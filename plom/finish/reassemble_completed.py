@@ -73,20 +73,26 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     pagedata = msgr.get_pagedata(t)
 
     id_pages = []
+    dnm_pages = []
     for row in pagedata:
         # Issue #2707: better use a image-type key
-        if not row["pagename"].casefold().startswith("id"):
-            continue
-        ext = Path(row["server_path"]).suffix
-        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
-        img_bytes = msgr.get_image(row["id"], row["md5"])
-        with open(filename, "wb") as f:
-            f.write(img_bytes)
-        if row["orientation"]:
-            # load with exif, then soft rotate, then resave?
-            # or can we somehow keep this until the writer?
-            pass
-        id_pages.append({"filename": filename, "rotation": row["orientation"]})
+        if row["pagename"].casefold().startswith("id"):
+            ext = Path(row["server_path"]).suffix
+            filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+            img_bytes = msgr.get_image(row["id"], row["md5"])
+            with open(filename, "wb") as f:
+                f.write(img_bytes)
+            id_pages.append({"filename": filename, "rotation": row["orientation"]})
+
+        # Issue #2707: better use a image-type key
+        if row["pagename"].casefold().startswith("dnm"):
+            ext = Path(row["server_path"]).suffix
+            filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+            img_bytes = msgr.get_image(row["id"], row["md5"])
+            with open(filename, "wb") as f:
+                f.write(img_bytes)
+            dnm_pages.append({"filename": filename, "rotation": row["orientation"]})
+        # skip other non-ID non-DNM pages
 
     marked_pages = []
     for q in range(1, num_questions + 1):
@@ -99,18 +105,6 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-
-    dnm_pages = []
-    for row in pagedata:
-        # Issue #2707: better use a image-type key
-        if not row["pagename"].casefold().startswith("dnm"):
-            continue
-        ext = Path(row["server_path"]).suffix
-        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
-        img_bytes = msgr.get_image(row["id"], row["md5"])
-        with open(filename, "wb") as f:
-            f.write(img_bytes)
-        dnm_pages.append({"filename": filename, "rotation": row["orientation"]})
 
     return (id_pages, marked_pages, dnm_pages)
 
