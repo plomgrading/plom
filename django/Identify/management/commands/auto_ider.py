@@ -41,20 +41,17 @@ class Command(BaseCommand):
 
     def delete_predictions(self, predictor):
         """Deletes ID predictions for the specified predictor."""
-        if predictor:
-            id_reader_service = IDReaderService()
-            try:
-                num_predictions = len(
-                    id_reader_service.get_ID_predictions(predictor=predictor)
-                )
-                id_reader_service.delete_ID_predictions(None, predictor=predictor)
-                self.stdout.write(
-                    f"Deleted {num_predictions} predictions by {predictor}."
-                )
-            except ValueError as err:
-                raise CommandError(err)
-        else:
+        if not predictor:
             raise CommandError("Please specify a predictor.")
+        id_reader_service = IDReaderService()
+        try:
+            num_predictions = len(
+                id_reader_service.get_ID_predictions(predictor=predictor)
+            )
+            id_reader_service.delete_ID_predictions(None, predictor=predictor)
+            self.stdout.write(f"Deleted {num_predictions} predictions by {predictor}.")
+        except ValueError as err:
+            raise CommandError(err)
 
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
