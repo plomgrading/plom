@@ -73,7 +73,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
         # TODO: useful bit of transcoding-in-memory code here: move somewhere!
-        # Its not currently useful here b/c clients try jpeg themeselves now
+        # Its not currently useful here b/c clients try jpeg themselves now
         continue
 
         png_size = img_name.stat().st_size
@@ -92,7 +92,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
     # process DNM pages one at a time, putting at most three per page
     on_this_page = 0
-    for idx, row in enumerate(dnm_images):
+    for idx, img in enumerate(dnm_images):
         how_many_more = len(dnm_images) - idx
         if on_this_page == 0:
             if how_many_more > 1:
@@ -120,10 +120,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             assert r > 0
         rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
         # fitz insert_image does not respect exif
-        rot = rot_angle_from_jpeg_exif_tag(row["filename"])
+        rot = rot_angle_from_jpeg_exif_tag(img["filename"])
         # now apply soft rotation
-        rot += row["rotation"]
-        pg.insert_image(rect, filename=row["filename"], rotate=rot)  # ccw
+        rot += img["rotation"]
+        pg.insert_image(rect, filename=img["filename"], rotate=rot)  # ccw
         offset += W
         on_this_page += 1
         if on_this_page == 3:
