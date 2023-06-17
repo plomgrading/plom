@@ -73,18 +73,19 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
     # process DNM pages one at a time, putting at most three per page
+    max_per_page = 3
     on_this_page = 0
     for idx, img in enumerate(dnm_images):
         how_many_more = len(dnm_images) - idx
         if on_this_page == 0:
             if how_many_more > 1:
-                # two or more pages main, do a landscape page
+                # two or more pages remain, do a landscape page
                 w, h = papersize_landscape
             else:
                 w, h = papersize_portrait
             pg = exam.new_page(width=w, height=h)
             # width of each image on the page
-            W = (w - 2 * margin) // min(3, how_many_more)
+            W = (w - 2 * margin) // min(max_per_page, how_many_more)
             header_bottom = margin + h // 10
             offset = margin
             if how_many_more > 1:
@@ -108,7 +109,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         pg.insert_image(rect, filename=img["filename"], rotate=rot)  # ccw
         offset += W
         on_this_page += 1
-        if on_this_page == 3:
+        if on_this_page == max_per_page:
             on_this_page = 0
 
     exam.set_metadata(
