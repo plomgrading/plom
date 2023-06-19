@@ -12,15 +12,19 @@
     <p>Rubric ID: {{ rubric.key }}</p>
     <p>Kind: {{ rubric.kind }}</p>
     <p># used: TODO</p>
-
     <table style="color:#FF0000;">
         <tr>
-            <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
+            <td style="padding:2px;
+                       border-width:1px;
+                       border-style:solid;
+                       border-color:#FF0000">
                 <b>{{ rubric.display_delta }}</b>
             </td>
-            <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
-                {{ rubric.text }}
-            </td>
+            <td style="padding:2px;
+                       border-width:1px;
+                       border-style:dotted;
+                       border-color:#FF0000;
+                       border-left-style:None">{{ rubric.text }}</td>
         </tr>
     </table>
     <br>

@@ -368,7 +368,7 @@ class RubricService:
             QuerySet: lazy queryset of all rubrics.
         """
         return Annotation.objects.all()
-    
+
     def get_rubric_as_html(self, rubric: Rubric):
         """Gets a rubric as HTML.
 
@@ -378,12 +378,6 @@ class RubricService:
         Returns:
             str: HTML representation of the rubric.
         """
-
-        # This seems a little plain without the border:
-        # return f"""
-        #    <span style="color:#FF0000;"><b>{display_delta}</b> {r["text"]}</span>
-        # """
-
         return f"""
             <table style="color:#FF0000;">
                 <tr>
