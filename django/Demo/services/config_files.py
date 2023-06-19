@@ -71,7 +71,6 @@ class ServerConfigService:
 
     def validate_config(self, config):
         """Validate a server config file."""
-
         if "test_spec" not in config.keys():
             raise PlomConfigError(
                 "A test specification is required in order to build a server."
