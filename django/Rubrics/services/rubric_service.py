@@ -20,7 +20,7 @@ from rest_framework.exceptions import ValidationError
 
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
-from Papers.models.paper_structure import Paper
+from Papers.models import Paper
 from Papers.services import SpecificationService
 from Rubrics.serializers import (
     RubricSerializer,
@@ -308,16 +308,15 @@ class RubricService:
         """
         return Rubric.objects.filter(annotations=annotation)
 
-    def get_rubrics_from_paper(self, paper: int):
+    def get_rubrics_from_paper(self, paper_obj: Paper):
         """Get the queryset of rubrics that are used by this paper.
 
         Args:
-            paper: Paper instance
+            paper_obj: Paper instance
 
         Returns:
             Queryset: Rubric instances
         """
-        paper_obj = Paper.objects.get(pk=paper)
         marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
         annotations = Annotation.objects.filter(task__in=marking_tasks)
         rubrics = Rubric.objects.filter(annotations__in=annotations)
