@@ -283,7 +283,7 @@ tag_matches_ver:
   rules:
    - if: $CI_COMMIT_TAG
   script:
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - echo "Extracted version string '$VER'"
     - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
     - echo $VER
@@ -1042,8 +1042,7 @@ linux_client_appimage:
   script:
     - docker build --tag appimagebuilder_tmp -f AppImageBuilder.Containerfile .
     - docker create -ti --name dummy appimagebuilder_tmp bash
-    # export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
-    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - export NAME=PlomClient-$VER-x86_64.AppImage
     - docker cp dummy:/app/$NAME .
     - docker rm -f dummy
@@ -1178,7 +1177,7 @@ macos12_universal_client:
   - /usr/local/bin/python3 -m pip install pyinstaller
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller --target-arch universal2 client.macos.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos12.zip
   - pushd dist
@@ -1227,7 +1226,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 -m pip install pyinstaller
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos12-arm64.zip
   - pushd dist
@@ -1282,7 +1281,7 @@ macos12_x86_64_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos12-x86_64.zip
   - pushd dist
@@ -1333,7 +1332,7 @@ macos11_client:
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos11.zip
   - pushd dist
@@ -1384,7 +1383,7 @@ macos1015_client:
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_15.zip
   - pushd dist
@@ -1430,7 +1429,7 @@ macos1014_client:
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_14.zip
   - pushd dist
@@ -1549,7 +1548,7 @@ winpyinst:
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - $VER = &"c:\python310\python" -c "exec(open('plom\\__init__.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
