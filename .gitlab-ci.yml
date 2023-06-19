@@ -1123,6 +1123,9 @@ macos12_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
+  - asdf current
+  - asdf info
+  - asdf which python
   # arch -x86_64 python --version
   # arch -x86_64 pip --version
   - asdf current
