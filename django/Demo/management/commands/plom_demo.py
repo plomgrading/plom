@@ -38,7 +38,7 @@ class Command(BaseCommand):
         config: dict,
         homework_bundles,
     ):
-        if "bundles" in config.keys():
+        if ServerConfigService().contains_key(config, "bundles"):
             dbs.scribble_on_exams(config)
 
         for bundle in homework_bundles:
@@ -89,14 +89,15 @@ class Command(BaseCommand):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        if "bundles" in config.keys():
+        scs = ServerConfigService()
+        if scs.contains_key(config, "bundles"):
             number_of_bundles = len(config["bundles"])
             bundle_service = DemoBundleService()
         else:
             bundle_service = None
             number_of_bundles = 0
 
-        if "hw_bundles" in config.keys():
+        if scs.contains_key(config, "hw_bundles"):
             homework_bundles = config["hw_bundles"]
             homework_service = DemoHWBundleService()
         else:
@@ -216,7 +217,7 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation" or "num_to_produce" not in config.keys():
+        if stop_at == "preparation" or not config_service.contains_key(config, "num_to_produce"):
             huey_worker_proc.terminate()
             return
 

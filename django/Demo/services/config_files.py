@@ -13,6 +13,32 @@ class PlomConfigError(Exception):
 class ServerConfigService:
     """Handle building a server database from a config file."""
 
+    def __init__(self):
+        self.valid_keys = {
+            "test_spec",
+            "test_sources",
+            "prenaming_enabled",
+            "classlist",
+            "num_to_produce",
+            "bundles",
+            "hw_bundles",
+        }
+
+        self.valid_bundle_keys = {
+            "first_paper",
+            "last_paper",
+            "extra_page_papers",
+            "garbage_page_papers",
+            "duplicate_page_papers",
+            "wrong_version_papers",
+            "duplicate_qr_papers",
+        }
+
+        self.valid_hw_bundle_keys = {
+            "paper_number",
+            "pages",
+        } 
+
     def read_server_config(self, path):
         """Create a server config from a TOML file.
 
@@ -29,6 +55,19 @@ class ServerConfigService:
                 return config
             except tomlkit.exceptions.ParseError as e:
                 raise ValueError(e)
+
+    def contains_key(self, config, key):
+        """Checks if a top-level key is present in the config.
+        
+        Args:
+            config (dict): server config.
+
+        Returns:
+            bool: true if the key is present, false otherwise
+        """
+        if key not in self.valid_keys:
+            raise ValueError(f"{key} is not a valid key.")
+        return key in config.keys()
 
     def validate_config(self, config):
         """Validate a server config file."""
@@ -48,19 +87,9 @@ class ServerConfigService:
                     "Bundles are specified but the config lacks a num_to_produce field."
                 )
 
-        valid_keys = {
-            "test_spec",
-            "test_sources",
-            "prenaming_enabled",
-            "classlist",
-            "num_to_produce",
-            "bundles",
-            "hw_bundles",
-        }
-
         key_set = set(config.keys())
-        if not key_set.issubset(valid_keys):
-            extra_keys = valid_keys.difference(key_set)
+        if not key_set.issubset(self.valid_keys):
+            extra_keys = self.valid_keys.difference(key_set)
             raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
 
         if "bundles" in config.keys():
@@ -72,30 +101,15 @@ class ServerConfigService:
                 self.validate_hw_bundle(bundle)
 
     def validate_bundle(self, bundle):
-        valid_bundle_keys = {
-            "first_paper",
-            "last_paper",
-            "extra_page_papers",
-            "garbage_page_papers",
-            "duplicate_page_papers",
-            "wrong_version_papers",
-            "duplicate_qr_papers",
-        }
-
         key_set = set(bundle.keys())
-        if not key_set.issubset(valid_bundle_keys):
-            extra_keys = valid_bundle_keys.difference(key_set)
+        if not key_set.issubset(self.valid_bundle_keys):
+            extra_keys = self.valid_bundle_keys.difference(key_set)
             raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
 
     def validate_hw_bundle(self, bundle):
-        valid_hw_bundle_keys = {
-            "paper_number",
-            "pages",
-        }
-
         key_set = set(bundle.keys())
-        if not key_set.issubset(valid_hw_bundle_keys):
-            extra_keys = valid_hw_bundle_keys.difference(key_set)
+        if not key_set.issubset(self.valid_hw_bundle_keys):
+            extra_keys = self.valid_hw_bundle_keys.difference(key_set)
             raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
 
 
