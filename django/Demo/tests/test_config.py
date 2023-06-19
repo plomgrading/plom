@@ -41,7 +41,7 @@ class ServerConfigTests(TestCase):
         scs.validate_hw_bundle(valid_hw_bundle)
 
         invalid_bundle = {
-            "frist_paper": 1, 
+            "frist_paper": 1,
             "last_paper": 5,
         }
         invalid_hw_bundle = {

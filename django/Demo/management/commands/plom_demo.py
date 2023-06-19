@@ -217,7 +217,9 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation" or not config_service.contains_key(config, "num_to_produce"):
+        if stop_at == "preparation" or not config_service.contains_key(
+            config, "num_to_produce"
+        ):
             huey_worker_proc.terminate()
             return
 

@@ -37,7 +37,7 @@ class ServerConfigService:
         self.valid_hw_bundle_keys = {
             "paper_number",
             "pages",
-        } 
+        }
 
     def read_server_config(self, path):
         """Create a server config from a TOML file.
@@ -58,7 +58,7 @@ class ServerConfigService:
 
     def contains_key(self, config, key):
         """Checks if a top-level key is present in the config.
-        
+
         Args:
             config (dict): server config.
 
@@ -111,5 +111,3 @@ class ServerConfigService:
         if not key_set.issubset(self.valid_hw_bundle_keys):
             extra_keys = self.valid_hw_bundle_keys.difference(key_set)
             raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
-
-
