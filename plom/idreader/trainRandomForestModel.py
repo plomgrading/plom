@@ -20,6 +20,7 @@ def train_model():
     mnist = fetch_openml("mnist_784", parser="auto")
 
     # Split the data into training and testing data
+    # pylint: disable=no-member
     X_train, X_test, y_train, y_test = train_test_split(
         mnist.data, mnist.target, test_size=1 / 8.0
     )
