@@ -14,12 +14,14 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from Identify.services import IDReaderService
+from Preparation.services import StagingStudentService
 
 
 class Command(BaseCommand):
     """Management command for ID reading and matching.
 
-    python3 manage.py auto_ider
+    python3 manage.py auto_ider run
+    python3 manage.py auto_ider delete --predictor P
     """
 
     help = """
@@ -38,11 +40,25 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
+    def delete_predictions(self, predictor):
+        """Deletes ID predictions for the specified predictor."""
+        if not predictor:
+            raise CommandError("Please specify a predictor.")
+        id_reader_service = IDReaderService()
+        try:
+            num_predictions = len(
+                id_reader_service.get_ID_predictions(predictor=predictor)
+            )
+            id_reader_service.delete_ID_predictions(None, predictor=predictor)
+            self.stdout.write(f"Deleted {num_predictions} predictions by {predictor}.")
+        except ValueError as err:
+            raise CommandError(err)
+
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
         self.stdout.write("Getting the classlist")
-        id_reader_service = IDReaderService()
-        return id_reader_service.get_classlist_sids_for_ID_matching()
+        student_service = StagingStudentService()
+        return student_service.get_classlist_sids_for_ID_matching()
 
     def get_probabilities(self):
         """Retrieve probability data from `id_prob_heatmaps.json`.
@@ -257,5 +273,30 @@ class Command(BaseCommand):
 
         return predictions
 
+    def add_arguments(self, parser):
+        sp = parser.add_subparsers(
+            dest="command",
+            description="ID matching tools to generate and delete ID predictions.",
+        )
+        sp_match = sp.add_parser("run", help="Run existing ID matching tools.")
+        sp_del_pred = sp.add_parser(
+            "delete", help="Delete ID predictions from a particular predictor."
+        )
+        sp_del_pred.add_argument(
+            "--predictor",
+            type=str,
+            metavar="P",
+            help="""
+                Delete all predictions from predictor P,
+                which may be "MLLAP", "MLGreedy" or "prename".
+                Note: prename predictions are not re-generated during matching.
+            """,
+        )
+
     def handle(self, *args, **options):
-        self.run_auto_iding()
+        if options["command"] == "run":
+            self.run_auto_iding()
+        elif options["command"] == "delete":
+            self.delete_predictions(options["predictor"])
+        else:
+            self.print_help("manage.py", "auto_ider")
