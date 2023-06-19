@@ -1125,10 +1125,12 @@ macos12_client:
   - arch -x86_64 uname -m
   - asdf current
   - asdf info
-  - asdf which python
+  - asdf install python $MACBIN_PY_VER
+  # asdf which python
   # arch -x86_64 python --version
   # arch -x86_64 pip --version
   - asdf current
+  - asdf info
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
