@@ -1125,6 +1125,9 @@ macos12_client:
   - arch -x86_64 uname -m
   - asdf current
   - asdf info
+  - asdf plugin-add python
+  - asdf current
+  - asdf info
   - asdf install python $MACBIN_PY_VER
   # asdf which python
   # arch -x86_64 python --version
