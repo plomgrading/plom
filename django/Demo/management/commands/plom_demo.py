@@ -40,8 +40,8 @@ class Command(BaseCommand):
     ):
         dbs.scribble_on_exams(config)
 
-        for paper_number, question_list in homework_bundles.items():
-            dhs.make_hw_bundle(paper_number, question_list=question_list)
+        for bundle in homework_bundles:
+            dhs.make_hw_bundle(bundle)
 
     def upload_bundles(
         self, dcs: DemoCreationService, number_of_bundles, homework_bundles
@@ -90,11 +90,8 @@ class Command(BaseCommand):
         print("*" * 40)
         number_of_bundles = len(config["bundles"])
 
-        homework_bundles = {
-            61: [[1], [2], [], [2, 3], [3]],
-            62: [[1], [1, 2], [2], [], [3]],
-            63: [[1, 2], [3], []],
-        }
+        homework_bundles = config["hw_bundles"]
+
         bundle_service = DemoBundleService()
         homework_service = DemoHWBundleService()
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)

@@ -1,10 +1,13 @@
-<!-- 
+<!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Colin B. Macdonald
 -->
-{% extends 'base/base.html' %}
+{% extends "base/base.html" %}
 {% load static %}
-{% block page_heading %}Tags{% endblock %}
+{% block page_heading %}
+    Tags
+{% endblock page_heading %}
 {% block main_content %}
     <body>
         <section>
@@ -17,7 +20,7 @@
                 </form>
                 <br>
                 <br>
-                You are filtering for tags containing &ldquo;{{ tag_filter_text }}&ldquo; with
+                You are filtering for tags containing &ldquo;{{ tag_filter_text }}&rdquo; with
                 strict matching {{ tag_filter_strict }}.
             </div>
         </section>
@@ -79,4 +82,4 @@
         </section>
     </body>
     <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
-{% endblock %}
+{% endblock main_content %}
