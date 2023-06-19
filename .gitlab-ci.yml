@@ -1115,18 +1115,22 @@ macos12_client:
   needs: []
   script:
   - sw_vers
+  - uname -a
+  - uname -m
   - echo $SHELL
   - which python
   - python --version
   - pip --version
-  - arch -x86_64 python --version
-  - arch -x86_64 pip --version
+  - uname -m
+  - arch -x86_64 uname -m
+  # arch -x86_64 python --version
+  # arch -x86_64 pip --version
   - asdf current
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - pyinstaller client.macos.spec
+  - pyinstaller --target-arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
