@@ -1,47 +1,54 @@
 <!-- Copyright (C) 2023 Brennen Chiu -->
-{% extends 'base/base.html' %}
-{% block title %}Web Plom - Identify Progress{% endblock %}
-{% block page_heading %}Identifying progress{% endblock %}
+{% extends "base/base.html" %}
+{% block title %}Web Plom - Identify Progress{% endblock title %}
+{% block page_heading %}Identifying progress{% endblock page_heading %}
 {% block main_content %}
 <div class="card mb-2 w-25">
     <h4 class="p-2" style="margin-bottom: 0px;">Papers Identified: {{ identified_papers_count }} / {{ all_id_papers_count }}</h4>
 </div>
-<div class="card w-50">
-    <table class="table table-hover" style="margin-bottom: 0px;">
-        <thead>
-            <tr>
-              <th scope="col">Paper</th>
-              <th scope="col">ID Page</th>
-              <th scope="col">Student ID</th>
-              <th scope="col">Student Name</th>
-              <th scope="col"></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for id_paper in all_id_papers %}
-            {% if id_paper.image == none %}
-            <tr>
-                <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
-                <td class="text-center" colspan="3">No ID</td>
-                <td class="align-middle" scope="row">
-                    <button class="btn btn-outline-danger disabled">Clear ID</button>
-                </td> 
-            </tr>
-            {% else %}
-            <tr>
-              <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
-              <td class="align-middle" scope="row">
-                <button class="btn btn-outline-success">1</button>
-              </td>
-              <td class="align-middle" scope="row">123456789</td>
-              <td class="align-middle" scope="row">Mr. Nobody</td>
-              <td class="align-middle" scope="row">
-                <button class="btn btn-outline-danger">Clear ID</button>
-              </td> 
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <table class="table table-hover" style="margin-bottom: 0px;">
+                <thead>
+                    <tr>
+                      <th scope="col">Paper</th>
+                      <th scope="col">ID Page</th>
+                      <th scope="col">Student ID</th>
+                      <th scope="col">Student Name</th>
+                      <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for id_paper in all_id_papers %}
+                    {% if id_paper.image == none %}
+                    <tr>
+                        <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
+                        <td class="text-center" colspan="3">Not ID yet</td>
+                        <td class="align-middle" scope="row">
+                            <button class="btn btn-outline-danger disabled">Clear ID</button>
+                        </td> 
+                    </tr>
+                    {% else %}
+                    <tr>
+                      <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
+                      <td class="align-middle" scope="row">
+                        <button class="btn btn-outline-success">1</button>
+                      </td>
+                      <td class="align-middle" scope="row">123456789</td>
+                      <td class="align-middle" scope="row">Mr. Nobody</td>
+                      <td class="align-middle" scope="row">
+                        <button class="btn btn-outline-danger">Clear ID</button>
+                      </td> 
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col">
+        
+    </div>       
 </div>
-{% endblock %}
+{% endblock main_content %}
