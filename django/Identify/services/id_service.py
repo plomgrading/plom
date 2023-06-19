@@ -11,11 +11,11 @@ class IDService:
 
     @transaction.atomic
     def get_all_id_papers(self):
-        return IDPage.objects.all().order_by('pk')
+        return IDPage.objects.all().order_by("pk")
 
     @transaction.atomic
     def get_identified_papers(self):
-        return IDPage.objects.exclude(image=None).order_by('pk')
+        return IDPage.objects.exclude(image=None).order_by("pk")
 
     @transaction.atomic
     def get_all_unidentified_papers(self):
