@@ -410,7 +410,6 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(len(rubrics), 2)
 
-
         rubric1.annotations.add(annotation3)
         rubric1.annotations.add(annotation4)
         rubrics = service.get_rubrics_from_paper(paper1)
