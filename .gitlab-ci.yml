@@ -1118,6 +1118,8 @@ macos12_client:
   - which python
   - python --version
   - pip --version
+  - arch -x86_64 python --version
+  - arch -x86_64 pip --version
   - asdf current
   - python -m pip install --upgrade pip
   - pip --version
