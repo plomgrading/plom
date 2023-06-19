@@ -21,33 +21,27 @@ class StudentMarksService:
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
-        if original:
-            annotations = Annotation.objects.filter(task__in=marking_tasks).order_by(
-                "-edition"
-            )
-        else:
-            annotations = Annotation.objects.filter(task__in=marking_tasks).order_by(
-                "edition"
-            )
-
-        annotations_by_task = {}
-        for annotation in annotations:
-            annotations_by_task[annotation.task] = annotation
 
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
-            if marking_task in annotations_by_task:
-                annotation_data = annotations_by_task[marking_task].annotation_data
-                # questions["q" + str(marking_task.question_number)] = {
+            if original:
+                current_annotation = marking_task.annotation_set.order_by(
+                    "edition"
+                ).first()
+            else:
+                current_annotation = marking_task.annotation_set.order_by(
+                    "-edition"
+                ).first()
+
+            if current_annotation:
                 questions[marking_task.question_number] = {
                     "question": marking_task.question_number,
                     "version": marking_task.question_version,
-                    "out_of": annotation_data["maxMark"],
-                    "student_mark": annotations_by_task[marking_task].score,
+                    "out_of": current_annotation.annotation_data["maxMark"],
+                    "student_mark": current_annotation.score,
                 }
 
         return {paper_num: questions}
-        # return { "p" + str(paper_num): questions }
 
     def get_all_marks(self, original: bool = False) -> dict:
         """Get the marks for all papers.
