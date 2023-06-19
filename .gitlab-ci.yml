@@ -1111,7 +1111,8 @@ macos12_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: packaging
+  stage: alt_build
+  needs: []
   script:
   - sw_vers
   - echo $SHELL
