@@ -1,0 +1,34 @@
+/* 
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Julian Lapenna
+*/
+
+table {
+    border-collapse: collapse;
+    width: 85%;
+}
+
+th,
+td {
+    padding: 1px;
+    padding-left: 4px;
+    text-align: left;
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #333;
+    color: #fff;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #e9e9e9;
+}
+
+th.id-column {
+    width: 100px;
+}
+
+th.tag-column {
+    width: 200px;
+}

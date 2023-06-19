@@ -6,11 +6,13 @@ import pathlib
 from warnings import warn
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from Identify.models import PaperIDTask
-from Identify.services.id_tasks import IdentifyTaskService
-from Papers.models import IDPage
+from Identify.models import PaperIDTask, IDPrediction
+from Identify.services import IdentifyTaskService
+from Papers.models import IDPage, Paper
 from Preparation.services import StagingStudentService
 from Scan.services.image_process import PageImageProcessor
 
@@ -90,3 +92,77 @@ class IDReaderService:
         for entry in classlist:
             students.append(entry.pop("student_id"))
         return students
+
+    @transaction.atomic
+    def get_ID_predictions(self, predictor=None):
+        """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
+
+        Keyword Args:
+            predictor (str): predictor whose predictions are returned.
+                If None, all predictions are returned.
+
+        Returns:
+            dict: if returning all predictions, a dict of lists of dicts.
+            If returning predictions for a specific predictor, a dict of dicts.
+            Inner-most dicts contain prediction info (ie. SID, certainty, predictor).
+            Outer-most dict is keyed by paper number.
+        """
+        predictions = {}
+        if predictor:
+            pred_query = IDPrediction.objects.filter(predictor=predictor)
+            for pred in pred_query:
+                predictions[pred.paper.paper_number] = {
+                    "student_id": pred.student_id,
+                    "certainty": pred.certainty,
+                    "predictor": pred.predictor,
+                }
+        else:
+            pred_query = IDPrediction.objects.all()
+            for pred in pred_query:
+                if predictions.get(pred.paper.paper_number) is None:
+                    predictions[pred.paper.paper_number] = []
+                predictions[pred.paper.paper_number].append(
+                    {
+                        "student_id": pred.student_id,
+                        "certainty": pred.certainty,
+                        "predictor": pred.predictor,
+                    }
+                )
+        return predictions
+
+    @transaction.atomic
+    def add_or_change_ID_prediction(
+        self, user, paper_num, student_id, certainty, predictor
+    ):
+        """Add a new ID prediction or change an existing prediction in the DB."""
+        try:
+            # TODO: hardcoded to use "first" manager user in DB
+            user_obj = User.objects.filter(groups__name="manager").first()
+        except ObjectDoesNotExist:
+            raise ValueError("Manager user does not exist")
+        paper = Paper.objects.get(paper_number=paper_num)
+        try:
+            existing_pred = IDPrediction.objects.get(paper=paper, predictor=predictor)
+        except IDPrediction.DoesNotExist:
+            existing_pred = None
+        if not existing_pred:
+            new_prediction = IDPrediction(
+                user=user_obj,
+                paper=paper,
+                predictor=predictor,
+                student_id=student_id,
+                certainty=certainty,
+            )
+            new_prediction.save()
+        else:
+            existing_pred.student_id = student_id
+            existing_pred.certainty = certainty
+            existing_pred.save()
+
+    @transaction.atomic
+    def delete_ID_predictions(self, user, predictor=None):
+        """Delete all ID predictions from a particular predictor."""
+        if predictor:
+            IDPrediction.objects.filter(predictor=predictor).delete()
+        else:
+            IDPrediction.objects.all().delete()

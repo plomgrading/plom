@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from django.urls import path
 
@@ -48,7 +49,7 @@ class IdURLPatterns:
         ]
         id_patterns += tasks
 
-        # get ID'er predictions
+        # get, put and delete ID'er predictions
         predictions = [
             path(
                 "predictions/", GetIDPredictions.as_view(), name="api_get_predictions"
@@ -57,6 +58,21 @@ class IdURLPatterns:
                 "predictions/<predictor>",
                 GetIDPredictions.as_view(),
                 name="api_get_predictions_from_predictor",
+            ),
+            path(
+                "predictions/",
+                GetIDPredictions.as_view(),
+                name="api_put_predictions",
+            ),
+            path(
+                "predictions/",
+                GetIDPredictions.as_view(),
+                name="api_delete_predictions",
+            ),
+            path(
+                "predictions/<predictor>",
+                GetIDPredictions.as_view(),
+                name="api_delete_predictions_from_predictor",
             ),
         ]
         id_patterns += predictions
