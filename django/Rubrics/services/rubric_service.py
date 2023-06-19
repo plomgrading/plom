@@ -360,3 +360,39 @@ class RubricService:
             "annotations": r.annotations,
         }
         return rubric_dict
+
+    def get_all_annotations(self):
+        """Gets all annotations.
+
+        Returns:
+            QuerySet: lazy queryset of all rubrics.
+        """
+        return Annotation.objects.all()
+    
+    def get_rubric_as_html(self, rubric: Rubric):
+        """Gets a rubric as HTML.
+
+        Args:
+            rubric: a Rubric instance
+
+        Returns:
+            str: HTML representation of the rubric.
+        """
+
+        # This seems a little plain without the border:
+        # return f"""
+        #    <span style="color:#FF0000;"><b>{display_delta}</b> {r["text"]}</span>
+        # """
+
+        return f"""
+            <table style="color:#FF0000;">
+                <tr>
+                    <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
+                        <b>{rubric.display_delta}</b>
+                    </td>
+                    <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
+                        {rubric.text}
+                    </td>
+                </tr>
+            </table>
+        """

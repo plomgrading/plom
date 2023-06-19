@@ -30,5 +30,5 @@ class RubricEditForm(forms.ModelForm):
         model = Rubric
         fields = ["meta"]
         widgets = {
-            "meta": forms.Textarea(),
+            "meta": forms.Textarea(attrs={"rows": 2, "cols": 50}),
         }
