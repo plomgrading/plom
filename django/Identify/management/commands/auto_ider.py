@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from Identify.services import IDReaderService
+from Preparation.services import StagingStudentService
 
 
 class Command(BaseCommand):
@@ -56,8 +57,8 @@ class Command(BaseCommand):
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
         self.stdout.write("Getting the classlist")
-        id_reader_service = IDReaderService()
-        return id_reader_service.get_classlist_sids_for_ID_matching()
+        student_service = StagingStudentService()
+        return student_service.get_classlist_sids_for_ID_matching()
 
     def get_probabilities(self):
         """Retrieve probability data from `id_prob_heatmaps.json`.
