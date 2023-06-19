@@ -1130,7 +1130,7 @@ macos12_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - pyinstaller --target-arch universal2 client.macos.spec
+  - pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
