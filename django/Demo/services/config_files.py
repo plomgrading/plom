@@ -47,3 +47,55 @@ class ServerConfigService:
                 raise PlomConfigError(
                     "Bundles are specified but the config lacks a num_to_produce field."
                 )
+
+        valid_keys = {
+            "test_spec",
+            "test_sources",
+            "prenaming_enabled",
+            "classlist",
+            "num_to_produce",
+            "bundles",
+            "hw_bundles",
+        }
+
+        key_set = set(config.keys())
+        if not key_set.issubset(valid_keys):
+            extra_keys = valid_keys.difference(key_set)
+            raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
+
+        if "bundles" in config.keys():
+            for bundle in config["bundles"]:
+                self.validate_bundle(bundle)
+
+        if "hw_bundles" in config.keys():
+            for bundle in config["hw_bundles"]:
+                self.validate_hw_bundle(bundle)
+
+    def validate_bundle(self, bundle):
+        valid_bundle_keys = {
+            "first_paper",
+            "last_paper",
+            "extra_page_papers",
+            "garbage_page_papers",
+            "duplicate_page_papers",
+            "wrong_version_papers",
+            "duplicate_qr_papers",
+        }
+
+        key_set = set(bundle.keys())
+        if not key_set.issubset(valid_bundle_keys):
+            extra_keys = valid_bundle_keys.difference(key_set)
+            raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
+
+    def validate_hw_bundle(self, bundle):
+        valid_hw_bundle_keys = {
+            "paper_number",
+            "pages",
+        }
+
+        key_set = set(bundle.keys())
+        if not key_set.issubset(valid_hw_bundle_keys):
+            extra_keys = valid_hw_bundle_keys.difference(key_set)
+            raise PlomConfigError(f"Unrecognized fields in config file: {extra_keys}")
+
+
