@@ -1197,7 +1197,8 @@ class RubricWidget(QWidget):
                 group_tab_data[g].append(rubric["id"])
 
         current_group_tabs = self.get_group_tabs_dict()
-        prev_group_tabs = {x["name"]: x["ids"] for x in wranglerState["group_tabs"]}
+        _group_tabs = wranglerState.get("group_tabs", {})
+        prev_group_tabs = {x["name"]: x["ids"] for x in _group_tabs}
         for name, tab in current_group_tabs.items():
             if name not in group_tab_data.keys():
                 log.info("Removing now-empty tab: group %s is now empty", name)
