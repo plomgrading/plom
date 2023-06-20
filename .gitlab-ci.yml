@@ -1123,6 +1123,9 @@ macos12_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - pwd
+  - sudo installer -pkg python.pkg -target /
   - asdf current
   - asdf info
   - asdf plugin-add python
