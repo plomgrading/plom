@@ -1141,8 +1141,9 @@ macos12_client:
   - pip --version
   # hacks for charset_normalizser, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
-  - /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
-  - arch -x86_64 /usr/local/bin/python3 -m pip install Pillow
+  # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
+  - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install Pillow
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
