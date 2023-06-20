@@ -3,7 +3,7 @@
 
 from django.db import transaction
 
-from Papers.models import IDPage
+from Papers.models import IDPage, Image
 
 
 class IDService:
@@ -20,3 +20,11 @@ class IDService:
     @transaction.atomic
     def get_all_unidentified_papers(self):
         return IDPage.objects.exclude(image__isnull=False)
+    
+    @transaction.atomic
+    def get_id_image_object(self, img_pk):
+        try:
+            img_obj = Image.objects.get(pk=img_pk)
+            return img_obj
+        except Image.DoesNotExist:
+            return None

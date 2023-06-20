@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+
 from django.shortcuts import render
+from django.http import FileResponse
 
 from Base.base_group_views import ManagerRequiredView
 
 from Identify.services import IDService
+from Papers.models import Image
 
 
 class ProgressIdentifyHome(ManagerRequiredView):
@@ -25,3 +28,9 @@ class ProgressIdentifyHome(ManagerRequiredView):
             }
         )
         return render(request, "Progress/Identify/identify_home.html", context)
+
+
+class IDImageView(ManagerRequiredView):
+    def get(self, request, img_pk):
+        id_img = IDService().get_id_image_object(img_pk=img_pk)
+        return FileResponse(id_img.image_file)
