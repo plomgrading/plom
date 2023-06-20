@@ -1142,9 +1142,9 @@ macos12_client:
   - /Users/gitlab/.asdf/shims/python -m pip install --upgrade pip
   # python -m pip install --upgrade pip
   - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/shims/python -m pip install -r requirements.txt.client
+  - /Users/gitlab/.asdf/shims/python -m pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
