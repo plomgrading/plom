@@ -1128,7 +1128,7 @@ macos12_client:
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
   - /usr/bin/python3 -m pip --version
-  # install
+  # install specific python
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
   - sudo installer -verbose -pkg python.pkg -target /
   - python3 --version
@@ -1140,7 +1140,8 @@ macos12_client:
   - which pip3
   - pip --version
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install -v -v pyinstaller
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
   # TODO: 3.11 hardcoded here
   - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
   - ls dist/
