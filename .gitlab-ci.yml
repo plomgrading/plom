@@ -1114,6 +1114,7 @@ macos12_client:
   stage: alt_build
   needs: []
   script:
+  - pwd
   - sw_vers
   - uname -a
   - uname -m
@@ -1123,10 +1124,12 @@ macos12_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
+  # quite likely the built-in python would work...  but below we installer latest
   - arch -x86_64 /usr/bin/python3 --version
+  - arch -arm64 /usr/bin/python3 --version
   - /usr/bin/python3 -m pip --version
+  # install
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
-  - pwd
   - sudo installer -verbose -pkg python.pkg -target /
   - python3 --version
   - /usr/bin/python3 --version

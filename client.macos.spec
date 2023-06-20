@@ -9,6 +9,7 @@ with open(Path("plom") / "version.py") as f:
 
 block_cipher = None
 
+# Notes: https://github.com/Ousret/charset_normalizer/issues/253
 a = Analysis(['plom/client/__main__.py'],
              pathex=['./'],
              binaries=[],
@@ -22,7 +23,7 @@ a = Analysis(['plom/client/__main__.py'],
                  ('plom/client/help_img/click_drag.gif', 'plom/client/help_img'),
                  ('plom/*keys.toml', 'plom'),
              ],
-             hiddenimports=[],
+             hiddenimports=["charset_normalizer.md__mypyc"],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
