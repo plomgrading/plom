@@ -1097,6 +1097,9 @@ linuxbin_ubuntu2204:
 
 
 # Notes on macOS client builds
+# - June 2023, we now have only M1 (arm64) runners:
+#     - goal remains universal2 binary: Issue #1655
+#     - for now, we use Rosetta2 to cross compile onto x86_64
 # - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
 #     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
 #   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
@@ -1104,7 +1107,7 @@ linuxbin_ubuntu2204:
 #   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos12_client_universal2:
+macos12_universal_client:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1112,6 +1115,8 @@ macos12_client_universal2:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: alt_build
   needs: []
   script:
@@ -1149,7 +1154,7 @@ macos12_client_universal2:
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
-  - /Library/Frameworks/Python.framework/Versions/$MACBIN_PY_MAJOR_MINOR_VER/bin/pyinstaller --target_arch universal2 client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/$MACBIN_PY_MAJOR_MINOR_VER/bin/pyinstaller --target-arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1170,7 +1175,7 @@ macos12_client_universal2:
     expire_in: 30 days
 
 
-macos12_client_arm64:
+macos12_arm64_client:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1220,7 +1225,7 @@ macos12_client_arm64:
     expire_in: 30 days
 
 
-macos12_client_x86_64:
+macos12_x86_64_client:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
