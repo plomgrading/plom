@@ -1125,7 +1125,10 @@ macos12_client:
   - arch -x86_64 uname -m
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
   - pwd
-  - sudo installer -pkg python.pkg -target /
+  - sudo installer -verbose -pkg python.pkg -target /
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - /usr/local/bin/pip --version
   - which python3
   - which python
   - arch -x86_64 python3
