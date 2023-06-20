@@ -1126,37 +1126,16 @@ macos12_client:
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
   - pwd
   - sudo installer -verbose -pkg python.pkg -target /
+  - python3 --version
   - /usr/bin/python3 --version
   - /usr/local/bin/python3 --version
-  - /usr/local/bin/pip --version
-  - which python3
-  - which python
-  - arch -x86_64 python3
+  - /usr/local/bin/python3 -m pip install --upgrade pip
   - which pip
   - which pip3
-  - asdf current
-  - asdf info
-  - asdf plugin-add python
-  - asdf current
-  - asdf info
-  # asdf install python $MACBIN_PY_VER
-  - PYTHON_CONFIGURE_OPTS="--enable-shared --enable-universalsdk --with-universal-archs=universal2" asdf install python $MACBIN_PY_VER
-  - asdf local python $MACBIN_PY_VER
-  - asdf which python
-  - asdf reshim python
-  # arch -x86_64 python --version
-  # arch -x86_64 pip --version
-  - asdf current
-  - asdf info
-  - which python
-  - python --version
-  - /Users/gitlab/.asdf/shims/python --version
-  - /Users/gitlab/.asdf/shims/python -m pip install --upgrade pip
-  # python -m pip install --upgrade pip
   - pip --version
-  - /Users/gitlab/.asdf/shims/python -m pip install -r requirements.txt.client
-  - /Users/gitlab/.asdf/shims/python -m pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install -v -v pyinstaller
+  - /usr/local/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
