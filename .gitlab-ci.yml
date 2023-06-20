@@ -36,6 +36,7 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
+  MACBIN_PY_MAJOR_MINOR_VER: 3.11
   MACBIN_PY_VER: 3.11.4
   QT_QPA_PLATFORM: offscreen
 
@@ -1139,7 +1140,7 @@ macos12_client_universal2:
   - which pip
   - which pip3
   - pip --version
-  # hacks for charset_normalizser, following https://github.com/machawk1/wail/pull/562/
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
@@ -1148,8 +1149,7 @@ macos12_client_universal2:
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
-  # TODO: 3.11 hardcoded here
-  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller --target_arch universal2 client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/$MACBIN_PY_MAJOR_MINOR_VER/bin/pyinstaller --target_arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1197,13 +1197,9 @@ macos12_client_arm64:
   - /usr/bin/python3 --version
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
-  - which pip
-  - which pip3
-  - pip --version
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
-  # TODO: 3.11 hardcoded here
-  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/$MACBIN_PY_MAJOR_MINOR_VER/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1255,13 +1251,11 @@ macos12_client_x86_64:
   - /usr/local/bin/python3 --version
   - arch -x86_64 /usr/local/bin/python3 --version
   - arch -x86_64 /usr/local/bin/python3 -m pip install --upgrade pip
-  - which pip
-  - which pip3
-  - pip --version
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
-  # TODO: 3.11 hardcoded here
-  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/$MACBIN_PY_MAJOR_MINOR_VER/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
