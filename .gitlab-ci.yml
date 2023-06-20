@@ -1130,7 +1130,7 @@ macos12_client:
   - /usr/bin/python3 -m pip --version
   # install specific python
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
-  - sudo installer -verbose -pkg python.pkg -target /
+  - sudo installer -pkg python.pkg -target /
   - python3 --version
   - /usr/bin/python3 --version
   - /usr/local/bin/python3 --version
@@ -1139,6 +1139,9 @@ macos12_client:
   - which pip
   - which pip3
   - pip --version
+  # hacks for charset_normalizser, following https://github.com/machawk1/wail/pull/562/
+  - /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
