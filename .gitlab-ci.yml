@@ -1169,6 +1169,119 @@ macos12_client_universal2:
     - md5sum
     expire_in: 30 days
 
+
+macos12_client_arm64:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: alt_build
+  needs: []
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - /usr/bin/python3 -m pip --version
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - /usr/local/bin/python3 -m pip install --upgrade pip
+  - which pip
+  - which pip3
+  - pip --version
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
+  # TODO: 3.11 hardcoded here
+  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
+macos12_client_x86_64:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: alt_build
+  needs: []
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - arch -x86_64 uname -m
+  # quite likely the built-in python would work...  but below we installer latest
+  - arch -x86_64 /usr/bin/python3 --version
+  # install specific python
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 -m pip install --upgrade pip
+  - which pip
+  - which pip3
+  - pip --version
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
+  # TODO: 3.11 hardcoded here
+  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
 macos11_client:
   image: macos-11-xcode-12
   tags:
