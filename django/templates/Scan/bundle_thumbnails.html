@@ -26,26 +26,18 @@
                         <h5>
                             Bundle <q>{{ slug }}</q> summary
                         </h5>
-                        {# djlint:off #}
-                        {% if is_pushed %}
-                        <div class="alert alert-success">
-                          Pushed <i class="bi bi-check-circle text-success"></i>
-                        {% else %}
-                        <div class="alert alert-info">
-                        {% endif %}
-                        {# djlint:on #}
-                        <ul>
-                            <li>{{ known_pages }} / {{ total_pages }} known pages</li>
-                            {% if known_pages != total_pages %}
-                                <li>{{ unknown_pages }} unknown pages</li>
-                                <li>{{ extra_pages }} extra pages</li>
-                                <li>{{ discard_pages }} discard pages</li>
-                                <li>{{ error_pages }} error pages</li>
-                            {% endif %}
-                        </ul>
-                        {# djlint:off #}
+                        <div class="alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
+                            {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
+                            <ul>
+                                <li>{{ known_pages }} / {{ total_pages }} known pages</li>
+                                {% if known_pages != total_pages %}
+                                    <li>{{ unknown_pages }} unknown pages</li>
+                                    <li>{{ extra_pages }} extra pages</li>
+                                    <li>{{ discard_pages }} discard pages</li>
+                                    <li>{{ error_pages }} error pages</li>
+                                {% endif %}
+                            </ul>
                         </div>
-                        {# djlint:on #}
                     </div>
                     <div class="col-8">
                         <h5>Bundle Contains:</h5>
