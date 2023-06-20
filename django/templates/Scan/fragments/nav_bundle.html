@@ -21,10 +21,17 @@
                     {% endif %}
                 </div>
                 <div class="col">
-		  <div style="height: 70vh; width: 70vh; justify-content: center; display:flex; align-items:center;">
-                    <img class="shadow rounded p-2" src="{% url 'scan_get_image' timestamp index %}"
-                         style=" max-height:100%; max-width: 100%; transform:rotate(calc(-1 * {{ current_page.rotation }}deg));"/>
-		  </div>
+                    <div style="height: 70vh;
+                                width: 70vh;
+                                justify-content: center;
+                                display:flex;
+                                align-items:center">
+                        <img class="shadow rounded p-2"
+                             src="{% url 'scan_get_image' timestamp index %}"
+                             style="max-height:100%;
+                                    max-width: 100%;
+                                    transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
+                    </div>
                 </div>
                 <div class="col">
                     {% if next_idx <= total_pages %}
