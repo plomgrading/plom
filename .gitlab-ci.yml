@@ -1103,7 +1103,7 @@ linuxbin_ubuntu2204:
 #   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos12_client:
+macos12_client_universal2:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1143,8 +1143,8 @@ macos12_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
+  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
-  - /usr/local/bin/python3 -m pip install Pillow
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
