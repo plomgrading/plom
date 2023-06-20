@@ -1129,8 +1129,9 @@ macos12_client:
   - asdf current
   - asdf info
   - asdf install python $MACBIN_PY_VER
-  - asdf shell python $MACBIN_PY_VER
+  - asdf local python $MACBIN_PY_VER
   - asdf which python
+  - asdf reshim python
   # arch -x86_64 python --version
   # arch -x86_64 pip --version
   - asdf current
