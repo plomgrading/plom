@@ -1128,7 +1128,8 @@ macos12_client:
   - asdf plugin-add python
   - asdf current
   - asdf info
-  - asdf install python $MACBIN_PY_VER
+  # asdf install python $MACBIN_PY_VER
+  - PYTHON_CONFIGURE_OPTS="--enable-framework --enable-shared --enable-universalsdk --with-universal-archs=universal2" asdf install python $MACBIN_PY_VER
   - asdf local python $MACBIN_PY_VER
   - asdf which python
   - asdf reshim python
