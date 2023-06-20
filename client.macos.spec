@@ -34,13 +34,14 @@ a = Analysis(['plom/client/__main__.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# See https://gitlab.com/plom/plom/-/issues/1655
+# target_arch='universal2',
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
           a.datas,
           name=f'PlomClient-{__version__}-macos.bin',
-          target_arch='universal2',
           debug=False,
           strip=False,
           onefile=True,

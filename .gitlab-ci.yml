@@ -1149,7 +1149,7 @@ macos12_client_universal2:
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
   # TODO: 3.11 hardcoded here
-  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller --target_arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
