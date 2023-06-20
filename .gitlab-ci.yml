@@ -1123,19 +1123,23 @@ macos12_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
+  - arch -x86_64 /usr/bin/python3 --version
+  - /usr/bin/python3 -m pip --version
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
   - pwd
   - sudo installer -verbose -pkg python.pkg -target /
   - python3 --version
   - /usr/bin/python3 --version
   - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - which pip
   - which pip3
   - pip --version
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install -v -v pyinstaller
-  - /usr/local/bin/pyinstaller client.macos.spec
+  # TODO: 3.11 hardcoded here
+  - /Library/Frameworks/Python.framework/Versions/3.11/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
