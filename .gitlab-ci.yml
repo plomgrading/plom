@@ -1138,7 +1138,9 @@ macos12_client:
   - asdf info
   - which python
   - python --version
-  - python -m pip install --upgrade pip
+  - /Users/gitlab/.asdf/shims/python --version
+  - /Users/gitlab/.asdf/shims/python -m pip install --upgrade pip
+  # python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
