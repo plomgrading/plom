@@ -1,4 +1,8 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 <div class="card-body">
     <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
         <div style="height: 16vh;
@@ -16,7 +20,7 @@
                 <img class="img-thumbnail thumbnail90"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
             {% elif pg.rotation == -90 or pg.rotation == 270 %}
-                <img class="img-thumbnail w-100 thumbnail270"
+                <img class="img-thumbnail thumbnail270"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
             {% else %}
                 <img class="img-thumbnail"
