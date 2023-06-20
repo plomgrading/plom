@@ -171,7 +171,7 @@ class PageImageProcessor:
             qr_data (dict): parsed QR code data
 
         Returns:
-            int: rotation angle by which the page needs to be rotated.
+            int/None: rotation angle by which the page needs to be rotated.
             If page is already upright, rotation angle of 0 is returned.
             Returns None if the orientation cannot be determined.
             See also also ``get_page_orientation``, although these two

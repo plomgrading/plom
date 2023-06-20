@@ -160,15 +160,30 @@ class ImageBundleService:
 
         for staged in bundle_images:
             with staged.image_file.open("rb") as fh:
-                image = Image(
-                    bundle=uploaded_bundle,
-                    bundle_order=staged.bundle_order,
-                    original_name=staged.image_file.name,
-                    image_file=File(fh, name=image_save_name(staged)),
-                    hash=staged.image_hash,
-                    rotation=staged.rotation,
-                    parsed_qr=staged.parsed_qr,
-                )
+                # ensure that a pushed image has a defined rotation
+                # hard-coded to set rotation=0 if no staging image rotation exists
+                # the use of rotation=None for StagingImages is currently unused,
+                # but could be in future for user scanning orientation default: see #1825 and #2050
+                if staged.rotation:
+                    image = Image(
+                        bundle=uploaded_bundle,
+                        bundle_order=staged.bundle_order,
+                        original_name=staged.image_file.name,
+                        image_file=File(fh, name=image_save_name(staged)),
+                        hash=staged.image_hash,
+                        rotation=staged.rotation,
+                        parsed_qr=staged.parsed_qr,
+                    )
+                else:
+                    image = Image(
+                        bundle=uploaded_bundle,
+                        bundle_order=staged.bundle_order,
+                        original_name=staged.image_file.name,
+                        image_file=File(fh, name=image_save_name(staged)),
+                        hash=staged.image_hash,
+                        rotation=0,
+                        parsed_qr=staged.parsed_qr,
+                    )
                 image.save()
 
             if staged.image_type == StagingImage.KNOWN:

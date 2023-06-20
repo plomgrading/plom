@@ -1041,9 +1041,6 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
 def huey_parent_read_qr_codes_task(bundle_pk):
     from time import sleep
 
-    # for now, hard-code user's preferred rotation to 0
-    user_defined_rotation = 0
-
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
@@ -1073,10 +1070,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
             # TODO - check for error status here.
             img = StagingImage.objects.get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
-            if X["rotation"]:
-                img.rotation = X["rotation"]
-            else:
-                img.rotation = user_defined_rotation
+            img.rotation = X["rotation"]
             img.save()
 
         bundle_obj.has_qr_codes = True
