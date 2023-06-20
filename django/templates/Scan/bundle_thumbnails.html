@@ -30,9 +30,9 @@
           {% if is_pushed %}
           <div class="alert alert-success">
             Pushed <i class="bi bi-check-circle text-success"></i>
-            {% else %}
-            <div class="alert alert-info">
-              {% endif %}
+          {% else %}
+          <div class="alert alert-info">
+          {% endif %}
                         {# djlint:on #}
                         <ul>
                             <li>{{ known_pages }} / {{ total_pages }} known pages</li>
@@ -44,7 +44,7 @@
                             {% endif %}
                         </ul>
                         {# djlint:off #}
-            </div>
+          </div>
                         {# djlint:on #}
                     </div>
                     <div class="col-8">
