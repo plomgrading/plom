@@ -36,6 +36,7 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
+  MACBIN_PY_MAJOR_MINOR_VER: "3.11"
   MACBIN_PY_VER: 3.11.4
   QT_QPA_PLATFORM: offscreen
 
@@ -1096,6 +1097,9 @@ linuxbin_ubuntu2204:
 
 
 # Notes on macOS client builds
+# - June 2023, we now have only M1 (arm64) runners:
+#     - goal remains universal2 binary: Issue #1655
+#     - for now, we use Rosetta2 to cross compile onto x86_64
 # - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
 #     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
 #   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
@@ -1103,7 +1107,7 @@ linuxbin_ubuntu2204:
 #   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos12_client:
+macos12_universal_client:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1111,9 +1115,12 @@ macos12_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: alt_build
   needs: []
   script:
+  - pwd
   - sw_vers
   - uname -a
   - uname -m
@@ -1123,29 +1130,31 @@ macos12_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  - asdf current
-  - asdf info
-  - asdf plugin-add python
-  - asdf current
-  - asdf info
-  # asdf install python $MACBIN_PY_VER
-  - PYTHON_CONFIGURE_OPTS="--enable-shared --enable-universalsdk --with-universal-archs=universal2" asdf install python $MACBIN_PY_VER
-  - asdf local python $MACBIN_PY_VER
-  - asdf which python
-  - asdf reshim python
-  # arch -x86_64 python --version
-  # arch -x86_64 pip --version
-  - asdf current
-  - asdf info
-  - which python
-  - python --version
-  - /Users/gitlab/.asdf/shims/python --version
-  - /Users/gitlab/.asdf/shims/python -m pip install --upgrade pip
-  # python -m pip install --upgrade pip
+  # quite likely the built-in python would work...  but below we installer latest
+  - arch -x86_64 /usr/bin/python3 --version
+  - arch -arm64 /usr/bin/python3 --version
+  - /usr/bin/python3 -m pip --version
+  # install specific python
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
+  - /usr/local/bin/python3 -m pip install --upgrade pip
+  - which pip
+  - which pip3
   - pip --version
-  - /Users/gitlab/.asdf/shims/python -m pip install -r requirements.txt.client
-  - /Users/gitlab/.asdf/shims/python -m pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
+  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
+  - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller --target-arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1163,7 +1172,112 @@ macos12_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
+
+
+macos12_arm64_client:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - /usr/bin/python3 -m pip --version
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - /usr/local/bin/python3 -m pip install --upgrade pip
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12-arm64.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER-arm64.app
+  - zip -r $ZIPNAME PlomClient-$VER-arm64.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 16 days
+
+
+macos12_x86_64_client:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - arch -x86_64 uname -m
+  # quite likely the built-in python would work...  but below we installer latest
+  - arch -x86_64 /usr/bin/python3 --version
+  # install specific python
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 -m pip install --upgrade pip
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
+  - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12-x86_64.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER-x86_64.app
+  - zip -r $ZIPNAME PlomClient-$VER-x86_64.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 16 days
+
 
 macos11_client:
   image: macos-11-xcode-12
