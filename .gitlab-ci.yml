@@ -956,12 +956,12 @@ binary_upload:
     - echo $VER
     - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
     - export LINKNAME1="Plom Client for Windows"
-    - export LINKNAME2="Plom Client for macOS (for macOS ≥ 11)"
-    - export LINKNAME3="Plom Client for macOS (for macOS ≥ 10.14)"
+    - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 12)"
+    - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 12)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
-    - export FILENAME2="PlomClient-$VER-macos11.zip"
-    - export FILENAME3="PlomClient-$VER-macos10_14.zip"
+    - export FILENAME2="PlomClient-$VER-macos12-x86_64.zip"
+    - export FILENAME3="PlomClient-$VER-macos12-arm64.zip"
     # list the md5sums in the release notes
     - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
