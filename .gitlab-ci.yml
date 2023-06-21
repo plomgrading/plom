@@ -1208,11 +1208,11 @@ macos12_arm64_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - export ZIPNAME=PlomClient-$VER-macos12-arm64.zip
   - pushd dist
   - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER-arm64.app
+  - zip -r $ZIPNAME PlomClient-$VER-arm64.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
   - md5 $ZIPNAME > md5sum
@@ -1260,15 +1260,15 @@ macos12_x86_64_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
-  - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
+  - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - export ZIPNAME=PlomClient-$VER-macos12-x86_64.zip
   - pushd dist
   - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER-x86_64.app
+  - zip -r $ZIPNAME PlomClient-$VER-x86_64.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
   - md5 $ZIPNAME > md5sum
