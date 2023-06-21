@@ -103,7 +103,7 @@ log = logging.getLogger("manager")
 
 
 class UserDialog(QDialog):
-    """Simple dialog to enter username and password"""
+    """Simple dialog to enter username and password."""
 
     def __init__(self, parent, title, *, name=None):
         super().__init__(parent)
@@ -379,6 +379,9 @@ class Manager(QWidget):
             server (str/None):
             user (str/None):
             password (str/None):
+
+        Returns:
+            None
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
@@ -578,10 +581,9 @@ class Manager(QWidget):
         self.initReviewTab()
         self.initSolutionTab()
 
-    # -------------------
     def getTPQV(self):
         info = self.msgr.get_spec()
-        self.max_papers = info["numberToProduce"]
+        self.max_papernum = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
@@ -1236,7 +1238,7 @@ class Manager(QWidget):
         uvw = UnknownViewWindow(
             self,
             [pagedatum],
-            [self.max_papers, self.numberOfPages, self.qlabels],
+            [self.max_papernum, self.numberOfPages, self.qlabels],
             iDict,
         )
         if uvw.exec() == QDialog.DialogCode.Accepted:
@@ -1957,8 +1959,7 @@ class Manager(QWidget):
 
         # TODO: Issue #1745
         # TODO: all existing papers or scanned only?
-        s = self.msgr.get_spec()
-        alltests = range(1, s["numberToProduce"] + 1)
+        alltests = range(1, self.max_papernum + 1)
 
         r = 0
         for t in alltests:
@@ -2299,7 +2300,7 @@ class Manager(QWidget):
 
         # maps zero to special text
         self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
-        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
+        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papernum)
 
         self.ui.questionCB.addItem("*")
         for q in self.qlabels:
@@ -2532,18 +2533,18 @@ class Manager(QWidget):
     def manage_task_tags(self, paper_num, question, parent=None):
         """Manage the tags of a task.
 
-        args:
+        Args:
             paper_num (int/str):
             question (int/str):
 
-        keyword args:
+        Keyword Args:
             parent (Window/None): Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
                 would be the visual parents of this dialog.
 
-        returns:
+        Returns:
             list: the current tags of paper/question.  Note even if the
             dialog is cancelled, this will be updated (as someone else
             could've changed tags).
