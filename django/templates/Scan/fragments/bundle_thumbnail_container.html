@@ -23,11 +23,7 @@
                 <img class="img-thumbnail thumbnail270"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
             {% else %}
-                <img class="img-thumbnail"
-                     style="transform: rotate(calc(-1 * {{ pg.rotation }}deg));
-                            height:auto;
-                            width:16vh"
-                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
+                <p>Oh snap, rotation code broke&mdash;report a bug!</p>
             {% endif %}
         </div>
     </a>
