@@ -7,11 +7,11 @@
 -->
 <div class="container w-100 p-0 m-3" id="navFragment">
     <div class="row">
-        <div class="col-9">
-            <div class="row p-4  justify-content-center bg-light">
-                <div class="col">
+        <div class="col shadow-sm rounded" style="background-color: lightgrey;">
+            <div class="row p-0">
+                <div class="col-sm-2 p-0 d-flex justify-content-center">
                     {% if prev_idx >= 1 %}
-                        <button class="btn w-100 h-100 d-flex justify-content-center shadow-sm"
+                        <button class="btn w-100 h-100 d-flex justify-content-center"
                                 hx-get="{% url 'scan_nav_bundle' timestamp prev_idx %}"
                                 hx-swap="outerHTML"
                                 hx-target="#navFragment"
@@ -20,22 +20,15 @@
                         </button>
                     {% endif %}
                 </div>
-                <div class="col">
-                    <div style="height: 70vh;
-                                width: 70vh;
-                                justify-content: center;
-                                display:flex;
-                                align-items:center">
-                        <img class="shadow rounded p-2"
-                             src="{% url 'scan_get_image' timestamp index %}"
-                             style="max-height:100%;
-                                    max-width: 100%;
-                                    transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
-                    </div>
+                <div class="col d-flex justify-content-center" style="height:600px;">
+                    <img src="{% url 'scan_get_image' timestamp index %}"
+                         class="img-fluid shadow"
+                         alt=""
+                         style="transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
                 </div>
-                <div class="col">
+                <div class="col-sm-2 p-0 d-flex justify-content-center">
                     {% if next_idx <= total_pages %}
-                        <button class="btn w-100 h-100 d-flex justify-content-center shadow-sm"
+                        <button class="btn w-100 h-100 d-flex justify-content-center"
                                 hx-get="{% url 'scan_nav_bundle' timestamp next_idx %}"
                                 hx-swap="outerHTML"
                                 hx-target="#navFragment"
@@ -46,7 +39,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
