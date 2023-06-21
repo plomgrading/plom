@@ -153,6 +153,7 @@ djlint-strict:
   before_script:
     - pip install djlint~=1.30.2
   script:
+    - djlint django/templates/Authentication/*.html --profile django
     - djlint django/templates/base/*.html --profile django
     - djlint django/templates/Rubrics/*.html --profile django
     - djlint django/templates/Scan/*.html --profile django
