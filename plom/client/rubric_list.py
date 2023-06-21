@@ -1593,10 +1593,7 @@ class RubricWidget(QWidget):
         self.handleClick()
 
     def get_tab_rubric_lists(self):
-        """returns a dict of lists of the current rubrics.
-
-        Currently does not include "group tabs".
-        """
+        """Returns a dict of lists of the current rubrics."""
         return {
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
