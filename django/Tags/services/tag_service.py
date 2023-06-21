@@ -7,7 +7,19 @@ from Mark.models.tasks import MarkingTask, MarkingTaskTag
 class TagService:
     """Class to encapsulate functions for creating and modifying tags."""
 
-    def get_tag(self, tag_text: str):
+    def get_tag_from_id(self, tag_id: int):
+        """Get a singular tag by its id.
+
+        Args:
+            tag_id: The primary key of the tag.
+
+        Returns:
+            A tag object.
+        """
+        tag = MarkingTaskTag.objects.get(pk=tag_id)
+        return tag
+
+    def get_tag_from_text(self, tag_text: str):
         """Get a singular tag by its text.
 
         Args:
@@ -61,7 +73,7 @@ class TagService:
             for task in task_tag.task.all():
                 if task.paper not in papers:
                     papers.update({task.paper: set()})
-                papers[task.paper].add(task_tag.text)
+                papers[task.paper].add(task_tag)
         return papers
 
     def get_task_tags_counts(self):
@@ -72,11 +84,11 @@ class TagService:
             counts.update({task_tag: task_tag.task.all().count()})
         return counts
 
-    def delete_tag(self, tag_text: str):
+    def delete_tag(self, tag_id: int):
         """Delete a tag by its text.
 
         Args:
-            tag_text: The text of the tag.
+            tag_id: The primary key of the tag.
         """
-        tag = self.get_tag(tag_text)
+        tag = self.get_tag_from_id(tag_id)
         tag.delete()
