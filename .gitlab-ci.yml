@@ -398,7 +398,7 @@ pydocstyle-django-count:
     - NUMERR=`pydocstyle --count django | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 539 ]]"
+    - bash -c "[[ $NUMERR -le 467 ]]"
   allow_failure: true
 
 
@@ -411,7 +411,7 @@ pydocstyle-django:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd django
-    - pydocstyle -s -e API Base Demo Identify Mark Rubrics Scan Tags
+    - pydocstyle -s -e API Authentication Base Demo Identify Mark Rubrics Scan Tags
     - popd
   allow_failure: true
 
