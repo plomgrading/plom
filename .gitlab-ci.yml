@@ -1172,7 +1172,7 @@ macos12_universal_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos12_arm64_client:
@@ -1183,8 +1183,7 @@ macos12_arm64_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: alt_build
-  needs: []
+  stage: packaging
   script:
   - pwd
   - sw_vers
@@ -1222,7 +1221,7 @@ macos12_arm64_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos12_x86_64_client:
@@ -1233,8 +1232,7 @@ macos12_x86_64_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: alt_build
-  needs: []
+  stage: packaging
   script:
   - pwd
   - sw_vers
@@ -1278,7 +1276,7 @@ macos12_x86_64_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos11_client:
