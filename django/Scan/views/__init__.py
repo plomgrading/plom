@@ -18,6 +18,8 @@ from .manage_bundle import (
     ManageBundleView,
     GetBundleNavFragmentView,
     GetBundleImageView,
+    BundleThumbnailView,
+    GetBundleThumbnailView,
 )
 
 from .qr_codes import (

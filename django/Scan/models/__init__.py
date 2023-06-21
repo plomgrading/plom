@@ -5,6 +5,7 @@ from .staging_bundle import StagingBundle
 
 from .staging_images import (
     StagingImage,
+    StagingThumbnail,
     KnownStagingImage,
     ExtraStagingImage,
     UnknownStagingImage,

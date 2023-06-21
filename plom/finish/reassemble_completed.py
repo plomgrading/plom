@@ -57,33 +57,47 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     return covername
 
 
-def download_page_images(msgr, tmpdir, num_questions, t, sid):
-    """Download the images for reassembling a particular paper.
+def _download_page_images(msgr, tmpdir, num_questions, t, which: str) -> list:
+    """Download images for reassembling a particular paper.
 
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path): directory to save the temp images.
         num_questions (int): number of questions.
         t (str/int): Test number.
-        sid (str): student number.
+        which: currently, can ``"id"`` or ``"dnm"``.
 
     Returns:
-       tuple: (id_page_files, marked_page_files, dnm_page_files)
+        The filenames of the marked page files.
     """
     pagedata = msgr.get_pagedata(t)
 
-    id_pages = []
+    pages = []
     for row in pagedata:
         # Issue #2707: better use a image-type key
-        if not row["pagename"].casefold().startswith("id"):
+        if not row["pagename"].casefold().startswith(which):
             continue
         ext = Path(row["server_path"]).suffix
         filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
         img_bytes = msgr.get_image(row["id"], row["md5"])
         with open(filename, "wb") as f:
             f.write(img_bytes)
-        id_pages.append(filename)
+        pages.append({"filename": filename, "rotation": row["orientation"]})
+    return pages
 
+
+def _download_annotation_images(msgr, tmpdir, num_questions, t) -> list:
+    """Download images for reassembling a particular paper.
+
+    Args:
+        msgr (ManagerMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path): directory to save the temp images.
+        num_questions (int): number of questions.
+        t (str/int): Test number.
+
+    Returns:
+        The filenames of the marked page files.
+    """
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
@@ -96,19 +110,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         with open(filename, "wb") as f:
             f.write(obj)
 
-    dnm_pages = []
-    for row in pagedata:
-        # Issue #2707: better use a image-type key
-        if not row["pagename"].casefold().startswith("dnm"):
-            continue
-        ext = Path(row["server_path"]).suffix
-        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
-        img_bytes = msgr.get_image(row["id"], row["md5"])
-        with open(filename, "wb") as f:
-            f.write(img_bytes)
-        dnm_pages.append(filename)
-
-    return (id_pages, marked_pages, dnm_pages)
+    return marked_pages
 
 
 def _reassemble_one_paper(
@@ -143,8 +145,10 @@ def _reassemble_one_paper(
         print(f"Skipping {outname}: already exists")
         return
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
-    file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
-    reassemble(outname, short_name, sid, coverfile, *file_lists)
+    id_pages = _download_page_images(msgr, tmpdir, num_questions, t, "id")
+    dnm_pages = _download_page_images(msgr, tmpdir, num_questions, t, "dnm")
+    marked_pages = _download_annotation_images(msgr, tmpdir, num_questions, t)
+    reassemble(outname, short_name, sid, coverfile, id_pages, marked_pages, dnm_pages)
     return outname
 
 

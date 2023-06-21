@@ -22,6 +22,11 @@ class TagLandingPageView(ManagerRequiredView):
         tag_filter_text = request.session.get("tag_filter_text", "")
         tag_filter_strict = request.session.get("strict_match", "off")
 
+        text_field_form.fields["tag_filter_text"].initial = tag_filter_text
+        text_field_form.fields["strict_match"].initial = False
+        if tag_filter_strict == "on":
+            text_field_form.fields["strict_match"].initial = True
+
         if tag_filter_strict == "on":
             task_tags = self.ts.get_task_tags_with_tag_exact(tag_filter_text)
         else:

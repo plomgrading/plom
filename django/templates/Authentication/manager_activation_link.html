@@ -1,4 +1,9 @@
-{% extends 'base/base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -25,6 +30,6 @@
                 Copy
             </button>
             <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
-        {% endblock %}
+        {% endblock main_content %}
     </body>
 </html>
