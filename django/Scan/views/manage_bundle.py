@@ -159,7 +159,6 @@ class BundleThumbnailView(ScannerRequiredView):
         Args:
             timestamp (float): select a bundle by its timestamp.
             user (todo): which user.
-            index (int): 1-indexed.
         """
         context = super().build_context()
         scanner = ScanService()
