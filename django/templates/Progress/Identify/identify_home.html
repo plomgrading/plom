@@ -31,7 +31,9 @@
                                 <tr>
                                     <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
                                     <td class="align-middle" scope="row">
-                                        <button x-model="idimage" x-on:click="idimage={{ id_paper.image.pk }}" class="btn btn-outline-success">1</button>
+                                        <button x-model="idimage"
+                                                x-on:click="idimage={{ id_paper.image.pk }}"
+                                                class="btn btn-outline-success">1</button>
                                     </td>
                                     <td class="align-middle" scope="row">123456789</td>
                                     <td class="align-middle" scope="row">Mr. Nobody</td>
@@ -55,7 +57,12 @@
         </div>
         <div class="col">
             <template x-if="idimage">
-                <img :src="'id_img/'+idimage" class="img-thumbnail" style="max-height: 70vh">
+                <img :src="'id_img/'+idimage"
+                     class="img-thumbnail"
+                     style="max-height: 70vh;
+                            position: -webkit-sticky;
+                            position: sticky;
+                            top: 0">
             </template>
         </div>
     </div>

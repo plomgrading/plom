@@ -6,8 +6,8 @@ from django.http import FileResponse
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDService
-from Papers.models import Image
+from Identify.services import IDService, IDReaderService
+from Identify.models import IDPrediction
 
 
 class ProgressIdentifyHome(ManagerRequiredView):
@@ -18,6 +18,10 @@ class ProgressIdentifyHome(ManagerRequiredView):
         all_id_papers = ids.get_all_id_papers()
         identified_papers = ids.get_identified_papers()
         unidentified_papers = ids.get_all_unidentified_papers()
+
+        list_data = IDReaderService().get_already_matched_sids()
+        for i in list_data:
+            print(i)
 
         context.update(
             {
