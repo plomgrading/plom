@@ -2,6 +2,8 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
+import html
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -393,14 +395,15 @@ class AddRemoveTagDialog(QDialog):
                 )
             )
             for tag in current_tags:
+                safe_tag = html.escape(tag)
                 row = QHBoxLayout()
                 row.addItem(QSpacerItem(48, 1))
-                row.addWidget(QLabel(f"<big><em>{tag}</em></big>"))
+                row.addWidget(QLabel(f"<big><em>{safe_tag}</em></big>"))
                 b = QToolButton()
                 b.setText("\N{Erase To The Left}")
                 # b.setText("\N{Cross Mark}")
                 # b.setText("\N{Multiplication Sign}")
-                b.setToolTip(f'Remove tag "{tag}"')
+                b.setToolTip(f'Remove tag "{safe_tag}"')
                 b.clicked.connect(remove_func_factory(b, tag))
                 row.addWidget(b)
                 row.addItem(
@@ -457,8 +460,9 @@ class AddRemoveTagDialog(QDialog):
         self.accept()
 
     def remove_tag(self, tag):
-        msg = f"<p>Do you want to remove tag &ldquo;{tag}&rdquo;?"
-        title = f"Remove tag \u201C{tag}\u201D{self.from_label}?"
+        safe_tag = html.ecsape(tag)
+        msg = f"<p>Do you want to remove tag &ldquo;{safe_tag}&rdquo;?"
+        title = f"Remove tag \u201C{safe_tag}\u201D{self.from_label}?"
         if QMessageBox.question(self, title, msg) != QMessageBox.StandardButton.Yes:
             return
         self.return_values = ("remove", tag)
