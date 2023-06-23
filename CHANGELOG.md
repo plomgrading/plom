@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Shared "group tabs" can now be re-ordered on a per-user basis.
-
+* Crash fixes when multiple clients are tagging.
 
 
 ## [0.13.3] - 2023-04-25

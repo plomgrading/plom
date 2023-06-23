@@ -15,6 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
+import html
 import imghdr
 import json
 import logging
@@ -2451,9 +2452,17 @@ class MarkerClient(QWidget):
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
-                        WarnMsg(parent, f"Tag not acceptable: {e}").exec()
+                        errmsg = html.escape(str(e))
+                        WarnMsg(parent, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        parent,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
                 pass

@@ -471,7 +471,9 @@ class MarkingTaskService:
             ValidationError: tag contains invalid characters.
         """
         if not is_valid_tag_text(tag_text):
-            raise ValidationError(f"Invalid tag text: {tag_text}")
+            raise ValidationError(
+                f'Invalid tag text: "{tag_text}"; contains disallowed characters'
+            )
         new_tag = MarkingTaskTag(user=user, text=tag_text)
         new_tag.save()
         return new_tag
@@ -512,4 +514,4 @@ class MarkingTaskService:
             tag.task.remove(task)
             tag.save()
         except MarkingTask.DoesNotExist:
-            raise ValueError(f"Task {code} does not have tag {tag.text}")
+            raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')

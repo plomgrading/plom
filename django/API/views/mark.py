@@ -448,7 +448,12 @@ class TagsFromCodeView(APIView):
         except ValueError as e:
             return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except ValidationError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: why not?
+            # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: yuck but works and looks better than str(e) for ValidationError
+            (r.reason_phrase,) = e.args
+            return r
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
@@ -475,7 +480,9 @@ class TagsFromCodeView(APIView):
             mts.remove_tag_from_task(the_tag, the_task)
             return Response(status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_409_NOT_ACCEPTABE)
+            r = Response(status=status.HTTP_409_CONFLICT)
+            r.reason_phrase = str(e)
+            return r
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
