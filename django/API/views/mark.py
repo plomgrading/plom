@@ -451,7 +451,7 @@ class TagsFromCodeView(APIView):
             # TODO: why not?
             # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
             r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            # TODO: yuck but works and looks better than str(e)
+            # TODO: yuck but works and looks better than str(e) for ValidationError
             (r.reason_phrase,) = e.args
             return r
         except RuntimeError as e:
