@@ -46,7 +46,6 @@ class TagLandingPageView(ManagerRequiredView):
                 "tag_filter_strict": tag_filter_strict,
             }
         )
-        print("PAPERS: ", papers)
 
         return render(request, self.template_name, context=context)
 
@@ -67,10 +66,6 @@ class TagItemView(ManagerRequiredView):
 
     def get(self, request, tag_id):
         context = self.build_context()
-
-        print(request)
-        print("GET: ", request.GET)
-        print("POST: ", request.POST)
 
         tag = self.ts.get_tag_from_id(tag_id=tag_id)
         context.update({"tag": tag, "form": self.form(instance=tag)})
