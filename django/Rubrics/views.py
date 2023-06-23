@@ -58,11 +58,13 @@ class RubricItemView(ManagerRequiredView):
         rubric_key = str(rubric_key).zfill(12)
         rubric = self.rs.get_all_rubrics().get(key=rubric_key)
         annotations = self.rs.get_annotation_from_rubric(rubric)
+        rubric_as_html = self.rs.get_rubric_as_html(rubric)
         context.update(
             {
                 "rubric": rubric,
                 "form": self.form(instance=rubric),
                 "annotations": annotations,
+                "rubric_as_html": rubric_as_html,
             }
         )
 

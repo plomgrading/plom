@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 
+import html
 import logging
 
 from operator import itemgetter
@@ -377,14 +378,16 @@ class RubricService:
         Returns:
             str: HTML representation of the rubric.
         """
+        text = html.escape(rubric.text)
+        display_delta = html.escape(rubric.display_delta)
         return f"""
             <table style="color:#FF0000;">
                 <tr>
                     <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
-                        <b>{rubric.display_delta}</b>
+                        <b>{display_delta}</b>
                     </td>
                     <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
-                        {rubric.text}
+                        {text}
                     </td>
                 </tr>
             </table>
