@@ -514,4 +514,4 @@ class MarkingTaskService:
             tag.task.remove(task)
             tag.save()
         except MarkingTask.DoesNotExist:
-            raise ValueError(f"Task {task} does not have tag {tag.text}")
+            raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
