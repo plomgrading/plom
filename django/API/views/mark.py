@@ -22,8 +22,7 @@ import logging
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
-    """
-    Return the max mark for a given question.
+    """Return the max mark for a given question.
 
     TODO: how do I make the `data["q"]` thing work?  This always fails with KeyError
     """
@@ -48,8 +47,7 @@ class QuestionMaxMark_how_to_get_data(APIView):
 
 
 class QuestionMaxMark(APIView):
-    """
-    Return the max mark for a given question.
+    """Return the max mark for a given question.
 
     Returns:
         (200): returns the maximum number of points for a question
@@ -96,8 +94,7 @@ class MarkingProgressCount(APIView):
 
 
 class MgetDoneTasks(APIView):
-    """
-    Retrieve data for questions which have already been graded by the user.
+    """Retrieve data for questions which have already been graded by the user.
 
     Respond with status 200.
 
@@ -127,7 +124,7 @@ class MgetDoneTasks(APIView):
                 annotation.task.code,
                 annotation.score,
                 annotation.marking_time,
-                [],  # TODO: tags are not implemented yet
+                mts.get_tags_for_task(annotation.task.code),
                 annotation.task.pk,  # TODO: integrity check is not implemented yet
             ],
             marks,
@@ -136,8 +133,7 @@ class MgetDoneTasks(APIView):
 
 
 class MgetNextTask(APIView):
-    """
-    Responds with a code for the next available marking task.
+    """Responds with a code for the next available marking task.
 
     Returns:
         200: An available task exists, returns the task code as a string.
@@ -160,10 +156,7 @@ class MgetNextTask(APIView):
 
 class MclaimThisTask(APIView):
     def patch(self, request, code, *args):
-        """
-        Attach a user to a marking task and return the task's metadata.
-        """
-
+        """Attach a user to a marking task and return the task's metadata."""
         mss = MarkingTaskService()
         the_task = mss.get_task_from_code(code)
         mss.assign_task_to_user(request.user, the_task)
@@ -172,14 +165,10 @@ class MclaimThisTask(APIView):
         paper, question = mss.unpack_code(code)
         question_data = pds.get_question_pages_list(paper, question)
 
-        # TODO: tags and integrity check are hardcoded for now
-        return Response([question_data, [], the_task.pk])
+        return Response([question_data, mss.get_tags_for_task(code), the_task.pk])
 
     def post(self, request, code, *args):
-        """
-        Accept a marker's grade and annotation for a task.
-        """
-
+        """Accept a marker's grade and annotation for a task."""
         mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
@@ -229,8 +218,7 @@ class MclaimThisTask(APIView):
 
 
 class MgetPageDataQuestionInContext(APIView):
-    """
-    Get page metadata for a particular test-paper optionally with a question highlighted.
+    """Get page metadata for a particular test-paper optionally with a question highlighted.
 
     APIs backed by this routine return a JSON response with a list of
     dicts, where each dict has keys: `pagename`, `md5`, `included`,
@@ -341,9 +329,7 @@ class MgetPageDataQuestionInContext(APIView):
 
 
 class MgetOneImage(APIView):
-    """
-    Get a page image from the server.
-    """
+    """Get a page image from the server."""
 
     def get(self, request, pk, hash):
         pds = PageDataService()
@@ -360,9 +346,7 @@ class MgetOneImage(APIView):
 
 
 class MgetAnnotations(APIView):
-    """
-    Get the latest annotations for a question.
-    """
+    """Get the latest annotations for a question."""
 
     def get(self, request, paper, question):
         mts = MarkingTaskService()
@@ -385,9 +369,7 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """
-    Get an annotation-image.
-    """
+    """Get an annotation-image."""
 
     def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
@@ -410,3 +392,104 @@ class MgetAnnotationImage(APIView):
         return FileResponse(
             open(annotation_image.path, "rb"), status=status.HTTP_200_OK
         )
+
+
+class TagsFromCodeView(APIView):
+    """Handle getting and setting tags for marking tasks."""
+
+    def get(self, request, code):
+        """Get all of the tags for a particular task.
+
+        Args:
+            code: str, question/paper code for a task
+
+        Returns:
+            200: list of tag texts
+
+        Raises:
+            406: Invalid task code
+            404: Task is not found
+        """
+        mts = MarkingTaskService()
+        try:
+            return Response(mts.get_tags_for_task(code), status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+        except RuntimeError as e:
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, code):
+        """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
+
+        Args:
+            code: str, question/paper code for a task
+
+        Returns:
+            200: OK response
+
+        Raises:
+            406: Invalid task code or tag text
+            404: Task is not found
+        """
+        mts = MarkingTaskService()
+        tag_text = request.data["tag_text"]
+        tag_text = mts.sanitize_tag_text(tag_text)
+
+        try:
+            the_task = mts.get_task_from_code(code)
+            the_tag = mts.get_tag_from_text(tag_text)
+            if the_tag:
+                mts.add_tag(the_tag, the_task)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                new_tag = mts.create_tag(request.user, tag_text)
+                mts.add_tag(new_tag, the_task)
+                return Response(status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+        except ValidationError as e:
+            # TODO: why not?
+            # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: yuck but works and looks better than str(e) for ValidationError
+            (r.reason_phrase,) = e.args
+            return r
+        except RuntimeError as e:
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, code):
+        """Remove a tag from a task.
+
+        Args:
+            code: str, question/paper code for a task
+
+        Returns:
+            200: OK response
+
+        Raises:
+            409: Invalid task code or task does not have tag
+            404: Task is not found
+        """
+        mts = MarkingTaskService()
+        tag_text = request.data["tag_text"]
+        tag_text = mts.sanitize_tag_text(tag_text)
+
+        try:
+            the_task = mts.get_task_from_code(code)
+            the_tag = mts.get_tag_from_text(tag_text)
+            mts.remove_tag_from_task(the_tag, the_task)
+            return Response(status=status.HTTP_200_OK)
+        except ValueError as e:
+            r = Response(status=status.HTTP_409_CONFLICT)
+            r.reason_phrase = str(e)
+            return r
+        except RuntimeError as e:
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+
+class GetAllTags(APIView):
+    """Respond with all of the tags in the server."""
+
+    def get(self, request):
+        mts = MarkingTaskService()
+        return Response(mts.get_all_tags(), status=status.HTTP_200_OK)

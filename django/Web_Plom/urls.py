@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 """Web_Plom URL Configuration
 
@@ -17,8 +19,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -30,8 +34,9 @@ urlpatterns = [
     path("create/", include("Preparation.urls")),
     path("create/spec/", include("SpecCreator.urls")),
     path("create/paperpdfs/", include("BuildPaperPDF.urls")),
-    path("connect/", include("Connect.urls")),
     path("papers/", include("Papers.urls")),
     path("scan/", include("Scan.urls")),
     path("progress/", include("Progress.urls")),
+    path("rubrics/", include("Rubrics.urls")),
+    path("paper_tags/", include("Tags.urls")),
 ]

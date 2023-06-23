@@ -57,31 +57,47 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     return covername
 
 
-def download_page_images(msgr, tmpdir, num_questions, t, sid):
-    """Download the images for reassembling a particular paper.
+def _download_page_images(msgr, tmpdir, num_questions, t, which: str) -> list:
+    """Download images for reassembling a particular paper.
 
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path): directory to save the temp images.
         num_questions (int): number of questions.
         t (str/int): Test number.
-        sid (str): student number.
+        which: currently, can ``"id"`` or ``"dnm"``.
 
     Returns:
-       tuple: (id_page_files, marked_page_files, dnm_page_files)
+        The filenames of the marked page files.
     """
-    # empty list if no ID-page (return None) - eg for hw.
-    id_pages = []
-    id_image_blob = msgr.request_ID_image(t)
-    if id_image_blob:
-        # TODO: imghdr is deprecated
-        im_type = imghdr.what(None, h=id_image_blob)
-        id_page = tmpdir / f"img_{int(t):04}_id0.{im_type}"
-        if not im_type:
-            raise PlomSeriousException(f"Could not identify image type: {id_page}")
-        with open(id_page, "wb") as f:
-            f.write(id_image_blob)
-        id_pages = [id_page]
+    pagedata = msgr.get_pagedata(t)
+
+    pages = []
+    for row in pagedata:
+        # Issue #2707: better use a image-type key
+        if not row["pagename"].casefold().startswith(which):
+            continue
+        ext = Path(row["server_path"]).suffix
+        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+        img_bytes = msgr.get_image(row["id"], row["md5"])
+        with open(filename, "wb") as f:
+            f.write(img_bytes)
+        pages.append({"filename": filename, "rotation": row["orientation"]})
+    return pages
+
+
+def _download_annotation_images(msgr, tmpdir, num_questions, t) -> list:
+    """Download images for reassembling a particular paper.
+
+    Args:
+        msgr (ManagerMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path): directory to save the temp images.
+        num_questions (int): number of questions.
+        t (str/int): Test number.
+
+    Returns:
+        The filenames of the marked page files.
+    """
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
@@ -93,19 +109,8 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    dnm_image_blobs = msgr.request_donotmark_images(t)
-    dnm_pages = []
-    for i, obj in enumerate(dnm_image_blobs):
-        im_type = imghdr.what(None, h=obj)
-        filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.{im_type}"
-        if not im_type:
-            raise PlomSeriousException(f"Could not identify image type: {filename}")
-        dnm_pages.append(filename)
-        with open(filename, "wb") as f:
-            f.write(obj)
-    # return id-page inside a list since then the 3 different page types
-    # are returned consistently inside lists.
-    return (id_pages, marked_pages, dnm_pages)
+
+    return marked_pages
 
 
 def _reassemble_one_paper(
@@ -140,8 +145,10 @@ def _reassemble_one_paper(
         print(f"Skipping {outname}: already exists")
         return
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
-    file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
-    reassemble(outname, short_name, sid, coverfile, *file_lists)
+    id_pages = _download_page_images(msgr, tmpdir, num_questions, t, "id")
+    dnm_pages = _download_page_images(msgr, tmpdir, num_questions, t, "dnm")
+    marked_pages = _download_annotation_images(msgr, tmpdir, num_questions, t)
+    reassemble(outname, short_name, sid, coverfile, id_pages, marked_pages, dnm_pages)
     return outname
 
 
@@ -175,10 +182,10 @@ def reassemble_paper(
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    short_name = msgr.getInfoShortName()
     spec = msgr.get_spec()
+    short_name = spec["name"]
     num_questions = spec["numberOfQuestions"]
-    max_marks = msgr.MgetAllMax()
+    max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
     t = str(testnum)  # dicts keyed by strings
@@ -239,10 +246,10 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), tmpdir=None, skip
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    short_name = msgr.getInfoShortName()
     spec = msgr.get_spec()
+    short_name = spec["name"]
     num_questions = spec["numberOfQuestions"]
-    max_marks = msgr.MgetAllMax()
+    max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
     # dict testnumber -> [scanned, id'd, #q's marked]

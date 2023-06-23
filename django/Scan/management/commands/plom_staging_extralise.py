@@ -7,9 +7,7 @@ from Scan.services import ScanCastService
 
 
 class Command(BaseCommand):
-    """
-    python3 manage.py plom_staging_extralise (username) (bundle name) (bundle_order)
-    """
+    """python3 manage.py plom_staging_extralise (username) (bundle name) (bundle_order)."""
 
     help = "Cast to extra a page from the given bundle at the given order"
 

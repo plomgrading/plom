@@ -1,0 +1,81 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Copyright (C) 2022 Edith Coates */
+/* Copyright (C) 2022 Brennen Chiu */
+/* Copyright (C) 2023 Andrew Rechnitzer */
+
+
+[x-cloak] { display: none !important; }
+
+div.list-group {
+    --bs-list-group-bg: #F5F6FA;
+    --bs-list-group-action-hover-bg: #dadce2;
+    margin-right: 10px;
+
+}
+
+div.list-group-item {
+    border-bottom: 0;
+}
+
+div.is_pdf_thumbnail {
+    width: 10rem;
+    height: 13rem;
+}
+
+div.is_pdf_thumbnail:hover {
+    opacity: 0.5;
+}
+
+a.is_sidebar_link:hover {
+    background-color: #282828;
+}
+
+a.list-group-item {
+    border-bottom: 0;
+}
+
+p.is_test_spec_nav_text {
+    margin: 0;
+    margin-right: 20px;
+}
+
+.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+    background-color: #AD9CFF !important;
+    border-color: #282828 !important;
+}
+
+a.btn.btn-primary.btn-lg {
+    color: black;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 .2rem #282828 !important;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 .2rem #AD9CFF !important;
+}
+
+.is_sidebar_link {
+    text-align: center;
+}
+
+img.thumbnail0 {
+    max-height: 100%;
+    max-width: 100%;
+}
+img.thumbnail180 {
+    max-height: 100%;
+    max-width: 100%;
+    transform: rotate(180deg);
+}
+img.thumbnail90 {
+    max-height: 100%;
+    max-width: 100%;
+    transform: rotate(-90deg);
+}
+img.thumbnail270 {
+    max-width: 100%;
+    max-height: 100%;
+    transform: rotate(90deg);
+}

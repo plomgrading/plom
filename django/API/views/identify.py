@@ -2,22 +2,18 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import FileResponse
-
 from Preparation.services import StagingStudentService
-from Identify.services import IdentifyTaskService
+from Identify.services import IdentifyTaskService, IDReaderService
 
 
 class GetClasslist(APIView):
-    """
-    Get the classlist.
-    """
+    """Get the classlist."""
 
     def get(self, request):
         sstu = StagingStudentService()
@@ -34,31 +30,64 @@ class GetClasslist(APIView):
 
 
 class GetIDPredictions(APIView):
-    """
-    Get predictions for test-paper identification.
+    """Get, put and delete predictions for test-paper identification.
 
-    TODO: not implemented in Django, Issue #2672.
-    For now, just return all the pre-named papers.
+    If no predictor is specified, get or delete all predictions.
+
+    Client needs predictions to be formatted as a dict of lists,
+    where each list contains an inner dict with prediction
+    info for a particular predictor (could have more than one).
     """
 
     def get(self, request, *, predictor=None):
-        # TODO: Issue #2672
-        assert predictor is None or predictor == "prename"
-        sstu = StagingStudentService()
-        if sstu.are_there_students():
-            predictions = {}
-            for s in sstu.get_students():
-                if s["paper_number"]:
-                    predictions[s["paper_number"]] = {
-                        "student_id": s["student_id"],
-                        "certainty": 100,
-                        "predictor": "preID",
-                    }
-            return Response(predictions)
+        """Get ID predictions from either a particular predictor or all predictors.
+
+        Returns:
+            dict: a dict keyed by paper_number of lists of prediction dicts
+            if returning all ID predictions, or a dict of dicts if returning
+            only predictions for a single predictor.
+        """
+        id_reader_service = IDReaderService()
+        if not predictor:
+            predictions = id_reader_service.get_ID_predictions()
+        else:
+            predictions = id_reader_service.get_ID_predictions(predictor=predictor)
+        return Response(predictions)
+
+    def put(self, request):
+        """Add or change ID predictions."""
+        data = request.data
+        user = request.user
+        id_reader_service = IDReaderService()
+        for paper_num in data:
+            id_reader_service.add_or_change_ID_prediction(
+                user,
+                int(paper_num),
+                data[paper_num]["student_id"],
+                data[paper_num]["certainty"],
+                data[paper_num]["predictor"],
+            )
+        return Response(status=status.HTTP_200_OK)
+
+    def delete(self, request, predictor=None):
+        """Remove ID predictions from either a particular predictor or all predictors."""
+        user = request.user
+        id_reader_service = IDReaderService()
+        if predictor:
+            try:
+                id_reader_service.delete_ID_predictions(user, predictor)
+                return Response(status=status.HTTP_200_OK)
+            except RuntimeError:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            for predictor_name in ("MLLAP", "MLGreedy"):
+                id_reader_service.delete_ID_predictions(user, predictor_name)
+            return Response(status=status.HTTP_200_OK)
 
 
 class IDgetDoneTasks(APIView):
     """When a id-client logs on they request a list of papers they have already IDd.
+
     Send back the list.
     """
 
@@ -95,10 +124,7 @@ class IDgetNextTask(APIView):
 
 class IDprogressCount(APIView):
     def get(self, request):
-        """
-        Responds with a list of completed/total tasks.
-        """
-
+        """Responds with a list of completed/total tasks."""
         its = IdentifyTaskService()
         progress = its.get_id_progress()
         return Response(progress, status=status.HTTP_200_OK)
@@ -107,7 +133,6 @@ class IDprogressCount(APIView):
 class IDclaimThisTask(APIView):
     def patch(self, request, paper_id):
         """Claims this identifying task for the user."""
-
         its = IdentifyTaskService()
         try:
             its.claim_task(request.user, paper_id)
@@ -119,35 +144,8 @@ class IDclaimThisTask(APIView):
 
     def put(self, request, paper_id):
         """Assigns a name and a student ID to the paper."""
-
         data = request.data
         user = request.user
-
         its = IdentifyTaskService()
         its.identify_paper(user, paper_id, data["sid"], data["sname"])
         return Response(status=status.HTTP_200_OK)
-
-
-class IDgetImage(APIView):
-    def get(self, request, paper_id):
-        """
-        Responds with an ID page image file.
-        """
-
-        its = IdentifyTaskService()
-        id_img = its.get_id_page(paper_id)
-
-        if not id_img:
-            return Response(
-                f"ID page-image not found for paper {paper_id}",
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        img_path = id_img.image_file.path
-        with open(img_path, "rb") as f:
-            image = SimpleUploadedFile(
-                f"{paper_id}_id.png",
-                f.read(),
-                content_type="image/png",
-            )
-        return FileResponse(image, status=status.HTTP_200_OK)

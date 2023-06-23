@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from plom.plom_exceptions import (
     PlomConflict,
@@ -18,10 +18,15 @@ def upload_classlist(classlist, *, msgr, force=False):
     Arguments:
         classdict (list): list of dict, each has at least keys `"id"` and
             `"name"`, optionally other fields too.
+
+    Keyword Arguments:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         force (bool): Force uploading if a classlist already exists,
             default `False`.
+
+    Returns:
+        None
     """
     _ultra_raw_upload_classlist(classlist, msgr, force=force)
 

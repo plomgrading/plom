@@ -11,14 +11,14 @@ from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 def compute_score_naive(rubrics, maxscore):
     """Compute score given a set of rubrics, using naive straight sum rules.
 
-    args:
+    Args:
         rubrics (list):
         maxscore (int): the maximum anticipated score
 
-    returns:
+    Returns:
         int: the computed score
 
-    raises:
+    Raises:
         ValueError: int is outside range [0, maxscore].
 
     This is probably the simplest scoring system: literally
@@ -38,17 +38,17 @@ def compute_score_naive(rubrics, maxscore):
 def compute_score_legacy2022(rubrics, maxscore):
     """Compute score given a set of rubrics, using "Plom 2022" rules.
 
-    args:
+    Args:
         rubrics (list): each rubric is dict with (at least) these
             keys: `kind`, `value`.  Kind must be a string in
             ``("absolute", "relative", "neutral")``.
         maxscore (int): the maximum anticipated score
 
-    returns:
+    Returns:
         None/int: the computed score or `None` if there are no mark-changing
         annotations on the page.  Note `None` is different from `0`.
 
-    raises:
+    Raises:
         PlomInconsistentRubric: for example, absolute and relative rubrics
             cannot be mixed.
         ValueError: int is outside range [0, maxscore], or non-zero,
@@ -108,18 +108,18 @@ def compute_score_locabs(rubrics, maxscore):
     "locally absolute" rubrics for per-part marking, combined with
     +/- rubrics when they are unambiguous.
 
-    args:
+    Args:
         rubrics (list): each rubric is dict with (at least) these
             keys: `kind`, `value`.  Kind must be a string in
             ``("absolute", "relative", "neutral")``.
             Any ``kind="absolute"`` must also have `out_of` fields.
         maxscore (int): the maximum anticipated score
 
-    returns:
+    Returns:
         None/int: the computed score or `None` if there are no mark-changing
         annotations on the page.  Note `None` is different from `0`.
 
-    raises:
+    Raises:
         PlomInconsistentRubric: for example, absolute and relative rubrics
             cannot be mixed.
         ValueError: int is outside range [0, maxscore], or absolute rubrics
@@ -278,11 +278,11 @@ def _context(a):
 def diff_rubric(p, r):
     """Are two rubrics the same, and a marked up visual representation if not.
 
-    args:
+    Args:
         p (dict): a previous rubric.
         r (dict): the current rubric.  We diff from ``p`` to ``q``.
 
-    returns:
+    Returns:
         tuple: True/False and an string of HTML.  True means they are
         the same and the string is empty in this case.
         Its theoretically possible for two rubrics to be different but
@@ -319,14 +319,14 @@ def diff_rubric(p, r):
 def check_for_illadvised(rubrics, maxscore):
     """Certain combinations of rubrics are legal but not a good idea.
 
-    return:
+    Return:
         tuple: if there are no concerns, return `(True, None, None)`.
         Otherwise, ``[False, code, msg]``, where ``code`` is a short
         string for programmitically tracking what happened and ``msg``
         is some html appropriate to show to the user, e.g., as part of
         a dialog questioning if they really wish to continue.
 
-    raises:
+    Raises:
         KeyError: rubric must have at least "kind", "value", "out_of"
             keys.  In some cases, also "display_delta" and "text"  which
             are used to render error messages.

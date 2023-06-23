@@ -52,7 +52,7 @@ def processHWScans(
 ):
     """Process the given PDF bundle into images, upload, then archive the pdf.
 
-    args:
+    Args:
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
         student_id (str):
@@ -70,7 +70,7 @@ def processHWScans(
             Tuples or other iterables should be in place of lists.
             TODO: Currently `dict` are not supported, subject to change.
 
-    keyword args:
+    Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         basedir (pathlib.Path): where on the file system do we perform
@@ -81,10 +81,10 @@ def processHWScans(
         gamma (bool):
         extractbmp (bool):
 
-    returns:
+    Returns:
         None
 
-    raises:
+    Raises:
         ValueError: various errors such as cannot find file, no such student
             id, md5sum collision with existing bundle, etc.  Generally
             things caller could fix.  Check message for details.
@@ -200,7 +200,6 @@ def processAllHWByQ(server, password, yes_flag):
     each PDF in turn. User will be prompted for each unless the
     'yes_flag' is set.
     """
-
     submissions = defaultdict(list)
     for file_name in sorted(Path("submittedHWByQ").glob("*.pdf")):
         IDQ = IDQorIDorBad(file_name)
@@ -236,7 +235,7 @@ def processAllHWByQ(server, password, yes_flag):
 
 @with_scanner_messenger
 def processMissing(*, msgr, yes_flag):
-    """Replace missing questions with 'not submitted' pages
+    """Replace missing questions with 'not submitted' pages.
 
     Student may not upload pages for questions they don't answer. This function
     asks server for list of all missing hw-questions from all tests that have

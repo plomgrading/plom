@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -35,7 +36,8 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MACBIN_PY_VER: 3.10.10
+  MACBIN_PY_MAJOR_MINOR_VER: "3.11"
+  MACBIN_PY_VER: 3.11.4
   QT_QPA_PLATFORM: offscreen
 
 stages:
@@ -63,9 +65,9 @@ docker-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM .
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.legacy
       else
-        docker build --tag $IM .
+        docker build --tag $IM . -f Containerfile.legacy
       fi
     - docker push $IM
 
@@ -134,23 +136,39 @@ copyright_year:
   allow_failure: true
 
 
+# TODO: tighten up by adding `--profile django` (but not with --check?)
 djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint
+    - pip install djlint~=1.30.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html
 
 
-# TODO: remove --warn to make these errors, Issue #2666
+# eventually replace the above job
+djlint-strict:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - pip install djlint~=1.30.2
+  script:
+    - djlint django/templates/Authentication/*.html --profile django
+    - djlint django/templates/base/*.html --profile django
+    - djlint django/templates/Rubrics/*.html --profile django
+    - djlint django/templates/Scan/*.html --profile django
+    - djlint django/templates/SpecCreator/*.html --profile django
+    - djlint django/templates/*/*/*.html --profile django
+
+
 djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint
+    - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --check
+  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -165,7 +183,6 @@ docker-tag-latest:
     - docker push $IM_LATEST
   only:
     - main
-    - tags
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
@@ -174,14 +191,14 @@ pypi:
   image: $IM
   stage: packaging
   needs: ["docker-image"]
+  rules:
+   - if: $CI_COMMIT_TAG
   cache: {}
   script:
     - pip install --upgrade twine wheel setuptools
     - python3 setup.py sdist bdist_wheel
     - python3 -m twine check dist/*
     - python3 -m twine upload dist/*
-  only:
-    - tags
 
 
 release_job:
@@ -264,7 +281,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.3"
+    - pip3 install "black~=23.3.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -310,30 +327,92 @@ doctests:
     - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
+# needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
     # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.2
-    - python3 -m pip install pylint~=2.17.2
+    - python3 -m pip install astroid~=2.15.5
+    - python3 -m pip install pylint~=2.17.4
   script:
     - pylint plom
   allow_failure: true
 
 
 flake8:
-  stage: test
-  needs: ["docker-image"]
-  image: $IM
+  image: python:3.11
+  stage: static_analysis
   before_script:
-    - python3 -m pip install flake8
+    - python3 -m pip install flake8~=6.0.0
   script:
     # show all errors and warnings but don't fail
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
+  allow_failure: true
+
+
+pydocstyle-plom-count:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]~=6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle plom || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e plom
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 590 ]]"
+  allow_failure: true
+
+
+# For now, an allowlist of submodules that must pass
+# TODO: add more modules and eventually just plom/
+pydocstyle-plom:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]~=6.3.0
+  script:
+    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish
+  allow_failure: true
+
+
+pydocstyle-django-count:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]~=6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle django || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e django
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count django | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 467 ]]"
+  allow_failure: true
+
+
+# For now, an allowlist of submodules that must pass
+# TODO: add more modules and eventually just django/
+pydocstyle-django:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]~=6.3.0
+  script:
+    - pushd django
+    - pydocstyle -s -e API Authentication Base Demo Identify Mark Rubrics Scan Tags
+    - popd
   allow_failure: true
 
 
@@ -352,14 +431,15 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
     - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt
+    - python3 -m pip install -r requirements.txt.django
+    - pushd django
     - export PLOM_USING_DOCKER=1
-    - python3 -m demo --test --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker
     - coverage run --source='.' manage.py test
-    - coverage report --precision=2
-    - coverage xml -o django_coverage.xml
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
+    - coverage xml -i -o django_coverage.xml
     - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
@@ -586,7 +666,7 @@ docs_sphinx:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
   script:
     - pushd doc
     - ls
@@ -876,12 +956,12 @@ binary_upload:
     - echo $VER
     - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
     - export LINKNAME1="Plom Client for Windows"
-    - export LINKNAME2="Plom Client for macOS (for macOS ≥ 11)"
-    - export LINKNAME3="Plom Client for macOS (for macOS ≥ 10.14)"
+    - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 12)"
+    - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 12)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
-    - export FILENAME2="PlomClient-$VER-macos11.zip"
-    - export FILENAME3="PlomClient-$VER-macos10_14.zip"
+    - export FILENAME2="PlomClient-$VER-macos12-x86_64.zip"
+    - export FILENAME3="PlomClient-$VER-macos12-arm64.zip"
     # list the md5sums in the release notes
     - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
@@ -1017,6 +1097,9 @@ linuxbin_ubuntu2204:
 
 
 # Notes on macOS client builds
+# - June 2023, we now have only M1 (arm64) runners:
+#     - goal remains universal2 binary: Issue #1655
+#     - for now, we use Rosetta2 to cross compile onto x86_64
 # - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
 #     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
 #   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
@@ -1024,27 +1107,54 @@ linuxbin_ubuntu2204:
 #   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos12_client:
-  image: macos-12-xcode-13
+macos12_universal_client:
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: packaging
+    when: manual
+  allow_failure: true
+  stage: alt_build
+  needs: []
   script:
+  - pwd
   - sw_vers
+  - uname -a
+  - uname -m
   - echo $SHELL
   - which python
   - python --version
   - pip --version
-  - asdf current
-  - python -m pip install --upgrade pip
+  - uname -m
+  - arch -x86_64 uname -m
+  # quite likely the built-in python would work...  but below we installer latest
+  - arch -x86_64 /usr/bin/python3 --version
+  - arch -arm64 /usr/bin/python3 --version
+  - /usr/bin/python3 -m pip --version
+  # install specific python
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
+  - /usr/local/bin/python3 -m pip install --upgrade pip
+  - which pip
+  - which pip3
   - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - pyinstaller client.macos.spec
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
+  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
+  - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller --target-arch universal2 client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1062,7 +1172,112 @@ macos12_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
+
+
+macos12_arm64_client:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - /usr/bin/python3 -m pip --version
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - /usr/local/bin/python3 -m pip install --upgrade pip
+  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12-arm64.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER-arm64.app
+  - zip -r $ZIPNAME PlomClient-$VER-arm64.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 16 days
+
+
+macos12_x86_64_client:
+  image: macos-12-xcode-14
+  tags:
+  - saas-macos-medium-m1
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - pwd
+  - sw_vers
+  - uname -a
+  - uname -m
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - uname -m
+  - arch -x86_64 uname -m
+  # quite likely the built-in python would work...  but below we installer latest
+  - arch -x86_64 /usr/bin/python3 --version
+  # install specific python
+  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
+  - sudo installer -pkg python.pkg -target /
+  - python3 --version
+  - /usr/bin/python3 --version
+  - /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 --version
+  - arch -x86_64 /usr/local/bin/python3 -m pip install --upgrade pip
+  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
+  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
+  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
+  - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12-x86_64.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER-x86_64.app
+  - zip -r $ZIPNAME PlomClient-$VER-x86_64.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 16 days
+
 
 macos11_client:
   image: macos-11-xcode-12
@@ -1072,6 +1287,8 @@ macos11_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1172,6 +1389,8 @@ macos1014_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1211,11 +1430,10 @@ macos1014_client:
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
-# Other possible images: macos-10.15-xcode-11, macos-11-xcode-12
 macos_server:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never

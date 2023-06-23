@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
 import copy
@@ -92,18 +93,18 @@ class StagingSpecificationService:
         test_spec.save()
 
     def get_n_versions(self):
-        """Get the number of test versions
+        """Get the number of test versions.
 
         Returns:
-            int: versions
+            int: versions.
         """
         return self.specification().numberOfVersions
 
     def set_n_versions(self, n: int):
-        """Set the number of test versions
+        """Set the number of test versions.
 
         Args:
-            n number of versions
+            n: number of versions.
         """
         test_spec = self.specification()
         test_spec.numberOfVersions = n
@@ -247,11 +248,13 @@ class StagingSpecificationService:
         return None
 
     def set_do_not_mark_pages(self, pages: list):
-        """
-        Set these pages as the test's do-not-mark pages
+        """Set these pages as the test's do-not-mark pages.
 
         Args:
-            page: list of ints - 0-indexed page numbers
+            page: list of ints, 0-indexed page numbers.
+
+        Returns:
+            None
         """
         test_spec = self.specification()
         str_ids = [str(i) for i in pages]
@@ -452,9 +455,9 @@ class StagingSpecificationService:
         return valid_dict
 
     def validate_specification(self, verbose=True):
-        """
-        Verify the specification using Plom-classic's specVerifier. If it passes, return the validated spec.
-        Also, assign private seed and public code.
+        """Verify the specification, assign public/private codes, return validated spec.
+
+        Uses the original SpecVerifier.
         """
         spec_dict = self.get_staging_spec_dict()
         spec_w_default_quest_labels = self.insert_default_question_labels(

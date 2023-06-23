@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import pathlib
 from datetime import datetime
 from django.utils import timezone
 import arrow
@@ -14,7 +13,6 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -24,10 +22,7 @@ from Scan.forms import BundleUploadForm
 
 
 class ScannerHomeView(ScannerRequiredView):
-    """
-    Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged
-    bundles.
-    """
+    """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
 
     def build_context(self, user):
         context = super().build_context()
@@ -54,6 +49,7 @@ class ScannerHomeView(ScannerRequiredView):
         pushed_bundles = []
         for bundle in user_bundles:
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
+            cover_img_rotation = scanner.get_first_image(bundle).rotation
             pages = scanner.get_n_images(bundle)
             if bundle.pushed:
                 pushed_bundles.append(
@@ -62,6 +58,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
+                        "cover_angle": cover_img_rotation,
                     }
                 )
             else:
@@ -71,6 +68,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
+                        "cover_angle": cover_img_rotation,
                     }
                 )
 
@@ -109,9 +107,7 @@ class ScannerHomeView(ScannerRequiredView):
 
 
 class RemoveBundleView(ScannerRequiredView):
-    """
-    Delete an uploaded bundle
-    """
+    """Delete an uploaded bundle."""
 
     def delete(self, request, timestamp):
         try:
@@ -126,9 +122,7 @@ class RemoveBundleView(ScannerRequiredView):
 
 
 class GetBundleView(ScannerRequiredView):
-    """
-    Return a user-uploaded bundle PDF
-    """
+    """Return a user-uploaded bundle PDF."""
 
     def get(self, request, timestamp):
         try:
@@ -147,9 +141,7 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """
-    Return a user-uploaded bundle PDF
-    """
+    """Return a user-uploaded bundle PDF."""
 
     def get(self, request, timestamp):
         try:
@@ -166,6 +158,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         n_extra_w_data = scanner.get_n_extra_images_with_data(bundle)
         n_discard = scanner.get_n_discard_images(bundle)
         n_errors = scanner.get_n_error_images(bundle)
+        cover_img_rotation = scanner.get_first_image(bundle).rotation
+
         context = {
             "timestamp": timestamp,
             "slug": bundle.slug,
@@ -181,6 +175,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_extra_w_data": n_extra_w_data,
             "n_discard": n_discard,
             "n_errors": n_errors,
+            "cover_angle": cover_img_rotation,
         }
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)

@@ -3,13 +3,12 @@
 
 from django.db import models
 
-from Base.models import BaseTask, BaseAction
+from Base.models import BaseTask, Tag
 from Papers.models import Paper
 
 
 class MarkingTask(BaseTask):
-    """
-    Represents a single question that needs to be marked.
+    """Represents a single question that needs to be marked.
 
     paper: reference to Paper, the test-paper of the question
     code: str, a unique string for indexing a marking task
@@ -21,3 +20,9 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
+
+
+class MarkingTaskTag(Tag):
+    """Represents a tag that can be assigned to one or more marking tasks."""
+
+    task = models.ManyToManyField(MarkingTask)

@@ -3,7 +3,7 @@
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
-from plom.client.useful_classes import AddRemoveTagDialog
+from plom.client.tagging import AddRemoveTagDialog
 
 
 def test_tag_add(qtbot):
@@ -51,4 +51,16 @@ def test_tag_remove(qtbot, monkeypatch):
     qtbot.addWidget(d)
     d.remove_tag("tag2")
     assert d.return_values == ("remove", "tag2")
+    assert not d.isVisible()
+
+
+def test_tag_remove_dangerous_chars(qtbot, monkeypatch):
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *args: QMessageBox.StandardButton.Yes
+    )
+    d = AddRemoveTagDialog(None, ["I <3 Plom", "<i>tag</i>", "<h1>"], [])
+    d.show()
+    qtbot.addWidget(d)
+    d.remove_tag("<h1>")
+    assert d.return_values == ("remove", "<h1>")
     assert not d.isVisible()

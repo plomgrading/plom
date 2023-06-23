@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2022 Joey Shi
 
-"""Build pdf files for a demo test and provide demo classlists"""
+"""Build pdf files for a demo test and provide demo classlists."""
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -15,7 +15,7 @@ from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -26,7 +26,7 @@ from plom.textools import buildLaTeX
 def getDemoClassList():
     """A classlist for demos.
 
-    returns:
+    Returns:
         list: each entry is dict of one row of the demo classlist.
     """
     d = []
@@ -45,7 +45,7 @@ def getDemoClassListLength():
 def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     """Builds the LaTeX source files for the demo.
 
-    Keyword args:
+    Keyword Args:
         basedir (libpath.Path): where to make the files?  We will build
             in a "sourceVersions" under this directory.
         solutions (bool): build solutions as well.  Default: False.
@@ -95,9 +95,8 @@ def buildLaTeXExam2(src, filename):
 
     Returns:
         bool: True if everything worked.  Print to stdout and return
-            False if latex failed.
+        False if latex failed.
     """
-
     with open(filename, "wb") as f:
         r, out = buildLaTeX(src, f)
     if r:

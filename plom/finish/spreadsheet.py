@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Colin B. Macdonald
-# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2023 Julian Lapenna
 
 import arrow
 import csv
@@ -9,7 +10,6 @@ import csv
 from plom import get_question_label
 from plom.finish import with_finish_messenger
 from plom.finish import CSVFilename
-from plom.misc_utils import utc_now_to_string, arrowtime_to_string
 
 
 def write_spreadsheet(spreadSheetDict, labels, filename):
@@ -67,9 +67,8 @@ def write_spreadsheet(spreadSheetDict, labels, filename):
                 row["Total"] = ""
 
             lu = arrow.get(thisTest["last_update"])
-            row["LastUpdate"] = arrowtime_to_string(lu)
-
-            row["CSVWriteTime"] = utc_now_to_string()
+            row["LastUpdate"] = lu.isoformat(" ", "seconds")
+            row["CSVWriteTime"] = arrow.utcnow().isoformat(" ", "seconds")
 
             warnString = ""
             if not thisTest["identified"]:

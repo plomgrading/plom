@@ -14,9 +14,7 @@
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the classlist?"
                         hx-target="body"
-                        hx-swap="outerHTML">
-                    delete whole classlist
-                </button>
+                        hx-swap="outerHTML">delete whole classlist</button>
             </div>
             <div class="border p-2" style="overflow: auto; max-height: 50%">
                 <table class="table table-striped">
@@ -60,7 +58,7 @@
                               action="{% url 'prep_classlist' %}">
                             {% csrf_token %}
                             <div>
-                                <input type="file" accepts=".csv" name="classlist_csv" required/>
+                                <input type="file" accepts=".csv" name="classlist_csv" required />
                                 <button class="btn btn-primary" type="submit">upload</button>
                             </div>
                         </form>

@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -246,7 +246,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
         ignore_warnings (bool): if true, proceed with classlist
             processing even if there are warnings.  Default False.
 
-    Return:
+    Returns:
         tuple: if successful then "(True, clist)" where clist is a
         list of dicts each with "id" and "name". On failure
         "(False, warn_err)" where "warn_err" is a list of dicts of

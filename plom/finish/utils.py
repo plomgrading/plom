@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2020, 2023 Colin B. Macdonald
 # Copyright (C) 2019 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
-"""Misc utilities"""
+"""Misc utilities."""
 
 import secrets
 import hashlib
 
 
 def salted_int_hash_from_str(s, salt=None, digits=9):
-    """Hash a string to a 9-digit code
+    """Hash a string to a 9-digit code.
 
     Combine the string with a salt string, compute the md5sum, grab
     the first few digits as an integer between 100000000 and 999999999.
@@ -97,5 +97,4 @@ def rand_integer_code(digits=9):
 
 def rand_hex(digits=16):
     """Proper random hex string."""
-
     return secrets.token_hex((digits + 1) // 2)[0:digits]

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Colin B. Macdonald
+# Copyright (C) 2018-2023 Colin B. Macdonald
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -57,7 +57,8 @@ def main(server=None, pwd=None):
         tmp = Path(_td)
 
         try:
-            shortName = msgr.getInfoShortName()
+            spec = msgr.get_spec()
+            shortName = spec["name"]
 
             outdir = Path("reassembled_ID_but_not_marked")
             outdir.mkdir(exist_ok=True)

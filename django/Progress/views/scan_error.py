@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Edith Coates
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse
@@ -17,9 +18,11 @@ class ScanError(BaseScanProgressPage):
 
     def get(self, request):
         context = self.build_context("error_page")
-        mss = ManageScanService()
-        error_pages = mss.get_error_pages_list()
-        context.update({"error_pages": error_pages, "n_error": len(error_pages)})
+
+        # TODO: Error page view needs redesign
+        # mss = ManageScanService()
+        # error_pages = mss.get_error_pages_list()
+        context.update({"error_pages": 0, "n_error": 0})
         return render(request, "Progress/scan_error.html", context)
 
 

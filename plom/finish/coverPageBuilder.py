@@ -38,6 +38,9 @@ def makeCover(
             and student id (str).
         solution (bool): whether or not this is a cover page for solutions.
         footer (bool): whether to print a footer with timestamp.
+
+    Returns:
+        None
     """
     # check all table entries that should be numbers are non-negative numbers
     for row in tab:

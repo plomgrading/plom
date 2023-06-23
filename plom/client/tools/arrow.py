@@ -25,6 +25,7 @@ class CommandArrow(CommandLine):
 class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, pti, ptf, style):
         """Creates an arrow from pti to ptf.
+
         Some manipulations required to draw the arrow head.
         """
         super().__init__()

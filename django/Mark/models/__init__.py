@@ -6,6 +6,4 @@ from .annotations import (
     Annotation,
 )
 
-from .tasks import (
-    MarkingTask,
-)
+from .tasks import MarkingTask, MarkingTaskTag

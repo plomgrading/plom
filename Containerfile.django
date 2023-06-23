@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
+# Pull base image
+FROM python:3.10.2-slim-bullseye
+
+# Set environment variables
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+ENV PYTHONUNBUFFERED 1
+ENV PLOM_USING_DOCKER 1
+
+# base OS dependencies
+RUN apt-get -y update && \
+    apt-get --no-install-recommends -y install cmake gcc latexmk texlive-pictures build-essential git && \
+    apt-get -yq autoclean
+
+# Set work directory
+WORKDIR /src
+COPY . /src
+# RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install .
+RUN pip install --no-deps .
+
+# Set work directory
+WORKDIR /code
+
+# Install dependencies
+COPY ./requirements.txt.django .
+RUN pip install --no-cache-dir -r requirements.txt.django
+
+# Copy project
+COPY django/ .

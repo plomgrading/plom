@@ -15,6 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
+import html
 import imghdr
 import json
 import logging
@@ -79,7 +80,7 @@ from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
-from .useful_classes import AddRemoveTagDialog
+from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
 
@@ -1872,7 +1873,8 @@ class MarkerClient(QWidget):
             with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
-        except PlomNoSolutionException:
+        except PlomNoSolutionException as e:
+            log.warning(f"no solution image: {e}")
             # if a residual file is there, delete it
             if os.path.isfile(soln):
                 os.remove(soln)
@@ -2450,9 +2452,17 @@ class MarkerClient(QWidget):
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
-                        WarnMsg(parent, f"Tag not acceptable: {e}").exec()
+                        errmsg = html.escape(str(e))
+                        WarnMsg(parent, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        parent,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
                 pass
@@ -2479,7 +2489,9 @@ class MarkerClient(QWidget):
 
     def view_other(self):
         """Shows a particular paper number and question."""
-        tgs = SelectTestQuestion(self, self.exam_spec, self.question)
+        max_papernum = self.exam_spec["numberToProduce"]
+        max_question_idx = self.exam_spec["numberOfQuestions"]
+        tgs = SelectTestQuestion(self, max_papernum, max_question_idx, self.question)
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         tn, q, get_annotated = tgs.get_results()

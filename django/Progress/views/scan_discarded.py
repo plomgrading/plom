@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.shortcuts import render
 from django.http import FileResponse
@@ -19,12 +19,14 @@ class ScanDiscarded(BaseScanProgressPage):
 
     def get(self, request):
         context = self.build_context("discarded")
-        mss = ManageScanService()
-        context.update(
-            {
-                "discarded_pages": mss.get_discarded_pages_list(),
-            }
-        )
+
+        # TODO: Discarded pages view needs redesign
+        # mss = ManageScanService()
+        # context.update(
+        #     {
+        #         "discarded_pages": mss.get_discarded_pages_list(),
+        #     }
+        # )
         return render(request, "Progress/scan_discarded.html", context)
 
 

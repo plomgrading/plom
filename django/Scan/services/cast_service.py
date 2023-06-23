@@ -16,17 +16,14 @@ from Scan.models import (
 
 
 class ScanCastService:
-    """
-    Functions for casting staging images to different types
-    """
+    """Functions for casting staging images to different types."""
 
     # ----------------------------------------
     # Page casting helper function
     # ----------------------------------------
 
     def string_to_staging_image_type(self, img_str):
-        """A helper function to translate from string to the staging image enum type"""
-
+        """A helper function to translate from string to the staging image enum type."""
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
             return StagingImage.DISCARD
@@ -67,9 +64,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
@@ -237,6 +232,29 @@ class ScanCastService:
     def assign_extra_page(
         self, user_obj, bundle_obj, bundle_order, paper_number, question_list
     ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        The command assigns the paper-number and question list to the
+        given extra page.
+
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
+
+        Args:
+            user_obj (danjgo auth user database mode instance): the database model instance representing the user assigning information
+            bundle_obj (danjgo staging bundle database mode instance): the database model instance representing the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+               Is 1-indexed.
+            paper_number (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        """
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
         # make sure paper_number in db
@@ -277,6 +295,29 @@ class ScanCastService:
     def assign_extra_page_cmd(
         self, username, bundle_name, bundle_order, paper_number, question_list
     ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        The command assigns the paper-number and question list to the
+        given extra page.
+
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
+
+        Args:
+            username (str): the name of the user who is assigning the info
+            bundle_name (str): the name of the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+                Is 1-indexed.
+            paper_number (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -299,7 +340,7 @@ class ScanCastService:
     def clear_extra_page_info_from_bundle_timestamp_and_order(
         self, user_obj, bundle_timestamp, bundle_order
     ):
-        """A wrapper around clear_image_type
+        """A wrapper around clear_image_type.
 
         The main difference is that it that takes a
         bundle-timestamp instead of a bundle-object itself. Further,
@@ -313,9 +354,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
@@ -374,9 +413,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )

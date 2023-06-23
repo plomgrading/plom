@@ -531,7 +531,7 @@ class MarkHandler:
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
-        if not self.server.checkTagTextValid(tag_text):
+        if not self.server.is_valid_tag_text(tag_text):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
 
         ok, errcode, msg = self.server.add_tag(data["user"], task, tag_text)
@@ -603,7 +603,7 @@ class MarkHandler:
             HTTPNotAcceptable if tag text is not acceptable or
             HTTPConflict if tag already in system.
         """
-        if not self.server.checkTagTextValid(data["tag_text"]):
+        if not self.server.is_valid_tag_text(data["tag_text"]):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters")
         success, tag_key = self.server.McreateNewTag(data["user"], data["tag_text"])
         if success:
@@ -828,6 +828,8 @@ class MarkHandler:
     @authenticate_by_token
     def MgetAllMax(self):
         """Respond with information on max mark possible for each question in the exam.
+
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
 
         Respond with status 200/404.
 

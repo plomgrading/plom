@@ -22,18 +22,18 @@ margin = 10
 def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_images):
     """Reassemble a pdf from the cover and question images.
 
-    args:
+    Args:
         outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
         sid (str): Student ID, to be written into metadata.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
-        id_images (list): str/Path images to be inserted one per page.
-        marked_pages (list): str/Path images to be inserted one per page.
-        dnm_images (list): str/Path images to be combined into a new
-            final page.
+        id_images (list): dict of images with keys "filename" (`pathlib.Path`)
+            and "rotation" (`integer`).
+        marked_pages (list): `pathlib.Path` for each image.
+        dnm_images (list): as above ``id_images``.
 
-    return:
+    Returns:
         None
     """
     outname = Path(outname)
@@ -43,8 +43,17 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     else:
         exam = fitz.open()
 
-    for img_name in [*id_images, *marked_pages]:
-        img_name = Path(img_name)
+    for img in id_images:
+        w, h = papersize_portrait
+        pg = exam.new_page(width=w, height=h)
+        rect = fitz.Rect(margin, margin, w - margin, h - margin)
+        # fitz insert_image does not respect exif
+        rot = rot_angle_from_jpeg_exif_tag(img["filename"])
+        # now apply soft rotation
+        rot += img["rotation"]
+        pg.insert_image(rect, filename=img["filename"], rotate=rot)  # ccw
+
+    for img_name in marked_pages:
         im = PIL.Image.open(img_name)
 
         # Rotate page not the image: we want landscape on screen
@@ -63,52 +72,45 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
-        # TODO: useful bit of transcoding-in-memory code here: move somewhere!
-        # Its not currently useful here b/c clients try jpeg themeselves now
-        continue
-
-        png_size = img_name.stat().st_size
-        # Make a jpeg in memory, and use that if its significantly smaller
-        with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
-            im.convert("RGB").save(
-                jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
-            )
-            jpeg_size = jpeg_file.tell()  # cannot use stat as above
-            if jpeg_size < 0.75 * png_size:
-                # print("Using smaller JPEG for {}".format(img_name))
-                jpeg_file.seek(0)
-                pg.insert_image(rec, stream=jpeg_file.read())
+    # process DNM pages one at a time, putting at most three per page
+    max_per_page = 3
+    on_this_page = 0
+    for idx, img in enumerate(dnm_images):
+        how_many_more = len(dnm_images) - idx
+        if on_this_page == 0:
+            if how_many_more > 1:
+                # two or more pages remain, do a landscape page
+                w, h = papersize_landscape
             else:
-                pg.insert_image(rec, filename=img_name)
-
-    if len(dnm_images) > 1:
-        w, h = papersize_landscape
-    else:
-        w, h = papersize_portrait
-    if dnm_images:
-        pg = exam.new_page(width=w, height=h)
-        W = (w - 2 * margin) // len(dnm_images)
-        header_bottom = margin + h // 10
-        offset = margin
-        for img_name in dnm_images:
-            rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
-            # fitz insert_image does not respect exif
-            rot = rot_angle_from_jpeg_exif_tag(img_name)
-            pg.insert_image(rect, filename=img_name, rotate=rot)  # ccw
-            offset += W
-        if len(dnm_images) > 1:
-            text = 'These pages were flagged "Do No Mark" by the instructor.'
-        else:
-            text = 'This page was flagged "Do No Mark" by the instructor.'
-        text += "  In most cases nothing here was marked."
-        r = pg.insert_textbox(
-            fitz.Rect(margin, margin, w - margin, header_bottom),
-            text,
-            fontsize=12,
-            color=(0, 0, 0),
-            align="left",
-        )
-        assert r > 0
+                w, h = papersize_portrait
+            pg = exam.new_page(width=w, height=h)
+            # width of each image on the page
+            W = (w - 2 * margin) // min(max_per_page, how_many_more)
+            header_bottom = margin + h // 10
+            offset = margin
+            if how_many_more > 1:
+                text = 'These pages were flagged "Do No Mark" by the instructor.'
+            else:
+                text = 'This page was flagged "Do No Mark" by the instructor.'
+            text += "  In most cases nothing here was marked."
+            r = pg.insert_textbox(
+                fitz.Rect(margin, margin, w - margin, header_bottom),
+                text,
+                fontsize=12,
+                color=(0, 0, 0),
+                align="left",
+            )
+            assert r > 0
+        rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
+        # fitz insert_image does not respect exif
+        rot = rot_angle_from_jpeg_exif_tag(img["filename"])
+        # now apply soft rotation
+        rot += img["rotation"]
+        pg.insert_image(rect, filename=img["filename"], rotate=rot)  # ccw
+        offset += W
+        on_this_page += 1
+        if on_this_page == max_per_page:
+            on_this_page = 0
 
     exam.set_metadata(
         {
@@ -120,3 +122,23 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     exam.save(outname, deflate=True)
     # https://gitlab.com/plom/plom/-/issues/1777
     exam.close()
+
+
+def _unused_in_memory_jpeg_conversion(img_name, pg, rec):
+    # TODO: useful bit of transcoding-in-memory code
+    # Its not currently used b/c clients try jpeg themselves now
+
+    png_size = img_name.stat().st_size
+    im = PIL.Image.open(img_name)
+    # Make a jpeg in memory, and use that if its significantly smaller
+    with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
+        im.convert("RGB").save(
+            jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
+        )
+        jpeg_size = jpeg_file.tell()  # cannot use stat as above
+        if jpeg_size < 0.75 * png_size:
+            # print("Using smaller JPEG for {}".format(img_name))
+            jpeg_file.seek(0)
+            pg.insert_image(rec, stream=jpeg_file.read())
+        else:
+            pg.insert_image(rec, filename=img_name)

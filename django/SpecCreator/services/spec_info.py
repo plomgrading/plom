@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 import pathlib
 import json
@@ -25,52 +25,53 @@ class TestSpecService:
             self.questions[i] = services.TestSpecQuestionService(i, self)
 
     def specification(self):
-        """Get the latest form of the TestSpecInfo instance
+        """Get the latest form of the TestSpecInfo instance.
 
         Returns:
-            TestSpecInfo: the singleton TestSpec object
+            TestSpecInfo: the singleton TestSpec object.
         """
         spec, created = models.TestSpecInfo.objects.get_or_create(pk=1)
         return spec
 
     def reset_specification(self):
-        """Clear the TestSpecInfo object
+        """Clear the TestSpecInfo object.
 
         Returns:
-            TestSpecInfo: the newly cleared TestSpec object
+            TestSpecInfo: the newly cleared TestSpec object.
         """
         models.TestSpecInfo.objects.all().delete()
         return self.specification()
 
     def get_long_name(self):
-        """Return the TestSpecInfo long_name field
+        """Return the TestSpecInfo long_name field.
 
         Returns:
-            str: the test's long name
+            str: the test's long name.
         """
         return self.specification().long_name
 
     def set_long_name(self, long_name: str):
-        """Set the test's long name
+        """Set the test's long name.
 
         Args:
-            long_name: the new long name
+            long_name: the new long name.
         """
         test_spec = self.specification()
         test_spec.long_name = long_name
         test_spec.save()
 
     def get_short_name(self):
-        """Return the TestSpecInfo short_name field
+        """Return the TestSpecInfo short_name field.
 
         Returns:
-            str: the test's short name
+            str: the test's short name.
         """
         return self.specification().short_name
 
     def get_short_name_slug(self):
-        """Return django-sluggified TestSpecInfo short_name
-        field. This makes sure that it is sanitised for use, say, in
+        """Return django-sluggified TestSpecInfo short_name field.
+
+        This makes sure that it is sanitised for use, say, in
         filenames.
 
         Returns:
@@ -79,7 +80,7 @@ class TestSpecService:
         return slugify(self.specification().short_name)
 
     def set_short_name(self, short_name: str):
-        """Set the short name of the test
+        """Set the short name of the test.
 
         Args:
             short_name: the short name
@@ -89,25 +90,25 @@ class TestSpecService:
         test_spec.save()
 
     def get_n_versions(self):
-        """Get the number of test versions
+        """Get the number of test versions.
 
         Returns:
-            int: versions
+            int: versions.
         """
         return self.specification().n_versions
 
     def set_n_versions(self, n: int):
-        """Set the number of test versions
+        """Set the number of test versions.
 
         Args:
-            n number of versions
+            n: number of versions.
         """
         test_spec = self.specification()
         test_spec.n_versions = n
         test_spec.save()
 
     def get_n_to_produce(self):
-        """Get the number of test papers to produce
+        """Get the number of test papers to produce.
 
         Returns:
             int: number to produce
@@ -115,7 +116,7 @@ class TestSpecService:
         return self.specification().n_to_produce
 
     def set_n_to_produce(self, n: int):
-        """Set the number of test papers to produce
+        """Set the number of test papers to produce.
 
         Args:
             n: number of test papers
@@ -301,11 +302,13 @@ class TestSpecService:
         return None
 
     def set_do_not_mark_pages(self, pages: list):
-        """
-        Set these pages as the test's do-not-mark pages
+        """Set these pages as the test's do-not-mark pages.
 
         Args:
-            page: list of ints - 0-indexed page numbers
+            page: list of ints, 0-indexed page numbers.
+
+        Returns:
+            None
         """
         test_spec = self.specification()
         str_ids = [str(i) for i in pages]
@@ -621,7 +624,7 @@ class TestSpecService:
         if errors_to_raise:
             raise ValidationError(errors_to_raise)
 
-        # As a final step, send through the plom-classic spec verifier
+        # As a final step, send through the spec verifier
         valid_spec = None
         try:
             spec_dict = services.TestSpecGenerateService(self).generate_spec_dict()
