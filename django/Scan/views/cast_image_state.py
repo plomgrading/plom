@@ -21,6 +21,17 @@ class DiscardImageType(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
+class UnknowifyImageType(ScannerRequiredView):
+    """Unknowify a particular StagingImage type."""
+
+    def post(self, request, timestamp, index):
+        ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
+            request.user, timestamp, index
+        )
+
+        return HttpResponseClientRefresh()
+
+
 class ExtraliseImageType(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 

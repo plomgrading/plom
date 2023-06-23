@@ -227,6 +227,13 @@
                                         Cast to known page
                                     </a>
                                 </div>
+                                <div>
+                                    <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                       hx-post="{% url 'unknowify_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                        Cast to unknown page
+                                    </a>
+                                </div>
                             {% endif %}
                         {% elif current_page.status == 'error' %}
                             <div class="alert alert-danger">

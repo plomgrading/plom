@@ -31,6 +31,7 @@ from Scan.views import (
     ChangeCollisionImageState,
     DiscardImageType,
     ExtraliseImageType,
+    UnknowifyImageType,
     RotateImageClockwise,
     RotateImageCounterClockwise,
 )
@@ -153,6 +154,11 @@ urlpatterns = [
         "discard/<timestamp>/<int:index>/",
         DiscardImageType.as_view(),
         name="discard_image",
+    ),
+    path(
+        "unknowify/<timestamp>/<int:index>/",
+        UnknowifyImageType.as_view(),
+        name="unknowify_image",
     ),
     path(
         "extralise/<timestamp>/<int:index>/",
