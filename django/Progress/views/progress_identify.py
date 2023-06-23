@@ -19,8 +19,8 @@ class ProgressIdentifyHome(ManagerRequiredView):
         identified_papers = ids.get_identified_papers()
         unidentified_papers = ids.get_all_unidentified_papers()
 
-        list_data = IDReaderService().get_already_matched_sids()
-        for i in list_data:
+        data = IDReaderService().get_ID_predictions()
+        for i in data:
             print(i)
 
         context.update(
@@ -29,6 +29,7 @@ class ProgressIdentifyHome(ManagerRequiredView):
                 "all_id_papers_count": all_id_papers.count(),
                 "identified_papers_count": identified_papers.count(),
                 "unidentified_papers_count": unidentified_papers.count(),
+                "identified": False,
             }
         )
         return render(request, "Progress/Identify/identify_home.html", context)
