@@ -5,7 +5,7 @@
 
 
 from django.shortcuts import render, redirect
-from django.http import Http404, FileResponse
+from django.http import Http404, FileResponse, HttpResponse
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -148,5 +148,72 @@ class GetBundleImageView(ScannerRequiredView):
 
         scanner = ScanService()
         image = scanner.get_image(timestamp, request.user, index)
+
+        return FileResponse(image.image_file)
+
+
+class BundleThumbnailView(ScannerRequiredView):
+    def build_context(self, timestamp, user):
+        """Build a context for a particular page of a bundle.
+
+        Args:
+            timestamp (float): select a bundle by its timestamp.
+            user (todo): which user.
+        """
+        context = super().build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, user)
+        n_pages = scanner.get_n_images(bundle)
+        known_pages = scanner.get_n_known_images(bundle)
+        unknown_pages = scanner.get_n_unknown_images(bundle)
+        extra_pages = scanner.get_n_extra_images(bundle)
+        discard_pages = scanner.get_n_discard_images(bundle)
+        error_pages = scanner.get_n_error_images(bundle)
+
+        # list of dicts of page info, in bundle order
+        bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
+        # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
+        bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
+
+        context.update(
+            {
+                "is_pushed": bundle.pushed,
+                "slug": bundle.slug,
+                "timestamp": timestamp,
+                "pages": bundle_page_info_list,
+                "papers_pages_list": bundle_papers_pages_list,
+                "total_pages": n_pages,
+                "known_pages": known_pages,
+                "unknown_pages": unknown_pages,
+                "extra_pages": extra_pages,
+                "discard_pages": discard_pages,
+                "error_pages": error_pages,
+                "finished_reading_qr": bundle.has_qr_codes,
+            }
+        )
+        return context
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context(timestamp, request.user)
+
+        return render(request, "Scan/bundle_thumbnails.html", context)
+
+
+class GetBundleThumbnailView(ScannerRequiredView):
+    """Return an image from a user-uploaded bundle."""
+
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        image = scanner.get_thumbnail_image(timestamp, request.user, index)
 
         return FileResponse(image.image_file)

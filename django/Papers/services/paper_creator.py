@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 import logging
 
@@ -54,14 +55,17 @@ class PaperCreatorService:
         """Creates a paper with the given paper number and the given
         question-version mapping.
 
+        Also initializes prename ID predictions in DB, if applicable.
+
         spec (dict): The test specification
         paper_number (int): The number of the paper being created
         qv_mapping (dict): Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
-
-
-
         """
+        # private to prevent circular imports
+        from Preparation.services import StagingStudentService
+        from Identify.services import IDReaderService
+
         paper_obj = Paper(paper_number=paper_number)
         try:
             paper_obj.save()
@@ -82,6 +86,12 @@ class PaperCreatorService:
                 paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
             )
             dnm_page.save()
+
+        student_service = StagingStudentService()
+        prename_sid = student_service.get_prename_for_paper(paper_number)
+        if prename_sid:
+            id_reader_service = IDReaderService()
+            id_reader_service.add_prename_ID_prediction(prename_sid, paper_number)
 
         for q_id, question in spec["question"].items():
             index = int(q_id)

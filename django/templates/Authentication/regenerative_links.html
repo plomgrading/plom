@@ -1,13 +1,18 @@
-<!-- Copyright (C) 2022 Brennen Chiu -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
-{% extends 'base/base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>{
-            {% block title %}Password Reset Links{% endblock %}
+        <title>
+            {% block title %}
+                Password Reset Links
+            {% endblock title %}
         </title>
     </head>
     <body>
@@ -46,6 +51,6 @@
                     </tbody>
                 </table>
             </div>
-        {% endblock %}
+        {% endblock main_content %}
     </body>
 </html>

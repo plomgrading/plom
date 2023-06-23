@@ -18,6 +18,9 @@ from django.db import transaction
 
 from rest_framework.exceptions import ValidationError
 
+from Mark.models import Annotation
+from Mark.models.tasks import MarkingTask
+from Papers.models import Paper
 from Papers.services import SpecificationService
 from Rubrics.serializers import (
     RubricSerializer,
@@ -114,7 +117,7 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = self.rubric_dict(r)
+            rubric_dict = self._rubric_dict(r)
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
@@ -283,7 +286,55 @@ class RubricService:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def rubric_dict(self, r: Rubric):
+    def get_annotation_from_rubric(self, rubric: Rubric):
+        """Get the queryset of annotations that use this rubric.
+
+        Args:
+            Rubric instance
+
+        Returns:
+            Queryset: Annotation instances
+        """
+        return rubric.annotations.all()
+
+    def get_rubrics_from_annotation(self, annotation):
+        """Get the queryset of rubrics that are used by this annotation.
+
+        Args:
+            annotation: (Annotation) Annotation instance
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        return Rubric.objects.filter(annotations=annotation)
+
+    def get_rubrics_from_paper(self, paper_obj: Paper):
+        """Get the queryset of rubrics that are used by this paper.
+
+        Args:
+            paper_obj: Paper instance
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
+        annotations = Annotation.objects.filter(task__in=marking_tasks)
+        rubrics = Rubric.objects.filter(annotations__in=annotations)
+        return rubrics
+
+    def get_rubrics_from_user(self, username: str):
+        """Get the queryset of rubrics used by this user.
+
+        Args:
+            username: username of the user
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        user = User.objects.get(username=username)
+        return Rubric.objects.filter(user=user)
+
+    def _rubric_dict(self, r: Rubric):
         """Gets a dictionary representation of a rubric.
 
         Args:
@@ -305,5 +356,6 @@ class RubricService:
             "question": r.question,
             "versions": r.versions,
             "parameters": r.parameters,
+            "annotations": r.annotations,
         }
         return rubric_dict

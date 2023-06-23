@@ -1,3 +1,9 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Copyright (C) 2022 Edith Coates */
+/* Copyright (C) 2022 Brennen Chiu */
+/* Copyright (C) 2023 Andrew Rechnitzer */
+
+
 [x-cloak] { display: none !important; }
 
 div.list-group {
@@ -52,4 +58,24 @@ a.btn.btn-primary.btn-lg {
 
 .is_sidebar_link {
     text-align: center;
+}
+
+img.thumbnail0 {
+    max-height: 100%;
+    max-width: 100%;
+}
+img.thumbnail180 {
+    max-height: 100%;
+    max-width: 100%;
+    transform: rotate(180deg);
+}
+img.thumbnail90 {
+    max-height: 100%;
+    max-width: 100%;
+    transform: rotate(-90deg);
+}
+img.thumbnail270 {
+    max-width: 100%;
+    max-height: 100%;
+    transform: rotate(90deg);
 }

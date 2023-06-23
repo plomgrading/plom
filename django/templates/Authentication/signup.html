@@ -1,15 +1,24 @@
-{% extends 'base/base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>
-            {% block title %}Web Plom - Sign Up{% endblock %}
+            {% block title %}
+                Web Plom - Sign Up
+            {% endblock title %}
         </title>
     </head>
     <body>
-        {% block page_heading %}Sign up{% endblock %}
+        {% block page_heading %}
+            Sign up
+        {% endblock page_heading %}
         {% block main_content %}
             <div>
                 <p>Click on the user type you want to create.</p>
@@ -30,5 +39,6 @@
                           padding-top: 16px"
                    href="{% url 'signup_markers' %}">Markers</a>
             </div>
-        {% endblock %}
+        {% endblock main_content %}
     </body>
+</html>

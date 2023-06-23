@@ -71,7 +71,7 @@
         <br>
         <div>
             <div class="row" style="margin-right: 0.1px;">
-                <div class="col-4 border">
+                <div class="col border">
                     <div>
                         <h5>{{ staged_bundles|length }} Staged Bundles</h5>
                         <div class="d-grid gap-2">
@@ -88,7 +88,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-4 border">
+                <div class="col border">
                     <div>
                         <h5>{{ pushed_bundles|length }} Pushed Bundles</h5>
                         {% if pushed_bundles %}
@@ -99,16 +99,17 @@
                                                 max-width: 90%;
                                                 height:100%">
                                         <div class="card-body d-flex flex-row p-0">
-                                            <img src="{% url 'scan_get_image' bundle.timestamp 1 %}"
+                                            <img src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}"
                                                  class="border rounded-start"
-                                                 style="max-height: 14em">
+                                                 style="max-height: 16em;
+                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle }}deg))">
                                             <div class="p-2">
                                                 <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
                                                 <ul class="list-unstyled">
                                                     <li>Total pages: {{ bundle.pages }}</li>
                                                 </ul>
                                                 <a class="btn"
-                                                   href="{% url 'scan_manage_bundle' bundle.timestamp 1 %}"
+                                                   href="{% url 'scan_bundle_thumbnails' bundle.timestamp %}"
                                                    style="background-color: #0F984F;
                                                           color: white">View</a>
                                                 <a class="btn btn-secondary"
