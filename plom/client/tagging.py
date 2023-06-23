@@ -141,7 +141,7 @@ class AddRemoveTagDialog(QDialog):
         self.accept()
 
     def remove_tag(self, tag):
-        safe_tag = html.ecsape(tag)
+        safe_tag = html.escape(tag)
         msg = f"<p>Do you want to remove tag &ldquo;{safe_tag}&rdquo;?"
         title = f"Remove tag \u201C{safe_tag}\u201D{self.from_label}?"
         if QMessageBox.question(self, title, msg) != QMessageBox.StandardButton.Yes:
