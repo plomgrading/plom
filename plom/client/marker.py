@@ -2461,7 +2461,7 @@ class MarkerClient(QWidget):
                     InfoMsg(
                         parent,
                         "Tag was not present, perhaps someone else removed it?",
-                        info=str(e),
+                        info=html.escape(str(e)),
                     ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
