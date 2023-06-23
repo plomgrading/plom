@@ -24,7 +24,7 @@ class IDReaderService:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
-            box (None/list): the box to extract or a default is empty/None.
+            box (None/list): the box to extract or a default if empty/None.
 
         Keyword Args:
             dur (None/pathlib.Path): what directory to save to, or choose
@@ -38,7 +38,7 @@ class IDReaderService:
         else:
             id_box_folder = pathlib.Path(dur)
         if not box:
-            box = (0.28, 0.58, 0.09, 0.91)
+            box = (0.1, 0.9, 0.0, 1.0)
         id_box_folder.mkdir(exist_ok=True)
 
         pipr = PageImageProcessor()
