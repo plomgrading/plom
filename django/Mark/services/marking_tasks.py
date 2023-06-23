@@ -7,12 +7,13 @@
 import json
 import pathlib
 import imghdr
-import re
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+
+from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
@@ -456,15 +457,6 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    def is_tag_text_valid(self, text):
-        """Return True if the tag text passes our validation checks, False otherwise.
-
-        Args:
-            text: str, tag text. Assumes it's sanitized.
-        """
-        # just checking if there are invalid characters for now
-        return re.match(r"([-_+;:@]|\w)+", text) is not None
-
     def create_tag(self, user, tag_text):
         """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
 
@@ -474,18 +466,15 @@ class MarkingTaskService:
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
-        """
-        if self.is_tag_text_valid(tag_text):
-            # allowable characters: - _ + ; : @ and any alphanumeric character
-            new_tag = MarkingTaskTag(
-                user=user,
-                text=tag_text,
-            )
-            new_tag.save()
 
-            return new_tag
-        else:
+        Raises:
+            ValidationError: tag contains invalid characters.
+        """
+        if not is_valid_tag_text(tag_text):
             raise ValidationError(f"Invalid tag text: {tag_text}")
+        new_tag = MarkingTaskTag(user=user, text=tag_text)
+        new_tag.save()
+        return new_tag
 
     def add_tag(self, tag, task):
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
