@@ -1,0 +1,28 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+<div>
+  <p>Rotate Image:</p>
+  <a class="btn btn-secondary text-center mb-3"
+     data-bs-toggle="tooltip"
+     data-bs-placement="top"
+     title="Rotate counter-clockwise"
+     style="width: 49%"
+     hx-post="{% url 'rotate_img_ccw' timestamp index %}"
+     hx-swap="outerHTML"
+     hx-target="#navFragment">
+    <i class="bi-arrow-counterclockwise fs-5"></i>
+  </a>
+  <a class="btn btn-secondary text-center mb-3"
+     data-bs-toggle="tooltip"
+     data-bs-placement="top"
+     title="Rotate clockwise"
+     style="width: 49%"
+     hx-post="{% url 'rotate_img_cw' timestamp index %}"
+     hx-swap="outerHTML"
+     hx-target="#navFragment">
+    <i class="bi-arrow-clockwise fs-5"></i>
+  </a>
+</div>
