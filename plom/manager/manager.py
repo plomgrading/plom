@@ -2515,7 +2515,14 @@ class Manager(QWidget):
                 question = int(self.ui.reviewTW.item(r, 1).text())
                 task = f"q{paper:04}g{question}"
                 log.debug('%s: removing tag "%s"', task, new_tag)
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        self,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
         else:
             # do nothing - but shouldn't arrive here.
             pass
@@ -2572,7 +2579,14 @@ class Manager(QWidget):
                         WarnMsg(self, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
                 log.debug('%s: removing tag "%s"', task, new_tag)
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        self,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
                 pass

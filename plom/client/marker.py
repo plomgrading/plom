@@ -2455,7 +2455,14 @@ class MarkerClient(QWidget):
                         errmsg = html.escape(str(e))
                         WarnMsg(parent, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        parent,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=str(e),
+                    ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
                 pass
