@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
@@ -187,7 +187,7 @@ class Server:
         MlatexFragment,
         MclaimThisTask,
         MreturnMarkedTask,
-        checkTagTextValid,
+        is_valid_tag_text,
         add_tag,
         remove_tag,
         MgetTagsOfTask,

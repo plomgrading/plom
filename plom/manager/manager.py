@@ -59,7 +59,7 @@ import plom.client.icons
 
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
-from plom.client.useful_classes import AddRemoveTagDialog
+from plom.client.tagging import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client.downloader import Downloader
 from plom.client.about_dialog import show_about_dialog

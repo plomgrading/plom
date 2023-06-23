@@ -79,7 +79,7 @@ from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
-from .useful_classes import AddRemoveTagDialog
+from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
 

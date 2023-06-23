@@ -447,6 +447,8 @@ class TagsFromCodeView(APIView):
                 return Response(status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+        except ValidationError as e:
+            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
@@ -460,7 +462,7 @@ class TagsFromCodeView(APIView):
             200: OK response
 
         Raises:
-            406: Invalid task code or task does not have tag
+            409: Invalid task code or task does not have tag
             404: Task is not found
         """
         mts = MarkingTaskService()
@@ -473,7 +475,7 @@ class TagsFromCodeView(APIView):
             mts.remove_tag_from_task(the_tag, the_task)
             return Response(status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABE)
+            return Response(str(e), status=status.HTTP_409_NOT_ACCEPTABE)
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
