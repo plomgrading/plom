@@ -481,7 +481,7 @@ class TagsFromCodeView(APIView):
             return Response(status=status.HTTP_200_OK)
         except ValueError as e:
             r = Response(status=status.HTTP_409_CONFLICT)
-            (r.reason_phrase,) = e.args
+            r.reason_phrase = str(e)
             return r
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
