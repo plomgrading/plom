@@ -84,6 +84,7 @@ class AddRemoveTagDialog(QDialog):
                 # b.setText("\N{Cross Mark}")
                 # b.setText("\N{Multiplication Sign}")
                 b.setToolTip(f'Remove tag "{safe_tag}"')
+                # important that this callback uses tag not safe_tag:
                 b.clicked.connect(remove_func_factory(b, tag))
                 row.addWidget(b)
                 row.addItem(
