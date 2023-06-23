@@ -9,6 +9,7 @@
 # Copyright (C) 2022 Natalie Balashov
 
 from collections import defaultdict
+import html
 import imghdr
 import logging
 import os
@@ -2505,7 +2506,8 @@ class Manager(QWidget):
                         log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    WarnMsg(self, f"Tag not acceptable: {e}").exec()
+                    errmsg = html.escape(str(e))
+                    WarnMsg(self, "Tag not acceptable", info=errmsg).exec()
         elif cmd == "remove":
             for tmp in ri[::mod]:
                 r = tmp.row()
@@ -2566,7 +2568,8 @@ class Manager(QWidget):
                         log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
                     except PlomBadTagError as e:
-                        WarnMsg(self, f"Tag not acceptable: {e}").exec()
+                        errmsg = html.escape(str(e))
+                        WarnMsg(self, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
                 log.debug('%s: removing tag "%s"', task, new_tag)
                 self.msgr.remove_single_tag(task, new_tag)
