@@ -11,7 +11,7 @@ def is_valid_tag_text(tag_text: str) -> bool:
     """Compare tag text against an allow list of acceptable characters.
 
     The allow list is currently:
-    * alpha-numeric characters
+    * alphanumeric characters
     * "_", "-", "+", ":", ";", "@"
     """
     allow_list = ("_", "-", "+", ":", ";", "@")
