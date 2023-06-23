@@ -448,7 +448,10 @@ class TagsFromCodeView(APIView):
         except ValueError as e:
             return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except ValidationError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            print(f'Trying to return this or some part of it:\n"{str(e)}"')
+            # return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(reason=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
