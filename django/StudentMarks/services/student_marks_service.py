@@ -80,3 +80,16 @@ class StudentMarksService:
             marks.update(self.get_marks_from_paper(paper_num, original))
 
         return marks
+
+    def get_n_of_question_marked(self, question_num: int) -> float:
+        """Get the percentage of a question that has been marked.
+
+        Args:
+            question_num: The question number.
+
+        Returns:
+            The percentage of the question that has been marked.
+        """
+        marking_tasks = MarkingTask.objects.filter(question_number=question_num)
+
+        return Annotation.objects.filter(task__in=marking_tasks).filter(newest_version=True).count()

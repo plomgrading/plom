@@ -22,10 +22,17 @@ class StudentMarkView(ManagerRequiredView):
         context = self.build_context()
 
         papers = self.sms.get_all_marks()
-        context["papers"] = papers
-
         n_questions = self.scs.get_n_questions()
-        context["n_questions"] = range(1, n_questions + 1)
+        marked_percentages = [self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)]
+
+        context.update(
+            {
+                "papers": papers,
+                "n_questions": range(1, n_questions + 1),
+                "n_papers": len(papers),
+                "marked_percentages": marked_percentages,
+            }
+        )
 
         # return JsonResponse(student_marks)
         return render(request, self.template, context)
