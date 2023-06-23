@@ -185,7 +185,6 @@ docker-tag-latest:
     - docker push $IM_LATEST
   only:
     - main
-    - tags
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
@@ -202,8 +201,6 @@ pypi:
     - python3 setup.py sdist bdist_wheel
     - python3 -m twine check dist/*
     - python3 -m twine upload dist/*
-  only:
-    - tags
 
 
 release_job:
