@@ -5,49 +5,27 @@
     Copyright (C) 2023 Natalie Balashov
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<div class="container w-100 p-0 m-3" id="navFragment">
+<div class="container p-0 m-2" id="navFragment">
     <div class="row">
-        <div class="col-9">
-            <div class="row p-4  justify-content-center bg-light">
-                <div class="col">
-                    {% if prev_idx >= 1 %}
-                        <button class="btn w-100 h-100 d-flex justify-content-center shadow-sm"
-                                hx-get="{% url 'scan_nav_bundle' timestamp prev_idx %}"
-                                hx-swap="outerHTML"
-                                hx-target="#navFragment"
-                                hx-replace-url="{% url 'scan_manage_bundle' timestamp prev_idx %}">
-                            <i class="bi bi-arrow-left fs-2 align-self-center"></i>
-                        </button>
-                    {% endif %}
-                </div>
-                <div class="col">
-                    <div style="height: 70vh;
-                                width: 70vh;
-                                justify-content: center;
-                                display:flex;
-                                align-items:center">
-                        <img class="shadow rounded p-2"
-                             src="{% url 'scan_get_image' timestamp index %}"
-                             style="max-height:100%;
-                                    max-width: 100%;
-                                    transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
-                    </div>
-                </div>
-                <div class="col">
-                    {% if next_idx <= total_pages %}
-                        <button class="btn w-100 h-100 d-flex justify-content-center shadow-sm"
-                                hx-get="{% url 'scan_nav_bundle' timestamp next_idx %}"
-                                hx-swap="outerHTML"
-                                hx-target="#navFragment"
-                                hx-replace-url="{% url 'scan_manage_bundle' timestamp next_idx %}">
-                            <i class="bi bi-arrow-right fs-2 align-self-center"></i>
-                        </button>
-                    {% endif %}
+        <div class="col-8">
+            {% include "Scan/fragments/nav_bundle_left_right.html" %}
+            <div class="row p-2 justify-content-center">
+                <div style="height: 50vw;
+                            width: 50vw;
+                            justify-content: center;
+                            display:flex;
+                            align-items:center">
+                    <img class="shadow rounded"
+                         src="{% url 'scan_get_image' timestamp index %}"
+                         style="max-height:100%;
+                                max-width: 100%;
+                                transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
                 </div>
             </div>
+            {% include "Scan/fragments/nav_bundle_left_right.html" %}
         </div>
-        <div class="col-3">
-            <div class="card h-100">
+        <div class="col-4 w-25">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
                     <p class="card-text">
