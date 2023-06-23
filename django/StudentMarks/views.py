@@ -4,7 +4,7 @@
 import json
 
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
 from StudentMarks.services import StudentMarksService
@@ -36,7 +36,29 @@ class StudentMarkView(ManagerRequiredView):
 
         # return JsonResponse(student_marks)
         return render(request, self.template, context)
+    
+    def marks_download(request):
+        """Download marks as an Excel file."""
 
+        # import pandas as pd
+        # import tempfile
+
+        sms = StudentMarksService()
+        student_marks = sms.get_all_marks()
+        
+        # df = pd.DataFrame(student_marks)
+
+        # with tempfile.NamedTemporaryFile(suffix='.csv', delete=True) as temp_file:
+        #     # Save the DataFrame to the temporary file
+        #     df.to_csv(temp_file.name, index=True, header=True)
+
+        #     with open(temp_file, "rb") as fprb:
+        #         response = HttpResponse(fprb.read(), content_type="csv")
+        #         response["Content-Disposition"] = "attachment; filename=marks.csv"
+
+        #         return response        
+
+        return JsonResponse(student_marks)
 
 class StudentMarkPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""

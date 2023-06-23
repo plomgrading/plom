@@ -92,4 +92,4 @@ class StudentMarksService:
         """
         marking_tasks = MarkingTask.objects.filter(question_number=question_num)
 
-        return Annotation.objects.filter(task__in=marking_tasks).filter(newest_version=True).count()
+        return Annotation.objects.filter(task__in=marking_tasks).count()  # TODO: .filter(newest_version=True) once implemented
