@@ -448,10 +448,12 @@ class TagsFromCodeView(APIView):
         except ValueError as e:
             return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except ValidationError as e:
-            print(f'Trying to return this or some part of it:\n"{str(e)}"')
-            # return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: why not?
             # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
-            return Response(reason=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: yuck but works and looks better than str(e)
+            (r.reason_phrase,) = e.args
+            return r
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
