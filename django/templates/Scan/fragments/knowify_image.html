@@ -1,0 +1,90 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+<div class="container w-100 p-0 m-3" id="navFragment">
+    <div class="row">
+        <div class="col shadow-sm rounded" style="background-color: lightgrey;">
+            <div class="row p-0">
+                <div class="col d-flex justify-content-center" style="height:600px;">
+                    <img src="{% url 'scan_get_image' timestamp index %}"
+                         class="img-fluid shadow"
+                         alt=""
+                         style="transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
+		</div>
+
+                <div class="alert alert-secondary">
+                  <h6>Set known page information</h6>
+                  <form hx-post="{% url 'knowify_image' timestamp index %}"
+                        hx-target="#invalidmessage"
+                        hx-swap="innerHTML">
+                    <div class="input-group p-3">
+                      <div x-data="{bundlepapers: true}">
+                        Paper:
+                        <div class="form-check">
+                          <input name="bundleOrArbitrary"
+                                 class="form-check-input"
+                                 type="checkbox"
+                                 x-bind:value="bundlepapers"
+                                 id="bundlepapers"
+                                 x-model="bundlepapers">
+                          <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                        </div>
+                        <div x-show="bundlepapers">
+                          <select name="bundlePaper"
+                                  class="form-select"
+                                  aria-label="Default select example">
+                            <option selected>Paper from bundle</option>
+                            {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                          </select>
+                        </div>
+                        <div x-show="!bundlepapers">
+                          <select name="arbitraryPaper"
+                                  class="form-select"
+                                  aria-label="Default select example">
+                            <option selected>any produced paper</option>
+                            {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                          </select>
+                        </div>
+                        Page:
+                          <div>
+                            {% for pl in page_labels %}
+                            <div class="form-check">
+                              <input name="pages"
+                                     class="form-check-input"
+                                     type="radio"
+                                     value="{{ forloop.counter }}"
+                                     id="{{ pl }}">
+                              <label class="form-check-label" for="{{ pl }}">{{ pl }}</label>
+                            </div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Set data</button>
+                  </form>
+                </div>
+		<div class="py-4" id="invalidmessage"></div>
+	    </div>
+	</div>
+	
+    </div>
+</div>
+<script>
+	var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+	var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+		return new bootstrap.Tooltip(tooltipTriggerEl)
+	});
+</script>
