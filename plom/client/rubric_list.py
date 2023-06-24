@@ -47,11 +47,12 @@ def rubric_is_naked_delta(r):
 
 
 def isLegalRubric(rubric, *, scene, version, maxMark):
-    """Checks the 'legality' of a particular rubric - returning one of several possible indicators
+    """Checks the 'legality' of a particular rubric - returning one of several possible indicators.
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
-    1 = compatible but out of range - the kind of rubric is compatible with the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
+    1 = compatible but out of range - the kind of rubric is compatible with
+    the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
     2 = compatible and in range - is compatible and can be used.
     3 = version does not match - should be hidden by default.
     Note that the rubric lists use the result to decide which rubrics will
@@ -115,6 +116,9 @@ class RubricTable(QTableWidget):
                 Here `"show"` is used for the "All" tab, `None` is used
                 for custom "user tabs".
             sort (bool):
+
+        Returns:
+            None
         """
         super().__init__(parent)
         self._parent = parent
@@ -388,14 +392,14 @@ class RubricTable(QTableWidget):
             event.accept()
 
     def appendByKey(self, key):
-        """Append the rubric associated with a key to the end of the list
+        """Append the rubric associated with a key to the end of the list.
 
         If its a dupe, don't add.
 
-        args
+        Args
             key (str/int?): the key associated with a rubric.
 
-        raises
+        Raises
             what happens on invalid key?
         """
         # TODO: hmmm, should be dict?
@@ -437,7 +441,7 @@ class RubricTable(QTableWidget):
         self.setSortingEnabled(_sorting_enabled)
 
     def setRubricsByKeys(self, rubric_list, id_list, *, alt_order=None):
-        """Clear table and repopulate rubrics in the key_list
+        """Clear table and re-populate rubrics.
 
         Args:
             rubric_list (list): all the rubrics, which are dicts with
@@ -453,6 +457,9 @@ class RubricTable(QTableWidget):
                 should appear at the end of the list.
                 Defaults to None, which means just use the `key_list`
                 order.
+
+        Returns:
+            None
         """
         if alt_order:
             # construct a new list from alt_order and key_list
@@ -482,7 +489,7 @@ class RubricTable(QTableWidget):
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics, positive=True):
-        """Clear table and repopulate with delta-rubrics"""
+        """Clear table and repopulate with delta-rubrics."""
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -538,21 +545,21 @@ class RubricTable(QTableWidget):
         self.selectRubricByVisibleRow(r)
 
     def selectRubricByRow(self, r):
-        """Select the r'th rubric in the list
+        """Select the r'th rubric in the list.
 
         Args:
             r (int): The row-number in the rubric-table.
-            If r is None, do nothing.
+                If r is None, do nothing.
         """
         if r is not None:
             self.selectRow(r)
 
     def selectRubricByVisibleRow(self, r):
-        """Select the r'th **visible** row
+        """Select the r'th **visible** row.
 
         Args:
             r (int): The row-number in the rubric-table.
-            If r is None, do nothing.
+                If r is None, do nothing.
         """
         rc = -1  # start here, so that correctly test after-increment
         for s in range(self.rowCount()):
@@ -564,7 +571,7 @@ class RubricTable(QTableWidget):
         return
 
     def selectRubricByKey(self, key):
-        """Select row with given key. Return true if works, else false"""
+        """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
         for r in range(self.rowCount()):
@@ -668,7 +675,7 @@ class RubricTable(QTableWidget):
             # self.item(r, 3).setForeground(colour_hide)
 
     def updateLegality(self):
-        """Style items according to their legality"""
+        """Style items according to their legality."""
         for r in range(self.rowCount()):
             self.colourLegalRubric(r)
 
@@ -848,7 +855,7 @@ class RubricWidget(QWidget):
         return L
 
     def get_group_tabs_dict(self):
-        """Get a dict of the group tabs, keyed by name"""
+        """Get a dict of the group tabs, keyed by name."""
         d = {}
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
@@ -857,7 +864,7 @@ class RubricWidget(QWidget):
         return d
 
     def update_tab_names(self):
-        """Loop over the tabs and update their displayed names"""
+        """Loop over the tabs and update their displayed names."""
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
             self.RTW.setTabText(n, tab.shortname)
@@ -876,15 +883,15 @@ class RubricWidget(QWidget):
             #     self.RTW.setTabToolTip(n, "delta")
 
     def add_new_group_tab(self, name):
-        """Add new group-defined tab
+        """Add new group-defined tab.
 
         The new tab is inserted after the right-most "group" tab, or
         immediately after the "All" tab if there are no "group" tabs.
 
-        args:
+        Args:
             name (str): name of the new tab.
 
-        return:
+        Return:
             RubricTable: the newly added table.
         """
         tab = RubricTable(self, shortname=name, tabType="group")
@@ -908,7 +915,7 @@ class RubricWidget(QWidget):
         user adds a new tab, it appears before these.  But the user may
         have rearranged the delta tabs left of their custom tabs.
 
-        args:
+        Args:
             name (str/None): name of the new tab.  If omitted or None,
                 generate one from a set of symbols with digits appended
                 if necessary.
@@ -1035,7 +1042,7 @@ class RubricWidget(QWidget):
             self.syncB.setText("Sync")
 
     def refreshRubrics(self):
-        """Get rubrics from server and if non-trivial then repopulate"""
+        """Get rubrics from server and if non-trivial then repopulate."""
         old_rubrics = self.rubrics
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
@@ -1110,7 +1117,7 @@ class RubricWidget(QWidget):
         else:
             self.setRubricTabsFromState(wr.wranglerState)
 
-    def setInitialRubrics(self, user_tab_state=None):
+    def setInitialRubrics(self, *, user_tab_state=None):
         """Grab rubrics from server and set sensible initial values.
 
         Note: must be called after annotator knows its tgv etc, so
@@ -1118,8 +1125,8 @@ class RubricWidget(QWidget):
         refactor would have the caller (which is probably `_parent`)
         get the server rubrics list and pass in as an argument.
 
-        args:
-            wranglerState (dict/None): a representation of the state of
+        Keyword Args:
+            user_tab_state (dict/None): a representation of the state of
                 the user's tabs, or None.  If None then pull from server.
                 If server also has none, initialize with some empty tabs.
                 Note: currently caller always passes None.
@@ -1138,7 +1145,7 @@ class RubricWidget(QWidget):
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
 
-        args:
+        Args:
             wranglerState (dict/None): a representation of the state of
                 the user's tabs.  This could be from a previous session
                 or it could be "stale" in the sense that new rubrics
@@ -1197,7 +1204,8 @@ class RubricWidget(QWidget):
                 group_tab_data[g].append(rubric["id"])
 
         current_group_tabs = self.get_group_tabs_dict()
-        prev_group_tabs = {x["name"]: x["ids"] for x in wranglerState["group_tabs"]}
+        _group_tabs = wranglerState.get("group_tabs", {})
+        prev_group_tabs = {x["name"]: x["ids"] for x in _group_tabs}
         for name, tab in current_group_tabs.items():
             if name not in group_tab_data.keys():
                 log.info("Removing now-empty tab: group %s is now empty", name)
@@ -1269,11 +1277,11 @@ class RubricWidget(QWidget):
     def reorder_tabs(self, target_order):
         """Change the order of the tabs to match a target order.
 
-        args:
+        Args:
             target_order (list): a list of strings for the order we would
                 like to see.  We will copy and then dedupe this input.
 
-        returns:
+        Returns:
             None: but modifies the tab order.
 
         Algorithm probably relies on the tabs having unique names.
@@ -1333,10 +1341,11 @@ class RubricWidget(QWidget):
         assert check == target_order, "did not achieve target"
 
     def getCurrentRubricKeyAndTab(self):
-        """return the current rubric key and the current tab.
+        """The current rubric key and the current tab.
 
-        returns:
-            list: [a,b] where a=rubric-key=(int/none) and b=current tab index = int
+        Eeturns:
+            list: ``[a, b]`` where ``a`` is the rubric-key (int/None)
+            and ``b`` is the current tab index (int).
         """
         return [
             self.RTW.currentWidget().getCurrentRubricKey(),
@@ -1344,15 +1353,16 @@ class RubricWidget(QWidget):
         ]
 
     def setCurrentRubricKeyAndTab(self, key, tab):
-        """set the current rubric key and the current tab
+        """Set the current rubric key and the current tab.
 
-        args
-            key (int/None): which rubric to highlight.  If no None, no action.
+        Args
+            key (int/None): which rubric to highlight.  If None, no action.
             tab (int): which tab to choose.
 
-        returns:
-            bool: True if we set a row, False if we could not find an appropriate row
-                b/c for example key or tab are invalid or not found.
+        Returns:
+            bool: True if we set a row, False if we could not find an
+            appropriate row b/c for example key or tab are invalid or
+            not found.
         """
         if key is None:
             return False
@@ -1365,11 +1375,11 @@ class RubricWidget(QWidget):
     def setQuestion(self, num, label):
         """Set relevant question number and label.
 
-        args:
+        Args:
             num (int/None): the question number.
             label (str/None): the question label.
 
-        After calling this, you should call updateLegalityOfRubrics() to
+        After calling this, you should call ``updateLegalityOfRubrics()`` to
         update which rubrics are highlighted/displayed.
         """
         self.question_number = num
@@ -1378,11 +1388,11 @@ class RubricWidget(QWidget):
     def setVersion(self, version, maxver):
         """Set version being graded.
 
-        args:
+        Args:
             version (int/None): which version.
             maxver (int): the largest version in this assessment.
 
-        After calling this, you should call updateLegalityOfRubrics() to
+        After calling this, you should call ``updateLegalityOfRubrics()`` to
         update which rubrics are highlighted/displayed.
         """
         self.version = version
@@ -1391,16 +1401,16 @@ class RubricWidget(QWidget):
     def setMaxMark(self, maxMark):
         """Update the max mark.
 
-        args:
-            maxMark (int):
+        Args:
+            maxMark (int): the maximum mark.
 
-        After calling this, you should call updateLegalityOfRubrics() to
+        After calling this, you should call ``updateLegalityOfRubrics()`` to
         update which rubrics are highlighted/displayed.
         """
         self.maxMark = maxMark
 
     def updateLegalityOfRubrics(self):
-        """Redo the colour highlight/deemphasis in each tab"""
+        """Redo the colour highlight/deemphasis in each tab."""
         self.tabS.updateLegality()
         for tab in self.get_user_tabs():
             tab.updateLegality()
@@ -1531,12 +1541,12 @@ class RubricWidget(QWidget):
     def _new_or_edit_rubric(self, com, *, edit=False, index=None, add_to_group=None):
         """Open a dialog to edit a comment or make a new one.
 
-        args:
+        Args:
             com (dict/None): a comment to modify or use as a template
                 depending on next arg.  If set to None, which always
                 means create new.
 
-        keyword args:
+        Keyword args:
             edit (bool): are we modifying the comment?  if False, use
                 `com` as a template for a new duplicated comment.
             index (int): the index of the comment inside the current rubric list
@@ -1592,10 +1602,7 @@ class RubricWidget(QWidget):
         self.handleClick()
 
     def get_tab_rubric_lists(self):
-        """returns a dict of lists of the current rubrics.
-
-        Currently does not include "group tabs".
-        """
+        """Returns a dict of lists of the current rubrics."""
         return {
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),

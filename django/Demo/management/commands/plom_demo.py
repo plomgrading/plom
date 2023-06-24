@@ -38,7 +38,8 @@ class Command(BaseCommand):
         config: dict,
         homework_bundles,
     ):
-        dbs.scribble_on_exams(config)
+        if ServerConfigService().contains_key(config, "bundles"):
+            dbs.scribble_on_exams(config)
 
         for bundle in homework_bundles:
             dhs.make_hw_bundle(bundle)
@@ -88,12 +89,25 @@ class Command(BaseCommand):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        number_of_bundles = len(config["bundles"])
+        scs = ServerConfigService()
+        if scs.contains_key(config, "bundles"):
+            number_of_bundles = len(config["bundles"])
+            bundle_service = DemoBundleService()
+        else:
+            bundle_service = None
+            number_of_bundles = 0
 
-        homework_bundles = config["hw_bundles"]
+        if scs.contains_key(config, "hw_bundles"):
+            homework_bundles = config["hw_bundles"]
+            homework_service = DemoHWBundleService()
+        else:
+            homework_bundles = []
+            homework_service = None
 
-        bundle_service = DemoBundleService()
-        homework_service = DemoHWBundleService()
+        if bundle_service is None and homework_service is None:
+            print("No bundles detected - stopping.")
+            return
+
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
@@ -130,6 +144,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--config",
+            action="store",
+            nargs=1,
+            help="Use a TOML config file for creating the demo exam structure.",
+        )
+        parser.add_argument(
             "--no-waiting",
             action="store_true",
             help="Do not wait for user input at the end of the demo sequence before stopping the demo.",
@@ -163,10 +183,17 @@ class Command(BaseCommand):
                     "Cannot run plom-client randomarker with a demo breakpoint."
                 )
 
+        config_path = options["config"]
         config_service = ServerConfigService()
-        config = config_service.read_server_config(
-            settings.BASE_DIR / "Demo/config_files/full_demo_config.toml"
-        )
+        if config_path is None:
+            config = config_service.read_server_config(
+                settings.BASE_DIR / "Demo/config_files/full_demo_config.toml"
+            )
+        else:
+            try:
+                config = config_service.read_server_config(config_path[0])
+            except Exception as e:
+                raise CommandError(e)
         print(config)
 
         proc_service = DemoProcessesService()
@@ -190,7 +217,9 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation":
+        if stop_at == "preparation" or not config_service.contains_key(
+            config, "num_to_produce"
+        ):
             huey_worker_proc.terminate()
             return
 

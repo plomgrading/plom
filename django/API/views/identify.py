@@ -50,17 +50,6 @@ class GetIDPredictions(APIView):
         id_reader_service = IDReaderService()
         if not predictor:
             predictions = id_reader_service.get_ID_predictions()
-        elif predictor == "prename":  # TODO: remove this block later
-            sstu = StagingStudentService()
-            if sstu.are_there_students():
-                predictions = {}
-                for s in sstu.get_students():
-                    if s["paper_number"]:
-                        predictions[s["paper_number"]] = {
-                            "student_id": s["student_id"],
-                            "certainty": 100,
-                            "predictor": "prename",
-                        }
         else:
             predictions = id_reader_service.get_ID_predictions(predictor=predictor)
         return Response(predictions)

@@ -13,7 +13,6 @@ from django.db import transaction
 from Identify.models import PaperIDTask, IDPrediction
 from Identify.services import IdentifyTaskService
 from Papers.models import IDPage, Paper
-from Preparation.services import StagingStudentService
 from Scan.services.image_process import PageImageProcessor
 
 
@@ -25,7 +24,7 @@ class IDReaderService:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
-            box (None/list): the box to extract or a default is empty/None.
+            box (None/list): the box to extract or a default if empty/None.
 
         Keyword Args:
             dur (None/pathlib.Path): what directory to save to, or choose
@@ -39,7 +38,7 @@ class IDReaderService:
         else:
             id_box_folder = pathlib.Path(dur)
         if not box:
-            box = (0.28, 0.58, 0.09, 0.91)
+            box = (0.1, 0.9, 0.0, 1.0)
         id_box_folder.mkdir(exist_ok=True)
 
         pipr = PageImageProcessor()
@@ -83,15 +82,6 @@ class IDReaderService:
         for task in not_IDed_tasks:
             paper_list.append(task.paper.paper_number)
         return paper_list
-
-    def get_classlist_sids_for_ID_matching(self):
-        """Returns a list containing all student IDs on the classlist."""
-        students = []
-        student_service = StagingStudentService()
-        classlist = student_service.get_students()
-        for entry in classlist:
-            students.append(entry.pop("student_id"))
-        return students
 
     @transaction.atomic
     def get_ID_predictions(self, predictor=None):
@@ -166,3 +156,14 @@ class IDReaderService:
             IDPrediction.objects.filter(predictor=predictor).delete()
         else:
             IDPrediction.objects.all().delete()
+
+    def add_prename_ID_prediction(self, student_id, paper_number):
+        """Add ID prediction for a prenamed paper."""
+        try:
+            # TODO: hardcoded to use "first" manager user in DB
+            user_obj = User.objects.filter(groups__name="manager").first()
+        except ObjectDoesNotExist:
+            raise ValueError("Manager user does not exist")
+        self.add_or_change_ID_prediction(
+            user_obj, paper_number, student_id, 0.9, "prename"
+        )

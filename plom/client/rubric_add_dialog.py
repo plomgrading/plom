@@ -80,7 +80,7 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, txt):
         """Highlight tex prefix and matches in our substitution list.
 
-        args:
+        Args:
             txt (str): the text to be highlighted.
 
         TODO: use colours from the palette?
@@ -709,7 +709,7 @@ class AddRubricBox(QDialog):
         return super().keyPressEvent(event)
 
     def accept(self):
-        """Make sure rubric is valid before accepting"""
+        """Make sure rubric is valid before accepting."""
         txt = self.TE.toPlainText().strip()
         if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(

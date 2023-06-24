@@ -11,7 +11,8 @@ from tabulate import tabulate
 
 # -m to get number of scanners and markers
 class Command(BaseCommand):
-    """
+    """Create canned demo users, for demos and testing.
+
     This is the command for "python manage.py plom_create_demo_users"
     It creates demo users such as 1 manager, 5 scanners and 5 markers.
     Then, add the users to their respective group.

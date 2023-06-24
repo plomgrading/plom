@@ -7,6 +7,8 @@
 from django.db import models
 from Scan.models import StagingBundle
 
+import logging
+
 
 class StagingImage(models.Model):
     """An image of a scanned page that isn't validated.
@@ -38,6 +40,21 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
+
+
+class StagingThumbnail(models.Model):
+    def _staging_thumbnail_upload_path(self, filename):
+        # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+        return "staging/bundles/{}/{}/page_images/{}".format(
+            self.staging_image.bundle.user.username,
+            self.staging_image.bundle.timestamp,
+            filename,
+        )
+
+    staging_image = models.OneToOneField(
+        StagingImage, on_delete=models.CASCADE, primary_key=True
+    )
+    image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)
 
 
 class KnownStagingImage(models.Model):
