@@ -143,9 +143,8 @@ class MarkingTaskService:
             The marking task object the matches the code.
 
         Raises:
-            ValueError: invalid code
-            RuntimeError: code valid but task does not exist, currently
-                broken, Issue #2809.
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         try:
             paper_number, question_number = self.unpack_code(code)
