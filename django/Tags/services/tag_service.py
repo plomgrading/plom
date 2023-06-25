@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-from Mark.models.tasks import MarkingTask, MarkingTaskTag
+from Mark.models.tasks import MarkingTaskTag
 
 
 class TagService:
@@ -16,8 +16,7 @@ class TagService:
         Returns:
             A tag object.
         """
-        tag = MarkingTaskTag.objects.get(pk=tag_id)
-        return tag
+        return MarkingTaskTag.objects.get(pk=tag_id)
 
     def get_tag_from_text(self, tag_text: str):
         """Get a singular tag by its text.
@@ -28,8 +27,7 @@ class TagService:
         Returns:
             A tag object.
         """
-        tag = MarkingTaskTag.objects.get(text=tag_text)
-        return tag
+        return MarkingTaskTag.objects.get(text=tag_text)
 
     def get_task_tags_with_tag(self, tag_text: str):
         """Get all task tags that contain the given text.
@@ -42,8 +40,7 @@ class TagService:
         Returns:
             A queryset of task tags.
         """
-        task_tags = MarkingTaskTag.objects.filter(text__icontains=tag_text)
-        return task_tags
+        return MarkingTaskTag.objects.filter(text__icontains=tag_text)
 
     def get_task_tags_with_tag_exact(self, tag_text: str):
         """Get all task tags that contain the given text.
@@ -56,8 +53,7 @@ class TagService:
         Returns:
             A queryset of task tags.
         """
-        task_tags = MarkingTaskTag.objects.filter(text__in=[tag_text])
-        return task_tags
+        return MarkingTaskTag.objects.filter(text__in=[tag_text])
 
     def get_papers_from_task_tags(self, task_tags):
         """Get all papers that have a tag with a task tag in the given queryset.
@@ -66,7 +62,8 @@ class TagService:
             task_tags: A queryset of task tags.
 
         Returns:
-            A dictionary of papers and their tags from the given queryset.
+            dict: keyed by papers objects whose values are their tags that are
+              present in the given queryset.
         """
         papers = {}
         for task_tag in task_tags:
@@ -85,7 +82,7 @@ class TagService:
         return counts
 
     def delete_tag(self, tag_id: int):
-        """Delete a tag by its text.
+        """Delete a tag by its id.
 
         Args:
             tag_id: The primary key of the tag.
