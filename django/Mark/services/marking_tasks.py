@@ -152,7 +152,7 @@ class MarkingTaskService:
             return self.get_latest_task(paper_number, question_number)
         except AssertionError:
             raise ValueError(f"{code} is not a valid task code.")
-        except MarkingTask.DoesNotExist:
+        except ObjectDoesNotExist:
             raise RuntimeError(f"Task {code} does not exist.")
 
     def get_user_tasks(self, user, question=None, version=None):
