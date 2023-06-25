@@ -483,7 +483,9 @@ class TagsFromCodeView(APIView):
             r.reason_phrase = str(e)
             return r
         except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
         return Response(status=status.HTTP_200_OK)
 
 
