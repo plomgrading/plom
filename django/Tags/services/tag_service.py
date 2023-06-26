@@ -18,17 +18,6 @@ class TagService:
         """
         return MarkingTaskTag.objects.get(pk=tag_id)
 
-    def get_tag_from_text(self, tag_text: str):
-        """Get a singular tag by its text.
-
-        Args:
-            tag_text: The text of the tag.
-
-        Returns:
-            A tag object.
-        """
-        return MarkingTaskTag.objects.get(text=tag_text)
-
     def get_task_tags_with_tag(self, tag_text: str):
         """Get all task tags that contain the given text.
 
