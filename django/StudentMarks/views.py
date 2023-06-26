@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import json
-
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
@@ -56,9 +54,22 @@ class StudentMarkView(ManagerRequiredView):
         #         response = HttpResponse(fprb.read(), content_type="csv")
         #         response["Content-Disposition"] = "attachment; filename=marks.csv"
 
-        #         return response        
+        #         return response     
+        import csv
 
-        return JsonResponse(student_marks)
+        response = None
+
+        with open('marks.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
+            w = csv.DictWriter(f, student_marks.keys())
+            w.writeheader()
+            w.writerow(student_marks)
+            print(w)
+
+        with open('marks.csv', 'r') as f:
+            response = HttpResponse(f, content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=marks.csv'
+
+        return response
 
 class StudentMarkPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
