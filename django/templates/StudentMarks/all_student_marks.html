@@ -24,8 +24,8 @@
                     <tr>
                         <td>{{ p_key }}</td>
                         {% if not p_val %}
-                            {% comment %}Not graded{% endcomment %}
-                            {% for i in n_questions %}<td>Not graded</td>{% endfor %}
+                            {% comment %}None{% endcomment %}
+                            {% for i in n_questions %}<td>None</td>{% endfor %}
                         {% elif p_val|length == n_questions|length %}
                             {% comment %}Fully graded{% endcomment %}
                             {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
@@ -37,7 +37,7 @@
                                         {% if dict %}
                                             {{ dict.student_mark }}
                                         {% else %}
-                                            Not graded
+                                            None
                                         {% endif %}
                                     {% endwith %}
                                 </td>

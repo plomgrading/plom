@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-from Mark.models import Annotation
-from Mark.models.tasks import MarkingTask
 from Papers.models.paper_structure import Paper
 
 
@@ -53,7 +51,6 @@ class StudentMarksService:
             The mark information for each question in each paper.
         """
         papers = Paper.objects.all()
-        print("PAPERS: ", papers)
         marks = {}
         for paper in papers:
             marks.update(self.get_marks_from_paper(paper.paper_number, original))
