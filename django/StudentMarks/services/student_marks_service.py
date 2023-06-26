@@ -16,7 +16,7 @@ class StudentMarksService:
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            dict: keyed by paper number whose values are a dictionary holding 
+            dict: keyed by paper number whose values are a dictionary holding
             the mark information for each question in the paper.
         """
         paper_obj = Paper.objects.get(pk=paper_num)
@@ -94,9 +94,13 @@ class StudentMarksService:
         """
         marking_tasks = MarkingTask.objects.filter(question_number=question_num)
 
-        return Annotation.objects.filter(task__in=marking_tasks).count()  # TODO: .filter(newest_version=True) once implemented
+        return Annotation.objects.filter(
+            task__in=marking_tasks
+        ).count()  # TODO: .filter(newest_version=True) once implemented
 
-    def get_marks_from_paper_download(self, paper_num: int, original: bool = False) -> dict:
+    def get_marks_from_paper_download(
+        self, paper_num: int, original: bool = False
+    ) -> dict:
         """Get the marks for a paper.
 
         Args:
@@ -123,8 +127,12 @@ class StudentMarksService:
             if current_annotation:
                 marks.update(
                     {
-                        "Q" + str(marking_task.question_number) + "_mark" : current_annotation.score,
-                        "Q" + str(marking_task.question_number) + "_version" : marking_task.question_version,
+                        "Q"
+                        + str(marking_task.question_number)
+                        + "_mark": current_annotation.score,
+                        "Q"
+                        + str(marking_task.question_number)
+                        + "_version": marking_task.question_version,
                     }
                 )
 
@@ -142,6 +150,8 @@ class StudentMarksService:
         papers = Paper.objects.all()
         marks = []
         for paper in papers:
-            marks.append(self.get_marks_from_paper_download(paper.paper_number, original))
+            marks.append(
+                self.get_marks_from_paper_download(paper.paper_number, original)
+            )
 
         return marks

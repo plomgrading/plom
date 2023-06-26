@@ -22,8 +22,9 @@ class StudentMarkView(ManagerRequiredView):
 
         papers = self.sms.get_all_marks()
         n_questions = self.scs.get_n_questions()
-        marked_percentages = [self.sms.get_n_of_question_marked(
-            q) for q in range(1, n_questions + 1)]
+        marked_percentages = [
+            self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
+        ]
 
         context.update(
             {
@@ -49,18 +50,18 @@ class StudentMarkView(ManagerRequiredView):
 
         # create csv file headers
         keys = ["paper"]
-        for q in range(1, spec["numberOfQuestions"]+1):
+        for q in range(1, spec["numberOfQuestions"] + 1):
             keys.append("Q" + str(q) + "_mark")
             keys.append("Q" + str(q) + "_version")
 
-        with open('marks.csv', 'w') as f:
+        with open("marks.csv", "w") as f:
             w = csv.DictWriter(f, keys)
             w.writeheader()
             w.writerows(student_marks)
 
-        with open('marks.csv', 'r') as f:
-            response = HttpResponse(f, content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename=marks.csv'
+        with open("marks.csv", "r") as f:
+            response = HttpResponse(f, content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=marks.csv"
 
         return response
 
