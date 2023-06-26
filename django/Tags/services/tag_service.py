@@ -52,7 +52,7 @@ class TagService:
 
         Returns:
             dict: keyed by papers objects whose values are their tags that are
-              present in the given queryset.
+            present in the given queryset.
         """
         papers = {}
         for task_tag in task_tags:
