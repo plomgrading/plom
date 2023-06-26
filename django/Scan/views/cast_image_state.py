@@ -8,7 +8,7 @@ from django.http import HttpResponse, Http404
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanCastService, ScanService
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperInfoService
 
 
 class DiscardImageType(ScannerRequiredView):
@@ -40,6 +40,7 @@ class KnowifyImageType(ScannerRequiredView):
 
         context = super().build_context()
         scanner = ScanService()
+        paper_info = PaperInfoService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
 
@@ -59,16 +60,12 @@ class KnowifyImageType(ScannerRequiredView):
                 "current_page": current_page,
             }
         )
-
-        print(">"*40, SpecificationService().get_n_to_produce())
         
         page_labels = [
                 f"p.{n+1}" for n in range(SpecificationService().get_n_pages())
         ]
         paper_numbers = scanner.get_bundle_paper_numbers(bundle)
-        all_paper_numbers = [
-            n + 1 for n in range(SpecificationService().get_n_to_produce())
-        ]
+        all_paper_numbers = paper_info.which_papers_in_database()
         context.update(
             {
                 "page_labels": page_labels,
@@ -78,7 +75,6 @@ class KnowifyImageType(ScannerRequiredView):
         )
 
         return render(request, "Scan/fragments/knowify_image.html", context)
-
 
     def post(self, request, timestamp, index):
         # TODO - improve this form processing
@@ -94,17 +90,26 @@ class KnowifyImageType(ScannerRequiredView):
             paper_number = int(paper_number)
         except ValueError:
             return HttpResponse(
-                """<span class="alert alert-danger">Invalid paper number</span>"""
+                """<div class="alert alert-danger">Invalid paper number</div>"""
             )
-
-        if len(extra_page_data.get("pages", [])):
-            page_list = [int(p) for p in extra_page_data["pages"]]
-        else:
+        
+        page_list = [int(p) for p in extra_page_data.get("pages", [])]
+        if len(page_list) != 1:
             return HttpResponse(
-                """<span class="alert alert-danger">Exactly one page</span>"""
+                """<div class="alert alert-danger">Exactly one page</div>"""
             )
+        page_number = page_list[0]
 
-        ###>>>> HERE ###
+        try:
+            ScanCastService().knowify_image_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, paper_number, page_number
+            )
+        except ValueError as err:
+            return HttpResponse(
+                f"""<div class="alert alert-danger">{err}</div>"""
+            )
+            
+        return HttpResponseClientRefresh()
 
 class ExtraliseImageType(ScannerRequiredView):
     """Extralise a particular StagingImage type."""

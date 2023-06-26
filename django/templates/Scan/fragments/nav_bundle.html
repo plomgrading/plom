@@ -62,10 +62,8 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-
-			    {% include "Scan/fragments/rotate_image.html" %}
-
-                            <div>
+                                {% include "Scan/fragments/rotate_image.html" %}
+                                <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
                                        hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
@@ -92,9 +90,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-
-			    {% include "Scan/fragments/rotate_image.html" %}
-
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
@@ -183,7 +179,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-			    {% include "Scan/fragments/rotate_image.html" %}
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
@@ -197,10 +193,10 @@
                                     </a>
                                 </div>
                                 <div>
-                                  <a class="btn btn-outline-success text-center w-100 mb-3"
-				     hx-get="{% url 'knowify_image' timestamp index %}"
-				     hx-target="#navFragment"
-                                       hx-confirm="Are you sure you wish to set this discarded page as a known page?">
+                                    <a class="btn btn-outline-success text-center w-100 mb-3"
+                                       hx-get="{% url 'knowify_image' timestamp index %}"
+                                       hx-target="#navFragment"
+                                       hx-confirm="Are you sure you wish to set this unknown page as a known page?">
                                         Cast to known page
                                     </a>
                                 </div>
@@ -215,7 +211,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-			    {% include "Scan/fragments/rotate_image.html" %}
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-warning text-center w-100 mb-3"
                                        hx-put="{% url 'extralise_image' timestamp index %}"
@@ -224,18 +220,18 @@
                                     </a>
                                 </div>
                                 <div>
-                                    <a class="btn btn-warning text-center w-100 mb-3"
-                                       hx-put="{% url 'extralise_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
-                                        Cast to extra page
-                                    </a>
-                                </div>
-                                <div>
-                                  <a class="btn btn-outline-success text-center w-100 mb-3"
-				     hx-get="{% url 'knowify_image' timestamp index %}"
-				     hx-replace="#navFragment"
+                                    <a class="btn btn-outline-success text-center w-100 mb-3"
+                                       hx-get="{% url 'knowify_image' timestamp index %}"
+                                       hx-replace="#navFragment"
                                        hx-confirm="Are you sure you wish to set this discarded page as a known page?">
                                         Cast to known page
+                                    </a>
+                                </div>
+                                <div>
+                                    <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                       hx-post="{% url 'unknowify_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                        Cast to unknown page
                                     </a>
                                 </div>
                             {% endif %}
@@ -255,17 +251,16 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-
-			    {% include "Scan/fragments/rotate_image.html" %}
-                            <div>
-                              <a class="btn btn-danger text-center w-100 mb-3"
-                                 hx-post="{% url 'discard_image' timestamp index %}"
-                                 hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
-                                Discard
-                              </a>
-                            </div>
+                                {% include "Scan/fragments/rotate_image.html" %}
+                                <div>
+                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                       hx-post="{% url 'discard_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                                        Discard
+                                    </a>
+                                </div>
                             {% endif %}
-                            {% elif current_page.status == 'unread' %}
+                        {% elif current_page.status == 'unread' %}
                             <div class="alert alert-dark">
                                 <h6 class="alert-heading">Unread</h6>
                                 <ul>
