@@ -461,13 +461,15 @@ class TagsFromCodeView(APIView):
         """Remove a tag from a task.
 
         Args:
+            request (Request): with ``tag_text`` (`str`) as a data field
             code: str, question/paper code for a task
 
         Returns:
             200: OK response
 
         Raises:
-            409: Invalid task code or task does not have tag
+            409: Invalid task code, no such tag, or this task does not
+                have this tag.
             404: Task is not found
         """
         mts = MarkingTaskService()
@@ -475,9 +477,7 @@ class TagsFromCodeView(APIView):
         tag_text = mts.sanitize_tag_text(tag_text)
 
         try:
-            the_task = mts.get_task_from_code(code)
-            the_tag = mts.get_tag_from_text(tag_text)
-            mts.remove_tag_from_task(the_tag, the_task)
+            mts.remove_tag_text_from_task_code(tag_text, code)
         except ValueError as e:
             r = Response(status=status.HTTP_409_CONFLICT)
             r.reason_phrase = str(e)
