@@ -514,8 +514,9 @@ class MarkingTaskService:
         """Remove a tag from a marking task.
 
         Args:
-            tag: reference to a MarkingTaskTag instance
-            task: reference to a MarkingTask instance
+            tag_text: which tag to remove.
+            code: from which task, for example ``"g0123g5"`` for paper
+                123 question 5.
 
         Raises:
             ValueError: invalid task code, no such tag, or this task does not
