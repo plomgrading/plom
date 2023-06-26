@@ -518,7 +518,8 @@ class MarkingTaskService:
             task: reference to a MarkingTask instance
 
         Raises:
-            ValueError: TODO doc
+            ValueError: invalid task code, no such tag, or this task does not
+                have this tag.
             RuntimeError: task not found.
         """
         the_tag = self.get_tag_from_text(tag_text)
