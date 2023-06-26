@@ -16,7 +16,8 @@ class StudentMarksService:
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            The mark information for each question in the paper.
+            dict: keyed by paper number whose values are a dictionary holding 
+            the mark information for each question in the paper.
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()

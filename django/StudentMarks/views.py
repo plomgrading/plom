@@ -36,34 +36,18 @@ class StudentMarkView(ManagerRequiredView):
         return render(request, self.template, context)
     
     def marks_download(request):
-        """Download marks as an Excel file."""
-
-        # import pandas as pd
-        # import tempfile
+        """Download marks as a csv file."""
+        import csv
 
         sms = StudentMarksService()
-        student_marks = sms.get_all_marks()
-        
-        # df = pd.DataFrame(student_marks)
-
-        # with tempfile.NamedTemporaryFile(suffix='.csv', delete=True) as temp_file:
-        #     # Save the DataFrame to the temporary file
-        #     df.to_csv(temp_file.name, index=True, header=True)
-
-        #     with open(temp_file, "rb") as fprb:
-        #         response = HttpResponse(fprb.read(), content_type="csv")
-        #         response["Content-Disposition"] = "attachment; filename=marks.csv"
-
-        #         return response     
-        import csv
+        student_marks = sms.get_all_marks()   
 
         response = None
 
         with open('marks.csv', 'w') as f:  # You will need 'wb' mode in Python 2.x
             w = csv.DictWriter(f, student_marks.keys())
             w.writeheader()
-            w.writerow(student_marks)
-            print(w)
+            w.writerow(student_marks.items())
 
         with open('marks.csv', 'r') as f:
             response = HttpResponse(f, content_type='text/csv')
