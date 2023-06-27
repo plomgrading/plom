@@ -156,8 +156,8 @@ class StudentMarksService:
 
         student_info.update(
             {
-            "total_mark": total,
-            "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
+                "total_mark": total,
+                "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
             }
         )
 
