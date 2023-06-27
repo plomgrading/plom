@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 
+import html
 import logging
 
 from operator import itemgetter
@@ -117,7 +118,20 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = self._rubric_dict(r)
+            rubric_dict = {
+                "id": r.key,
+                "kind": r.kind,
+                "display_delta": r.display_delta,
+                "value": r.value,
+                "out_of": r.out_of,
+                "text": r.text,
+                "tags": r.tags,
+                "meta": r.meta,
+                "username": r.user.username,
+                "question": r.question,
+                "versions": r.versions,
+                "parameters": r.parameters,
+            }
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
@@ -334,28 +348,34 @@ class RubricService:
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def _rubric_dict(self, r: Rubric):
-        """Gets a dictionary representation of a rubric.
-
-        Args:
-            r: a Rubric instance
+    def get_all_annotations(self):
+        """Gets all annotations.
 
         Returns:
-            dict: dictionary representation of a rubric.
+            QuerySet: lazy queryset of all rubrics.
         """
-        rubric_dict = {
-            "id": r.key,
-            "kind": r.kind,
-            "display_delta": r.display_delta,
-            "value": r.value,
-            "out_of": r.out_of,
-            "text": r.text,
-            "tags": r.tags,
-            "meta": r.meta,
-            "username": r.user.username,
-            "question": r.question,
-            "versions": r.versions,
-            "parameters": r.parameters,
-            "annotations": r.annotations,
-        }
-        return rubric_dict
+        return Annotation.objects.all()
+
+    def get_rubric_as_html(self, rubric: Rubric) -> str:
+        """Gets a rubric as HTML.
+
+        Args:
+            rubric: a Rubric instance
+
+        Returns:
+            HTML representation of the rubric.
+        """
+        text = html.escape(rubric.text)
+        display_delta = html.escape(rubric.display_delta)
+        return f"""
+            <table style="color:#FF0000;">
+                <tr>
+                    <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
+                        <b>{display_delta}</b>
+                    </td>
+                    <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
+                        {text}
+                    </td>
+                </tr>
+            </table>
+        """

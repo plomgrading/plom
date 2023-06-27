@@ -133,18 +133,25 @@ class MarkingTaskService:
 
         return paper_number, question_number
 
-    def get_task_from_code(self, code):
+    def get_task_from_code(self, code: str) -> MarkingTask:
         """Get a marking task from its code.
 
-        Arg:
-            code: str, a unique string that includes the paper number and question number.
+        Args:
+            code: a unique string that includes the paper number and question number.
+
+        Returns:
+            The marking task object the matches the code.
+
+        Raises:
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         try:
             paper_number, question_number = self.unpack_code(code)
             return self.get_latest_task(paper_number, question_number)
         except AssertionError:
             raise ValueError(f"{code} is not a valid task code.")
-        except MarkingTask.DoesNotExist:
+        except ObjectDoesNotExist:
             raise RuntimeError(f"Task {code} does not exist.")
 
     def get_user_tasks(self, user, question=None, version=None):

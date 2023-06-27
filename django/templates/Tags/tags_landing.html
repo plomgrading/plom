@@ -44,7 +44,7 @@
                                 <td class="tag-column">
                                     {% for tag in tags %}
                                         {% if tag %}
-                                            <a href="{% url 'tag_item' tag %}">{{ tag }}</a>
+                                            <a href="{% url 'tag_item' tag.pk %}">{{ tag.text }}</a>
                                             <br>
                                         {% endif %}
                                     {% endfor %}
@@ -71,7 +71,7 @@
                             <tr>
                                 <td class="id-column">
                                     {% if tag.text %}
-                                        <a href="{% url 'tag_item' tag.text %}">{{ tag.text }}</a>
+                                        <a href="{% url 'tag_item' tag.pk %}">{{ tag.text }}</a>
                                         <br>
                                     {% endif %}
                                 </td>

@@ -57,7 +57,16 @@ class RubricItemView(ManagerRequiredView):
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
         rubric = self.rs.get_all_rubrics().get(key=rubric_key)
-        context.update({"rubric": rubric, "form": self.form(instance=rubric)})
+        annotations = self.rs.get_annotation_from_rubric(rubric)
+        rubric_as_html = self.rs.get_rubric_as_html(rubric)
+        context.update(
+            {
+                "rubric": rubric,
+                "form": self.form(instance=rubric),
+                "annotations": annotations,
+                "rubric_as_html": rubric_as_html,
+            }
+        )
 
         return render(request, self.template_name, context=context)
 
@@ -74,3 +83,19 @@ class RubricItemView(ManagerRequiredView):
                 rubric.__setattr__(key, value)
             rubric.save()
         return redirect("rubric_item", rubric_key=rubric_key)
+
+
+class AnnotationItemView(ManagerRequiredView):
+    """A page for displaying a single annotation."""
+
+    template_name = "Rubrics/annotation_item.html"
+    rs = RubricService()
+
+    def get(self, request, annotation_key):
+        context = self.build_context()
+
+        annotation = self.rs.get_all_annotations().get(pk=annotation_key)
+        rubrics = self.rs.get_rubrics_from_annotation(annotation)
+        context.update({"annotation": annotation, "rubrics": rubrics})
+
+        return render(request, self.template_name, context=context)

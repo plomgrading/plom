@@ -64,29 +64,25 @@ class TagItemView(ManagerRequiredView):
     ts = TagService()
     form = TagEditForm
 
-    def get(self, request, tag_text):
+    def get(self, request, tag_id):
         context = self.build_context()
 
-        print(request)
-        print("GET: ", request.GET)
-        print("POST: ", request.POST)
-
-        tag = self.ts.get_tag(tag_text=tag_text)
+        tag = self.ts.get_tag_from_id(tag_id=tag_id)
         context.update({"tag": tag, "form": self.form(instance=tag)})
 
         return render(request, self.template_name, context=context)
 
-    def post(request, tag_text):
+    def post(request, tag_id):
         form = TagEditForm(request.POST)
 
         if form.is_valid():
-            tag = TagItemView.ts.get_tag(tag_text=tag_text)
+            tag = TagItemView.ts.get_tag_from_id(tag_id=tag_id)
             for key, value in form.cleaned_data.items():
                 tag.__setattr__(key, value)
             tag.save()
-        return redirect("tag_item", tag_text=value)
+        return redirect("tag_item", tag_id=tag_id)
 
-    def tag_delete(request, tag_text):
+    def tag_delete(request, tag_id):
         """Delete a tag."""
-        TagItemView.ts.delete_tag(tag_text=tag_text)
+        TagItemView.ts.delete_tag(tag_id=tag_id)
         return redirect("tags_landing")
