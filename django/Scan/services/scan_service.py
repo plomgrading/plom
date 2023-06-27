@@ -11,7 +11,6 @@ import random
 from statistics import mode
 import tempfile
 
-import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -38,6 +37,7 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
+    StagingThumbnail,
     KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
@@ -262,6 +262,25 @@ class ScanService:
             bundle=bundle,
             bundle_order=index,
         )
+
+    @transaction.atomic
+    def get_first_image(self, bundle_obj):
+        """Get the first image from the given bundle."""
+        return StagingImage.objects.get(
+            bundle=bundle_obj,
+            bundle_order=1,
+        )
+
+    @transaction.atomic
+    def get_thumbnail_image(self, timestamp, user, index):
+        """Get a thubnail image from the database.
+
+        To uniquely identify an image, we need a bundle
+        (and a timestamp, and user) and a page index
+        """
+        bundle_obj = self.get_bundle(timestamp, user)
+        img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
+        return img.stagingthumbnail
 
     @transaction.atomic
     def get_n_images(self, bundle):
@@ -1026,11 +1045,15 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
         with transaction.atomic():
             for X in results:
                 with open(X["file_path"], "rb") as fh:
-                    StagingImage.objects.create(
+                    img = StagingImage.objects.create(
                         bundle=bundle_obj,
                         bundle_order=X["index"],
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
+                    )
+                with open(X["thumb_path"], "rb") as fh:
+                    StagingThumbnail.objects.create(
+                        staging_image=img, image_file=File(fh, X["thumb_name"])
                     )
 
             bundle_obj.has_page_images = True
@@ -1099,6 +1122,10 @@ def huey_child_get_page_image(
     Returns:
         None
     """
+    import fitz
+    from plom.scan import rotate
+    from PIL import Image
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
@@ -1117,6 +1144,13 @@ def huey_child_get_page_image(
     with open(save_path, "rb") as f:
         image_hash = hashlib.sha256(f.read()).hexdigest()
 
+    # make sure we load with exif rotations if required
+    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
+    size = 256, 256
+    pil_img.thumbnail(size, Image.Resampling.LANCZOS)
+    thumb_path = basedir / ("thumb-" + basename + ".png")
+    pil_img.save(thumb_path)
+
     # TODO - return an error of some sort here if problems
 
     return {
@@ -1124,6 +1158,8 @@ def huey_child_get_page_image(
         "file_name": save_path.name,
         "file_path": str(save_path),
         "image_hash": image_hash,
+        "thumb_name": thumb_path.name,
+        "thumb_path": str(thumb_path),
     }
 
 
@@ -1138,6 +1174,8 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
+    thumb = img.stagingthumbnail
+    thumb_path = thumb.image_file.path
 
     scanner = ScanService()
 

@@ -30,7 +30,7 @@ log = logging.getLogger("rubric_wrangler")
 
 
 def showRubricToUser(rubric):
-    """Filter the rubrics shown to the user in the wrangler"""
+    """Filter the rubrics shown to the user in the wrangler."""
     # hide system rubrics
     if rubric["username"] == "HAL":
         return False
@@ -44,7 +44,7 @@ def showRubricToUser(rubric):
 
 
 def deltaToInt(x):
-    """Since delta can just be a ."""
+    """Since delta can just be a full stop."""
     if x == ".":
         return 0
     else:

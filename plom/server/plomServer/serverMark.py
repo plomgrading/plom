@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Chris Jin
 
@@ -11,6 +11,7 @@ import os
 import logging
 
 from plom.textools import texFragmentToPNG
+from plom.tagging import is_valid_tag_text as _is_valid_tag_text
 
 
 log = logging.getLogger("server")
@@ -213,14 +214,8 @@ def MreturnMarkedTask(
     ]
 
 
-def checkTagTextValid(self, tag_text):
-    # put tag-text validity test in here.
-    # what else is reasonable here.
-    allow_list = ["_", "-", "+", ":", ";", "@"]
-    if all(c.isalnum() or c in allow_list for c in tag_text):
-        return True
-    else:
-        return False
+def is_valid_tag_text(self, tag_text):
+    return _is_valid_tag_text(tag_text)
 
 
 def MgetAllTags(self):

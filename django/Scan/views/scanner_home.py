@@ -49,6 +49,7 @@ class ScannerHomeView(ScannerRequiredView):
         pushed_bundles = []
         for bundle in user_bundles:
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
+            cover_img_rotation = scanner.get_first_image(bundle).rotation
             pages = scanner.get_n_images(bundle)
             if bundle.pushed:
                 pushed_bundles.append(
@@ -57,6 +58,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
+                        "cover_angle": cover_img_rotation,
                     }
                 )
             else:
@@ -66,6 +68,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
+                        "cover_angle": cover_img_rotation,
                     }
                 )
 
@@ -155,6 +158,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         n_extra_w_data = scanner.get_n_extra_images_with_data(bundle)
         n_discard = scanner.get_n_discard_images(bundle)
         n_errors = scanner.get_n_error_images(bundle)
+        cover_img_rotation = scanner.get_first_image(bundle).rotation
+
         context = {
             "timestamp": timestamp,
             "slug": bundle.slug,
@@ -170,6 +175,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_extra_w_data": n_extra_w_data,
             "n_discard": n_discard,
             "n_errors": n_errors,
+            "cover_angle": cover_img_rotation,
         }
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)

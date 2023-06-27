@@ -14,6 +14,17 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div style="margin: 0px 0px 16px 2.5px">
+        <a class="btn btn-success" href="{% url 'scan_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to upload
+        </a>
+        <a class="btn btn-info"
+           href="{% url 'scan_bundle_thumbnails' timestamp %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to thumbnails
+        </a>
+    </div>
+    <div style="margin: 0px 0px 16px 2.5px">
         <div class="card w-75">
             <div class="card-body">
                 <div class="row">
@@ -207,7 +218,14 @@
                                             p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'extra' %}
-                                        <button class="{% if pg.info.question_list %}" btn m-1 btn-outline-info {% else %} btn m-1 btn-info {% endif %} hx-get=" {% url 'scan_nav_bundle' timestamp forloop.counter %} hx-swap="outerHTML" hx-target="#navFragment" hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}" data-bs-toggle="tooltip" data-bs-placement="top" {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
+                                        <button class="btn m-1 {% if pg.info.question_list %} btn-outline-info {% else %} btn-info {% endif %}"
+                                                hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
+                                                hx-swap="outerHTML"
+                                                hx-target="#navFragment"
+                                                hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
                                             p{{ pg.order }}
                                         </button>
                                     {% endif %}
@@ -307,5 +325,6 @@
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
+
         </script>
     {% endblock main_content %}

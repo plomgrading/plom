@@ -9,11 +9,6 @@
     Tags
 {% endblock page_heading %}
 {% block main_content %}
-    <head>
-        <link rel="stylesheet"
-              type="text/css"
-              href="{% static '/css/landing_table.css' %}">
-    </head>
     <body>
         <section>
             <div>
@@ -34,11 +29,12 @@
                 <br>
                 <h5>Papers by tags:</h5>
                 <br>
-                <table>
+                <table class="table table-striped table-bordered sortable"
+                       style="width: 95%">
                     <thead>
                         <tr>
-                            <th class="id-column">Paper ID</th>
-                            <th class="tag-column">Matching Tags</th>
+                            <th class="id-column" style="width: auto;">Paper ID</th>
+                            <th class="tag-column" style="width: auto;">Matching Tags</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,11 +58,12 @@
                 <br>
                 <h5>All tags:</h5>
                 <br>
-                <table>
+                <table class="table table-striped table-bordered sortable"
+                       style="width: 95%">
                     <thead>
                         <tr>
-                            <th class="id-column">Tags</th>
-                            <th class="tag-column">Number of uses</th>
+                            <th class="id-column" style="width: auto;">Tags</th>
+                            <th class="tag-column" style="width: auto;">Number of uses</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,4 +83,5 @@
             </div>
         </section>
     </body>
+    <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
 {% endblock main_content %}
