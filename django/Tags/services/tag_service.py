@@ -12,7 +12,7 @@ class TagService:
     specifically in ``marking_tasks.py``.  Issue #2811.
     """
 
-    def get_tag_from_id(self, tag_id: int):
+    def get_tag_from_id(self, tag_id: int) -> MarkingTaskTag:
         """Get a singular tag by its id.
 
         Args:
