@@ -23,7 +23,7 @@
                 {% endfor %}
             </p>
             <p>Used: {{ tag.task.count }} times</p>
-            <form action="{% url 'tag_edit' tag.text %}" method="post">
+            <form action="{% url 'tag_edit' tag.pk %}" method="post">
                 {% csrf_token %}
                 {{ form.as_p }}
                 <input type="submit" value="Save changes">
@@ -33,7 +33,7 @@
         <section>
             <div>
                 <a href="{% url 'tags_landing' %}">Back to all tags</a>
-                <button onclick="confirmDelete(event, '{% url 'tag_delete' tag.text %}');"
+                <button onclick="confirmDelete(event, '{% url 'tag_delete' tag.pk %}');"
                         class="delete-button"
                         style="float: right;
                                margin-right: 2%">Delete tag</button>
