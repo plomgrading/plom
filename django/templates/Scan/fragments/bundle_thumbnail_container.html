@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Natalie Balashov
 -->
 <div class="card-body">
     <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
@@ -22,6 +23,12 @@
             {% elif pg.rotation == -90 or pg.rotation == 270 %}
                 <img class="img-thumbnail thumbnail270"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
+            {% elif pg.rotation == None %}
+                <figure style="width: 100%; height: 100%; object-fit: contain;">
+                    <img class="img-thumbnail thumbnail0"
+                         src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
+                    <figcaption>no rotation</figcaption>
+                </figure>
             {% else %}
                 <p>Oh snap, rotation code broke&mdash;report a bug!</p>
             {% endif %}
