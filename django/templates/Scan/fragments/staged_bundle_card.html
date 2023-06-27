@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Natalie Balashov
 -->
 {% load static %}
 <div class="card"
@@ -13,7 +14,7 @@
             <img src="{% url 'scan_get_thumbnail' timestamp 1 %}"
                  class="border rounded-start"
                  style="max-height: 16em;
-                        transform:rotate(calc(-1 * {{ cover_angle }}deg))">
+                        transform:rotate(calc(-1 * {{ cover_angle|default_if_none:0 }}deg))">
         {% else %}
             <!-- display an animating loading thingy and refresh after a few seconds -->
             <img class="shadow-sm p-3 border rounded-start"
