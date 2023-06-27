@@ -118,19 +118,19 @@ class RubricService:
 
         for r in rubric_list.prefetch_related("user"):
             rubric_dict = {
-            "id": r.key,
-            "kind": r.kind,
-            "display_delta": r.display_delta,
-            "value": r.value,
-            "out_of": r.out_of,
-            "text": r.text,
-            "tags": r.tags,
-            "meta": r.meta,
-            "username": r.user.username,
-            "question": r.question,
-            "versions": r.versions,
-            "parameters": r.parameters,
-        }
+                "id": r.key,
+                "kind": r.kind,
+                "display_delta": r.display_delta,
+                "value": r.value,
+                "out_of": r.out_of,
+                "text": r.text,
+                "tags": r.tags,
+                "meta": r.meta,
+                "username": r.user.username,
+                "question": r.question,
+                "versions": r.versions,
+                "parameters": r.parameters,
+            }
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
