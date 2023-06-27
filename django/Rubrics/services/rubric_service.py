@@ -117,7 +117,7 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = = {
+            rubric_dict = {
             "id": r.key,
             "kind": r.kind,
             "display_delta": r.display_delta,
