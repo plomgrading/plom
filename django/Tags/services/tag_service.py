@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 from Mark.models.tasks import MarkingTaskTag
 
 
 class TagService:
-    """Class to encapsulate functions for creating and modifying tags."""
+    """Class to encapsulate functions for creating and modifying tags.
+
+    TODO: some methods are duplicated/similar in Scan services,
+    specifically in ``marking_tasks.py``.  Issue #2811.
+    """
 
     def get_tag_from_id(self, tag_id: int):
         """Get a singular tag by its id.
@@ -70,6 +75,7 @@ class TagService:
             counts.update({task_tag: task_tag.task.all().count()})
         return counts
 
+    # TODO: create_tag is defined in `marking_tasks.py`
     def delete_tag(self, tag_id: int):
         """Delete a tag by its id.
 
