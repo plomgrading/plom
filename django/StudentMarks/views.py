@@ -44,16 +44,12 @@ class StudentMarkView(ManagerRequiredView):
         """Download marks as a csv file."""
         sms = StudentMarksService()
         spec = Specification.load().spec_dict
-        student_marks = sms.get_all_marks_download()
+        student_marks = sms.get_all_students_download()
 
         response = None
 
         # create csv file headers
-        keys = ["paper"]
-        for q in range(1, spec["numberOfQuestions"] + 1):
-            keys.append("Q" + str(q) + "_mark")
-            keys.append("Q" + str(q) + "_version")
-        keys.append("total_mark")
+        keys = sms.get_csv_header(spec)
 
         with open("marks.csv", "w") as f:
             w = csv.DictWriter(f, keys)

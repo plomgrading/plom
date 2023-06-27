@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
+import arrow
+
 from Mark.models import MarkingTask, Annotation
 from Papers.models.paper_structure import Paper
+from Identify.models import PaperIDAction, PaperIDTask
 
 
 class StudentMarksService:
@@ -98,7 +101,7 @@ class StudentMarksService:
             task__in=marking_tasks
         ).count()  # TODO: .filter(newest_version=True) once implemented
 
-    def get_marks_from_paper_download(
+    def get_student_info_from_paper(
         self, paper_num: int, original: bool = False
     ) -> dict:
         """Get the marks for a paper.
@@ -112,8 +115,21 @@ class StudentMarksService:
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
+        paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
 
-        marks = {"paper": paper_num}
+        student_info = {"paper_number": paper_num}
+
+        # student info
+        if paper_id_task:
+            paper_id_action = PaperIDAction.objects.get(task=paper_id_task)
+            student_info.update(
+                {
+                    "student_id": paper_id_action.student_id,
+                    "student_name": paper_id_action.student_name,
+                }
+            )
+
+        # mark info
         total = 0
         for marking_task in marking_tasks.order_by("question_number"):
             if original:
@@ -126,21 +142,28 @@ class StudentMarksService:
                 ).first()
 
             if current_annotation:
-                marks.update(
+                student_info.update(
                     {
-                        "Q"
+                        "q"
                         + str(marking_task.question_number)
                         + "_mark": current_annotation.score,
-                        "Q"
+                        "q"
                         + str(marking_task.question_number)
                         + "_version": marking_task.question_version,
                     }
                 )
                 total += current_annotation.score
-        marks.update({"total_mark": total})
-        return marks
 
-    def get_all_marks_download(self, original: bool = False) -> list:
+        student_info.update(
+            {
+            "total_mark": total,
+            "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
+            }
+        )
+
+        return student_info
+
+    def get_all_students_download(self, original: bool = False) -> list:
         """Get the marks for all papers.
 
         Args:
@@ -150,10 +173,30 @@ class StudentMarksService:
             list: each element is a dictionary containing the information about an individual paper.
         """
         papers = Paper.objects.all()
-        marks = []
+        csv_data = []
         for paper in papers:
-            marks.append(
-                self.get_marks_from_paper_download(paper.paper_number, original)
+            csv_data.append(
+                self.get_student_info_from_paper(paper.paper_number, original)
             )
 
-        return marks
+        return csv_data
+
+    def get_csv_header(self, spec) -> list:
+        """Get the header for the csv file.
+
+        Args:
+            spec: The specification for the paper.
+
+        Returns:
+            list: The header for the csv file. Contains student info, marks,
+            version info, timestamps and warnings.
+        """
+        keys = ["student_id", "student_name", "paper_number"]
+        for q in range(1, spec["numberOfQuestions"] + 1):
+            keys.append("q" + str(q) + "_mark")
+        keys.append("total_mark")
+        for q in range(1, spec["numberOfQuestions"] + 1):
+            keys.append("q" + str(q) + "_version")
+        keys.extend(["last_update", "csv_write_time", "warnings"])
+
+        return keys
