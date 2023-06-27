@@ -114,6 +114,7 @@ class StudentMarksService:
         marking_tasks = paper_obj.markingtask_set.all()
 
         marks = {"paper": paper_num}
+        total = 0
         for marking_task in marking_tasks.order_by("question_number"):
             if original:
                 current_annotation = marking_task.annotation_set.order_by(
@@ -135,7 +136,8 @@ class StudentMarksService:
                         + "_version": marking_task.question_version,
                     }
                 )
-
+                total += current_annotation.score
+        marks.update({"total_mark": total})
         return marks
 
     def get_all_marks_download(self, original: bool = False) -> list:

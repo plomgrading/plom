@@ -53,6 +53,7 @@ class StudentMarkView(ManagerRequiredView):
         for q in range(1, spec["numberOfQuestions"] + 1):
             keys.append("Q" + str(q) + "_mark")
             keys.append("Q" + str(q) + "_version")
+        keys.append("total_mark")
 
         with open("marks.csv", "w") as f:
             w = csv.DictWriter(f, keys)
