@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
+import csv
+
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 
@@ -40,8 +42,6 @@ class StudentMarkView(ManagerRequiredView):
 
     def marks_download(request):
         """Download marks as a csv file."""
-        import csv
-
         sms = StudentMarksService()
         spec = Specification.load().spec_dict
         student_marks = sms.get_all_marks_download()
