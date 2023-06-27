@@ -86,32 +86,32 @@ class StudentMarksService:
 
         return marks
 
-    def get_n_of_question_marked(self, question_num: int) -> float:
-        """Get the percentage of a question that has been marked.
+    def get_n_of_question_marked(self, question_num: int) -> int:
+        """Get the count of how many papers have marked a question.
 
         Args:
             question_num: The question number.
 
         Returns:
-            The percentage of the question that has been marked.
+            The count of how many papers a mark for this question.
         """
         marking_tasks = MarkingTask.objects.filter(question_number=question_num)
 
         return Annotation.objects.filter(
             task__in=marking_tasks
-        ).count()  # TODO: .filter(newest_version=True) once implemented
+        ).count()  # TODO: #2820 .filter(newest_version=True) once implemented
 
     def get_student_info_from_paper(
         self, paper_num: int, original: bool = False
     ) -> dict:
-        """Get the marks for a paper.
+        """Get student info from a paper number.
 
         Args:
             paper_num: The paper number.
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            dict: keyed by string information about the paper (i.e. "Q1_version" : 2).
+            dict: keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
@@ -164,13 +164,13 @@ class StudentMarksService:
         return student_info
 
     def get_all_students_download(self, original: bool = False) -> list:
-        """Get the marks for all papers.
+        """Get the info for all students in a list for building a csv file to download.
 
         Args:
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            list: each element is a dictionary containing the information about an individual paper.
+            list: each element is a dictionary containing the information about an individual student.
         """
         papers = Paper.objects.all()
         csv_data = []
