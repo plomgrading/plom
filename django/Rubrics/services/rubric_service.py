@@ -356,14 +356,14 @@ class RubricService:
         """
         return Annotation.objects.all()
 
-    def get_rubric_as_html(self, rubric: Rubric):
+    def get_rubric_as_html(self, rubric: Rubric) -> str:
         """Gets a rubric as HTML.
 
         Args:
             rubric: a Rubric instance
 
         Returns:
-            str: HTML representation of the rubric.
+            HTML representation of the rubric.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)
