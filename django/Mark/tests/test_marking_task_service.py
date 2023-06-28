@@ -63,6 +63,10 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(q2, q3)
         self.assertNotEqual(q1, q3)
 
+        p1, q1 = mts.unpack_code("q8g9")
+        self.assertEqual(p1, 8)
+        self.assertEqual(q1, 9)
+
     def test_get_first_available_task(self):
         """
         Test MarkingTaskService.get_first_available_task()

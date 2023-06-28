@@ -125,13 +125,20 @@ class MarkingTaskService:
         """Return a tuple of (paper_number, question_number) from a task code string.
 
         Args:
-            code (str): a task code, e.g. q0001g1
+            code (str): a task code, e.g. q0001g1. Requires code to be at least 4 characters
+            long. Requires code to start with "q" and contain a "g" somewhere after the second
+            character, but not be the last character and the rest of the characters to be numeric.
         """
-        assert len(code) >= len("q0000g0")
+        assert len(code) >= len("q0g0")
         assert code[0] == "q"
-        assert code.find("g", 1) != -1
 
-        split_index = code.find("g", 1)
+        split_index = code.find("g", 2)
+
+        # g must be present
+        assert split_index != -1
+        # g cannot be the last character
+        assert split_index != len(code) - 1
+
         paper_number = int(code[1:split_index])
         question_number = int(code[split_index + 1 :])
 
