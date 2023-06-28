@@ -6,8 +6,7 @@ from django.http import FileResponse
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDService, IDReaderService, IdentifyTaskService
-from Identify.models import IDPrediction, PaperIDAction, PaperIDTask
+from Identify.services import IDService
 
 
 class ProgressIdentifyHome(ManagerRequiredView):

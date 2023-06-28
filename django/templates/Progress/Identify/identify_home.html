@@ -8,10 +8,10 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card mb-2 w-25">
-        <h4 class="p-2" style="margin-bottom: 0px;">ID Papers Scanned: {{ id_papers_count }} / {{ all_id_papers_count }}</h4>
-        <h4 class="p-2" style="margin-bottom: 0px;">
+        <h5 class="p-2" style="margin-bottom: 0px;">ID Papers Scanned: {{ id_papers_count }} / {{ all_id_papers_count }}</h5>
+        <h5 class="p-2" style="margin-bottom: 0px;">
             Papers Identified: {{ identified_papers_count }} / {{ all_id_papers_count }}
-        </h4>
+        </h5>
     </div>
     <div class="row" x-data="{idimage: ''}">
         <div class="col">
