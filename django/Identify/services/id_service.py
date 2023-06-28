@@ -35,8 +35,8 @@ class IDService:
     @transaction.atomic
     def get_identified_papers_count(self, identified_papers):
         identified_papers_count = 0
-        for i in identified_papers.values():
-            if i is not None:
+        for id_paper in identified_papers.values():
+            if id_paper is not None:
                 identified_papers_count += 1
             else:
                 identified_papers_count = identified_papers_count
