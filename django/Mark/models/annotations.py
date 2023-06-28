@@ -3,6 +3,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from Mark.models.tasks import MarkingTask
 
@@ -24,3 +25,4 @@ class Annotation(models.Model):
     marking_time = models.PositiveIntegerField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time = models.DateTimeField(default=timezone.now)

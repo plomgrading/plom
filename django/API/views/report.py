@@ -5,56 +5,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from API.services import ReassembleService
+
 from Mark.services import MarkingTaskService
 
 
 class REPspreadsheet(APIView):
     def get(self, request):
-        # TODO: q1v is question 1 version
-        # TODO: q1m is question 1 mark
-        canned = {
-            "2": {
-                "identified": True,
-                "marked": True,
-                "sid": "10130103",
-                "sname": "Vandeventer, Irene",
-                "q1v": 1,
-                "q1m": 0,
-                "q2v": 1,
-                "q2m": 1,
-                "q3v": 2,
-                "q3m": 5,
-                "last_update": "2023-05-03T07:48:13.751636+00:00",
-            },
-            "3": {
-                "identified": True,
-                "marked": True,
-                "sid": "10152155",
-                "sname": "Little, Abigail",
-                "q1v": 1,
-                "q1m": 0,
-                "q2v": 1,
-                "q2m": 2,
-                "q3v": 1,
-                "q3m": 5,
-                "last_update": "2023-05-03T07:48:13.762651+00:00",
-            },
-            "4": {
-                "identified": True,
-                "marked": True,
-                "sid": "10203891",
-                "sname": "Coleman, Ashley",
-                "q1v": 2,
-                "q1m": 5,
-                "q2v": 1,
-                "q2m": 5,
-                "q3v": 1,
-                "q3m": 5,
-                "last_update": "2023-05-03T07:48:13.775470+00:00",
-            },
-        }
+        spreadsheet_data = ReassembleService().get_spreadsheet_data()
         return Response(
-            canned,
+            spreadsheet_data,
             status=status.HTTP_200_OK,
         )
 
