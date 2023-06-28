@@ -31,7 +31,7 @@ class IDService:
             return id_image_obj
         except Image.DoesNotExist:
             return None
-    
+
     @transaction.atomic
     def get_identified_papers_count(self, identified_papers):
         identified_papers_count = 0
@@ -44,7 +44,7 @@ class IDService:
 
     @transaction.atomic
     def get_all_identified_papers(self, all_scanned_id_papers):
-        # TODO: Future needs to optimize this
+        # TODO: Needs to optimize this
         completed_id_task_list = {}
         for scanned_id_paper in all_scanned_id_papers:
             try:
