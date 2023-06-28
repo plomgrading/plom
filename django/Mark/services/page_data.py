@@ -17,21 +17,17 @@ from Papers.models import (
 
 
 class PageDataService:
-    """
-    Class to encapsulate functions for selecting page data and
-    sending it to the client.
-    """
+    """Class to encapsulate functions for selecting page data and sending it to the client."""
 
     def get_question_order(self, page, question_pages):
-        """
-        Get the order of this page in a question group. i.e.,
-        if this is the 2nd page of question 5, return 2.
+        """Get the order of this page in a question group.
+
+        i.e., if this is the 2nd page of question 5, return 2.
 
         Args:
             page: a reference to FixedPage
             question_pages: a QuerySet of FixedPages
         """
-
         page_number = page.page_number
         all_page_numbers = question_pages.values_list("page_number", flat=True)
         offset = min(all_page_numbers) - 1
@@ -39,8 +35,7 @@ class PageDataService:
 
     @transaction.atomic
     def get_question_pages_list(self, paper, question):
-        """
-        Return a list of lists containing an image public key and its hash.
+        """Return a list of lists containing an image public key and its hash.
 
         Args:
             paper (int): test-paper number
@@ -92,8 +87,7 @@ class PageDataService:
     def get_question_pages_metadata(
         self, paper, *, question=None, include_idpage=False, include_dnmpages=True
     ):
-        """
-        Return a list of metadata for all pages in a paper.
+        """Return a list of metadata for all pages in a paper.
 
         Args:
             paper (int): test-paper number
@@ -118,7 +112,6 @@ class PageDataService:
                 }
             ]
         """
-
         test_paper = Paper.objects.get(paper_number=paper)
         pages_metadata = []
 
@@ -199,13 +192,11 @@ class PageDataService:
 
     @transaction.atomic
     def get_image_path(self, pk, img_hash):
-        """
-        Return the path to a page-image from its public key and hash.
+        """Return the path to a page-image from its public key and hash.
 
         Args:
             pk (int): image's public key
             img_hash (str): image's hash
         """
-
         image = Image.objects.get(pk=pk, hash=img_hash)
         return image.image_file.path

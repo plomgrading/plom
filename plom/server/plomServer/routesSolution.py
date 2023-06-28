@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartReader
@@ -28,11 +28,9 @@ class SolutionHandler:
         q = data["question"]
         v = data["version"]
         solutionFile = self.server.getSolutionImage(q, v)
-        if solutionFile is not None:
-            return web.FileResponse(solutionFile, status=200)
-        else:
-            # cannot pass reason b/c 204 is literally NoContent (consider 4xx here?)
-            return web.Response(status=204)
+        if not solutionFile:
+            raise web.HTTPNotFound(reason=f"No solution for question {q} version {v}")
+        return web.FileResponse(solutionFile, status=200)
 
     @authenticate_by_token_required_fields(["user", "question", "version"])
     def deleteSolutionImage(self, data, request):

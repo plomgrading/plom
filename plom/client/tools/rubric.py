@@ -24,7 +24,7 @@ class CommandGroupDeltaText(CommandTool):
     def __init__(self, scene, pt, rubric):
         """Constructor for this class.
 
-        args:
+        Args:
             scene (PageScene): Plom's annotation scene.
             pt (QPointF): where to place the rubric.
             rubric (dict): must have at least these keys:
@@ -106,8 +106,11 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
-            style:
-            fontsize:
+            style (dict): various things effecting color, linewidths etc.
+            fontsize (float): size to render the rubric.
+
+        Returns:
+            None
         """
         super().__init__()
         self.pt = pt
@@ -158,7 +161,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def as_rubric(self):
-        """return as a rubric dict"""
+        """Return as a rubric dict."""
         return {
             "id": self.rubricID,
             "kind": self.kind,

@@ -58,6 +58,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+from pathlib import Path
 
 from stdiomask import getpass
 
@@ -234,16 +235,20 @@ def main():
         args.password = getpass('Please enter the "scanner" password: ')
 
     if args.command == "process":
+        scan_pdf = args.scanPDF
+        assert " " not in Path(scan_pdf).name, "File name should not have spaces"
         processScans(
-            args.scanPDF,
+            scan_pdf,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
             demo=args.demo,
             msgr=(args.server, args.password),
         )
     elif args.command == "upload":
+        bundle_name = args.bundleName
+        assert " " not in bundle_name, "Bundle name should not have spaces"
         uploadImages(
-            args.bundleName,
+            bundle_name,
             do_unknowns=args.unknowns,
             do_collisions=args.collisions,
             prompt=(not args.yes),

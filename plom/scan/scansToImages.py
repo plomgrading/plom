@@ -60,12 +60,12 @@ def generate_png_metadata(bundle_name, bundle_page):
 def add_metadata_png(filename, bundle_name, bundle_page):
     """Insert metadata into an existing png file.
 
-    args:
+    Args:
         filename (pathlib.Path/str): name of a png file to edit.
         bundle_name (str): usually the filename of the bundle.
         bundle_page (int): what page of the bundle.
 
-    returns:
+    Returns:
         None
 
     This is used to write some unique metadata into the PNG file,
@@ -79,7 +79,7 @@ def add_metadata_png(filename, bundle_name, bundle_page):
 def add_metadata_jpeg_exif(filename, bundle_name, bundle_page):
     """Insert metadata into an existing jpeg file, via EXIF fields.
 
-    raises:
+    Raises:
         ValueError: known to fail if existing file has a shorter
             ``user_comment`` field.
     """
@@ -92,12 +92,12 @@ def add_metadata_jpeg_exif(filename, bundle_name, bundle_page):
 def add_metadata_jpeg_comment(filename, bundle_name, bundle_page):
     """Insert metadata into an existing jpeg file, by appending comment.
 
-    args:
+    Args:
         filename (pathlib.Path/str): name of a jpeg file to edit.
         bundle_name (str): usually the filename of the bundle.
         bundle_page (int): what page of the bundle.
 
-    returns:
+    Returns:
         None
 
     This is used to write some unique metadata into the JPEG file,
@@ -424,13 +424,11 @@ def render_page_to_bitmap(
 
 
 def make_mucked_up_jpeg(f, outname):
-    """
-            debug_jpeg (bool): make jpegs, randomly rotated of various
-            quality settings, for debugging or demos.  Default: False.
+    """Given an input file, do horrid things to it in the name of debugging.
 
     Args:
         f (pathlib.Path): input
-        out (pathlib.Path): output file
+        outname (pathlib.Path): output file
     """
     img = pil_load_with_jpeg_exif_rot_applied(f)
 
@@ -473,7 +471,6 @@ def extractImageFromFitzPage(page, doc):
             The dict has at least the fields `width`, `height`, `image`
             and `ext`.  `d["image"]` is the raw binary data.
     """
-
     imlist = page.get_images()
     if len(imlist) > 1:
         return False, "More than one image"
@@ -500,7 +497,7 @@ def extractImageFromFitzPage(page, doc):
 
 
 def processFileToPng_w_ghostscript(fname, dest):
-    """Convert each page of pdf into png using ghostscript"""
+    """Convert each page of pdf into png using ghostscript."""
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(fname).stem.replace(" ", "_")
     dest = Path(dest)
@@ -529,7 +526,7 @@ def processFileToPng_w_ghostscript(fname, dest):
 
 
 def gamma_adjust(fn):
-    """Apply a simple gamma shift to an image"""
+    """Apply a simple gamma shift to an image."""
     subprocess.run(
         ["mogrify", "-quiet", "-gamma", "0.5", fn],
         stderr=subprocess.STDOUT,
@@ -545,6 +542,9 @@ def postProcessing(thedir, dest, skip_gamma=False):
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
         skip_gamma_shift (bool): skip the white balancing.
+
+    Returns:
+        None
     """
     thedir = Path(thedir)
     dest = Path(dest)

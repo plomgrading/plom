@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from copy import deepcopy
 from pathlib import Path
@@ -33,7 +33,7 @@ def test_spec_verify_quiet():
     s.verify()
 
 
-def test_deprecated_numberToName():
+def test_removed_numberToName():
     s = SpecVerifier.demo()
     s.spec["numberToName"] = 10
     with raises(ValueError):

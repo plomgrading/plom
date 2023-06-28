@@ -24,7 +24,8 @@ class PDFTask(HueyTask):
     # See - https://docs.djangoproject.com/en/4.1/ref/models/fields/#django.db.models.CASCADE
 
     def __str__(self):
-        return "Task Object " + str(self.paper_number)
+        """Stringify task using its related test-paper's number."""
+        return "Task Object " + str(self.paper.paper_number)
 
     def unlink_associated_pdf(self):
         print(
@@ -33,7 +34,20 @@ class PDFTask(HueyTask):
         self.file_path().unlink(missing_ok=True)
 
     def file_path(self):
-        return Path(self.pdf_file.path)
+        """Get the path of the generated PDF file.
+
+        Returns:
+            pathlib.Path | None: If the file exists, return the path. If it doesn't, return None.
+        """
+        if self.pdf_file:
+            return Path(self.pdf_file.path)
+
+    def file_display_name(self):
+        """Return a file name for displaying on the PDF builder GUI."""
+        if self.student_id:
+            return f"exam_{self.paper.paper_number:04}_{self.student_id}.pdf"
+        else:
+            return f"exam_{self.paper.paper_number:04}.pdf"
 
 
 @receiver(pre_delete, sender=Paper)

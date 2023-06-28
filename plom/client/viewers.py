@@ -128,7 +128,7 @@ class QuestionViewDialog(GroupView):
             self._buttonBox.addButton(tagButton, QDialogButtonBox.ButtonRole.ActionRole)
 
     def tags(self):
-        """If we have a marker parent then use it to manage tags"""
+        """If we have a marker parent then use it to manage tags."""
         if self.marker:
             task = f"q{self.papernum:04}g{self.question_index}"
             self.marker.manage_task_tags(task, parent=self)
@@ -183,16 +183,25 @@ class WholeTestView(QDialog):
 
 
 class SelectTestQuestion(QDialog):
-    def __init__(self, parent, info, question_index):
+    """Select paper and question number.
+
+    Args:
+        parent: the parent of this dialog
+        max_papernum (int): limit the paper number selection to this value.
+        max_question_index (int): limit the question index to this value.
+        question_index (int): which question (index) is initially selected.
+    """
+
+    def __init__(self, parent, max_papernum, max_question_index, question_index):
         super().__init__(parent)
         self.setWindowTitle("View another paper")
         flay = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, info["numberToProduce"])
+        self.tsb.setRange(1, max_papernum)
         self.tsb.setValue(1)
         flay.addRow("Select paper:", self.tsb)
         self.gsb = QSpinBox()
-        self.gsb.setRange(1, info["numberOfQuestions"])
+        self.gsb.setRange(1, max_question_index)
         self.gsb.setValue(question_index)
         flay.addRow("Select question:", self.gsb)
         self.annotations = QCheckBox("Show annotations")
@@ -290,10 +299,10 @@ class CatViewer(QDialog):
     def getNewImageFile(self, *, msg=None):
         """Erase the current stored image and try to get a new one.
 
-        args:
+        Keyword Args:
             msg (None/str): something for the cat to say.
 
-        returns:
+        Returns:
             None: but sets the `.catz` instance variable as a side effect.
         """
         self.eraseImageFile()

@@ -65,6 +65,9 @@ class BaseMessenger:
                 which ultimately receives this.
             webplom (True/False): default False, whether to connect to
                 Django-based servers.  Experimental!
+
+        Returns:
+            None
         """
         self.webplom = webplom
         if os.environ.get("WEBPLOM"):
@@ -117,7 +120,7 @@ class BaseMessenger:
         return x
 
     def force_ssl_unverified(self):
-        """This connection (can be open) does not need to verify cert SSL going forward"""
+        """This connection (can be open) does not need to verify cert SSL going forward."""
         self.verify_ssl = False
         if self.session:
             self.session.verify = False
@@ -228,7 +231,7 @@ class BaseMessenger:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
 
     def stop(self):
-        """Stop the messenger"""
+        """Stop the messenger."""
         if self.session:
             log.debug("stopping requests-session")
             self.session.close()
@@ -262,7 +265,7 @@ class BaseMessenger:
 
         The token is then used to authenticate future transactions with the server.
 
-        raises:
+        Raises:
             PlomAPIException: a mismatch between server/client versions.
             PlomExistingLoginException: user already has a token:
                 currently, we do not support getting another one.
@@ -309,9 +312,7 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def _requestAndSaveToken_webplom(self, user, pw):
-        """
-        Get an authorisation token from WebPlom.
-        """
+        """Get an authorisation token from WebPlom."""
         self.SRmutex.acquire()
         response = self.post(
             "/get_token/",
@@ -362,7 +363,6 @@ class BaseMessenger:
                 logged in to call this.  A second call will raise this.
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
-
         """
         if self.webplom:
             self._closeUser_webplom()
@@ -642,33 +642,31 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def add_single_tag(self, code, tag_text):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_text": tag_text},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code in [406, 410]:
-                raise PlomBadTagError(response.reason)
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    f"/tags/{code}",
+                    json={"user": self.user, "token": self.token, "tag_text": tag_text},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code in (406, 410):
+                    raise PlomBadTagError(response.reason)
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def remove_single_tag(self, task, tag_text):
         """Remove a tag from a task.
 
-        args:
+        Args:
             task (str): e.g., like ``q0013g1``, for paper 13 question 1.
             tag_text (str): the tag.
 
-        returns:
+        Returns:
             None
 
-        raises:
+        Raises:
             PlomAuthenticationException
             PlomConflict: no such task
         """
@@ -886,16 +884,16 @@ class BaseMessenger:
     def get_image(self, image_id, md5sum):
         """Download one image from server by its database id.
 
-        args:
+        Args:
             image_id (int): TODO: int/str?  The key into the server's
                 database of images.
             md5sum (str): the expected md5sum, just for sanity checks or
                 something I suppose.
 
-        return:
+        Returns:
             bytes: png/jpeg or whatever as bytes.
 
-        Errors/Exceptions
+        Errors/Exceptions:
             401: not authenticated
             404: no such image
             409: wrong md5sum provided
@@ -1043,7 +1041,20 @@ class BaseMessenger:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def getSolutionImage(self, question, version):
+    def getSolutionImage(self, question: int, version: int) -> BytesIO:
+        """Download the solution image for a question version.
+
+        Args:
+            question: the question number.
+            version: the version number.
+
+        Returns:
+            contents of a bitmap file.
+
+        Raises:
+            PlomAuthenticationException
+            PlomNoSolutionException
+        """
         with self.SRmutex:
             try:
                 response = self.get(
@@ -1056,6 +1067,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
+                # deprecated: new servers will 404
                 if response.status_code == 204:
                     raise PlomNoSolutionException(
                         f"Server has no solution for question {question} version {version}",
@@ -1064,6 +1076,8 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomNoSolutionException(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getUnknownPages(self):

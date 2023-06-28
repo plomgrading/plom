@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2023 Edith Coates
+
 from django.core.management.base import BaseCommand, CommandError
 
 from Preparation.services import PQVMappingService
@@ -56,9 +60,8 @@ class Command(BaseCommand):
 
         elif number_to_produce < pqvms.get_minimum_number_to_produce():
             self.stdout.write(
-                f"Supplied number-to-produce={number_to_produce} is less than the recommended minimum={min_production}. Stopping."
+                f"Warning: Supplied number-to-produce={number_to_produce} is less than the recommended minimum={min_production}."
             )
-            return
 
         self.stdout.write(
             f"Question-version map with {number_to_produce} rows generated."

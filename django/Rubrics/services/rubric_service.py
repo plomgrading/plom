@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2010-2023 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
+import html
 import logging
 
 from operator import itemgetter
@@ -16,6 +19,9 @@ from django.db import transaction
 
 from rest_framework.exceptions import ValidationError
 
+from Mark.models import Annotation
+from Mark.models.tasks import MarkingTask
+from Papers.models import Paper
 from Papers.services import SpecificationService
 from Rubrics.serializers import (
     RubricSerializer,
@@ -28,15 +34,12 @@ log = logging.getLogger("RubricServer")
 
 
 class RubricService:
-    """
-    Class to encapsulate functions for creating and modifying rubrics.
-    """
+    """Class to encapsulate functions for creating and modifying rubrics."""
 
     __valid_kinds = ("absolute", "neutral", "relative")
 
     def create_rubric(self, rubric_data):
-        """
-        Create a rubric using data submitted by a marker.
+        """Create a rubric using data submitted by a marker.
 
         Args:
             rubric_data: (dict) data for a rubric submitted by a web request.
@@ -44,7 +47,6 @@ class RubricService:
         Returns:
             Rubric: the created and saved rubric instance.
         """
-
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
@@ -66,8 +68,7 @@ class RubricService:
 
     @transaction.atomic
     def modify_rubric(self, key, rubric_data):
-        """
-        Modify a rubric.
+        """Modify a rubric.
 
         Args:
             key: (str) a sequence of ints representing
@@ -77,9 +78,8 @@ class RubricService:
             Rubric: the modified rubric instance.
 
         Exceptions:
-            ValueError: wrong "kind" or invalid rubric data
+            ValueError: wrong "kind" or invalid rubric data.
         """
-
         username = rubric_data.pop("username")
         user = User.objects.get(
             username=username
@@ -103,8 +103,7 @@ class RubricService:
         return rubric_instance
 
     def get_rubrics(self, *, question=None):
-        """
-        Get the rubrics, possibly filtered by question number
+        """Get the rubrics, possibly filtered by question number.
 
         Args:
             question: (None/str) question number or None for all.
@@ -112,7 +111,6 @@ class RubricService:
         Returns:
             list: dictionaries, one for each rubric.
         """
-
         if question is None:
             rubric_list = Rubric.objects.all()
         else:
@@ -139,6 +137,16 @@ class RubricService:
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
+
+    def get_all_rubrics(self):
+        """Get all the rubrics lazily, so that lazy filtering is possible.
+
+        See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
+
+        Returns:
+            QuerySet: lazy queryset of all rubrics.
+        """
+        return Rubric.objects.all()
 
     def init_rubrics(self):
         """Add special rubrics such as deltas and per-question specific.
@@ -244,8 +252,7 @@ class RubricService:
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
 
     def erase_all_rubrics(self):
-        """
-        Remove all rubrics, permanently deleting them.  BE CAREFUL.
+        """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
         Returns:
             int: how many rubrics were removed.
@@ -257,8 +264,7 @@ class RubricService:
         return n
 
     def get_rubric_pane(self, user, question):
-        """
-        Gets a rubric pane for a user.
+        """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
@@ -267,29 +273,25 @@ class RubricService:
         Returns:
             dict: the JSON representation of the pane.
         """
-
         pane, created = RubricPane.objects.get_or_create(user=user, question=question)
         if created:
             return {}
         return pane.data
 
     def update_rubric_pane(self, user, question, data):
-        """
-        Updates a rubric pane for a user.
+        """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
             question: int
             data: dict representing the new pane
         """
-
         pane = RubricPane.objects.get(user=user, question=question)
         pane.data = data
         pane.save()
 
     def check_rubric(self, rubric_data):
-        """
-        Check rubric data to ensure the data is consistent.
+        """Check rubric data to ensure the data is consistent.
 
         Args:
             rubric_data: (dict) data for a rubric submitted by a web request.
@@ -297,3 +299,83 @@ class RubricService:
         # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
+
+    def get_annotation_from_rubric(self, rubric: Rubric):
+        """Get the queryset of annotations that use this rubric.
+
+        Args:
+            Rubric instance
+
+        Returns:
+            Queryset: Annotation instances
+        """
+        return rubric.annotations.all()
+
+    def get_rubrics_from_annotation(self, annotation):
+        """Get the queryset of rubrics that are used by this annotation.
+
+        Args:
+            annotation: (Annotation) Annotation instance
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        return Rubric.objects.filter(annotations=annotation)
+
+    def get_rubrics_from_paper(self, paper_obj: Paper):
+        """Get the queryset of rubrics that are used by this paper.
+
+        Args:
+            paper_obj: Paper instance
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
+        annotations = Annotation.objects.filter(task__in=marking_tasks)
+        rubrics = Rubric.objects.filter(annotations__in=annotations)
+        return rubrics
+
+    def get_rubrics_from_user(self, username: str):
+        """Get the queryset of rubrics used by this user.
+
+        Args:
+            username: username of the user
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        user = User.objects.get(username=username)
+        return Rubric.objects.filter(user=user)
+
+    def get_all_annotations(self):
+        """Gets all annotations.
+
+        Returns:
+            QuerySet: lazy queryset of all rubrics.
+        """
+        return Annotation.objects.all()
+
+    def get_rubric_as_html(self, rubric: Rubric) -> str:
+        """Gets a rubric as HTML.
+
+        Args:
+            rubric: a Rubric instance
+
+        Returns:
+            HTML representation of the rubric.
+        """
+        text = html.escape(rubric.text)
+        display_delta = html.escape(rubric.display_delta)
+        return f"""
+            <table style="color:#FF0000;">
+                <tr>
+                    <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
+                        <b>{display_delta}</b>
+                    </td>
+                    <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
+                        {text}
+                    </td>
+                </tr>
+            </table>
+        """

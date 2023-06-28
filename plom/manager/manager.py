@@ -9,6 +9,7 @@
 # Copyright (C) 2022 Natalie Balashov
 
 from collections import defaultdict
+import html
 import imghdr
 import logging
 import os
@@ -59,7 +60,7 @@ import plom.client.icons
 
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
-from plom.client.useful_classes import AddRemoveTagDialog
+from plom.client.tagging import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client.downloader import Downloader
 from plom.client.about_dialog import show_about_dialog
@@ -103,7 +104,7 @@ log = logging.getLogger("manager")
 
 
 class UserDialog(QDialog):
-    """Simple dialog to enter username and password"""
+    """Simple dialog to enter username and password."""
 
     def __init__(self, parent, title, *, name=None):
         super().__init__(parent)
@@ -379,6 +380,9 @@ class Manager(QWidget):
             server (str/None):
             user (str/None):
             password (str/None):
+
+        Returns:
+            None
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
@@ -578,10 +582,9 @@ class Manager(QWidget):
         self.initReviewTab()
         self.initSolutionTab()
 
-    # -------------------
     def getTPQV(self):
         info = self.msgr.get_spec()
-        self.max_papers = info["numberToProduce"]
+        self.max_papernum = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
@@ -1236,7 +1239,7 @@ class Manager(QWidget):
         uvw = UnknownViewWindow(
             self,
             [pagedatum],
-            [self.max_papers, self.numberOfPages, self.qlabels],
+            [self.max_papernum, self.numberOfPages, self.qlabels],
             iDict,
         )
         if uvw.exec() == QDialog.DialogCode.Accepted:
@@ -1677,7 +1680,7 @@ class Manager(QWidget):
                 f"Spreadsheet written to {filename} but grading is not complete.",
                 info="Either some papers are unidentified or they are not fully marked.",
                 info_pre=False,
-            ).exec_()
+            ).exec()
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()
@@ -1802,7 +1805,7 @@ class Manager(QWidget):
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
             pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
-        certainty = self.ui.predictionTW.item(idx[0].row(), 4)
+        certainty = self.ui.predictionTW.item(idx[0].row(), 5)
         if certainty is not None:
             certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
 
@@ -1881,19 +1884,19 @@ class Manager(QWidget):
                 f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
-            if msg.exec_() == QMessageBox.StandardButton.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
         if (
-            SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
+            SimpleQuestion(self, "Stop running process", "Are you sure?").exec()
             == QMessageBox.StandardButton.No
         ):
             return
         msg = self.msgr.id_reader_kill()
         txt = "Stopped background ID reader process.  Server response:"
-        InfoMsg(self, txt, info=msg).exec_()
+        InfoMsg(self, txt, info=msg).exec()
 
     def run_predictor(self):
         try:
@@ -1957,8 +1960,7 @@ class Manager(QWidget):
 
         # TODO: Issue #1745
         # TODO: all existing papers or scanned only?
-        s = self.msgr.get_spec()
-        alltests = range(1, s["numberToProduce"] + 1)
+        alltests = range(1, self.max_papernum + 1)
 
         r = 0
         for t in alltests:
@@ -2299,7 +2301,7 @@ class Manager(QWidget):
 
         # maps zero to special text
         self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
-        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
+        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papernum)
 
         self.ui.questionCB.addItem("*")
         for q in self.qlabels:
@@ -2504,7 +2506,8 @@ class Manager(QWidget):
                         log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    WarnMsg(self, f"Tag not acceptable: {e}").exec()
+                    errmsg = html.escape(str(e))
+                    WarnMsg(self, "Tag not acceptable", info=errmsg).exec()
         elif cmd == "remove":
             for tmp in ri[::mod]:
                 r = tmp.row()
@@ -2512,7 +2515,14 @@ class Manager(QWidget):
                 question = int(self.ui.reviewTW.item(r, 1).text())
                 task = f"q{paper:04}g{question}"
                 log.debug('%s: removing tag "%s"', task, new_tag)
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        self,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
         else:
             # do nothing - but shouldn't arrive here.
             pass
@@ -2532,18 +2542,18 @@ class Manager(QWidget):
     def manage_task_tags(self, paper_num, question, parent=None):
         """Manage the tags of a task.
 
-        args:
+        Args:
             paper_num (int/str):
             question (int/str):
 
-        keyword args:
+        Keyword Args:
             parent (Window/None): Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
                 would be the visual parents of this dialog.
 
-        returns:
+        Returns:
             list: the current tags of paper/question.  Note even if the
             dialog is cancelled, this will be updated (as someone else
             could've changed tags).
@@ -2565,10 +2575,18 @@ class Manager(QWidget):
                         log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
                     except PlomBadTagError as e:
-                        WarnMsg(self, f"Tag not acceptable: {e}").exec()
+                        errmsg = html.escape(str(e))
+                        WarnMsg(self, "Tag not acceptable", info=errmsg).exec()
             elif cmd == "remove":
                 log.debug('%s: removing tag "%s"', task, new_tag)
-                self.msgr.remove_single_tag(task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomConflict as e:
+                    InfoMsg(
+                        self,
+                        "Tag was not present, perhaps someone else removed it?",
+                        info=html.escape(str(e)),
+                    ).exec()
             else:
                 # do nothing - but shouldn't arrive here.
                 pass

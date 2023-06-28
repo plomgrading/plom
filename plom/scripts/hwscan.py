@@ -124,9 +124,7 @@ def get_parser():
     spP.add_argument(
         "-q",
         "--question",
-        nargs=1,
         metavar="N",
-        action="store",
         help="""
             Which question(s) are answered in file.
             You can pass a single integer, or a list like `-q [1,2,3]`
@@ -241,12 +239,10 @@ def main():
     if args.command == "submitted":
         print_who_submitted_what(args.directory, msgr=(args.server, args.password))
     elif args.command == "process":
-        questions = args.question[0]
-        # args passes '[q]' rather than just 'q'
         processHWScans(
             args.hwPDF,
             args.studentid,
-            questions,
+            args.question,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
             bundle_name=args.bundle_name,

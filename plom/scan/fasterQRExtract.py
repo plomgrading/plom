@@ -16,7 +16,7 @@ from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
 def findCorner(qr, dim):
-    """Determines the x-y coordinates and relative location of the given QR code's approximate centre
+    """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
         qr (zxingcpp.Result): object containing the information stored in the QR code
@@ -57,19 +57,23 @@ def findCorner(qr, dim):
     return NS + EW, mx, my
 
 
-def QRextract(image, try_harder=True):
+def QRextract(image, *, try_harder=True, rotation=0):
     """Decode and return QR codes in an image.
 
-    args:
+    Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
+
+    Keyword Args:
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
             Details below.
+        rotation (int): Rotate the image by 90, -90, 180 or 270 degrees
+            counterclockwise prior to reading the QR codes. Defaults to 0.
 
-    returns:
+    Returns:
         dict/None: Keys "NW", "NE", "SW", "SE", each with a dict containing
             a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
             QR codes (one string per code) and the x-y coordinates of the QR code.
@@ -93,6 +97,10 @@ def QRextract(image, try_harder=True):
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
+
+    if rotation != 0:
+        assert rotation in (-90, 90, 270, 180)
+        image = image.rotate(rotation, expand=True)
 
     # PIL does lazy loading.  Force loading now so we see errors now.
     # Otherwise, zxing-cpp might hide error messages, Issue #2597
@@ -149,7 +157,7 @@ def QRextract(image, try_harder=True):
 def QRextract_legacy(image, write_to_file=True, try_harder=True):
     """Decode QR codes in an image, return or save them in .qr file.
 
-    args:
+    Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
@@ -163,7 +171,7 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
             failure rates in the synthetic images used in CI testing.
             Details blow.
 
-    returns:
+    Returns:
         dict/None: Keys "NW", "NE", "SW", "SE", each with a list of the
             strings extracted from QR codes, one string per code.  The
             list is empty if no QR codes found in that corner.

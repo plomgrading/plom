@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -35,11 +36,10 @@ qt_api = "pyqt6"
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
 # TODO: think about: H020, H025, H030, H031
-# H037: vaguely false positives from "class" inside if-else
-ignore="H006,H013,H020,H021,H023,H025,H030,H031,H037"
+ignore="H006,H013,H020,H021,H023,H025,H030,H031"
 # indent=2
 
 [tool.pydocstyle]
 convention = "google"
 # TODO: many of these should be fixed instead of ignored!
-add-ignore = "D100,D101,D102,D103,D104,D107"
+add-ignore = "D100,D101,D102,D103,D104,D107,D106"

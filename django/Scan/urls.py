@@ -9,10 +9,12 @@ from Scan.views import (
     BundleSplittingProgressView,
     BundleSplittingUpdateView,
     ManageBundleView,
+    BundleThumbnailView,
     UpdateQRProgressView,
     GetBundleView,
     GetBundleNavFragmentView,
     GetBundleImageView,
+    GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     RemoveBundleView,
     ReadQRcodesView,
@@ -29,6 +31,8 @@ from Scan.views import (
     ChangeCollisionImageState,
     DiscardImageType,
     ExtraliseImageType,
+    RotateImageClockwise,
+    RotateImageCounterClockwise,
 )
 
 
@@ -43,6 +47,16 @@ urlpatterns = [
         "nav/<timestamp>/<int:index>/",
         GetBundleNavFragmentView.as_view(),
         name="scan_nav_bundle",
+    ),
+    path(
+        "thumbnails/<timestamp>/<int:index>",
+        GetBundleThumbnailView.as_view(),
+        name="scan_get_thumbnail",
+    ),
+    path(
+        "thumbnails/<timestamp>",
+        BundleThumbnailView.as_view(),
+        name="scan_bundle_thumbnails",
     ),
     path(
         "split/<timestamp>/",
@@ -144,5 +158,15 @@ urlpatterns = [
         "extralise/<timestamp>/<int:index>/",
         ExtraliseImageType.as_view(),
         name="extralise_image",
+    ),
+    path(
+        "rotate/clockwise/<timestamp>/<int:index>/",
+        RotateImageClockwise.as_view(),
+        name="rotate_img_cw",
+    ),
+    path(
+        "rotate/counterclockwise/<timestamp>/<int:index>/",
+        RotateImageCounterClockwise.as_view(),
+        name="rotate_img_ccw",
     ),
 ]

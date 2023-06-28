@@ -238,7 +238,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 if the_tag not in the_tags:
                     the_tags.append(the_tag)
                     messenger.add_single_tag(task, the_tag)
-            print(f"TODO: skipped: Tagged task with: {the_tags}")
 
 
 def build_random_rubrics(question, *, username, messenger):

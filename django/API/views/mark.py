@@ -447,6 +447,13 @@ class TagsFromCodeView(APIView):
                 return Response(status=status.HTTP_200_OK)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+        except ValidationError as e:
+            # TODO: why not?
+            # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            # TODO: yuck but works and looks better than str(e) for ValidationError
+            (r.reason_phrase,) = e.args
+            return r
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
@@ -460,7 +467,7 @@ class TagsFromCodeView(APIView):
             200: OK response
 
         Raises:
-            406: Invalid task code or task does not have tag
+            409: Invalid task code or task does not have tag
             404: Task is not found
         """
         mts = MarkingTaskService()
@@ -471,11 +478,15 @@ class TagsFromCodeView(APIView):
             the_task = mts.get_task_from_code(code)
             the_tag = mts.get_tag_from_text(tag_text)
             mts.remove_tag_from_task(the_tag, the_task)
-            return Response(status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABE)
+            r = Response(status=status.HTTP_409_CONFLICT)
+            r.reason_phrase = str(e)
+            return r
         except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
+        return Response(status=status.HTTP_200_OK)
 
 
 class GetAllTags(APIView):

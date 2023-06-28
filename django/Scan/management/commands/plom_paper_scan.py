@@ -123,7 +123,6 @@ class Command(BaseCommand):
         sp_map.add_argument(
             "-q",
             "--question",
-            nargs=1,
             metavar="N",
             help="""
                 Which question(s) are answered in file.
@@ -150,10 +149,7 @@ class Command(BaseCommand):
 
         if opt["command"] == "map":
             if opt["question"] is None:
-                questions = "all"
-            else:
-                questions = opt["question"][0]
-
+                opt["question"] = "all"
             self.map_bundle_pages(
-                opt["bundle_name"], papernum=opt["papernum"], questions=questions
+                opt["bundle_name"], papernum=opt["papernum"], questions=opt["question"]
             )

@@ -455,9 +455,9 @@ class StagingSpecificationService:
         return valid_dict
 
     def validate_specification(self, verbose=True):
-        """
-        Verify the specification using Plom-classic's specVerifier. If it passes, return the validated spec.
-        Also, assign private seed and public code.
+        """Verify the specification, assign public/private codes, return validated spec.
+
+        Uses the original SpecVerifier.
         """
         spec_dict = self.get_staging_spec_dict()
         spec_w_default_quest_labels = self.insert_default_question_labels(

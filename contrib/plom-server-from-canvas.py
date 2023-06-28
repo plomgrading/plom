@@ -104,7 +104,6 @@ def make_toml(assignment, marks, *, server_dir="."):
     numberOfPages = len(marks) + 1
 
     numberToProduce = -1
-    numberToName = -1
     # note potentially useful
     # assignment.needs_grading_count, assignment.get_gradeable_students()
 
@@ -116,7 +115,6 @@ def make_toml(assignment, marks, *, server_dir="."):
         numberOfVersions = {numberOfVersions}
         numberOfPages = {numberOfPages}
         numberToProduce = {numberToProduce}
-        numberToName = {numberToName}
         numberOfQuestions = {numberOfQuestions}
         idPage = 1
         """

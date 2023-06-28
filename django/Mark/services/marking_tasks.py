@@ -2,16 +2,18 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 import pathlib
 import imghdr
-import re
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+
+from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
@@ -131,18 +133,25 @@ class MarkingTaskService:
 
         return paper_number, question_number
 
-    def get_task_from_code(self, code):
+    def get_task_from_code(self, code: str) -> MarkingTask:
         """Get a marking task from its code.
 
-        Arg:
-            code: str, a unique string that includes the paper number and question number.
+        Args:
+            code: a unique string that includes the paper number and question number.
+
+        Returns:
+            The marking task object the matches the code.
+
+        Raises:
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         try:
             paper_number, question_number = self.unpack_code(code)
             return self.get_latest_task(paper_number, question_number)
         except AssertionError:
             raise ValueError(f"{code} is not a valid task code.")
-        except MarkingTask.DoesNotExist:
+        except ObjectDoesNotExist:
             raise RuntimeError(f"Task {code} does not exist.")
 
     def get_user_tasks(self, user, question=None, version=None):
@@ -257,6 +266,7 @@ class MarkingTaskService:
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
         editions_so_far = Annotation.objects.filter(task=task).count()
+
         annotation = Annotation(
             edition=editions_so_far + 1,
             score=score,
@@ -266,7 +276,15 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
+
         annotation.save()
+
+        # link to rubric object
+        for item in data["sceneItems"]:
+            if item[0] == "GroupDeltaText":
+                rubric = Rubric.objects.get(key=item[3])
+                rubric.annotations.add(annotation)
+                rubric.save()
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
@@ -444,17 +462,7 @@ class MarkingTaskService:
         Returns:
             str: sanitized version of the text.
         """
-
         return tag_text.strip()
-
-    def is_tag_text_valid(self, text):
-        """Return True if the tag text passes our validation checks, False otherwise.
-
-        Args:
-            text: str, tag text. Assumes it's sanitized.
-        """
-        # just checking if there are invalid characters for now
-        return re.match(r"([-_+;:@]|\w)+", text) is not None
 
     def create_tag(self, user, tag_text):
         """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
@@ -465,19 +473,17 @@ class MarkingTaskService:
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
+
+        Raises:
+            ValidationError: tag contains invalid characters.
         """
-
-        if self.is_tag_text_valid(tag_text):
-            # allowable characters: - _ + ; : @ and any alphanumeric character
-            new_tag = MarkingTaskTag(
-                user=user,
-                text=tag_text,
+        if not is_valid_tag_text(tag_text):
+            raise ValidationError(
+                f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-            new_tag.save()
-
-            return new_tag
-        else:
-            raise ValidationError(f"Invalid tag text: {tag_text}")
+        new_tag = MarkingTaskTag(user=user, text=tag_text)
+        new_tag.save()
+        return new_tag
 
     def add_tag(self, tag, task):
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
@@ -515,4 +521,4 @@ class MarkingTaskService:
             tag.task.remove(task)
             tag.save()
         except MarkingTask.DoesNotExist:
-            raise ValueError(f"Task {code} does not have tag {tag.text}")
+            raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')

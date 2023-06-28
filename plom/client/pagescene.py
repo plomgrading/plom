@@ -320,7 +320,8 @@ class UnderlyingImages(QGraphicsItemGroup):
                 raise RuntimeError(f"Could not read an image from {data['filename']}")
             # after metadata rotations, we might have a further DB-level rotation
             rot = QTransform()
-            rot.rotate(data["orientation"])
+            # 90 means CCW, but we have a minus sign b/c of a y-downward coordsys
+            rot.rotate(-data["orientation"])
             pix = pix.transformed(rot)
             img = QGraphicsPixmapItem(pix)
             # this gives (only) bilinear interpolation
