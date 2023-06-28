@@ -90,7 +90,7 @@ urlpatterns = [
         name="progress_identify_home",
     ),
     path(
-        "identify/overview/id_img/<int:img_pk>",
+        "identify/overview/id_img/<int:image_pk>",
         IDImageView.as_view(),
         name="ID_img",
     ),

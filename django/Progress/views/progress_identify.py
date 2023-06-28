@@ -6,8 +6,8 @@ from django.http import FileResponse
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDService, IDReaderService
-from Identify.models import IDPrediction
+from Identify.services import IDService, IDReaderService, IdentifyTaskService
+from Identify.models import IDPrediction, PaperIDAction, PaperIDTask
 
 
 class ProgressIdentifyHome(ManagerRequiredView):
@@ -16,26 +16,27 @@ class ProgressIdentifyHome(ManagerRequiredView):
 
         ids = IDService()
         all_id_papers = ids.get_all_id_papers()
-        identified_papers = ids.get_identified_papers()
-        unidentified_papers = ids.get_all_unidentified_papers()
+        id_papers = ids.get_id_papers()
+        no_id_papers = ids.get_no_id_papers()
 
-        data = IDReaderService().get_ID_predictions()
-        for i in data:
-            print(i)
+        identified_papers = ids.get_all_identified_papers(id_papers)
+        identified_papers_count = ids.get_all_identifier_count(identified_papers)
 
         context.update(
             {
                 "all_id_papers": all_id_papers,
                 "all_id_papers_count": all_id_papers.count(),
-                "identified_papers_count": identified_papers.count(),
-                "unidentified_papers_count": unidentified_papers.count(),
-                "identified": False,
+                "id_papers": id_papers,
+                "id_papers_count": id_papers.count(),
+                "no_id_papers_count": no_id_papers.count(),
+                "identified_papers": identified_papers,
+                "identified_papers_count": identified_papers_count,
             }
         )
         return render(request, "Progress/Identify/identify_home.html", context)
 
 
 class IDImageView(ManagerRequiredView):
-    def get(self, request, img_pk):
-        id_img = IDService().get_id_image_object(img_pk=img_pk)
+    def get(self, request, image_pk):
+        id_img = IDService().get_id_image_object(image_pk=image_pk)
         return FileResponse(id_img.image_file)
