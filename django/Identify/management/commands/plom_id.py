@@ -25,9 +25,17 @@ class Command(BaseCommand):
 
     python3 manage.py plom_id idbox (top) (bottom) (left) (right)
     python3 manage.py plom_id idreader
+    python3 manage.py plom_id testing
     """
 
     help = "Extract the ID box from all papers."
+
+    def testing(self):
+        test_image = Path("test_image.png")
+        largest_box = self.get_largest_box(test_image)
+        cv2.imwrite("largest_box_image.png", largest_box)
+        ID_box = self.get_digit_box(test_image)
+        cv2.imwrite("output_image.png", ID_box)
 
     def get_id_box(self, top, bottom, left, right):
         idservice = IDReaderService()
@@ -81,62 +89,55 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_digit_box(self, filename):
-        """Find the box that includes the student ID for extracting the digits.
+    def get_largest_box(self, filename):
+        # TODO: this function should go into ImageProcessor service
+        """Helper function for extracting the largest box from an image.
 
         Args:
-            filename (str/pathlib.Path): the image of the ID page.
+            filename (str/pathlib.Path): the image where the largest box is extracted from.
 
         Returns:
-            None: in case of some sort of error, or
-            numpy.ndarray: The processed image that includes the student
-                ID digits.
+            numpy.ndarray | None: the image, cropped to only include the contour region
+            or None if an error occurred.
         """
-        cropped_image = cv2.imread(str(filename))
+        src_image = cv2.imread(str(filename))
         # Process the image so as to find the contours.
         # Grey, Blur and Edging are standard processes for text detection.
-        # TODO: I must make these better formatted.
-        grey_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+        grey_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2GRAY)
         blurred_image = cv2.GaussianBlur(grey_image, (5, 5), 0)
         edged_image = cv2.Canny(blurred_image, 50, 200, 255)
 
-        # Find the contours to find the black bordered box.
         contours = cv2.findContours(
-            edged_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            edged_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
         contour_lists = imutils.grab_contours(contours)
         sorted_contour_list = sorted(contour_lists, key=cv2.contourArea, reverse=True)
-        id_box_contour = None
 
         for contour in sorted_contour_list:
-            # Approximate the contour.
             perimeter = cv2.arcLength(contour, True)
+            # Approximate the contour
             third_order_moment = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
-
+            # check that the contour is a quadrilateral
             if len(third_order_moment) == 4:
-                id_box_contour = third_order_moment
+                box_contour = third_order_moment
                 break
+        if box_contour is not None:
+            return four_point_transform(src_image, box_contour.reshape(4, 2))
 
-        # if whatever the above is doing failed, then abort
-        if id_box_contour is None:
+    def get_digit_box(self, filename):
+        template_id_box_width = 1250
+        id_box = self.get_largest_box(filename)
+        height, width, _ = id_box.shape
+        if height < 32 or width < 32:  # id_box is too small
             return None
-
-        # TODO: Why is this this not using edged_image
-        # warped = four_point_transform(edged_image, id_box_contour.reshape(4, 2))
-        output = four_point_transform(cropped_image, id_box_contour.reshape(4, 2))
-
-        # TODO = add in some dimensions check = this box should not be tiny.
-        if output.shape[0] < 32 or output.shape[1] < 32:
-            return None
-
-        # TODO: Remove magic number creation.
-        # note that this width of 1250 is defined by the IDbox template
-        new_width = int(output.shape[0] * 1250.0 / output.shape[1])
-        scaled = cv2.resize(output, (1250, new_width), cv2.INTER_CUBIC)
-
-        # the digit box numbers again come from the IDBox template and numerology
-        ID_box = scaled[30:350, 355:1220]
-        return ID_box
+        # scale height to retain aspect ratio of image
+        new_height = int(template_id_box_width * height / width)
+        scaled_id_box = cv2.resize(
+            id_box, (template_id_box_width, new_height), cv2.INTER_CUBIC
+        )
+        # extract the top strip of the IDBox template
+        # which only contains the digits
+        return scaled_id_box[25:130, 355:1230]
 
     def get_digit_images(self, ID_box, num_digits):
         """Find the digit images and return them in a list.
@@ -339,6 +340,7 @@ class Command(BaseCommand):
                 `python manage.py auto_ider`.
             """,
         )
+        sp.add_parser("testing")
 
     def handle(self, *args, **options):
         if options["command"] == "idbox":
@@ -347,5 +349,7 @@ class Command(BaseCommand):
             )
         elif options["command"] == "idreader":
             self.run_id_reader()
+        elif options["command"] == "testing":
+            self.testing()
         else:
             self.print_help("manage.py", "plom_id")
