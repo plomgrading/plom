@@ -60,7 +60,9 @@ class KnowifyImageType(ScannerRequiredView):
             }
         )
 
-        page_labels = [f"page {n+1}" for n in range(SpecificationService().get_n_pages())]
+        page_labels = [
+            f"page {n+1}" for n in range(SpecificationService().get_n_pages())
+        ]
         paper_numbers = scanner.get_bundle_paper_numbers(bundle)
         all_paper_numbers = paper_info.which_papers_in_database()
         context.update(
@@ -79,7 +81,7 @@ class KnowifyImageType(ScannerRequiredView):
         extra_page_data = request.POST
 
         print("Data = ", extra_page_data)
-        
+
         if extra_page_data.get("bundleOrArbitrary", "off") == "on":
             paper_number = extra_page_data.get("bundlePaper", None)
         else:

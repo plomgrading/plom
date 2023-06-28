@@ -1060,6 +1060,36 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_unknown_pages_info(bundle_obj)
 
+    @transaction.atomic
+    def get_bundle_discard_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        pages = []
+        for img in (
+            bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
+            .prefetch_related("discardstagingimage")
+            .all()
+            .order_by("bundle_order")
+        ):
+            pages.append(
+                {
+                    "status": img.image_type,
+                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "rotation": img.rotation,
+                    "reason": img.discardstagingimage.discard_reason,
+                }
+            )
+        return pages
+
+    @transaction.atomic
+    def get_bundle_discard_pages_info_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_discard_pages_info(bundle_obj)
+
 
 # ----------------------------------------
 # factor out the huey tasks.

@@ -40,6 +40,14 @@ class Command(BaseCommand):
             tabulate(bundle_page_list, headers="keys", tablefmt="simple_outline")
         )
 
+    def list_discarded_pages(self, bundle_name):
+        scanner = ScanService()
+        bundle_page_list = scanner.get_bundle_discard_pages_info_cmd(bundle_name)
+
+        self.stdout.write(
+            tabulate(bundle_page_list, headers="keys", tablefmt="simple_outline")
+        )
+
     # def assign_extra_page(
     #     self, username, bundle_name, index, paper_number, question_list
     # ):
@@ -59,6 +67,7 @@ class Command(BaseCommand):
             description="Assign an extra page to a paper and questions.",
         )
         sp.add_parser("unknowns", help="List the unknown pages in the bundle.")
+        sp.add_parser("discards", help="List the discarded pages in the bundle.")
         sp.add_parser(
             "missing", help="List the missing known paper-numbers in the bundle."
         )
@@ -77,7 +86,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if options["command"] == "unknowns":
+        if options["command"] == "discards":
+            self.list_discarded_pages(options["bundle"])
+        elif options["command"] == "unknowns":
             self.list_unknown_pages(options["bundle"])
         elif options["command"] == "missing":
             self.list_missing_paper_page_numbers(options["bundle"])
