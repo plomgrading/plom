@@ -222,8 +222,8 @@
                                 <div>
                                     <a class="btn btn-outline-success text-center w-100 mb-3"
                                        hx-get="{% url 'knowify_image' timestamp index %}"
-                                       hx-replace="#navFragment"
-                                       hx-confirm="Are you sure you wish to set this discarded page as a known page?">
+                                       hx-target="#navFragment"
+                                       hx-confirm="Are you sure you wish to set this unknown page as a known page?">
                                         Cast to known page
                                     </a>
                                 </div>

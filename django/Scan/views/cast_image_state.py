@@ -37,7 +37,6 @@ class KnowifyImageType(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
     def get(self, request, timestamp, index):
-
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -60,10 +59,8 @@ class KnowifyImageType(ScannerRequiredView):
                 "current_page": current_page,
             }
         )
-        
-        page_labels = [
-                f"p.{n+1}" for n in range(SpecificationService().get_n_pages())
-        ]
+
+        page_labels = [f"page {n+1}" for n in range(SpecificationService().get_n_pages())]
         paper_numbers = scanner.get_bundle_paper_numbers(bundle)
         all_paper_numbers = paper_info.which_papers_in_database()
         context.update(
@@ -81,6 +78,8 @@ class KnowifyImageType(ScannerRequiredView):
 
         extra_page_data = request.POST
 
+        print("Data = ", extra_page_data)
+        
         if extra_page_data.get("bundleOrArbitrary", "off") == "on":
             paper_number = extra_page_data.get("bundlePaper", None)
         else:
@@ -92,24 +91,23 @@ class KnowifyImageType(ScannerRequiredView):
             return HttpResponse(
                 """<div class="alert alert-danger">Invalid paper number</div>"""
             )
-        
-        page_list = [int(p) for p in extra_page_data.get("pages", [])]
-        if len(page_list) != 1:
+
+        try:
+            page_number = int(extra_page_data.get("pageSelect", None))
+        except ValueError:
             return HttpResponse(
-                """<div class="alert alert-danger">Exactly one page</div>"""
+                """<div class="alert alert-danger">Select a page</div>"""
             )
-        page_number = page_list[0]
 
         try:
             ScanCastService().knowify_image_from_bundle_timestamp_and_order(
                 request.user, timestamp, index, paper_number, page_number
             )
         except ValueError as err:
-            return HttpResponse(
-                f"""<div class="alert alert-danger">{err}</div>"""
-            )
-            
+            return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
+
         return HttpResponseClientRefresh()
+
 
 class ExtraliseImageType(ScannerRequiredView):
     """Extralise a particular StagingImage type."""

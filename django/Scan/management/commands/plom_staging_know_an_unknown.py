@@ -29,7 +29,7 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(f"Papers with missing pages in bundle {bundle_name}:")
-        for (pn, pg_list) in missing_papers_pages:
+        for pn, pg_list in missing_papers_pages:
             self.stdout.write(f"\t{pn}: {pg_list}")
 
     def list_unknown_pages(self, bundle_name):
