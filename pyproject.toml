@@ -123,6 +123,31 @@ packages = [
     "plom.scripts",
 ]
 
+# somewhat deprecated?  not supposed to package things into share?
+# https://blog.raek.se/2022/10/31/os-integration-files-in-python-packages/u
+[tool.setuptools.data-files]
+"share/plom" = [
+    "plom/templateTestSpec.toml",
+    "plom/templateSolutionSpec.toml",
+    "plom/templateUserList.csv",
+    "plom/demoClassList.csv",
+    "plom/demo_rubrics.toml",
+    "plom/create/extra_pages_src.tex"
+]
+# TODO: move up from plom/ in the tree: Issue #2821
+"share/plom/testTemplates" = ["plom/testTemplates/*"]
+"share/applications" = ["org.plomgrading.PlomClient.desktop"]
+"share/metainfo" = ["org.plomgrading.PlomClient.metainfo.xml"]
+"share/icons/hicolor/128x128/apps/" = ["org.plomgrading.PlomClient.png"]
+# "share/plom/contrib", ["contrib/**/*"]
+"share/plom/contrib" = [
+            "contrib/README.txt",
+            "contrib/plom-return_codes_to_canvas_csv.py",
+            "contrib/plom-write_grades_to_canvas_csv.py",
+            "contrib/upload_hw_from_zip_of_jpegs.py",
+            "contrib/plom-push-to-canvas.py"
+]
+
 [tool.setuptools.dynamic]
 version = {attr = 'plom.__version__'}
 
