@@ -2,14 +2,15 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import csv
+from io import StringIO
 
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from StudentMarks.services import StudentMarksService
-from SpecCreator.services import StagingSpecificationService
 from Papers.models import Specification
+from SpecCreator.services import StagingSpecificationService
+from StudentMarks.services import StudentMarksService
 
 
 class StudentMarkView(ManagerRequiredView):
@@ -51,14 +52,16 @@ class StudentMarkView(ManagerRequiredView):
         # create csv file headers
         keys = sms.get_csv_header(spec)
 
-        with open("marks.csv", "w") as f:
-            w = csv.DictWriter(f, keys)
-            w.writeheader()
-            w.writerows(student_marks)
+        f = StringIO()
 
-        with open("marks.csv", "r") as f:
-            response = HttpResponse(f, content_type="text/csv")
-            response["Content-Disposition"] = "attachment; filename=marks.csv"
+        w = csv.DictWriter(f, keys)
+        w.writeheader()
+        w.writerows(student_marks)
+
+        f.seek(0)
+
+        response = HttpResponse(f, content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="marks.csv"'
 
         return response
 
