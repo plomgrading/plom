@@ -67,6 +67,7 @@ class ReassembleService:
         elif latest_annotation:
             return latest_annotation
         else:
+            # TODO: default to the current date for the time being
             return timezone.now()
 
     def paper_spreadsheet_dict(self, paper):
