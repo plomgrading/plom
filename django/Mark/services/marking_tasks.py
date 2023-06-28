@@ -127,9 +127,9 @@ class MarkingTaskService:
         Args:
             code (str): a task code, e.g. q0001g1
         """
-        assert len(code) == len("q0000g0")
+        assert (len(code) == len("q0000g0")) or (len(code) == len("q0000g00"))
         paper_number = int(code[1:5])
-        question_number = int(code[-1])
+        question_number = int(code[6:])
 
         return paper_number, question_number
 

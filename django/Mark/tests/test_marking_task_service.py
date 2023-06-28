@@ -36,6 +36,19 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(paper_number, 1)
         self.assertEqual(question_number, 2)
 
+    def test_unpack_code_additional_tests(self):
+        mts = MarkingTaskService()
+
+        _, q1 = mts.unpack_code("q0001g2")
+        _, q2 = mts.unpack_code("q0001g02")
+
+        self.assertEqual(q1, q2)
+
+        _, q1 = mts.unpack_code("q0001g2")
+        _, q2 = mts.unpack_code("q0001g22")
+
+        self.assertNotEqual(q1, q2)
+
     def test_get_first_available_task(self):
         """
         Test MarkingTaskService.get_first_available_task()
