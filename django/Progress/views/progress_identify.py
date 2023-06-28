@@ -20,7 +20,7 @@ class ProgressIdentifyHome(ManagerRequiredView):
         no_id_papers = ids.get_no_id_papers()
 
         identified_papers = ids.get_all_identified_papers(id_papers)
-        identified_papers_count = ids.get_all_identifier_count(identified_papers)
+        identified_papers_count = ids.get_identified_papers_count(identified_papers)
 
         context.update(
             {

@@ -31,6 +31,16 @@ class IDService:
             return id_image_obj
         except Image.DoesNotExist:
             return None
+    
+    @transaction.atomic
+    def get_identified_papers_count(self, identified_papers):
+        identified_papers_count = 0
+        for i in identified_papers.values():
+            if i is not None:
+                identified_papers_count += 1
+            else:
+                identified_papers_count = identified_papers_count
+        return identified_papers_count
 
     @transaction.atomic
     def get_all_identified_papers(self, all_scanned_id_papers):
