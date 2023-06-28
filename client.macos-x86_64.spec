@@ -3,9 +3,12 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
 from pathlib import Path
-# trickery from setup.py to define __version__ without import
-with open(Path("plom") / "version.py") as f:
-    exec(f.read())
+# trickery to define __version__ without import
+with open(Path("plom") / "__init__.py") as f:
+    lines = f.readlines()
+(verline,) = (x for x in lines if x.startswith("__version__ = "))
+exec(verline)
+del verline, lines
 
 block_cipher = None
 
