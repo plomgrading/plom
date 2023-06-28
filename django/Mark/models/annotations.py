@@ -24,3 +24,4 @@ class Annotation(models.Model):
     marking_time = models.PositiveIntegerField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time_of_last_update = models.DateTimeField(auto_now=True)
