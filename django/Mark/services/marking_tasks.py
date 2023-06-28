@@ -127,9 +127,13 @@ class MarkingTaskService:
         Args:
             code (str): a task code, e.g. q0001g1
         """
-        assert (len(code) == len("q0000g0")) or (len(code) == len("q0000g00"))
-        paper_number = int(code[1:5])
-        question_number = int(code[6:])
+        assert len(code) >= len("q0000g0")
+        assert code[0] == "q"
+        assert code.find("g", 1) != -1
+
+        split_index = code.find("g", 1)
+        paper_number = int(code[1:split_index])
+        question_number = int(code[split_index + 1 :])
 
         return paper_number, question_number
 

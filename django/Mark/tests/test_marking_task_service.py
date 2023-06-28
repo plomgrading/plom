@@ -27,7 +27,10 @@ class MarkingTaskServiceTests(TestCase):
             mts.unpack_code("")
 
         with self.assertRaises(AssertionError):
-            mts.unpack_code("astringthatistoolong")
+            mts.unpack_code("astringthatdoesn'tstartwithq")
+
+        with self.assertRaises(AssertionError):
+            mts.unpack_code("qastrinGthatdoesn'tcontainalowercaseG")
 
         with self.assertRaises(ValueError):
             mts.unpack_code("q000qge")
@@ -38,6 +41,8 @@ class MarkingTaskServiceTests(TestCase):
 
     def test_unpack_code_additional_tests(self):
         mts = MarkingTaskService()
+        with self.assertRaises(AssertionError):
+            mts.unpack_code("g0001q2")
 
         _, q1 = mts.unpack_code("q0001g2")
         _, q2 = mts.unpack_code("q0001g02")
@@ -48,6 +53,15 @@ class MarkingTaskServiceTests(TestCase):
         _, q2 = mts.unpack_code("q0001g22")
 
         self.assertNotEqual(q1, q2)
+
+        p1, q1 = mts.unpack_code("q1234567890987654321g8888888855555555123412341324")
+        p2, q2 = mts.unpack_code("q1234567890987654321g9090909090909090909090909090")
+        p3, q3 = mts.unpack_code("q9876543100123456789g9090909090909090909090909090")
+
+        self.assertEqual(p1, p2)
+        self.assertNotEqual(p1, p3)
+        self.assertEqual(q2, q3)
+        self.assertNotEqual(q1, q3)
 
     def test_get_first_available_task(self):
         """
