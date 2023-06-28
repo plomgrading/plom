@@ -121,13 +121,14 @@ class StudentMarksService:
 
         # student info
         if paper_id_task:
-            paper_id_action = PaperIDAction.objects.get(task=paper_id_task)
-            student_info.update(
-                {
-                    "student_id": paper_id_action.student_id,
-                    "student_name": paper_id_action.student_name,
-                }
-            )
+            paper_id_action = PaperIDAction.objects.filter(task=paper_id_task).first()
+            if paper_id_action:
+                student_info.update(
+                    {
+                        "student_id": paper_id_action.student_id,
+                        "student_name": paper_id_action.student_name,
+                    }
+                )
 
         # mark info
         total = 0
