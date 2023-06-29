@@ -118,7 +118,6 @@ packages = [
     "plom.demo",
     "plom.idreader",
     "plom.solutions",
-    "plom.testTemplates",
     "plom.canvas",
     "plom.scripts",
 ]
@@ -134,8 +133,7 @@ packages = [
     "plom/demo_rubrics.toml",
     "plom/create/extra_pages_src.tex"
 ]
-# TODO: move up from plom/ in the tree: Issue #2821
-"share/plom/testTemplates" = ["plom/testTemplates/*"]
+"share/plom/testTemplates" = ["testTemplates/*"]
 "share/applications" = ["org.plomgrading.PlomClient.desktop"]
 "share/metainfo" = ["org.plomgrading.PlomClient.metainfo.xml"]
 "share/icons/hicolor/128x128/apps/" = ["org.plomgrading.PlomClient.png"]
