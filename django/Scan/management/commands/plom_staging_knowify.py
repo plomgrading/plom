@@ -3,7 +3,9 @@
 
 from tabulate import tabulate
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.core.exceptions import PermissionDenied
+
 from Scan.services import ScanCastService, ScanService
 from Papers.services.validated_spec_service import SpecificationService
 from plom.scan.question_list_utils import check_question_list
@@ -12,19 +14,23 @@ from plom.scan.question_list_utils import check_question_list
 class Command(BaseCommand):
     """
     commands:
-        python3 manage.py plom_staging_know_an_unknown (bundle name) (bundle_order) (paper_number) (page_number)
+        python3 manage.py plom_staging_knowify (bundle name) (bundle_order) (paper_number) (page_number)
     """
 
-    help = """Fix an unknown page as being a known page of the given paper, page."""
+    help = """Fix an unknown or discarded page as being a known page of the given paper, page."""
 
     def list_missing_paper_page_numbers(self, bundle_name):
         scanner = ScanService()
-        missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers_cmd(
-            bundle_name
-        )
+        try:
+            missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers_cmd(
+                bundle_name
+            )
+        except ValueError as err:
+            raise CommandError(err)
+
         if len(missing_papers_pages) == 0:
             self.stdout.write(
-                "No papers with missing known-pages (papers have zero or all their known pages)"
+                "No papers in this bundle with missing known-pages (papers have zero or all their known pages)"
             )
             return
 
@@ -32,29 +38,39 @@ class Command(BaseCommand):
         for pn, pg_list in missing_papers_pages:
             self.stdout.write(f"\t{pn}: {pg_list}")
 
-    def list_unknown_pages(self, bundle_name):
+    def list_unknown_and_discarded_pages(self, bundle_name):
         scanner = ScanService()
-        bundle_page_list = scanner.get_bundle_unknown_pages_info_cmd(bundle_name)
+        try:
+            bundle_unknowns_list = scanner.get_bundle_unknown_pages_info_cmd(
+                bundle_name
+            )
+            bundle_discards_list = scanner.get_bundle_discard_pages_info_cmd(
+                bundle_name
+            )
+        except ValueError as err:
+            raise CommandError(err)
 
+        self.stdout.write("Unknown pages:")
         self.stdout.write(
-            tabulate(bundle_page_list, headers="keys", tablefmt="simple_outline")
+            tabulate(bundle_unknowns_list, headers="keys", tablefmt="simple_outline")
         )
 
-    def list_discarded_pages(self, bundle_name):
-        scanner = ScanService()
-        bundle_page_list = scanner.get_bundle_discard_pages_info_cmd(bundle_name)
-
+        self.stdout.write("Discarded pages:")
         self.stdout.write(
-            tabulate(bundle_page_list, headers="keys", tablefmt="simple_outline")
+            tabulate(bundle_discards_list, headers="keys", tablefmt="simple_outline")
         )
 
-    # def assign_extra_page(
-    #     self, username, bundle_name, index, paper_number, question_list
-    # ):
-    #     scs = ScanCastService()
-    #     scs.assign_extra_page_cmd(
-    #         username, bundle_name, index, paper_number, question_list
-    #     )
+    def knowify_given_page(
+        self, username, bundle_name, bundle_order, paper_number, page_number
+    ):
+        scs = ScanCastService()
+        try:
+            scs.assign_page_as_known_cmd(
+                username, bundle_name, bundle_order, paper_number, page_number
+            )
+            self.stdout.write("Image assigned")
+        except (PermissionDenied, ValueError) as err:
+            raise CommandError(err)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -64,19 +80,23 @@ class Command(BaseCommand):
         )
         sp = parser.add_subparsers(
             dest="command",
-            description="Assign an extra page to a paper and questions.",
+            description="Set an unknown or discarded page as a given known page of a given paper.",
         )
-        sp.add_parser("unknowns", help="List the unknown pages in the bundle.")
-        sp.add_parser("discards", help="List the discarded pages in the bundle.")
+        sp.add_parser("list", help="List the unknown and discared pages in the bundle.")
         sp.add_parser(
             "missing", help="List the missing known paper-numbers in the bundle."
         )
         spa = sp.add_parser(
             "assign", help="Assign the known page a paper-number and page-number."
         )
-        spa.add_argument("username", type=str, help="username doing the assigning.")
         spa.add_argument(
-            "-i" "--index", type=int, help="index of page within the bundle (from one)"
+            "-u",
+            "--username",
+            type=str,
+            help="the user performing the assignment (must be in the scanner or manager groups)",
+        )
+        spa.add_argument(
+            "-i", "--index", type=int, help="index of page within the bundle (from one)"
         )
         spa.add_argument(
             "-p", "--paper", type=int, help="the paper-number of the known-page"
@@ -86,21 +106,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if options["command"] == "discards":
-            self.list_discarded_pages(options["bundle"])
-        elif options["command"] == "unknowns":
-            self.list_unknown_pages(options["bundle"])
+        if options["command"] == "list":
+            self.list_unknown_and_discarded_pages(options["bundle"])
         elif options["command"] == "missing":
             self.list_missing_paper_page_numbers(options["bundle"])
-        # elif options["command"] == "assign":
-        #     n_questions = SpecificationService().get_n_questions()
-        #     question_list = check_question_list(options["question"][0], n_questions)
-        #     self.assign_extra_page(
-        #         options["username"],
-        #         options["bundle"],
-        #         options["index"],
-        #         options["paper"],
-        #         question_list,
-        #     )
+        elif options["command"] == "assign":
+            self.knowify_given_page(
+                options["username"],
+                options["bundle"],
+                options["index"],
+                options["paper"],
+                options["page"],
+            )
         else:
             self.print_help("manage.py", "plom_know_an_unknown")

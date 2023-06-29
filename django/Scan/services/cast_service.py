@@ -14,7 +14,7 @@ from Scan.models import (
     UnknownStagingImage,
     KnownStagingImage,
 )
-from Papers.services import PaperInfoService
+from Papers.services import PaperInfoService, SpecificationService
 
 
 class ScanCastService:
@@ -623,3 +623,30 @@ class ScanCastService:
         # finally - do not forget to set the image type correctly **and** save it!
         img.image_type = StagingImage.KNOWN
         img.save()
+
+    @transaction.atomic
+    def assign_page_as_known_cmd(
+        self, username, bundle_name, bundle_order, paper_number, page_number
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        if page_number < 0 or page_number > SpecificationService().get_n_pages():
+            raise ValueError("Page number out of range - check the specification")
+        if paper_number < 0:
+            raise ValueError("Paper number cannot be negative.")
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.knowify_image_from_bundle(
+            user_obj, bundle_obj, bundle_order, paper_number, page_number
+        )
