@@ -109,10 +109,13 @@ wet_no_drift:
     - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
-    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
     - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - echo $VER0
     - echo $VER1
     - echo $VER2
+    - bash -c "[[ x$VER0 == x$VER1 ]]"
     - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
@@ -1548,7 +1551,7 @@ winpyinst:
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python310\python" -c "exec(open('plom\\__init__.py').read()); print(__version__)"
+  - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
