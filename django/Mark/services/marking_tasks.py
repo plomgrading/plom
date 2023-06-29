@@ -524,8 +524,27 @@ class MarkingTaskService:
             # Assuming the queryset will always have a length of one
             return text_tags.first()
 
-    def remove_tag_from_task(self, tag, task):
+    def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
+
+        Args:
+            tag_text: which tag to remove.
+            code: from which task, for example ``"q0123g5"`` for paper
+                123 question 5.
+
+        Raises:
+            ValueError: invalid task code, no such tag, or this task does not
+                have this tag.
+            RuntimeError: task not found.
+        """
+        the_tag = self.get_tag_from_text(tag_text)
+        if not the_tag:
+            raise ValueError(f'No such tag "{tag_text}"')
+        the_task = self.get_task_from_code(code)
+        self.remove_tag_from_task(the_tag, the_task)
+
+    def remove_tag_from_task(self, tag, task):
+        """Backend to remove a tag from a marking task.
 
         Args:
             tag: reference to a MarkingTaskTag instance

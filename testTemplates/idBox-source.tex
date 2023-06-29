@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SPDX-License-Identifier: AGPL-3.0-or-later
+% Copyright (C) 2019 Andrew Rechnitzer
+% Copyright (C) 2023 Colin B. Macdonald
 
 \documentclass[12pt]{article}
 
@@ -11,13 +11,9 @@
 \thispagestyle{empty}
 \begin{center}
 \begin{tikzpicture}[scale=1.25, background rectangle/.style={line width=4pt, draw=black}, show background rectangle]
-
-  \draw (0,1) rectangle (3,2) node[pos=0.5] {\large Signature};
-  \draw (3,1) rectangle (11,2);
-
-  \draw (0,2) rectangle (3,4) node[pos=0.5] {\large Name};
-  \draw[loosely dotted] (3.2,3) -- (10.8,3);
-  \draw (3,2) rectangle (11,4);
+  \draw (0,1) rectangle (3,2) node[pos=0.5] {\large Family Name}; \draw (3,1) rectangle (11,2);
+  \draw (0,2) rectangle (3,3) node[pos=0.5] {\large Given Name}; \draw (3,2) rectangle (11,3);
+  \draw (0,3) rectangle (3,4) node[pos=0.5] {\large Preferred Name}; \draw (3,3) rectangle (11,4);
 
   \draw (0,4) rectangle (3,5) node[pos=0.5] {\large Section};
   \foreach \x in {0,...,2} {

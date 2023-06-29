@@ -10,10 +10,10 @@
 # without any warranty.
 #
 # This is used by a CI run to test minimum versions of dependencies.
-# It should list the min-pinned versions in setup.py, and must be kept
-# up-to-date with setup.py
+# It should list the min-pinned versions in pyproject.toml, and must be
+# kept up-to-date with pyproject.toml
 #
-# TODO: hopefully just temporary, until we can lift these values from setup.py
+# TODO: hopefully just temporary, until we can lift these values from pyproject.toml
 
 # Not really server deps
 PyQt6==6.2.0
