@@ -515,7 +515,7 @@ class MarkingTaskService:
 
         Args:
             tag_text: which tag to remove.
-            code: from which task, for example ``"g0123g5"`` for paper
+            code: from which task, for example ``"q0123g5"`` for paper
                 123 question 5.
 
         Raises:
