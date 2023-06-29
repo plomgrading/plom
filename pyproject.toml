@@ -1,11 +1,170 @@
 # SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Elizabeth Xiao
+# Copyright (C) 2022 Natalia Accomazzo Scotti
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ['pip>=20.3', 'setuptools>=61', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'plom'
+description = 'Plom is Paperless Open Marking'
+authors = [{name = 'Andrew Rechnitzer'}]
+license = {text = 'AGPLv3+'}
+classifiers=[
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Topic :: Education :: Testing",
+    "Development Status :: 3 - Alpha",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dynamic = ['version']
+requires-python = '>=3.7'
+dependencies = [
+    "appdirs>=1.4.3",
+    "arrow>=1.1.1",
+    "packaging",
+    "passlib",
+    "Pillow>=7.0.0",
+    "PyQt6>=6.2.0",
+    "requests",
+    "requests-toolbelt",
+    "stdiomask>=0.0.6",
+    'tomli>=2.0.1 ; python_version<"3.11"',  # until we drop 3.10
+    "tomlkit>=0.11.4",
+    "canvasapi>=2.0.0",
+    "exif>=1.2.2",
+    "fonttools>=4.37.1",
+    "tqdm",
+    "numpy>=1.17.0",
+    "pandas>=1.0.0",
+    "pymupdf>=1.21.0",
+    "aiohttp>=3.7.2",
+    "peewee>=3.13.3",
+    "PyMySQL>=1.0.2",
+    "pytest>=6.0.0",
+    "pytest-qt>=4.1.0",
+    "imutils",
+    "opencv-python-headless>=4.4.0.40",
+    "scikit-learn>=0.23.1",
+    "segno",
+    "lapsolver",  # ID reading
+    'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
+    "zipfly",
+    "zxing-cpp>=1.4.0",
+]
+# TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
+#   "file-magic || python-magic>=0.4.20",
+
+# Non-Python deps for server
+#   - openssl (legacy)
+#   - imagemagick (legacy)
+#   - ghostscript (optional, legacy)
+#   - latex installation including (Debian/Ubuntu pkg names):
+#       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
+#   - latex installation including (Fedora pkg names):
+#       tex-preview tex-dvipng texlive-scheme-basic tex-charter
+
+
+[project.readme]
+file = 'README.md'
+content-type = 'text/x-markdown'
+[project.urls]
+Homepage = 'https://plomgrading.org/'
+'Source Code' = 'https://gitlab.com/plom/plom'
+'Bug Tracker' = 'https://gitlab.com/plom/plom/-/issues'
+# TODO
+# Documentation = ''
+# TODO: changelog
+
+# [project.optional-dependencies]
+
+# [tool.setuptools]
+# zip-safe = true
+
+[tool.setuptools]
+packages = [
+    "plom",
+    "plom.create",
+    "plom.create.fonts",
+    "plom.scan",
+    "plom.finish",
+    "plom.client",
+    "plom.client.ui_files",
+    "plom.client.tools",
+    "plom.client.icons",
+    "plom.client.cursors",
+    "plom.client.help_img",
+    "plom.manager",
+    "plom.server",
+    "plom.server.plomServer",
+    "plom.db",
+    "plom.demo",
+    "plom.idreader",
+    "plom.solutions",
+    "plom.testTemplates",
+    "plom.canvas",
+    "plom.scripts",
+]
+
+# somewhat deprecated?  not supposed to package things into share?
+# https://blog.raek.se/2022/10/31/os-integration-files-in-python-packages/u
+[tool.setuptools.data-files]
+"share/plom" = [
+    "plom/templateTestSpec.toml",
+    "plom/templateSolutionSpec.toml",
+    "plom/templateUserList.csv",
+    "plom/demoClassList.csv",
+    "plom/demo_rubrics.toml",
+    "plom/create/extra_pages_src.tex"
+]
+# TODO: move up from plom/ in the tree: Issue #2821
+"share/plom/testTemplates" = ["plom/testTemplates/*"]
+"share/applications" = ["org.plomgrading.PlomClient.desktop"]
+"share/metainfo" = ["org.plomgrading.PlomClient.metainfo.xml"]
+"share/icons/hicolor/128x128/apps/" = ["org.plomgrading.PlomClient.png"]
+# "share/plom/contrib", ["contrib/**/*"]
+"share/plom/contrib" = [
+            "contrib/README.txt",
+            "contrib/plom-return_codes_to_canvas_csv.py",
+            "contrib/plom-write_grades_to_canvas_csv.py",
+            "contrib/upload_hw_from_zip_of_jpegs.py",
+            "contrib/plom-push-to-canvas.py"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = 'plom.__version__'}
+
+[project.scripts]
+plom-client = "plom.client.__main__:main"
+plom-demo = "plom.demo.__main__:main"
+plom-hwdemo = "plom.scripts.hwdemo:main"
+plom-create = "plom.create.__main__:main"
+plom-server = "plom.server.__main__:main"
+plom-scan = "plom.scan.__main__:main"
+plom-manager = "plom.manager.__main__:main"
+plom-finish = "plom.finish.__main__:main"
+plom-hwscan = "plom.scripts.hwscan:main"
+plom-solutions = "plom.solutions.__main__:main"
+
+
+# Tooling configuration
 
 # You can run `black plom` or `black plom --verbose`
 [tool.black]

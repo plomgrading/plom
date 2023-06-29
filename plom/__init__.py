@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
 
 """Plom is Paperless Open Marking.
 
@@ -12,13 +12,15 @@ __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+# Also hardcoded in AppImageBuilder.yml and deprecated in plom/version.py
+__version__ = "0.14.0.dev0"
+
 import sys
 
 if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
-from .version import __version__
 
 Plom_API_Version = "59"
 Default_Port = 41984
