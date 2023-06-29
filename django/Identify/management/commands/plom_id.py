@@ -36,8 +36,7 @@ class Command(BaseCommand):
         cv2.imwrite("largest_box_image.png", largest_box)
         ID_box = self.extract_and_resize_ID_box(test_image)
         cv2.imwrite("output_image.png", ID_box)
-        digits = self.extract_and_resize_ID_box(test_image)
-        cv2.imwrite("output_image.png", ID_box)
+        list_of_images = self.get_digit_images(ID_box, 8)
 
     def get_id_box(self, top, bottom, left, right):
         idservice = IDReaderService()
@@ -149,33 +148,30 @@ class Command(BaseCommand):
 
         Returns:
             list: A list of numpy.ndarray which are the images for each digit.
-                In case of errors, returns an empty list
+            In case of errors, returns an empty list
         """
         processed_digits_images_list = []
         for digit_index in range(num_digits):
+            # extract single digit by dividing ID box into num_digits equal boxes
             height, width, _ = ID_box.shape
-            digit_width = width / num_digits
-            print(digit_width)
-            left = digit_index * 109 + 5
-            right = (digit_index + 1) * 109 - 5
-            print(f"{left} to {right}")
-            digit1 = ID_box[0:height, left:right]
-            # TODO: I think I could remove all of this.
-            # Now some hackery to centre on the digit so closer to mnist dataset.
-            # Find the contours and centre on the largest (by area).
-            digit2 = cv2.GaussianBlur(digit1, (3, 3), 0)
-            digit3 = cv2.Canny(digit2, 5, 255, 200)
+            width_digit_box = width / num_digits
+            left = int(digit_index * width_digit_box)
+            right = int((digit_index + 1) * width_digit_box)
+            single_digit = ID_box[0:height, left:right]
+            cv2.imwrite(f"digit_{digit_index}.png", single_digit)
+            # Find the contours and centre digit based on the largest contour (by area)
+            blurred_digit = cv2.GaussianBlur(single_digit, (3, 3), 0)
+            edged_digit = cv2.Canny(blurred_digit, 5, 255, 200)
             contours = cv2.findContours(
-                digit3.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                edged_digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
             )
             contour_lists = imutils.grab_contours(contours)
             # sort by bounding box area
             sorted_contours = sorted(
                 contour_lists, key=self.bounding_rect_area, reverse=True
             )
-            # make sure we can find at least one contour
+            # if no contours, can't make a prediction, so return empty list
             if len(sorted_contours) == 0:
-                # can't make a prediction so return empty list
                 return []
             # get bounding rect of biggest contour
             bnd = cv2.boundingRect(sorted_contours[0])
@@ -198,15 +194,16 @@ class Command(BaseCommand):
             digit6 = cv2.blur(digit5, (3, 3))
             # now need to resize it to height or width =28 (depending on aspect ratio)
             # the "28" comes from mnist dataset, mnist digits are 28 x 28
-            rat = digit5.shape[0] / digit5.shape[1]
-            if rat > 1:
+            aspect_ratio = digit5.shape[0] / digit5.shape[1]
+            if aspect_ratio > 1:
                 w = 28
-                h = int(28 // rat)
+                h = int(28 // aspect_ratio)
             else:
-                w = int(28 * rat)
+                w = int(28 * aspect_ratio)
                 h = 28
-            # region of interest
-            roi = cv2.resize(digit6, (h, w), interpolation=cv2.INTER_AREA)
+            region_of_interest = cv2.resize(
+                digit6, (h, w), interpolation=cv2.INTER_AREA
+            )
             px = int((28 - w) // 2)
             py = int((28 - h) // 2)
             # and a bit more clean-up - put black around border where needed
@@ -235,9 +232,9 @@ class Command(BaseCommand):
 
         Returns:
             list: A list of lists of probabilities.  The outer list is over
-                the 8 positions.  Inner lists have length 10: the probability
-                that the digit is a 0, 1, 2, ..., 9.
-                In case of errors it returns an empty list
+            the 8 positions.  Inner lists have length 10: the probability
+            that the digit is a 0, 1, 2, ..., 9.
+            In case of errors it returns an empty list
         """
         id_page_file = Path(id_page_file)
         ID_box = self.get_digit_box(id_page_file)
