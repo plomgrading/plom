@@ -63,13 +63,13 @@ class KnowifyImageType(ScannerRequiredView):
         page_labels = [
             f"page {n+1}" for n in range(SpecificationService().get_n_pages())
         ]
-        paper_numbers = scanner.get_bundle_paper_numbers(bundle)
         all_paper_numbers = paper_info.which_papers_in_database()
+        missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers(bundle)
         context.update(
             {
                 "page_labels": page_labels,
-                "bundle_paper_numbers": paper_numbers,
                 "all_paper_numbers": all_paper_numbers,
+                "missing_papers_pages": missing_papers_pages,
             }
         )
 
@@ -78,14 +78,19 @@ class KnowifyImageType(ScannerRequiredView):
     def post(self, request, timestamp, index):
         # TODO - improve this form processing
 
-        extra_page_data = request.POST
+        knowify_page_data = request.POST
 
-        print("Data = ", extra_page_data)
-
-        if extra_page_data.get("bundleOrArbitrary", "off") == "on":
-            paper_number = extra_page_data.get("bundlePaper", None)
+        if knowify_page_data.get("bundleOrArbitrary", "off") == "on":
+            try:
+                paper_number, page_number = knowify_page_data.get(
+                    "missingPaperPage", ","
+                ).split(",")
+            except ValueError:
+                return HttpResponse(
+                    """<div class="alert alert-danger">Choose paper/page</div>"""
+                )
         else:
-            paper_number = extra_page_data.get("arbitraryPaper", None)
+            paper_number = knowify_page_data.get("arbitraryPaper", None)
 
         try:
             paper_number = int(paper_number)
@@ -95,7 +100,7 @@ class KnowifyImageType(ScannerRequiredView):
             )
 
         try:
-            page_number = int(extra_page_data.get("pageSelect", None))
+            page_number = int(page_number)
         except ValueError:
             return HttpResponse(
                 """<div class="alert alert-danger">Select a page</div>"""

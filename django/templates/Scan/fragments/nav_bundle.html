@@ -180,10 +180,7 @@
                                 <div>
                                     <a class="btn btn-outline-success text-center w-100 mb-3"
                                        hx-get="{% url 'knowify_image' timestamp index %}"
-                                       hx-target="#navFragment"
-                                       hx-confirm="Are you sure you wish to set this unknown page as a known page?">
-                                        Cast to known page
-                                    </a>
+                                       hx-target="#navFragment">Cast to known page</a>
                                 </div>
                             {% endif %}
                         {% elif current_page.status == 'discard' %}
@@ -207,10 +204,7 @@
                                 <div>
                                     <a class="btn btn-outline-success text-center w-100 mb-3"
                                        hx-get="{% url 'knowify_image' timestamp index %}"
-                                       hx-target="#navFragment"
-                                       hx-confirm="Are you sure you wish to set this unknown page as a known page?">
-                                        Cast to known page
-                                    </a>
+                                       hx-target="#navFragment">Cast to known page</a>
                                 </div>
                                 <div>
                                     <a class="btn btn-outline-warning text-center w-100 mb-3"

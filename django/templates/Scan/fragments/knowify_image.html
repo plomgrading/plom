@@ -3,16 +3,17 @@
     Copyright (C) 2023 Andrew Rechnitzer
 -->
 <div class="container w-100 p-0 m-3" id="navFragment">
-    <div class="row">
-        <div class="col shadow-sm rounded" style="background-color: lightgrey;">
-            <div class="row p-0">
-                <div class="col d-flex justify-content-center" style="height:600px;">
-                    <img src="{% url 'scan_get_image' timestamp index %}"
-                         class="img-fluid shadow"
-                         alt=""
-                         style="transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
-                </div>
-            </div>
+    <div class="row p-2">
+        <div style="height: 50vw;
+                    width: 50vw;
+                    justify-content: center;
+                    display:flex;
+                    align-items:center">
+            <img class="shadow rounded"
+                 src="{% url 'scan_get_image' timestamp index %}"
+                 style="max-height:100%;
+                        max-width: 100%;
+                        transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
         </div>
         <div class="col-lg-3">
             <div class="card h-100">
@@ -26,7 +27,6 @@
                               hx-swap="innerHTML">
                             <div class="input-group p-3">
                                 <div x-data="{bundlepapers: true}">
-                                    Paper:
                                     <div class="form-check">
                                         <input name="bundleOrArbitrary"
                                                class="form-check-input"
@@ -34,23 +34,22 @@
                                                x-bind:value="bundlepapers"
                                                id="bundlepapers"
                                                x-model="bundlepapers">
-                                        <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                                        <label class="form-check-label" for="bundlepapers">Missing from this bundle</label>
                                     </div>
                                     <div x-show="bundlepapers">
-                                        <select name="bundlePaper" class="form-select">
-                                            <option selected>Paper from bundle</option>
-                                            {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                        <select name="missingPaperPage" class="form-select">
+                                            <option selected>Missing paper/page</option>
+                                            {% for pn, pg_list in missing_papers_pages %}
+                                                {% for pg in pg_list %}<option value="{{ pn }},{{ pg }}">paper {{ pn }} page {{ pg }}</option>{% endfor %}
+                                            {% endfor %}
                                         </select>
                                     </div>
                                     <div x-show="!bundlepapers">
-                                        <select name="arbitraryPaper"
-                                                class="form-select"
-                                                aria-label="Default select example">
-                                            <option selected>any produced paper</option>
+                                        Paper:
+                                        <select name="arbitraryPaper" class="form-select">
+                                            <option selected>Select paper</option>
                                             {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
                                         </select>
-                                    </div>
-                                    <div>
                                         Page:
                                         <select name="pageSelect" class="form-select">
                                             <option selected>Select page</option>
@@ -60,6 +59,11 @@
                                 </div>
                             </div>
                             <button class="btn btn-primary" type="submit">Set data</button>
+                            <button class="btn btn-danger px-4"
+                                    type="button"
+                                    hx-get="{% url 'scan_nav_bundle' timestamp index %}"
+                                    hx-swap="outerHTML"
+                                    hx-target="#navFragment">Cancel</button>
                         </form>
                     </div>
                 </div>
