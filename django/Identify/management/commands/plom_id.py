@@ -34,7 +34,9 @@ class Command(BaseCommand):
         test_image = Path("test_image.png")
         largest_box = self.get_largest_box(test_image)
         cv2.imwrite("largest_box_image.png", largest_box)
-        ID_box = self.get_digit_box(test_image)
+        ID_box = self.extract_and_resize_ID_box(test_image)
+        cv2.imwrite("output_image.png", ID_box)
+        digits = self.extract_and_resize_ID_box(test_image)
         cv2.imwrite("output_image.png", ID_box)
 
     def get_id_box(self, top, bottom, left, right):
@@ -90,7 +92,6 @@ class Command(BaseCommand):
         return w * h
 
     def get_largest_box(self, filename):
-        # TODO: this function should go into ImageProcessor service
         """Helper function for extracting the largest box from an image.
 
         Args:
@@ -124,7 +125,7 @@ class Command(BaseCommand):
         if box_contour is not None:
             return four_point_transform(src_image, box_contour.reshape(4, 2))
 
-    def get_digit_box(self, filename):
+    def extract_and_resize_ID_box(self, filename):
         template_id_box_width = 1250
         id_box = self.get_largest_box(filename)
         height, width, _ = id_box.shape
@@ -152,9 +153,13 @@ class Command(BaseCommand):
         """
         processed_digits_images_list = []
         for digit_index in range(num_digits):
-            # TODO: Maybe remove magical hackery.
-            # extract the kth digit box. Some magical hackery / numerology here.
-            digit1 = ID_box[0:100, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
+            height, width, _ = ID_box.shape
+            digit_width = width / num_digits
+            print(digit_width)
+            left = digit_index * 109 + 5
+            right = (digit_index + 1) * 109 - 5
+            print(f"{left} to {right}")
+            digit1 = ID_box[0:height, left:right]
             # TODO: I think I could remove all of this.
             # Now some hackery to centre on the digit so closer to mnist dataset.
             # Find the contours and centre on the largest (by area).
