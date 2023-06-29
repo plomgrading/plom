@@ -79,7 +79,9 @@ class Command(BaseCommand):
             dest="command",
             description="Set an unknown or discarded page as a given known page of a given paper.",
         )
-        sp.add_parser("list", help="List the unknown and discarded pages in the bundle.")
+        sp.add_parser(
+            "list", help="List the unknown and discarded pages in the bundle."
+        )
         sp.add_parser(
             "missing", help="List the missing known paper-numbers in the bundle."
         )
