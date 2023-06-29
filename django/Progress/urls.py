@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 from django.urls import path
 
@@ -20,6 +20,10 @@ from Progress.views import (
     DiscardedPageModal,
     DeleteDiscardedPage,
     RestoreDiscardedPage,
+    ProgressIdentifyHome,
+    ProgressMarkHome,
+    ProgressUserInfoHome,
+    IDImageView,
 )
 
 
@@ -74,5 +78,25 @@ urlpatterns = [
         "scan/discarded/restore/<discarded_hash>/",
         RestoreDiscardedPage.as_view(),
         name="progress_restore_discarded",
+    ),
+    path(
+        "mark/overview/",
+        ProgressMarkHome.as_view(),
+        name="progress_mark_home",
+    ),
+    path(
+        "identify/overview/",
+        ProgressIdentifyHome.as_view(),
+        name="progress_identify_home",
+    ),
+    path(
+        "identify/overview/id_img/<int:image_pk>",
+        IDImageView.as_view(),
+        name="ID_img",
+    ),
+    path(
+        "userinfo/overview/",
+        ProgressUserInfoHome.as_view(),
+        name="progress_user_info_home",
     ),
 ]
