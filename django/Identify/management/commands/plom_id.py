@@ -62,8 +62,7 @@ class Command(BaseCommand):
 
             self.stdout.write("Extracting ID boxes...")
             idservice = IDReaderService()
-            # id_box_files = idservice.get_id_box_cmd(None)
-            id_box_files = idservice.get_id_box_cmd((0.1, 0.8, 0.02, 0.98))
+            id_box_files = idservice.get_id_box_cmd((0.1, 0.9, 0.0, 1.0))
 
             self.stdout.write("Computing probabilities for student ID digits.")
             student_number_length = 8
@@ -128,7 +127,7 @@ class Command(BaseCommand):
         template_id_box_width = 1250
         id_box = self.get_largest_box(filename)
         height, width, _ = id_box.shape
-        if height < 32 or width < 32:  # id_box is too small
+        if height < 32 or width < 32:  # check if id_box is too small
             return None
         # scale height to retain aspect ratio of image
         new_height = int(template_id_box_width * height / width)
@@ -153,12 +152,12 @@ class Command(BaseCommand):
         processed_digits_images_list = []
         for digit_index in range(num_digits):
             # extract single digit by dividing ID box into num_digits equal boxes
-            height, width, _ = ID_box.shape
-            width_digit_box = width / num_digits
-            left = int(digit_index * width_digit_box)
-            right = int((digit_index + 1) * width_digit_box)
-            single_digit = ID_box[0:height, left:right]
-            cv2.imwrite(f"digit_{digit_index}.png", single_digit)
+            ID_box_height, ID_box_width, _ = ID_box.shape
+            digit_box_width = ID_box_width / num_digits
+            side_crop = 5
+            left = int(digit_index * digit_box_width + side_crop)
+            right = int((digit_index + 1) * digit_box_width - side_crop)
+            single_digit = ID_box[0:ID_box_height, left:right]
             # Find the contours and centre digit based on the largest contour (by area)
             blurred_digit = cv2.GaussianBlur(single_digit, (3, 3), 0)
             edged_digit = cv2.Canny(blurred_digit, 5, 255, 200)
@@ -170,53 +169,57 @@ class Command(BaseCommand):
             sorted_contours = sorted(
                 contour_lists, key=self.bounding_rect_area, reverse=True
             )
-            # if no contours, can't make a prediction, so return empty list
+            # can't make a prediction if there are no contours
             if len(sorted_contours) == 0:
                 return []
-            # get bounding rect of biggest contour
-            bnd = cv2.boundingRect(sorted_contours[0])
-            # put some padding around that rectangle
+            # get bounding rectangle of biggest contour
+            # (x, y) are the coordinates of the rectangle's top-left corner
+            x, y, rect_width, rect_height = cv2.boundingRect(sorted_contours[0])
+            # add padding around this rectangle
             pad = 10
-            xl = max(0, bnd[1] - pad)
-            yt = max(0, bnd[0] - pad)
-            # grab the image - should be the digit.
-            digit4 = digit2[xl : bnd[1] + bnd[3] + pad, yt : bnd[0] + bnd[2] + pad]
+            padded_digit = blurred_digit[
+                max(0, y - pad) : y + rect_height + pad,
+                max(0, x - pad) : x + rect_width + pad,
+            ]
             # Do some clean-up by thresholding pixels
-            digit5 = cv2.adaptiveThreshold(
-                cv2.cvtColor(digit4, cv2.COLOR_BGR2GRAY),
+            thresholded_digit = cv2.adaptiveThreshold(
+                cv2.cvtColor(padded_digit, cv2.COLOR_BGR2GRAY),
                 255,
                 cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv2.THRESH_BINARY_INV,
                 31,
                 1,
             )
-            # and a little more - blur helps get rid of "dust" artifacts
-            digit6 = cv2.blur(digit5, (3, 3))
-            # now need to resize it to height or width =28 (depending on aspect ratio)
+            # more blurring, which helps get rid of "dust" artifacts
+            final_blurred_digit = cv2.blur(thresholded_digit, (3, 3))
+            # now need to resize image to height or width =28 (depending on aspect ratio)
             # the "28" comes from mnist dataset, mnist digits are 28 x 28
-            aspect_ratio = digit5.shape[0] / digit5.shape[1]
+            digit_img_height, digit_img_width = final_blurred_digit.shape
+            aspect_ratio = digit_img_height / digit_img_width
             if aspect_ratio > 1:
-                w = 28
-                h = int(28 // aspect_ratio)
-            else:
-                w = int(28 * aspect_ratio)
                 h = 28
-            region_of_interest = cv2.resize(
-                digit6, (h, w), interpolation=cv2.INTER_AREA
+                w = int(28 // aspect_ratio)
+            else:
+                h = int(28 * aspect_ratio)
+                w = 28
+            resized_digit = cv2.resize(
+                final_blurred_digit, (w, h), interpolation=cv2.INTER_AREA
             )
-            px = int((28 - w) // 2)
-            py = int((28 - h) // 2)
-            # and a bit more clean-up - put black around border where needed
-            roi2 = cv2.copyMakeBorder(
-                roi,
-                px,
-                28 - w - px,
-                py,
-                28 - h - py,
+            # add black border around the digit image to make the dimensions 28 x 28 pixels
+            top_border = int((28 - h) // 2)
+            bottom_border = 28 - h - top_border
+            left_border = int((28 - w) // 2)
+            right_border = 28 - w - left_border
+            bordered_image = cv2.copyMakeBorder(
+                resized_digit,
+                top_border,
+                bottom_border,
+                left_border,
+                right_border,
                 cv2.BORDER_CONSTANT,
                 value=[0, 0, 0],
             )
-            processed_digits_images_list.append(roi2)
+            processed_digits_images_list.append(bordered_image)
         return processed_digits_images_list
 
     def get_digit_prob(self, prediction_model, id_page_file, num_digits, *, debug=True):
@@ -237,14 +240,14 @@ class Command(BaseCommand):
             In case of errors it returns an empty list
         """
         id_page_file = Path(id_page_file)
-        ID_box = self.get_digit_box(id_page_file)
+        ID_box = self.extract_and_resize_ID_box(id_page_file)
         if ID_box is None:
             self.stdout.write("Trouble finding the ID box")
             return []
         if debug:
-            dbdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
-            dbdir.mkdir(exist_ok=True)
-            p = dbdir / f"idbox_{id_page_file.stem}.png"
+            debugdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
+            debugdir.mkdir(exist_ok=True)
+            p = debugdir / f"idbox_{id_page_file.stem}.png"
             cv2.imwrite(str(p), ID_box)
         processed_digits_images = self.get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
@@ -252,10 +255,8 @@ class Command(BaseCommand):
             return []
         if debug:
             for n, digit_image in enumerate(processed_digits_images):
-                p = dbdir / f"digit_{id_page_file.stem}-pos{n}.png"
+                p = debugdir / f"digit_{id_page_file.stem}-pos{n}.png"
                 cv2.imwrite(str(p), digit_image)
-                # cv2.imshow("argh", digit_image)
-                # cv2.waitKey(0)
         prob_lists = []
         for digit_image in processed_digits_images:
             # get it into format needed by model predictor
@@ -278,20 +279,20 @@ class Command(BaseCommand):
         """
         prediction_model = load_model()
         probabilities = {}
-        for testNumber, image_file in image_file_paths.items():
+        for paper_number, image_file in image_file_paths.items():
             prob_lists = self.get_digit_prob(prediction_model, image_file, num_digits)
             if len(prob_lists) == 0:
                 self.stdout.write(
-                    f"Test{testNumber}: could not read digits, excluding from calculations"
+                    f"Test{paper_number}: could not read digits, excluding from calculations"
                 )
                 continue
-            elif len(prob_lists) != 8:
+            elif len(prob_lists) != num_digits:
                 self.stdout.write(
-                    f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}"
+                    f"Test{paper_number}: unexpectedly len={len(prob_lists)}: {prob_lists}"
                 )
-                probabilities[testNumber] = prob_lists
+                probabilities[paper_number] = prob_lists
             else:
-                probabilities[testNumber] = prob_lists
+                probabilities[paper_number] = prob_lists
         return probabilities
 
     def add_arguments(self, parser):
