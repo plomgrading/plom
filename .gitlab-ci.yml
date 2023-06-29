@@ -106,8 +106,8 @@ wet_no_drift:
     - apk add bash
   script:
     - 'echo "Issue #2402: ensure two identical copies of the latex template"'
-    - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
-    - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
+    - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
+    - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
