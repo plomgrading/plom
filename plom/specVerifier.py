@@ -8,6 +8,7 @@ import logging
 from math import ceil
 from pathlib import Path
 import random
+import re
 import sys
 
 if sys.version_info >= (3, 9):
@@ -622,7 +623,10 @@ class SpecVerifier:
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
         print("  Checking names")
-        if not self.spec["name"].isalnum() or len(self.spec["name"]) <= 0:
+        if (
+            not re.match("^[A-Za-z0-9_]*$", self.spec["name"])
+            or len(self.spec["name"]) <= 0
+        ):
             raise ValueError(
                 "Specification error - Test name must be an alphanumeric string of non-zero length."
             )
