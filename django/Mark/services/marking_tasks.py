@@ -125,26 +125,44 @@ class MarkingTaskService:
         """Return a tuple of (paper_number, question_number) from a task code string.
 
         Args:
-            code (str): a task code, e.g. q0001g1
+            code (str): a task code, e.g. q0001g1. Requires code to be at least 4 characters
+            long. Requires code to start with "q" and contain a "g" somewhere after the second
+            character, but not be the last character and the rest of the characters to be numeric.
         """
-        assert len(code) == len("q0000g0")
-        paper_number = int(code[1:5])
-        question_number = int(code[-1])
+        assert len(code) >= len("q0g0")
+        assert code[0] == "q"
+
+        split_index = code.find("g", 2)
+
+        # g must be present
+        assert split_index != -1
+        # g cannot be the last character
+        assert split_index != len(code) - 1
+
+        paper_number = int(code[1:split_index])
+        question_number = int(code[split_index + 1 :])
 
         return paper_number, question_number
 
-    def get_task_from_code(self, code):
+    def get_task_from_code(self, code: str) -> MarkingTask:
         """Get a marking task from its code.
 
-        Arg:
-            code: str, a unique string that includes the paper number and question number.
+        Args:
+            code: a unique string that includes the paper number and question number.
+
+        Returns:
+            The marking task object the matches the code.
+
+        Raises:
+            ValueError: invalid code.
+            RuntimeError: code valid but task does not exist.
         """
         try:
             paper_number, question_number = self.unpack_code(code)
             return self.get_latest_task(paper_number, question_number)
         except AssertionError:
             raise ValueError(f"{code} is not a valid task code.")
-        except MarkingTask.DoesNotExist:
+        except ObjectDoesNotExist:
             raise RuntimeError(f"Task {code} does not exist.")
 
     def get_user_tasks(self, user, question=None, version=None):

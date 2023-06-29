@@ -478,13 +478,15 @@ class TagsFromCodeView(APIView):
             the_task = mts.get_task_from_code(code)
             the_tag = mts.get_tag_from_text(tag_text)
             mts.remove_tag_from_task(the_tag, the_task)
-            return Response(status=status.HTTP_200_OK)
         except ValueError as e:
             r = Response(status=status.HTTP_409_CONFLICT)
             r.reason_phrase = str(e)
             return r
         except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
+        return Response(status=status.HTTP_200_OK)
 
 
 class GetAllTags(APIView):
