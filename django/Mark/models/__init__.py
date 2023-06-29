@@ -4,4 +4,3 @@
 
 from .tasks import MarkingTask, MarkingTaskTag
 from .annotations import AnnotationImage, Annotation
-

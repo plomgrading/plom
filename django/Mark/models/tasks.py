@@ -21,9 +21,11 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
-    latest_annotation = models.ForeignKey("Annotation", null=True, on_delete=models.SET_NULL)
+    latest_annotation = models.OneToOneField(
+        "Annotation", unique=True, null=True, on_delete=models.SET_NULL
+    )
 
-    
+
 class MarkingTaskTag(Tag):
     """Represents a tag that can be assigned to one or more marking tasks."""
 
