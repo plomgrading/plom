@@ -556,7 +556,6 @@ class ScanCastService:
         Returns:
             None.
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )

@@ -12,10 +12,7 @@ from plom.scan.question_list_utils import check_question_list
 
 
 class Command(BaseCommand):
-    """
-    commands:
-        python3 manage.py plom_staging_knowify (bundle name) (bundle_order) (paper_number) (page_number)
-    """
+    """Map an unknown or discarded page to a "known" page of a given paper."""
 
     help = """Fix an unknown or discarded page as being a known page of the given paper, page."""
 
@@ -82,7 +79,7 @@ class Command(BaseCommand):
             dest="command",
             description="Set an unknown or discarded page as a given known page of a given paper.",
         )
-        sp.add_parser("list", help="List the unknown and discared pages in the bundle.")
+        sp.add_parser("list", help="List the unknown and discarded pages in the bundle.")
         sp.add_parser(
             "missing", help="List the missing known paper-numbers in the bundle."
         )
