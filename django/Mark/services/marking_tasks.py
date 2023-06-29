@@ -287,8 +287,10 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
-
         annotation.save()
+        # update the latest_annotation field in the parent task
+        task.latest_annotation = annotation
+        task.save()
 
         # link to rubric object
         for item in data["sceneItems"]:
@@ -440,7 +442,8 @@ class MarkingTaskService:
             Annotation: the latest annotation instance
         """
         task = self.get_latest_task(paper, question)
-        return Annotation.objects.filter(task=task).order_by("-edition").first()
+        return task.latest_annotation
+        # return Annotation.objects.filter(task=task).order_by("-edition").first()
 
     def get_all_tags(self):
         """Get all of the saved tags.

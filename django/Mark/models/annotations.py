@@ -3,8 +3,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-
-from Mark.models.tasks import MarkingTask
+from Mark.models import MarkingTask
 
 
 class AnnotationImage(models.Model):
@@ -16,7 +15,6 @@ class AnnotationImage(models.Model):
 
 class Annotation(models.Model):
     """Represents a marker's annotation of a particular test paper's question."""
-
     edition = models.IntegerField(null=True)
     score = models.IntegerField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
