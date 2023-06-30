@@ -624,7 +624,7 @@ class SpecVerifier:
         print("Checking specification name and numbers")
         print("  Checking names")
         if (
-            not re.match("^[A-Za-z0-9_]*$", self.spec["name"])
+            not re.match("\w", self.spec["name"])
             or len(self.spec["name"]) <= 0
         ):
             raise ValueError(
