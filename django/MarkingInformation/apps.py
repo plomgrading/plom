@@ -4,6 +4,6 @@
 from django.apps import AppConfig
 
 
-class StudentMarksConfig(AppConfig):
+class MarkingInformationConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "StudentMarks"
+    name = "MarkingInformation"

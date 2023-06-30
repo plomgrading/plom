@@ -92,9 +92,9 @@ class TaMarkingService:
     def get_time_spent_on_question(
         self, question: int, q_version: int = 0, average: bool = False
     ) -> int:
-        """Get the time spent on a question by all markers. 
-        
-        By default, returns the total time spent but if average == True, returns the average 
+        """Get the time spent on a question by all markers.
+
+        By default, returns the total time spent but if average == True, returns the average
         time spent instead.
 
         Args:

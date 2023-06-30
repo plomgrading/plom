@@ -11,18 +11,18 @@ from django.contrib.auth.models import User
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
-from StudentMarks.services import StudentMarksService
-from StudentMarks.services.ta_marking_service import TaMarkingService
+from MarkingInformation.services.student_marks_service import StudentMarkService
+from MarkingInformation.services.ta_marking_service import TaMarkingService
 from Papers.models import Paper
 
 
-class StudentMarkView(ManagerRequiredView):
+class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
-    sms = StudentMarksService()
+    sms = StudentMarkService()
     tms = TaMarkingService()
     scs = StagingSpecificationService()
-    template = "StudentMarks/all_student_marks.html"
+    template = "MarkingInformation/marking_landing.html"
 
     def get(self, request):
         context = self.build_context()
@@ -33,10 +33,12 @@ class StudentMarkView(ManagerRequiredView):
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
         total_times_spent = [
-            self.tms.get_time_spent_on_question(question=q) for q in range(1, n_questions + 1)
+            self.tms.get_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
         ]
         average_times_spent = [
-            self.tms.get_time_spent_on_question(question=q, average=True) for q in range(1, n_questions + 1)
+            self.tms.get_time_spent_on_question(question=q, average=True)
+            for q in range(1, n_questions + 1)
         ]
 
         context.update(
@@ -55,7 +57,7 @@ class StudentMarkView(ManagerRequiredView):
 
     def marks_download(request):
         """Download marks as a csv file."""
-        sms = StudentMarksService()
+        sms = StudentMarkService()
         spec = Specification.load().spec_dict
         student_marks = sms.get_all_students_download()
 
@@ -98,11 +100,11 @@ class StudentMarkView(ManagerRequiredView):
         return response
 
 
-class StudentMarkPaperView(ManagerRequiredView):
+class MarkingInformationPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
-    template = "StudentMarks/paper_marks.html"
-    sms = StudentMarksService()
+    template = "MarkingInformation/paper_marks.html"
+    sms = StudentMarkService()
 
     def get(self, request, paper_num):
         marks_dict = self.sms.get_marks_from_paper(paper_num)
