@@ -10,4 +10,7 @@ urlpatterns = [
     path("", StudentMarkView.as_view(), name="student_marks"),
     path("<int:paper_num>/paper/", StudentMarkPaperView.as_view(), name="paper_num"),
     path("marks_download/", StudentMarkView.marks_download, name="marks_download"),
+    path(
+        "ta_info_download/", StudentMarkView.ta_info_download, name="ta_info_download"
+    ),
 ]

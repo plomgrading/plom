@@ -6,17 +6,21 @@ from io import StringIO
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
 from StudentMarks.services import StudentMarksService
+from StudentMarks.services.ta_marking_service import TaMarkingService
+from Papers.models import Paper
 
 
 class StudentMarkView(ManagerRequiredView):
     """View for the Student Marks page."""
 
     sms = StudentMarksService()
+    tms = TaMarkingService()
     scs = StagingSpecificationService()
     template = "StudentMarks/all_student_marks.html"
 
@@ -28,6 +32,12 @@ class StudentMarkView(ManagerRequiredView):
         marked_percentages = [
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
+        total_times_spent = [
+            self.tms.get_time_spent_on_question(question=q) for q in range(1, n_questions + 1)
+        ]
+        average_times_spent = [
+            self.tms.get_time_spent_on_question(question=q, average=True) for q in range(1, n_questions + 1)
+        ]
 
         context.update(
             {
@@ -35,6 +45,8 @@ class StudentMarkView(ManagerRequiredView):
                 "n_questions": range(1, n_questions + 1),
                 "n_papers": len(papers),
                 "marked_percentages": marked_percentages,
+                "total_times_spent": total_times_spent,
+                "average_times_spent": average_times_spent,
             }
         )
 
@@ -62,6 +74,26 @@ class StudentMarkView(ManagerRequiredView):
 
         response = HttpResponse(f, content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="marks.csv"'
+
+        return response
+
+    def ta_info_download(request):
+        """Download TA marking information as a csv file."""
+        tms = TaMarkingService()
+        ta_info = tms.build_csv_data()
+
+        keys = tms.get_csv_header()
+        response = None
+        f = StringIO()
+
+        w = csv.DictWriter(f, keys)
+        w.writeheader()
+        w.writerows(ta_info)
+
+        f.seek(0)
+
+        response = HttpResponse(f, content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="ta_marking_info.csv"'
 
         return response
 
