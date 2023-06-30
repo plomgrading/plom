@@ -42,6 +42,7 @@ from .scan_progress import (
 from .progress_identify import (
     ProgressIdentifyHome,
     IDImageView,
+    IDImageWrapView,
 )
 
 from .progress_mark import (

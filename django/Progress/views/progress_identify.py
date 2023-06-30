@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import FileResponse
@@ -33,6 +34,13 @@ class ProgressIdentifyHome(ManagerRequiredView):
             }
         )
         return render(request, "Progress/Identify/identify_home.html", context)
+
+
+class IDImageWrapView(ManagerRequiredView):
+    def get(self, request, image_pk):
+        id_img = IDService().get_id_image_object(image_pk=image_pk)
+        context = {"image_pk": image_pk, "angle": id_img.rotation}
+        return render(request, "Progress/Identify/id_image_wrap_fragment.html", context)
 
 
 class IDImageView(ManagerRequiredView):
