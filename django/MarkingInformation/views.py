@@ -6,14 +6,12 @@ from io import StringIO
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
 from MarkingInformation.services.student_marks_service import StudentMarkService
 from MarkingInformation.services.ta_marking_service import TaMarkingService
-from Papers.models import Paper
 
 
 class MarkingInformationView(ManagerRequiredView):
