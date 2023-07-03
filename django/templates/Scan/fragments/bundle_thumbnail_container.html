@@ -11,7 +11,7 @@
                     justify-content: center;
                     display:flex;
                     align-items:center">
-            {% if pg.rotation == 0 %}
+            {% if pg.rotation == 0 or pg.rotation == None %}
                 <img class="img-thumbnail thumbnail0"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
             {% elif pg.rotation == 180 %}
@@ -23,16 +23,16 @@
             {% elif pg.rotation == -90 or pg.rotation == 270 %}
                 <img class="img-thumbnail thumbnail270"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
-            {% elif pg.rotation == None %}
-                <figure style="width: 100%; height: 100%; object-fit: contain;">
-                    <img class="img-thumbnail thumbnail0"
-                         src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
-                    <figcaption>no rotation</figcaption>
-                </figure>
             {% else %}
                 <p>Oh snap, rotation code broke&mdash;report a bug!</p>
             {% endif %}
         </div>
     </a>
 </div>
-<div class="card-footer">{{ pg.order }}</div>
+<div class="card-footer">
+    {% if pg.rotation == None %}
+        {{ pg.order }}: no rotation
+    {% else %}
+        {{ pg.order }}
+    {% endif %}
+</div>
