@@ -276,10 +276,13 @@ class MarkingTaskService:
     def mark_task(self, user, code, score, time, image, data):
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
-        editions_so_far = Annotation.objects.filter(task=task).count()
+        if task.latest_annotation:
+            last_annotation_edition = task.latest_annotation.edition
+        else:  # there was no previous annotation
+            last_annotation_edition = 0
 
-        annotation = Annotation(
-            edition=editions_so_far + 1,
+        this_annotation = Annotation(
+            edition=last_annotation_edition + 1,
             score=score,
             image=image,
             annotation_data=data,
@@ -287,14 +290,16 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
-
-        annotation.save()
+        this_annotation.save()
+        # update the latest_annotation field in the parent task
+        task.latest_annotation = this_annotation
+        task.save()
 
         # link to rubric object
         for item in data["sceneItems"]:
             if item[0] == "GroupDeltaText":
                 rubric = Rubric.objects.get(key=item[3])
-                rubric.annotations.add(annotation)
+                rubric.annotations.add(this_annotation)
                 rubric.save()
 
     def get_n_marked_tasks(self):
@@ -420,10 +425,9 @@ class MarkingTaskService:
         if version:
             complete_tasks = complete_tasks.filter(question_version=version)
 
+        complete_tasks.prefetch_related("latest_annotation")
         annotations = map(
-            lambda task: Annotation.objects.filter(task=task)
-            .order_by("-edition")
-            .first(),
+            lambda task: task.latest_annotation,
             complete_tasks,
         )
 
@@ -440,7 +444,7 @@ class MarkingTaskService:
             Annotation: the latest annotation instance
         """
         task = self.get_latest_task(paper, question)
-        return Annotation.objects.filter(task=task).order_by("-edition").first()
+        return task.latest_annotation
 
     def get_all_tags(self):
         """Get all of the saved tags.

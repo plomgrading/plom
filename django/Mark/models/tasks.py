@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import models
 
@@ -20,6 +21,9 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
+    latest_annotation = models.OneToOneField(
+        "Annotation", unique=True, null=True, on_delete=models.SET_NULL
+    )
 
 
 class MarkingTaskTag(Tag):
