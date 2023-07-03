@@ -624,10 +624,11 @@ class SpecVerifier:
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
         print("  Checking names")
-        if not re.match(r"\w+$", self.spec["name"]):
+        if not re.match(r"[\w\-\.]+$", self.spec["name"]):
             raise ValueError(
                 "Specification error - "
-                "Test name must be alphanumeric string without spaces (underscores ok)."
+                "Test name must be alphanumeric string without spaces "
+                "(underscores, hyphens, and periods are ok)."
             )
         print('    name "{}" is acceptable{}'.format(self.spec["name"], chk))
 
