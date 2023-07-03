@@ -624,12 +624,12 @@ class SpecVerifier:
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
         print("  Checking names")
-        if not re.match(r"\w*$", self.spec["name"]) or len(self.spec["name"]) <= 0:
+        if not re.match(r"\w+$", self.spec["name"]):
             raise ValueError(
-                "Specification error - Test name must be an alphanumeric string of non-zero length."
+                "Specification error - "
+                "Test name must be alphanumeric string without spaces (underscores ok)."
             )
-        print('    name "{}" has non-zero length{}'.format(self.spec["name"], chk))
-        print('    name "{}" is alphanumeric{}'.format(self.spec["name"], chk))
+        print('    name "{}" is acceptable{}'.format(self.spec["name"], chk))
 
         if len(self["longName"]) <= 0 or self["longName"].isspace():
             raise ValueError(
