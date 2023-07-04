@@ -106,7 +106,6 @@ class MarkingInformationView(ManagerRequiredView):
 class MarkingInformationPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
-    template = "MarkingInformation/paper_marks.html"
     sms = StudentMarkService()
 
     def get(self, request, paper_num):

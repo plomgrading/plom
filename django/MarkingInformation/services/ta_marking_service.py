@@ -2,9 +2,10 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import arrow
-import statistics
 
+from django.db.models import Sum, Avg, StdDev
 from Mark.models import MarkingTask, Annotation
+from Mark.services import MarkingTaskService
 
 
 class TaMarkingService:
@@ -90,60 +91,59 @@ class TaMarkingService:
         }
         return annotation_info
 
-    def get_time_spent_on_question(
-        self, question: int, q_version: int = 0, average: bool = False
+    def get_total_time_spent_on_question(
+        self, question: int, *, version: int = 0
     ) -> float:
-        """Get the time spent on a question by all markers.
-
-        By default, returns the total time spent but if average == True, returns the average
-        time spent instead.
+        """Get the total time spent on a question by all markers.
 
         Args:
             question: (int) The question number to get the total time spent on.
-            q_version: (int) The version of the question to get the total time spent on.
+
+        Keyword Args:
+            version: (int) The version of the question to get the total time spent on.
                 Defaults to 0 which ignores version, otherwise the version is used.
-            average: (bool) Whether to get the average time spent on a question by all markers.
 
         Returns:
-            The time (total or average) spent on a question by all markers in minutes.
+            The total time spent on a question by all markers in minutes.
         """
-        total_time = 0.0
-        marking_tasks = MarkingTask.objects.filter(question_number=question)
-        if q_version != 0:
-            marking_tasks = marking_tasks.filter(question_version=q_version)
+        return MarkingTaskService.get_tasks_from_question_with_annotation(
+            question=question, version=version
+        ).aggregate(Sum("latest_annotation__marking_time"))
 
-        for marking_task in marking_tasks:
-            if marking_task.latest_annotation:
-                total_time += marking_task.latest_annotation.marking_time
-
-        if average:
-            return round(total_time / marking_tasks.count(), 1)
-
-        return total_time
-
-    def get_std_time_spent_on_question(
-        self, question: int, q_version: int = 0
+    def get_average_time_spent_on_question(
+        self, question: int, *, version: int = 0
     ) -> float:
-        """Get the std of time spent on a question by all markers.
+        """Get the average time spent on a question by all markers.
 
         Args:
-            question: (int) The question number to get the total time spent on.
-            q_version: (int) The version of the question to get the total time spent on.
+            question: (int) The question number to get the average time spent on.
+
+        Keyword Args:
+            version: (int) The version of the question to get the average time spent on.
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            The std time spent on a question by all markers in minutes.
+            The average time spent on a question by all markers in minutes.
         """
-        times = []
-        marking_tasks = MarkingTask.objects.filter(question_number=question)
-        if q_version != 0:
-            marking_tasks = marking_tasks.filter(question_version=q_version)
+        return MarkingTaskService.get_tasks_from_question_with_annotation(
+            question=question, version=version
+        ).aggregate(Avg("latest_annotation__marking_time"))
 
-        for marking_task in marking_tasks:
-            if marking_task.latest_annotation:
-                times.append(marking_task.latest_annotation.marking_time)
+    def get_stdev_time_spent_on_question(
+        self, question: int, *, version: int = 0
+    ) -> float:
+        """Get the standard deviation of time spent on a question by all markers.
 
-        if len(times) == 0:
-            return 0.0
+        Args:
+            question: (int) The question number to get the standard deviation time spent on.
 
-        return round(statistics.stdev(times), 1)
+        Keyword Args:
+            version: (int) The version of the question to get the standard deviation time spent on.
+                Defaults to 0 which ignores version, otherwise the version is used.
+
+        Returns:
+            The standard deviation time spent on a question by all markers in minutes.
+        """
+        return MarkingTaskService.get_tasks_from_question_with_annotation(
+            question=question, version=version
+        ).aggregate(StdDev("latest_annotation__marking_time"))
