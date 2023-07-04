@@ -2,12 +2,14 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Brennen Chiu
 
 from copy import deepcopy
 import logging
 from math import ceil
 from pathlib import Path
 import random
+import re
 import sys
 
 if sys.version_info >= (3, 9):
@@ -622,12 +624,13 @@ class SpecVerifier:
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
         print("  Checking names")
-        if not self.spec["name"].isalnum() or len(self.spec["name"]) <= 0:
+        if not re.match(r"[\w\-\.]+$", self.spec["name"]):
             raise ValueError(
-                "Specification error - Test name must be an alphanumeric string of non-zero length."
+                "Specification error - "
+                "Test name must be alphanumeric string without spaces "
+                "(underscores, hyphens, and periods are ok)."
             )
-        print('    name "{}" has non-zero length{}'.format(self.spec["name"], chk))
-        print('    name "{}" is alphanumeric{}'.format(self.spec["name"], chk))
+        print('    name "{}" is acceptable{}'.format(self.spec["name"], chk))
 
         if len(self["longName"]) <= 0 or self["longName"].isspace():
             raise ValueError(
