@@ -335,8 +335,8 @@ class ManageScanService:
 
         bundle_list = []
         for bundle in bundles:
-            n_pages = len(StagingImage.objects.filter(bundle=bundle))
-            n_complete = len(Image.objects.filter(bundle__hash=bundle.pdf_hash))
+            n_pages = StagingImage.objects.filter(bundle=bundle).count()
+            n_complete = Image.objects.filter(bundle__hash=bundle.pdf_hash).count()
             time_uploaded = timezone.make_aware(
                 datetime.fromtimestamp(bundle.timestamp)
             )

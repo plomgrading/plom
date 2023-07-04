@@ -341,55 +341,55 @@ class RubricServiceTests(TestCase):
         service = RubricService()
         user = baker.make(User)
         rubrics = service.get_rubrics_from_user(user)
-        self.assertEqual(len(rubrics), 0)
+        self.assertEqual(rubrics.count(), 0)
 
         baker.make(Rubric, user=user)
         rubrics = service.get_rubrics_from_user(user)
-        self.assertEqual(len(rubrics), 1)
+        self.assertEqual(rubrics.count(), 1)
 
         baker.make(Rubric, user=user)
         rubrics = service.get_rubrics_from_user(user)
-        self.assertEqual(len(rubrics), 2)
+        self.assertEqual(rubrics.count(), 2)
 
         baker.make(Rubric, user=user)
         rubrics = service.get_rubrics_from_user(user)
-        self.assertEqual(len(rubrics), 3)
+        self.assertEqual(rubrics.count(), 3)
 
     def test_rubrics_from_annotation(self):
         service = RubricService()
         annotation1 = baker.make(Annotation)
 
         rubrics = service.get_rubrics_from_annotation(annotation1)
-        self.assertEqual(len(rubrics), 0)
+        self.assertEqual(rubrics.count(), 0)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
         rubrics = service.get_rubrics_from_annotation(annotation1)
-        self.assertEqual(len(rubrics), 1)
+        self.assertEqual(rubrics.count(), 1)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
         rubrics = service.get_rubrics_from_annotation(annotation1)
-        self.assertEqual(len(rubrics), 2)
+        self.assertEqual(rubrics.count(), 2)
 
     def test_annotations_from_rubric(self):
         service = RubricService()
         rubric1 = baker.make(Rubric)
 
         annotations = service.get_annotation_from_rubric(rubric1)
-        self.assertEqual(len(annotations), 0)
+        self.assertEqual(annotations.count(), 0)
 
         annot1 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot1)
         annotations = service.get_annotation_from_rubric(rubric1)
-        self.assertEqual(len(annotations), 1)
+        self.assertEqual(annotations.count(), 1)
 
         annot2 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot2)
         annotations = service.get_annotation_from_rubric(rubric1)
-        self.assertEqual(len(annotations), 2)
+        self.assertEqual(annotations.count(), 2)
 
     def test_rubrics_from_paper(self):
         service = RubricService()
@@ -402,15 +402,15 @@ class RubricServiceTests(TestCase):
         annotation4 = baker.make(Annotation, task=marking_task2)
 
         rubrics = service.get_rubrics_from_paper(paper1)
-        self.assertEqual(len(rubrics), 0)
+        self.assertEqual(rubrics.count(), 0)
 
         rubric1 = baker.make(Rubric)
         rubric1.annotations.add(annotation1)
         rubric1.annotations.add(annotation2)
         rubrics = service.get_rubrics_from_paper(paper1)
-        self.assertEqual(len(rubrics), 2)
+        self.assertEqual(rubrics.count(), 2)
 
         rubric1.annotations.add(annotation3)
         rubric1.annotations.add(annotation4)
         rubrics = service.get_rubrics_from_paper(paper1)
-        self.assertEqual(len(rubrics), 4)
+        self.assertEqual(rubrics.count(), 4)

@@ -43,7 +43,7 @@ class TestSpecQuestionTests(TestCase):
         q1.save()
 
         qserv.remove_question()
-        self.assertEqual(len(models.TestSpecQuestion.objects.all()), 0)
+        self.assertEqual(models.TestSpecQuestion.objects.all().count(), 0)
 
     def test_remove_question_update_spec(self):
         """Test that calling remove_question will update the pages in models.TestSpecInfo"""
@@ -72,7 +72,7 @@ class TestSpecQuestionTests(TestCase):
         spec.set_n_questions(3)
 
         spec.clear_questions()
-        self.assertEqual(len(models.TestSpecQuestion.objects.all()), 0)
+        self.assertEqual(models.TestSpecQuestion.objects.all().count(), 0)
 
     def test_total_assigned_marks(self):
         """Test TestSpecService.get_total_assigned_marks"""

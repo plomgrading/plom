@@ -34,11 +34,11 @@ class PaperCreatorTests(TestCase):
         Helper function for getting the current number of papers/pages
         """
 
-        n_papers = len(Paper.objects.all())
-        n_pages = len(FixedPage.objects.all())
-        n_id = len(IDPage.objects.all())
-        n_dnm = len(DNMPage.objects.all())
-        n_question = len(QuestionPage.objects.all())
+        n_papers = Paper.objects.all().count()
+        n_pages = FixedPage.objects.all().count()
+        n_id = IDPage.objects.all().count()
+        n_dnm = DNMPage.objects.all().count()
+        n_question = QuestionPage.objects.all().count()
 
         return n_papers, n_pages, n_id, n_dnm, n_question
 

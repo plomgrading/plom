@@ -33,25 +33,22 @@ class BuildPapersService:
     @transaction.atomic
     def get_n_complete_tasks(self):
         """Get the number of PDFTasks that have completed."""
-        completed = PDFTask.objects.filter(status="complete")
-        return len(completed)
+        return PDFTask.objects.filter(status="complete").count()
 
     @transaction.atomic
     def get_n_pending_tasks(self):
         """Get the number of PDFTasks with the status 'todo,' 'queued,' 'started,' or 'error'."""
-        pending = PDFTask.objects.exclude(status="complete")
-        return len(pending)
+        return PDFTask.objects.exclude(status="complete").count()
 
     @transaction.atomic
     def get_n_running_tasks(self):
         """Get the number of PDFTasks with the status 'queued' or 'started'."""
-        running = PDFTask.objects.filter(Q(status="queued") | Q(status="started"))
-        return len(running)
+        return PDFTask.objects.filter(Q(status="queued") | Q(status="started")).count()
 
     @transaction.atomic
     def get_n_tasks(self):
         """Get the total number of PDFTasks."""
-        return len(PDFTask.objects.all())
+        return PDFTask.objects.all().count()
 
     @transaction.atomic
     def are_all_papers_built(self):
@@ -63,8 +60,7 @@ class BuildPapersService:
     @transaction.atomic
     def are_there_errors(self):
         """Return True if there are any PDFTasks with an 'error' status."""
-        error_tasks = PDFTask.objects.filter(status="error")
-        return len(error_tasks) > 0
+        return PDFTask.objects.filter(status="error").count() > 0
 
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database."""
