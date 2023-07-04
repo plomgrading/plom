@@ -110,10 +110,10 @@ class TaMarkingService:
             marking_tasks = marking_tasks.filter(question_version=q_version)
 
         for marking_task in marking_tasks:
-            # total_time += marking_task.latest_annotation.marking_time
-            pass
+            if marking_task.latest_annotation:
+                total_time += marking_task.latest_annotation.marking_time
 
         if average:
-            return total_time / marking_tasks.count()
+            return round(total_time / marking_tasks.count(), 1)
 
         return total_time
