@@ -95,11 +95,9 @@ class StudentMarksService:
         Returns:
             The count of how many papers a mark for this question.
         """
-        return (
-            MarkingTask.objects.filter(question_number=question_num)
-            .filter(latest_annotation__isnull=False)
-            .count()
-        )
+        return MarkingTask.objects.filter(
+            question_number=question_num, latest_annotation__isnull=False
+        ).count()
 
     def get_student_info_from_paper(
         self, paper_num: int, original: bool = False
