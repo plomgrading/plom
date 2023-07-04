@@ -46,23 +46,23 @@
                         {% for time in total_times_spent %}<td>{{ time }}</td>{% endfor %}
                     </tr>
                     <tr>
-                        <td>Avgerage</td>
+                        <td>Average</td>
                         {% for time in average_times_spent %}
-                        {% if time %}
-                        <td>{{ time|floatformat:1 }}</td>
-                        {% else %}
-                        <td>None</td>
-                        {% endif %}
+                            {% if time %}
+                                <td>{{ time|floatformat:1 }}</td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
                         {% endfor %}
                     </tr>
                     <tr>
                         <td>Standard Deviation</td>
                         {% for time in std_times_spent %}
-                        {% if time %}
-                        <td>{{ time|floatformat:1 }}</td>
-                        {% else %}
-                        <td>None</td>
-                        {% endif %}
+                            {% if time %}
+                                <td>{{ time|floatformat:1 }}</td>
+                            {% else %}
+                                <td>None</td>
+                            {% endif %}
                         {% endfor %}
                     </tr>
                 </tbody>
