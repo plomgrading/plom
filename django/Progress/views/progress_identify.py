@@ -39,7 +39,8 @@ class ProgressIdentifyHome(ManagerRequiredView):
 class IDImageWrapView(ManagerRequiredView):
     def get(self, request, image_pk):
         id_img = IDService().get_id_image_object(image_pk=image_pk)
-        context = {"image_pk": image_pk, "angle": id_img.rotation}
+        # pass -angle to template since css uses clockwise not anti-clockwise.
+        context = {"image_pk": image_pk, "angle": -id_img.rotation}
         return render(request, "Progress/Identify/id_image_wrap_fragment.html", context)
 
 
