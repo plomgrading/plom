@@ -262,7 +262,7 @@ class PageImageProcessor:
             the full, righted image if an invalid box range is specified.
         """
         pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
-        pil_img.rotate(orientation)
+        pil_img = pil_img.rotate(orientation, expand=True)
 
         # convert the PIL.Image to OpenCV format
         opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)

@@ -138,9 +138,26 @@ def test_spec_question_select_key_takes_default():
     assert s["question"]["1"]["select"] == "shuffle"
 
 
+def test_spec_valid_shortname():
+    r = raw.copy()
+    r["name"] = "test42"
+    SpecVerifier(r).verify()
+    r["name"] = "udder_score"
+    SpecVerifier(r).verify()
+    r["name"] = "42nd"
+    SpecVerifier(r).verify()
+    r["name"] = "dotty.exam"
+    SpecVerifier(r).verify()
+    r["name"] = "hy-phen"
+    SpecVerifier(r).verify()
+
+
 def test_spec_invalid_shortname():
     r = raw.copy()
-    r["name"] = "no spaces"
+    r["name"] = "no spaces allowed"
+    with raises(ValueError):
+        SpecVerifier(r).verify()
+    r["name"] = ""
     with raises(ValueError):
         SpecVerifier(r).verify()
 

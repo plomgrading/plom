@@ -3,8 +3,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-
-from Mark.models.tasks import MarkingTask
+from Mark.models import MarkingTask
 
 
 class AnnotationImage(models.Model):

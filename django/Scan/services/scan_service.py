@@ -925,7 +925,7 @@ class ScanService:
                     "paper_number": img.extrastagingimage.paper_number,
                     "question_list": img.extrastagingimage.question_list,
                 },
-                "order": f"{img.bundle_order+1}".zfill(n_digits),
+                "order": f"{img.bundle_order}".zfill(n_digits),
                 "rotation": img.rotation,
             }
         return pages
@@ -997,6 +997,98 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_paper_numbers(bundle_obj)
+
+    @transaction.atomic
+    def get_bundle_missing_paper_page_numbers(self, bundle_obj):
+        n_pages = SpecificationService().get_n_pages()
+        papers_pages = {}
+        # get all known images in the bundle
+        # put in dict as {page_number: [list of known pages present] }
+        for img in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.KNOWN
+        ).prefetch_related("knownstagingimage"):
+            papers_pages.setdefault(img.knownstagingimage.paper_number, [])
+            papers_pages[img.knownstagingimage.paper_number].append(
+                img.knownstagingimage.page_number
+            )
+
+        incomplete_papers = []
+        for paper_number, page_list in sorted(papers_pages.items()):
+            if len(page_list) == 0 or len(page_list) == n_pages:
+                continue
+            incomplete_papers.append(
+                (
+                    paper_number,
+                    [pg for pg in range(1, n_pages + 1) if pg not in page_list],
+                )
+            )
+        return incomplete_papers
+
+    @transaction.atomic
+    def get_bundle_missing_paper_page_numbers_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_missing_paper_page_numbers(bundle_obj)
+
+    @transaction.atomic
+    def get_bundle_unknown_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        pages = []
+        for img in (
+            bundle_obj.stagingimage_set.filter(image_type=StagingImage.UNKNOWN)
+            .all()
+            .order_by("bundle_order")
+        ):
+            pages.append(
+                {
+                    "status": img.image_type,
+                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "rotation": img.rotation,
+                }
+            )
+        return pages
+
+    @transaction.atomic
+    def get_bundle_unknown_pages_info_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_unknown_pages_info(bundle_obj)
+
+    @transaction.atomic
+    def get_bundle_discard_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        pages = []
+        for img in (
+            bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
+            .prefetch_related("discardstagingimage")
+            .all()
+            .order_by("bundle_order")
+        ):
+            pages.append(
+                {
+                    "status": img.image_type,
+                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "rotation": img.rotation,
+                    "reason": img.discardstagingimage.discard_reason,
+                }
+            )
+        return pages
+
+    @transaction.atomic
+    def get_bundle_discard_pages_info_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_discard_pages_info(bundle_obj)
 
 
 # ----------------------------------------
