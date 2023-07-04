@@ -55,9 +55,18 @@ class ScannerSummaryView(ScannerRequiredView):
 
 
 class ScannerPushedImageView(ScannerRequiredView):
-    """Display the summary of the whole test."""
+    """Return a pushed image given by its pk."""
 
     def get(self, request, img_pk):
-        mss = ManageScanService()
-        img = mss.get_pushed_image(img_pk)
+        img = ManageScanService().get_pushed_image(img_pk)
         return FileResponse(img.image_file)
+
+
+class ScannerPushedImageWrapView(ScannerRequiredView):
+    """Return the simple html wrapper around the pushed image with correct rotation."""
+
+    def get(self, request, img_pk):
+        pushed_img = ManageScanService().get_pushed_image(img_pk)
+        # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
+        context = {"image_pk": img_pk, "angle": -pushed_img.rotation}
+        return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
