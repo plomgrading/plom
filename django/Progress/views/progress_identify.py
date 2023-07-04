@@ -44,5 +44,5 @@ class IDImageView(ManagerRequiredView):
 
 class ClearID(ManagerRequiredView):
     def post(self, request, paper_pk):
-        print(paper_pk)
+        IDService().set_id_task_todo_and_clear_id(paper_pk)
         return HttpResponseClientRefresh()

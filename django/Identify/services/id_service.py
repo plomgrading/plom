@@ -4,7 +4,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from Identify.models import PaperIDTask
+from Identify.models import PaperIDTask, PaperIDAction
 from Identify.services import IdentifyTaskService
 from Papers.models import IDPage, Image
 
@@ -62,6 +62,10 @@ class IDService:
         return completed_id_task_list
     
     @transaction.atomic
-    def clear_id(self, paper_pk):
-        
-        pass
+    def set_id__task_todo_and_clear_id(self, paper_pk):
+        paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
+        paper_ID_task_obj.status = PaperIDTask.TO_DO
+        paper_ID_task_obj.save()
+
+        sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
+        sid.delete()
