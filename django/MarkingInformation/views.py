@@ -35,7 +35,7 @@ class MarkingInformationView(ManagerRequiredView):
             for q in range(1, n_questions + 1)
         ]
         average_times_spent = [
-            self.tms.get_average_time_spent_on_question(question=q, average=True)
+            self.tms.get_average_time_spent_on_question(question=q)
             for q in range(1, n_questions + 1)
         ]
         std_times_spent = [

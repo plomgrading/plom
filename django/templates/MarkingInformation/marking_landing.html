@@ -25,13 +25,6 @@
                     </tr>
                 </tbody>
             </table>
-            <div class="col-auto" style="padding-top: 0.5%">
-                {% if marking_complete %}
-                <p style="color: green;">Please confirm with your TAs that marking is complete.</p>
-                {% else %}
-                <p style="color: red;">* * * Marking is not complete. * * *</p>
-                {% endif %}
-            </div>
             <form method="post"
                   action="{% url 'marks_download' %}"
                   style="padding-right: 2%">
@@ -54,21 +47,26 @@
                     </tr>
                     <tr>
                         <td>Avgerage</td>
-                        {% for time in average_times_spent %}<td>{{ time }}</td>{% endfor %}
+                        {% for time in average_times_spent %}
+                        {% if time %}
+                        <td>{{ time|floatformat:1 }}</td>
+                        {% else %}
+                        <td>None</td>
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                     <tr>
                         <td>Standard Deviation</td>
-                        {% for time in std_times_spent %}<td>{{ time }}</td>{% endfor %}
+                        {% for time in std_times_spent %}
+                        {% if time %}
+                        <td>{{ time|floatformat:1 }}</td>
+                        {% else %}
+                        <td>None</td>
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                 </tbody>
             </table>
-            <div class="col-auto" style="padding-top: 0.5%">
-                {% if marking_complete %}
-                <p style="color: green;">Please confirm with your TAs that marking is complete.</p>
-                {% else %}
-                <p style="color: red;">* * * Marking is not complete. * * *</p>
-                {% endif %}
-            </div>
             <form method="post"
                   action="{% url 'ta_info_download' %}"
                   style="padding-right: 2%">

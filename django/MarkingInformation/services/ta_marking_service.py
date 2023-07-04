@@ -106,9 +106,12 @@ class TaMarkingService:
         Returns:
             The total time spent on a question by all markers in minutes.
         """
-        return MarkingTaskService.get_tasks_from_question_with_annotation(
+        service = MarkingTaskService()
+        return service.get_tasks_from_question_with_annotation(
             question=question, version=version
-        ).aggregate(Sum("latest_annotation__marking_time"))
+        ).aggregate(Sum("latest_annotation__marking_time"))[
+            "latest_annotation__marking_time__sum"
+        ]
 
     def get_average_time_spent_on_question(
         self, question: int, *, version: int = 0
@@ -125,9 +128,12 @@ class TaMarkingService:
         Returns:
             The average time spent on a question by all markers in minutes.
         """
-        return MarkingTaskService.get_tasks_from_question_with_annotation(
+        service = MarkingTaskService()
+        return service.get_tasks_from_question_with_annotation(
             question=question, version=version
-        ).aggregate(Avg("latest_annotation__marking_time"))
+        ).aggregate(Avg("latest_annotation__marking_time"))[
+            "latest_annotation__marking_time__avg"
+        ]
 
     def get_stdev_time_spent_on_question(
         self, question: int, *, version: int = 0
@@ -144,6 +150,9 @@ class TaMarkingService:
         Returns:
             The standard deviation time spent on a question by all markers in minutes.
         """
-        return MarkingTaskService.get_tasks_from_question_with_annotation(
+        service = MarkingTaskService()
+        return service.get_tasks_from_question_with_annotation(
             question=question, version=version
-        ).aggregate(StdDev("latest_annotation__marking_time"))
+        ).aggregate(StdDev("latest_annotation__marking_time"))[
+            "latest_annotation__marking_time__stddev"
+        ]
