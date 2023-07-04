@@ -60,3 +60,8 @@ class IDService:
             completed_id_task_list.update({id_paper: latest_id_result})
 
         return completed_id_task_list
+    
+    @transaction.atomic
+    def clear_id(self, paper_pk):
+        
+        pass

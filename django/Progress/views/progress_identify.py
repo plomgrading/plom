@@ -3,6 +3,7 @@
 
 from django.shortcuts import render
 from django.http import FileResponse
+from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -39,3 +40,9 @@ class IDImageView(ManagerRequiredView):
     def get(self, request, image_pk):
         id_img = IDService().get_id_image_object(image_pk=image_pk)
         return FileResponse(id_img.image_file)
+    
+
+class ClearID(ManagerRequiredView):
+    def post(self, request, paper_pk):
+        print(paper_pk)
+        return HttpResponseClientRefresh()
