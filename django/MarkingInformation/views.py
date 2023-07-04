@@ -31,15 +31,15 @@ class MarkingInformationView(ManagerRequiredView):
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
         total_times_spent = [
-            self.tms.get_time_spent_on_question(question=q)
+            self.tms.get_total_time_spent_on_question(question=q)
             for q in range(1, n_questions + 1)
         ]
         average_times_spent = [
-            self.tms.get_time_spent_on_question(question=q, average=True)
+            self.tms.get_average_time_spent_on_question(question=q, average=True)
             for q in range(1, n_questions + 1)
         ]
         std_times_spent = [
-            self.tms.get_std_time_spent_on_question(question=q)
+            self.tms.get_stdev_time_spent_on_question(question=q)
             for q in range(1, n_questions + 1)
         ]
 

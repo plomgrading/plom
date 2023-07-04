@@ -25,6 +25,13 @@
                     </tr>
                 </tbody>
             </table>
+            <div class="col-auto" style="padding-top: 0.5%">
+                {% if marking_complete %}
+                <p style="color: green;">Please confirm with your TAs that marking is complete.</p>
+                {% else %}
+                <p style="color: red;">* * * Marking is not complete. * * *</p>
+                {% endif %}
+            </div>
             <form method="post"
                   action="{% url 'marks_download' %}"
                   style="padding-right: 2%">
@@ -36,25 +43,32 @@
             <table style="width: auto" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th scope="col"></th>
+                        <th scope="col">Time marking (minutes)</th>
                         {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Total time marking</td>
+                        <td>Total</td>
                         {% for time in total_times_spent %}<td>{{ time }}</td>{% endfor %}
                     </tr>
                     <tr>
-                        <td>Avg time marking</td>
+                        <td>Avgerage</td>
                         {% for time in average_times_spent %}<td>{{ time }}</td>{% endfor %}
                     </tr>
                     <tr>
-                        <td>Std time marking</td>
+                        <td>Standard Deviation</td>
                         {% for time in std_times_spent %}<td>{{ time }}</td>{% endfor %}
                     </tr>
                 </tbody>
             </table>
+            <div class="col-auto" style="padding-top: 0.5%">
+                {% if marking_complete %}
+                <p style="color: green;">Please confirm with your TAs that marking is complete.</p>
+                {% else %}
+                <p style="color: red;">* * * Marking is not complete. * * *</p>
+                {% endif %}
+            </div>
             <form method="post"
                   action="{% url 'ta_info_download' %}"
                   style="padding-right: 2%">
