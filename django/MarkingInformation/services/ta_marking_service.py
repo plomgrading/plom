@@ -82,7 +82,9 @@ class TaMarkingService:
             "score_given": annotation.score,
             "max_score": annotation.annotation_data["maxMark"],
             "minutes_spent_marking": annotation.marking_time,
-            "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(" ", "seconds"),
+            "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(
+                " ", "seconds"
+            ),
             "csv_write_time": arrow.now().isoformat(" ", "seconds"),
         }
         return annotation_info
