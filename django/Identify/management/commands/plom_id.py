@@ -25,18 +25,9 @@ class Command(BaseCommand):
 
     python3 manage.py plom_id idbox (top) (bottom) (left) (right)
     python3 manage.py plom_id idreader
-    python3 manage.py plom_id testing
     """
 
     help = "Extract the ID box from all papers."
-
-    def testing(self):
-        test_image = Path("test_image.png")
-        largest_box = self.get_largest_box(test_image)
-        cv2.imwrite("largest_box_image.png", largest_box)
-        ID_box = self.extract_and_resize_ID_box(test_image)
-        cv2.imwrite("output_image.png", ID_box)
-        list_of_images = self.get_digit_images(ID_box, 8)
 
     def get_id_box(self, top, bottom, left, right):
         idservice = IDReaderService()
@@ -343,7 +334,6 @@ class Command(BaseCommand):
                 `python manage.py auto_ider`.
             """,
         )
-        sp.add_parser("testing")
 
     def handle(self, *args, **options):
         if options["command"] == "idbox":
@@ -352,7 +342,5 @@ class Command(BaseCommand):
             )
         elif options["command"] == "idreader":
             self.run_id_reader()
-        elif options["command"] == "testing":
-            self.testing()
         else:
             self.print_help("manage.py", "plom_id")
