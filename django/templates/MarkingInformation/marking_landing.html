@@ -21,7 +21,7 @@
                 <tbody>
                     <tr>
                         <td># of papers marked</td>
-                        {% for q in marked_percentages %}<td>{{ q }}/{{ n_papers }}</td>{% endfor %}
+                        {% for q in marked_question_counts %}<td>{{ q }}/{{ n_papers }}</td>{% endfor %}
                     </tr>
                 </tbody>
             </table>
@@ -29,6 +29,11 @@
                   action="{% url 'marks_download' %}"
                   style="padding-right: 2%">
                 {% csrf_token %}
+                {% if all_marked %}
+                    <p style="color: green; padding-right: 0.5%;">All questions have a mark. Please confirm with your TAs that marking is complete.</p>
+                {% else %}
+                    <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
+                {% endif %}
                 <button type="submit" class="btn btn-success">Download Grades</button>
             </form>
         </div>
@@ -71,6 +76,11 @@
                   action="{% url 'ta_info_download' %}"
                   style="padding-right: 2%">
                 {% csrf_token %}
+                {% if all_marked %}
+                    <p style="color: green; padding-right: 0.5%;">All questions have a mark. Please confirm with your TAs that marking is complete.</p>
+                {% else %}
+                    <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
+                {% endif %}
                 <button type="submit" class="btn btn-success">Download TA Marking Info</button>
             </form>
         </div>

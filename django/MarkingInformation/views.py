@@ -27,7 +27,7 @@ class MarkingInformationView(ManagerRequiredView):
 
         papers = self.sms.get_all_marks()
         n_questions = self.scs.get_n_questions()
-        marked_percentages = [
+        marked_question_counts = [
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
         total_times_spent = [
@@ -43,19 +43,25 @@ class MarkingInformationView(ManagerRequiredView):
             for q in range(1, n_questions + 1)
         ]
 
+
         context.update(
             {
                 "papers": papers,
                 "n_questions": range(1, n_questions + 1),
                 "n_papers": len(papers),
-                "marked_percentages": marked_percentages,
+                "marked_question_counts": marked_question_counts,
                 "total_times_spent": total_times_spent,
                 "average_times_spent": average_times_spent,
                 "std_times_spent": std_times_spent,
+                "all_marked": True,
             }
         )
 
-        # return JsonResponse(student_marks)
+        for marked_question_count in marked_question_counts:
+            if marked_question_count < len(papers):
+                context["all_marked"] = False
+                break
+
         return render(request, self.template, context)
 
     def marks_download(request):
