@@ -49,6 +49,10 @@
                         <td>Avg time marking</td>
                         {% for time in average_times_spent %}<td>{{ time }}</td>{% endfor %}
                     </tr>
+                    <tr>
+                        <td>Std time marking</td>
+                        {% for time in std_times_spent %}<td>{{ time }}</td>{% endfor %}
+                    </tr>
                 </tbody>
             </table>
             <form method="post"

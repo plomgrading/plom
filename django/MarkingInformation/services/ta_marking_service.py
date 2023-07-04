@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import arrow
+import statistics
 
 from Mark.models import MarkingTask, Annotation
 
@@ -91,7 +92,7 @@ class TaMarkingService:
 
     def get_time_spent_on_question(
         self, question: int, q_version: int = 0, average: bool = False
-    ) -> int:
+    ) -> float:
         """Get the time spent on a question by all markers.
 
         By default, returns the total time spent but if average == True, returns the average
@@ -104,7 +105,7 @@ class TaMarkingService:
             average: (bool) Whether to get the average time spent on a question by all markers.
 
         Returns:
-            int: The total time spent on a question by all markers.
+            The time (total or average) spent on a question by all markers in minutes.
         """
         total_time = 0.0
         marking_tasks = MarkingTask.objects.filter(question_number=question)
@@ -119,3 +120,30 @@ class TaMarkingService:
             return round(total_time / marking_tasks.count(), 1)
 
         return total_time
+
+    def get_std_time_spent_on_question(
+        self, question: int, q_version: int = 0
+    ) -> float:
+        """Get the std of time spent on a question by all markers.
+
+        Args:
+            question: (int) The question number to get the total time spent on.
+            q_version: (int) The version of the question to get the total time spent on.
+                Defaults to 0 which ignores version, otherwise the version is used.
+
+        Returns:
+            The std time spent on a question by all markers in minutes.
+        """
+        times = []
+        marking_tasks = MarkingTask.objects.filter(question_number=question)
+        if q_version != 0:
+            marking_tasks = marking_tasks.filter(question_version=q_version)
+
+        for marking_task in marking_tasks:
+            if marking_task.latest_annotation:
+                times.append(marking_task.latest_annotation.marking_time)
+
+        if len(times) == 0:
+            return 0.0
+
+        return round(statistics.stdev(times), 1)

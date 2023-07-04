@@ -38,6 +38,10 @@ class MarkingInformationView(ManagerRequiredView):
             self.tms.get_time_spent_on_question(question=q, average=True)
             for q in range(1, n_questions + 1)
         ]
+        std_times_spent = [
+            self.tms.get_std_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
 
         context.update(
             {
@@ -47,6 +51,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "marked_percentages": marked_percentages,
                 "total_times_spent": total_times_spent,
                 "average_times_spent": average_times_spent,
+                "std_times_spent": std_times_spent,
             }
         )
 
