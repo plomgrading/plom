@@ -4,8 +4,6 @@
 import arrow
 
 from Mark.models import MarkingTask, Annotation
-from Papers.models import Paper
-from Authentication.models import Profile
 
 
 class TaMarkingService:
@@ -84,9 +82,7 @@ class TaMarkingService:
             "score_given": annotation.score,
             "max_score": annotation.annotation_data["maxMark"],
             "minutes_spent_marking": annotation.marking_time,
-            "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(
-                " ", "seconds"
-            ),
+            "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(" ", "seconds"),
             "csv_write_time": arrow.now().isoformat(" ", "seconds"),
         }
         return annotation_info
@@ -115,7 +111,7 @@ class TaMarkingService:
 
         for marking_task in marking_tasks:
             # total_time += marking_task.latest_annotation.marking_time
-            total_time += 1.0
+            pass
 
         if average:
             return total_time / marking_tasks.count()
