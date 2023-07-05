@@ -10,7 +10,7 @@ from django.http import Http404, FileResponse, HttpResponse
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperInfoService
 
 
 # from Scan.models import StagingImage
@@ -95,6 +95,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
 
         context = super().build_context()
         scanner = ScanService()
+        paper_info = PaperInfoService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
 
@@ -123,9 +124,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
                 f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
             ]
             paper_numbers = scanner.get_bundle_paper_numbers(bundle)
-            all_paper_numbers = [
-                n + 1 for n in range(SpecificationService().get_n_to_produce())
-            ]
+            all_paper_numbers = paper_info.which_papers_in_database()
             context.update(
                 {
                     "question_labels": question_labels,

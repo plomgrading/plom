@@ -125,11 +125,22 @@ class MarkingTaskService:
         """Return a tuple of (paper_number, question_number) from a task code string.
 
         Args:
-            code (str): a task code, e.g. q0001g1
+            code (str): a task code, e.g. q0001g1. Requires code to be at least 4 characters
+            long. Requires code to start with "q" and contain a "g" somewhere after the second
+            character, but not be the last character and the rest of the characters to be numeric.
         """
-        assert len(code) == len("q0000g0")
-        paper_number = int(code[1:5])
-        question_number = int(code[-1])
+        assert len(code) >= len("q0g0")
+        assert code[0] == "q"
+
+        split_index = code.find("g", 2)
+
+        # g must be present
+        assert split_index != -1
+        # g cannot be the last character
+        assert split_index != len(code) - 1
+
+        paper_number = int(code[1:split_index])
+        question_number = int(code[split_index + 1 :])
 
         return paper_number, question_number
 
@@ -265,10 +276,13 @@ class MarkingTaskService:
     def mark_task(self, user, code, score, time, image, data):
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
-        editions_so_far = Annotation.objects.filter(task=task).count()
+        if task.latest_annotation:
+            last_annotation_edition = task.latest_annotation.edition
+        else:  # there was no previous annotation
+            last_annotation_edition = 0
 
-        annotation = Annotation(
-            edition=editions_so_far + 1,
+        this_annotation = Annotation(
+            edition=last_annotation_edition + 1,
             score=score,
             image=image,
             annotation_data=data,
@@ -276,14 +290,16 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
-
-        annotation.save()
+        this_annotation.save()
+        # update the latest_annotation field in the parent task
+        task.latest_annotation = this_annotation
+        task.save()
 
         # link to rubric object
         for item in data["sceneItems"]:
             if item[0] == "GroupDeltaText":
                 rubric = Rubric.objects.get(key=item[3])
-                rubric.annotations.add(annotation)
+                rubric.annotations.add(this_annotation)
                 rubric.save()
 
     def get_n_marked_tasks(self):
@@ -409,10 +425,9 @@ class MarkingTaskService:
         if version:
             complete_tasks = complete_tasks.filter(question_version=version)
 
+        complete_tasks.prefetch_related("latest_annotation")
         annotations = map(
-            lambda task: Annotation.objects.filter(task=task)
-            .order_by("-edition")
-            .first(),
+            lambda task: task.latest_annotation,
             complete_tasks,
         )
 
@@ -429,7 +444,7 @@ class MarkingTaskService:
             Annotation: the latest annotation instance
         """
         task = self.get_latest_task(paper, question)
-        return Annotation.objects.filter(task=task).order_by("-edition").first()
+        return task.latest_annotation
 
     def get_all_tags(self):
         """Get all of the saved tags.
@@ -510,8 +525,27 @@ class MarkingTaskService:
             # Assuming the queryset will always have a length of one
             return text_tags.first()
 
-    def remove_tag_from_task(self, tag, task):
+    def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
+
+        Args:
+            tag_text: which tag to remove.
+            code: from which task, for example ``"q0123g5"`` for paper
+                123 question 5.
+
+        Raises:
+            ValueError: invalid task code, no such tag, or this task does not
+                have this tag.
+            RuntimeError: task not found.
+        """
+        the_tag = self.get_tag_from_text(tag_text)
+        if not the_tag:
+            raise ValueError(f'No such tag "{tag_text}"')
+        the_task = self.get_task_from_code(code)
+        self.remove_tag_from_task(the_tag, the_task)
+
+    def remove_tag_from_task(self, tag, task):
+        """Backend to remove a tag from a marking task.
 
         Args:
             tag: reference to a MarkingTaskTag instance

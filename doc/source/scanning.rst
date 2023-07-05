@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright 2018-2022 Andrew Rechnitzer
-   Copyright 2022 Colin B. Macdonald
+   Copyright 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -110,9 +110,9 @@ for one of two reasons:
   need to be able to identify which test and question that extra page
   belongs to.
   We have templates for this purpose:
-  `extraSheets.tex <https://gitlab.com/plom/plom/-/blob/main/plom/testTemplates/extraSheets.tex>`_
+  `extraSheets.tex <https://gitlab.com/plom/plom/-/blob/main/testTemplates/extraSheets.tex>`_
   and
-  `extraSheets_noname.tex <https://gitlab.com/plom/plom/-/blob/main/plom/testTemplates/extraSheets_noname.tex>`_.
+  `extraSheets_noname.tex <https://gitlab.com/plom/plom/-/blob/main/testTemplates/extraSheets_noname.tex>`_.
   These should be printed *double-sided*.
 * the qr-codes on the page were not legible for some reason.
   Generally this is due to some scanning issue such as a page being

@@ -12,7 +12,9 @@ from Scan.models import (
     DiscardStagingImage,
     ExtraStagingImage,
     UnknownStagingImage,
+    KnownStagingImage,
 )
+from Papers.services import PaperInfoService, SpecificationService
 
 
 class ScanCastService:
@@ -151,6 +153,36 @@ class ScanCastService:
 
         self.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
+        )
+
+    @transaction.atomic
+    def unknowify_image_type_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order
+    ):
+        """A wrapper around unknowify_image_type_from_bundle cmd.
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+
+        Returns:
+            None.
+        """
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        try:
+            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        self.unknowify_image_type_from_bundle(
+            user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
     @transaction.atomic
@@ -496,4 +528,124 @@ class ScanCastService:
 
         self.extralise_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
+        )
+
+    @transaction.atomic
+    def knowify_image_from_bundle_timestamp_and_order(
+        self,
+        user_obj,
+        bundle_timestamp,
+        bundle_order,
+        paper_number,
+        page_number,
+    ):
+        """A wrapper around knowify_image_from_bundle cmd.
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+            paper_number: (int) Set image as known-page with this paper number
+            page_number: (int) Set image as known-page with this page number
+
+        Returns:
+            None.
+        """
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        if not bundle_obj.stagingimage_set.filter(bundle_order=bundle_order).exists():
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        self.knowify_image_from_bundle(
+            user_obj,
+            bundle_obj,
+            bundle_order,
+            paper_number,
+            page_number,
+        )
+
+    @transaction.atomic
+    def knowify_image_from_bundle(
+        self,
+        user_obj,
+        bundle_obj,
+        bundle_order,
+        paper_number,
+        page_number,
+    ):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+
+        try:
+            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+
+        if img.image_type not in [StagingImage.UNKNOWN, StagingImage.DISCARD]:
+            raise ValueError("Can only 'knowify' discarded and unknown images")
+
+        # now check if this paper/page in the current bundle
+        bundle_known_img = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.KNOWN
+        ).prefetch_related("knownstagingimage")
+        if bundle_known_img.filter(
+            knownstagingimage__paper_number=paper_number,
+            knownstagingimage__page_number=page_number,
+        ).exists():
+            raise ValueError(
+                f"There is already an image in this bundle with paper = {paper_number}, page = {page_number}"
+            )
+        # okay - now it is safe to cast the current image to a known page
+        if img.image_type == StagingImage.DISCARD:
+            img.discardstagingimage.delete()
+        elif img.image_type == StagingImage.UNKNOWN:
+            img.unknownstagingimage.delete()
+        else:
+            raise ValueError(f"Cannot knowify an image of type {img.image_type}")
+        # before we create the known-page we need the version of this paper/page
+
+        version_in_db = PaperInfoService().get_version_from_paper_page(
+            paper_number, page_number
+        )
+
+        KnownStagingImage.objects.create(
+            staging_image=img,
+            paper_number=paper_number,
+            page_number=page_number,
+            version=version_in_db,
+        )
+        # finally - do not forget to set the image type correctly **and** save it!
+        img.image_type = StagingImage.KNOWN
+        img.save()
+
+    @transaction.atomic
+    def assign_page_as_known_cmd(
+        self, username, bundle_name, bundle_order, paper_number, page_number
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        if page_number < 0 or page_number > SpecificationService().get_n_pages():
+            raise ValueError("Page number out of range - check the specification")
+        if paper_number < 0:
+            raise ValueError("Paper number cannot be negative.")
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.knowify_image_from_bundle(
+            user_obj, bundle_obj, bundle_order, paper_number, page_number
         )

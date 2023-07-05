@@ -76,7 +76,9 @@ class BaseTask(PolymorphicModel):
     for more info
 
     assigned_user: reference to User, the user currently attached to the task.
-                   Can be null, can change over time.
+        Can be null, can change over time.
+    time: the time the task was originally created.
+        TODO: is this used for anything?
     status: str, represents the status of the task: not started, sent to a client, completed
     """
 
