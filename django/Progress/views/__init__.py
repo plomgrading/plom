@@ -43,6 +43,7 @@ from .progress_identify import (
     ProgressIdentifyHome,
     IDImageView,
     ClearID,
+    IDImageWrapView,
 )
 
 from .progress_mark import (
