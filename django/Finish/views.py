@@ -10,7 +10,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
-from StudentMarks.services import StudentMarksService
+from Finish.services import StudentMarksService
 
 
 class StudentMarkView(ManagerRequiredView):
@@ -18,7 +18,7 @@ class StudentMarkView(ManagerRequiredView):
 
     sms = StudentMarksService()
     scs = StagingSpecificationService()
-    template = "StudentMarks/all_student_marks.html"
+    template = "Finish/all_student_marks.html"
 
     def get(self, request):
         context = self.build_context()
@@ -69,7 +69,7 @@ class StudentMarkView(ManagerRequiredView):
 class StudentMarkPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
-    template = "StudentMarks/paper_marks.html"
+    template = "Finish/paper_marks.html"
     sms = StudentMarksService()
 
     def get(self, request, paper_num):

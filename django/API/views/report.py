@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from API.services import ReassembleService
+from Finish.services import ReassembleService
 
 from Mark.services import MarkingTaskService
 
