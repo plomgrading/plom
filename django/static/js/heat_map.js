@@ -1,3 +1,8 @@
+/*
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Divy Patel
+*/
+
 function renderHeatMap(data, divId) {
     // Clear existing contents of the div
     d3.select("#" + divId).html("");
