@@ -21,21 +21,9 @@ class REPspreadsheet(APIView):
 
 class REPidentified(APIView):
     def get(self, request):
-        # TODO
-        canned = {
-            "1": ["10050380", "Fink, Iris"],
-            "2": ["10130103", "Vandeventer, Irene"],
-            "3": ["10152155", "Little, Abigail"],
-            "10": ["11135153", "Garcia, Theodore"],
-            "11": ["12370103", "Khan, Josephine [randomly chosen]"],
-            "12": ["12143240", "Horton, James [randomly chosen]"],
-            "13": ["11770182", "Perkins, Albert [randomly chosen]"],
-            "14": ["88882222", "Macdonald, Colin [randomly chosen]"],
-            "15": [None, "No ID given"],
-            "16": ["12368663", "Micheau, Barbara [randomly chosen]"],
-        }
+        id_data = ReassembleService().get_identified_papers()
         return Response(
-            canned,
+            id_data,
             status=status.HTTP_200_OK,
         )
 
