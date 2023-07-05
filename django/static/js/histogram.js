@@ -8,7 +8,7 @@ function renderHist(data, divId) {
     const height = 300 - margin.top - margin.bottom;
 
     // Create SVG element with margins
-    const svg_hist = d3.select("#" + divId)
+    const svg = d3.select("#" + divId)
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
@@ -30,7 +30,7 @@ function renderHist(data, divId) {
     const yAxis = d3.axisLeft(yScale);
 
     // Append x and y axes to the SVG
-    svg_hist.append("g")
+    svg.append("g")
         .attr("class", "axis-x")
         .attr("transform", `translate(0,${height})`)
         .call(xAxis)
@@ -39,12 +39,12 @@ function renderHist(data, divId) {
         .attr("dx", "-.8em")
         .attr("dy", ".15em");
 
-    svg_hist.append("g")
+    svg.append("g")
         .attr("class", "axis-y")
         .call(yAxis);
 
     // Create bars
-    svg_hist.selectAll("rect")
+    svg.selectAll("rect")
         .data(data.values)
         .enter()
         .append("rect")
@@ -55,7 +55,7 @@ function renderHist(data, divId) {
         .attr("fill", "steelblue");
 
     // Add x-axis label
-    svg_hist.append("text")
+    svg.append("text")
         .attr("class", "axis-label")
         .attr("x", width / 2)
         .attr("y", height + margin.bottom - 10)
@@ -63,7 +63,7 @@ function renderHist(data, divId) {
         .text(data.xLabel);
 
     // Add y-axis label
-    svg_hist.append("text")
+    svg.append("text")
         .attr("class", "axis-label")
         .attr("transform", "rotate(-90)")
         .attr("x", -height / 2)

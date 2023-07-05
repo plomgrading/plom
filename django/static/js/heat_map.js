@@ -4,12 +4,12 @@ function renderHeatMap(data, divId) {
 
     // Set up dimensions and margins
     const cellSize = 40; // Set the desired cell size
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const margin = { top: 20, right: 20, bottom: 40, left: 20 }; // Higher margin on bottom for labels
     const width = data.cols * cellSize + margin.left + margin.right;
     const height = data.rows * cellSize + margin.top + margin.bottom;
 
     // Create the SVG container
-    const svg_heat = d3.select("#" + divId)
+    const svg = d3.select("#" + divId)
         .append("svg")
         .attr("width", width)
         .attr("height", height);
@@ -19,7 +19,7 @@ function renderHeatMap(data, divId) {
         .domain([d3.min(data.values.flat()), d3.max(data.values.flat())]);
 
     // Create the heat map cells
-    const cells = svg_heat.selectAll("rect")
+    const cells = svg.selectAll("rect")
         .data(data.values.flat())
         .enter()
         .append("rect")
@@ -28,4 +28,26 @@ function renderHeatMap(data, divId) {
         .attr("width", cellSize) // Set the desired cell width
         .attr("height", cellSize) // Set the desired cell height
         .attr("fill", d => colorScale(d)); // Set the cell color based on the value
+
+    // Add x-axis labels
+    const xLabels = svg.selectAll(".xLabel")
+        .data(data.xLabel)
+        .enter()
+        .append("text")
+        .text(d => d)
+        .attr("class", "xLabel")
+        .attr("x", (d, i) => (i + 0.5) * cellSize + margin.left)
+        .attr("y", height - margin.bottom / 2)
+        .style("text-anchor", "middle");
+
+    // Add y-axis labels
+    const yLabels = svg.selectAll(".yLabel")
+        .data(data.yLabel)
+        .enter()
+        .append("text")
+        .text(d => d)
+        .attr("class", "yLabel")
+        .attr("x", margin.left / 2)
+        .attr("y", (d, i) => (i + 0.5) * cellSize + margin.top)
+        .style("text-anchor", "middle");
 }

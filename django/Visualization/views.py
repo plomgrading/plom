@@ -38,12 +38,24 @@ class VisualizationLandingView(ManagerRequiredView):
         }
         hist_data_2 = json.dumps(hist_data_2)
 
-        heat_data = {"rows": 3, "cols": 3, "values": [[1, 2, 3], [4, 5, 6], [7, 8, 9]]}
+        heat_data = {
+            "rows": 3,
+            "cols": 3,
+            "xTitle": "X",
+            "yTitle": "Y",
+            "xLabel": ["A", "B", "C"],
+            "yLabel": ["1", "2", "3"],
+            "values": [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        }
         heat_data = json.dumps(heat_data)
 
         heat_data_2 = {
             "rows": 5,
             "cols": 4,
+            "xTitle": "X",
+            "yTitle": "Y",
+            "xLabel": ["A", "B", "C", "D"],
+            "yLabel": ["1", "2", "3", "4", "5"],
             "values": [
                 [14, 16, 11, 17],
                 [4, 8, 15, 9],
