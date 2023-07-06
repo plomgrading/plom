@@ -3,6 +3,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 from Mark.models import MarkingTask
 
 
@@ -20,7 +21,7 @@ class Annotation(models.Model):
         edition: The edition of the annotation for the specified task.
         score: The score given to the student's work.
         image: The image of the annotated question.
-        annotation_data: A Json blob of annotation data containing image path info, 
+        annotation_data: A Json blob of annotation data containing image path info,
             rubric info, svg annotation info.
         marking_time: The time spent by the TA marking the question in seconds.
         task: The marking task.

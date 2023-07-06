@@ -38,8 +38,9 @@
                                     <td scope="row">{{ id_paper.paper.paper_number }}</td>
                                     {% if id_paper.image %}
                                         <td scope="row">
-                                            <button x-model="idimage"
-                                                    x-on:click="idimage={{ id_paper.image.pk }}; imgRotation={{ id_paper.image.rotation }}"
+                                            <button hx-get="id_img_wrap/{{ id_paper.image.pk }}"
+                                                    hx-target="#imageHere"
+                                                    hx-replace="innerHTML"
                                                     class="btn btn-outline-success">View ID page</button>
                                         </td>
                                     {% else %}
@@ -69,17 +70,14 @@
             </div>
         </div>
         <div class="col">
-            <template x-if="idimage">
-                {% comment %} TODO: Paper cut - Image Rotation {% endcomment %}
-                <img id="showImg"
-                     :src="'id_img/'+idimage"
-                     class="img-thumbnail"
-                     style="max-height: 70vh;
-                            position: -webkit-sticky;
-                            position: sticky;
-                            top: 0"
-                     :data-imgrotation="imgRotation">
-            </template>
+            <div style="height: 45vw;
+                        width: 45vw;
+                        justify-content: center;
+                        display:flex;
+                        align-items:center;
+                        position:sticky;
+                        top: 0"
+                 id="imageHere"></div>
         </div>
     </div>
 {% endblock main_content %}

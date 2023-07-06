@@ -4,6 +4,6 @@
 from django.apps import AppConfig
 
 
-class MarkingInformationConfig(AppConfig):
+class FinishConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "MarkingInformation"
+    name = "Finish"

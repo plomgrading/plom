@@ -10,8 +10,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
-from MarkingInformation.services.student_marks_service import StudentMarkService
-from MarkingInformation.services.ta_marking_service import TaMarkingService
+from Finish.services import StudentMarkService, TaMarkingService
 
 
 class MarkingInformationView(ManagerRequiredView):
@@ -20,7 +19,8 @@ class MarkingInformationView(ManagerRequiredView):
     sms = StudentMarkService()
     tms = TaMarkingService()
     scs = StagingSpecificationService()
-    template = "MarkingInformation/marking_landing.html"
+
+    template = "Finish/marking_landing.html"
 
     def get(self, request):
         context = self.build_context()
