@@ -32,6 +32,16 @@ class MarkingTaskServiceTaggingTests(TestCase):
         with self.assertRaisesMessage(ValidationError, "disallowed char"):
             s.create_tag(user, "  spaces and symbols $&<b> ")
 
+    def test_tag_task_invalid_tag(self):
+        s = MarkingTaskService()
+        user = baker.make(User)
+        task = baker.make(
+            MarkingTask, question_number=1, paper__paper_number=2, code="q0002g1"
+        )
+        with self.assertRaisesMessage(ValidationError, "disallowed char"):
+            tag_text = "  spaces and symbols $&<b> "
+            s.add_tag_text_from_task_code(tag_text, task.code, user)
+
     def test_tag_task(self):
         s = MarkingTaskService()
         user = baker.make(User)

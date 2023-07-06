@@ -540,7 +540,8 @@ class MarkingTaskService:
 
         Raises:
             ValueError: invalid task code
-            RuntimeError: task not found.
+            RuntimeError: task not found
+            ValidationError: invalid tag text
         """
         mts = MarkingTaskService()
         the_task = mts.get_task_from_code(code)
