@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
+import arrow
 import csv
 from io import StringIO
 
@@ -66,6 +67,7 @@ class MarkingInformationView(ManagerRequiredView):
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
         spec = Specification.load().spec_dict
+        print("SPEC: ", spec)
 
         # create csv file headers
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
@@ -81,10 +83,19 @@ class MarkingInformationView(ManagerRequiredView):
 
         f.seek(0)
 
-        file_name = "marks_" + 
+        filename = (
+            "marks--"
+            + spec["name"]
+            + "--"
+            + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
+            + "--UTC"
+            + ".csv"
+        )
 
         response = HttpResponse(f, content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="marks.csv"'
+        response["Content-Disposition"] = "attachment; filename={filename}".format(
+            filename=filename
+        )
 
         return response
 
@@ -92,6 +103,7 @@ class MarkingInformationView(ManagerRequiredView):
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         ta_info = tms.build_csv_data()
+        spec = Specification.load().spec_dict
 
         keys = tms.get_csv_header()
         response = None
@@ -103,8 +115,17 @@ class MarkingInformationView(ManagerRequiredView):
 
         f.seek(0)
 
+        filename = (
+            "TA--"
+            + spec["name"]
+            + "--"
+            + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
+            + "--UTC"
+            + ".csv"
+        )
+
         response = HttpResponse(f, content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="ta_marking_info.csv"'
+        response["Content-Disposition"] = 'attachment; filename={filename}'.format(filename=filename)
 
         return response
 
