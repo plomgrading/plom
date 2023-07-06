@@ -212,6 +212,21 @@ def do_random_marking_backend(question, version, *, messenger):
             print("Another user got task {}. Trying again...".format(task))
             continue
 
+        # tag one in three papers
+        if random.randrange(3) == 0:
+            # use up to 3 tags, skewed towards single tag
+            num_tag = random.choice([1] * 4 + [2] * 2 + [3])
+            the_tags = []
+            for k in range(num_tag):
+                the_tag = random.choice(tag_list)
+                if the_tag not in the_tags:
+                    the_tags.append(the_tag)
+                    messenger.add_single_tag(task, the_tag)
+
+        # skip marking on one in four paper-questions
+        if random.randrange(4) == 0:
+            continue
+
         with tempfile.TemporaryDirectory() as td:
             downloader = Downloader(td, msgr=messenger)
             src_img_data = downloader.sync_downloads(src_img_data)
@@ -232,16 +247,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 rubrics,
                 integrity_check,
             )
-        # tag one in three papers
-        if random.randrange(3) == 0:
-            # use up to 3 tags, skewed towards single tag
-            num_tag = random.choice([1] * 4 + [2] * 2 + [3])
-            the_tags = []
-            for k in range(num_tag):
-                the_tag = random.choice(tag_list)
-                if the_tag not in the_tags:
-                    the_tags.append(the_tag)
-                    messenger.add_single_tag(task, the_tag)
 
 
 def build_random_rubrics(question, *, username, messenger):
