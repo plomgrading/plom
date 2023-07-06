@@ -184,6 +184,23 @@ class MarkingTaskService:
 
         return tasks
 
+    def get_tasks_from_question_with_annotation(self, question: int, version: int):
+        """Get all the marking tasks for this question/version.
+
+        Args:
+            question: int, the question number
+            version: int, the version number. If version == 0, then all versions are returned.
+
+        Returns:
+            QuerySet[MarkingTask]: tasks
+        """
+        marking_tasks = MarkingTask.objects.filter(
+            question_number=question, latest_annotation__isnull=False
+        )
+        if version != 0:
+            marking_tasks = marking_tasks.filter(question_version=version)
+        return marking_tasks
+
     def get_first_available_task(self, question=None, version=None):
         """Return the first marking task with a 'todo' status.
 

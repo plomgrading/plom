@@ -10,15 +10,17 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
-from Finish.services import StudentMarksService
+from Finish.services import StudentMarkService, TaMarkingService
 
 
-class StudentMarkView(ManagerRequiredView):
+class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
-    sms = StudentMarksService()
+    sms = StudentMarkService()
+    tms = TaMarkingService()
     scs = StagingSpecificationService()
-    template = "Finish/all_student_marks.html"
+
+    template = "Finish/marking_landing.html"
 
     def get(self, request):
         context = self.build_context()
@@ -28,6 +30,18 @@ class StudentMarkView(ManagerRequiredView):
         marked_percentages = [
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
+        total_times_spent = [
+            self.tms.get_total_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        average_times_spent = [
+            self.tms.get_average_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        std_times_spent = [
+            self.tms.get_stdev_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
 
         context.update(
             {
@@ -35,6 +49,9 @@ class StudentMarkView(ManagerRequiredView):
                 "n_questions": range(1, n_questions + 1),
                 "n_papers": len(papers),
                 "marked_percentages": marked_percentages,
+                "total_times_spent": total_times_spent,
+                "average_times_spent": average_times_spent,
+                "std_times_spent": std_times_spent,
             }
         )
 
@@ -43,7 +60,7 @@ class StudentMarkView(ManagerRequiredView):
 
     def marks_download(request):
         """Download marks as a csv file."""
-        sms = StudentMarksService()
+        sms = StudentMarkService()
         spec = Specification.load().spec_dict
         student_marks = sms.get_all_students_download()
 
@@ -65,12 +82,31 @@ class StudentMarkView(ManagerRequiredView):
 
         return response
 
+    def ta_info_download(request):
+        """Download TA marking information as a csv file."""
+        tms = TaMarkingService()
+        ta_info = tms.build_csv_data()
 
-class StudentMarkPaperView(ManagerRequiredView):
+        keys = tms.get_csv_header()
+        response = None
+        f = StringIO()
+
+        w = csv.DictWriter(f, keys)
+        w.writeheader()
+        w.writerows(ta_info)
+
+        f.seek(0)
+
+        response = HttpResponse(f, content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="ta_marking_info.csv"'
+
+        return response
+
+
+class MarkingInformationPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
-    template = "Finish/paper_marks.html"
-    sms = StudentMarksService()
+    sms = StudentMarkService()
 
     def get(self, request, paper_num):
         marks_dict = self.sms.get_marks_from_paper(paper_num)

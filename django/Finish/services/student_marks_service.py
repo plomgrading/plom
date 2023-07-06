@@ -8,7 +8,7 @@ from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
 
 
-class StudentMarksService:
+class StudentMarkService:
     """Service for the Student Marks page."""
 
     def get_marks_from_paper(self, paper_num: int, original: bool = False) -> dict:
