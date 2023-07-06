@@ -46,7 +46,7 @@ class TaMarkingService:
             "question_version",
             "score_given",
             "max_score",
-            "minutes_spent_marking",
+            "seconds_spent_marking",
             "last_update_time",
             "csv_write_time",
             "warnings",
@@ -83,7 +83,7 @@ class TaMarkingService:
             "question_version": annotation.task.question_version,
             "score_given": annotation.score,
             "max_score": annotation.annotation_data["maxMark"],
-            "minutes_spent_marking": annotation.marking_time,
+            "seconds_spent_marking": annotation.marking_time,
             "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(
                 " ", "seconds"
             ),
@@ -104,7 +104,7 @@ class TaMarkingService:
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            The total time spent on a question by all markers in minutes.
+            The total time spent on a question by all markers in seconds.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -126,7 +126,7 @@ class TaMarkingService:
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            The average time spent on a question by all markers in minutes.
+            The average time spent on a question by all markers in seconds.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -148,7 +148,7 @@ class TaMarkingService:
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            The standard deviation time spent on a question by all markers in minutes.
+            The standard deviation time spent on a question by all markers in seconds.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
