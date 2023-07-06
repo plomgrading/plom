@@ -30,19 +30,11 @@ class MarkingInformationView(ManagerRequiredView):
         marked_question_counts = [
             self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
         ]
-        total_times_spent = [
-            self.tms.get_total_time_spent_on_question(question=q)
-            for q in range(1, n_questions + 1)
-        ]
-        average_times_spent = [
-            self.tms.get_average_time_spent_on_question(question=q)
-            for q in range(1, n_questions + 1)
-        ]
-        std_times_spent = [
-            self.tms.get_stdev_time_spent_on_question(question=q)
-            for q in range(1, n_questions + 1)
-        ]
-
+        (
+            total_times_spent,
+            average_times_spent,
+            std_times_spent,
+        ) = self.tms.all_marking_times_for_web(n_questions)
 
         context.update(
             {
@@ -69,8 +61,6 @@ class MarkingInformationView(ManagerRequiredView):
         sms = StudentMarkService()
         spec = Specification.load().spec_dict
         student_marks = sms.get_all_students_download()
-
-        response = None
 
         # create csv file headers
         keys = sms.get_csv_header(spec)

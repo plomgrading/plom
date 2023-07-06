@@ -41,7 +41,7 @@
             <table style="width: auto" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th scope="col">Time marking (minutes)</th>
+                        <th scope="col">Time marking</th>
                         {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
                     </tr>
                 </thead>
@@ -54,7 +54,7 @@
                         <td>Average</td>
                         {% for time in average_times_spent %}
                             {% if time %}
-                                <td>{{ time|floatformat:1 }}</td>
+                                <td>{{ time }}</td>
                             {% else %}
                                 <td>None</td>
                             {% endif %}
@@ -64,7 +64,7 @@
                         <td>Standard Deviation</td>
                         {% for time in std_times_spent %}
                             {% if time %}
-                                <td>{{ time|floatformat:1 }}</td>
+                                <td>{{ time }}</td>
                             {% else %}
                                 <td>None</td>
                             {% endif %}

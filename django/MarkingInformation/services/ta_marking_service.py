@@ -156,3 +156,38 @@ class TaMarkingService:
         ).aggregate(StdDev("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__stddev"
         ]
+
+    def all_marking_times_for_web(self, n_questions: int) -> tuple:
+        """Get the total, average and standard deviation of time spent on each question.
+
+        Args:
+            n_questions: (int) The number of questions in the paper.
+
+        Returns:
+            tuple: 3 lists that contain the total, average and standard deviation times respectively
+                for marking each question held in a humanized format.
+        """
+
+        service = TaMarkingService()
+        present = arrow.utcnow()
+
+        total_times_spent = [
+            present.shift(
+                seconds=service.get_total_time_spent_on_question(question=q)
+            ).humanize(present, only_distance=True, granularity=["hour", "minute"])
+            for q in range(1, n_questions + 1)
+        ]
+        average_times_spent = [
+            present.shift(
+                seconds=service.get_average_time_spent_on_question(question=q)
+            ).humanize(present, only_distance=True, granularity=["minute", "second"])
+            for q in range(1, n_questions + 1)
+        ]
+        std_times_spent = [
+            present.shift(
+                seconds=service.get_stdev_time_spent_on_question(question=q)
+            ).humanize(present, only_distance=True, granularity=["minute", "second"])
+            for q in range(1, n_questions + 1)
+        ]
+
+        return total_times_spent, average_times_spent, std_times_spent
