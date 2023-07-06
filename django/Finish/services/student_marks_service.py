@@ -3,6 +3,8 @@
 
 import arrow
 
+from django.db.models import Max
+
 from Mark.models import MarkingTask, Annotation
 from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
@@ -95,11 +97,9 @@ class StudentMarkService:
         Returns:
             The count of how many papers a mark for this question.
         """
-        marking_tasks = MarkingTask.objects.filter(question_number=question_num)
-
-        return Annotation.objects.filter(
-            task__in=marking_tasks
-        ).count()  # TODO: #2820 .filter(newest_version=True) once implemented
+        return MarkingTask.objects.filter(
+            question_number=question_num, latest_annotation__isnull=False
+        ).count()
 
     def get_student_info_from_paper(
         self,
@@ -122,6 +122,7 @@ class StudentMarkService:
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
+        last_update = None
 
         student_info = {"paper_number": paper_num}
 
@@ -144,9 +145,7 @@ class StudentMarkService:
                     "edition"
                 ).first()
             else:
-                current_annotation = marking_task.annotation_set.order_by(
-                    "-edition"
-                ).first()
+                current_annotation = marking_task.latest_annotation
 
             if current_annotation:
                 student_info.update(
@@ -166,6 +165,11 @@ class StudentMarkService:
                     )
                 total += current_annotation.score
 
+                if not last_update:
+                    last_update = current_annotation.time_of_last_update
+                elif current_annotation.time_of_last_update > last_update:
+                    last_update = current_annotation.time_of_last_update
+
         student_info.update(
             {
                 "total_mark": total,
@@ -178,7 +182,12 @@ class StudentMarkService:
                     "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
                 }
             )
-
+            if last_update:
+                student_info.update(
+                    {
+                        "last_update": arrow.get(last_update).isoformat(" ", "seconds"),
+                    }
+                )
         return student_info
 
     def get_all_students_download(

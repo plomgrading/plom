@@ -39,5 +39,5 @@ urlpatterns = [
     path("progress/", include("Progress.urls")),
     path("rubrics/", include("Rubrics.urls")),
     path("paper_tags/", include("Tags.urls")),
-    path("marking_info/", include("MarkingInformation.urls")),
+    path("finish/", include("Finish.urls")),
 ]

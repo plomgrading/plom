@@ -14,6 +14,14 @@ from API.routes import (
     TagsURLPatterns,
 )
 
+# TODO: these are possibly temporary
+from API.views import (
+    REPspreadsheet,
+    REPidentified,
+    REPcompletionStatus,
+    REPcoverPageInfo,
+)
+
 """
 Handle URL patterns for the plom-client / server API.
 See docs for including other URLconfs:
@@ -34,4 +42,24 @@ urlpatterns = [
     path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns())),
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
+    path(
+        "REP/spreadsheet",
+        REPspreadsheet.as_view(),
+        name="api_REP_spreadsheet",
+    ),
+    path(
+        "REP/identified",
+        REPidentified.as_view(),
+        name="api_REP_identified",
+    ),
+    path(
+        "REP/completionStatus",
+        REPcompletionStatus.as_view(),
+        name="api_REP_completion_status",
+    ),
+    path(
+        "REP/coverPageInfo/<int:papernum>",
+        REPcoverPageInfo.as_view(),
+        name="api_REP_cover_page_info",
+    ),
 ]

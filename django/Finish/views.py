@@ -9,11 +9,10 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from MarkingInformation.services.student_marks_service import StudentMarkService
-from MarkingInformation.services.ta_marking_service import TaMarkingService
-from MarkingInformation.forms import StudentMarksFilterForm
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
+from Finish.services import StudentMarkService, TaMarkingService
+from Finish.forms import StudentMarksFilterForm
 
 
 class MarkingInformationView(ManagerRequiredView):
@@ -23,7 +22,8 @@ class MarkingInformationView(ManagerRequiredView):
     smff = StudentMarksFilterForm()
     tms = TaMarkingService()
     scs = StagingSpecificationService()
-    template = "MarkingInformation/marking_landing.html"
+
+    template = "Finish/marking_landing.html"
 
     def get(self, request):
         context = self.build_context()
@@ -67,7 +67,6 @@ class MarkingInformationView(ManagerRequiredView):
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
         spec = Specification.load().spec_dict
-        print("SPEC: ", spec)
 
         # create csv file headers
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
@@ -125,7 +124,9 @@ class MarkingInformationView(ManagerRequiredView):
         )
 
         response = HttpResponse(f, content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename={filename}'.format(filename=filename)
+        response["Content-Disposition"] = "attachment; filename={filename}".format(
+            filename=filename
+        )
 
         return response
 
