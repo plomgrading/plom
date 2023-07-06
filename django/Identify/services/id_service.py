@@ -6,7 +6,7 @@ from django.db import transaction
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Identify.services import IdentifyTaskService
-from Papers.models import IDPage, Image
+from Papers.models import IDPage, Image, Paper
 
 
 class IDService:
@@ -62,10 +62,16 @@ class IDService:
         return completed_id_task_list
     
     @transaction.atomic
-    def set_id__task_todo_and_clear_id(self, paper_pk):
+    def set_id__task_todo_and_clear_specific_id(self, paper_pk):
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
         paper_ID_task_obj.status = PaperIDTask.TO_DO
         paper_ID_task_obj.save()
 
         sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
         sid.delete()
+
+    @transaction.atomic
+    def set_id__task_todo_and_clear_specific_id_cmd(self, paper_number):
+        paper = Paper.objects.get(paper_number=int(paper_number))
+        print(paper.pk)
+        self.set_id__task_todo_and_clear_specific_id(paper.pk)
