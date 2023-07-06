@@ -30,7 +30,9 @@
                   style="padding-right: 2%">
                 {% csrf_token %}
                 {% if all_marked %}
-                    <p style="color: green; padding-right: 0.5%;">All questions have a mark. Please confirm with your TAs that marking is complete.</p>
+                    <p style="color: green; padding-right: 0.5%;">
+                        All questions have a mark. Please confirm with your TAs that marking is complete.
+                    </p>
                 {% else %}
                     <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
                 {% endif %}
@@ -78,7 +80,9 @@
                   style="padding-right: 2%">
                 {% csrf_token %}
                 {% if all_marked %}
-                    <p style="color: green; padding-right: 0.5%;">All questions have a mark. Please confirm with your TAs that marking is complete.</p>
+                    <p style="color: green; padding-right: 0.5%;">
+                        All questions have a mark. Please confirm with your TAs that marking is complete.
+                    </p>
                 {% else %}
                     <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
                 {% endif %}
