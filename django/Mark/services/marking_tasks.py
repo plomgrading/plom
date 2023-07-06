@@ -525,6 +525,30 @@ class MarkingTaskService:
             # Assuming the queryset will always have a length of one
             return text_tags.first()
 
+    def add_tag_text_from_task_code(self, tag_text: str, code: str, user: str) -> None:
+        """Add a tag to a task, creating the tag if it does not exist.
+
+        Args:
+            tag_text: which tag to add, creating it if necessary.
+            code: from which task, for example ``"q0123g5"`` for paper
+                123 question 5.
+            user: who is doing the tagging.
+                TODO: record who tagged: Issue #2840.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: invalid task code
+            RuntimeError: task not found.
+        """
+        mts = MarkingTaskService()
+        the_task = mts.get_task_from_code(code)
+        the_tag = mts.get_tag_from_text(tag_text)
+        if not the_tag:
+            the_tag = mts.create_tag(user, tag_text)
+        mts.add_tag(the_tag, the_task)
+
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
 
