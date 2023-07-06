@@ -60,7 +60,7 @@ class IDService:
             completed_id_task_list.update({id_paper: latest_id_result})
 
         return completed_id_task_list
-    
+
     @transaction.atomic
     def set_id__task_todo_and_clear_specific_id(self, paper_pk):
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
@@ -73,5 +73,15 @@ class IDService:
     @transaction.atomic
     def set_id__task_todo_and_clear_specific_id_cmd(self, paper_number):
         paper = Paper.objects.get(paper_number=int(paper_number))
-        print(paper.pk)
         self.set_id__task_todo_and_clear_specific_id(paper.pk)
+
+    @transaction.atomic
+    def set_all_id__task_todo_and_clear_all_id_cmd(self):
+        for paper_id_task in PaperIDTask.objects.all():
+            paper_id_task.status = PaperIDTask.TO_DO
+            paper_id_task.save()
+
+            try:
+                PaperIDAction.objects.get(task=paper_id_task.pk)
+            except ObjectDoesNotExist:
+                continue
