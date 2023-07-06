@@ -8,16 +8,18 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.models import Specification
-from SpecCreator.services import StagingSpecificationService
 from MarkingInformation.services.student_marks_service import StudentMarkService
 from MarkingInformation.services.ta_marking_service import TaMarkingService
+from MarkingInformation.forms import StudentMarksFilterForm
+from Papers.models import Specification
+from SpecCreator.services import StagingSpecificationService
 
 
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
     sms = StudentMarkService()
+    smff = StudentMarksFilterForm()
     tms = TaMarkingService()
     scs = StagingSpecificationService()
     template = "MarkingInformation/marking_landing.html"
@@ -46,6 +48,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "average_times_spent": average_times_spent,
                 "std_times_spent": std_times_spent,
                 "all_marked": True,
+                "student_marks_form": self.smff,
             }
         )
 
@@ -59,11 +62,16 @@ class MarkingInformationView(ManagerRequiredView):
     def marks_download(request):
         """Download marks as a csv file."""
         sms = StudentMarkService()
+        version_info = request.POST.get("version_info", "off") == "on"
+        timing_info = request.POST.get("timing_info", "off") == "on"
+        warning_info = request.POST.get("warning_info", "off") == "on"
         spec = Specification.load().spec_dict
-        student_marks = sms.get_all_students_download()
 
         # create csv file headers
-        keys = sms.get_csv_header(spec)
+        keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
+        student_marks = sms.get_all_students_download(
+            version_info, timing_info, warning_info
+        )
 
         f = StringIO()
 
@@ -72,6 +80,8 @@ class MarkingInformationView(ManagerRequiredView):
         w.writerows(student_marks)
 
         f.seek(0)
+
+        file_name = "marks_" + 
 
         response = HttpResponse(f, content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="marks.csv"'

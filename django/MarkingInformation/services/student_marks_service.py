@@ -102,7 +102,13 @@ class StudentMarkService:
         ).count()  # TODO: #2820 .filter(newest_version=True) once implemented
 
     def get_student_info_from_paper(
-        self, paper_num: int, original: bool = False
+        self,
+        paper_num: int,
+        version_info: bool,
+        timing_info: bool,
+        warning_info: bool,
+        *,
+        original: bool = False,
     ) -> dict:
         """Get student info from a paper number.
 
@@ -148,23 +154,41 @@ class StudentMarkService:
                         "q"
                         + str(marking_task.question_number)
                         + "_mark": current_annotation.score,
-                        "q"
-                        + str(marking_task.question_number)
-                        + "_version": marking_task.question_version,
                     }
                 )
+                if version_info:
+                    student_info.update(
+                        {
+                            "q"
+                            + str(marking_task.question_number)
+                            + "_version": marking_task.question_version,
+                        }
+                    )
                 total += current_annotation.score
 
         student_info.update(
             {
                 "total_mark": total,
-                "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
             }
         )
 
+        if timing_info:
+            student_info.update(
+                {
+                    "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
+                }
+            )
+
         return student_info
 
-    def get_all_students_download(self, original: bool = False) -> list:
+    def get_all_students_download(
+        self,
+        version_info: bool,
+        timing_info: bool,
+        warning_info: bool,
+        *,
+        original: bool = False,
+    ) -> list:
         """Get the info for all students in a list for building a csv file to download.
 
         Args:
@@ -177,12 +201,20 @@ class StudentMarkService:
         csv_data = []
         for paper in papers:
             csv_data.append(
-                self.get_student_info_from_paper(paper.paper_number, original)
+                self.get_student_info_from_paper(
+                    paper.paper_number,
+                    version_info,
+                    timing_info,
+                    warning_info,
+                    original=original,
+                )
             )
 
         return csv_data
 
-    def get_csv_header(self, spec) -> list:
+    def get_csv_header(
+        self, spec, version_info: bool, timing_info: bool, warning_info: bool
+    ) -> list:
         """Get the header for the csv file.
 
         Args:
@@ -196,8 +228,12 @@ class StudentMarkService:
         for q in range(1, spec["numberOfQuestions"] + 1):
             keys.append("q" + str(q) + "_mark")
         keys.append("total_mark")
-        for q in range(1, spec["numberOfQuestions"] + 1):
-            keys.append("q" + str(q) + "_version")
-        keys.extend(["last_update", "csv_write_time", "warnings"])
+        if version_info:
+            for q in range(1, spec["numberOfQuestions"] + 1):
+                keys.append("q" + str(q) + "_version")
+        if timing_info:
+            keys.extend(["last_update", "csv_write_time"])
+        if warning_info:
+            keys.append("warnings")
 
         return keys

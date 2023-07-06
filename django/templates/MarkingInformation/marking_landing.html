@@ -34,6 +34,7 @@
                 {% else %}
                     <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
                 {% endif %}
+                {{ student_marks_form.as_p }}
                 <button type="submit" class="btn btn-success">Download Grades</button>
             </form>
         </div>
