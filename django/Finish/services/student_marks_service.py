@@ -6,6 +6,7 @@ import arrow
 from django.db.models import Max
 
 from Mark.models import MarkingTask, Annotation
+from Mark.services import MarkingTaskService
 from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
 
@@ -88,17 +89,21 @@ class StudentMarkService:
 
         return marks
 
-    def get_n_of_question_marked(self, question_num: int) -> int:
+    def get_n_of_question_marked(self, question_num: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a question.
 
         Args:
             question_num: The question number.
 
+        Keyword Args:
+            version: The version of the question.
+
         Returns:
             The count of how many papers a mark for this question.
         """
-        return MarkingTask.objects.filter(
-            question_number=question_num, latest_annotation__isnull=False
+        service = MarkingTaskService()
+        return service.get_tasks_from_question_with_annotation(
+            question=question_num, version=version
         ).count()
 
     def get_student_info_from_paper(

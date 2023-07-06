@@ -191,3 +191,25 @@ class TaMarkingService:
         ]
 
         return total_times_spent, average_times_spent, std_times_spent
+
+    def get_n_of_question_marked_past_day(self, question: int, version: int = 0) -> int:
+        """Get the number of times a given question was marked in the past 24 hours over all papers.
+
+        Args:
+            question: (int) The question number.
+
+        Returns:
+            int: The number of questions marked in the past 24 hours.
+        """
+        service = MarkingTaskService()
+        return (
+            service.get_tasks_from_question_with_annotation(
+                question=question, version=version
+            )
+            .filter(
+                latest_annotation__time_of_last_update__gte=arrow.utcnow()
+                .shift(days=-1)
+                .datetime
+            )
+            .count()
+        )

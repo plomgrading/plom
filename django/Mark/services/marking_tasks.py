@@ -185,7 +185,7 @@ class MarkingTaskService:
         return tasks
 
     def get_tasks_from_question_with_annotation(self, question: int, version: int):
-        """Get all the marking tasks with annotations for this question/version.
+        """Get all the marking tasks for this question/version.
 
         Args:
             question: int, the question number
