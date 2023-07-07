@@ -13,7 +13,7 @@ class Command(BaseCommand):
     python manage.py clear_id all
     """
 
-    help = "Clear the ID of a specific paper or clear all IDs. \
+    help = "Clear the ID of a specific paper or clear all IDs.\
             To clear all IDs: python manage.py clear_id all\
             To clear a specific ID: python manage.py clear_id (paper number)"
 
@@ -21,13 +21,15 @@ class Command(BaseCommand):
         try:
             IDService().set_id__task_todo_and_clear_specific_id_cmd(paper_num)
             self.stdout.write(f"Cleared ID for paper number #{paper_num}")
-        except ObjectDoesNotExist as err:
-            raise CommandError(err)
+        except ObjectDoesNotExist:
+            raise CommandError(
+                f"Cannot clear ID due to paper number #{paper_num} has yet to be identified."
+            )
 
     def clear_all_ids(self):
         try:
             IDService().set_all_id__task_todo_and_clear_all_id_cmd()
-            self.stdout.write("Cleared all IDs.")
+            self.stdout.write("All IDs cleared.")
         except ObjectDoesNotExist as err:
             raise CommandError(err)
 
