@@ -209,16 +209,13 @@ class TaMarkingService:
         service = StudentMarkService()
         num_questions_marked = service.get_n_of_question_marked(question)
 
-        num_days = self.round_days(
+        num_days = max(self.round_days(
             timezone.now()
             - MarkingTask.objects.filter(question_number=question)
             .order_by("time")
             .first()
             .time
-        )
-
-        if num_days == 0:
-            return None
+        ), 1)  # Ensure at least 1 day is returned to prevent division by 0
 
         return num_questions_marked / num_days
 
@@ -236,12 +233,12 @@ class TaMarkingService:
         ).count()
 
         avg_per_day = self.get_avg_n_of_questions_marked_per_day(question=question)
-        if not avg_per_day:
-            return None
+        
+        print("QS REMAINING: ", num_questions_remaining)
+        print("AVG PER DAY: ", avg_per_day)
+        print("NUM DAYS REMAINING: ", num_questions_remaining / avg_per_day)
 
-        num_days_remaining = num_questions_remaining / avg_per_day
-
-        return num_days_remaining
+        return num_questions_remaining / avg_per_day
 
     def get_estimate_hours_remaining(self, question: int) -> float:
         """Get the estimated number of hours remaining to mark a given question.
@@ -258,6 +255,11 @@ class TaMarkingService:
         num_questions_remaining = MarkingTask.objects.filter(
             question_number=question, latest_annotation__isnull=True
         ).count()
+
+        print("AVG TIME ON QUESTION: ", avg_time_on_question)
+        print("NUM QUESTIONS REMAINING: ", num_questions_remaining)
+        print("NUM HOURS REMAINING: ", num_questions_remaining * avg_time_on_question / 3600)
+
         return num_questions_remaining * avg_time_on_question / 3600
 
     def round_days(self, obj: dt.timedelta) -> int:
