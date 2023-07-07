@@ -49,7 +49,7 @@ class IDImageView(ManagerRequiredView):
     def get(self, request, image_pk):
         id_img = IDService().get_id_image_object(image_pk=image_pk)
         return FileResponse(id_img.image_file)
-    
+
 
 class ClearID(ManagerRequiredView):
     def post(self, request, paper_pk):
