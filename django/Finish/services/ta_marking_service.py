@@ -170,28 +170,38 @@ class TaMarkingService:
             tuple: 3 lists that contain the total, average and standard deviation times respectively
                 for marking each question held in a humanized format.
         """
-
         service = TaMarkingService()
         present = arrow.utcnow()
 
-        total_times_spent = [
-            present.shift(
-                seconds=service.get_total_time_spent_on_question(question=q)
-            ).humanize(present, only_distance=True, granularity=["hour", "minute"])
-            for q in range(1, n_questions + 1)
-        ]
-        average_times_spent = [
-            present.shift(
-                seconds=service.get_average_time_spent_on_question(question=q)
-            ).humanize(present, only_distance=True, granularity=["minute", "second"])
-            for q in range(1, n_questions + 1)
-        ]
-        std_times_spent = [
-            present.shift(
-                seconds=service.get_stdev_time_spent_on_question(question=q)
-            ).humanize(present, only_distance=True, granularity=["minute", "second"])
-            for q in range(1, n_questions + 1)
-        ]
+        total_seconds = [service.get_total_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
+        average_seconds = [service.get_average_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
+        std_seconds = [service.get_stdev_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
+
+        total_times_spent = [None] * n_questions
+        average_times_spent = [None] * n_questions
+        std_times_spent = [None] * n_questions
+
+        if not None in total_seconds:
+            total_times_spent = [
+                present.shift(
+                    seconds=service.get_total_time_spent_on_question(question=q)
+                ).humanize(present, only_distance=True, granularity=["hour", "minute"])
+                for q in range(1, n_questions + 1)
+            ]
+        if not None in average_seconds:
+            average_times_spent = [
+                present.shift(
+                    seconds=service.get_average_time_spent_on_question(question=q)
+                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                for q in range(1, n_questions + 1)
+            ]
+        if not None in std_seconds:
+            std_times_spent = [
+                present.shift(
+                    seconds=service.get_stdev_time_spent_on_question(question=q)
+                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                for q in range(1, n_questions + 1)
+            ]
 
         return total_times_spent, average_times_spent, std_times_spent
 
