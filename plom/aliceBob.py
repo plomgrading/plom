@@ -80,11 +80,15 @@ weak wear weather wedding week weight welcome were well west wet what wheel when
 where which while white who why wide wife wild will win wind window wine winter
 wire wise wish with without woman wonder word work world worry yard yell yet you
 young your zero zoo
-"""
-words = words.split()
+""".split()
 
-names = """aiden azami basia bob caris carol dave duska erin evander fatima frank greg gwen haris heidi idris isla john judy kali kamal layla lucas mary malik nina noor olivia oscar peter peggy quentin quinci raisa rupert samir sybil talia trent ursula usher vanna virgil walter wendy xavier xena yuri yvonne zahara zeke"""
-names = names.split()
+names = """
+    aiden azami basia bob caris carol dave duska erin evander fatima
+    frank greg gwen haris heidi idris isla john judy kali kamal layla
+    lucas mary malik nina noor olivia oscar peter peggy quentin quinci
+    raisa rupert samir sybil talia trent ursula usher vanna virgil
+    walter wendy xavier xena yuri yvonne zahara zeke
+""".split()
 
 
 def simple_password(n=3):
