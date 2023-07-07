@@ -39,6 +39,9 @@ class MarkingInformationView(ManagerRequiredView):
             std_times_spent,
         ) = self.tms.all_marking_times_for_web(n_questions)
 
+        estimate_days = self.tms.get_estimate_days_remaining(1)
+        estimate_hours = self.tms.get_estimate_hours_remaining(1)
+
         context.update(
             {
                 "papers": papers,
@@ -50,6 +53,8 @@ class MarkingInformationView(ManagerRequiredView):
                 "std_times_spent": std_times_spent,
                 "all_marked": True,
                 "student_marks_form": self.smff,
+                "estimate_days": estimate_days,
+                "estimate_hours": estimate_hours,
             }
         )
 
