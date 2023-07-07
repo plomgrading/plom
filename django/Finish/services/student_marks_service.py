@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import arrow
+
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, Any
 
 from Mark.models import MarkingTask, Annotation
 from Papers.models.paper_structure import Paper
@@ -115,7 +119,7 @@ class StudentMarkService:
         marking_tasks = paper_obj.markingtask_set.all()
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
 
-        student_info = {"paper_number": paper_num}
+        student_info: Dict[str, Any] = {"paper_number": paper_num}
 
         # student info
         if paper_id_task:
