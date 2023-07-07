@@ -173,9 +173,18 @@ class TaMarkingService:
         service = TaMarkingService()
         present = arrow.utcnow()
 
-        total_seconds = [service.get_total_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
-        average_seconds = [service.get_average_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
-        std_seconds = [service.get_stdev_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
+        total_seconds = [
+            service.get_total_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        average_seconds = [
+            service.get_average_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        std_seconds = [
+            service.get_stdev_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
 
         total_times_spent = [None] * n_questions
         average_times_spent = [None] * n_questions
@@ -192,14 +201,18 @@ class TaMarkingService:
             average_times_spent = [
                 present.shift(
                     seconds=service.get_average_time_spent_on_question(question=q)
-                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                ).humanize(
+                    present, only_distance=True, granularity=["minute", "second"]
+                )
                 for q in range(1, n_questions + 1)
             ]
         if not None in std_seconds:
             std_times_spent = [
                 present.shift(
                     seconds=service.get_stdev_time_spent_on_question(question=q)
-                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                ).humanize(
+                    present, only_distance=True, granularity=["minute", "second"]
+                )
                 for q in range(1, n_questions + 1)
             ]
 
@@ -237,12 +250,13 @@ class TaMarkingService:
         num_questions_remaining = MarkingTask.objects.filter(
             question=question, latest_annotation__isnull=True
         ).count()
-        num_days_remaining = num_questions_remaining / self.get_avg_n_of_questions_marked_per_day(
-            question=question
+        num_days_remaining = (
+            num_questions_remaining
+            / self.get_avg_n_of_questions_marked_per_day(question=question)
         )
 
         return num_days_remaining
-    
+
     def get_estimate_hours_remaining(self, question: int) -> float:
         """Get the estimated number of hours remaining to mark a given question.
 
@@ -252,7 +266,9 @@ class TaMarkingService:
         Returns:
             float: The estimated number of hours remaining to mark a given question.
         """
-        avg_time_on_question = self.get_average_time_spent_on_question(question=question)
+        avg_time_on_question = self.get_average_time_spent_on_question(
+            question=question
+        )
         num_questions_remaining = MarkingTask.objects.filter(
             question=question, latest_annotation__isnull=True
         ).count()
