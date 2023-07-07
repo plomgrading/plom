@@ -233,10 +233,6 @@ class TaMarkingService:
         ).count()
 
         avg_per_day = self.get_avg_n_of_questions_marked_per_day(question=question)
-        
-        print("QS REMAINING: ", num_questions_remaining)
-        print("AVG PER DAY: ", avg_per_day)
-        print("NUM DAYS REMAINING: ", num_questions_remaining / avg_per_day)
 
         return num_questions_remaining / avg_per_day
 
@@ -255,10 +251,6 @@ class TaMarkingService:
         num_questions_remaining = MarkingTask.objects.filter(
             question_number=question, latest_annotation__isnull=True
         ).count()
-
-        print("AVG TIME ON QUESTION: ", avg_time_on_question)
-        print("NUM QUESTIONS REMAINING: ", num_questions_remaining)
-        print("NUM HOURS REMAINING: ", num_questions_remaining * avg_time_on_question / 3600)
 
         return num_questions_remaining * avg_time_on_question / 3600
 
