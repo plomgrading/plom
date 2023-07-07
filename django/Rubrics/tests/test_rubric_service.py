@@ -259,7 +259,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.value, self.modified_relative_rubric.value)
         self.assertEqual(r.user, self.modified_relative_rubric.user)
 
-    def test_modify_relative_rubric(self):
+    def test_modify_absolute_rubric(self):
         """
         Test RubricService.modify_rubric() to modify a relative rubric
         """
