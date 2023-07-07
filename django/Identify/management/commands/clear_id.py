@@ -21,10 +21,8 @@ class Command(BaseCommand):
         try:
             IDService().set_id__task_todo_and_clear_specific_id_cmd(paper_num)
             self.stdout.write(f"Cleared ID for paper number #{paper_num}")
-        except ObjectDoesNotExist:
-            raise CommandError(
-                f"Cannot clear ID due to paper number #{paper_num} has yet to be identified."
-            )
+        except ObjectDoesNotExist as err:
+            raise CommandError(err)
 
     def clear_all_ids(self):
         try:
