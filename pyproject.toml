@@ -224,3 +224,14 @@ module = [
     'zxingcpp',
 ]
 ignore_missing_imports = true
+
+# hide some things from mypy
+#   - examDB and theServer have strange/confusing import patterns
+#   - tool.py has pyqtProperty stuff that is also confusing to me
+[[tool.mypy.overrides]]
+module = [
+    'plom.client.tools.tool',
+    'plom.db.examDB',
+    'plom.server.theServer',
+]
+ignore_errors = true
