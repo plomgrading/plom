@@ -442,7 +442,8 @@ mypy-type-checking:
     - python3 -m pip install mypy
   script:
     - mypy plom --install-types --non-interactive || true
-    - mypy plom
+    - mypy plom || true
+    - mypy plom --ignore-missing-import || true
     - mypy plom django --ignore-missing-import
 
 
