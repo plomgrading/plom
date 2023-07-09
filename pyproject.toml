@@ -205,9 +205,6 @@ add-ignore = "D100,D101,D102,D103,D104,D107,D106"
 # pretty = true
 exclude = [
     'digitHunter.py',
-    'tool.py',
-    'plom/db.py',
-    "plom/server",
 ]
 
 [[tool.mypy.overrides]]
