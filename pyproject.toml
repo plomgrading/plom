@@ -222,6 +222,7 @@ module = [
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
+    'api_secrets',
 ]
 ignore_missing_imports = true
 
