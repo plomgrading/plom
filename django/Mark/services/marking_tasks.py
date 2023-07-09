@@ -107,19 +107,32 @@ class MarkingTaskService:
 
         return (len(completed), len(total))
 
-    def get_latest_task(self, paper_number, question_number):
+    def get_latest_task(self, paper_number, question_number) -> MarkingTask:
         """Get a marking task from its paper number and question number.
 
         Args:
             paper_number: int
             question_number: int
+
+        Returns:
+            The MarkingTask.
+
+        Raises:
+            ObjectDoesNotExist: no such marking task, either b/c the paper
+            does not exist or the question does not exist for that paper.
         """
         paper = Paper.objects.get(paper_number=paper_number)
-        return (
+        r = (
             MarkingTask.objects.filter(paper=paper, question_number=question_number)
             .order_by("-time")
             .first()
         )
+        # Issue #2851, special handling of the None return
+        if r is None:
+            raise ObjectDoesNotExist(
+                f"we have paper {paper_number} but not question index {question_number}"
+            )
+        return r
 
     def unpack_code(self, code):
         """Return a tuple of (paper_number, question_number) from a task code string.
@@ -478,10 +491,10 @@ class MarkingTaskService:
             code: the question/paper code for a task.
 
         Returns:
-            The text of all tags for this task.
+            A list of the text of all tags for this task.
 
         Raises:
-            ValueError: TODO
+            ObjectDoesNotExist: no such code.
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -66,6 +67,21 @@ class MarkingTaskServiceTests(TestCase):
         p1, q1 = mts.unpack_code("q8g9")
         self.assertEqual(p1, 8)
         self.assertEqual(q1, 9)
+
+    def test_get_latest_task_no_paper_nor_question(self):
+        s = MarkingTaskService()
+        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+            s.get_task_from_code("q0042g42")
+
+    def test_get_latest_task_has_paper_but_no_question(self):
+        s = MarkingTaskService()
+        task = baker.make(
+            MarkingTask, question_number=1, paper__paper_number=42, code="q0042g1"
+        )
+        code = "q0042g9"
+        assert task.code != code
+        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+            s.get_task_from_code(code)
 
     def test_get_first_available_task(self):
         """
