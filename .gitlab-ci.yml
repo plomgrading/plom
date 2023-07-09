@@ -361,6 +361,7 @@ pylint:
 
 
 # needs full dependencies, cannot easily run with other early static analysis
+# If exceptions are needed, see "tool.mypy" sections in pyproject.toml
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
