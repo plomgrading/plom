@@ -244,11 +244,13 @@ ignore_missing_imports = true
 # hide some things from mypy
 #   - examDB and theServer have strange/confusing import patterns
 #   - tool.py has pyqtProperty stuff that is also confusing to me
+#   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
 module = [
     'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
     'BuildPaperPDF.services.build_papers',  # Issue #2847
+    'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
