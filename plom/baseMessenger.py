@@ -992,7 +992,7 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException
-            PlomTaskChangedError: TODO: add this back again, with integriy_check??
+            PlomTaskChangedError: TODO: add this back again, with integrity_check??
             PlomTaskDeletedError
             PlomNoPaper
             PlomSeriousException
