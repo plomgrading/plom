@@ -435,7 +435,7 @@ pydocstyle-django:
   allow_failure: true
 
 
-mppy-type-checking:
+mypy-type-checking:
   image: python:3.11
   stage: static_analysis
   before_script:
