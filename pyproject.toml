@@ -223,6 +223,24 @@ module = [
 ]
 ignore_missing_imports = true
 
+# another such section for django
+#   - "django.*" is very confusing!  Issue #2532
+[[tool.mypy.overrides]]
+module = [
+    'braces.*',
+    'debugpy',
+    'django.*',
+    'django_huey',
+    'huey.*',
+    'polymorphic.models',
+    'random_username.generate',
+    'rest_framework.*',
+    'scipy.optimize',
+    'whitenoise',
+    'zipfly',
+]
+ignore_missing_imports = true
+
 # hide some things from mypy
 #   - examDB and theServer have strange/confusing import patterns
 #   - tool.py has pyqtProperty stuff that is also confusing to me
