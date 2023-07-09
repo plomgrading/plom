@@ -161,9 +161,9 @@ class MarkingTaskService:
             paper_number, question_number = self.unpack_code(code)
             return self.get_latest_task(paper_number, question_number)
         except AssertionError:
-            raise ValueError(f"{code} is not a valid task code.")
+            raise ValueError(f"{code} is not a valid task code.") from None
         except ObjectDoesNotExist:
-            raise RuntimeError(f"Task {code} does not exist.")
+            raise RuntimeError(f"Task {code} does not exist.") from None
 
     def get_user_tasks(self, user, question=None, version=None):
         """Get all the marking tasks that are assigned to this user.
