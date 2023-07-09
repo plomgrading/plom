@@ -471,18 +471,20 @@ class MarkingTaskService:
         """
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
-    def get_tags_for_task(self, code):
+    def get_tags_for_task(self, code: str) -> list[str]:
         """Get a list of tags assigned to this marking task.
 
         Args:
-            code: str, the question/paper code for a task
+            code: the question/paper code for a task.
 
         Returns:
-            list[str]: the text of all tags for this task.
+            The text of all tags for this task.
+
+        Raises:
+            ValueError: TODO
         """
-        task = self.get_task_from_code(
-            code
-        )  # TODO: what if the client has an OOD task with the same code?
+        # TODO: what if the client has an OLD task with the same code?
+        task = self.get_task_from_code(code)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
     def sanitize_tag_text(self, tag_text):
