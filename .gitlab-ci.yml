@@ -441,6 +441,7 @@ mypy-type-checking:
   before_script:
     - python3 -m pip install mypy
   script:
+    - mypy --install-types --non-interactive
     - mypy plom
     - mypy plom django --ignore-missing-import
 
