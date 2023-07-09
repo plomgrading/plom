@@ -652,7 +652,7 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                if response.status_code in (406, 410):
+                if response.status_code in (406, 404, 410):
                     raise PlomBadTagError(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
