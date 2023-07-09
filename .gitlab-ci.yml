@@ -435,6 +435,16 @@ pydocstyle-django:
   allow_failure: true
 
 
+mppy-type-checking:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install mypy
+  script:
+    - mypy plom
+    - mypy plom django --ignore-missing-import
+
+
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
   services:
