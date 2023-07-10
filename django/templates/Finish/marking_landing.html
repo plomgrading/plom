@@ -100,24 +100,24 @@
         </div>
         <div class="col">
             <table style="width: auto"
-               class="table table-striped table-bordered sortable">
-            <thead>
-                <tr>
-                    <th scope="col">Estimate</th>
-                    {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Hours remaining</td>
+                   class="table table-striped table-bordered sortable">
+                <thead>
+                    <tr>
+                        <th scope="col">Estimate</th>
+                        {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Hours remaining</td>
                         {% for time in hours_estimate %}<td>{{ time }}</td>{% endfor %}
-                </tr>
-                <tr>
-                    <td>Days remaining</td>
+                    </tr>
+                    <tr>
+                        <td>Days remaining</td>
                         {% for time in days_estimate %}<td>{{ time }}</td>{% endfor %}
-                </tr>
-            </tbody>
-        </table>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <br>
