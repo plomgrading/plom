@@ -971,7 +971,7 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_annotations_image(self, num, question, edition=None):
+    def get_annotations_image(self, num, question, edition=None) -> bytes:
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
@@ -980,7 +980,7 @@ class BaseMessenger:
             edition (int/None): which annotation set or None for latest.
 
         Returns:
-            BytesIO: contents of a bitmap file.
+            contents of a bitmap file.
 
         Raises:
             PlomAuthenticationException
