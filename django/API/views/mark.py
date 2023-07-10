@@ -350,16 +350,29 @@ class MgetAnnotations(APIView):
 
     def get(self, request, paper, question):
         mts = MarkingTaskService()
-        annotation = mts.get_latest_annotation(paper, question)
+        try:
+            annotation = mts.get_latest_annotation(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = (
+                f"No annotations for paper {paper} question {question}: " + str(e)
+            )
+            return r
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
-        latest_task = mts.get_latest_task(paper, question)
+        try:
+            latest_task = mts.get_latest_task(paper, question)
+        except ObjectDoesNotExist as e:
+            # Possibly should be 410?  see baseMessenger.py
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
+
         if latest_task != annotation_task:
-            return Response(
-                "Integrity error: task has been modified by server.",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = "Integrity error: task has been modified by server."
+            return r
 
         annotation_data["user"] = annotation.user.username
         annotation_data["annotation_edition"] = annotation.edition
@@ -373,21 +386,27 @@ class MgetAnnotationImage(APIView):
 
     def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
-        annotation = mts.get_latest_annotation(paper, question)
-        if not annotation:
-            return Response(
-                f"No annotations for paper {paper} question {question}",
-                status=status.HTTP_404_NOT_FOUND,
+        try:
+            annotation = mts.get_latest_annotation(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = (
+                f"No annotations for paper {paper} question {question}: " + str(e)
             )
+            return r
         annotation_task = annotation.task
         annotation_image = annotation.image
 
-        latest_task = mts.get_latest_task(paper, question)
+        try:
+            latest_task = mts.get_latest_task(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
         if latest_task != annotation_task:
-            return Response(
-                "Integrity error: task has been modified by server.",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = "Integrity error: task has been modified by server."
+            return r
 
         return FileResponse(
             open(annotation_image.path, "rb"), status=status.HTTP_200_OK

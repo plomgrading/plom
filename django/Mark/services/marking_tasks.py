@@ -121,7 +121,14 @@ class MarkingTaskService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
-        paper = Paper.objects.get(paper_number=paper_number)
+        try:
+            paper = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist as e:
+            # TODO: or some re-raise?
+            raise ObjectDoesNotExist(
+                f"Task for paper {paper_number} and question {question_number} "
+                f"does not exist: {str(e)}"
+            ) from None
         r = (
             MarkingTask.objects.filter(paper=paper, question_number=question_number)
             .order_by("-time")
@@ -172,9 +179,10 @@ class MarkingTaskService:
         """
         try:
             paper_number, question_number = self.unpack_code(code)
-            return self.get_latest_task(paper_number, question_number)
         except AssertionError:
             raise ValueError(f"{code} is not a valid task code.") from None
+        try:
+            return self.get_latest_task(paper_number, question_number)
         except ObjectDoesNotExist:
             raise RuntimeError(f"Task {code} does not exist.") from None
 
@@ -472,6 +480,10 @@ class MarkingTaskService:
 
         Returns:
             Annotation: the latest annotation instance
+
+        Raises:
+            ObjectDoesNotExist: no such marking task, either b/c the paper
+            does not exist or the question does not exist for that paper.
         """
         task = self.get_latest_task(paper, question)
         return task.latest_annotation
