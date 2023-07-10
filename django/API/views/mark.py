@@ -324,8 +324,6 @@ class MgetPageDataQuestionInContext(APIView):
             r = Response(status=status.HTTP_409_CONFLICT)
             r.reason_phrase = f"Test paper does not exist: {str(e)}"
             return r
-        # TODO: Issue #2852, if question if out of range, we still get a response
-        # with id pages and dnm pages but this is not correct
         return Response(page_metadata, status=status.HTTP_200_OK)
 
 

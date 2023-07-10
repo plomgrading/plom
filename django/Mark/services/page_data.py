@@ -4,7 +4,9 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 
+from Papers.services import SpecificationService
 from Papers.models import (
     Paper,
     FixedPage,
@@ -112,11 +114,19 @@ class PageDataService:
                 }
             ]
 
-        TODO: Issue #2852: if question is out of range, this still returns ID
-        and DNM instead of an error.
+        Raises:
+            ObjectDoesNotExist: paper does not exist or question is out of range.
         """
         test_paper = Paper.objects.get(paper_number=paper)
         pages_metadata = []
+
+        # loops below do not actually check if the question is valid: do that first
+        if question is not None:
+            numq = SpecificationService().get_n_questions()
+            if question not in range(1, numq + 1):
+                raise ObjectDoesNotExist(
+                    f"question {question} is out of bounds [1, {numq}]"
+                )
 
         # get all the fixed pages of the test that have images - prefetch the related image
         fixed_pages = FixedPage.objects.filter(
