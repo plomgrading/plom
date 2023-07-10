@@ -24,6 +24,7 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
+    marking_priority = models.FloatField(null=False, default=1.0)
 
 
 class MarkingTaskTag(Tag):
