@@ -111,6 +111,9 @@ class PageDataService:
                     'server_path' (str) path to the image in the server's filesystem,
                 }
             ]
+
+        TODO: Issue #2852: if question is out of range, this still returns ID
+        and DNM instead of an error.
         """
         test_paper = Paper.objects.get(paper_number=paper)
         pages_metadata = []
