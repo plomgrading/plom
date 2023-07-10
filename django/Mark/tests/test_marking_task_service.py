@@ -70,7 +70,7 @@ class MarkingTaskServiceTests(TestCase):
 
     def test_get_latest_task_no_paper_nor_question(self):
         s = MarkingTaskService()
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegexp(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code("q0042g42")
 
     def test_get_latest_task_has_paper_but_no_question(self):
@@ -80,7 +80,7 @@ class MarkingTaskServiceTests(TestCase):
         )
         code = "q0042g9"
         assert task.code != code
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegexp(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
 
     def test_get_first_available_task(self):

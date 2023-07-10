@@ -129,5 +129,5 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         s = MarkingTaskService()
         user = baker.make(User)
         s.create_tag(user, "hello")
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegexp(RuntimeError, "Task .*does not exist"):
             s.remove_tag_text_from_task_code("hello", "q9999g9")

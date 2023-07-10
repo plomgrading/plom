@@ -137,7 +137,8 @@ class MarkingTaskService:
         # Issue #2851, special handling of the None return
         if r is None:
             raise ObjectDoesNotExist(
-                f"we have paper {paper_number} but not question index {question_number}"
+                f"Task does not exist: we have paper {paper_number} but"
+                f"not question index {question_number}"
             )
         return r
 
@@ -183,8 +184,8 @@ class MarkingTaskService:
             raise ValueError(f"{code} is not a valid task code.") from None
         try:
             return self.get_latest_task(paper_number, question_number)
-        except ObjectDoesNotExist:
-            raise RuntimeError(f"Task {code} does not exist.") from None
+        except ObjectDoesNotExist as e:
+            raise RuntimeError(e) from None
 
     def get_user_tasks(self, user, question=None, version=None):
         """Get all the marking tasks that are assigned to this user.
