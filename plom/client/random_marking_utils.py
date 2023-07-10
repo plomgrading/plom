@@ -10,6 +10,9 @@ import sys
 import tempfile
 import time
 
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, List
+
 from PyQt6.QtCore import QPointF, QRectF
 from PyQt6.QtGui import QColor, QPainterPath, QPen
 from PyQt6.QtWidgets import QApplication, QWidget
@@ -54,8 +57,8 @@ positiveComments = [
     ("+2", "Good"),
     ("+2", "Clever approach"),
 ]
-negativeRubrics = {}
-positiveRubrics = {}
+negativeRubrics: Dict[int, List] = {}
+positiveRubrics: Dict[int, List] = {}
 
 tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic"]
 

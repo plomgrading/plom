@@ -1041,7 +1041,7 @@ class BaseMessenger:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def getSolutionImage(self, question: int, version: int) -> BytesIO:
+    def getSolutionImage(self, question: int, version: int) -> bytes:
         """Download the solution image for a question version.
 
         Args:
