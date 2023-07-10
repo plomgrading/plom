@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 __version__ = "0.14.0.dev0"
+# Also hardcoded in plom/__init__.py
 # Also hardcoded in AppImageBuilder.yml

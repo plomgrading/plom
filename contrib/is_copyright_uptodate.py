@@ -33,6 +33,8 @@ ok_no_copyright = [
     "*/cl_for_demo.csv",
     "*papers_to_rooms.csv",
     "django/static/*.svg",
+    "testTemplates/idBox*.eps",
+    "testTemplates/idBox*.svg",
 ]
 
 if __name__ == "__main__":

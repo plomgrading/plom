@@ -428,25 +428,28 @@ class TagsFromCodeView(APIView):
             200: OK response
 
         Raises:
-            406: Invalid task code or tag text
+            406: Invalid tag text
             404: Task is not found
+            410: Invalid task code
+
+        TODO: legacy uses 204 in the case of "already tagged", which
+        I think we just silently accept and return 200.
         """
         mts = MarkingTaskService()
         tag_text = request.data["tag_text"]
         tag_text = mts.sanitize_tag_text(tag_text)
+        user = request.user
 
         try:
-            the_task = mts.get_task_from_code(code)
-            the_tag = mts.get_tag_from_text(tag_text)
-            if the_tag:
-                mts.add_tag(the_tag, the_task)
-                return Response(status=status.HTTP_200_OK)
-            else:
-                new_tag = mts.create_tag(request.user, tag_text)
-                mts.add_tag(new_tag, the_task)
-                return Response(status=status.HTTP_200_OK)
+            mts.add_tag_text_from_task_code(tag_text, code, user=user)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_410_GONE)
+            r.reason_phrase = str(e)
+            return r
+        except RuntimeError as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
         except ValidationError as e:
             # TODO: why not?
             # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -454,20 +457,21 @@ class TagsFromCodeView(APIView):
             # TODO: yuck but works and looks better than str(e) for ValidationError
             (r.reason_phrase,) = e.args
             return r
-        except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_200_OK)
 
     def delete(self, request, code):
         """Remove a tag from a task.
 
         Args:
+            request (Request): with ``tag_text`` (`str`) as a data field
             code: str, question/paper code for a task
 
         Returns:
             200: OK response
 
         Raises:
-            409: Invalid task code or task does not have tag
+            409: Invalid task code, no such tag, or this task does not
+                have this tag.
             404: Task is not found
         """
         mts = MarkingTaskService()
@@ -475,9 +479,7 @@ class TagsFromCodeView(APIView):
         tag_text = mts.sanitize_tag_text(tag_text)
 
         try:
-            the_task = mts.get_task_from_code(code)
-            the_tag = mts.get_tag_from_text(tag_text)
-            mts.remove_tag_from_task(the_tag, the_task)
+            mts.remove_tag_text_from_task_code(tag_text, code)
         except ValueError as e:
             r = Response(status=status.HTTP_409_CONFLICT)
             r.reason_phrase = str(e)

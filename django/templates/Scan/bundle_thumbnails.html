@@ -43,15 +43,9 @@
                         <h5>Bundle Contains:</h5>
                         {% for paper,pages in papers_pages_list %}
                             {% with pg=pages|dictsort:"order"|first %}
-                                <button class="btn m-1 btn-outline-success"
-                                        type="button"
-                                        onclick="this.blur();"
-                                        hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
-                                        hx-swap="outerHTML"
-                                        hx-target="#navFragment"
-                                        hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}">
-                                    paper {{ paper }}
-                                </button>
+                                <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
+                                    <button class="btn m-1 btn-outline-success" type="button">paper {{ paper }}</button>
+                                </a>
                             {% endwith %}
                         {% endfor %}
                     </div>

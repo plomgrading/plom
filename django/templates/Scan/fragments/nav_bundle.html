@@ -10,8 +10,7 @@
         <div class="col-8">
             {% include "Scan/fragments/nav_bundle_left_right.html" %}
             <div class="row p-2 justify-content-center">
-                <div style="height: 50vw;
-                            width: 50vw;
+                <div style="aspect-ratio: 1 / 1;
                             justify-content: center;
                             display:flex;
                             align-items:center">
@@ -47,29 +46,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-                                <div>
-                                    <p>Rotate Image:</p>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate counter-clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_ccw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-counterclockwise fs-5"></i>
-                                    </a>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_cw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-clockwise fs-5"></i>
-                                    </a>
-                                </div>
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
@@ -97,25 +74,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-                                <div>
-                                    <p>Rotate Image:</p>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate counter-clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_ccw' timestamp index %}">
-                                        <i class="bi-arrow-counterclockwise fs-5"></i>
-                                    </a>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_cw' timestamp index %}">
-                                        <i class="bi-arrow-clockwise fs-5"></i>
-                                    </a>
-                                </div>
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
@@ -204,29 +163,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-                                <div>
-                                    <p>Rotate Image:</p>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate counter-clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_ccw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-counterclockwise fs-5"></i>
-                                    </a>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_cw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-clockwise fs-5"></i>
-                                    </a>
-                                </div>
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"
@@ -239,6 +176,11 @@
                                         Cast to extra page
                                     </a>
                                 </div>
+                                <div>
+                                    <a class="btn btn-outline-success text-center w-100 mb-3"
+                                       hx-get="{% url 'knowify_image' timestamp index %}"
+                                       hx-target="#navFragment">Cast to known page</a>
+                                </div>
                             {% endif %}
                         {% elif current_page.status == 'discard' %}
                             <div class="alert alert-dark">
@@ -250,11 +192,24 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-warning text-center w-100 mb-3"
                                        hx-put="{% url 'extralise_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+                                       hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
                                         Cast to extra page
+                                    </a>
+                                </div>
+                                <div>
+                                    <a class="btn btn-outline-success text-center w-100 mb-3"
+                                       hx-get="{% url 'knowify_image' timestamp index %}"
+                                       hx-target="#navFragment">Cast to known page</a>
+                                </div>
+                                <div>
+                                    <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                       hx-post="{% url 'unknowify_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                        Cast to unknown page
                                     </a>
                                 </div>
                             {% endif %}
@@ -274,29 +229,7 @@
                             </div>
                             {% if is_pushed %}
                             {% else %}
-                                <div>
-                                    <p>Rotate Image:</p>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate counter-clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_ccw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-counterclockwise fs-5"></i>
-                                    </a>
-                                    <a class="btn btn-secondary text-center mb-3"
-                                       data-bs-toggle="tooltip"
-                                       data-bs-placement="top"
-                                       title="Rotate clockwise"
-                                       style="width: 49%"
-                                       hx-post="{% url 'rotate_img_cw' timestamp index %}"
-                                       hx-swap="outerHTML"
-                                       hx-target="#navFragment">
-                                        <i class="bi-arrow-clockwise fs-5"></i>
-                                    </a>
-                                </div>
+                                {% include "Scan/fragments/rotate_image.html" %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-post="{% url 'discard_image' timestamp index %}"

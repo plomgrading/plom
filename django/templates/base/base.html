@@ -131,7 +131,7 @@
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'student_marks' %}">Student Marks</a>
+                                           href="{% url 'marking_info' %}">Marking Info</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link"
@@ -148,10 +148,16 @@
                                                href="{% url 'progress_scan_overview' %}">Scan</a>
                                         </li>
                                         <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link">Mark</a>
+                                            <a class="nav-link link-light is_sidebar_link"
+                                               href="{% url 'progress_mark_home' %}">Mark</a>
                                         </li>
                                         <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link">Identify</a>
+                                            <a class="nav-link link-light is_sidebar_link"
+                                               href="{% url 'progress_identify_home' %}">Identify</a>
+                                        </li>
+                                        <li class="nav-item" style="background-color: #b5a7fa;">
+                                            <a class="nav-link link-light is_sidebar_link"
+                                               href="{% url 'progress_user_info_home' %}">User Info</a>
                                         </li>
                                     </div>
                                 {% elif user_group == 'scanner' %}
@@ -171,11 +177,10 @@
                         </div>
                     </nav>
                 </div>
-                <div class="col pe-0">
+                <div class="col">
                     <div class="container-fluid"
                          style="padding-top: 12px;
                                 padding-bottom: 12px;
-                                padding-right: 0;
                                 min-height: 100%">
                         <!-- Page heading -->
                         <h1 class="fw-lighter" style="margin: 15px;">

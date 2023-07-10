@@ -42,6 +42,7 @@ from .flag_images import (
 from .scanner_summary import (
     ScannerSummaryView,
     ScannerPushedImageView,
+    ScannerPushedImageWrapView,
 )
 
 from .change_image_state import (
@@ -54,6 +55,8 @@ from .change_image_state import (
 from .cast_image_state import (
     DiscardImageType,
     ExtraliseImageType,
+    KnowifyImageType,
+    UnknowifyImageType,
 )
 
 from .rotate_images import (

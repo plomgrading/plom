@@ -30,6 +30,8 @@ RUN apt-get -y update && \
 
 COPY requirements.txt /src/
 WORKDIR /src
+# pip from 22.04 is too old for pure pyproject.toml?
+RUN pip install -U --no-cache-dir pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Because source includes the PyQt client, we need minimal deps for Qt.
