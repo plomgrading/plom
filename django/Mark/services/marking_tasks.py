@@ -137,7 +137,7 @@ class MarkingTaskService:
         # Issue #2851, special handling of the None return
         if r is None:
             raise ObjectDoesNotExist(
-                f"Task does not exist: we have paper {paper_number} but"
+                f"Task does not exist: we have paper {paper_number} but "
                 f"not question index {question_number}"
             )
         return r
