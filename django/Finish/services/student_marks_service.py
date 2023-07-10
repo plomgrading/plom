@@ -89,7 +89,7 @@ class StudentMarkService:
 
         return marks
 
-    def get_n_of_question_marked(self, question_num: int, *, version: int = 0) -> int:
+    def get_n_of_question_marked(self, question: int, *, version: int = 0) -> int:
         """Get the count of how many papers have marked a question.
 
         Args:
@@ -103,7 +103,7 @@ class StudentMarkService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question_num, version=version
+            question=question, version=version
         ).count()
 
     def get_student_info_from_paper(
