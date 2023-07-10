@@ -77,4 +77,8 @@ class IDService:
 
     @transaction.atomic
     def set_all_id__task_todo_and_clear_all_id_cmd(self):
+        for paper_id_task in PaperIDTask.objects.all():
+            paper_id_task.status = PaperIDTask.TO_DO
+            paper_id_task.save()
+            
         PaperIDAction.objects.all().delete()
