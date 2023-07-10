@@ -433,9 +433,13 @@ class TagsFromCodeView(APIView):
         try:
             return Response(mts.get_tags_for_task(code), status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = str(e)
+            return r
         except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
 
     def patch(self, request, code):
         """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
