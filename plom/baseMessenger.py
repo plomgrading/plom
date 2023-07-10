@@ -623,25 +623,44 @@ class BaseMessenger:
 
         Returns:
             list: a list of strings, one for each tag.  If there are no tags,
-            you get an empty list.  If the task was not found, you get ``None``.
-            TODO: maybe raising an exception would be friendlier.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+            you get an empty list.
+            On some legacy servers, if the task was not found, you get ``None``
+            rather than an exception.
 
-    def add_single_tag(self, code, tag_text):
+        Raises:
+            PlomNoPaper: the task was not found (or was poorly formed
+                in the request).
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/tags/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code in (404, 406):
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def add_single_tag(self, code: str, tag_text: str) -> None:
+        """Add a tag to a task.
+
+        Args:
+            task: e.g., like ``q0013g1``, for paper 13 question 1.
+            tag_text: the tag.
+
+        Returns:
+            None
+
+        Raises:
+            PlomAuthenticationException
+            PlomBadTagError: invalid tag (such as disallowed chars).
+                Also no such task, or invalid formed task code.
+        """
         with self.SRmutex:
             try:
                 response = self.patch(
@@ -653,7 +672,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code in (406, 404, 410):
-                    raise PlomBadTagError(response.reason)
+                    raise PlomBadTagError(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def remove_single_tag(self, task, tag_text):
@@ -686,6 +705,8 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def create_new_tag(self, tag_text):
