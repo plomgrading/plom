@@ -507,7 +507,7 @@ class MarkingTaskService:
             A list of the text of all tags for this task.
 
         Raises:
-            ObjectDoesNotExist: no such code.
+            RuntimeError: no such code.
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)
