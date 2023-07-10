@@ -944,40 +944,32 @@ class BaseMessenger:
             url = f"/annotations/{num}/{question}/{edition}"
         if integrity is None:
             integrity = ""
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                url,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "integrity": integrity,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomNoPaper(
-                    "Cannot find image file for {}.".format(num)
-                ) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(num)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(num)
-                ) from None
-            elif response.status_code == 416:
-                raise PlomRangeException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    url,
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "integrity": integrity,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                elif response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                elif response.status_code == 406:
+                    raise PlomTaskChangedError(response.reason) from None
+                elif response.status_code == 410:
+                    raise PlomTaskDeletedError(response.reason) from None
+                elif response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_annotations_image(self, num, question, edition=None):
         """Download image of the latest annotations (or a particular set of annotations).
@@ -1001,31 +993,25 @@ class BaseMessenger:
             url = f"/annotations_image/{num}/{question}"
         else:
             url = f"/annotations_image/{num}/{question}/{edition}"
-        self.SRmutex.acquire()
-        try:
-            response = self.get(url, json={"user": self.user, "token": self.token})
-            response.raise_for_status()
-            return BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomNoPaper(response.reason) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(num)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(num)
-                ) from None
-            elif response.status_code == 416:
-                raise PlomRangeException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(url, json={"user": self.user, "token": self.token})
+                response.raise_for_status()
+                return BytesIO(response.content).getvalue()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                elif response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                elif response.status_code == 406:
+                    raise PlomTaskChangedError(response.reason) from None
+                elif response.status_code == 410:
+                    raise PlomTaskDeletedError(response.reason) from None
+                elif response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getSolutionStatus(self):
         with self.SRmutex:
