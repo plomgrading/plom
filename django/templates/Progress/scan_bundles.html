@@ -1,24 +1,23 @@
 {% extends 'Progress/scan_base.html' %}
-{% block title %}Web Plom - Progress{% endblock %}
-{% block page_heading %}Scanning progress{% endblock %}
 {% block main_card_content %}
     <div class="row ps-5 pe-5">
-        <h5>Bundles: {{ n_bundles }}</h5>
+        <h5>Pushed bundles: {{ number_of_pushed_bundles }}</h5>
         <div class="card" style="max-height: 50vh">
             <div class="card-body overflow-auto">
                 <table class="table table-striped">
                     <thead>
                         <tr>
                             <th scope="col">Name</th>
-                            <th scope="col">User</th>
-                            <th scope="col">Uploaded</th>
                             <th scope="col">Pages</th>
-                            <th scope="col">Pushed pages</th>
+                            <th scope="col">Uploaded by</th>
+                            <th scope="col">Upload time</th>
+                            <th scope="col">Push time</th>
+                            <th scope="col">Pushed by </th>
                             <th scope="col">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for bundle in bundles %}
+                        {% for bundle in pushed_bundles %}
                             <tr>
                                 <td>{{ bundle.name }}</td>
                                 <td>{{ bundle.username }}</td>

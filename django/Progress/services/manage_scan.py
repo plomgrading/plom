@@ -16,6 +16,7 @@ from Papers.models import (
     MobilePage,
     Paper,
     Image,
+    Bundle,
 )
 from Scan.models import StagingImage, StagingBundle
 
@@ -318,36 +319,32 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    def get_n_bundles(self):
+    def get_number_pushed_bundles(self):
         """
-        Return the number of uploaded bundles.
+        Return the number of pushed bundles.
         """
 
-        return StagingBundle.objects.all().count()
+        return Bundle.objects.all().count()
+
+    def get_number_unpushed_bundles(self):
+        """
+        Return the number of uploaded, but not yet pushed, bundles.
+        """
+
+        return StagingBundle.objects.filter(pushed=False).count()
 
     @transaction.atomic
-    def get_bundles_list(self):
+    def get_pushed_bundles_list(self):
         """
-        Return a list of all uploaded bundles.
+        Return a list of all pushed bundles.
         """
-
-        bundles = StagingBundle.objects.all()
 
         bundle_list = []
-        for bundle in bundles:
-            n_pages = len(StagingImage.objects.filter(bundle=bundle))
-            n_complete = len(Image.objects.filter(bundle__hash=bundle.pdf_hash))
-            time_uploaded = timezone.make_aware(
-                datetime.fromtimestamp(bundle.timestamp)
-            )
-
+        for bundle in Bundle.objects.all():
             bundle_list.append(
                 {
-                    "name": bundle.slug,
-                    "username": bundle.user.username,
-                    "uploaded": arrow.get(time_uploaded).humanize(),
-                    "n_pages": n_pages,
-                    "n_complete": n_complete,
+                    "n_pages": Image.objects.filter(bundle=bundle).count(),
+                    "update_time": bundle.time_of_last_update,
                 }
             )
 

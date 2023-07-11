@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Bundle(models.Model):
@@ -17,11 +18,14 @@ class Bundle(models.Model):
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
     hash (str): The sha256 of the bundle/pdf file.
-
+    user: The user who pushed the bundle.
+    time_of_last_update (datetime): The time of last change to the bundle.
     """
 
     name = models.TextField(null=False)
     hash = models.CharField(null=False, max_length=64)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time_of_last_update = models.DateTimeField(auto_now=True)
 
 
 class Image(models.Model):
