@@ -37,7 +37,7 @@ class Command(BaseCommand):
         dhs: DemoHWBundleService,
         config: dict,
         homework_bundles,
-    ):
+    ) -> None:
         if ServerConfigService().contains_key(config, "bundles"):
             dbs.scribble_on_exams(config)
 
@@ -108,6 +108,8 @@ class Command(BaseCommand):
             print("No bundles detected - stopping.")
             return
 
+        assert bundle_service is not None
+        assert homework_service is not None
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
