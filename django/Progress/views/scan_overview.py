@@ -24,7 +24,7 @@ class ScanOverview(BaseScanProgressPage):
         incomplete_papers = mss.get_number_incomplete_test_papers()
         pushed_bundles = mss.get_number_pushed_bundles()
         unpushed_bundles = mss.get_number_unpushed_bundles()
-        
+
         context = self.build_context("overview")
         context.update(
             {
@@ -113,7 +113,7 @@ class ScanBundles(BaseScanProgressPage):
         context.update(
             {
                 "number_of_pushed_bundles": len(bundle_list),
-                "pushed_bundles": bundle_list
+                "pushed_bundles": bundle_list,
             }
         )
         return render(request, "Progress/scan_bundles.html", context)

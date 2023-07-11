@@ -136,7 +136,12 @@ class ImageBundleService:
                 f"Some pages in the staged bundle collide with uploaded pages - {collide}"
             )
 
-        uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash, user=user_obj, staging_bundle=staged_bundle)
+        uploaded_bundle = Bundle(
+            name=staged_bundle.slug,
+            hash=staged_bundle.pdf_hash,
+            user=user_obj,
+            staging_bundle=staged_bundle,
+        )
         uploaded_bundle.save()
 
         pi_service = PaperInfoService()

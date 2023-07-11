@@ -240,7 +240,9 @@ class Command(BaseCommand):
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
         sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
         sp_push.add_argument(
-            "username", type=str, help="Name of user who is pushing the bundle.",
+            "username",
+            type=str,
+            help="Name of user who is pushing the bundle.",
         )
 
         # Read QR codes
