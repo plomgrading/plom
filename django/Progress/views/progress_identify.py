@@ -26,10 +26,10 @@ class ProgressIdentifyHome(ManagerRequiredView):
         context.update(
             {
                 "all_id_papers": all_id_papers,
-                "all_id_papers_count": all_id_papers.count(),
+                "all_id_papers_count": len(all_id_papers),
                 "id_papers": id_papers,
-                "id_papers_count": id_papers.count(),
-                "no_id_papers_count": no_id_papers.count(),
+                "id_papers_count": len(id_papers),
+                "no_id_papers_count": len(no_id_papers),
                 "identified_papers": identified_papers,
                 "identified_papers_count": identified_papers_count,
             }
