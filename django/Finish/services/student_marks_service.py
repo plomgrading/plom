@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import arrow
+
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Dict, Any
 
