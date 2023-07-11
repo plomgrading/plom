@@ -40,4 +40,5 @@ urlpatterns = [
     path("rubrics/", include("Rubrics.urls")),
     path("paper_tags/", include("Tags.urls")),
     path("finish/", include("Finish.urls")),
+    path("reports/", include("Reports.urls")),
 ]
