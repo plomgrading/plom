@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import arrow
 from datetime import datetime

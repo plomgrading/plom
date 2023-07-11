@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
+
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from pathlib import Path

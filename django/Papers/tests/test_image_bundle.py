@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 from django.test import TestCase
 from django.conf import settings
