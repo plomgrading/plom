@@ -19,21 +19,23 @@ sms = StudentMarkService()
 tms = TaMarkingService()
 spec = Specification.load().spec_dict
 
-student_marks = sms.get_all_students_download()
+student_df = sms.get_all_students_download()
 keys = sms.get_csv_header(spec)
-df = pd.DataFrame(student_marks, columns=keys)
+marks = pd.DataFrame(student_df, columns=keys)
 
+
+### INFO FOR REPORT ###
 name = spec["name"]
 longName = spec["longName"]
 totalMarks = spec["totalMarks"]
 date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
 num_students = Paper.objects.count()
-average_mark = df["total_mark"].mean()
-median_mark = df["total_mark"].median()
+average_mark = marks["total_mark"].mean()
+median_mark = marks["total_mark"].median()
 
-# create a matplotlib plot and save it to a BytesIO object
+### IMAGE FOR REPORT ###
 fig, ax = plt.subplots()
-ax.hist(df["total_mark"], bins=range(0, totalMarks + 1))
+ax.hist(marks["total_mark"], bins=range(0, totalMarks + 1))
 ax.set_title("Histogram of Total Marks")
 ax.set_xlabel("Total Mark")
 ax.set_ylabel("Number of Students")
@@ -44,6 +46,10 @@ fig.savefig(png_bytes, format="png")
 png_bytes.seek(0)
 base64_string = base64.b64encode(png_bytes.read()).decode()
 
+### TABLE FOR REPORT ###
+marks = marks[["student_id", "student_name", "paper_number", "total_mark"]]
+table = marks.iloc[10:20].to_html()
+
 html = f"""
 <h2>{longName} report</h2>
 <p>date: {date}</p>
@@ -53,6 +59,9 @@ html = f"""
 <p>median mark: {median_mark}/{totalMarks}</p>
 <br>
 <img src="data:image/png;base64,{base64_string}" alt="Histogram of Total Marks">
+<br>
+<p style="break-before: page;"></p>
+{table}
 """
 
 
