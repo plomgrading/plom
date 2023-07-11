@@ -6,6 +6,7 @@
 import pathlib
 import random
 from tempfile import TemporaryDirectory
+
 import zipfly
 
 from plom.create.mergeAndCodePages import make_PDF
@@ -62,7 +63,7 @@ class BuildPapersService:
         """Return True if there are any PDFTasks with an 'error' status."""
         return PDFTask.objects.filter(status="error").count() > 0
 
-    def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
+    def create_task(self, index: int, huey_id: int, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database."""
         paper = get_object_or_404(Paper, paper_number=index)
 

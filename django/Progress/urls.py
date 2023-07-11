@@ -24,6 +24,7 @@ from Progress.views import (
     ProgressMarkHome,
     ProgressUserInfoHome,
     IDImageView,
+    IDImageWrapView,
 )
 
 
@@ -93,6 +94,11 @@ urlpatterns = [
         "identify/overview/id_img/<int:image_pk>",
         IDImageView.as_view(),
         name="ID_img",
+    ),
+    path(
+        "identify/overview/id_img_wrap/<int:image_pk>",
+        IDImageWrapView.as_view(),
+        name="ID_img_wrap",
     ),
     path(
         "userinfo/overview/",

@@ -42,6 +42,7 @@ from .flag_images import (
 from .scanner_summary import (
     ScannerSummaryView,
     ScannerPushedImageView,
+    ScannerPushedImageWrapView,
 )
 
 from .change_image_state import (

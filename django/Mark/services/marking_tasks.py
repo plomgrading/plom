@@ -184,6 +184,23 @@ class MarkingTaskService:
 
         return tasks
 
+    def get_tasks_from_question_with_annotation(self, question: int, version: int):
+        """Get all the marking tasks for this question/version.
+
+        Args:
+            question: int, the question number
+            version: int, the version number. If version == 0, then all versions are returned.
+
+        Returns:
+            QuerySet[MarkingTask]: tasks
+        """
+        marking_tasks = MarkingTask.objects.filter(
+            question_number=question, latest_annotation__isnull=False
+        )
+        if version != 0:
+            marking_tasks = marking_tasks.filter(question_version=version)
+        return marking_tasks
+
     def get_first_available_task(self, question=None, version=None):
         """Return the first marking task with a 'todo' status.
 
@@ -524,6 +541,31 @@ class MarkingTaskService:
         if text_tags.exists():
             # Assuming the queryset will always have a length of one
             return text_tags.first()
+
+    def add_tag_text_from_task_code(self, tag_text: str, code: str, user: str) -> None:
+        """Add a tag to a task, creating the tag if it does not exist.
+
+        Args:
+            tag_text: which tag to add, creating it if necessary.
+            code: from which task, for example ``"q0123g5"`` for paper
+                123 question 5.
+            user: who is doing the tagging.
+                TODO: record who tagged: Issue #2840.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: invalid task code
+            RuntimeError: task not found
+            ValidationError: invalid tag text
+        """
+        mts = MarkingTaskService()
+        the_task = mts.get_task_from_code(code)
+        the_tag = mts.get_tag_from_text(tag_text)
+        if not the_tag:
+            the_tag = mts.create_tag(user, tag_text)
+        mts.add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.

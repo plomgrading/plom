@@ -26,6 +26,7 @@ from Scan.views import (
     FlagPageImage,
     ScannerSummaryView,
     ScannerPushedImageView,
+    ScannerPushedImageWrapView,
     ChangeErrorImageState,
     ReplacePageImage,
     ChangeCollisionImageState,
@@ -135,6 +136,11 @@ urlpatterns = [
         "summary/pushed_img/<int:img_pk>",
         ScannerPushedImageView.as_view(),
         name="scan_pushed_img",
+    ),
+    path(
+        "summary/pushed_img_wrap/<int:img_pk>",
+        ScannerPushedImageWrapView.as_view(),
+        name="scan_pushed_img_wrap",
     ),
     path(
         "change/error_state/<timestamp>/<int:index>/",

@@ -19,6 +19,9 @@ import logging
 import os
 from pathlib import Path
 
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, Any
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -69,7 +72,7 @@ INSTALLED_APPS = [
     "Progress",
     "Rubrics",
     "Demo",
-    "StudentMarks",
+    "Finish",
 ]
 
 MIDDLEWARE = [
@@ -242,8 +245,7 @@ MAX_BUNDLE_SIZE = 1e9
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
 
-
-LOGGING = {
+LOGGING: Dict[str, Any] = {
     "version": 1,
     "handlers": {
         "console": {
