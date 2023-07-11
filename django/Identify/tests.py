@@ -7,11 +7,12 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from model_bakery import baker
 
 from Papers.models import Paper
 
-from Identify.services import IdentifyTaskService
+from Identify.services import IdentifyTaskService, IDService
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
@@ -19,7 +20,8 @@ from Identify.models import (
 
 
 class IdentifyTaskTests(TestCase):
-    """Tests for ``Identify.services.IdentifyTaskService`` functions."""
+    """Tests for ``Identify.services.IdentifyTaskService`` functions
+    and ``Identify.services.IDService`` functions. """
 
     def setUp(self):
         self.marker0 = baker.make(User, username="marker0")
@@ -148,3 +150,51 @@ class IdentifyTaskTests(TestCase):
         action = PaperIDAction.objects.get(user=self.marker0, task=task)
         self.assertEqual(action.student_name, "A")
         self.assertEqual(action.student_id, "1")
+
+    def test_set_id_task_todo_and_clear_specific_id(self):
+        """Test ``IDService().set_id_task_todo_and_clear_specific_id()``."""
+        ids = IDService()
+        paper = baker.make(Paper)
+        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        action = baker.make(PaperIDAction, task=task)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            ids.set_id_task_todo_and_clear_specific_id(paper.pk)
+            task.refresh_from_db()
+            action.refresh_from_db()
+
+        self.assertEqual(task.status, PaperIDTask.TO_DO)
+        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
+
+    def set_id_task_todo_and_clear_specific_id_cmd(self):
+        """Test ``IDService().id_task_todo_and_clear_specific_id_cmd()``."""
+        ids = IDService()
+        paper = baker.make(Paper)
+        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        action = baker.make(PaperIDAction, task=task)
+
+        with self.assertRaises(ObjectDoesNotExist):
+            ids.set_id_task_todo_and_clear_specific_id_cmd(paper.paper_number)
+            task.refresh_from_db()
+            action.refresh_from_db()
+
+        self.assertEqual(task.status, PaperIDTask.TO_DO)
+        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
+
+    def test_set_all_id_task_todo_and_clear_all_id_cmd(self):
+        """Test ``IDService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
+        ids = IDService()
+        for paper_number in range(1, 11):
+            paper = baker.make(Paper, paper_number=paper_number)
+            task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+            action = baker.make(PaperIDAction, task=task)
+        
+        with self.assertRaises(ObjectDoesNotExist):
+            ids.set_all_id_task_todo_and_clear_all_id_cmd()
+            task.refresh_from_db()
+            action.refresh_from_db()
+
+        for id_task in PaperIDTask.objects.all():
+            self.assertEqual(id_task.status, PaperIDTask.TO_DO)
+        
+        self.assertQuerysetEqual(PaperIDAction.objects.all(), [])
