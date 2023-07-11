@@ -23,6 +23,12 @@ class TaMarkingService:
 
         Args:
             user: (User) The user to get the annotations from.
+
+        Returns:
+            QuerySet: The annotations from the user.
+
+        Raises:
+            No exceptions anticipated.
         """
         return Annotation.objects.filter(user=user)
 
@@ -32,6 +38,12 @@ class TaMarkingService:
         Args:
             user: (User) The user to get the annotations from.
             paper: (Paper) The paper to get the annotations from.
+
+        Returns:
+            QuerySet: The annotations from the user on that paper.
+
+        Raises:
+            No exceptions anticipated.
         """
         return Annotation.objects.filter(user=user, task__paper=paper)
 
@@ -78,6 +90,9 @@ class TaMarkingService:
 
         Returns:
             dict: keyed by string information about the annotation (i.e. "score": 2, "question_number" : 3).
+
+        Raises:
+            No exceptions anticipated.
         """
         annotation_info = {
             "user": annotation.user.username,
@@ -108,6 +123,9 @@ class TaMarkingService:
 
         Returns:
             The total time spent on a question by all markers in seconds.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -130,6 +148,9 @@ class TaMarkingService:
 
         Returns:
             The average time spent on a question by all markers in seconds.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -152,6 +173,9 @@ class TaMarkingService:
 
         Returns:
             The standard deviation time spent on a question by all markers in seconds.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -169,13 +193,25 @@ class TaMarkingService:
         Returns:
             tuple: 3 lists that contain the total, average and standard deviation times respectively
                 for marking each question held in a humanized format.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = TaMarkingService()
         present = arrow.utcnow()
 
-        total_seconds = [service.get_total_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
-        average_seconds = [service.get_average_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
-        std_seconds = [service.get_stdev_time_spent_on_question(question=q) for q in range(1, n_questions + 1)]
+        total_seconds = [
+            service.get_total_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        average_seconds = [
+            service.get_average_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
+        std_seconds = [
+            service.get_stdev_time_spent_on_question(question=q)
+            for q in range(1, n_questions + 1)
+        ]
 
         total_times_spent = [None] * n_questions
         average_times_spent = [None] * n_questions
@@ -192,14 +228,18 @@ class TaMarkingService:
             average_times_spent = [
                 present.shift(
                     seconds=service.get_average_time_spent_on_question(question=q)
-                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                ).humanize(
+                    present, only_distance=True, granularity=["minute", "second"]
+                )
                 for q in range(1, n_questions + 1)
             ]
         if not None in std_seconds:
             std_times_spent = [
                 present.shift(
                     seconds=service.get_stdev_time_spent_on_question(question=q)
-                ).humanize(present, only_distance=True, granularity=["minute", "second"])
+                ).humanize(
+                    present, only_distance=True, granularity=["minute", "second"]
+                )
                 for q in range(1, n_questions + 1)
             ]
 
@@ -213,12 +253,16 @@ class TaMarkingService:
 
         Returns:
             float: The average number of questions marked per day for a given question.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = StudentMarkService()
         num_questions_marked = service.get_n_of_question_marked(question=question)
         num_days = (
             timezone.now()
-            - MarkingTask.objects.values_list("question", "time")
+            - MarkingTask.objects.filter(question_number=question)
+            .values_list("time")
             .order_by("time")
             .first()
         )
@@ -233,16 +277,20 @@ class TaMarkingService:
 
         Returns:
             float: The estimated number of days remaining to mark a given question.
+
+        Raises:
+            No exceptions anticipated.
         """
         num_questions_remaining = MarkingTask.objects.filter(
             question=question, latest_annotation__isnull=True
         ).count()
-        num_days_remaining = num_questions_remaining / self.get_avg_n_of_questions_marked_per_day(
-            question=question
+        num_days_remaining = (
+            num_questions_remaining
+            / self.get_avg_n_of_questions_marked_per_day(question=question)
         )
 
         return num_days_remaining
-    
+
     def get_estimate_hours_remaining(self, question: int) -> float:
         """Get the estimated number of hours remaining to mark a given question.
 
@@ -251,8 +299,13 @@ class TaMarkingService:
 
         Returns:
             float: The estimated number of hours remaining to mark a given question.
+
+        Raises:
+            No exceptions anticipated.
         """
-        avg_time_on_question = self.get_average_time_spent_on_question(question=question)
+        avg_time_on_question = self.get_average_time_spent_on_question(
+            question=question
+        )
         num_questions_remaining = MarkingTask.objects.filter(
             question=question, latest_annotation__isnull=True
         ).count()
