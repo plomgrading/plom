@@ -124,11 +124,10 @@ class MarkingTaskService:
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist as e:
-            # TODO: or some re-raise?
+            # reraise with a more detailed error message
             raise ObjectDoesNotExist(
-                f"Task for paper {paper_number} and question {question_number} "
-                f"does not exist: {str(e)}"
-            ) from None
+                f"Task for paper {paper_number} question {question_number} does not exist"
+            ) from e
         r = (
             MarkingTask.objects.filter(paper=paper, question_number=question_number)
             .order_by("-time")
@@ -180,12 +179,12 @@ class MarkingTaskService:
         """
         try:
             paper_number, question_number = self.unpack_code(code)
-        except AssertionError:
-            raise ValueError(f"{code} is not a valid task code.") from None
+        except AssertionError as e:
+            raise ValueError(f"{code} is not a valid task code.") from e
         try:
             return self.get_latest_task(paper_number, question_number)
         except ObjectDoesNotExist as e:
-            raise RuntimeError(e) from None
+            raise RuntimeError(e) from e
 
     def get_user_tasks(self, user, question=None, version=None):
         """Get all the marking tasks that are assigned to this user.
