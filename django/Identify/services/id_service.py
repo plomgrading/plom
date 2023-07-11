@@ -14,26 +14,73 @@ class IDService:
 
     @transaction.atomic
     def get_all_id_papers(self):
-        return IDPage.objects.all().order_by("paper")
+        """Get all the ID papers.
+
+        Returns:
+            list: A list of all IDPage objects.
+
+        Raises:
+            Not expected to raise any exceptions.
+        """
+        return list(IDPage.objects.all().order_by("paper"))
 
     @transaction.atomic
     def get_id_papers(self):
-        return IDPage.objects.exclude(image=None).order_by("paper")
+        """Get all the scanned ID papers.
+
+        Returns:
+            list: A list of all the scanned IDPage objects.
+
+        Raises:
+            Not expected to raise any exceptions.
+        """
+        return list(IDPage.objects.exclude(image=None).order_by("paper"))
 
     @transaction.atomic
     def get_no_id_papers(self):
-        return IDPage.objects.exclude(image__isnull=False)
+        """Get all the unscanned ID papers.
+
+        Returns:
+            list: A list of all the unscanned IDPage objects.
+
+        Raises:
+            Not expected to raise any exceptions.
+        """
+        return list(IDPage.objects.exclude(image__isnull=False))
 
     @transaction.atomic
     def get_id_image_object(self, image_pk):
+        """Get the ID page image based on the image's pk value.
+
+        Args:
+            image_pk (int): The primary key of an image.
+
+        Returns:
+            instance | None: If the Image object exists, return instance of the Image. If it doesn't, return None.
+
+        Raises:
+            ObjectDoesNotExist: This is raised when an instance of the Image does not exist.
+        """
         try:
             id_image_obj = Image.objects.get(pk=image_pk)
             return id_image_obj
-        except Image.DoesNotExist:
+        except ObjectDoesNotExist:
             return None
 
     @transaction.atomic
     def get_identified_papers_count(self, identified_papers):
+        """Get the number of papers identified.
+
+        Args:
+            identified_papers (dict): A dictionary of all the
+            PaperIDAction(Value) corresponding with IDPage(key).
+
+        Returns:
+            int: Number of papers identified.
+
+        Raises:
+            Not expected to raise any exceptions.
+        """
         identified_papers_count = 0
         for id_paper in identified_papers.values():
             if id_paper is not None:
@@ -44,6 +91,20 @@ class IDService:
 
     @transaction.atomic
     def get_all_identified_papers(self, all_scanned_id_papers):
+        """Get all the identified paper instances as a dictionary.
+
+        This method is to help with getting all the correct instances to display
+        into Identifying progress view, such as IDPage and PaperIDAction model.
+
+        Args:
+            all_scanned_id_papers (list): A list of all the scanned IDPage objects.
+
+        Returns:
+            dict: A dictionary of all the PaperIDAction(Value) corresponding with IDPage(key).
+
+        Raises:
+            ObjectDoesNotExist: This is raised when an instance of the PaperIDTask does not exist.
+        """
         # TODO: Needs to optimize this
         completed_id_task_list = {}
         for scanned_id_paper in all_scanned_id_papers:
@@ -63,6 +124,18 @@ class IDService:
 
     @transaction.atomic
     def set_id_task_todo_and_clear_specific_id(self, paper_pk):
+        """Set PaperIDTask as TO_DO and clear the PaperIDAction corresponding for that task.
+
+        Args:
+            paper_pk (int): The primary key of a paper.
+
+        Returns:
+            None
+
+        Raises:
+            ObjectDoesNotExist: This is raised when an instance of the PaperIDTask or
+            PaperIDAction does not exist.
+        """
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
         sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
 
@@ -73,11 +146,39 @@ class IDService:
 
     @transaction.atomic
     def set_id_task_todo_and_clear_specific_id_cmd(self, paper_number):
+        """Set PaperIDTask as TO_DO and clear the PaperIDAction corresponding for that task.
+
+        This method is used in the clear_id.py.
+
+        Args:
+            paper_number (int): The paper number of a paper.
+
+        Returns:
+            None
+
+        Raises:
+            ObjectDoesNotExist: This is raised when an instance of the Paper or PaperIDTask or
+            PaperIDAction does not exist.
+        """
         paper = Paper.objects.get(paper_number=int(paper_number))
         self.set_id_task_todo_and_clear_specific_id(paper.pk)
 
     @transaction.atomic
     def set_all_id_task_todo_and_clear_all_id_cmd(self):
+        """Set all the PaperIDTask as TO_DO and clear all the PaperIDAction.
+
+        This method is used in the clear_id.py.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            ObjectDoesNotExist: This is raised when an instance of the PaperIDTask or
+            PaperIDAction does not exist.
+        """
         for paper_id_task in PaperIDTask.objects.all():
             paper_id_task.status = PaperIDTask.TO_DO
             paper_id_task.save()
