@@ -33,7 +33,6 @@ urlpatterns = [
         PushedImageWrapView.as_view(),
         name="progress_pushed_img_wrap",
     ),
-
     path(
         "mark/overview/",
         ProgressMarkHome.as_view(),
