@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import arrow
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, Any
 
 from django.db.models import Max
 
-from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
@@ -129,7 +131,7 @@ class StudentMarkService:
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
         last_update = None
 
-        student_info = {"paper_number": paper_num}
+        student_info: Dict[str, Any] = {"paper_number": paper_num}
 
         # student info
         if paper_id_task:

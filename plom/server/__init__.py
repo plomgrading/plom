@@ -13,7 +13,7 @@ import logging
 from plom import specdir
 
 specdir = Path(specdir)
-confdir = Path("serverConfiguration")
+confdir: Path = Path("serverConfiguration")
 
 from .misc import build_server_directories
 from .misc import create_server_config
