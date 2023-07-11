@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Brennen Chiu
 
 from datetime import timedelta
 
@@ -20,8 +21,7 @@ from Identify.models import (
 
 
 class IdentifyTaskTests(TestCase):
-    """Tests for ``Identify.services.IdentifyTaskService`` functions
-    and ``Identify.services.IDService`` functions. """
+    """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDService`` functions."""
 
     def setUp(self):
         self.marker0 = baker.make(User, username="marker0")
@@ -166,7 +166,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(task.status, PaperIDTask.TO_DO)
         self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
 
-    def set_id_task_todo_and_clear_specific_id_cmd(self):
+    def test_set_id_task_todo_and_clear_specific_id_cmd(self):
         """Test ``IDService().id_task_todo_and_clear_specific_id_cmd()``."""
         ids = IDService()
         paper = baker.make(Paper)
@@ -188,7 +188,7 @@ class IdentifyTaskTests(TestCase):
             paper = baker.make(Paper, paper_number=paper_number)
             task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
             action = baker.make(PaperIDAction, task=task)
-        
+
         with self.assertRaises(ObjectDoesNotExist):
             ids.set_all_id_task_todo_and_clear_all_id_cmd()
             task.refresh_from_db()
@@ -196,5 +196,5 @@ class IdentifyTaskTests(TestCase):
 
         for id_task in PaperIDTask.objects.all():
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
-        
+
         self.assertQuerysetEqual(PaperIDAction.objects.all(), [])

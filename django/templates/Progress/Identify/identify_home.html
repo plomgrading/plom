@@ -51,7 +51,7 @@
                                         <td scope="row">{{ identified_paper.student_name }}</td>
                                         <td scope="row">
                                             <a class="btn btn-outline-danger"
-                                               hx-post="{% url "clear_ID" id_paper.paper.pk %}"
+                                               hx-post="{% url 'clear_ID' id_paper.paper.pk %}"
                                                hx-confirm="Are you sure you wish to clear the ID for paper number {{ id_paper.paper.paper_number }}?">
                                             Clear ID</a>
                                         </td>

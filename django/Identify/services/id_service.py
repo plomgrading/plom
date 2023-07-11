@@ -62,23 +62,24 @@ class IDService:
         return completed_id_task_list
 
     @transaction.atomic
-    def set_id__task_todo_and_clear_specific_id(self, paper_pk):
+    def set_id_task_todo_and_clear_specific_id(self, paper_pk):
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
+        sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
+            
         paper_ID_task_obj.status = PaperIDTask.TO_DO
         paper_ID_task_obj.save()
 
-        sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
         sid.delete()
 
     @transaction.atomic
-    def set_id__task_todo_and_clear_specific_id_cmd(self, paper_number):
+    def set_id_task_todo_and_clear_specific_id_cmd(self, paper_number):
         paper = Paper.objects.get(paper_number=int(paper_number))
-        self.set_id__task_todo_and_clear_specific_id(paper.pk)
+        self.set_id_task_todo_and_clear_specific_id(paper.pk)
 
     @transaction.atomic
-    def set_all_id__task_todo_and_clear_all_id_cmd(self):
+    def set_all_id_task_todo_and_clear_all_id_cmd(self):
         for paper_id_task in PaperIDTask.objects.all():
             paper_id_task.status = PaperIDTask.TO_DO
             paper_id_task.save()
-            
+
         PaperIDAction.objects.all().delete()
