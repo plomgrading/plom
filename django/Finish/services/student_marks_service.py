@@ -26,7 +26,10 @@ class StudentMarkService:
 
         Returns:
             dict: keyed by paper number whose values are a dictionary holding
-            the mark information for each question in the paper.
+                the mark information for each question in the paper.
+
+        Raises:
+            Paper.DoesNotExist: If the paper does not exist in the database.
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
@@ -59,7 +62,9 @@ class StudentMarkService:
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            The mark information for each question in each paper.
+            dict: The mark information for each question in each paper. Keyed by paper number
+                whose values are a dictionary holding the mark information for each question
+                in the paper.
         """
         papers = Paper.objects.all()
         marks = {}
@@ -84,7 +89,9 @@ class StudentMarkService:
             original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            The mark information for each question in each paper.
+            dict: The mark information for each question in each paper. Keyed by paper number
+                whose values are a dictionary holding the mark information for each question
+                in the paper.
         """
         marks = {}
         for paper_num in paper_set:
@@ -103,6 +110,9 @@ class StudentMarkService:
 
         Returns:
             The count of how many papers a mark for this question.
+
+        Raises:
+            No exceptions anticipated.
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -126,6 +136,9 @@ class StudentMarkService:
 
         Returns:
             dict: keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
+
+        Raises:
+            Paper.DoesNotExist: If the paper does not exist in the database.
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
@@ -213,6 +226,9 @@ class StudentMarkService:
 
         Returns:
             list: each element is a dictionary containing the information about an individual student.
+
+        Raises:
+            No exceptions anticipated.
         """
         papers = Paper.objects.all()
         csv_data = []
@@ -240,6 +256,9 @@ class StudentMarkService:
         Returns:
             list: The header for the csv file. Contains student info, marks,
             version info, timestamps and warnings.
+
+        Raises:
+            No exceptions anticipated.
         """
         keys = ["student_id", "student_name", "paper_number"]
         for q in range(1, spec["numberOfQuestions"] + 1):

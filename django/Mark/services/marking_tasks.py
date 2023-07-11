@@ -192,7 +192,10 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            QuerySet[MarkingTask]: tasks
+            PolymorphicQuerySet[MarkingTask]: tasks
+
+        Raises:
+            No exceptions anticipated.
         """
         marking_tasks = MarkingTask.objects.filter(
             question_number=question, latest_annotation__isnull=False
