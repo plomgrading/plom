@@ -737,7 +737,23 @@ class ScanService:
         return True
 
     @transaction.atomic
-    def push_bundle_to_server(self, bundle_obj, user_obj):
+    def push_bundle_to_server(self, bundle_obj: StagingBundle, user_obj: User):
+        """Push a legal bundle from staging to the core server
+
+        Args:
+            bundle_obj: The StagingBundle object to be pushed to the core server
+            user_obj: The (django) User object that is doing the pushing
+
+        Returns:
+            None
+
+        Exceptions:
+            ValueError: When the bundle has already been pushed,
+            ValueError: When the qr codes have not all been read,
+            ValueError: When the bundle is not prefect (eg still has errors or unknowns),
+            RuntimeError: When something very strange happens!!
+        """
+
         if bundle_obj.pushed:
             raise ValueError("Bundle has already been pushed. Cannot push again.")
 
@@ -766,7 +782,20 @@ class ScanService:
             raise err
 
     @transaction.atomic
-    def push_bundle_cmd(self, bundle_name, username):
+    def push_bundle_cmd(self, bundle_name: str, username: str):
+        """Wrapper around push_bundle_to_server
+
+        Args:
+            bundle_name: The name of the staging bundle to be pushed
+            username: The name of the user doing the pushing
+
+        Returns:
+            None
+
+        Exceptions:
+            ValueError: When the bundle does not exist
+            ValueError: When the user does not exist or has wrong permissions
+        """
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
