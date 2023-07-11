@@ -217,7 +217,7 @@ class DemoCreationService:
                     split(py_man_cmd), stderr=subprocess.STDOUT
                 ).decode("utf-8")
                 if "perfect" in out_stat:
-                    push_cmd = f"python3 manage.py plom_staging_bundles push {bundle}"
+                    push_cmd = f"python3 manage.py plom_staging_bundles push {bundle} demoScanner1"
                     subprocess.check_call(split(push_cmd))
                     done.append(bundle)
                     sleep(1)

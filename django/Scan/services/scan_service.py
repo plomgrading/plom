@@ -737,7 +737,22 @@ class ScanService:
         return True
 
     @transaction.atomic
-    def push_bundle_to_server(self, bundle_obj):
+    def push_bundle_to_server(self, bundle_obj: StagingBundle, user_obj: User):
+        """Push a legal bundle from staging to the core server.
+
+        Args:
+            bundle_obj: The StagingBundle object to be pushed to the core server
+            user_obj: The (django) User object that is doing the pushing
+
+        Returns:
+            None
+
+        Exceptions:
+            ValueError: When the bundle has already been pushed,
+            ValueError: When the qr codes have not all been read,
+            ValueError: When the bundle is not prefect (eg still has errors or unknowns),
+            RuntimeError: When something very strange happens!!
+        """
         if bundle_obj.pushed:
             raise ValueError("Bundle has already been pushed. Cannot push again.")
 
@@ -755,7 +770,7 @@ class ScanService:
 
         # the bundle is valid so we can push it.
         try:
-            img_service.upload_valid_bundle(bundle_obj)
+            img_service.upload_valid_bundle(bundle_obj, user_obj)
             # now update the bundle and its images to say "pushed"
             bundle_obj.pushed = True
             bundle_obj.save()
@@ -766,13 +781,36 @@ class ScanService:
             raise err
 
     @transaction.atomic
-    def push_bundle_cmd(self, bundle_name):
+    def push_bundle_cmd(self, bundle_name: str, username: str):
+        """Wrapper around push_bundle_to_server().
+
+        Args:
+            bundle_name: The name of the staging bundle to be pushed
+            username: The name of the user doing the pushing
+
+        Returns:
+            None
+
+        Exceptions:
+            ValueError: When the bundle does not exist
+            ValueError: When the user does not exist or has wrong permissions
+        """
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.push_bundle_to_server(bundle_obj)
+        # username => user_object, if in scanner group, else exception raised.
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        self.push_bundle_to_server(bundle_obj, user_obj)
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):

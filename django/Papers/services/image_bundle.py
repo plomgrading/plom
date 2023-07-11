@@ -102,7 +102,7 @@ class ImageBundleService:
                 return True
         return False
 
-    def upload_valid_bundle(self, staged_bundle):
+    def upload_valid_bundle(self, staged_bundle, user_obj):
         """
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
         paper number, and don't collide with any currently uploaded pages) upload all the pages
@@ -136,7 +136,12 @@ class ImageBundleService:
                 f"Some pages in the staged bundle collide with uploaded pages - {collide}"
             )
 
-        uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash)
+        uploaded_bundle = Bundle(
+            name=staged_bundle.slug,
+            hash=staged_bundle.pdf_hash,
+            user=user_obj,
+            staging_bundle=staged_bundle,
+        )
         uploaded_bundle.save()
 
         pi_service = PaperInfoService()

@@ -340,14 +340,19 @@ class ManageScanService:
         """
 
         bundle_list = []
-        for bundle in Bundle.objects.all():
+        for bundle in Bundle.objects.all().prefetch_related("staging_bundle", "user"):
             bundle_list.append(
                 {
-                    "n_pages": Image.objects.filter(bundle=bundle).count(),
-                    "update_time": bundle.time_of_last_update,
+                    "name": bundle.staging_bundle.slug,
+                    "pages": Image.objects.filter(bundle=bundle).count(),
+                    "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),
+                    "when_uploaded": arrow.get(
+                        bundle.staging_bundle.time_of_last_update
+                    ).humanize(),
+                    "who_pushed": bundle.user.username,
+                    "who_uploaded": bundle.staging_bundle.user.username,
                 }
             )
-
         return bundle_list
 
     def get_pushed_image(self, img_pk):
