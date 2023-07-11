@@ -1,22 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.urls import path
 
 from Progress.views import (
     ScanOverview,
-    ScanTestPaperProgress,
-    ScanGetPageImage,
-    ScanTestPageModal,
-    ScanBundles,
-    ErrorPagesModal,
-    ErrorPageImage,
-    ScanDiscarded,
-    DiscardedPageImage,
-    DiscardedPageModal,
-    DeleteDiscardedPage,
-    RestoreDiscardedPage,
+    ScanBundlesView,
+    ScanCompleteView,
+    PushedImageView,
+    PushedImageWrapView,
     ProgressIdentifyHome,
     ProgressMarkHome,
     ProgressUserInfoHome,
@@ -27,42 +21,19 @@ from Progress.views import (
 
 urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
+    path("scan/bundles/", ScanBundlesView.as_view(), name="progress_scan_bundles"),
+    path("scan/complete/", ScanCompleteView.as_view(), name="progress_scan_complete"),
     path(
-        "scan/overview/<filter_by>",
-        ScanTestPaperProgress.as_view(),
-        name="progress_scan_tptable",
+        "scan/pushed_img/<int:img_pk>",
+        PushedImageView.as_view(),
+        name="progress_pushed_img",
     ),
     path(
-        "scan/overview/<int:test_paper>/<int:index>/img/",
-        ScanGetPageImage.as_view(),
-        name="progress_scan_page_image",
+        "scan/pushed_img_wrap/<int:img_pk>",
+        PushedImageWrapView.as_view(),
+        name="progress_pushed_img_wrap",
     ),
-    path(
-        "scan/overview/<int:test_paper>/<int:index>/",
-        ScanTestPageModal.as_view(),
-        name="progress_scan_page_modal",
-    ),
-    path("scan/bundles/", ScanBundles.as_view(), name="progress_scan_bundles"),
-    path(
-        "scan/discarded/get/<discarded_hash>/",
-        DiscardedPageImage.as_view(),
-        name="progress_scan_discarded_image",
-    ),
-    path(
-        "scan/discarded/view/<discarded_hash>/",
-        DiscardedPageModal.as_view(),
-        name="progress_discarded_modal",
-    ),
-    path(
-        "scan/discarded/delete/<discarded_hash>/",
-        DeleteDiscardedPage.as_view(),
-        name="progress_delete_discarded",
-    ),
-    path(
-        "scan/discarded/restore/<discarded_hash>/",
-        RestoreDiscardedPage.as_view(),
-        name="progress_restore_discarded",
-    ),
+
     path(
         "mark/overview/",
         ProgressMarkHome.as_view(),
