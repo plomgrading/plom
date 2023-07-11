@@ -108,7 +108,8 @@ class ScanBundles(BaseScanProgressPage):
         context = self.build_context("bundles")
         mss = ManageScanService()
 
-        bundle_list = mss.get_pushed_bundles_list(),
+        bundle_list = mss.get_pushed_bundles_list()
+
         context.update(
             {
                 "number_of_pushed_bundles": len(bundle_list),
