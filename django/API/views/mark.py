@@ -227,8 +227,7 @@ class MgetPageDataQuestionInContext(APIView):
     This routine returns all pages, including ID pages, DNM pages and
     various sorts of extra pages.
 
-    TODO: 409 versus 400?  Legacy used 409...
-    A 400 is returned with an explanation if paper number not found.
+    A 409 is returned with an explanation if paper number not found.
 
     The list of dicts (we think of them as rows) have the keys:
 
@@ -321,11 +320,11 @@ class MgetPageDataQuestionInContext(APIView):
             page_metadata = service.get_question_pages_metadata(
                 paper, question=question, include_idpage=True, include_dnmpages=True
             )
-            return Response(page_metadata, status=status.HTTP_200_OK)
-        except Paper.DoesNotExist:
-            return Response(
-                detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
-            )
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_409_CONFLICT)
+            r.reason_phrase = f"Test paper does not exist: {str(e)}"
+            return r
+        return Response(page_metadata, status=status.HTTP_200_OK)
 
 
 class MgetOneImage(APIView):
