@@ -737,7 +737,7 @@ class ScanService:
         return True
 
     @transaction.atomic
-    def push_bundle_to_server(self, bundle_obj):
+    def push_bundle_to_server(self, bundle_obj, user_obj):
         if bundle_obj.pushed:
             raise ValueError("Bundle has already been pushed. Cannot push again.")
 
@@ -755,7 +755,7 @@ class ScanService:
 
         # the bundle is valid so we can push it.
         try:
-            img_service.upload_valid_bundle(bundle_obj)
+            img_service.upload_valid_bundle(bundle_obj, user_obj)
             # now update the bundle and its images to say "pushed"
             bundle_obj.pushed = True
             bundle_obj.save()
@@ -766,13 +766,23 @@ class ScanService:
             raise err
 
     @transaction.atomic
-    def push_bundle_cmd(self, bundle_name):
+    def push_bundle_cmd(self, bundle_name, username):
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.push_bundle_to_server(bundle_obj)
+        # username => user_object, if in scanner group, else exception raised.
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        self.push_bundle_to_server(bundle_obj, user_obj)
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):
