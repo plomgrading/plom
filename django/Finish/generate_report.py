@@ -6,7 +6,7 @@ import datetime as dt
 from io import BytesIO
 import matplotlib.pyplot as plt
 import pandas as pd
-from weasyprint import HTML
+from weasyprint import HTML, CSS
 
 import django
 
@@ -14,6 +14,8 @@ django.setup()
 
 from Papers.models import Specification, Paper
 from Finish.services import StudentMarkService, TaMarkingService
+
+print("Building report.")
 
 sms = StudentMarkService()
 tms = TaMarkingService()
@@ -24,7 +26,7 @@ keys = sms.get_csv_header(spec)
 marks = pd.DataFrame(student_df, columns=keys)
 
 
-### INFO FOR REPORT ###
+# INFO FOR REPORT
 name = spec["name"]
 longName = spec["longName"]
 totalMarks = spec["totalMarks"]
@@ -33,7 +35,7 @@ num_students = Paper.objects.count()
 average_mark = marks["total_mark"].mean()
 median_mark = marks["total_mark"].median()
 
-### IMAGE FOR REPORT ###
+# IMAGE FOR REPORT
 fig, ax = plt.subplots()
 ax.hist(marks["total_mark"], bins=range(0, totalMarks + 1))
 ax.set_title("Histogram of Total Marks")
@@ -46,11 +48,12 @@ fig.savefig(png_bytes, format="png")
 png_bytes.seek(0)
 base64_string = base64.b64encode(png_bytes.read()).decode()
 
-### TABLE FOR REPORT ###
+# TABLE FOR REPORT
 marks = marks[["student_id", "student_name", "paper_number", "total_mark"]]
 table = marks.iloc[10:20].to_html()
 
 html = f"""
+<body>
 <h2>{longName} report</h2>
 <p>date: {date}</p>
 <br>
@@ -62,13 +65,35 @@ html = f"""
 <br>
 <p style="break-before: page;"></p>
 {table}
+</body>
 """
 
-
+# DO NOT CHANGE THE FOLLOWING TWO FUNCTIONS
 def create_pdf(html):
     """Generate a PDF file from a string of HTML."""
     htmldoc = HTML(string=html, base_url="")
-    return htmldoc.write_pdf()
+    return htmldoc.write_pdf(
+        stylesheets=[
+            CSS(
+                string="""
+                @page {
+                    @top-left {
+                        content     : "Made with";
+                        margin-left : 125mm;
+                        margin-top  : 10mm;
+                    }
+                    @top-right {
+                        content         : "";
+                        width           : 119px;
+                        height          : 40px;
+                        margin-right    : -10mm;
+                        background      : url('https://plomgrading.org/images/plomLogo.png');
+                        background-size : 100%;
+                    }
+                }"""
+            )
+        ]
+    )
 
 
 def save_pdf_to_disk(pdf_data, file_path):
