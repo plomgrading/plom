@@ -76,6 +76,7 @@ class Command(BaseCommand):
         )
 
         dcs.map_extra_pages(config)
+        dcs.map_pages_to_discards(config)
 
     def push_bundles(
         self, dcs: DemoCreationService, number_of_bundles, homework_bundles
