@@ -5,26 +5,36 @@
     <div class="d-grid gap-2">
         <div class="row">
             <div class="col">
-              <ul class="list">
-                <li>{{ total_papers }} papers produced</li>
-                <li>{{ completed_papers }} complete papers pushed
-		  <ul>
-		      {% if incomplete_papers %}
-		      <li>{{ incomplete_papers }} incomplete papers pushed  <i class="bi bi-exclamation-diamond-fill text-danger"></i></li>
-		      {% else %}
-		      <li>all pushed papers are complete <i class="bi bi-check-circle text-success"></i> </li>
-		      {% endif %}
-		  </ul>
-		</li>		      
-		<li>{{ pushed_bundles }} bundles pushed
-		  <ul>
-		    {% if unpushed_bundles %}
-		    <li>{{ unpushed_bundles }} unpushed bundle(s)  <i class="bi bi-exclamation-diamond-fill text-warning"></i></li>
-		    {% else %}
-		    <li>all uploaed bundles have been pushed <i class="bi bi-check-circle text-success"></i> </li>
-		    {% endif %}
-		  </ul>
-		</li>
+                <ul class="list">
+                    <li>{{ total_papers }} papers produced</li>
+                    <li>
+                        {{ completed_papers }} complete papers pushed
+                        <ul>
+                            {% if incomplete_papers %}
+                                <li>
+                                    {{ incomplete_papers }} incomplete papers pushed  <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                </li>
+                            {% else %}
+                                <li>
+                                    all pushed papers are complete <i class="bi bi-check-circle text-success"></i>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li>
+                        {{ pushed_bundles }} bundles pushed
+                        <ul>
+                            {% if unpushed_bundles %}
+                                <li>
+                                    {{ unpushed_bundles }} unpushed bundle(s)  <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                </li>
+                            {% else %}
+                                <li>
+                                    all uploaed bundles have been pushed <i class="bi bi-check-circle text-success"></i>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
