@@ -345,10 +345,8 @@ class ManageScanService:
                 {
                     "name": bundle.staging_bundle.slug,
                     "pages": Image.objects.filter(bundle=bundle).count(),
-                    "when_pushed": arrow.utcnow().humanize(bundle.time_of_last_update),
-                    "when_uploaded": arrow.utcnow().humanize(
-                        bundle.staging_bundle.time_of_last_update
-                    ),
+                    "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),
+                    "when_uploaded": arrow.get(bundle.staging_bundle.time_of_last_update).humanize(),
                     "who_pushed": bundle.user.username,
                     "who_uploaded": bundle.staging_bundle.user.username,
                 }
