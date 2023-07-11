@@ -65,7 +65,7 @@ class IDService:
     def set_id_task_todo_and_clear_specific_id(self, paper_pk):
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
         sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
-            
+
         paper_ID_task_obj.status = PaperIDTask.TO_DO
         paper_ID_task_obj.save()
 
