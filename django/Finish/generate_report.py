@@ -4,6 +4,7 @@
 import base64
 import datetime as dt
 from io import BytesIO
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from weasyprint import HTML, CSS
@@ -12,7 +13,7 @@ import django
 
 django.setup()
 
-from Papers.models import Specification, Paper
+from Papers.models import Paper, Specification
 from Finish.services import StudentMarkService, TaMarkingService
 
 print("Building report.")
@@ -67,6 +68,7 @@ html = f"""
 {table}
 </body>
 """
+
 
 # DO NOT CHANGE THE FOLLOWING TWO FUNCTIONS
 def create_pdf(html):
