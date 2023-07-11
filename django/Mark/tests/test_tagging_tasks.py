@@ -32,6 +32,26 @@ class MarkingTaskServiceTaggingTests(TestCase):
         with self.assertRaisesMessage(ValidationError, "disallowed char"):
             s.create_tag(user, "  spaces and symbols $&<b> ")
 
+    def test_get_all_tags(self):
+        s = MarkingTaskService()
+        assert s.get_all_tags() == []
+        baker.make(MarkingTaskTag)
+        assert len(s.get_all_tags()) == 1
+
+    def test_get_all_tags_tuples_with_ints(self):
+        s = MarkingTaskService()
+        assert s.get_all_tags() == []
+        user = baker.make(User)
+        s.create_tag(user, "mytag1")
+        s.create_tag(user, "mytag2")
+        a, b = s.get_all_tags()
+        n, t = a
+        assert isinstance(n, int)
+        assert t == "mytag1"
+        n, t = b
+        assert isinstance(n, int)
+        assert t == "mytag2"
+
     def test_tag_task_invalid_tag(self):
         s = MarkingTaskService()
         user = baker.make(User)
@@ -93,6 +113,32 @@ class MarkingTaskServiceTaggingTests(TestCase):
         with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
             s.add_tag_text_from_task_code("hello", "q9999g9", user)
 
+    def test_get_tags_for_task(self):
+        s = MarkingTaskService()
+        task = baker.make(
+            MarkingTask, question_number=1, paper__paper_number=2, code="q0002g1"
+        )
+        tags = s.get_tags_for_task(task.code)
+        assert tags == []
+        user = baker.make(User)
+        s.add_tag_text_from_task_code("a_new_tag", task.code, user)
+        tags = s.get_tags_for_task(task.code)
+        assert "a_new_tag" in tags
+        s.add_tag_text_from_task_code("one_more", task.code, user)
+        tags = s.get_tags_for_task(task.code)
+        assert "one_more" in tags
+        assert "a_new_tag" in tags
+
+    def test_get_tags_for_task_invalid_task(self):
+        s = MarkingTaskService()
+        with self.assertRaisesMessage(ValueError, "not a valid task code"):
+            s.get_tags_for_task("paper_0111_invalid")
+
+    def test_get_tags_for_task_no_such_task(self):
+        s = MarkingTaskService()
+        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+            s.get_tags_for_task("q9999g9")
+
 
 class MarkingTaskServiceRemovingTaggingTests(TestCase):
     """Unit tests for removing tags in Mark.services.MarkingTaskService."""
@@ -129,5 +175,5 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         s = MarkingTaskService()
         user = baker.make(User)
         s.create_tag(user, "hello")
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegexp(RuntimeError, "Task .*does not exist"):
             s.remove_tag_text_from_task_code("hello", "q9999g9")
