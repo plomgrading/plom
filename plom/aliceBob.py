@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -80,11 +80,15 @@ weak wear weather wedding week weight welcome were well west wet what wheel when
 where which while white who why wide wife wild will win wind window wine winter
 wire wise wish with without woman wonder word work world worry yard yell yet you
 young your zero zoo
-"""
-words = words.split()
+""".split()
 
-names = """aiden azami basia bob caris carol dave duska erin evander fatima frank greg gwen haris heidi idris isla john judy kali kamal layla lucas mary malik nina noor olivia oscar peter peggy quentin quinci raisa rupert samir sybil talia trent ursula usher vanna virgil walter wendy xavier xena yuri yvonne zahara zeke"""
-names = names.split()
+names = """
+    aiden azami basia bob caris carol dave duska erin evander fatima
+    frank greg gwen haris heidi idris isla john judy kali kamal layla
+    lucas mary malik nina noor olivia oscar peter peggy quentin quinci
+    raisa rupert samir sybil talia trent ursula usher vanna virgil
+    walter wendy xavier xena yuri yvonne zahara zeke
+""".split()
 
 
 def simple_password(n=3):
