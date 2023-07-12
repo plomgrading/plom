@@ -469,15 +469,11 @@ class ScanService:
 
         # TODO: assert the length of question is same as pages in bundle
 
-        print(bundle_obj)
         with transaction.atomic():
             # TODO: how do we walk them in order?
             for page_img, qlist in zip(
                 bundle_obj.stagingimage_set.all().order_by("bundle_order"), questions
             ):
-                print(page_img)
-                print(page_img.rotation)
-                print(page_img.parsed_qr)
                 if not qlist:
                     page_img.image_type = StagingImage.DISCARD
                     page_img.save()
