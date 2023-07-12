@@ -10,6 +10,7 @@ from typing import Dict, Any
 from django.db.models import Max
 
 from Mark.services import MarkingTaskService
+from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
 
@@ -17,7 +18,7 @@ from Identify.models import PaperIDAction, PaperIDTask
 class StudentMarkService:
     """Service for the Student Marks page."""
 
-    def get_marks_from_paper(self, paper_num: int, original: bool = False) -> dict:
+    def get_marks_from_paper(self, paper_num: int) -> dict:
         """Get the marks for a paper.
 
         Args:
@@ -36,14 +37,7 @@ class StudentMarkService:
 
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
-            if original:
-                current_annotation = marking_task.annotation_set.order_by(
-                    "edition"
-                ).first()
-            else:
-                current_annotation = marking_task.annotation_set.order_by(
-                    "-edition"
-                ).first()
+            current_annotation = marking_task.latest_annotation
 
             if current_annotation:
                 questions[marking_task.question_number] = {
@@ -55,7 +49,7 @@ class StudentMarkService:
 
         return {paper_num: questions}
 
-    def get_all_marks(self, original: bool = False) -> dict:
+    def get_all_marks(self) -> dict:
         """Get the marks for all papers.
 
         Args:
@@ -66,20 +60,13 @@ class StudentMarkService:
                 whose values are a dictionary holding the mark information for each question
                 in the paper.
         """
-        papers = Paper.objects.all()
+        marking_tasks = MarkingTask.objects.all()
+        marking_tasks.prefetch_related("paper")
         marks = {}
-        for paper in papers:
-            marks.update(self.get_marks_from_paper(paper.paper_number, original))
-
-        return marks
-
-    def get_all_papers(self):
-        """Get all papers.
-
-        Returns:
-            Queryset: All paper objects.
-        """
-        return Paper.objects.all()
+        for marking_task in marking_tasks:
+            marks.update(self.get_marks_from_paper(marking_task.paper.paper_number))
+        # Sort by paper number
+        return {k: marks[k] for k in sorted(marks)}
 
     def get_marks_from_paper_set(self, paper_set: set, original: bool = False) -> dict:
         """Get the marks for a set of papers.
