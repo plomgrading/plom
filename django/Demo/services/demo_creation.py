@@ -280,3 +280,19 @@ class DemoCreationService:
                             "-q",
                             n_questions,  # default to last question
                         )
+
+    def map_pages_to_discards(self, config):
+        if "bundles" not in config.keys():
+            return
+
+        bundles = config["bundles"]
+        n_bundles = len(bundles)
+
+        for i in range(n_bundles):
+            bundle = bundles[i]
+            bundle_slug = f"fake_bundle{i+1}"
+            if "discard_pages" in bundle.keys():
+                for page in bundle["discard_pages"]:
+                    call_command(
+                        "plom_staging_discard", "demoScanner1", bundle_slug, page
+                    )
