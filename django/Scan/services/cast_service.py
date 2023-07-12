@@ -29,18 +29,16 @@ class ScanCastService:
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
             return StagingImage.DISCARD
-
         elif img_str.casefold() == "extra":
             return StagingImage.EXTRA
-
         elif img_str.casefold() == "error":
             return StagingImage.ERROR
-
         elif img_str.casefold() == "known":
             return StagingImage.KNOWN
-
         elif img_str.casefold() == "unknown":
             return StagingImage.UNKNOWN
+        elif img_str.casefold() == "unread":
+            return StagingImage.UNREAD
         else:
             raise ValueError(f"Unrecognisable image type '{img_str}'")
 
