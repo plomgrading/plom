@@ -13,9 +13,7 @@ class Command(BaseCommand):
     python3 manage.py clear_id all
     """
 
-    help = (
-        """Clear the ID of a specific paper or clear all IDs."""
-    )
+    help = """Clear the ID of a specific paper or clear all IDs."""
 
     def specific_id(self, paper_num):
         try:
@@ -32,7 +30,9 @@ class Command(BaseCommand):
             raise CommandError(err)
 
     def add_arguments(self, parser):
-        parser.add_argument("paper_num", type=str, help="Enter a specific paper number or all.")
+        parser.add_argument(
+            "paper_num", type=str, help="Enter a specific paper number or all."
+        )
 
     def handle(self, *args, **options):
         if options["paper_num"].isnumeric():
