@@ -18,7 +18,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all IDPage objects
-            that exhibit list-like behavior.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -31,7 +31,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all scanned IDPage objects
-            that exhibit list-like behavior.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -44,7 +44,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all unscanned IDPage objects
-            that exhibit list-like behavior.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -102,7 +102,7 @@ class IDService:
 
         Args:
             all_scanned_id_papers (PolymorphicQuerySet): A collection of all IDPage
-            objects that exhibit list-like behavior.
+            objects that is iterable.
 
         Returns:
             dict: A dictionary of all the PaperIDAction(Value) corresponding with IDPage(key).
