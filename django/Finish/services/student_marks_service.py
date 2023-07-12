@@ -82,7 +82,7 @@ class StudentMarkService:
         """
         marks = {}
         for paper_num in paper_set:
-            marks.update(self.get_marks_from_paper(paper_num, original))
+            marks.update(self.get_marks_from_paper(paper_num))
 
         return marks
 
