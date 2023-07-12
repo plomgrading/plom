@@ -9,6 +9,7 @@ from Progress.views import (
     ScanOverview,
     ScanBundlesView,
     ScanCompleteView,
+    ScanInCompleteView,
     PushedImageView,
     PushedImageWrapView,
     ProgressIdentifyHome,
@@ -23,6 +24,11 @@ urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
     path("scan/bundles/", ScanBundlesView.as_view(), name="progress_scan_bundles"),
     path("scan/complete/", ScanCompleteView.as_view(), name="progress_scan_complete"),
+    path(
+        "scan/incomplete/",
+        ScanInCompleteView.as_view(),
+        name="progress_scan_incomplete",
+    ),
     path(
         "scan/pushed_img/<int:img_pk>",
         PushedImageView.as_view(),
