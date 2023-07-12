@@ -15,15 +15,16 @@ Marking Information
                 <thead>
                     <tr>
                         <th scope="col">Question</th>
-                        {% for i in n_questions %}<th scope="col" colspan="{{ n_versions|length }}">Q{{ i }}</th>
+                        {% for i in n_questions %}
+                            <th scope="col" colspan="{{ n_versions|length }}">Q{{ i }}</th>
                         {% endfor%}
                     </tr>
                     <tr>
                         <th scope="col">Version</th>
                         {% for i in n_questions %}
-                        {% for j in n_versions %}
-                        <th scope="col">V{{ j }}</th>
-                        {% endfor %}
+                            {% for j in n_versions %}
+                                <th scope="col">V{{ j }}</th>
+                            {% endfor %}
                         {% endfor %}
                     </tr>
                 </thead>
@@ -31,9 +32,9 @@ Marking Information
                     <tr>
                         <td># of papers marked</td>
                         {% for q in marked_question_counts %}
-                        {% for v in q %}
-                        <td>{{ v.0 }}/{{ v.1 }}</td>
-                        {% endfor %}
+                            {% for v in q %}
+                                <td>{{ v.0 }}/{{ v.1 }}</td>
+                            {% endfor %}
                         {% endfor %}
                     </tr>
                 </tbody>
@@ -41,11 +42,11 @@ Marking Information
             <form method="post" action="{% url 'marks_download' %}" style="padding-right: 2%">
                 {% csrf_token %}
                 {% if all_marked %}
-                <p style="color: green; padding-right: 0.5%;">
-                    All questions have a mark. Please confirm with your TAs that marking is complete.
-                </p>
+                    <p style="color: green; padding-right: 0.5%;">
+                        All questions have a mark. Please confirm with your TAs that marking is complete.
+                    </p>
                 {% else %}
-                <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
+                    <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
                 {% endif %}
                 {{ student_marks_form.as_p }}
                 <button type="submit" class="btn btn-success">Download Grades</button>
@@ -77,11 +78,11 @@ Marking Information
             <form method="post" action="{% url 'ta_info_download' %}" style="padding-right: 2%">
                 {% csrf_token %}
                 {% if all_marked %}
-                <p style="color: green; padding-right: 0.5%;">
-                    All questions have a mark. Please confirm with your TAs that marking is complete.
-                </p>
+                    <p style="color: green; padding-right: 0.5%;">
+                        All questions have a mark. Please confirm with your TAs that marking is complete.
+                    </p>
                 {% else %}
-                <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
+                    <p style="color: red; padding-right: 0.5%">* * * Marking is not complete. * * *</p>
                 {% endif %}
                 <button type="submit" class="btn btn-success">Download TA Marking Info</button>
             </form>
@@ -127,29 +128,28 @@ Marking Information
             </thead>
             <tbody>
                 {% for p_key, p_val in papers.items %}
-                <tr>
-                    <td>{{ p_key }}</td>
-                    {% if not p_val %}
-                    {% comment %}None{% endcomment %}
-                    {% for i in n_questions %}<td>None</td>{% endfor %}
-                    {% elif p_val|length == n_questions|length %}
-                    {% comment %}Fully graded{% endcomment %}
-                    {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
-                    {% else %}
-                    {% comment %}Partially graded{% endcomment %}
-                    {% for i in n_questions %}
-                    <td>
-                        {% with p_val|get_item:i as dict %}
-                        {% if dict %}
-                        {{ dict.student_mark }}
+                    <tr>
+                        <td>{{ p_key }}</td>
+                        {% if not p_val %}
+                            {% for i in n_questions %}<td>None</td>{% endfor %}
+                        {% elif p_val|length == n_questions|length %}
+                            {% comment %}Fully graded{% endcomment %}
+                            {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
                         {% else %}
-                        None
+                            {% comment %}Partially graded{% endcomment %}
+                            {% for i in n_questions %}
+                                <td>
+                                    {% with p_val|get_item:i as dict %}
+                                        {% if dict %}
+                                            {{ dict.student_mark }}
+                                        {% else %}
+                                            None
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            {% endfor %}
                         {% endif %}
-                        {% endwith %}
-                    </td>
-                    {% endfor %}
-                    {% endif %}
-                </tr>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

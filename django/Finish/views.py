@@ -40,8 +40,6 @@ class MarkingInformationView(ManagerRequiredView):
             ]
             for q in range(1, n_questions + 1)
         ]
-
-        print(marked_question_counts)
         (
             total_times_spent,
             average_times_spent,
@@ -55,6 +53,8 @@ class MarkingInformationView(ManagerRequiredView):
             self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
         ]
 
+        all_marked = self.mts.get_n_marked_tasks() == self.mts.get_n_total_tasks()
+
         context.update(
             {
                 "papers": papers,
@@ -65,7 +65,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "total_times_spent": total_times_spent,
                 "average_times_spent": average_times_spent,
                 "std_times_spent": std_times_spent,
-                "all_marked": True,
+                "all_marked": all_marked,
                 "student_marks_form": self.smff,
                 "hours_estimate": hours_estimate,
                 "days_estimate": days_estimate,

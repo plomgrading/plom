@@ -324,11 +324,11 @@ class MarkingTaskService:
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
-        return len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE))
+        return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
     def get_n_total_tasks(self):
         """Return the total number of tasks in the database."""
-        return len(MarkingTask.objects.all())
+        return MarkingTask.objects.all().count()
 
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
