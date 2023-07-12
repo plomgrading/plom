@@ -360,6 +360,23 @@ pylint:
   allow_failure: true
 
 
+# needs full dependencies, cannot easily run with other early static analysis
+# If exceptions are needed, see "tool.mypy" sections in pyproject.toml
+# TODO: maybe pip install unnecessary eventually, Issue #2850
+mypy-type-checking:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install mypy
+  script:
+    - mypy plom --install-types --non-interactive || true
+    - mypy plom
+    - python3 -m pip install -r requirements.txt.django
+    - mypy django --install-types --non-interactive || true
+    - mypy django
+
+
 flake8:
   image: python:3.11
   stage: static_analysis
