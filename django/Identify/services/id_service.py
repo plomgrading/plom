@@ -17,36 +17,39 @@ class IDService:
         """Get all the ID papers.
 
         Returns:
-            list: A list of all IDPage objects.
+            PolymorphicQuerySet: A collection of all IDPage objects
+            that exhibit list-like behavior.
 
         Raises:
             Not expected to raise any exceptions.
         """
-        return list(IDPage.objects.all().order_by("paper"))
+        return IDPage.objects.all().order_by("paper")
 
     @transaction.atomic
     def get_id_papers(self):
         """Get all the scanned ID papers.
 
         Returns:
-            list: A list of all the scanned IDPage objects.
+            PolymorphicQuerySet: A collection of all scanned IDPage objects
+            that exhibit list-like behavior.
 
         Raises:
             Not expected to raise any exceptions.
         """
-        return list(IDPage.objects.exclude(image=None).order_by("paper"))
+        return IDPage.objects.exclude(image=None).order_by("paper")
 
     @transaction.atomic
     def get_no_id_papers(self):
         """Get all the unscanned ID papers.
 
         Returns:
-            list: A list of all the unscanned IDPage objects.
+            PolymorphicQuerySet: A collection of all unscanned IDPage objects
+            that exhibit list-like behavior.
 
         Raises:
             Not expected to raise any exceptions.
         """
-        return list(IDPage.objects.exclude(image__isnull=False))
+        return IDPage.objects.exclude(image__isnull=False)
 
     @transaction.atomic
     def get_id_image_object(self, image_pk):
@@ -56,7 +59,8 @@ class IDService:
             image_pk (int): The primary key of an image.
 
         Returns:
-            instance | None: If the Image object exists, return instance of the Image. If it doesn't, return None.
+            instance | None: If the Image object exists, return instance of the Image.
+            If it doesn't, return None.
 
         Raises:
             ObjectDoesNotExist: This is raised when an instance of the Image does not exist.
@@ -97,7 +101,8 @@ class IDService:
         into Identifying progress view, such as IDPage and PaperIDAction model.
 
         Args:
-            all_scanned_id_papers (list): A list of all the scanned IDPage objects.
+            all_scanned_id_papers (PolymorphicQuerySet): A collection of all IDPage
+            objects that exhibit list-like behavior.
 
         Returns:
             dict: A dictionary of all the PaperIDAction(Value) corresponding with IDPage(key).
