@@ -8,7 +8,7 @@ from Base.base_group_views import ManagerRequiredView
 
 
 class VisualizationLandingView(ManagerRequiredView):
-    """Landing page for creating visualizations with D3.js"""
+    """Landing page for creating visualizations with D3.js."""
 
     template_name = "Visualization/visualization_landing.html"
 
@@ -74,7 +74,7 @@ class VisualizationLandingView(ManagerRequiredView):
 
 
 class HistogramView(ManagerRequiredView):
-    """Histogram view for D3.js"""
+    """Histogram view for D3.js."""
 
     template_name = "Visualization/histogram.html"
 
@@ -83,7 +83,7 @@ class HistogramView(ManagerRequiredView):
 
 
 class HeatMapView(ManagerRequiredView):
-    """Heat map view for D3.js"""
+    """Heat map view for D3.js."""
 
     template_name = "Visualization/heat_map.html"
 
