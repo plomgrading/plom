@@ -284,9 +284,11 @@ class TaMarkingService:
         Raises:
             No exceptions anticipated.
         """
-        num_questions_remaining = MarkingTask.objects.filter(
-            question_number=question, latest_annotation__isnull=True
-        ).count()
+        num_questions_remaining = (
+            MarkingTask.objects.filter(question_number=question)
+            .exclude(status=MarkingTask.COMPLETE)
+            .count()
+        )
 
         avg_per_day = self.get_avg_n_of_questions_marked_per_day(question=question)
         assert avg_per_day >= 0
@@ -311,9 +313,11 @@ class TaMarkingService:
         avg_time_on_question = self.get_average_time_spent_on_question(
             question=question
         )
-        num_questions_remaining = MarkingTask.objects.filter(
-            question_number=question, latest_annotation__isnull=True
-        ).count()
+        num_questions_remaining = (
+            MarkingTask.objects.filter(question_number=question)
+            .exclude(status=MarkingTask.COMPLETE)
+            .count()
+        )
         if not avg_time_on_question:
             return None
 
