@@ -682,8 +682,8 @@ class ScanService:
     def map_bundle_pages_cmd(self, bundle_name, *, papernum, questions=None):
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
 
         if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
