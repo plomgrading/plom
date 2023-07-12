@@ -218,9 +218,9 @@ class TaMarkingService:
             for q in range(1, n_questions + 1)
         ]
 
-        total_times_spent : List[Union[str, None]] = [None] * n_questions
-        average_times_spent : List[Union[str, None]] = [None] * n_questions
-        std_times_spent : List[Union[str, None]] = [None] * n_questions
+        total_times_spent: List[Union[str, None]] = [None] * n_questions
+        average_times_spent: List[Union[str, None]] = [None] * n_questions
+        std_times_spent: List[Union[str, None]] = [None] * n_questions
 
         for i, s in enumerate(total_seconds):
             if s:

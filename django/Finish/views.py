@@ -9,19 +9,21 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.models import Specification
-from SpecCreator.services import StagingSpecificationService
 from Finish.services import StudentMarkService, TaMarkingService
 from Finish.forms import StudentMarksFilterForm
+from Mark.services import MarkingTaskService
+from Papers.models import Specification
+from SpecCreator.services import StagingSpecificationService
 
 
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
+    mts = MarkingTaskService()
     sms = StudentMarkService()
     smff = StudentMarksFilterForm()
-    tms = TaMarkingService()
     scs = StagingSpecificationService()
+    tms = TaMarkingService()
 
     template = "Finish/marking_landing.html"
 
@@ -30,9 +32,16 @@ class MarkingInformationView(ManagerRequiredView):
 
         papers = self.sms.get_all_marks()
         n_questions = self.scs.get_n_questions()
+        n_versions = self.scs.get_n_versions()
         marked_question_counts = [
-            self.sms.get_n_of_question_marked(q) for q in range(1, n_questions + 1)
+            [
+                self.mts.get_marking_progress(version=v, question=q)
+                for v in range(1, n_versions + 1)
+            ]
+            for q in range(1, n_questions + 1)
         ]
+
+        print(marked_question_counts)
         (
             total_times_spent,
             average_times_spent,
@@ -50,6 +59,7 @@ class MarkingInformationView(ManagerRequiredView):
             {
                 "papers": papers,
                 "n_questions": range(1, n_questions + 1),
+                "n_versions": range(1, n_versions + 1),
                 "n_papers": len(papers),
                 "marked_question_counts": marked_question_counts,
                 "total_times_spent": total_times_spent,
@@ -61,11 +71,6 @@ class MarkingInformationView(ManagerRequiredView):
                 "days_estimate": days_estimate,
             }
         )
-
-        for marked_question_count in marked_question_counts:
-            if marked_question_count < len(papers):
-                context["all_marked"] = False
-                break
 
         return render(request, self.template, context)
 

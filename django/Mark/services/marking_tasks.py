@@ -105,7 +105,7 @@ class MarkingTaskService:
         except MarkingTask.DoesNotExist:
             return (0, 0)
 
-        return (len(completed), len(total))
+        return (completed.count(), total.count())
 
     def get_latest_task(self, paper_number, question_number):
         """Get a marking task from its paper number and question number.
