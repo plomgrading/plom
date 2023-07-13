@@ -268,10 +268,12 @@ def try_to_extract_image(
     # then stamps a smiley-face `.png` there."
     if p.get_links():
         msgs.append("Has links")
-    if list(p.annots()):
+    for _ in p.annots():
         msgs.append("Has annotations")
-    if list(p.widgets()):
+        break
+    for _ in p.widgets():
         msgs.append("Has fillable forms")
+        break
     # TODO: which is more expensive, this or getImageList?
     if p.get_text("text"):
         msgs.append("Has text")
