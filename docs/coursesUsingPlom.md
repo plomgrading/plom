@@ -137,20 +137,36 @@ Approx: 17760 over 13 courses
 
 | Course  |  Tasks                           | # students |  Notes                        |
 |---------|----------------------------------|:----------:|-------------------------------|
-| Math101 | Mock final x2,                   | ~4000      | mixed-mode sync/async         |
-| Math110 | Midterm                          | 205        |                               |
-| Math300 | Test1, Test2                     | 60         |                               |
-| Math303 | Midterm1                         | 265        |                               |
-| Math317 | Midterm1                         | 160        |                               |
-| Math318 | Midterm1                         | 105        |                               |
-| Math323 | Midterm1                         | 20         |                               |
-| Math340 |                                  |            |                               |
-| BMEG220 | Quiz1, Quiz2, Midterm            | 120        |                               |
-| Elec211 | Midterm1, Midterm2               | 195        |                               |
+| Math101 | Two mock finals                  | 3200       | mixed-mode sync/async         |
+| Math101 | Final                            | 3300       |                               |
+| Math110 | Midterm, Final                   | 205        |                               |
+| Math200 | Final                            | 360        |                               |
+| Math257 | final                            | 95         |                               |
+| Math300 | Test1, Test2, Final              | 60         |                               |
+| Math303 | Midterm1, Final                  | 265        |                               |
+| Math317 | Midterm1, Final                  | 160        |                               |
+| Math318 | Midterm1, Final                  | 105        |                               |
+| Math323 | Midterm1, Final                  | 20         |                               |
+| Math340 | Final                            | 1640       |                               |
+| BMEG220 | Quiz1, Quiz2, Midterm, Final     | 120        |                               |
+| Elec211 | Midterm1, Midterm2, Exam         | 195        |                               |
 
-Approx: 9600 over 9 courses
+Approx: 14550 over 12 courses
 
 
-## Totals up to March 31st 2023
+## 2023S: S1 so far, S2 to follow
 
-  * Approx 88000 papers in 67 courses.
+| Course  |  Tasks                           | # students |  Notes                        |
+|---------|----------------------------------|:----------:|-------------------------------|
+| Math100 | Mock final, Final                | 380        |
+| Math220 | Midterm, Midterm 2, Final        | 59         |
+| Math200 | Final                            | 176        |
+| Math253 | Midterm, Final                   | 134        |
+
+
+Approx: 1380 over 4 courses
+
+
+## Totals up to July 12 2023
+
+  * Approx 94330 papers in 74 courses.
