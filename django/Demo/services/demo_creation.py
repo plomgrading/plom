@@ -245,7 +245,6 @@ class DemoCreationService:
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
-
         if "bundles" not in config.keys():
             return
 

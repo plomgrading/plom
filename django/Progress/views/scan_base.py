@@ -4,6 +4,7 @@
 
 from Base.base_group_views import ManagerRequiredView
 
+
 class BaseScanProgressPage(ManagerRequiredView):
     """Base view for each of the "tabs" in the pushed progress card."""
 
