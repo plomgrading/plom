@@ -60,7 +60,6 @@ class MarkingInformationView(ManagerRequiredView):
                 "papers": papers,
                 "n_questions": range(1, n_questions + 1),
                 "n_versions": range(1, n_versions + 1),
-                "n_papers": len(papers),
                 "marked_question_counts": marked_question_counts,
                 "total_times_spent": total_times_spent,
                 "average_times_spent": average_times_spent,
