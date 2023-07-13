@@ -105,21 +105,41 @@ class MarkingTaskService:
         except MarkingTask.DoesNotExist:
             return (0, 0)
 
-        return (len(completed), len(total))
+        return (completed.count(), total.count())
 
-    def get_latest_task(self, paper_number, question_number):
+    def get_latest_task(self, paper_number, question_number) -> MarkingTask:
         """Get a marking task from its paper number and question number.
 
         Args:
             paper_number: int
             question_number: int
+
+        Returns:
+            The MarkingTask.
+
+        Raises:
+            ObjectDoesNotExist: no such marking task, either b/c the paper
+            does not exist or the question does not exist for that paper.
         """
-        paper = Paper.objects.get(paper_number=paper_number)
-        return (
+        try:
+            paper = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist as e:
+            # reraise with a more detailed error message
+            raise ObjectDoesNotExist(
+                f"Task for paper {paper_number} question {question_number} does not exist"
+            ) from e
+        r = (
             MarkingTask.objects.filter(paper=paper, question_number=question_number)
             .order_by("-time")
             .first()
         )
+        # Issue #2851, special handling of the None return
+        if r is None:
+            raise ObjectDoesNotExist(
+                f"Task does not exist: we have paper {paper_number} but "
+                f"not question index {question_number}"
+            )
+        return r
 
     def unpack_code(self, code):
         """Return a tuple of (paper_number, question_number) from a task code string.
@@ -159,11 +179,12 @@ class MarkingTaskService:
         """
         try:
             paper_number, question_number = self.unpack_code(code)
+        except AssertionError as e:
+            raise ValueError(f"{code} is not a valid task code.") from e
+        try:
             return self.get_latest_task(paper_number, question_number)
-        except AssertionError:
-            raise ValueError(f"{code} is not a valid task code.")
-        except ObjectDoesNotExist:
-            raise RuntimeError(f"Task {code} does not exist.")
+        except ObjectDoesNotExist as e:
+            raise RuntimeError(e) from e
 
     def get_user_tasks(self, user, question=None, version=None):
         """Get all the marking tasks that are assigned to this user.
@@ -321,11 +342,11 @@ class MarkingTaskService:
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
-        return len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE))
+        return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
     def get_n_total_tasks(self):
         """Return the total number of tasks in the database."""
-        return len(MarkingTask.objects.all())
+        return MarkingTask.objects.all().count()
 
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
@@ -459,6 +480,10 @@ class MarkingTaskService:
 
         Returns:
             Annotation: the latest annotation instance
+
+        Raises:
+            ObjectDoesNotExist: no such marking task, either b/c the paper
+            does not exist or the question does not exist for that paper.
         """
         task = self.get_latest_task(paper, question)
         return task.latest_annotation
@@ -471,18 +496,20 @@ class MarkingTaskService:
         """
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
-    def get_tags_for_task(self, code):
+    def get_tags_for_task(self, code: str) -> list[str]:
         """Get a list of tags assigned to this marking task.
 
         Args:
-            code: str, the question/paper code for a task
+            code: the question/paper code for a task.
 
         Returns:
-            list[str]: the text of all tags for this task.
+            A list of the text of all tags for this task.
+
+        Raises:
+            RuntimeError: no such code.
         """
-        task = self.get_task_from_code(
-            code
-        )  # TODO: what if the client has an OOD task with the same code?
+        # TODO: what if the client has an OLD task with the same code?
+        task = self.get_task_from_code(code)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
     def sanitize_tag_text(self, tag_text):

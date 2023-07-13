@@ -3,11 +3,9 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import arrow
-from datetime import datetime
-
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
@@ -18,7 +16,7 @@ from Papers.models import (
     Image,
     Bundle,
 )
-from Scan.models import StagingImage, StagingBundle
+from Scan.models import StagingBundle
 
 
 class ManageScanService:
