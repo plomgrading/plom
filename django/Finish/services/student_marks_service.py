@@ -23,10 +23,9 @@ class StudentMarkService:
 
         Args:
             paper_num: The paper number.
-            original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            dict: keyed by paper number whose values are a dictionary holding
+            Dict keyed by paper number whose values are a dictionary holding
                 the mark information for each question in the paper.
 
         Raises:
@@ -52,13 +51,10 @@ class StudentMarkService:
     def get_all_marks(self) -> dict:
         """Get the marks for all papers.
 
-        Args:
-            original: Gets the first edition of a mark if true, otherwise get latest (default).
-
         Returns:
-            dict: The mark information for each question in each paper. Keyed by paper number
-                whose values are a dictionary holding the mark information for each question
-                in the paper.
+            Dict containing the mark information for each question in each paper. Keyed by
+            paper number whose values are a dictionary holding the mark information for each
+            question in the paper.
         """
         marking_tasks = MarkingTask.objects.all()
         marking_tasks.prefetch_related("paper")
@@ -68,17 +64,15 @@ class StudentMarkService:
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
 
-    def get_marks_from_paper_set(self, paper_set: set, original: bool = False) -> dict:
+    def get_marks_from_paper_set(self, paper_set: set) -> dict:
         """Get the marks for a set of papers.
 
         Args:
             paper_set: The set of (int) paper numbers.
-            original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
-            dict: The mark information for each question in each paper. Keyed by paper number
-                whose values are a dictionary holding the mark information for each question
-                in the paper.
+            Dict containing the mark information for each question in each paper. Keyed by paper number whose
+            values are a dictionary holding the mark information for each question in the paper.
         """
         marks = {}
         for paper_num in paper_set:
@@ -87,10 +81,10 @@ class StudentMarkService:
         return marks
 
     def get_n_of_question_marked(self, question: int, *, version: int = 0) -> int:
-        """Get the count of how many papers have marked a question.
+        """Get the count of how many papers have marked a specific question.
 
         Args:
-            question_num: The question number.
+            question: The question number.
 
         Keyword Args:
             version: The version of the question.
@@ -112,17 +106,17 @@ class StudentMarkService:
         version_info: bool,
         timing_info: bool,
         warning_info: bool,
-        *,
-        original: bool = False,
     ) -> dict:
         """Get student info from a paper number.
 
         Args:
             paper_num: The paper number.
-            original: Gets the first edition of a mark if true, otherwise get latest (default).
+            version_info: Whether to include the version info.
+            timing_info: Whether to include the timing info.
+            warning_info: Whether to include the warning info.
 
         Returns:
-            dict: keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
+            Dict keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
 
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
@@ -148,12 +142,7 @@ class StudentMarkService:
         # mark info
         total = 0
         for marking_task in marking_tasks.order_by("question_number"):
-            if original:
-                current_annotation = marking_task.annotation_set.order_by(
-                    "edition"
-                ).first()
-            else:
-                current_annotation = marking_task.latest_annotation
+            current_annotation = marking_task.latest_annotation
 
             if current_annotation:
                 student_info.update(
@@ -203,16 +192,16 @@ class StudentMarkService:
         version_info: bool,
         timing_info: bool,
         warning_info: bool,
-        *,
-        original: bool = False,
     ) -> list:
         """Get the info for all students in a list for building a csv file to download.
 
         Args:
-            original: Gets the first edition of a mark if true, otherwise get latest (default).
+            version_info: Whether to include the version info.
+            timing_info: Whether to include the timing info.
+            warning_info: Whether to include the warning info.
 
         Returns:
-            list: each element is a dictionary containing the information about an individual student.
+            List where each element is a dictionary containing the information about an individual student.
 
         Raises:
             No exceptions anticipated.
@@ -226,7 +215,6 @@ class StudentMarkService:
                     version_info,
                     timing_info,
                     warning_info,
-                    original=original,
                 )
             )
 
@@ -239,9 +227,12 @@ class StudentMarkService:
 
         Args:
             spec: The specification for the paper.
+            version_info: Whether to include the version info.
+            timing_info: Whether to include the timing info.
+            warning_info: Whether to include the warning info.
 
         Returns:
-            list: The header for the csv file. Contains student info, marks,
+            List holding the header for the csv file. Contains student info, marks,
             version info, timestamps and warnings.
 
         Raises:

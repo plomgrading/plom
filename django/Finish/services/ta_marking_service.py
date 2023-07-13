@@ -27,7 +27,7 @@ class TaMarkingService:
             user: (User) The user to get the annotations from.
 
         Returns:
-            QuerySet: The annotations from the user.
+            QuerySet[Annotation]: The annotations from the user.
 
         Raises:
             No exceptions anticipated.
@@ -42,7 +42,7 @@ class TaMarkingService:
             paper: (Paper) The paper to get the annotations from.
 
         Returns:
-            QuerySet: The annotations from the user on that paper.
+            QuerySet[Annotation]: The annotations from the user on that paper.
 
         Raises:
             No exceptions anticipated.
@@ -53,7 +53,7 @@ class TaMarkingService:
         """Get the header for the csv file.
 
         Returns:
-            list: The header for the csv file. Contains TA marking information,
+            List holding the header for the csv file. Contains TA marking information,
             paper, question and version info, timestamps and warnings.
         """
         keys = [
@@ -75,7 +75,11 @@ class TaMarkingService:
         """Get the info for all students in a list for building a csv file to download.
 
         Returns:
-            list: each element is a dictionary containing the marking information for an annotation.
+            List where each element is a dictionary containing the marking information
+            for an annotation.
+
+        Raises:
+            No exceptions anticipated.
         """
         annotations = Annotation.objects.all()
         csv_data = []
@@ -88,10 +92,11 @@ class TaMarkingService:
         """Get the marking information for an annotation.
 
         Args:
-            annotation: (Annotation) The annotation to get the marking information from.
+            annotation: The annotation to get the marking information from.
 
         Returns:
-            dict: keyed by string information about the annotation (i.e. "score": 2, "question_number" : 3).
+            Dict keyed by string information about the annotation (i.e. "score": 2,
+            "question_number" : 3).
 
         Raises:
             No exceptions anticipated.
@@ -124,8 +129,8 @@ class TaMarkingService:
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            None: If there are no annotations for the question.
-            float: The total time spent on a question by all markers in seconds.
+            None if there are no annotations for the question otherwise, the total time
+            spent on a question by all markers in seconds as a float.
 
         Raises:
             No exceptions anticipated.
@@ -150,8 +155,8 @@ class TaMarkingService:
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            None: If there are no annotations for the question.
-            float: The average time spent on a question by all markers in seconds.
+            None if there are no annotations for the question otherwise, the average time
+            spent on a question by all markers in seconds as a float.
 
         Raises:
             No exceptions anticipated.
@@ -172,12 +177,12 @@ class TaMarkingService:
             question: (int) The question number to get the standard deviation time spent on.
 
         Keyword Args:
-            version: (int) The version of the question to get the standard deviation time spent on.
-                Defaults to 0 which ignores version, otherwise the version is used.
+            version: (int) The version of the question to get the standard deviation time
+                spent on. Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
-            None: If there are no annotations for the question.
-            float: The standard deviation time spent on a question by all markers in seconds.
+            None if there are no annotations for the question otherwise, the standard deviation
+            time spent on a question by all markers in seconds as a float.
 
         Raises:
             No exceptions anticipated.
@@ -196,8 +201,8 @@ class TaMarkingService:
             n_questions: (int) The number of questions in the paper.
 
         Returns:
-            tuple: 3 lists that contain the total, average and standard deviation times respectively
-                for marking each question held in a humanized format.
+            Tuple holding 3 lists that contain the total, average and standard deviation
+            times respectively for marking each question held in a humanized format.
 
         Raises:
             No exceptions anticipated.
@@ -244,10 +249,11 @@ class TaMarkingService:
         """Get the average number of questions marked per day for a given question.
 
         Args:
-            question: (int) The question number to get the average number of questions marked per day for.
+            question: (int) The question number to get the average number of questions
+                marked per day for.
 
         Returns:
-            float: The average number of questions marked per day for a given question.
+            The average number of questions marked per day for a given question as a float.
 
         Raises:
             No exceptions anticipated.
@@ -275,11 +281,12 @@ class TaMarkingService:
         """Get the estimated number of days remaining to mark a given question.
 
         Args:
-            question: (int) The question number to get the estimated number of days remaining to mark.
+            question: (int) The question number to get the estimated number of days remaining
+                to mark.
 
         Returns:
-            None: if no questions have been marked yet; otherwise,
-            float: The estimated number of days remaining to mark a given question.
+            None if no questions have been marked yet otherwise, the estimated number of days
+            remaining to mark a given question .
 
         Raises:
             No exceptions anticipated.
@@ -304,8 +311,8 @@ class TaMarkingService:
             question: (int) The question number to get the estimated number of hours remaining to mark.
 
         Returns:
-            None: if no questions have been marked yet; otherwise,
-            float: The estimated number of hours remaining to mark a given question.
+            None if no questions have been marked yet otherwise, the estimated number of hours
+            remaining to mark a given question.
 
         Raises:
             No exceptions anticipated.
@@ -327,9 +334,9 @@ class TaMarkingService:
         """Round a timedelta object to the nearest day.
 
         Args:
-            obj: (dt.timedelta) The timedelta object to round.
+            obj: The timedelta object to round.
 
         Returns:
-            int: The timedelta object rounded to the nearest day.
+            The integer days of the timedelta object rounded to the nearest day.
         """
         return round(obj.total_seconds() / 86400)
