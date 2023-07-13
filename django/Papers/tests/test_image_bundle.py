@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 from django.test import TestCase
 from django.conf import settings
@@ -65,19 +66,19 @@ class ImageBundleTests(TestCase):
         Test ImageBundlseService.create_bundle()
         """
 
-        n_bundles = len(Bundle.objects.all())
+        n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 0)
 
         ibs = ImageBundleService()
         ibs.create_bundle("bundle1", "abcde")
 
-        n_bundles = len(Bundle.objects.all())
+        n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 1)
 
         with self.assertRaises(RuntimeError):
             ibs.create_bundle("bundle2", "abcde")
 
-        n_bundles = len(Bundle.objects.all())
+        n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 1)
 
     def test_all_staged_imgs_valid(self):
