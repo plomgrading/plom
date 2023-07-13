@@ -128,11 +128,11 @@ class IDService:
         return completed_id_task_list
 
     @transaction.atomic
-    def set_id_task_todo_and_clear_specific_id(self, paper_pk):
+    def set_id_task_todo_and_clear_specific_id(self, paper_pk: int) -> None:
         """Set PaperIDTask as TO_DO and clear the PaperIDAction corresponding for that task.
 
         Args:
-            paper_pk (int): The primary key of a paper.
+            paper_pk: The primary key of a paper.
 
         Returns:
             None
@@ -150,13 +150,13 @@ class IDService:
         sid.delete()
 
     @transaction.atomic
-    def set_id_task_todo_and_clear_specific_id_cmd(self, paper_number):
+    def set_id_task_todo_and_clear_specific_id_cmd(self, paper_number: int) -> None:
         """Set PaperIDTask as TO_DO and clear the PaperIDAction corresponding for that task.
 
         This method is used in ``clear_id.py``.
 
         Args:
-            paper_number (int): The paper number of a paper.
+            paper_number: The paper number of a paper.
 
         Returns:
             None
