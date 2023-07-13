@@ -13,8 +13,9 @@ import django
 
 django.setup()
 
-from Papers.models import Paper, Specification
 from Finish.services import StudentMarkService, TaMarkingService
+from Mark.models import MarkingTask
+from Papers.models import Specification
 
 print("Building report.")
 
@@ -32,7 +33,9 @@ name = spec["name"]
 longName = spec["longName"]
 totalMarks = spec["totalMarks"]
 date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
-num_students = Paper.objects.count()
+num_students = (
+    MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct().count()
+)
 average_mark = marks["total_mark"].mean()
 median_mark = marks["total_mark"].median()
 
