@@ -197,7 +197,6 @@ class DemoCreationService:
                     sleep(0.5)
                 else:
                     print(f"fake_bundle{n}.pdf has been read")
-                    return
 
     def push_if_ready(self, number_of_bundles=3, homework_bundles=[], attempts=15):
         print(
