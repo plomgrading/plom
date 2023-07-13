@@ -17,7 +17,7 @@
                                 <tr>
                                     <td>{{ pn }}</td>
                                     <td>
-                                        {% for fp in pages|dictsort:"page_number" %}
+                                        {% for fp in pages.fixed|dictsort:"page_number" %}
                                             {% if fp.img_pk %}
                                                 <button hx-get="{% url 'progress_pushed_img_wrap' fp.img_pk %}"
                                                         hx-target="#incompleteImageHere"
@@ -32,9 +32,9 @@
                                         {% endfor %}
                                     </td>
                                     <td>
-                                        {% for mp in pages|dictsort:"question_number" %}
+                                        {% for mp in pages.mobile|dictsort:"question_number" %}
                                             <button hx-get="{% url 'progress_pushed_img_wrap' mp.img_pk %}"
-                                                    hx-target="#imageHere"
+                                                    hx-target="#incompleteImageHere"
                                                     hx-replace="incompletInnerHTML"
                                                     class="btn btn-outline-info">q.{{ mp.question_number }}</button>
                                         {% endfor %}

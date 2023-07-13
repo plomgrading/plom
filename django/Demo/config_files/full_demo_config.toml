@@ -22,7 +22,8 @@ duplicate_page_papers = [7, 8]
 [[bundles]]
 first_paper = 11
 last_paper = 20
-discard_pages=[56, 60, 54, 51]
+extra_page_papers = [19, 20]
+discard_pages=[51, 54, 58, 62]
 
 
 # bundle 3

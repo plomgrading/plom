@@ -132,53 +132,48 @@ class ManageScanTests(TestCase):
         mss_incomplete = mss.get_all_incomplete_test_papers()
         # papers 6,7,10,11 is incomplete - should return dict of the form
         #
-        # {6:[ {'type': 'fixed', 'page_number': 1, 'img_pk': 63},
-        # {'type': 'fixed', 'page_number': 2, 'img_pk': 64}, {'type':
-        # 'missing', 'page_number': 3}, {'type': 'missing',
-        # 'page_number': 4}, {'type': 'missing', 'page_number': 5},
-        # {'type': 'missing', 'page_number': 6} ]}, 11 [{'type':
-        # 'fixed', 'page_number': 1, 'img_pk': 147}, {'type': 'fixed',
-        # 'page_number': 2, 'img_pk': 148}, {'type': 'missing',
-        # 'page_number': 3}, {'type': 'missing', 'page_number': 4},
-        # {'type': 'missing', 'page_number': 5}, {'type': 'missing',
-        # 'page_number': 6}, {'type': 'mobile', 'question_number': 1,
-        # 'img_pk': 149}, {'type': 'mobile', 'question_number': 2,
-        # 'img_pk': 150}]
+        # 6: {'fixed': [{'status': 'present', 'page_number': 1,
+        # 'img_pk': 146}, {'status': 'present', 'page_number': 2,
+        # 'img_pk': 147}, {'status': 'missing', 'page_number': 3},
+        # {'status': 'missing', 'page_number': 4}, {'status':
+        # 'missing', 'page_number': 5}, {'status': 'missing',
+        # 'page_number': 6}], 'mobile': []}}
 
         assert len(mss_incomplete) == 4
         for pn in [6, 7]:
             assert 6 in mss_incomplete
             # it is missing pages 3,4,5,6, but has fixed pages 1,2 - the img_pk of those we can ignore.
-            pg_data = mss_incomplete[pn]
-            assert len(pg_data) == 6
+            f_pg_data = mss_incomplete[pn]["fixed"]
+            assert len(f_pg_data) == 6
             for pg in [1, 2]:
-                assert pg_data[pg - 1]["type"] == "fixed"
-                assert pg_data[pg - 1]["page_number"] == pg
+                assert f_pg_data[pg - 1]["status"] == "present"
+                assert f_pg_data[pg - 1]["page_number"] == pg
                 assert (
-                    "img_pk" in pg_data[pg - 1]
+                    "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert pg_data[pg - 1] == {"type": "missing", "page_number": pg}
+                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
         for pn in [10, 11]:
             assert pn in mss_incomplete
             # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
-            pg_data = mss_incomplete[pn]
-            assert len(pg_data) == 8
+            f_pg_data = mss_incomplete[pn]["fixed"]
+            m_pg_data = mss_incomplete[pn]["mobile"]
+            assert len(f_pg_data) == 6
+            assert len(m_pg_data) == 2
             for pg in [1, 2]:
-                assert pg_data[pg - 1]["type"] == "fixed"
-                assert pg_data[pg - 1]["page_number"] == pg
+                assert f_pg_data[pg - 1]["status"] == "present"
+                assert f_pg_data[pg - 1]["page_number"] == pg
                 assert (
-                    "img_pk" in pg_data[pg - 1]
+                    "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert pg_data[pg - 1] == {"type": "missing", "page_number": pg}
-            for pg in range(7, 9):
-                assert pg_data[pg - 1]["type"] == "mobile"
+                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
+            for pg in range(1, 3):
                 assert (
-                    pg_data[pg - 1]["question_number"] == pg - 6
+                    m_pg_data[pg - 1]["question_number"] == pg
                 )  # 7th, 8th entries are q's 1,2.
                 assert (
-                    "img_pk" in pg_data[pg - 1]
+                    "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
     def test_get_all_completed_test_papers(self):
@@ -192,37 +187,36 @@ class ManageScanTests(TestCase):
 
         for pn in [1]:
             assert pn in mss_complete
-            assert len(mss_complete[pn]) == 7
-            page_data = mss_complete[pn]
+            assert len(mss_complete[pn]["fixed"]) == 6
+            assert len(mss_complete[pn]["mobile"]) == 1
+            f_page_data = mss_complete[pn]["fixed"]
+            m_page_data = mss_complete[pn]["mobile"]
             for pg in range(1, 7):
-                self.assertEqual(page_data[pg - 1]["type"], "fixed")
-                self.assertEqual(page_data[pg - 1]["page_number"], pg)
+                self.assertEqual(f_page_data[pg - 1]["page_number"], pg)
                 assert (
-                    "img_pk" in page_data[pg - 1]
+                    "img_pk" in f_page_data[pg - 1]
                 )  # not testing the actual value of image_pk
+
             for qn in [1]:  # is the 7th page of the test
-                self.assertEqual(page_data[6]["type"], "mobile")
-                self.assertEqual(page_data[6]["question_number"], qn)
+                self.assertEqual(m_page_data[0]["question_number"], qn)
                 assert (
-                    "img_pk" in page_data[qn - 1]
+                    "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
         for pn in [2, 3, 4, 5]:
             assert pn in mss_complete
-            assert len(mss_complete[pn]) == 6
-            page_data = mss_complete[pn]
+            assert len(mss_complete[pn]["fixed"]) == 6
+            f_page_data = mss_complete[pn]["fixed"]
             for pg in range(1, 7):
-                self.assertEqual(page_data[pg - 1]["type"], "fixed")
-                self.assertEqual(page_data[pg - 1]["page_number"], pg)
+                self.assertEqual(f_page_data[pg - 1]["page_number"], pg)
                 assert (
-                    "img_pk" in page_data[pg - 1]
+                    "img_pk" in f_page_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
         for pn in [12, 13, 14, 15]:
             assert pn in mss_complete
-            page_data = mss_complete[pn]
+            m_page_data = mss_complete[pn]["mobile"]
             for qn in range(1, 4):
-                self.assertEqual(page_data[qn - 1]["type"], "mobile")
-                self.assertEqual(page_data[qn - 1]["question_number"], qn)
+                self.assertEqual(m_page_data[qn - 1]["question_number"], qn)
                 assert (
-                    "img_pk" in page_data[qn - 1]
+                    "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
