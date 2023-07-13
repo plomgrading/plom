@@ -139,7 +139,7 @@ class IDService:
 
         Raises:
             ObjectDoesNotExist: This is raised when an instance of the PaperIDTask or
-            PaperIDAction does not exist.
+                PaperIDAction does not exist.
         """
         paper_ID_task_obj = PaperIDTask.objects.get(paper=paper_pk)
         sid = PaperIDAction.objects.get(task=paper_ID_task_obj.pk)
@@ -163,7 +163,7 @@ class IDService:
 
         Raises:
             ObjectDoesNotExist: This is raised when an instance of the Paper or PaperIDTask or
-            PaperIDAction does not exist.
+                PaperIDAction does not exist.
         """
         paper = Paper.objects.get(paper_number=int(paper_number))
         self.set_id_task_todo_and_clear_specific_id(paper.pk)
@@ -182,7 +182,7 @@ class IDService:
 
         Raises:
             ObjectDoesNotExist: This is raised when an instance of the PaperIDTask or
-            PaperIDAction does not exist.
+                PaperIDAction does not exist.
         """
         for paper_id_task in PaperIDTask.objects.all():
             paper_id_task.status = PaperIDTask.TO_DO
