@@ -26,12 +26,12 @@ class StudentMarkService:
 
         Returns:
             Dict keyed by paper number whose values are a dictionary holding
-                the mark information for each question in the paper.
-
-        Raises:
-            Paper.DoesNotExist: If the paper does not exist in the database.
+            the mark information for each question in the paper.
         """
-        paper_obj = Paper.objects.get(pk=paper_num)
+        try:
+            paper_obj = Paper.objects.get(pk=paper_num)
+        except Paper.DoesNotExist:
+            return {}
         marking_tasks = paper_obj.markingtask_set.all()
 
         questions = {}
@@ -93,7 +93,7 @@ class StudentMarkService:
             The count of how many papers a mark for this question.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -121,7 +121,10 @@ class StudentMarkService:
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
         """
-        paper_obj = Paper.objects.get(pk=paper_num)
+        try:
+            paper_obj = Paper.objects.get(pk=paper_num)
+        except Paper.DoesNotExist:
+            raise Paper.DoesNotExist
         marking_tasks = paper_obj.markingtask_set.all()
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
         last_update = None
@@ -201,7 +204,7 @@ class StudentMarkService:
             List where each element is a dictionary containing the information about an individual student.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         papers = Paper.objects.all()
         csv_data = []
@@ -233,7 +236,7 @@ class StudentMarkService:
             version info, timestamps and warnings.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         keys = ["student_id", "student_name", "paper_number"]
         for q in range(1, spec["numberOfQuestions"] + 1):

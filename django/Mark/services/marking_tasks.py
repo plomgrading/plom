@@ -195,7 +195,7 @@ class MarkingTaskService:
             PolymorphicQuerySet[MarkingTask]: tasks
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         marking_tasks = MarkingTask.objects.filter(
             question_number=question, status=MarkingTask.COMPLETE

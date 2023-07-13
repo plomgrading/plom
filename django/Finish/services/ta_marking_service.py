@@ -30,7 +30,7 @@ class TaMarkingService:
             QuerySet[Annotation]: The annotations from the user.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         return Annotation.objects.filter(user=user)
 
@@ -45,7 +45,7 @@ class TaMarkingService:
             QuerySet[Annotation]: The annotations from the user on that paper.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         return Annotation.objects.filter(user=user, task__paper=paper)
 
@@ -79,7 +79,7 @@ class TaMarkingService:
             for an annotation.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         annotations = Annotation.objects.all()
         csv_data = []
@@ -99,7 +99,7 @@ class TaMarkingService:
             "question_number" : 3).
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         annotation_info = {
             "user": annotation.user.username,
@@ -133,7 +133,7 @@ class TaMarkingService:
             spent on a question by all markers in seconds as a float.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -159,7 +159,7 @@ class TaMarkingService:
             spent on a question by all markers in seconds as a float.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -185,7 +185,7 @@ class TaMarkingService:
             time spent on a question by all markers in seconds as a float.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
@@ -205,7 +205,7 @@ class TaMarkingService:
             times respectively for marking each question held in a humanized format.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = TaMarkingService()
         present = arrow.utcnow()
@@ -256,7 +256,7 @@ class TaMarkingService:
             The average number of questions marked per day for a given question as a float.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         service = StudentMarkService()
         num_questions_marked = service.get_n_of_question_marked(question)
@@ -289,7 +289,7 @@ class TaMarkingService:
             remaining to mark a given question .
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         num_questions_remaining = (
             MarkingTask.objects.filter(question_number=question)
@@ -315,7 +315,7 @@ class TaMarkingService:
             remaining to mark a given question.
 
         Raises:
-            No exceptions anticipated.
+            None expected
         """
         avg_time_on_question = self.get_average_time_spent_on_question(
             question=question
