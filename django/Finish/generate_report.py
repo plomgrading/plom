@@ -51,7 +51,7 @@ base64_string = base64.b64encode(png_bytes.read()).decode()
 
 # TABLE FOR REPORT
 marks = marks[["student_id", "student_name", "paper_number", "total_mark"]]
-table = marks.iloc[10:20].to_html()
+table = marks.to_html()
 
 html = f"""
 <body>
