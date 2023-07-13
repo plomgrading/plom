@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
+import arrow
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
