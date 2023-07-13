@@ -169,13 +169,10 @@ class IDService:
         self.set_id_task_todo_and_clear_specific_id(paper.pk)
 
     @transaction.atomic
-    def set_all_id_task_todo_and_clear_all_id_cmd(self):
+    def set_all_id_task_todo_and_clear_all_id_cmd(self) -> None:
         """Set all the PaperIDTask as TO_DO and clear all the PaperIDAction.
 
         This method is used in the ``clear_id.py``.
-
-        Args:
-            None
 
         Returns:
             None
