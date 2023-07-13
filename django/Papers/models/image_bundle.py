@@ -78,5 +78,5 @@ class Image(models.Model):
 
 
 class DiscardImage(models.Model):
-    image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
+    image = models.OneToOneField(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()

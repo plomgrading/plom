@@ -11,13 +11,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
-from Papers.models import (
-    FixedPage,
-    MobilePage,
-    Paper,
-    Image,
-    Bundle,
-)
+from Papers.models import FixedPage, MobilePage, Paper, Image, Bundle, DiscardImage
 from Scan.models import StagingImage, StagingBundle
 
 
@@ -336,7 +330,9 @@ class ManageScanService:
         """
 
         bundle_list = []
-        for bundle in Bundle.objects.all().prefetch_related("staging_bundle", "user"):
+        for bundle in Bundle.objects.all().prefetch_related(
+            "staging_bundle", "user", "staging_bundle__user"
+        ):
             bundle_list.append(
                 {
                     "name": bundle.staging_bundle.slug,
@@ -357,3 +353,24 @@ class ManageScanService:
             return img
         except Image.DoesNotExist:
             return None
+
+    @transaction.atomic
+    def get_discarded_images(self):
+        discards = []
+
+        for img in (
+            Image.objects.filter(discardimage__isnull=False)
+            .prefetch_related("discardimage", "bundle", "bundle__staging_bundle")
+            .order_by("bundle", "bundle_order")
+        ):
+            discards.append(
+                {
+                    "image": img.pk,
+                    "reason": img.discardimage.discard_reason,
+                    "bundle_pk": img.bundle.pk,
+                    "bundle_name": img.bundle.staging_bundle.slug,
+                    "order": img.bundle_order,
+                }
+            )
+
+        return discards
