@@ -158,7 +158,9 @@ djlint-strict:
   script:
     - djlint django/templates/Authentication/*.html --profile django
     - djlint django/templates/base/*.html --profile django
+    - djlint django/templates/BuildPaperPDF/*.html --profile django
     - djlint django/templates/Progress/*.html --profile django
+    - djlint django/templates/Profile/*.html --profile django
     - djlint django/templates/Rubrics/*.html --profile django
     - djlint django/templates/Scan/*.html --profile django
     - djlint django/templates/SpecCreator/*.html --profile django
