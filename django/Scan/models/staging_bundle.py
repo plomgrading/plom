@@ -25,3 +25,4 @@ class StagingBundle(models.Model):
     has_page_images = models.BooleanField(default=False)
     has_qr_codes = models.BooleanField(default=False)
     pushed = models.BooleanField(default=False)
+    time_of_last_update = models.DateTimeField(auto_now=True)

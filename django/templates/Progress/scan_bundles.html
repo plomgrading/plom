@@ -1,3 +1,4 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
 {% extends 'Progress/scan_base.html' %}
 {% block main_card_content %}
     <div class="row ps-5 pe-5">
@@ -10,9 +11,9 @@
                             <th scope="col">Name</th>
                             <th scope="col">Pages</th>
                             <th scope="col">Uploaded by</th>
-                            <th scope="col">Upload time</th>
-                            <th scope="col">Push time</th>
-                            <th scope="col">Pushed by </th>
+                            <th scope="col">When uploaded</th>
+                            <th scope="col">Pushed by</th>
+                            <th scope="col">when pushed</th>
                             <th scope="col">Action</th>
                         </tr>
                     </thead>
@@ -20,14 +21,14 @@
                         {% for bundle in pushed_bundles %}
                             <tr>
                                 <td>{{ bundle.name }}</td>
-                                <td>{{ bundle.username }}</td>
-                                <td>{{ bundle.uploaded }}</td>
-                                <td>{{ bundle.n_pages }}</td>
-                                <td>{{ bundle.n_complete }}</td>
+                                <td>{{ bundle.pages }}</td>
+                                <td>{{ bundle.who_uploaded }}</td>
+                                <td>{{ bundle.when_uploaded }}</td>
+                                <td>{{ bundle.who_pushed }}</td>
+                                <td>{{ bundle.when_pushed }}</td>
                                 <td>
                                     <div class="hstack gap-2">
-                                        <a class="btn btn-primary">View</a>
-                                        <a class="btn btn-danger">Delete</a>
+                                        <a class="btn btn-primary disabled">View</a>
                                     </div>
                                 </td>
                             </tr>
