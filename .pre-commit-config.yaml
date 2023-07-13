@@ -6,6 +6,17 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+# Notes
+# -----
+#
+# First `pip install pre-commit`.
+#
+# To run one-off, just type `pre-commit`.  To have it run on every
+# commit (which is the intention), you can do `pre-commit install`.
+#
+# You can `git commit -n` to disable this on a one-off commit.
+
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
