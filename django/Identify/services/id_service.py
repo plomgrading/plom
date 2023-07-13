@@ -173,13 +173,6 @@ class IDService:
         """Set all the PaperIDTask as TO_DO and clear all the PaperIDAction.
 
         This method is used in the ``clear_id.py``.
-
-        Returns:
-            None
-
-        Raises:
-            ObjectDoesNotExist: This is raised when an instance of the PaperIDTask or
-                PaperIDAction does not exist.
         """
         for paper_id_task in PaperIDTask.objects.all():
             paper_id_task.status = PaperIDTask.TO_DO
