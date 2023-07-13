@@ -13,9 +13,7 @@ from Progress.views import BaseScanProgressPage
 
 
 class ScanOverview(BaseScanProgressPage):
-    """
-    View the progress of scanning/validating page-images.
-    """
+    """View the progress of scanning/validating page-images."""
 
     def get(self, request):
         mss = ManageScanService()
@@ -40,9 +38,7 @@ class ScanOverview(BaseScanProgressPage):
 
 
 class ScanGetPageImage(ManagerRequiredView):
-    """
-    Get a page-image from the database.
-    """
+    """Get a page-image from the database."""
 
     def get(self, request, test_paper, index):
         mss = ManageScanService()
@@ -58,9 +54,7 @@ class ScanGetPageImage(ManagerRequiredView):
 
 
 class ScanBundlesView(BaseScanProgressPage):
-    """
-    View the bundles uploaded by scanner users.
-    """
+    """View the bundles uploaded by scanner users."""
 
     def get(self, request):
         context = self.build_context("bundles")
