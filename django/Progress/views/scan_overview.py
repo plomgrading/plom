@@ -18,23 +18,21 @@ class ScanOverview(BaseScanProgressPage):
 
     def get(self, request):
         mss = ManageScanService()
-        total_pages = mss.get_total_fixed_pages()
-        scanned_pages = mss.get_number_of_scanned_pages()
-        percent_pages_complete = scanned_pages / total_pages * 100
 
         total_papers = mss.get_total_test_papers()
         completed_papers = mss.get_number_completed_test_papers()
-        percent_papers_complete = completed_papers / total_papers * 100
+        incomplete_papers = mss.get_number_incomplete_test_papers()
+        pushed_bundles = mss.get_number_pushed_bundles()
+        unpushed_bundles = mss.get_number_unpushed_bundles()
 
         context = self.build_context("overview")
         context.update(
             {
-                "total_pages": total_pages,
-                "scanned_pages": scanned_pages,
-                "percent_pages_complete": int(percent_pages_complete),
                 "total_papers": total_papers,
                 "completed_papers": completed_papers,
-                "percent_papers_complete": int(percent_papers_complete),
+                "incomplete_papers": incomplete_papers,
+                "pushed_bundles": pushed_bundles,
+                "unpushed_bundles": unpushed_bundles,
             }
         )
         return render(request, "Progress/scan_overview.html", context)
@@ -99,3 +97,23 @@ class ScanTestPageModal(ManagerRequiredView):
         return render(
             request, "Progress/fragments/scan_view_paper_page_modal.html", context
         )
+
+
+class ScanBundles(BaseScanProgressPage):
+    """
+    View the bundles uploaded by scanner users.
+    """
+
+    def get(self, request):
+        context = self.build_context("bundles")
+        mss = ManageScanService()
+
+        bundle_list = mss.get_pushed_bundles_list()
+
+        context.update(
+            {
+                "number_of_pushed_bundles": len(bundle_list),
+                "pushed_bundles": bundle_list,
+            }
+        )
+        return render(request, "Progress/scan_bundles.html", context)

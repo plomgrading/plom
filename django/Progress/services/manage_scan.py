@@ -6,9 +6,6 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import arrow
-from datetime import datetime
-
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
@@ -17,8 +14,9 @@ from Papers.models import (
     MobilePage,
     Paper,
     Image,
+    Bundle,
 )
-from Scan.models import StagingImage, StagingBundle
+from Scan.models import StagingBundle
 
 
 class ManageScanService:
@@ -319,39 +317,40 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    def get_n_bundles(self):
+    def get_number_pushed_bundles(self):
         """
-        Return the number of uploaded bundles.
+        Return the number of pushed bundles.
         """
 
-        return StagingBundle.objects.all().count()
+        return Bundle.objects.all().count()
+
+    def get_number_unpushed_bundles(self):
+        """
+        Return the number of uploaded, but not yet pushed, bundles.
+        """
+
+        return StagingBundle.objects.filter(pushed=False).count()
 
     @transaction.atomic
-    def get_bundles_list(self):
+    def get_pushed_bundles_list(self):
         """
-        Return a list of all uploaded bundles.
+        Return a list of all pushed bundles.
         """
-
-        bundles = StagingBundle.objects.all()
 
         bundle_list = []
-        for bundle in bundles:
-            n_pages = StagingImage.objects.filter(bundle=bundle).count()
-            n_complete = Image.objects.filter(bundle__hash=bundle.pdf_hash).count()
-            time_uploaded = timezone.make_aware(
-                datetime.fromtimestamp(bundle.timestamp)
-            )
-
+        for bundle in Bundle.objects.all().prefetch_related("staging_bundle", "user"):
             bundle_list.append(
                 {
-                    "name": bundle.slug,
-                    "username": bundle.user.username,
-                    "uploaded": arrow.get(time_uploaded).humanize(),
-                    "n_pages": n_pages,
-                    "n_complete": n_complete,
+                    "name": bundle.staging_bundle.slug,
+                    "pages": Image.objects.filter(bundle=bundle).count(),
+                    "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),
+                    "when_uploaded": arrow.get(
+                        bundle.staging_bundle.time_of_last_update
+                    ).humanize(),
+                    "who_pushed": bundle.user.username,
+                    "who_uploaded": bundle.staging_bundle.user.username,
                 }
             )
-
         return bundle_list
 
     def get_pushed_image(self, img_pk):

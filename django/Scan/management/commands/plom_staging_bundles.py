@@ -23,7 +23,7 @@ class Command(BaseCommand):
     python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
     python3 manage.py plom_staging_bundles status
     python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
-    python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
+    python3 manage.py plom_staging_bundles push (bundle name) (username) <- can get it from status
     python3 manage.py plom_staging_bundles pages bundle name
     """
 
@@ -140,10 +140,10 @@ class Command(BaseCommand):
             raise CommandError(err)
         self.stdout.write(f"Deleted {bundle_name}")
 
-    def push_staged_bundle(self, bundle_name):
+    def push_staged_bundle(self, bundle_name, username):
         scanner = ScanService()
         try:
-            scanner.push_bundle_cmd(bundle_name)
+            scanner.push_bundle_cmd(bundle_name, username)
             self.stdout.write(f"Bundle {bundle_name} - pushed from staging.")
         except ValueError as err:
             raise CommandError(err)
@@ -239,6 +239,11 @@ class Command(BaseCommand):
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
         sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
+        sp_push.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is pushing the bundle.",
+        )
 
         # Read QR codes
         sp_read_qr = sp.add_parser("read_qr", help="Read the selected bundle QR codes.")
@@ -272,7 +277,10 @@ class Command(BaseCommand):
         elif options["command"] == "delete":
             self.delete_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
-            self.push_staged_bundle(bundle_name=options["bundle_name"])
+            self.push_staged_bundle(
+                bundle_name=options["bundle_name"],
+                username=options["username"],
+            )
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
         elif options["command"] == "pages":
