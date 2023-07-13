@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import Http404, FileResponse
@@ -12,9 +13,7 @@ from Progress.views import BaseScanProgressPage
 
 
 class ScanOverview(BaseScanProgressPage):
-    """
-    View the progress of scanning/validating page-images.
-    """
+    """View the progress of scanning/validating page-images."""
 
     def get(self, request):
         mss = ManageScanService()
@@ -38,34 +37,8 @@ class ScanOverview(BaseScanProgressPage):
         return render(request, "Progress/scan_overview.html", context)
 
 
-class ScanTestPaperProgress(ManagerRequiredView):
-    """
-    Get the current state of test-paper scanning, filtered by
-    'complete', 'incomplete', or 'all'.
-    """
-
-    def get(self, request, filter_by):
-        mss = ManageScanService()
-        context = self.build_context()
-
-        # TODO: test paper list needs updating
-        # if filter_by == "all":
-        #     test_papers = mss.get_test_paper_list()
-        # elif filter_by == "complete":
-        #     test_papers = mss.get_test_paper_list(exclude_incomplete=True)
-        # elif filter_by == "incomplete":
-        #     test_papers = mss.get_test_paper_list(exclude_complete=True)
-        # else:
-        #     raise Http404("Unrecognized filtering argument.")
-
-        # context.update({"test_papers": test_papers})
-        return render(request, "Progress/fragments/scan_overview_table.html", context)
-
-
 class ScanGetPageImage(ManagerRequiredView):
-    """
-    Get a page-image from the database.
-    """
+    """Get a page-image from the database."""
 
     def get(self, request, test_paper, index):
         mss = ManageScanService()
@@ -80,29 +53,8 @@ class ScanGetPageImage(ManagerRequiredView):
         return FileResponse(image_file)
 
 
-class ScanTestPageModal(ManagerRequiredView):
-    """
-    Return a modal that displays a scanned test-paper page.
-    """
-
-    def get(self, request, test_paper, index):
-        context = self.build_context()
-        context.update(
-            {
-                "test_paper": test_paper,
-                "index": index,
-            }
-        )
-
-        return render(
-            request, "Progress/fragments/scan_view_paper_page_modal.html", context
-        )
-
-
-class ScanBundles(BaseScanProgressPage):
-    """
-    View the bundles uploaded by scanner users.
-    """
+class ScanBundlesView(BaseScanProgressPage):
+    """View the bundles uploaded by scanner users."""
 
     def get(self, request):
         context = self.build_context("bundles")

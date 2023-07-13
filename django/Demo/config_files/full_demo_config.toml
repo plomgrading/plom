@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 test_spec = "demo"
 test_sources = ["demo", "demo"]
@@ -21,6 +22,7 @@ duplicate_page_papers = [7, 8]
 [[bundles]]
 first_paper = 11
 last_paper = 20
+discard_pages=[56, 60, 54, 51]
 
 
 # bundle 3

@@ -1,0 +1,51 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+{% extends 'Progress/scan_base.html' %}
+{% block main_card_content %}
+    <div class="row">
+        <h5>Complete papers: {{ number_of_completed_papers }}</h5>
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="overflow-auto" style="max-height:66vh;">
+                        <table class="table table-striped table-sm">
+                            <tr>
+                                <th>Paper</th>
+                                <th>Fixed pages</th>
+                                <th>Mobile pages</th>
+                            </tr>
+                            {% for pn,pages in completed_papers_list %}
+                                <tr>
+                                    <td>{{ pn }}</td>
+                                    <td>
+                                        {% for fp in pages|dictsort:"page_number" %}
+                                            <button hx-get="{% url 'progress_pushed_img_wrap' fp.img_pk %}"
+                                                    hx-target="#imageHere"
+                                                    hx-replace="innerHTML"
+                                                    class="btn btn-outline-success">{{ fp.page_number }}</button>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% for mp in pages|dictsort:"question_number" %}
+                                            <button hx-get="{% url 'progress_pushed_img_wrap' mp.img_pk %}"
+                                                    hx-target="#imageHere"
+                                                    hx-replace="innerHTML"
+                                                    class="btn btn-outline-info">q.{{ mp.question_number }}</button>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col p-2" id="pushedImageFragment">
+            <div style="height: 30vw;
+                        width: 30vw;
+                        justify-content: center;
+                        display:flex;
+                        align-items:center"
+                 id="imageHere"></div>
+        </div>
+    </div>
+{% endblock %}
