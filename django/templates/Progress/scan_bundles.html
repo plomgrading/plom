@@ -1,5 +1,8 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
-{% extends 'Progress/scan_base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "Progress/scan_base.html" %}
 {% block main_card_content %}
     <div class="row ps-5 pe-5">
         <h5>Pushed bundles: {{ number_of_pushed_bundles }}</h5>
@@ -38,4 +41,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock main_card_content %}
