@@ -165,7 +165,6 @@ class StudentMarkService:
                         }
                     )
                 total += current_annotation.score
-
                 last_update = current_annotation.time_of_last_update
 
         student_info.update(
