@@ -1003,7 +1003,7 @@ class ScanService:
         n_pages = SpecificationService().get_n_pages()
         papers_pages = {}
         # get all known images in the bundle
-        # put in dict as {page_number: [list of known pages present] }
+        # put in dict as {paper_number: [list of known pages present] }
         for img in StagingImage.objects.filter(
             bundle=bundle_obj, image_type=StagingImage.KNOWN
         ).prefetch_related("knownstagingimage"):
@@ -1023,6 +1023,25 @@ class ScanService:
                 )
             )
         return incomplete_papers
+
+    @transaction.atomic
+    def get_bundle_number_incomplete_papers(self, bundle_obj):
+        n_pages = SpecificationService().get_n_pages()
+        papers_pages = {}
+        # get all known images in the bundle
+        # put in dict as {page_number: number of known pages present] }
+        for img in StagingImage.objects.filter(
+            bundle=bundle_obj, image_type=StagingImage.KNOWN
+        ).prefetch_related("knownstagingimage"):
+            papers_pages.setdefault(img.knownstagingimage.paper_number, 0)
+            papers_pages[img.knownstagingimage.paper_number] += 1
+
+        number_incomplete = 0
+        for paper_number, page_count in sorted(papers_pages.items()):
+            if page_count > 0 and page_count < n_pages:
+                number_incomplete += 1
+
+        return number_incomplete
 
     @transaction.atomic
     def get_bundle_missing_paper_page_numbers_cmd(self, bundle_name):
