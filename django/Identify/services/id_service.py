@@ -153,7 +153,7 @@ class IDService:
     def set_id_task_todo_and_clear_specific_id_cmd(self, paper_number):
         """Set PaperIDTask as TO_DO and clear the PaperIDAction corresponding for that task.
 
-        This method is used in the clear_id.py.
+        This method is used in ``clear_id.py``.
 
         Args:
             paper_number (int): The paper number of a paper.
@@ -172,7 +172,7 @@ class IDService:
     def set_all_id_task_todo_and_clear_all_id_cmd(self):
         """Set all the PaperIDTask as TO_DO and clear all the PaperIDAction.
 
-        This method is used in the clear_id.py.
+        This method is used in the ``clear_id.py``.
 
         Args:
             None
