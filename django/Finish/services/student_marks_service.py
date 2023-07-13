@@ -56,11 +56,10 @@ class StudentMarkService:
             paper number whose values are a dictionary holding the mark information for each
             question in the paper.
         """
-        marking_tasks = MarkingTask.objects.all()
-        marking_tasks.prefetch_related("paper")
+        paper_nums = MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
         marks = {}
-        for marking_task in marking_tasks:
-            marks.update(self.get_marks_from_paper(marking_task.paper.paper_number))
+        for paper_num in paper_nums:
+            marks.update(self.get_marks_from_paper(paper_num))
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
 
@@ -206,12 +205,12 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        papers = Paper.objects.all()
+        paper_nums = MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
         csv_data = []
-        for paper in papers:
+        for paper_num in paper_nums:
             csv_data.append(
                 self.get_student_info_from_paper(
-                    paper.paper_number,
+                    paper_num,
                     version_info,
                     timing_info,
                     warning_info,
