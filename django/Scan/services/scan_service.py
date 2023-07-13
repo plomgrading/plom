@@ -10,6 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
+from typing import Dict
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -999,9 +1000,16 @@ class ScanService:
         return self.get_bundle_paper_numbers(bundle_obj)
 
     @transaction.atomic
-    def get_bundle_missing_paper_page_numbers(self, bundle_obj):
+    def get_bundle_missing_paper_page_numbers(self, bundle_obj: StagingBundle):
+        """Return a list of the missing known pages in papers in the given bundle.
+
+        Args:
+            bundle_obj (StagingBundle): the given staging bundle to check
+        Returns:
+            list: A list of pairs (paper_number (int), [missing pages (int)])
+        """
         n_pages = SpecificationService().get_n_pages()
-        papers_pages = {}
+        papers_pages: Dict[int, list] = {}
         # get all known images in the bundle
         # put in dict as {paper_number: [list of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1025,9 +1033,18 @@ class ScanService:
         return incomplete_papers
 
     @transaction.atomic
-    def get_bundle_number_incomplete_papers(self, bundle_obj):
+    def get_bundle_number_incomplete_papers(self, bundle_obj: StagingBundle):
+        """Return number of incomplete papers in the given bundle.
+
+        A paper is incomplete when it has more than zero but not all its known pages.
+
+        Args:
+            bundle_obj (StagingBundle): the given staging bundle to check
+        Returns:
+            int: the number of incomplete papers in the bundle
+        """
         n_pages = SpecificationService().get_n_pages()
-        papers_pages = {}
+        papers_pages: Dict[int, int] = {}
         # get all known images in the bundle
         # put in dict as {page_number: number of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1285,8 +1302,6 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
-    thumb = img.stagingthumbnail
-    thumb_path = thumb.image_file.path
 
     scanner = ScanService()
 
