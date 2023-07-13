@@ -145,7 +145,7 @@
                                     </tr>
                                     {% for pn,pages in all_incomplete_list %}
                                         <tr>
-                                          <td>{{ pn }}</td>
+                                            <td>{{ pn }}</td>
                                             <td>
                                                 {% for fp in pages.fixed|dictsort:"page_number" %}
                                                     {% if fp.img_pk %}
