@@ -162,10 +162,7 @@ class StudentMarkService:
                     )
                 total += current_annotation.score
 
-                if not last_update:
-                    last_update = current_annotation.time_of_last_update
-                elif current_annotation.time_of_last_update > last_update:
-                    last_update = current_annotation.time_of_last_update
+                last_update = current_annotation.time_of_last_update
 
         student_info.update(
             {
