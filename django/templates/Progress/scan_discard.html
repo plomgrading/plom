@@ -1,5 +1,5 @@
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
-{% extends 'Progress/scan_base.html' %}
+{% extends "Progress/scan_base.html" %}
 {% block main_card_content %}
     <div class="row">
         <h5>Discarded images: {{ number_of_discards }}</h5>
@@ -40,4 +40,4 @@
                      id="discardImageHere"></div>
             </div>
         </div>
-    {% endblock %}
+    {% endblock main_card_content %}
