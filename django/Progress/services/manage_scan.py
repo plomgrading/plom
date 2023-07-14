@@ -15,7 +15,6 @@ from Papers.models import (
     Paper,
     Image,
     Bundle,
-    DiscardPage
 )
 from Scan.models import StagingBundle
 

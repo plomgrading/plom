@@ -86,7 +86,6 @@ class ManageDiscardService:
         mobilepage_number=None,
         dry_run=True,
     ):
-
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -101,9 +100,7 @@ class ManageDiscardService:
             raise ValueError(f"Paper {paper_number} is not in the database.")
 
         if image_pk:
-            return self.discard_pushed_image(
-                user_obj, image_pk, dry_run=dry_run
-            )
+            return self.discard_pushed_image(user_obj, image_pk, dry_run=dry_run)
         elif fixedpage_number:
             return self.discard_pushed_fixed_page(
                 user_obj, paper_obj, fixedpage_number, dry_run=dry_run

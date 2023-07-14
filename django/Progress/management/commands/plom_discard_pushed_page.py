@@ -19,7 +19,7 @@ class Command(BaseCommand):
         image_pk=None,
         fixedpage_number=None,
         mobilepage_number=None,
-        not_dry_run=False
+        not_dry_run=False,
     ):
         mds = ManageDiscardService()
 
