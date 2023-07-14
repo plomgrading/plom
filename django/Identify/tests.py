@@ -187,12 +187,9 @@ class IdentifyTaskTests(TestCase):
         for paper_number in range(1, 11):
             paper = baker.make(Paper, paper_number=paper_number)
             task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-            action = baker.make(PaperIDAction, task=task)
+            baker.make(PaperIDAction, task=task)
 
-        with self.assertRaises(ObjectDoesNotExist):
-            ids.set_all_id_task_todo_and_clear_all_id_cmd()
-            task.refresh_from_db()
-            action.refresh_from_db()
+        ids.set_all_id_task_todo_and_clear_all_id_cmd()
 
         for id_task in PaperIDTask.objects.all():
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)

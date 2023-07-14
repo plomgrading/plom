@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-
+import time
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
@@ -18,7 +18,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all IDPage objects
-            that is iterable.
+                that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -31,7 +31,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all scanned IDPage objects
-            that is iterable.
+                that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -44,7 +44,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all unscanned IDPage objects
-            that is iterable.
+                that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -59,16 +59,17 @@ class IDService:
             image_pk (int): The primary key of an image.
 
         Returns:
-            instance | None: If the Image object exists, return instance of the Image.
-            If it doesn't, return None.
+            Image or None: The Image object if it exists,
+                or None if the Image does not exist.
 
-        Raises:
-            ObjectDoesNotExist: This is raised when an instance of the Image does not exist.
+        Note:
+            If the Image does not exist, the function will return None
+            instead of raising the ObjectDoesNotExist exception.
         """
         try:
             id_image_obj = Image.objects.get(pk=image_pk)
             return id_image_obj
-        except ObjectDoesNotExist:
+        except Image.DoesNotExist:
             return None
 
     @transaction.atomic
@@ -77,7 +78,7 @@ class IDService:
 
         Args:
             identified_papers (dict): A dictionary of all the
-            PaperIDAction(Value) corresponding with IDPage(key).
+                PaperIDAction(Value) corresponding with IDPage(key).
 
         Returns:
             int: Number of papers identified.
@@ -101,24 +102,25 @@ class IDService:
         into Identifying progress view, such as IDPage and PaperIDAction model.
 
         Args:
-            all_scanned_id_papers (PolymorphicQuerySet): A collection of all IDPage
-            objects that is iterable.
+            all_scanned_id_papers (PolymorphicQuerySet): A collection of all
+                the scanned IDPage objects that is iterable.
 
         Returns:
             dict: A dictionary of all the PaperIDAction(Value) corresponding with IDPage(key).
 
-        Raises:
-            ObjectDoesNotExist: This is raised when an instance of the PaperIDTask does not exist.
+        Note:
+            If PaperIDTask does not exist, the dictionary value corresponding with IDPage(key)
+            will be None instead of raising the ObjectDoesNotExist exception.
         """
         # TODO: Needs to optimize this
         completed_id_task_list = {}
         for scanned_id_paper in all_scanned_id_papers:
             try:
-                IDed_paper_task = PaperIDTask.objects.get(
+                completed_id_paper_task = PaperIDTask.objects.get(
                     paper=scanned_id_paper.paper.pk, status=PaperIDTask.COMPLETE
                 )
-                completed_id_task_list[scanned_id_paper] = IDed_paper_task
-            except ObjectDoesNotExist:
+                completed_id_task_list[scanned_id_paper] = completed_id_paper_task
+            except PaperIDTask.DoesNotExist:
                 completed_id_task_list[scanned_id_paper] = None
 
         for id_paper, id_task in completed_id_task_list.items():
