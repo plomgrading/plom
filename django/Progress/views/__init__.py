@@ -10,6 +10,7 @@ from .scan_overview import (
 )
 
 from .scan_complete import ScanCompleteView, PushedImageView, PushedImageWrapView
+from .scan_incomplete import ScanInCompleteView
 
 from .progress_identify import (
     ProgressIdentifyHome,

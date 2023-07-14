@@ -141,32 +141,29 @@ class ManageScanService:
 
         complete = {}
         for paper in all_fixed_present:
-            complete[paper.paper_number] = []
+            complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
             # below here because we did the hard work above
             for fp in paper.fixedpage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["fixed"].append(
                     {
-                        "type": "fixed",
                         "page_number": fp.page_number,
                         "img_pk": fp.image.pk,
                     }
                 )
             for mp in paper.mobilepage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
                 )
         for paper in no_fixed_but_some_mobile:
-            complete[paper.paper_number] = []
+            complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # again we don't specify order or prefetch here because of the work above
             for mp in paper.mobilepage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
@@ -205,27 +202,26 @@ class ManageScanService:
 
         incomplete = {}
         for paper in some_but_not_all_fixed_present:
-            incomplete[paper.paper_number] = []
+            incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
                 if fp.image:
-                    incomplete[paper.paper_number].append(
+                    incomplete[paper.paper_number]["fixed"].append(
                         {
-                            "type": "fixed",
+                            "status": "present",
                             "page_number": fp.page_number,
                             "img_pk": fp.image.pk,
                         }
                     )
                 else:
-                    incomplete[paper.paper_number].append(
+                    incomplete[paper.paper_number]["fixed"].append(
                         {
-                            "type": "missing",
+                            "status": "missing",
                             "page_number": fp.page_number,
                         }
                     )
             for mp in paper.mobilepage_set.all():
-                incomplete[paper.paper_number].append(
+                incomplete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
