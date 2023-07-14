@@ -18,7 +18,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all IDPage objects
-                that is iterable.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -31,7 +31,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all scanned IDPage objects
-                that is iterable.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -44,7 +44,7 @@ class IDService:
 
         Returns:
             PolymorphicQuerySet: A collection of all unscanned IDPage objects
-                that is iterable.
+            that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -60,7 +60,7 @@ class IDService:
 
         Returns:
             Image or None: The Image object if it exists,
-                or None if the Image does not exist.
+            or None if the Image does not exist.
 
         Note:
             If the Image does not exist, the function will return None
