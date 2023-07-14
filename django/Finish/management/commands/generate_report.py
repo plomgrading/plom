@@ -7,12 +7,10 @@ from io import BytesIO
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 from weasyprint import HTML, CSS
 
-import django
 from django.core.management.base import BaseCommand
-
-# django.setup()
 
 from Finish.services import StudentMarkService, TaMarkingService
 from Mark.models import MarkingTask
@@ -77,11 +75,25 @@ class Command(BaseCommand):
             ax.set_ylabel("Number of Students")
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
-            # encode the bytes as a base64 string
             png_bytes.seek(0)
             base64_histogram_of_grades_q.append(
                 base64.b64encode(png_bytes.read()).decode()
             )
+
+        # correlation heatmap
+        marks_corr = marks.copy(deep=True)
+        marks_corr = (
+            marks_corr.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
+        )
+        marks_corr.columns = marks_corr.columns.str.split("_").str[0]
+        marks_corr.index = marks_corr.index.str.split("_").str[0]
+        plt.figure(figsize=(6.4, 5.12))
+        sns.heatmap(marks_corr, annot=True, cmap="coolwarm")
+        plt.title("Correlation between questions")
+        png_bytes = BytesIO()
+        plt.savefig(png_bytes, format="png")
+        png_bytes.seek(0)
+        base64_corr = base64.b64encode(png_bytes.read()).decode()
 
         # table for report
         marks = marks[["student_id", "student_name", "paper_number", "total_mark"]]
@@ -101,7 +113,7 @@ class Command(BaseCommand):
         <img src="data:image/png;base64,{base64_histogram_of_grades}">
         <br>
         <p style="break-before: page;"></p>
-        <br>
+        <h4>Histograms by question</h4>
         """
 
         for i, hist in enumerate(base64_histogram_of_grades_q):
@@ -112,7 +124,7 @@ class Command(BaseCommand):
                 """
             html += f"""
             <div class="col" style="margin-left:0mm;">
-            <img class="small-graph" src="data:image/png;base64,{hist}" width="50px" height="40px">
+            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
             </div>
             """
 
@@ -128,7 +140,8 @@ class Command(BaseCommand):
         html += f"""
         <br>
         <p style="break-before: page;"></p>
-        {table}
+        <h4>Correlation heatmap</h4>
+        <img src="data:image/png;base64,{base64_corr}">
         </body>
         """
 
