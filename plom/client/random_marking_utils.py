@@ -359,3 +359,81 @@ def do_rando_marking(server, user, password):
         messenger.closeUser()
         messenger.stop()
     return 0
+
+
+def do_rando_user_marking(server, user, password):
+    """Randomly annotate the papers assigning RANDOM accounts and grades: only for testing please.
+
+    .. caution:: Only for testing/demos.  Do not use for real tests.
+
+    Also, for each paper, with probability 1/3, we tag with up to 3
+    randomly selected tags.
+
+    args:
+        server (str)
+        user list[(str)]
+        password list[(str)]
+
+    returns:
+        int: 0 on success, non-zero on error/unexpected.
+    """
+    global Qapp
+
+    messenger = Messenger(server)
+    messenger.start()
+    user_index = 0
+    n_users = len(user)
+    n_passwords = len(password)
+    if n_users != n_passwords:
+        print("Number of users and passwords must be the same")
+        return 1
+
+    try:
+        previous_user = user[user_index]
+        previous_pass = password[user_index]
+        messenger.requestAndSaveToken(previous_user, previous_pass)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            "This script has automatically force-logout'd that user."
+        )
+        messenger.clearAuthorisation(previous_user, previous_pass)
+        return 1
+
+    try:
+        spec = messenger.get_spec()
+
+        # Headless QT: https://stackoverflow.com/a/35355906
+        L = sys.argv
+        L.extend(["-platform", "offscreen"])
+        Qapp = QApplication(L)
+
+        for q in range(1, spec["numberOfQuestions"] + 1):
+            build_random_rubrics(q, username=previous_user, messenger=messenger)
+            for v in range(1, spec["numberOfVersions"] + 1):
+                print("Annotating question {} version {}".format(q, v))
+                try:
+                    messenger.closeUser()
+                    previous_user = user[user_index % n_users]
+                    previous_pass = password[user_index % n_users]
+                    messenger.requestAndSaveToken(previous_user, previous_pass)
+                except PlomExistingLoginException:
+                    print(
+                        "You appear to be already logged in!\n\n"
+                        "  * Perhaps a previous session crashed?\n"
+                        "  * Do you have another scanner-script running,\n"
+                        "    e.g., on another computer?\n\n"
+                        "This script has automatically force-logout'd that user."
+                    )
+                    messenger.clearAuthorisation(previous_user, previous_pass)
+                    return 1
+                print("Marking as user {}.".format(previous_user))
+                do_random_marking_backend(q, v, messenger=messenger)
+                user_index += 1
+    finally:
+        messenger.closeUser()
+        messenger.stop()
+    return 0

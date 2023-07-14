@@ -22,7 +22,11 @@ import sys
 from stdiomask import getpass
 
 from plom import Default_Port
-from .random_marking_utils import do_rando_marking, build_random_rubrics
+from .random_marking_utils import (
+    do_rando_marking,
+    build_random_rubrics,
+    do_rando_user_marking,
+)
 
 __all__ = [
     "do_rando_marking",
@@ -64,13 +68,32 @@ if __name__ == "__main__":
 
     args.server = args.server or os.environ.get("PLOM_SERVER")
 
-    if not args.user:
-        args.user = "scanner"
+    # if not args.user:
+    #     args.user = "scanner"
 
-    if args.user == "scanner":
-        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+    # if args.user == "scanner":
+    #     args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
-    if not args.password:
-        args.password = getpass(f"Please enter the '{args.user}' password: ")
+    # if not args.password:
+    #     args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_marking(args.server, args.user, args.password))
+    args.user = [
+        "demoMarker1",
+        "demoMarker2",
+        "demoMarker3",
+        "demoMarker4",
+        "demoMarker5",
+        "demoManager1",
+        "manager",
+    ]
+    args.password = [
+        "demoMarker1",
+        "demoMarker2",
+        "demoMarker3",
+        "demoMarker4",
+        "demoMarker5",
+        "demoManager1",
+        "1234",
+    ]
+
+    sys.exit(do_rando_user_marking(args.server, args.user, args.password))
