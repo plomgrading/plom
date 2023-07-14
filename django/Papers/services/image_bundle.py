@@ -19,7 +19,7 @@ from Scan.models import (
 from Papers.models import (
     Bundle,
     Image,
-    DiscardImage,
+    DiscardPage,
     CreateImageTask,
     FixedPage,
     MobilePage,
@@ -28,7 +28,6 @@ from Papers.models import (
     Paper,
 )
 from .paper_info import PaperInfoService
-from .validated_spec_service import SpecificationService
 
 
 class ImageBundleService:
@@ -199,7 +198,7 @@ class ImageBundleService:
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
-                DiscardImage.objects.create(
+                DiscardPage.objects.create(
                     image=image, discard_reason=disc.discard_reason
                 )
             else:
