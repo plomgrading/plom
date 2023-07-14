@@ -1,5 +1,13 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block page_heading %}Manage classlist{% endblock %}
+{% block page_heading %}
+    Manage classlist
+{% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
@@ -75,4 +83,4 @@
             </div>
         {% endif %}
     </div>
-{% endblock %}
+{% endblock main_content %}
