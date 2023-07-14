@@ -1344,9 +1344,9 @@ def huey_child_parse_qr_code(image_pk: int, *, quiet=True) -> Dict[str, Any]:
         image_pk: primary key of the image
 
     Keyword Args:
-        quiet (bool): currently unused?
+        quiet: currently unused?
 
-    Return:
+    Returns:
         Information about the QR codes.
     """
     img = StagingImage.objects.get(pk=image_pk)
