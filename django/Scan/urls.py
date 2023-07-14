@@ -27,10 +27,10 @@ from Scan.views import (
     ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
-    DiscardImageType,
-    ExtraliseImageType,
-    KnowifyImageType,
-    UnknowifyImageType,
+    DiscardImageView,
+    ExtraliseImageView,
+    KnowifyImageView,
+    UnknowifyImageView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
 )
@@ -141,22 +141,22 @@ urlpatterns = [
     ),
     path(
         "discard/<timestamp>/<int:index>/",
-        DiscardImageType.as_view(),
+        DiscardImageView.as_view(),
         name="discard_image",
     ),
     path(
         "unknowify/<timestamp>/<int:index>/",
-        UnknowifyImageType.as_view(),
+        UnknowifyImageView.as_view(),
         name="unknowify_image",
     ),
     path(
         "knowify/<timestamp>/<int:index>/",
-        KnowifyImageType.as_view(),
+        KnowifyImageView.as_view(),
         name="knowify_image",
     ),
     path(
         "extralise/<timestamp>/<int:index>/",
-        ExtraliseImageType.as_view(),
+        ExtraliseImageView.as_view(),
         name="extralise_image",
     ),
     path(

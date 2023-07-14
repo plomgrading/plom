@@ -46,10 +46,10 @@ from .scanner_summary import (
 )
 
 from .cast_image_state import (
-    DiscardImageType,
-    ExtraliseImageType,
-    KnowifyImageType,
-    UnknowifyImageType,
+    DiscardImageView,
+    ExtraliseImageView,
+    KnowifyImageView,
+    UnknowifyImageView,
 )
 
 from .rotate_images import (
