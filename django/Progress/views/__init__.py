@@ -15,6 +15,7 @@ from .scan_incomplete import ScanInCompleteView
 from .progress_identify import (
     ProgressIdentifyHome,
     IDImageView,
+    ClearID,
     IDImageWrapView,
 )
 
