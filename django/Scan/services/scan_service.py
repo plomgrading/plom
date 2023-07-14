@@ -1270,8 +1270,14 @@ def huey_parent_read_qr_codes_task(bundle_pk):
 
 @db_task(queue="tasks")
 def huey_child_get_page_image(
-    bundle_pk, index, basedir, basename, *, quiet=True, debug_jpeg=False
-):
+    bundle_pk: int,
+    index: int,
+    basedir: pathlib.Path,
+    basename: str,
+    *,
+    quiet=True,
+    debug_jpeg=False,
+) -> Dict[str, Any]:
     """Render a page image and save to disk in the background.
 
     Args:
@@ -1286,7 +1292,8 @@ def huey_child_get_page_image(
             non-multiplies of 90, and save some low-quality jpegs.
 
     Returns:
-        None
+        Information about the page image, including its file name,
+        thumbnail, hash etc.
     """
     import fitz
     from plom.scan import rotate
