@@ -1,15 +1,29 @@
 @page {
+        margin-left: 2em;
     @top-left {
         content     : "Made with";
-        margin-left : 125mm;
+        margin-left : 147mm;
         margin-top  : 10mm;
     }
     @top-right {
         content         : "";
-        width           : 119px;
-        height          : 40px;
-        margin-right    : -10mm;
+        width           : 60px;
+        height          : 20px;
+        margin-right    : -5mm;
+        margin-bottom   : 3mm;
         background      : url('https://plomgrading.org/images/plomLogo.png');
         background-size : 100%;
     }
+}
+
+div {
+    width: 41em;
+    column-gap: 1em;
+    column-width: 20em;
+    margin-left: 0mm;
+}
+
+p {
+    line-height: 1em;   /* within paragraph */
+    margin-bottom: 1em; /* between paragraphs */
 }

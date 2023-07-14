@@ -50,6 +50,7 @@ class Command(BaseCommand):
         )
         average_mark = marks["total_mark"].mean()
         median_mark = marks["total_mark"].median()
+        stdev_mark = marks["total_mark"].std()
 
         # histogram of grades
         fig, ax = plt.subplots()
@@ -66,7 +67,7 @@ class Command(BaseCommand):
         # histogram of grades for each question
         base64_histogram_of_grades_q = []
         for question in spec["question"]:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
             ax.hist(
                 marks["q" + str(question) + "_mark"],
                 bins=range(0, spec["question"][question]["mark"] + 1),
@@ -91,15 +92,39 @@ class Command(BaseCommand):
         <h2>{longName} report</h2>
         <p>date: {date}</p>
         <br>
-        <p>number of students: {num_students}</p>
-        <p>average mark: {average_mark:.2f}/{totalMarks}</p>
-        <p>median mark: {median_mark}/{totalMarks}</p>
+        <h4>Overview</h4>
+        <p>Number of students: {num_students}</p>
+        <p>Average total mark: {average_mark:.2f}/{totalMarks}</p>
+        <p>Median total mark: {median_mark}/{totalMarks}</p>
+        <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
-        <img src="data:image/png;base64,{base64_histogram_of_grades}" """
+        <img src="data:image/png;base64,{base64_histogram_of_grades}">
+        <br>
+        <p style="break-before: page;"></p>
+        <br>
+        """
+
         for i, hist in enumerate(base64_histogram_of_grades_q):
+            odd = i % 2
+            if not odd:
+                html += f"""
+                <div class="row">
+                """
             html += f"""
+            <div class="col" style="margin-left:0mm;">
             <img class="small-graph" src="data:image/png;base64,{hist}" width="50px" height="40px">
+            </div>
             """
+
+            if odd:
+                html += f"""
+                </div>
+                """
+        if not odd:
+            html += f"""
+            </div>
+            """
+
         html += f"""
         <br>
         <p style="break-before: page;"></p>
