@@ -53,7 +53,8 @@ class MarkingInformationView(ManagerRequiredView):
             self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
         ]
 
-        all_marked = self.mts.get_n_marked_tasks() == self.mts.get_n_total_tasks()
+        total_tasks = self.mts.get_n_total_tasks()
+        all_marked = self.mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
         context.update(
             {
