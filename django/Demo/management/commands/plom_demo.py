@@ -114,17 +114,17 @@ class Command(BaseCommand):
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
-        if stop_at == "bundles_uploaded":
+        if stop_at == "bundles-uploaded":
             return
 
         self.read_bundles(
             dcs, homework_service, config, number_of_bundles, homework_bundles
         )
-        if stop_at == "bundles_read":
+        if stop_at == "bundles-read":
             return
 
         self.push_bundles(dcs, number_of_bundles, homework_bundles)
-        if stop_at == "bundles_pushed":
+        if stop_at == "bundles-pushed":
             return
 
         print("*" * 40)
@@ -179,8 +179,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
+
         if stop_at is not None:
             stop_at = stop_at[0]
+            self.stdout.write(f"Note that demo script will stop after '{stop_at}'")
+
             if options["randomarker"]:
                 raise CommandError(
                     "Cannot run plom-client randomarker with a demo breakpoint."
