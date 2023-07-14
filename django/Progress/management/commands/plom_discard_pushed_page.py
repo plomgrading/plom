@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from Progress.services import ManageDiscardService
 
@@ -9,7 +9,9 @@ from Progress.services import ManageDiscardService
 class Command(BaseCommand):
     """python3 manage.py plom_discard_pushed_page (username) -f (fixedpage pk)."""
 
-    help = "Discard a pushed page"
+    help = (
+        "Discard a pushed page. Note that at present this can only discard dnm pages."
+    )
 
     def discard_pushed_page(
         self,
@@ -27,7 +29,7 @@ class Command(BaseCommand):
             mobilepage_pk=mobilepage_pk,
             dry_run=not not_dry_run,
         )
-        print(ret)
+        self.stdout.write(ret)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -49,7 +51,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--do-it",
             action="store_true",
-            help="",
+            help="By default this command does a dry-run of the discard. Add this flag to actually do the discard.",
         )
 
     def handle(self, *args, **options):

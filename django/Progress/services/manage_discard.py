@@ -8,17 +8,11 @@ from django.db import transaction
 from Papers.models import (
     FixedPage,
     MobilePage,
-    Paper,
-    Image,
-    Bundle,
     IDPage,
     DNMPage,
     QuestionPage,
     DiscardPage,
 )
-
-from Identify.models import PaperIDTask
-from Mark.models import MarkingTask
 
 
 class ManageDiscardService:
@@ -69,14 +63,22 @@ class ManageDiscardService:
     def discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage):
         raise NotImplementedError("Need to set up Marking task invalidation")
 
+        # note that a single mobile page is attached to an image that
+        # might be associated with multiple questions. Accordingly
+        # when we discard this mobile-page we also discard any other
+        # mobile pages associated with this image **and** also flag
+        # the marking tasks associated with those mobile pages as 'out
+        # of date'
+
         DiscardPage.objects.create(
             image=mpage_obj.image,
             discard_reason=f"User {user_obj.username} discarded mobile paper.question {mpage_obj.paper.paper_number}.{mpage_obj.question_number}.",
         )
-        # set the associated marking task to "OUT_OF_DATE"
-        # >>> TODO <<<
 
-        # Now delete the mobile page
+        # find all the mobile pages associated with this image
+        # set the associated marking tasks to "OUT_OF_DATE"
+        # >>> TODO <<<
+        # and now delete each of those mobile pages
         mpage_obj.delete()
 
     def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True):
