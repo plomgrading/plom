@@ -26,7 +26,7 @@
         {% if pqv_mapping_present %}
             <div class="alert alert-primary">
                 <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                <a href="download" target="_blank" class="btn btn-info">download</a>
+                <a href="{% url 'prep_qvmapping_download' %}" target="_blank" class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the question-version map?"

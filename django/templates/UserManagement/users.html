@@ -23,7 +23,7 @@
         {% block main_content %}
             {% for user in users %}
                 {% if 'marker' in user.groups.all.0.name or 'scanner' in user.groups.all.0.name %}
-                    <form method="post" action="users/{{ user.username }}">
+                    <form method="post" action="{% url 'change_user_status' user.username %}">
                         {% csrf_token %}
                         <div class="card mt-2">
                             <div class="card-body d-flex flex-row justify-content-between">
@@ -41,7 +41,7 @@
                                         class="btn btn-info"
                                         name="showProgress"
                                         value="showProgess">
-                                    <a href="progress/{{ user.username }}" class="nav-link" target="_blank">Show Progress</a>
+                                    <a href="{% url 'progress' user.username %}" class="nav-link" target="_blank">Show Progress</a>
                                 </button>
                                 {% if user.is_active %}
                                     <input type="submit"
