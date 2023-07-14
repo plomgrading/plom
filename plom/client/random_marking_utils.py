@@ -231,6 +231,20 @@ def do_random_marking_backend(question, version, *, messenger):
                 rubrics,
                 integrity_check,
             )
+            # 20% chance of marking again
+            if random.randint(0, 10) > 8:
+                print("Remarking task {}".format(task))
+                messenger.MreturnMarkedTask(
+                    task,
+                    question,
+                    version,
+                    score,
+                    random.randint(1, 20),
+                    aname,
+                    plomfile,
+                    rubrics,
+                    integrity_check,
+                )
         # tag one in three papers
         if random.randrange(3) == 0:
             # use up to 3 tags, skewed towards single tag
