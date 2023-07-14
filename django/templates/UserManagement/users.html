@@ -41,7 +41,9 @@
                                         class="btn btn-info"
                                         name="showProgress"
                                         value="showProgess">
-                                    <a href="{% url 'progress' user.username %}" class="nav-link" target="_blank">Show Progress</a>
+                                    <a href="{% url 'progress' user.username %}"
+                                       class="nav-link"
+                                       target="_blank">Show Progress</a>
                                 </button>
                                 {% if user.is_active %}
                                     <input type="submit"

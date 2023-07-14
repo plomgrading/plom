@@ -17,7 +17,9 @@
         {% if student_list_present %}
             <div class="alert alert-primary">
                 <span>Classlist present</span>
-                <a href="download" target="_blank" class="btn btn-info">download</a>
+                <a href="{% url 'prep_classlist_download' %}"
+                   target="_blank"
+                   class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the classlist?"
