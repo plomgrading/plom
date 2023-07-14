@@ -30,6 +30,9 @@ class Command(BaseCommand):
         sms = StudentMarkService()
         tms = TaMarkingService()
         spec = Specification.load().spec_dict
+        # for question in spec["question"]:
+        #     print(question)
+        #     print(spec["question"][question]["mark"])
 
         student_df = sms.get_all_students_download()
         keys = sms.get_csv_header(spec)
@@ -60,6 +63,25 @@ class Command(BaseCommand):
         png_bytes.seek(0)
         base64_histogram_of_grades = base64.b64encode(png_bytes.read()).decode()
 
+        # histogram of grades for each question
+        base64_histogram_of_grades_q = []
+        for question in spec["question"]:
+            fig, ax = plt.subplots()
+            ax.hist(
+                marks["q" + str(question) + "_mark"],
+                bins=range(0, spec["question"][question]["mark"] + 1),
+            )
+            ax.set_title("Histogram of Question " + str(question) + " Marks")
+            ax.set_xlabel("Question " + str(question) + " Mark")
+            ax.set_ylabel("Number of Students")
+            png_bytes = BytesIO()
+            fig.savefig(png_bytes, format="png")
+            # encode the bytes as a base64 string
+            png_bytes.seek(0)
+            base64_histogram_of_grades_q.append(
+                base64.b64encode(png_bytes.read()).decode()
+            )
+
         # table for report
         marks = marks[["student_id", "student_name", "paper_number", "total_mark"]]
         table = marks.to_html()
@@ -73,7 +95,12 @@ class Command(BaseCommand):
         <p>average mark: {average_mark:.2f}/{totalMarks}</p>
         <p>median mark: {median_mark}/{totalMarks}</p>
         <br>
-        <img src="data:image/png;base64,{base64_histogram_of_grades}" alt="Histogram of Total Marks">
+        <img src="data:image/png;base64,{base64_histogram_of_grades}" """
+        for i, hist in enumerate(base64_histogram_of_grades_q):
+            html += f"""
+            <img class="small-graph" src="data:image/png;base64,{hist}" width="50px" height="40px">
+            """
+        html += f"""
         <br>
         <p style="break-before: page;"></p>
         {table}
@@ -83,27 +110,11 @@ class Command(BaseCommand):
         def create_pdf(html):
             """Generate a PDF file from a string of HTML."""
             htmldoc = HTML(string=html, base_url="")
+            # with open("styles.css", "r") as f:
+            #     css = f.read()
+
             return htmldoc.write_pdf(
-                stylesheets=[
-                    CSS(
-                        string="""
-                        @page {
-                            @top-left {
-                                content     : "Made with";
-                                margin-left : 125mm;
-                                margin-top  : 10mm;
-                            }
-                            @top-right {
-                                content         : "";
-                                width           : 119px;
-                                height          : 40px;
-                                margin-right    : -10mm;
-                                background      : url('https://plomgrading.org/images/plomLogo.png');
-                                background-size : 100%;
-                            }
-                        }"""
-                    )
-                ]
+                stylesheets=[CSS("./static/css/generate_report.css")]
             )
 
         def save_pdf_to_disk(pdf_data, file_path):

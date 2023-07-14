@@ -1,0 +1,15 @@
+@page {
+    @top-left {
+        content     : "Made with";
+        margin-left : 125mm;
+        margin-top  : 10mm;
+    }
+    @top-right {
+        content         : "";
+        width           : 119px;
+        height          : 40px;
+        margin-right    : -10mm;
+        background      : url('https://plomgrading.org/images/plomLogo.png');
+        background-size : 100%;
+    }
+}
