@@ -17,8 +17,8 @@ class Command(BaseCommand):
         self,
         username: str,
         *,
-        fixedpage_pk: int = None,
-        mobilepage_pk: int = None,
+        fixedpage_pk: int | None = None,
+        mobilepage_pk: int | None = None,
         not_dry_run: bool = False,
     ):
         mds = ManageDiscardService()
