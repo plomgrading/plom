@@ -139,30 +139,13 @@ copyright_year:
   allow_failure: true
 
 
-# TODO: tighten up by adding `--profile django` (but not with --check?)
 djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
     - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html
-
-
-# eventually replace the above job
-djlint-strict:
-  image: python:3.11
-  stage: static_analysis
-  before_script:
-    - pip install djlint~=1.30.2
-  script:
-    - djlint django/templates/Authentication/*.html --profile django
-    - djlint django/templates/base/*.html --profile django
-    - djlint django/templates/Progress/*.html --profile django
-    - djlint django/templates/Rubrics/*.html --profile django
-    - djlint django/templates/Scan/*.html --profile django
-    - djlint django/templates/SpecCreator/*.html --profile django
-    - djlint django/templates/*/*/*.html --profile django
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --profile django
 
 
 djlint-check:
