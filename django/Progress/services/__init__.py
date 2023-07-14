@@ -2,3 +2,4 @@
 # Copyright (C) 2022 Edith Coates
 
 from .manage_scan import ManageScanService
+from .manage_discard import ManageDiscardService
