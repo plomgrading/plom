@@ -6,9 +6,6 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import arrow
-from datetime import datetime
-
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
@@ -17,47 +14,39 @@ from Papers.models import (
     MobilePage,
     Paper,
     Image,
+    Bundle,
 )
-from Scan.models import StagingImage, StagingBundle
+from Scan.models import StagingBundle
 
 
 class ManageScanService:
-    """
-    Functions for managing the scanning process: tracking progress,
-    handling colliding pages, unknown pages, bundles, etc.
-    """
+    """Functions for overseeing pushed papers."""
 
     def get_total_fixed_pages(self):
-        """
-        Return the total number of fixed pages across all test-papers in the exam.
-        """
-
+        """Return the total number of fixed pages."""
         return FixedPage.objects.all().count()
 
     def get_total_mobile_pages(self):
-        """Return the total number of mobile pages across all
-        test-papers in the exam. Note that an image used for multiple
-        questions will be counted with multiplicity.
+        """Return the total number of mobile pages.
 
+        Note that an image used for multiple questions will be counted
+        with multiplicity.
         """
-
         return MobilePage.objects.all().count()
 
     @transaction.atomic
     def get_number_of_scanned_pages(self):
-        """Return the number of pages in the exam that have been
-        successfully scanned and validated. Note that any mobile page
-        used in multiple questions is counted with multiplicity."""
+        """Return the number of pages scanned and validated.
 
+        Note that any mobile page used in multiple questions is
+        counted with multiplicity.
+        """
         scanned_fixed = FixedPage.objects.exclude(image=None)
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
     def get_total_test_papers(self):
-        """
-        Return the total number of test-papers in the exam.
-        """
-
+        """Return the total number of test-papers in the exam."""
         return Paper.objects.all().count()
 
     @transaction.atomic
@@ -98,8 +87,7 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_completed_test_papers(self):
-        """
-        Return dict of test-papers that have been completely scanned.
+        """Return dict of test-papers that have been completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
@@ -153,32 +141,29 @@ class ManageScanService:
 
         complete = {}
         for paper in all_fixed_present:
-            complete[paper.paper_number] = []
+            complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
             # below here because we did the hard work above
             for fp in paper.fixedpage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["fixed"].append(
                     {
-                        "type": "fixed",
                         "page_number": fp.page_number,
                         "img_pk": fp.image.pk,
                     }
                 )
             for mp in paper.mobilepage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
                 )
         for paper in no_fixed_but_some_mobile:
-            complete[paper.paper_number] = []
+            complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # again we don't specify order or prefetch here because of the work above
             for mp in paper.mobilepage_set.all():
-                complete[paper.paper_number].append(
+                complete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
@@ -187,12 +172,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_incomplete_test_papers(self):
-        """
-        Return a dict of test-papers that are partially but not completely scanned.
+        """Return a dict of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
-
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=True
@@ -219,27 +202,26 @@ class ManageScanService:
 
         incomplete = {}
         for paper in some_but_not_all_fixed_present:
-            incomplete[paper.paper_number] = []
+            incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
                 if fp.image:
-                    incomplete[paper.paper_number].append(
+                    incomplete[paper.paper_number]["fixed"].append(
                         {
-                            "type": "fixed",
+                            "status": "present",
                             "page_number": fp.page_number,
                             "img_pk": fp.image.pk,
                         }
                     )
                 else:
-                    incomplete[paper.paper_number].append(
+                    incomplete[paper.paper_number]["fixed"].append(
                         {
-                            "type": "missing",
+                            "status": "missing",
                             "page_number": fp.page_number,
                         }
                     )
             for mp in paper.mobilepage_set.all():
-                incomplete[paper.paper_number].append(
+                incomplete[paper.paper_number]["mobile"].append(
                     {
-                        "type": "mobile",
                         "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
@@ -249,12 +231,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_incomplete_test_papers(self):
-        """
-        Return the number of test-papers that are partially but not completely scanned.
+        """Return the number of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
-
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         # Get fixed pages with image - ie scanned.
@@ -270,12 +250,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_unused_test_papers(self):
-        """
-        Return the number of test-papers that are usused.
+        """Return the number of test-papers that are usused.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
-
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
@@ -289,12 +267,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_unused_test_papers(self):
-        """
-        Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
+        """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
-
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
@@ -307,51 +283,41 @@ class ManageScanService:
 
     @transaction.atomic
     def get_page_image(self, test_paper, index):
-        """
-        Return a page-image.
+        """Return a page-image.
 
         Args:
             test_paper (int): paper ID
             index (int): page number
         """
-
         paper = Paper.objects.get(paper_number=test_paper)
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    def get_n_bundles(self):
-        """
-        Return the number of uploaded bundles.
-        """
+    def get_number_pushed_bundles(self):
+        """Return the number of pushed bundles."""
+        return Bundle.objects.all().count()
 
-        return StagingBundle.objects.all().count()
+    def get_number_unpushed_bundles(self):
+        """Return the number of uploaded, but not yet pushed, bundles."""
+        return StagingBundle.objects.filter(pushed=False).count()
 
     @transaction.atomic
-    def get_bundles_list(self):
-        """
-        Return a list of all uploaded bundles.
-        """
-
-        bundles = StagingBundle.objects.all()
-
+    def get_pushed_bundles_list(self):
+        """Return a list of all pushed bundles."""
         bundle_list = []
-        for bundle in bundles:
-            n_pages = StagingImage.objects.filter(bundle=bundle).count()
-            n_complete = Image.objects.filter(bundle__hash=bundle.pdf_hash).count()
-            time_uploaded = timezone.make_aware(
-                datetime.fromtimestamp(bundle.timestamp)
-            )
-
+        for bundle in Bundle.objects.all().prefetch_related("staging_bundle", "user"):
             bundle_list.append(
                 {
-                    "name": bundle.slug,
-                    "username": bundle.user.username,
-                    "uploaded": arrow.get(time_uploaded).humanize(),
-                    "n_pages": n_pages,
-                    "n_complete": n_complete,
+                    "name": bundle.staging_bundle.slug,
+                    "pages": Image.objects.filter(bundle=bundle).count(),
+                    "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),
+                    "when_uploaded": arrow.get(
+                        bundle.staging_bundle.time_of_last_update
+                    ).humanize(),
+                    "who_pushed": bundle.user.username,
+                    "who_uploaded": bundle.staging_bundle.user.username,
                 }
             )
-
         return bundle_list
 
     def get_pushed_image(self, img_pk):

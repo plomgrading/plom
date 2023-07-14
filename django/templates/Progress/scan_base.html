@@ -1,7 +1,15 @@
-<!-- Copyright (C) 2022-2023 Edith Coates -->
-{% extends 'base/base.html' %}
-{% block title %}Web Plom - Progress{% endblock %}
-{% block page_heading %}Scanning progress{% endblock %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Edith Coates
+    Copyright (C) 2022-2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Web Plom - Progress
+{% endblock title %}
+{% block page_heading %}
+    Pushed papers
+{% endblock page_heading %}
 {% block main_content %}
     <div class="container-fluid pe-4">
         <div class="card">
@@ -16,44 +24,31 @@
                     </li>
                     <li class="nav-item">
                         {% if curr_page == "bundles" %}
-                            <a class="nav-link active" href="{% url 'progress_scan_bundles' %}">Bundles</a>
+                            <a class="nav-link active" href="{% url 'progress_scan_bundles' %}">Pushed bundles</a>
                         {% else %}
-                            <a class="nav-link" href="{% url 'progress_scan_bundles' %}">Bundles</a>
+                            <a class="nav-link" href="{% url 'progress_scan_bundles' %}">Pushed bundles</a>
                         {% endif %}
                     </li>
                     <li class="nav-item">
-                        {% if curr_page == "unknown_page" %}
-                            <a class="nav-link active" href="{% url 'progress_scan_unknown' %}">Unknown pages</a>
+                        {% if curr_page == "complete" %}
+                            <a class="nav-link active" href="{% url 'progress_scan_complete' %}">Complete papers</a>
                         {% else %}
-                            <a class="nav-link" href="{% url 'progress_scan_unknown' %}">Unknown pages</a>
+                            <a class="nav-link" href="{% url 'progress_scan_complete' %}">Complete papers</a>
                         {% endif %}
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if curr_page == 'error_page' %}active{% endif %}"
-                           href="{% url 'progress_scan_error' %}">
-                            Error pages
-                            {% if n_error %}({{ n_error }}){% endif %}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        {% if curr_page == "extra" %}
-                            <a class="nav-link active" href="{% url 'progress_scan_extra' %}">Extra pages</a>
+                        {% if curr_page == "incomplete" %}
+                            <a class="nav-link active" href="{% url 'progress_scan_incomplete' %}">Incomplete papers</a>
                         {% else %}
-                            <a class="nav-link" href="{% url 'progress_scan_extra' %}">Extra pages</a>
+                            <a class="nav-link" href="{% url 'progress_scan_incomplete' %}">Incomplete papers</a>
                         {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if curr_page == 'discarded' %}active{% endif %}"
-                           href="{% url 'progress_scan_discarded' %}">
-                            Discarded pages
-                            {% if n_discarded %}({{ n_discarded }}){% endif %}
-                        </a>
                     </li>
                 </ul>
             </div>
             <div class="card-body">
-                {% block main_card_content %}{% endblock %}
+                {% block main_card_content %}
+                {% endblock main_card_content %}
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock main_content %}

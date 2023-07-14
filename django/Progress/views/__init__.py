@@ -6,42 +6,16 @@ from .scan_base import BaseScanProgressPage
 
 from .scan_overview import (
     ScanOverview,
-    ScanTestPaperProgress,
-    ScanGetPageImage,
-    ScanTestPageModal,
+    ScanBundlesView,
 )
 
-from .scan_colliding import (
-    ScanColliding,
-    CollidingPagesModal,
-    CollisionPageImage,
-    DiscardCollidingPage,
-    ReplaceImageWithColliding,
-)
-
-from .scan_discarded import (
-    ScanDiscarded,
-    DiscardedPageImage,
-    DiscardedPageModal,
-    DeleteDiscardedPage,
-    RestoreDiscardedPage,
-)
-
-from .scan_error import (
-    ScanError,
-    ErrorPagesModal,
-    ErrorPageImage,
-)
-
-from .scan_progress import (
-    ScanBundles,
-    ScanUnknown,
-    ScanExtra,
-)
+from .scan_complete import ScanCompleteView, PushedImageView, PushedImageWrapView
+from .scan_incomplete import ScanInCompleteView
 
 from .progress_identify import (
     ProgressIdentifyHome,
     IDImageView,
+    ClearID,
     IDImageWrapView,
 )
 

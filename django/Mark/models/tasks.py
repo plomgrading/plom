@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
 
@@ -15,6 +16,8 @@ class MarkingTask(BaseTask):
     code: str, a unique string for indexing a marking task
     question_number: int, the question to mark
     question_version: int, the version of the question
+    latest_annotation: reference to Annotation, the latest annotation for this task
+    marking_priority: float, the priority of this task
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
@@ -24,6 +27,7 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
+    marking_priority = models.FloatField(null=False, default=1.0)
 
 
 class MarkingTaskTag(Tag):

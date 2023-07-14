@@ -340,7 +340,7 @@ class ImageBundleTests(TestCase):
         )
 
         ibs = ImageBundleService()
-        ibs.upload_valid_bundle(bundle)
+        ibs.upload_valid_bundle(bundle, self.user)
 
         self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
         self.assertEqual(
