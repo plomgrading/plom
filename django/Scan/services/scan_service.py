@@ -1000,13 +1000,15 @@ class ScanService:
         return self.get_bundle_paper_numbers(bundle_obj)
 
     @transaction.atomic
-    def get_bundle_missing_paper_page_numbers(self, bundle_obj: StagingBundle):
+    def get_bundle_missing_paper_page_numbers(
+        self, bundle_obj: StagingBundle
+    ) -> list[tuple[int, list[int]]]:
         """Return a list of the missing known pages in papers in the given bundle.
 
         Args:
             bundle_obj (StagingBundle): the given staging bundle to check
         Returns:
-            list: A list of pairs (paper_number (int), [missing pages (int)])
+            A list of pairs (paper_number (int), [missing pages (int)])
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, list] = {}
@@ -1033,7 +1035,7 @@ class ScanService:
         return incomplete_papers
 
     @transaction.atomic
-    def get_bundle_number_incomplete_papers(self, bundle_obj: StagingBundle):
+    def get_bundle_number_incomplete_papers(self, bundle_obj: StagingBundle) -> int:
         """Return number of incomplete papers in the given bundle.
 
         A paper is incomplete when it has more than zero but not all its known pages.
@@ -1041,7 +1043,7 @@ class ScanService:
         Args:
             bundle_obj (StagingBundle): the given staging bundle to check
         Returns:
-            int: the number of incomplete papers in the bundle
+            The number of incomplete papers in the bundle
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, int] = {}

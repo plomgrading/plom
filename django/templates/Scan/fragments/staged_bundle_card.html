@@ -124,6 +124,7 @@
                             {% if n_incomplete == 0 %}
                                 <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
                             {% else %}
+                                <!-- TODO: Some link to docs explaining to user why it is a bad idea to push a bundle with incomplete papers in it. -->
                                 <button hx-post="push/{{ timestamp }}/all/"
                                         class="btn btn-danger"
                                         hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
