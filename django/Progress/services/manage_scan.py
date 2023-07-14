@@ -3,55 +3,50 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import arrow
-from datetime import datetime
-
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
-from Papers.models import FixedPage, MobilePage, Paper, Image, Bundle, DiscardImage
-from Scan.models import StagingImage, StagingBundle
+from Papers.models import (
+    FixedPage,
+    MobilePage,
+    Paper,
+    Image,
+    Bundle,
+)
+from Scan.models import StagingBundle
 
 
 class ManageScanService:
-    """
-    Functions for managing the scanning process: tracking progress,
-    handling colliding pages, unknown pages, bundles, etc.
-    """
+    """Functions for overseeing pushed papers."""
 
     def get_total_fixed_pages(self):
-        """
-        Return the total number of fixed pages across all test-papers in the exam.
-        """
-
+        """Return the total number of fixed pages."""
         return FixedPage.objects.all().count()
 
     def get_total_mobile_pages(self):
-        """Return the total number of mobile pages across all
-        test-papers in the exam. Note that an image used for multiple
-        questions will be counted with multiplicity.
+        """Return the total number of mobile pages.
 
+        Note that an image used for multiple questions will be counted
+        with multiplicity.
         """
-
         return MobilePage.objects.all().count()
 
     @transaction.atomic
     def get_number_of_scanned_pages(self):
-        """Return the number of pages in the exam that have been
-        successfully scanned and validated. Note that any mobile page
-        used in multiple questions is counted with multiplicity."""
+        """Return the number of pages scanned and validated.
 
+        Note that any mobile page used in multiple questions is
+        counted with multiplicity.
+        """
         scanned_fixed = FixedPage.objects.exclude(image=None)
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
     def get_total_test_papers(self):
-        """
-        Return the total number of test-papers in the exam.
-        """
-
+        """Return the total number of test-papers in the exam."""
         return Paper.objects.all().count()
 
     @transaction.atomic
@@ -92,8 +87,7 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_completed_test_papers(self):
-        """
-        Return dict of test-papers that have been completely scanned.
+        """Return dict of test-papers that have been completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
@@ -178,12 +172,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_incomplete_test_papers(self):
-        """
-        Return a dict of test-papers that are partially but not completely scanned.
+        """Return a dict of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
-
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=True
@@ -239,12 +231,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_incomplete_test_papers(self):
-        """
-        Return the number of test-papers that are partially but not completely scanned.
+        """Return the number of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
-
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         # Get fixed pages with image - ie scanned.
@@ -260,12 +250,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_unused_test_papers(self):
-        """
-        Return the number of test-papers that are usused.
+        """Return the number of test-papers that are usused.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
-
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
@@ -279,12 +267,10 @@ class ManageScanService:
 
     @transaction.atomic
     def get_all_unused_test_papers(self):
-        """
-        Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
+        """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
-
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
@@ -297,38 +283,27 @@ class ManageScanService:
 
     @transaction.atomic
     def get_page_image(self, test_paper, index):
-        """
-        Return a page-image.
+        """Return a page-image.
 
         Args:
             test_paper (int): paper ID
             index (int): page number
         """
-
         paper = Paper.objects.get(paper_number=test_paper)
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
     def get_number_pushed_bundles(self):
-        """
-        Return the number of pushed bundles.
-        """
-
+        """Return the number of pushed bundles."""
         return Bundle.objects.all().count()
 
     def get_number_unpushed_bundles(self):
-        """
-        Return the number of uploaded, but not yet pushed, bundles.
-        """
-
+        """Return the number of uploaded, but not yet pushed, bundles."""
         return StagingBundle.objects.filter(pushed=False).count()
 
     @transaction.atomic
     def get_pushed_bundles_list(self):
-        """
-        Return a list of all pushed bundles.
-        """
-
+        """Return a list of all pushed bundles."""
         bundle_list = []
         for bundle in Bundle.objects.all().prefetch_related(
             "staging_bundle", "user", "staging_bundle__user"

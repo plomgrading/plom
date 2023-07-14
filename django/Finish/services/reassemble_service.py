@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.utils import timezone
 
@@ -105,6 +106,10 @@ class ReassembleService:
 
         Returns:
             tuple (int, int or None): question version and score
+
+        Raises:
+            ObjectDoesNotExist: no such marking task, either b/c the paper
+            does not exist or the question does not exist for that paper.
         """
         qvmap = PQVMappingService().get_pqv_map_dict()
         version = qvmap[paper.paper_number][question_number]

@@ -623,25 +623,44 @@ class BaseMessenger:
 
         Returns:
             list: a list of strings, one for each tag.  If there are no tags,
-            you get an empty list.  If the task was not found, you get ``None``.
-            TODO: maybe raising an exception would be friendlier.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+            you get an empty list.
+            On some legacy servers, if the task was not found, you get ``None``
+            rather than an exception.
 
-    def add_single_tag(self, code, tag_text):
+        Raises:
+            PlomNoPaper: the task was not found (or was poorly formed
+                in the request).
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/tags/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code in (404, 406):
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def add_single_tag(self, code: str, tag_text: str) -> None:
+        """Add a tag to a task.
+
+        Args:
+            task: e.g., like ``q0013g1``, for paper 13 question 1.
+            tag_text: the tag.
+
+        Returns:
+            None
+
+        Raises:
+            PlomAuthenticationException
+            PlomBadTagError: invalid tag (such as disallowed chars).
+                Also no such task, or invalid formed task code.
+        """
         with self.SRmutex:
             try:
                 response = self.patch(
@@ -653,7 +672,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code in (406, 404, 410):
-                    raise PlomBadTagError(response.reason)
+                    raise PlomBadTagError(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def remove_single_tag(self, task, tag_text):
@@ -686,6 +705,8 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def create_new_tag(self, tag_text):
@@ -944,42 +965,34 @@ class BaseMessenger:
             url = f"/annotations/{num}/{question}/{edition}"
         if integrity is None:
             integrity = ""
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                url,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "integrity": integrity,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomNoPaper(
-                    "Cannot find image file for {}.".format(num)
-                ) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(num)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(num)
-                ) from None
-            elif response.status_code == 416:
-                raise PlomRangeException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    url,
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "integrity": integrity,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                elif response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                elif response.status_code == 406:
+                    raise PlomTaskChangedError(response.reason) from None
+                elif response.status_code == 410:
+                    raise PlomTaskDeletedError(response.reason) from None
+                elif response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_annotations_image(self, num, question, edition=None):
+    def get_annotations_image(self, num, question, edition=None) -> bytes:
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
@@ -988,11 +1001,11 @@ class BaseMessenger:
             edition (int/None): which annotation set or None for latest.
 
         Returns:
-            BytesIO: contents of a bitmap file.
+            contents of a bitmap file.
 
         Raises:
             PlomAuthenticationException
-            PlomTaskChangedError: TODO: add this back again, with integriy_check??
+            PlomTaskChangedError: TODO: add this back again, with integrity_check??
             PlomTaskDeletedError
             PlomNoPaper
             PlomSeriousException
@@ -1001,31 +1014,25 @@ class BaseMessenger:
             url = f"/annotations_image/{num}/{question}"
         else:
             url = f"/annotations_image/{num}/{question}/{edition}"
-        self.SRmutex.acquire()
-        try:
-            response = self.get(url, json={"user": self.user, "token": self.token})
-            response.raise_for_status()
-            return BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomNoPaper(response.reason) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(num)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(num)
-                ) from None
-            elif response.status_code == 416:
-                raise PlomRangeException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(url, json={"user": self.user, "token": self.token})
+                response.raise_for_status()
+                return BytesIO(response.content).getvalue()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                elif response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                elif response.status_code == 406:
+                    raise PlomTaskChangedError(response.reason) from None
+                elif response.status_code == 410:
+                    raise PlomTaskDeletedError(response.reason) from None
+                elif response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getSolutionStatus(self):
         with self.SRmutex:

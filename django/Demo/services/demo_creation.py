@@ -197,7 +197,7 @@ class DemoCreationService:
                     sleep(0.5)
                 else:
                     print(f"fake_bundle{n}.pdf has been read")
-                    return
+                    break
 
     def push_if_ready(self, number_of_bundles=3, homework_bundles=[], attempts=15):
         print(
@@ -245,15 +245,11 @@ class DemoCreationService:
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
-        caster = ScanCastService()
         if "bundles" not in config.keys():
             return
 
         bundles = config["bundles"]
-        n_bundles = len(bundles)
-
-        for i in range(n_bundles):
-            bundle = bundles[i]
+        for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "extra_page_papers" in bundle.keys():
                 extra_page_papers = bundle["extra_page_papers"]
@@ -263,7 +259,7 @@ class DemoCreationService:
 
                 n_questions = SpecificationService().get_n_questions()
 
-                for i in range(len(extra_page_papers)):
+                for i, ex_paper in enumerate(extra_page_papers):
                     paper_extra_pages = extra_pages[i * 2 : i * 2 + 2]
 
                     # command must be called twice, since the demo generates double extra pages
@@ -276,7 +272,7 @@ class DemoCreationService:
                             "-i",
                             page.staging_image.bundle_order,
                             "-t",
-                            extra_page_papers[i],
+                            ex_paper,
                             "-q",
                             n_questions,  # default to last question
                         )
@@ -286,10 +282,7 @@ class DemoCreationService:
             return
 
         bundles = config["bundles"]
-        n_bundles = len(bundles)
-
-        for i in range(n_bundles):
-            bundle = bundles[i]
+        for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "discard_pages" in bundle.keys():
                 for page in bundle["discard_pages"]:
