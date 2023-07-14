@@ -10,7 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Dict
+from typing import Dict, Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -1040,9 +1040,10 @@ class ScanService:
         """Return a list of the missing known pages in papers in the given bundle.
 
         Args:
-            bundle_obj (StagingBundle): the given staging bundle to check
+            bundle_obj: the given staging bundle to check.
+
         Returns:
-            A list of pairs (paper_number (int), [missing pages (int)])
+            A list of pairs `(paper_number (int), [missing pages (int)])`.
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, list] = {}
@@ -1075,9 +1076,10 @@ class ScanService:
         A paper is incomplete when it has more than zero but not all its known pages.
 
         Args:
-            bundle_obj (StagingBundle): the given staging bundle to check
+            bundle_obj: the given staging bundle to check.
+
         Returns:
-            The number of incomplete papers in the bundle
+            The number of incomplete papers in the bundle.
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, int] = {}
@@ -1328,13 +1330,17 @@ def huey_child_get_page_image(
 
 
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk, *, quiet=True):
+def huey_child_parse_qr_code(image_pk: int, *, quiet=True) -> Dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     Args:
         image_pk: primary key of the image
+
     Keyword Args:
         quiet (bool): currently unused?
+
+    Return:
+        Information about the QR codes.
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
