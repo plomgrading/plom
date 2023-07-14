@@ -15,6 +15,7 @@ from Papers.models import (
     Paper,
     Image,
     Bundle,
+    DiscardPage
 )
 from Scan.models import StagingBundle
 
@@ -334,14 +335,14 @@ class ManageScanService:
         discards = []
 
         for img in (
-            Image.objects.filter(discardimage__isnull=False)
-            .prefetch_related("discardimage", "bundle", "bundle__staging_bundle")
+            Image.objects.filter(discardpage__isnull=False)
+            .prefetch_related("discardpage", "bundle", "bundle__staging_bundle")
             .order_by("bundle", "bundle_order")
         ):
             discards.append(
                 {
                     "image": img.pk,
-                    "reason": img.discardimage.discard_reason,
+                    "reason": img.discardpage.discard_reason,
                     "bundle_pk": img.bundle.pk,
                     "bundle_name": img.bundle.staging_bundle.slug,
                     "order": img.bundle_order,
