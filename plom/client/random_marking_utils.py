@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 from pathlib import Path
@@ -225,7 +226,7 @@ def do_random_marking_backend(question, version, *, messenger):
                 question,
                 version,
                 score,
-                random.randint(1, 20),
+                max(0, round(random.gauss(180, 50))),
                 aname,
                 plomfile,
                 rubrics,
