@@ -225,7 +225,7 @@ def do_random_marking_backend(question, version, *, messenger):
                 question,
                 version,
                 score,
-                random.randint(1, 20),
+                round(random.gauss(180, 50)),
                 aname,
                 plomfile,
                 rubrics,
