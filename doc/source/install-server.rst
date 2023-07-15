@@ -76,7 +76,7 @@ but in practice, there are some caveats:
    **TODO**: it would be good to document this better!
    For now, see :doc:`install-from-source`.
    It may also be useful to `examine the Containerfile in the source
-   code <https://gitlab.com/plom/plom/-/blob/main/Dockerfile>`_.
+   code <https://gitlab.com/plom/plom/-/blob/main/Containerfile.legacy>`_.
 
 
 After installing, you should be able to run the various Plom commands.
