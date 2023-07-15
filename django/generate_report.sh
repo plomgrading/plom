@@ -6,4 +6,4 @@
 export PYTHONPATH=".."
 export DJANGO_SETTINGS_MODULE=Web_Plom.settings
 
-python Finish/generate_report.py
+python Finish/management/commands/generate_report.py
