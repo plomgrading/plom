@@ -47,19 +47,20 @@ MAX_PAPERS_TO_PRODUCE = 9999
 
 
 def get_question_label(spec, n):
-    """Print question label for the nth question from spec dict
+    """Print question label for the nth question from spec dict.
 
-    args:
+    Args:
         spec (dict/SpecVerifier): a spec dict or a SpecVerifier
             object.
         n (int/str): which question, current indexed from 1.
 
-    returns:
+    Returns:
         str: the custom label of a question or "Qn" if one is not set.
-    TODO: change spec question keys to int.
 
-    raises:
+    Raises:
         ValueError: `n` is out of range.
+
+    TODO: change spec question keys to int.
     """
     n = int(n)
     try:
@@ -79,7 +80,7 @@ def get_question_label(spec, n):
 
 
 def isPositiveInt(s):
-    """Check that given string s can be converted to a positive int"""
+    """Check that given string s can be converted to a positive int."""
     try:
         n = int(s)
         if n > 0:
@@ -90,16 +91,17 @@ def isPositiveInt(s):
         return False
 
 
-def isListPosInt(l, lastPage):
-    """Check given list is a list of pos-int, or string that can be converted to pos-ints, bounded below by 1 and above by lastPage. It need not be contiguous or ordered.
+def isListPosInt(l, lastPage) -> bool:
+    """Check for a list of pos-int, bounded below by 1 and above by lastPage.
 
-    args:
+    It need not be contiguous or ordered.
+
+    Args:
         l (list): a list of strings or ints
         lastPage (int): no element of list can be greater.
 
-    returns:
-        Bool
-
+    Returns:
+        Whether input satisfies these conditions.
     """
     # check it is a list
     if not isinstance(l, list):
@@ -114,14 +116,14 @@ def isListPosInt(l, lastPage):
     return True
 
 
-def isContiguous(l):
+def isContiguous(l) -> bool:
     """Check input is a contiguous list of integers.
 
-    args:
+    Args:
         l (list): a list of strings or ints
 
-    returns:
-        bool:
+    Returns:
+        bool
     """
     if not isinstance(l, list):
         return False
@@ -135,10 +137,11 @@ def isContiguous(l):
 def build_page_to_group_dict(spec):
     """Given a valid spec return a dict that translates each page to its containing group.
 
-    args:
+    Args:
         spec (dict): A validated test spec
-    returns:
-        (dict): A dict mapping page numbers to groups: 'ID', 'DNM', or 'Q7'
+
+    Returns:
+        dict: A mapping of page numbers to groups: 'ID', 'DNM', or 'Q7'
     """
     # start with the id page
     page_to_group = {spec["idPage"]: "ID"}
@@ -156,12 +159,14 @@ def build_page_to_group_dict(spec):
 def build_page_to_version_dict(spec, question_versions):
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
-    args:
+    Args:
         spec (dict): A validated test spec
         question_versions (dict): A dict mapping question numbers to version numbers.
         Note that typically each exam has a different qv-map.
-    returns:
-        (dict): A dict mapping page numbers to versions. Note idpages and dnm pages have version 1.
+
+    Returns:
+        dict: A mapping of page numbers to versions. Note idpages and
+        dnm pages have version 1.
     """
     # idpage and dnm pages always from version 1
     page_to_version = {spec["idPage"]: 1}
@@ -392,8 +397,11 @@ class SpecVerifier:
             s["question"].append(self.spec["question"][str(g + 1)])
         return tomlkit.dumps(s)
 
-    # this allows spec["key"] instead of spec.spec["key"] for all
     def __getitem__(self, what):
+        """Pass access to the keys to underlying dict.
+
+        This allows ``spec["key"]`` instead of ``spec.spec["key"]``.
+        """
         return self.spec[what]
 
     @property
@@ -409,8 +417,7 @@ class SpecVerifier:
         Args:
             spec (dict/SpecVerifier): a spec dict or a SpecVerifier
                 object.
-             n (int/str): which question, current indexed from 1.
-
+            n (int/str): which question, current indexed from 1.
 
         Returns:
             str: the custom label of a question or "Qn" if one is not set.
@@ -424,16 +431,19 @@ class SpecVerifier:
 
         By default this will add 10% extra "spare" papers.
 
-        args:
+        Args:
             n (int): how many requested.
 
-        kwargs:
+        Keyword Args:
             spare_percent (int/float): how many extra papers as a
                 percentage of `n` (default: 10).
             min_extra (int): minimum number of extra papers (default: 5)
             max_extra (int): maximum extra papers (default: 100)
 
-        exceptions:
+        Returns:
+            None
+
+        Exceptions:
             ValueError: number of papers already set.
         """
         extra = ceil(spare_percent * n / 100)
@@ -447,6 +457,7 @@ class SpecVerifier:
         )
 
     def __str__(self):
+        """Convert ourselves to a string."""
         N = self.spec.get("numberOfQuestions", "TBD*")
         s = "Plom exam specification:\n  "
         s += "\n  ".join(
@@ -493,14 +504,14 @@ class SpecVerifier:
     def verifySpec(self, verbose=True):
         """Check that spec contains required attributes and insert default values.
 
-        args:
+        Args:
             verbose: `None`/`False` for don't print; `True` is print to
                 standard output; `"log"` means use logging mechanism.
 
-        return:
+        Returns:
             None
 
-        exceptions:
+        Exceptions:
             ValueError: with a message indicating the problem.
         """
         if verbose == "log":
@@ -540,12 +551,15 @@ class SpecVerifier:
 
         self.check_pages(print=prnt)
 
-    def checkCodes(self, verbose=True):
+    def checkCodes(self, *, verbose=True) -> None:
         """Add public and private codes if the spec doesn't already have them.
 
-        args:
+        Keywords Args:
             verbose: `None`/`False` for don't print; `True` is print to
                 standard output; `"log"` means use logging mechanism.
+
+        Returns:
+            None
         """
         if verbose == "log":
             prnt = log.info
@@ -819,13 +833,12 @@ def checkSolutionSpec(testSpec, solutionSpec):
 
     Args:
         testSpec (dict): a validated plom test specification
-        solutionSpec (dict): for example
-        { "numberOfVersions": 2, "numberOfPages": 6, "numberOfQuestions": 3, 'solution': {'1': {'pages': [3]}, '2': {'pages': [4]}, '3': {'pages': [5]} } }
+        solutionSpec (dict): for example:
+            { "numberOfVersions": 2, "numberOfPages": 6, "numberOfQuestions": 3, 'solution': {'1': {'pages': [3]}, '2': {'pages': [4]}, '3': {'pages': [5]} } }
 
     Returns:
-        Pair(Bool, str): Either (True,"All ok") or (False, Error message)
+        Tuple[bool, str]: Either ``(True, "All ok")`` or ``(False, Error message)``.
     """
-
     print("Checking = ", solutionSpec)
     # make sure keys are present
     for x in [

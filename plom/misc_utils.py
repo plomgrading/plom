@@ -4,7 +4,7 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
 
-"""Misc utilities"""
+"""Misc utilities."""
 
 import arrow
 from contextlib import contextmanager
@@ -65,7 +65,7 @@ def is_within_one_hour_of_now(timestamp):
 
 
 def format_int_list_with_runs(L, use_unicode=None):
-    """Replace runs in a list with a range notation"""
+    """Replace runs in a list with a range notation."""
     if use_unicode is None:
         if "utf-8" in str(sys.stdout.encoding).casefold():
             use_unicode = True
@@ -110,7 +110,6 @@ def run_length_encoding(L):
     """Do a run-length-encoding of a list, producing triplets value, start, end.
 
     Examples:
-
     >>> run_length_encoding([7, 2, 2, 2, 9, 3, 3, 3])
     [(7, 0, 1), (2, 1, 4), (9, 4, 5), (3, 5, 8)]
 
@@ -137,14 +136,13 @@ def run_length_encoding(L):
 def next_in_longest_subsequence(items):
     """Guess next entry in the longest unordered contiguous subsequence.
 
-    args:
+    Args:
         items (list): an unordered list of strings.
 
-    return:
+    Returns:
         str/None: the next item in a longest subsequence.
 
     Examples:
-
     >>> next_in_longest_subsequence(["(a)", "(b)"])
     '(c)'
 
