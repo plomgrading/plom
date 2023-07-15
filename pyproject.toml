@@ -232,10 +232,12 @@ module = [
     'django.*',
     'django_huey',
     'huey.*',
+    'matplotlib.*',
     'polymorphic.models',
     'random_username.generate',
     'rest_framework.*',
     'scipy.optimize',
+    'weasyprint',
     'whitenoise',
     'zipfly',
 ]
