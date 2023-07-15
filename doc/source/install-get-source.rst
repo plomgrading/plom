@@ -27,8 +27,8 @@ Dev FAQ list
 How do I change the GUI?
 ........................
 
-You need `qtcreator`.  If we want to modify the ``plom-manager`` tool,
-we use `qtcreator` to edit the ``plom/client/ui_files/ui_manager.ui`` file.
+You need `qtcreator`.  If we want to modify the ``plom-client``,
+we use `qtcreator` to edit the files in ``plom/client/ui_files/``.
 
 
 I've changed the code, how do I install it?
