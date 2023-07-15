@@ -15,12 +15,13 @@
 #
 import os
 import sys
-from django import setup as django_setup
+
+# from django import setup as django_setup
 
 sys.path.insert(0, os.path.abspath("../../django/"))
 sys.path.insert(0, os.path.abspath("../.."))
 os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
-django_setup()
+# django_setup()
 
 # # https://daniel.feldroy.com/posts/2023-01-configuring-sphinx-auto-doc-with-django
 # sys.path.insert(0, os.path.abspath("."))
