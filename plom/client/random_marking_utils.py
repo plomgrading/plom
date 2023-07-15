@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 from pathlib import Path
@@ -9,6 +10,9 @@ import random
 import sys
 import tempfile
 import time
+
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, List
 
 from PyQt6.QtCore import QPointF, QRectF
 from PyQt6.QtGui import QColor, QPainterPath, QPen
@@ -54,8 +58,8 @@ positiveComments = [
     ("+2", "Good"),
     ("+2", "Clever approach"),
 ]
-negativeRubrics = {}
-positiveRubrics = {}
+negativeRubrics: Dict[int, List] = {}
+positiveRubrics: Dict[int, List] = {}
 
 tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic"]
 
@@ -222,7 +226,7 @@ def do_random_marking_backend(question, version, *, messenger):
                 question,
                 version,
                 score,
-                random.randint(1, 20),
+                max(0, round(random.gauss(180, 50))),
                 aname,
                 plomfile,
                 rubrics,

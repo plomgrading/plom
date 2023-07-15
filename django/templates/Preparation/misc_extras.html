@@ -1,8 +1,12 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block page_heading %}Miscellanea{% endblock %}
+{% block page_heading %}
+    Miscellanea
+{% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
@@ -16,8 +20,10 @@
                 </div>
                 <div class="card-text">
                     {% if extra_page_task_status == 'complete' %}
-                        <a class="btn btn-secondary" href="extra_page" target="_">View</a>
-                        <a class="btn btn-success" href="extra_page" download="extra_page.pdf">Download</a>
+                        <a class="btn btn-secondary" href="{% url 'extra_page' %}" target="_">View</a>
+                        <a class="btn btn-success"
+                           href="{% url 'extra_page' %}"
+                           download="extra_page.pdf">Download</a>
                         <button class="btn btn-danger"
                                 hx-delete="extra_page"
                                 hx-confirm="Are you sure you want to delete the extra-page pdf?"
@@ -40,4 +46,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock main_content %}

@@ -146,6 +146,10 @@ def test_spec_valid_shortname():
     SpecVerifier(r).verify()
     r["name"] = "42nd"
     SpecVerifier(r).verify()
+    r["name"] = "dotty.exam"
+    SpecVerifier(r).verify()
+    r["name"] = "hy-phen"
+    SpecVerifier(r).verify()
 
 
 def test_spec_invalid_shortname():

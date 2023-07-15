@@ -83,6 +83,13 @@
                                     {{ n_errors }} <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                 {% endif %}
                             </li>
+                            <li>
+                                {% if n_incomplete == 0 %}
+                                    All papers in bundle are complete <i class="bi bi-check-circle text-success"></i>
+                                {% else %}
+                                    Incomplete papers: {{ n_incomplete }} <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                {% endif %}
+                            </li>
                         {% endif %}
                     {% else %}
                         {% if is_mid_qr_read %}
@@ -114,7 +121,16 @@
                               color: white">View</a>
                     {% if has_qr_codes %}
                         {% if is_perfect %}
-                            <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
+                            {% if n_incomplete == 0 %}
+                                <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
+                            {% else %}
+                                <!-- TODO: Some link to docs explaining to user why it is a bad idea to push a bundle with incomplete papers in it. -->
+                                <button hx-post="push/{{ timestamp }}/all/"
+                                        class="btn btn-danger"
+                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
+                                    Push!
+                                </button>
+                            {% endif %}
                         {% else %}
                             <span data-bs-toggle="tooltip"
                                   data-bs-placement="top"

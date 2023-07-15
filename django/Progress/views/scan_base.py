@@ -4,27 +4,20 @@
 
 from Base.base_group_views import ManagerRequiredView
 
-from Progress.services import ManageScanService
-
 
 class BaseScanProgressPage(ManagerRequiredView):
-    """
-    Base view for each of the "tabs" in the scanning progress card.
-    """
+    """Base view for each of the "tabs" in the pushed progress card."""
 
     def build_context(self, page_name):
-        """
-        page_name (str): name of the current page, for coloring in the active tab
-        """
+        """Build the context for the base pushed progress.
 
-        mss = ManageScanService()
+        Arguments:
+            page_name (str): name of the current page, for coloring in the active tab
+        """
         context = super().build_context()
         context.update(
             {
                 "curr_page": page_name,
-                "n_error": 0,  # mss.get_n_error_image(),
-                "n_discarded": 0,  # mss.get_n_discarded_pages(),
-                "n_error": 0,  # mss.get_n_error_image(),
             }
         )
 

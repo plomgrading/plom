@@ -4,6 +4,9 @@
 # Copyright (C) 2023 Natalie Balashov
 
 from django.db import models
+from django.contrib.auth.models import User
+
+from Scan.models import StagingBundle
 
 
 class Bundle(models.Model):
@@ -17,11 +20,18 @@ class Bundle(models.Model):
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
     hash (str): The sha256 of the bundle/pdf file.
-
+    user: The user who pushed the bundle.
+    time_of_last_update (datetime): The time of last change to the bundle.
+    staging_bundle: a key to the staging bundle from which this bundle was created by a push
     """
 
     name = models.TextField(null=False)
     hash = models.CharField(null=False, max_length=64)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time_of_last_update = models.DateTimeField(auto_now=True)
+    staging_bundle = models.ForeignKey(
+        StagingBundle, null=True, on_delete=models.SET_NULL
+    )
 
 
 class Image(models.Model):
@@ -67,6 +77,6 @@ class Image(models.Model):
     parsed_qr = models.JSONField(default=dict, null=True)
 
 
-class DiscardImage(models.Model):
-    image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
+class DiscardPage(models.Model):
+    image = models.OneToOneField(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()

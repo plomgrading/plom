@@ -11,7 +11,7 @@ from Scan.services import ScanCastService, ScanService
 from Papers.services import SpecificationService, PaperInfoService
 
 
-class DiscardImageType(ScannerRequiredView):
+class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
@@ -22,7 +22,7 @@ class DiscardImageType(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class UnknowifyImageType(ScannerRequiredView):
+class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
@@ -33,7 +33,7 @@ class UnknowifyImageType(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class KnowifyImageType(ScannerRequiredView):
+class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
     def get(self, request, timestamp, index):
@@ -116,7 +116,7 @@ class KnowifyImageType(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class ExtraliseImageType(ScannerRequiredView):
+class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
     def post(self, request, timestamp, index):

@@ -32,6 +32,13 @@ from .mark import (
     GetAllTags,
 )
 
+from .report import (
+    REPspreadsheet,
+    REPidentified,
+    REPcompletionStatus,
+    REPcoverPageInfo,
+)
+
 from .rubrics import (
     MgetRubricsByQuestion,
     MgetRubricPanes,

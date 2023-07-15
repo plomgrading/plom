@@ -29,18 +29,16 @@ class ScanCastService:
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
             return StagingImage.DISCARD
-
         elif img_str.casefold() == "extra":
             return StagingImage.EXTRA
-
         elif img_str.casefold() == "error":
             return StagingImage.ERROR
-
         elif img_str.casefold() == "known":
             return StagingImage.KNOWN
-
         elif img_str.casefold() == "unknown":
             return StagingImage.UNKNOWN
+        elif img_str.casefold() == "unread":
+            return StagingImage.UNREAD
         else:
             raise ValueError(f"Unrecognisable image type '{img_str}'")
 
@@ -102,7 +100,7 @@ class ScanCastService:
             StagingImage.EXTRA,
             StagingImage.ERROR,
         ]:
-            raise ValueError(f"Image type '{image_type}' not recognised.")
+            raise ValueError(f"Cannot discard an image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
@@ -211,7 +209,7 @@ class ScanCastService:
             StagingImage.EXTRA,
             StagingImage.ERROR,
         ]:
-            raise ValueError(f"Image type '{image_type}' not recognised.")
+            raise ValueError(f"Cannot 'unknowify' and image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
@@ -474,14 +472,14 @@ class ScanCastService:
             image_type = img.image_type
 
         if image_type == StagingImage.EXTRA:
-            raise ValueError("Trying to 'extralise' and already 'extra' bundle image.")
+            raise ValueError("Trying to 'extralise' an already 'extra' bundle image.")
         if image_type not in [
             StagingImage.DISCARD,
             StagingImage.KNOWN,
             StagingImage.UNKNOWN,
             StagingImage.ERROR,
         ]:
-            raise ValueError(f"Image type '{image_type}' not recognised.")
+            raise ValueError(f"Cannot 'extralise' an image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"

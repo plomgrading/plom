@@ -200,3 +200,57 @@ ignore="H006,H013,H020,H021,H023,H025,H030,H031"
 convention = "google"
 # TODO: many of these should be fixed instead of ignored!
 add-ignore = "D100,D101,D102,D103,D104,D107,D106"
+
+[tool.mypy]
+# pretty = true
+exclude = [
+    'digitHunter.py',
+]
+
+[[tool.mypy.overrides]]
+module = [
+    'canvasapi',
+    'cv2',
+    'exif',
+    'fitz',
+    'imutils.*',
+    'lapsolver',
+    'requests_toolbelt',
+    'sklearn.*',
+    'stdiomask',
+    'zxingcpp',
+    'api_secrets',
+]
+ignore_missing_imports = true
+
+# another such section for django
+#   - "django.*" is very confusing!  Issue #2532
+[[tool.mypy.overrides]]
+module = [
+    'braces.*',
+    'debugpy',
+    'django.*',
+    'django_huey',
+    'huey.*',
+    'polymorphic.models',
+    'random_username.generate',
+    'rest_framework.*',
+    'scipy.optimize',
+    'whitenoise',
+    'zipfly',
+]
+ignore_missing_imports = true
+
+# hide some things from mypy
+#   - examDB and theServer have strange/confusing import patterns
+#   - tool.py has pyqtProperty stuff that is also confusing to me
+#   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
+[[tool.mypy.overrides]]
+module = [
+    'plom.client.tools.tool',
+    'plom.db.examDB',
+    'plom.server.theServer',
+    'BuildPaperPDF.services.build_papers',  # Issue #2847
+    'Tags.admin',  # Issue #2849
+]
+ignore_errors = true

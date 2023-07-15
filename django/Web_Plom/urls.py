@@ -39,5 +39,7 @@ urlpatterns = [
     path("progress/", include("Progress.urls")),
     path("rubrics/", include("Rubrics.urls")),
     path("paper_tags/", include("Tags.urls")),
-    path("student_marks/", include("StudentMarks.urls")),
+    path("finish/", include("Finish.urls")),
+    path("visualization/", include("Visualization.urls")),
+    path("reports/", include("Reports.urls")),
 ]

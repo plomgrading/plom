@@ -1,9 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Chris Jin
+# Copyright (C) 2023 Brennen Chiu
+
 from django.urls import path
 from UserManagement import views
 
 urlpatterns = [
-    path("users", view=views.UserPage.as_view(), name="listUsers"),
-    path("users/<str:username>", views.UserPage.as_view()),
+    path("users", view=views.UserPage.as_view(), name="users"),
+    path("users/<str:username>", views.UserPage.as_view(), name="change_user_status"),
     # path("users/refresh/", views.UserPage.retryConnection, name="retry_user_page"),
     path("disableScanners/", views.UserPage.disableScanners, name="disableScanners"),
     path("enableScanners/", views.UserPage.enableScanners, name="enableScanners"),

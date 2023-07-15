@@ -1,63 +1,46 @@
-<!-- Copyright (C) 2022 Edith Coates -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
-{% extends 'Progress/scan_base.html' %}
-{% block title %}Web Plom - Progress{% endblock %}
-{% block page_heading %}Scanning progress{% endblock %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "Progress/scan_base.html" %}
 {% block main_card_content %}
-    <script>
-    function toggle_pages(page_id) {
-        console.log('[id^="' + page_id + '"]');
-        let pages = document.querySelectorAll('[id^="' + page_id + '"]');
-        for (let page of pages) {
-            page.hidden = !page.hidden;
-        }
-    }
-    </script>
     <div class="d-grid gap-2">
         <div class="row">
             <div class="col">
-                <ul class="list-unstyled">
-                    <ul>
-                        {{ total_papers }} test papers
-                    </ul>
-                    <ul>
-                        {{ completed_papers }} complete test papers ({{ percent_papers_complete }}%)
-                    </ul>
+                <ul class="list">
+                    <li>{{ total_papers }} papers produced</li>
+                    <li>
+                        {{ completed_papers }} complete papers pushed
+                        <ul>
+                            {% if incomplete_papers %}
+                                <li>
+                                    {{ incomplete_papers }} incomplete papers pushed  <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                </li>
+                            {% else %}
+                                <li>
+                                    all pushed papers are complete <i class="bi bi-check-circle text-success"></i>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li>
+                        {{ pushed_bundles }} bundles pushed
+                        <ul>
+                            {% if unpushed_bundles %}
+                                <li>
+                                    {{ unpushed_bundles }} bundle(s) uploaded but not yet pushed <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                </li>
+                            {% else %}
+                                <li>
+                                    all uploaded bundles have been pushed <i class="bi bi-check-circle text-success"></i>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
                 </ul>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <ul class="list-unstyled">
-                    <ul>
-                        {{ total_pages }} pages
-                    </ul>
-                    <ul>
-                        {{ scanned_pages }} complete pages ({{ percent_pages_complete }}%)
-                    </ul>
-                </ul>
-            </div>
-        </div>
-        <div class="row ps-5 pe-5">
-            <div class="hstack gap-2 ps-0 pb-1">
-                <a class="btn btn-primary"
-                   hx-get="{% url 'progress_scan_tptable' 'all' %}"
-                   hx-target="#progressTable"
-                   hx-swap="outerHTML">Show all</a>
-                <a class="btn btn-primary"
-                   hx-get="{% url 'progress_scan_tptable' 'complete' %}"
-                   hx-target="#progressTable"
-                   hx-swap="outerHTML">Show complete papers</a>
-                <a class="btn btn-primary"
-                   hx-get="{% url 'progress_scan_tptable' 'incomplete' %}"
-                   hx-target="#progressTable"
-                   hx-swap="outerHTML">Show incomplete papers</a>
-            </div>
-            <div class="card" style="max-height: 50vh;">
-                <div class="card-body overflow-auto"
-                     hx-get="{% url 'progress_scan_tptable' 'all' %}"
-                     hx-trigger="load"></div>
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock main_card_content %}

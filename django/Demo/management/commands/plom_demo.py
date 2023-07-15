@@ -37,7 +37,7 @@ class Command(BaseCommand):
         dhs: DemoHWBundleService,
         config: dict,
         homework_bundles,
-    ):
+    ) -> None:
         if ServerConfigService().contains_key(config, "bundles"):
             dbs.scribble_on_exams(config)
 
@@ -76,6 +76,7 @@ class Command(BaseCommand):
         )
 
         dcs.map_extra_pages(config)
+        dcs.map_pages_to_discards(config)
 
     def push_bundles(
         self, dcs: DemoCreationService, number_of_bundles, homework_bundles
@@ -108,20 +109,22 @@ class Command(BaseCommand):
             print("No bundles detected - stopping.")
             return
 
+        assert bundle_service is not None
+        assert homework_service is not None
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
-        if stop_at == "bundles_uploaded":
+        if stop_at == "bundles-uploaded":
             return
 
         self.read_bundles(
             dcs, homework_service, config, number_of_bundles, homework_bundles
         )
-        if stop_at == "bundles_read":
+        if stop_at == "bundles-read":
             return
 
         self.push_bundles(dcs, number_of_bundles, homework_bundles)
-        if stop_at == "bundles_pushed":
+        if stop_at == "bundles-pushed":
             return
 
         print("*" * 40)
@@ -176,8 +179,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
+
         if stop_at is not None:
             stop_at = stop_at[0]
+            self.stdout.write(f"Note that demo script will stop after '{stop_at}'")
+
             if options["randomarker"]:
                 raise CommandError(
                     "Cannot run plom-client randomarker with a demo breakpoint."

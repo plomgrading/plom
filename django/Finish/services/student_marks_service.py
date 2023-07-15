@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import arrow
 
-from Mark.models import MarkingTask, Annotation
+# Yuck, replace this below when we drop Python 3.8 support
+from typing import Dict, Any
+
+from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Identify.models import PaperIDAction, PaperIDTask
 
 
-class StudentMarksService:
+class StudentMarkService:
     """Service for the Student Marks page."""
 
     def get_marks_from_paper(self, paper_num: int, original: bool = False) -> dict:
@@ -95,11 +99,9 @@ class StudentMarksService:
         Returns:
             The count of how many papers a mark for this question.
         """
-        marking_tasks = MarkingTask.objects.filter(question_number=question_num)
-
-        return Annotation.objects.filter(
-            task__in=marking_tasks
-        ).count()  # TODO: #2820 .filter(newest_version=True) once implemented
+        return MarkingTask.objects.filter(
+            question_number=question_num, latest_annotation__isnull=False
+        ).count()
 
     def get_student_info_from_paper(
         self, paper_num: int, original: bool = False
@@ -117,7 +119,7 @@ class StudentMarksService:
         marking_tasks = paper_obj.markingtask_set.all()
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
 
-        student_info = {"paper_number": paper_num}
+        student_info: Dict[str, Any] = {"paper_number": paper_num}
 
         # student info
         if paper_id_task:

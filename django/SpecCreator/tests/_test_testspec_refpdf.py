@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
+
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from pathlib import Path
@@ -39,8 +43,8 @@ class TestSpecRefPDFTests(TestCase):
         spec = TestSpecService()
         ref_service = ReferencePDFService(spec)
         new_pdf = ref_service.create_pdf("dummy", 1, self.dummy_file)
-        num_pdfs = len(models.ReferencePDF.objects.all())
+        num_pdfs = models.ReferencePDF.objects.all().count()
         self.assertEqual(num_pdfs, 1)
         ref_service.delete_pdf()
-        num_pdfs = len(models.ReferencePDF.objects.all())
+        num_pdfs = models.ReferencePDF.objects.all().count()
         self.assertEqual(num_pdfs, 0)

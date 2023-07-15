@@ -42,20 +42,14 @@ from .flag_images import (
 from .scanner_summary import (
     ScannerSummaryView,
     ScannerPushedImageView,
-)
-
-from .change_image_state import (
-    ChangeErrorImageState,
-    ReplacePageImage,
-    ChangeCollisionImageState,
-    DiscardImage,
+    ScannerPushedImageWrapView,
 )
 
 from .cast_image_state import (
-    DiscardImageType,
-    ExtraliseImageType,
-    KnowifyImageType,
-    UnknowifyImageType,
+    DiscardImageView,
+    ExtraliseImageView,
+    KnowifyImageView,
+    UnknowifyImageView,
 )
 
 from .rotate_images import (

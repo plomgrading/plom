@@ -227,8 +227,7 @@ class MgetPageDataQuestionInContext(APIView):
     This routine returns all pages, including ID pages, DNM pages and
     various sorts of extra pages.
 
-    TODO: 409 versus 400?  Legacy used 409...
-    A 400 is returned with an explanation if paper number not found.
+    A 409 is returned with an explanation if paper number not found.
 
     The list of dicts (we think of them as rows) have the keys:
 
@@ -321,11 +320,11 @@ class MgetPageDataQuestionInContext(APIView):
             page_metadata = service.get_question_pages_metadata(
                 paper, question=question, include_idpage=True, include_dnmpages=True
             )
-            return Response(page_metadata, status=status.HTTP_200_OK)
-        except Paper.DoesNotExist:
-            return Response(
-                detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
-            )
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_409_CONFLICT)
+            r.reason_phrase = f"Test paper does not exist: {str(e)}"
+            return r
+        return Response(page_metadata, status=status.HTTP_200_OK)
 
 
 class MgetOneImage(APIView):
@@ -350,16 +349,29 @@ class MgetAnnotations(APIView):
 
     def get(self, request, paper, question):
         mts = MarkingTaskService()
-        annotation = mts.get_latest_annotation(paper, question)
+        try:
+            annotation = mts.get_latest_annotation(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = (
+                f"No annotations for paper {paper} question {question}: " + str(e)
+            )
+            return r
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
-        latest_task = mts.get_latest_task(paper, question)
+        try:
+            latest_task = mts.get_latest_task(paper, question)
+        except ObjectDoesNotExist as e:
+            # Possibly should be 410?  see baseMessenger.py
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
+
         if latest_task != annotation_task:
-            return Response(
-                "Integrity error: task has been modified by server.",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = "Integrity error: task has been modified by server."
+            return r
 
         annotation_data["user"] = annotation.user.username
         annotation_data["annotation_edition"] = annotation.edition
@@ -373,21 +385,27 @@ class MgetAnnotationImage(APIView):
 
     def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
-        annotation = mts.get_latest_annotation(paper, question)
-        if not annotation:
-            return Response(
-                f"No annotations for paper {paper} question {question}",
-                status=status.HTTP_404_NOT_FOUND,
+        try:
+            annotation = mts.get_latest_annotation(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = (
+                f"No annotations for paper {paper} question {question}: " + str(e)
             )
+            return r
         annotation_task = annotation.task
         annotation_image = annotation.image
 
-        latest_task = mts.get_latest_task(paper, question)
+        try:
+            latest_task = mts.get_latest_task(paper, question)
+        except ObjectDoesNotExist as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
         if latest_task != annotation_task:
-            return Response(
-                "Integrity error: task has been modified by server.",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = "Integrity error: task has been modified by server."
+            return r
 
         return FileResponse(
             open(annotation_image.path, "rb"), status=status.HTTP_200_OK
@@ -414,9 +432,13 @@ class TagsFromCodeView(APIView):
         try:
             return Response(mts.get_tags_for_task(code), status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            r.reason_phrase = str(e)
+            return r
         except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
 
     def patch(self, request, code):
         """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
@@ -428,25 +450,28 @@ class TagsFromCodeView(APIView):
             200: OK response
 
         Raises:
-            406: Invalid task code or tag text
+            406: Invalid tag text
             404: Task is not found
+            410: Invalid task code
+
+        TODO: legacy uses 204 in the case of "already tagged", which
+        I think we just silently accept and return 200.
         """
         mts = MarkingTaskService()
         tag_text = request.data["tag_text"]
         tag_text = mts.sanitize_tag_text(tag_text)
+        user = request.user
 
         try:
-            the_task = mts.get_task_from_code(code)
-            the_tag = mts.get_tag_from_text(tag_text)
-            if the_tag:
-                mts.add_tag(the_tag, the_task)
-                return Response(status=status.HTTP_200_OK)
-            else:
-                new_tag = mts.create_tag(request.user, tag_text)
-                mts.add_tag(new_tag, the_task)
-                return Response(status=status.HTTP_200_OK)
+            mts.add_tag_text_from_task_code(tag_text, code, user=user)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+            r = Response(status=status.HTTP_410_GONE)
+            r.reason_phrase = str(e)
+            return r
+        except RuntimeError as e:
+            r = Response(status=status.HTTP_404_NOT_FOUND)
+            r.reason_phrase = str(e)
+            return r
         except ValidationError as e:
             # TODO: why not?
             # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -454,8 +479,7 @@ class TagsFromCodeView(APIView):
             # TODO: yuck but works and looks better than str(e) for ValidationError
             (r.reason_phrase,) = e.args
             return r
-        except RuntimeError as e:
-            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_200_OK)
 
     def delete(self, request, code):
         """Remove a tag from a task.
