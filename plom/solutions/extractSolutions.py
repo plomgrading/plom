@@ -86,10 +86,9 @@ def extractSolutionImages(solution_spec_filename=None, *, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    Return:
+    Returns:
         bytes: the bitmap of the solution.
     """
-
     testSpec = msgr.get_spec()
 
     if solution_spec_filename is None:

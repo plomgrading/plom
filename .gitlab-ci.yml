@@ -26,10 +26,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.23
+image: docker:20.10.24
 
 services:
-  - docker:20.10.23-dind
+  - docker:20.10.24-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -143,7 +143,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.30.2
+    - pip install djlint~=1.31.1
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html --profile django
 
@@ -152,10 +152,9 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.30.2
+    - pip install djlint~=1.31.1
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html --check
-  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -284,7 +283,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.3.0"
+    - pip3 install "black~=23.7.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -352,7 +351,7 @@ mypy-type-checking:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy
+    - python3 -m pip install mypy~=1.4.1
   script:
     - mypy plom --install-types --non-interactive || true
     - mypy plom
@@ -388,7 +387,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 590 ]]"
+    - bash -c "[[ $NUMERR -le 499 ]]"
   allow_failure: true
 
 
@@ -400,7 +399,7 @@ pydocstyle-plom:
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish
+    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish plom/solution plom/idreader plom/manager
   allow_failure: true
 
 
@@ -418,7 +417,7 @@ pydocstyle-django-count:
     - NUMERR=`pydocstyle --count django | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 467 ]]"
+    - bash -c "[[ $NUMERR -le 375 ]]"
   allow_failure: true
 
 
@@ -431,7 +430,7 @@ pydocstyle-django:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd django
-    - pydocstyle -s -e API Authentication Base Demo Identify Mark Rubrics Scan Tags
+    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Profile Progress Rubrics Scan Tags
     - popd
   allow_failure: true
 
@@ -1548,7 +1547,7 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==5.10.1
+  - c:\python310\python -m pip install pyinstaller==5.13.0
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec

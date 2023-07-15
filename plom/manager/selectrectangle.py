@@ -29,7 +29,7 @@ from plom.client.useful_classes import WarnMsg
 
 
 class SelectRectangleWindow(QDialog):
-    """Simple view window for pageimages"""
+    """Simple view window for pageimages."""
 
     def __init__(self, parent, fnames):
         super().__init__(parent)
@@ -126,9 +126,7 @@ class SelectRectangleWindow(QDialog):
 
 # TODO: maybe it can be a subclass of ExamView/ImageViewWidget?
 class IDView(QGraphicsView):
-    """Simple extension of QGraphicsView
-    - containing an image and click-to-zoom/unzoom
-    """
+    """Simple extension of QGraphicsView, containing an image and click-to-zoom/unzoom."""
 
     def __init__(self, parent, fnames):
         # parenting this widget gives a postage-stamp-sized view, not sure why
@@ -151,7 +149,7 @@ class IDView(QGraphicsView):
         self.boxItem.setBrush(QBrush(QColor(0, 255, 0, 64)))
 
     def updateImages(self, fnames):
-        """Update the image with that from filename"""
+        """Update the image with that from filename."""
         if isinstance(fnames, str):
             fnames = [fnames]
         for n in self.images:
