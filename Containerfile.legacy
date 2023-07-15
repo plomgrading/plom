@@ -28,11 +28,11 @@ RUN apt-get -y update && \
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
-COPY requirements.txt /src/
+COPY requirements.txt.legacy /src/
 WORKDIR /src
 # pip from 22.04 is too old for pure pyproject.toml?
 RUN pip install -U --no-cache-dir pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt.legacy
 
 # Because source includes the PyQt client, we need minimal deps for Qt.
 # For example, to install PyQt and run tests
@@ -43,7 +43,8 @@ RUN apt-get -y update && \
 
 COPY . /src
 WORKDIR /src
-RUN pip install --no-cache-dir .
+# pyproject.toml will soon have all the django deps too, so --no-deps
+RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 41984
 
