@@ -551,12 +551,12 @@ class SpecVerifier:
 
         self.check_pages(print=prnt)
 
-    def checkCodes(self, *, verbose=True) -> None:
+    def checkCodes(self, *, verbose=True):
         """Add public and private codes if the spec doesn't already have them.
 
         Keywords Args:
-            verbose: `None`/`False` for don't print; `True` is print to
-                standard output; `"log"` means use logging mechanism.
+            verbose (bool/str): `None`/`False` for don't print; `True` is print
+                to standard output; `"log"` means use logging mechanism.
 
         Returns:
             None
