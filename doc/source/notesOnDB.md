@@ -1,4 +1,10 @@
-# Explanation of the Plom database
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2018-2023 Andrew Rechnitzer
+    Copyright (C) 2022-2023 Colin B. Macdonald
+-->
+
+# Explanation of the legacy Plom server database
 
 A hack at trying to make some notes / questions on the database for plom.
 
@@ -7,7 +13,7 @@ This document tries to explain the structure of the database in `plom/db/examDB.
 WARNING: it may be out of date as it was last modified in 2021.
 
 
-## The tables in the Plom database
+## Tables in the database
 
 ### User
 Who is allowed to do things in Plom - including some higher-authority actors, like the "manage" and "HAL" (who does some automatic tasks for us).

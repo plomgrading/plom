@@ -3,8 +3,8 @@
    Copyright 2020 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Installing the Plom Server
-==========================
+Installing the Plom Legacy Server
+=================================
 
 The instructions here are for the installation of a Plom server.
 This **not** required by your markers; they only need to
@@ -39,9 +39,9 @@ own local directory with `-v`::
 You can override the default command, for example::
 
     docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-create new --demo
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-server init
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-server users --demo
-    docker run -it --rm -P -v $PWD/my_test:/exam plomgrading/server plom-server launch
+    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-legacy-server init
+    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-legacy-server users --demo
+    docker run -it --rm -P -v $PWD/my_test:/exam plomgrading/server plom-legacy-server launch
 
 Alternatively you can get a shell and work inside the image::
 
@@ -80,7 +80,7 @@ but in practice, there are some caveats:
 
 
 After installing, you should be able to run the various Plom commands.
-Try running `plom-server` and you should see something like::
+Try running `plom-legacy-server` and you should see something like::
 
-    $ plom-server --version
-    plom-server 0.8.11
+    $ plom-legacy-server --version
+    plom-legacy-server 0.14.0

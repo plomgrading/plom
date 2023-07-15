@@ -38,4 +38,4 @@ From the root of your git clone (i.e., the directory containing README.md, CONTR
 
     pip install .
 
-Now ``plom-server --version`` should report something like `0.9.0.dev`.
+Now ``plom-create --version`` should report something like `0.14.0.dev0`.
