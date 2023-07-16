@@ -959,7 +959,7 @@ oldOS_mindeps:
 minpy_mindeps:
   stage: alt_build
   needs: []
-  image: python:3.7
+  image: python:3.8
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
