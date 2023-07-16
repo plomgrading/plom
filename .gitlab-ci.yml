@@ -378,7 +378,6 @@ mypy-type-checking:
   script:
     - mypy plom --install-types --non-interactive || true
     - mypy plom
-    - python3 -m pip install -r requirements.txt.django
     - mypy django --install-types --non-interactive || true
     - mypy django
 
@@ -474,7 +473,6 @@ webplom_test:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt.django
     - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
@@ -716,7 +714,6 @@ docs_sphinx:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
     - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
-    - python3 -m pip install -r requirements.txt.django
   script:
     - pushd doc
     - ls
