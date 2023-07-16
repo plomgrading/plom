@@ -26,6 +26,7 @@ canvasapi==2.0.0
 exif==1.2.2
 fonttools==4.37.1
 importlib_resources==5.0.0
+imutils==0.5.4
 numpy==1.19.5
 opencv-python-headless==4.4.0.40
 Pillow==7.0.0
@@ -37,7 +38,9 @@ pytest==6.0.0
 pytest-qt==4.1.0
 scikit-learn==0.23.1
 scipy==1.8.1
+segno>=1.5.2
 stdiomask==0.0.6
+tqdm==4.63.2
 tomli==2.0.1
 tomlkit==0.11.4
 zipfly==6.0.1

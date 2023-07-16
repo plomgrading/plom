@@ -53,7 +53,7 @@ dependencies = [
     "exif>=1.2.2",
     "fonttools>=4.37.1",
     'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
-    "imutils",
+    "imutils>=0.5.4",
     "lapsolver",  # ID reading
     "model_bakery>=1.11.0",
     "numpy>=1.19.5",
@@ -74,12 +74,12 @@ dependencies = [
     "requests-toolbelt",
     "scikit-learn>=0.23.1",
     "scipy>=1.8.1",
-    "segno",
+    "segno>=1.5.2",
     "stdiomask>=0.0.6",
     "tabulate>=0.9.0",
     'tomli>=2.0.1 ; python_version<"3.11"',  # until we drop 3.10
     "tomlkit>=0.11.4",
-    "tqdm",
+    "tqdm>=4.63.2",
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=1.4.0",
