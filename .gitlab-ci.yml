@@ -69,9 +69,9 @@ docker-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.legacy
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.bulk
       else
-        docker build --tag $IM . -f Containerfile.legacy
+        docker build --tag $IM . -f Containerfile.bulk
       fi
     - docker push $IM
 
