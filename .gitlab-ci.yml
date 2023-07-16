@@ -37,8 +37,6 @@ variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
-  IM_LEGACY: $CI_REGISTRY_IMAGE/legacy-server:$CI_COMMIT_REF_SLUG
-  IM_LEGACY_LATEST: $CI_REGISTRY_IMAGE/legacy-server:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
   MACBIN_PY_VER: 3.11.4
@@ -74,17 +72,6 @@ docker-image:
         docker build --tag $IM . -f Containerfile.bulk
       fi
     - docker push $IM
-
-
-# TODO: later this might be a thin layer running plom-legacy-demo
-container-image-legacy:
-  stage: build
-  needs: ["docker-image"]
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker pull $IM
-    - docker tag $IM $IM_LEGACY
-    - docker push $IM_LEGACY
 
 
 # Get fast results by running tests in a copy-pasta of the docker-image job
@@ -481,9 +468,10 @@ webplom_test:
         path: django/django_coverage.xml
 
 
+# a legacy-only job
 demoserver:
   stage: test
-  needs: ["container-image-legacy"]
+  needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -528,9 +516,10 @@ demoserver:
     - popd
 
 
+# a legacy-only job
 hwdemoserver:
   stage: test
-  needs: ["container-image-legacy"]
+  needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -594,9 +583,10 @@ hwdemoserver:
     - popd
 
 
+# a legacy-only job
 fullworkflow:
   stage: test
-  needs: ["container-image-legacy"]
+  needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get update
