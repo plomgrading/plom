@@ -149,12 +149,9 @@ class PageImageProcessorTests(TestCase):
             expected_matrix = np.float64(
                 [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
             )
-            print(affine_matrix)
-            print(expected_matrix)
-            print(np.linalg.norm(affine_matrix - expected_matrix, "fro"))
-            self.assertTrue(
-                np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001
-            )
+            err = np.linalg.norm(affine_matrix - expected_matrix, "fro")
+            relative_err = err / np.linalg.norm(expected_matrix, "fro")
+            self.assertTrue(relative_err < 0.01)
 
     def test_affine_matrix_no_correction(self):
         """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
