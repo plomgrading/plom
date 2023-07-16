@@ -732,7 +732,7 @@ docs_sphinx:
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 # TODO: likely python3-zxing-cpp is too old
-fedora_build:
+fedora_legacy:
   stage: alt_build
   needs: []
   image: fedora:38
@@ -805,6 +805,57 @@ fedora_build:
     - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
+    - popd
+
+
+# get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
+# TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+# TODO: likely python3-zxing-cpp is too old
+fedora_webplom:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+  stage: alt_build
+  needs: []
+  image: fedora:38
+  when: manual
+  allow_failure: true
+  before_script:
+    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-passlib python3-pyqt6
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-aiohttp
+          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-tomlkit python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          file python3-file-magic
+          iproute
+          python3-django
+    - pip --version
+  script:
+    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - dnf install -y git
+    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
+    - pip install .
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
+    - pushd django
+    - export PLOM_USING_DOCKER=1
+    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py test
     - popd
 
 
