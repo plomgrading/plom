@@ -36,7 +36,6 @@ file-magic==0.4.1
 fonttools==4.39.4
 importlib-resources==5.12.0
 imutils==0.5.4
-lapsolver==1.1.0
 model_bakery==1.11.0
 numpy==1.24.3
 opencv-python-headless==4.7.0.72
