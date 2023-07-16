@@ -491,7 +491,7 @@ webplom_test:
 
 demoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image-legacy"]
   image: $IM
   before_script:
     - apt-get update
@@ -538,7 +538,7 @@ demoserver:
 
 hwdemoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image-legacy"]
   image: $IM
   before_script:
     - apt-get update
@@ -604,7 +604,7 @@ hwdemoserver:
 
 fullworkflow:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image-legacy"]
   image: $IM
   before_script:
     - apt-get update
@@ -705,7 +705,6 @@ appstreamValid:
 
 
 # TODO: perhaps all deps should be in the docker image?
-# TODO: django requirements too?
 docs_sphinx:
   stage: test
   needs: ["docker-image"]

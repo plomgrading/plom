@@ -43,7 +43,7 @@ RUN apt-get -y update && \
 
 COPY . /src
 WORKDIR /src
-# pyproject.toml will soon have all the django deps too, so --no-deps
+# pyproject.toml has all the django deps too, so --no-deps
 RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 41984
