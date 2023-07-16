@@ -31,10 +31,14 @@ image: docker:20.10.24
 services:
   - docker:20.10.24-dind
 
+# $CI_REGISTRY_IMAGE is:
+# registry.gitlab.com/plom/plom
 variables:
   DOCKER_DRIVER: overlay2
-  IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  IM_LATEST: $CI_REGISTRY_IMAGE:latest
+  IM: $CI_REGISTRY_IMAGE/bulk:$CI_COMMIT_REF_SLUG
+  IM_LATEST: $CI_REGISTRY_IMAGE/bulk:latest
+  IM_LEGACY: $CI_REGISTRY_IMAGE/legacy:$CI_COMMIT_REF_SLUG
+  IM_LEGACY_LATEST: $CI_REGISTRY_IMAGE/legacy:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
   MACBIN_PY_VER: 3.11.4
@@ -58,7 +62,6 @@ docker-image:
   needs: []
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - echo $CI_REGISTRY_IMAGE
     - echo $DOCKER_USE_CACHE
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
@@ -71,6 +74,25 @@ docker-image:
         docker build --tag $IM . -f Containerfile.legacy
       fi
     - docker push $IM
+
+
+docker-image-legacy:
+  stage: build
+  needs: []
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - echo $DOCKER_USE_CACHE
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker pull $IM_LEGACY_LATEST || true
+      fi
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker build --cache-from $IM_LEGACY_LATEST --tag $IM_LEGACY . -f Containerfile.legacy
+      else
+        docker build --tag $IM_LEGACY . -f Containerfile.legacy
+      fi
+    - docker push $IM_LEGACY
 
 
 # Get fast results by running tests in a copy-pasta of the docker-image job
