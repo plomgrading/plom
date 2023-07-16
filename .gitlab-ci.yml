@@ -83,6 +83,7 @@ container-image-legacy:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IM
+    - docker tag $IM $IM_LEGACY
     - docker push $IM_LEGACY
 
 
