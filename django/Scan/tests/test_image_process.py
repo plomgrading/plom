@@ -149,6 +149,9 @@ class PageImageProcessorTests(TestCase):
             expected_matrix = np.float64(
                 [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
             )
+            print(affine_matrix)
+            print(expected_matrix)
+            print(np.linalg.norm(affine_matrix - expected_matrix, "fro"))
             self.assertTrue(
                 np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001
             )
