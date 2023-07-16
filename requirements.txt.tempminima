@@ -19,16 +19,16 @@
 PyQt6==6.2.0
 PyQt6-sip==13.1.0
 
-appdirs==1.4.3
 aiohttp==3.7.2
+appdirs==1.4.3
 arrow==1.1.1
 canvasapi==2.0.0
 exif==1.2.2
 fonttools==4.37.1
 importlib_resources==5.0.0
-Pillow==7.0.0
-opencv-python-headless==4.4.0.40
 numpy==1.19.5
+opencv-python-headless==4.4.0.40
+Pillow==7.0.0
 pandas==1.0.0
 peewee==3.13.3
 pymupdf==1.21.0
@@ -40,4 +40,5 @@ scipy==1.8.1
 stdiomask==0.0.6
 tomli==2.0.1
 tomlkit==0.11.4
+zipfly==6.0.1
 zxing-cpp==1.4.0
