@@ -37,8 +37,8 @@ variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE/bulk:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE/bulk:latest
-  IM_LEGACY: $CI_REGISTRY_IMAGE/legacy:$CI_COMMIT_REF_SLUG
-  IM_LEGACY_LATEST: $CI_REGISTRY_IMAGE/legacy:latest
+  IM_LEGACY: $CI_REGISTRY_IMAGE/legacy-server:$CI_COMMIT_REF_SLUG
+  IM_LEGACY_LATEST: $CI_REGISTRY_IMAGE/legacy-server:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
   MACBIN_PY_VER: 3.11.4
@@ -76,7 +76,7 @@ docker-image:
     - docker push $IM
 
 
-docker-image-legacy:
+container-image-legacy:
   stage: build
   needs: []
   script:
