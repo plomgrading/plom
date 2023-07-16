@@ -826,6 +826,7 @@ fedora_webplom:
   when: manual
   allow_failure: true
   before_script:
+    # removed python3-PyMuPDF for Issue #2874
     - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
@@ -838,7 +839,7 @@ fedora_webplom:
           python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-scikit-learn python3-PyMySQL
           file python3-file-magic
           iproute
           python3-django
