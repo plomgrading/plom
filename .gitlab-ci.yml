@@ -473,6 +473,8 @@ webplom_test:
 # 2. take python deps from package manager
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
+# TODO: currently running on Ubuntu 22.04 b/c django-plom needs Python 3.10
+# TODO: but we promise 3.8 support in pyproject.toml: see Issue #2880.
 oldOS_mindeps_webplom:
   services:
     - postgres:12.2-alpine
@@ -483,7 +485,7 @@ oldOS_mindeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
   stage: alt_build
   needs: []
-  image: ubuntu:20.04
+  image: ubuntu:22.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
