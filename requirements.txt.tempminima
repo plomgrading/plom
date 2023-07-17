@@ -38,7 +38,7 @@ fonttools==4.37.1
 importlib_resources==5.0.0
 imutils==0.5.4
 numpy==1.21.2
-opencv-python-headless==4.4.0.40
+opencv-python-headless==4.5.4.60
 Pillow==7.0.0
 pandas==1.0.0
 peewee==3.13.3
