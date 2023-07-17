@@ -42,7 +42,7 @@ and were last tested in March 2023.
 3.  `pip install --user plom` (or `pip install --user .` from inside
     the Plom source tree) should pull in the remaining dependencies.
 4.  Like regular Ubuntu, this seems to lack `~/.local/bin` in the path so
-    you may not be able to run `plom-server`.
+    you may not be able to run `plom-create`.
       - You can try `~/.local/bin/plom-demo` to see if things are working
         without messing around with such config files.
       - Probably you need to modify the `PATH` environment variable in a
