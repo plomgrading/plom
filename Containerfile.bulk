@@ -43,7 +43,7 @@ RUN apt-get -y update && \
 
 COPY . /src
 WORKDIR /src
-RUN pip install .
+RUN pip install --no-cache-dir .
 
 EXPOSE 41984
 
