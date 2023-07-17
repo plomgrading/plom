@@ -38,7 +38,7 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(
-            f"A valid test spec is present - shortname = {spec_dict['name']}"
+            f"A valid test spec is present: shortname {spec_dict['name']}"
         )
         if dest is None:
             fname = Path(slugify(spec_dict["name"]) + "_spec.toml")
@@ -46,7 +46,7 @@ class Command(BaseCommand):
             fname = Path(dest)
         self.stdout.write(f"Writing test spec toml to {fname}")
         if fname.exists():
-            self.stderr.write(f"File {fname} already present - cannot overwrite.")
+            self.stderr.write(f"File {fname} already present - not overwriting.")
             return
         with open(fname, "w") as fh:
             tomlkit.dump(spec_dict, fh)
