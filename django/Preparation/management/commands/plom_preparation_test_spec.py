@@ -10,7 +10,6 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomlkit
 
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
@@ -57,8 +56,8 @@ class Command(BaseCommand):
         if fname.exists():
             self.stderr.write(f"File {fname} already present - not overwriting.")
             return
-        with open(fname, "w") as fh:
-            tomlkit.dump(spec_dict, fh)
+        with open(fname, "w") as f:
+            f.write(speck.get_the_spec_as_toml())
 
     def upload_spec(self, spec_file, pdf_file):
         speck = SpecificationService()
