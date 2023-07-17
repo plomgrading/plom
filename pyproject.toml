@@ -56,7 +56,7 @@ dependencies = [
     "imutils>=0.5.4",
     "lapsolver",  # ID reading
     "model_bakery>=1.11.0",
-    "numpy>=1.19.5",
+    "numpy>=1.21.2",
     "opencv-python-headless>=4.4.0.40",
     "packaging",
     "pandas>=1.0.0",
