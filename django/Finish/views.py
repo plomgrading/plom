@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 import arrow
 import csv
+import json
 from io import StringIO
 
 from django.http import JsonResponse, HttpResponse
@@ -56,6 +58,10 @@ class MarkingInformationView(ManagerRequiredView):
         total_tasks = self.mts.get_n_total_tasks()
         all_marked = self.mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
+        question_stats = self.sms.get_stats_for_questions(papers)
+        grades_hist_data = self.sms.convert_stats_to_hist_format(question_stats)
+        grades_hist_data = json.dumps(grades_hist_data)
+
         context.update(
             {
                 "papers": papers,
@@ -69,6 +75,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "student_marks_form": self.smff,
                 "hours_estimate": hours_estimate,
                 "days_estimate": days_estimate,
+                "grades_hist_data": grades_hist_data,
             }
         )
 
