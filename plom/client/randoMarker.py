@@ -25,7 +25,7 @@ from plom import Default_Port
 from .random_marking_utils import (
     do_rando_marking,
     build_random_rubrics,
-    do_rando_user_marking,
+    do_user_random_marking,
 )
 
 __all__ = [
@@ -82,18 +82,16 @@ if __name__ == "__main__":
         "demoMarker2",
         "demoMarker3",
         "demoMarker4",
+        "demoMarker4",
         "demoMarker5",
-        "demoManager1",
-        "manager",
     ]
     args.password = [
         "demoMarker1",
         "demoMarker2",
         "demoMarker3",
         "demoMarker4",
+        "demoMarker4",
         "demoMarker5",
-        "demoManager1",
-        "1234",
     ]
 
-    sys.exit(do_rando_user_marking(args.server, args.user, args.password))
+    sys.exit(do_user_random_marking(args.server, args.user, args.password))

@@ -348,10 +348,11 @@ def do_rando_marking(server, user, password):
     return 0
 
 
-def do_rando_user_marking(server, user, password):
-    """Randomly annotate the papers assigning RANDOM accounts and grades: only for testing please.
+def do_user_random_marking(server, user, password):
+    """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
-    .. caution:: Only for testing/demos.  Do not use for real tests.
+    .. caution:: Only for testing/demos.  Do not use for real tests. Uses a different
+    user for each question, version pair.
 
     Also, for each paper, with probability 1/3, we tag with up to 3
     randomly selected tags.
@@ -404,8 +405,8 @@ def do_rando_user_marking(server, user, password):
                 print("Annotating question {} version {}".format(q, v))
                 try:
                     messenger.closeUser()
-                    previous_user = user[user_index % n_users]
-                    previous_pass = password[user_index % n_users]
+                    previous_user = user[user_index]
+                    previous_pass = password[user_index]
                     messenger.requestAndSaveToken(previous_user, previous_pass)
                 except PlomExistingLoginException:
                     print(
