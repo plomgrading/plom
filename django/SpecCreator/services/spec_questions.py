@@ -95,8 +95,9 @@ class TestSpecQuestionService:
             The question label.
         """
         question = self.get_question()
-        if question:
-            return question.label
+        if not question:
+            raise RuntimeError("unexpectedly could not get question")
+        return question.label
 
     def get_question_marks(self) -> int:
         """Get the number of marks for the question.
@@ -105,8 +106,9 @@ class TestSpecQuestionService:
             The question maximum mark.
         """
         question = self.get_question()
-        if question:
-            return question.mark
+        if not question:
+            raise RuntimeError("unexpectedly could not get question")
+        return question.mark
 
     def get_question_shuffle(self) -> bool:
         """Get whether this is a shuffle question.
@@ -122,11 +124,11 @@ class TestSpecQuestionService:
 
         Returns:
             Either ``"shuffle"`` or ``"fix"``.
-            TODO: but it can also return None?!  Issue #2881.
         """
         question = self.get_question()
-        if question:
-            return "shuffle" if question.shuffle else "fix"
+        if not question:
+            raise RuntimeError("unexpectedly could not get question")
+        return "shuffle" if question.shuffle else "fix"
 
     def is_question_completed(self) -> bool:
         """Are all the necessary fields completed for the question?
