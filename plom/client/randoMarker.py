@@ -72,9 +72,16 @@ def get_parser():
         metavar="N",
         action="store",
         help="""
-            Question question to mark.  If omitted, mark all of them.
-            TODO: Not implemented yet.
-            TODO: `--version` would be ... confusing for argparse!
+            Question number to mark.  If omitted, mark all of them.
+        """,
+    )
+    # potentially confusing with --verbose and software --version :(
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store",
+        help="""
+            Which version to mark.  If omitted, mark all of them.
         """,
     )
     return parser
@@ -96,5 +103,12 @@ if __name__ == "__main__":
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
     sys.exit(
-        do_rando_marking(args.server, args.user, args.password, partial=args.partial)
+        do_rando_marking(
+            args.server,
+            args.user,
+            args.password,
+            partial=args.partial,
+            question=args.question,
+            version=args.version,
+        )
     )

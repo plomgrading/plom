@@ -10,6 +10,7 @@ import random
 import sys
 import tempfile
 import time
+from typing import Union
 
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Dict, List
@@ -301,7 +302,13 @@ def build_random_rubrics(question, *, username, messenger) -> None:
 
 
 def do_rando_marking(
-    server: str, user: str, password: str, *, partial: float = 100.0
+    server: str,
+    user: str,
+    password: str,
+    *,
+    partial: float = 100.0,
+    question: Union[None, int] = None,
+    version: Union[None, int],
 ) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
@@ -317,6 +324,8 @@ def do_rando_marking(
 
     Keyword Args:
         partial: what percentage of papers to grade?
+        question: what question to mark or if omitted, mark all of them.
+        version: what version to mark or if omitted, mark all of them.
 
     Returns:
         0 on success, non-zero on error/unexpected.
@@ -347,10 +356,20 @@ def do_rando_marking(
         L.extend(["-platform", "offscreen"])
         Qapp = QApplication(L)
 
-        for q in range(1, spec["numberOfQuestions"] + 1):
+        if question is None:
+            questions = range(1, spec["numberOfQuestions"] + 1)
+        else:
+            questions = [question]
+
+        if version is None:
+            versions = range(1, spec["numberOfVersions"] + 1)
+        else:
+            versions = [version]
+
+        for q in questions:
             build_random_rubrics(q, username=user, messenger=messenger)
-            for v in range(1, spec["numberOfVersions"] + 1):
-                print("Annotating question {} version {}".format(q, v))
+            for v in versions:
+                print(f"Annotating question {q} version {v}")
                 do_random_marking_backend(q, v, messenger=messenger, partial=partial)
     finally:
         messenger.closeUser()
