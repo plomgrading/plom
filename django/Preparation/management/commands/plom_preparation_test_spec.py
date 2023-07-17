@@ -12,6 +12,16 @@ else:
     import tomllib
 import tomlkit
 
+from django.core.management.base import BaseCommand
+from django.utils.text import slugify
+from django.core.files.uploadedfile import SimpleUploadedFile
+import fitz
+from plom import SpecVerifier
+
+from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from Papers.services import SpecificationService
+from Preparation.services import PQVMappingService
+
 
 class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
