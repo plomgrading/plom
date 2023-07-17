@@ -405,8 +405,8 @@ def do_user_random_marking(server, user, password):
                 print("Annotating question {} version {}".format(q, v))
                 try:
                     messenger.closeUser()
-                    previous_user = user[user_index]
-                    previous_pass = password[user_index]
+                    previous_user = user[user_index % n_users]
+                    previous_pass = password[user_index % n_passwords]
                     messenger.requestAndSaveToken(previous_user, previous_pass)
                 except PlomExistingLoginException:
                     print(
