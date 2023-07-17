@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Julian Lapenna
 
 """Randomly scribble marks and annotations on papers for testing purposes.
 
