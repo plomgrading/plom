@@ -1,18 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
-from django.core.management.base import BaseCommand
-from django.utils.text import slugify
-from django.core.files.uploadedfile import SimpleUploadedFile
-
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
-from Papers.services import SpecificationService
-from Preparation.services import PQVMappingService
-from plom import SpecVerifier
-
-import copy
-import fitz
 from pathlib import Path
 import sys
 
@@ -89,9 +79,7 @@ class Command(BaseCommand):
         elif spec_dict["numberToProduce"] == 0:
             spec_dict["numberToProduce"] = 1
 
-        # CAREFUL - vlad will change the underly dict, so pass it a copy
-        vlad = SpecVerifier(copy.deepcopy(spec_dict))
-
+        vlad = SpecVerifier(spec_dict)
         try:
             vlad.verifySpec()
             validated_spec = vlad.spec
