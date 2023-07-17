@@ -3,6 +3,8 @@
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
+from typing import Union
+
 from django.core.exceptions import ObjectDoesNotExist
 from .. import models
 from . import TestSpecService
@@ -49,7 +51,7 @@ class TestSpecQuestionService:
                 page["question_page"] = False
         test_spec.save()
 
-    def get_question(self):
+    def get_question(self) -> Union[None, models.TestSpecQuestion]:
         """Get a question from the database.
 
         Returns:
@@ -110,13 +112,15 @@ class TestSpecQuestionService:
             raise RuntimeError("unexpectedly could not get question")
         return question.mark
 
-    def get_question_shuffle(self) -> bool:
+    def is_shuffle(self) -> bool:
         """Get whether this is a shuffle question.
 
         Returns:
             True if shuffle, False if fixed.
         """
         question = self.get_question()
+        if not question:
+            raise RuntimeError("unexpectedly could not get question")
         return question.shuffle
 
     def get_question_fix_or_shuffle(self) -> str:
@@ -136,11 +140,9 @@ class TestSpecQuestionService:
         Returns:
             Are all the fields truthy?
         """
-        return (
-            self.get_question_label()
-            and self.get_question_marks()
-            and self.get_question_shuffle() is not None
-        )
+        if not self.get_question_label():
+            return False
+        return (self.get_question_marks() != 0) and self.is_shuffle()
 
     def get_marks_assigned_to_other_questions(self) -> int:
         """Get the total marks - current marks (passed down from question detail view).
