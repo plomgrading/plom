@@ -64,6 +64,8 @@ def get_parser():
         help="""
             What percentage of questions to mark?
             Default is 100; mark all of them.
+            Technically, this is a i.i.d. probability of grading
+            each task that the server has.
         """,
     )
     parser.add_argument(
