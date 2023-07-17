@@ -691,7 +691,7 @@ docs_sphinx:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
+    - pip install -r doc/requirements.txt
   script:
     - pushd doc
     - ls
