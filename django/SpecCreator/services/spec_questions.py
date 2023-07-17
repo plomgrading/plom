@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Natalie Balashov
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 from .. import models
@@ -9,19 +9,24 @@ from . import TestSpecService
 
 
 class TestSpecQuestionService:
-    """Keep track of a question in a test specification"""
+    """Keep track of a question in a test specification."""
 
     def __init__(self, one_index: int, spec_service: TestSpecService):
         self.spec = spec_service
         self.one_index = one_index
 
-    def create_question(self, label: str, mark: int, shuffle: bool):
-        """Create a question object
+    def create_question(
+        self, label: str, mark: int, shuffle: bool
+    ) -> models.TestSpecQuestion:
+        """Create a question object.
 
         Args:
             label: question label
             mark: max marks for the question
             shuffle: Randomize question across test versions?
+
+        Returns:
+            TestSpecQuestion: the question object.
         """
         question = models.TestSpecQuestion(
             index=self.one_index, label=label, mark=mark, shuffle=shuffle
@@ -29,8 +34,8 @@ class TestSpecQuestionService:
         question.save()
         return question
 
-    def remove_question(self):
-        """Remove a question from the database, clear any selected pages in TestSpecInfo"""
+    def remove_question(self) -> None:
+        """Remove a question from the database, clear any selected pages in TestSpecInfo."""
         question_exists = models.TestSpecQuestion.objects.filter(index=self.one_index)
         if question_exists:
             question = models.TestSpecQuestion.objects.get(index=self.one_index)
@@ -45,7 +50,7 @@ class TestSpecQuestionService:
         test_spec.save()
 
     def get_question(self):
-        """Get a question from the database
+        """Get a question from the database.
 
         Returns:
             models.TestSpecQuestion or None: the question object
@@ -55,20 +60,20 @@ class TestSpecQuestionService:
         else:
             return None
 
-    def question_exists(self):
-        """Check if a question exists in the database
+    def question_exists(self) -> bool:
+        """Check if a question exists in the database.
 
         Returns:
-            bool: True if it exists, otherwise false
+            True if it exists, otherwise false.
         """
         try:
-            question = models.TestSpecQuestion.objects.get(index=self.one_index)
+            _ = models.TestSpecQuestion.objects.get(index=self.one_index)
             return True
         except ObjectDoesNotExist:
             return False
 
     def create_or_replace_question(self, label: str, mark: int, shuffle: bool):
-        """Create question in the database. If a question with the same index exists, overwrite it
+        """Create question in the database. If a question with the same index exists, overwrite it.
 
         Args:
             label: question label
@@ -83,50 +88,51 @@ class TestSpecQuestionService:
 
         return self.create_question(label, mark, shuffle)
 
-    def get_question_label(self):
-        """Get the question label
+    def get_question_label(self) -> str:
+        """Get the question label.
 
         Returns:
-            str: question label
+            The question label.
         """
         question = self.get_question()
         if question:
             return question.label
 
-    def get_question_marks(self):
-        """Get the number of marks for the question
+    def get_question_marks(self) -> int:
+        """Get the number of marks for the question.
 
         Returns:
-            int: question max mark
+            The question maximum mark.
         """
         question = self.get_question()
         if question:
             return question.mark
 
-    def get_question_shuffle(self):
-        """Get the fix or shuffle status
+    def get_question_shuffle(self) -> bool:
+        """Get whether this is a shuffle question.
 
         Returns:
-            Bool: True if shuffle, False if fix
+            True if shuffle, False if fixed.
         """
         question = self.get_question()
         return question.shuffle
 
-    def get_question_fix_or_shuffle(self):
-        """Get the fix or shuffle status (as a string)
+    def get_question_fix_or_shuffle(self) -> str:
+        """Get the fix or shuffle status (as a string).
 
         Returns:
-            str: 'shuffle' or 'fix'
+            Either ``"shuffle"`` or ``"fix"``.
+            TODO: but it can also return None?!  Issue #2881.
         """
         question = self.get_question()
         if question:
             return "shuffle" if question.shuffle else "fix"
 
-    def is_question_completed(self):
+    def is_question_completed(self) -> bool:
         """Are all the necessary fields completed for the question?
 
         Returns:
-            bool: are all the fields truthy?
+            Are all the fields truthy?
         """
         return (
             self.get_question_label()
@@ -134,11 +140,11 @@ class TestSpecQuestionService:
             and self.get_question_shuffle() is not None
         )
 
-    def get_marks_assigned_to_other_questions(self):
-        """Get the total marks - current marks (passed down from question detail view)
+    def get_marks_assigned_to_other_questions(self) -> int:
+        """Get the total marks - current marks (passed down from question detail view).
 
         Returns:
-            int: marks assigned to other questions
+            Number of marks assigned to other questions.
         """
         total_marks = self.spec.get_total_assigned_marks()
         if self.get_question_marks():

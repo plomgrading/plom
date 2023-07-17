@@ -1,16 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from . import TestSpecService
 
 
 class TestSpecGenerateService:
-    """Methods for generating the final test specification"""
+    """Methods for generating the final test specification."""
 
     def __init__(self, spec_service: TestSpecService):
         self.spec = spec_service
 
     def generate_spec_dict(self):
-        """
-        Create a dictionary that can be dumped into a .toml file
-        """
+        """Create a dictionary that can be dumped into a .toml file."""
         spec_dict = {}
         spec = self.spec.specification()
 
