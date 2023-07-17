@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
-"""The Plom Server"""
+"""This is the legacy Plom Server."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -13,7 +13,7 @@ import logging
 from plom import specdir
 
 specdir = Path(specdir)
-confdir = Path("serverConfiguration")
+confdir: Path = Path("serverConfiguration")
 
 from .misc import build_server_directories
 from .misc import create_server_config

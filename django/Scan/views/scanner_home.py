@@ -49,7 +49,10 @@ class ScannerHomeView(ScannerRequiredView):
         pushed_bundles = []
         for bundle in user_bundles:
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            cover_img_rotation = scanner.get_first_image(bundle).rotation
+            if bundle.has_page_images:
+                cover_img_rotation = scanner.get_first_image(bundle).rotation
+            else:
+                cover_img_rotation = 0
             pages = scanner.get_n_images(bundle)
             if bundle.pushed:
                 pushed_bundles.append(
@@ -158,7 +161,11 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         n_extra_w_data = scanner.get_n_extra_images_with_data(bundle)
         n_discard = scanner.get_n_discard_images(bundle)
         n_errors = scanner.get_n_error_images(bundle)
-        cover_img_rotation = scanner.get_first_image(bundle).rotation
+        n_incomplete = scanner.get_bundle_number_incomplete_papers(bundle)
+        if bundle.has_page_images:
+            cover_img_rotation = scanner.get_first_image(bundle).rotation
+        else:
+            cover_img_rotation = 0
 
         context = {
             "timestamp": timestamp,
@@ -175,6 +182,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_extra_w_data": n_extra_w_data,
             "n_discard": n_discard,
             "n_errors": n_errors,
+            "n_incomplete": n_incomplete,
             "cover_angle": cover_img_rotation,
         }
         if not context["has_been_processed"]:

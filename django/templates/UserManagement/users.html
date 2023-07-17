@@ -1,22 +1,29 @@
-<!-- Copyright (C) 2022 Brennen Chiu -->
-<!-- Copyright (C) 2022 Edith Coates -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
-{% extends 'base/base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>User Management</title>
         <title>
-            {% block title %}Web Plom - User Management{% endblock %}
+            {% block title %}
+                Web Plom - User Management
+            {% endblock title %}
         </title>
     </head>
     <body>
-        {% block page_heading %}User Management{% endblock %}
+        {% block page_heading %}
+            User Management
+        {% endblock page_heading %}
         {% block main_content %}
             {% for user in users %}
                 {% if 'marker' in user.groups.all.0.name or 'scanner' in user.groups.all.0.name %}
-                    <form method="post" action="users/{{ user.username }}">
+                    <form method="post" action="{% url 'change_user_status' user.username %}">
                         {% csrf_token %}
                         <div class="card mt-2">
                             <div class="card-body d-flex flex-row justify-content-between">
@@ -34,7 +41,9 @@
                                         class="btn btn-info"
                                         name="showProgress"
                                         value="showProgess">
-                                    <a href="progress/{{ user.username }}" class="nav-link" target="_blank">Show Progress</a>
+                                    <a href="{% url 'progress' user.username %}"
+                                       class="nav-link"
+                                       target="_blank">Show Progress</a>
                                 </button>
                                 {% if user.is_active %}
                                     <input type="submit"
@@ -70,6 +79,6 @@
                     <a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a>
                 </button>
             </p>
-        {% endblock %}
+        {% endblock main_content %}
     </body>
 </html>

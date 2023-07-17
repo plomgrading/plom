@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Plom now requires at least Python 3.8.
 
 ### Fixed
 * Shared "group tabs" can now be re-ordered on a per-user basis.

@@ -109,8 +109,7 @@
                                     </li>
                                 {% elif user_group == 'manager' %}
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'listUsers' %}">Users</a>
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'users' %}">Users</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link"
@@ -132,6 +131,10 @@
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link"
                                            href="{% url 'marking_info' %}">Marking Info</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link"
+                                           href="{% url 'visualization_landing' %}">Visualization</a>
                                     </li>
                                     <li class="nav-item accordion accordion-flush">
                                         <a class="nav-link link-light is_sidebar_link"
@@ -156,6 +159,10 @@
                                                href="{% url 'progress_user_info_home' %}">User Info</a>
                                         </li>
                                     </div>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link"
+                                           href="{% url 'reports_landing' %}">Reports</a>
+                                    </li>
                                 {% elif user_group == 'scanner' %}
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link"

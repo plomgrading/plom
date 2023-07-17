@@ -4,10 +4,11 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
-"""Web_Plom URL Configuration
+"""Web_Plom URL Configuration.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.0/topics/http/urls/
+
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -40,4 +41,6 @@ urlpatterns = [
     path("rubrics/", include("Rubrics.urls")),
     path("paper_tags/", include("Tags.urls")),
     path("finish/", include("Finish.urls")),
+    path("visualization/", include("Visualization.urls")),
+    path("reports/", include("Reports.urls")),
 ]

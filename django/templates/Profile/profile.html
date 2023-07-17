@@ -1,11 +1,18 @@
-{% extends 'base/base.html' %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>
-            {% block title %}Web Plom - Profile{% endblock %}
+            {% block title %}
+                Web Plom - Profile
+            {% endblock title %}
         </title>
         <!-- Font Awesome -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
@@ -18,7 +25,9 @@
               rel="stylesheet" />
     </head>
     <body>
-        {% block page_heading %}Profile{% endblock %}
+        {% block page_heading %}
+            Profile
+        {% endblock page_heading %}
         {% block main_content %}
             <div style="display: grid; grid-template-columns: auto auto;">
                 <div class="row d-flex justify-content-center align-items-center h-100">
@@ -74,6 +83,6 @@
             <script type="text/javascript"
                     src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.4.0/mdb.min.js"></script>
             <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
-        {% endblock %}
+        {% endblock main_content %}
     </body>
 </html>

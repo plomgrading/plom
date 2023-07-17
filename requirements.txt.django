@@ -1,39 +1,36 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2020 Michael Zhang
+# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+# MAINTENANCE NOTE
+# ----------------
+# This file should be the same as `requirements.txt` with
+# the "Not really server deps and "Legacy-server deps" removed.
+
+arrow==1.2.3
 beautifulsoup4==4.12.2
+canvasapi==3.0.0
 debugpy==1.6.7
 django==4.1.9
 django-braces==1.15.0
 django-htmx==1.14.0
 django-huey==1.1.1
 django-polymorphic==3.1.0
-django-reset-migrations
-django-session-timeout
+django-reset-migrations==0.4.0
+django-session-timeout==0.1.0
 djangorestframework==3.14.0
-model_bakery==1.11.0
-psycopg2-binary==2.9.6
-random-username==1.0.2
-tabulate==0.9.0
-whitenoise==6.4.0
-
-# for ID reading
-scipy==1.10.1
-
-
-#---------- for dev / debug work - comment out unless using it.
-# nplusone==1.0.0  # for hunting down potential n+1 query problems
-
-
-# legacy stuff but without Qt
-appdirs==1.4.4
-arrow==1.2.3
-canvasapi==3.0.0
 exif==1.6.0
 file-magic==0.4.1
 fonttools==4.39.4
@@ -41,26 +38,33 @@ importlib-resources==5.12.0
 imutils==0.5.4
 # lapsolver==1.1.0
 matplotlib==3.5.3
+model_bakery==1.11.0
 numpy==1.24.3
 opencv-python-headless==4.7.0.72
 packaging==23.1
 pandas==1.5.3
 passlib==1.7.4
-peewee==3.16.2
 Pillow==9.5.0
 pymupdf==1.22.3
 PyMySQL==1.0.3
-# pytest-qt==4.2.0
+psycopg2-binary==2.9.6
+random-username==1.0.2
 requests==2.28.2
 requests-toolbelt==0.10.1
 seaborn==0.12.2
 scikit-learn==1.2.2
+scipy==1.10.1
 segno==1.5.2
 stdiomask==0.0.6
+tabulate==0.9.0
 tomli==2.0.1
 tomlkit==0.11.8
 tqdm==4.65.0
 urllib3==1.26.15
 weasyprint=59.0
+whitenoise==6.4.0
 zipfly==6.0.5
 zxing-cpp==2.0.0
+
+#---------- for dev / debug work - comment out unless using it.
+# nplusone==1.0.0  # for hunting down potential n+1 query problems

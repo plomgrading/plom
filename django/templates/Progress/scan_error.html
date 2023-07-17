@@ -1,6 +1,15 @@
-{% extends 'Progress/scan_base.html' %}
-{% block title %}Web Plom - Progress{% endblock %}
-{% block page_heading %}Scanning progress{% endblock %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "Progress/scan_base.html" %}
+{% block title %}
+    Web Plom - Progress
+{% endblock title %}
+{% block page_heading %}
+    Scanning progress
+{% endblock page_heading %}
 {% block main_card_content %}
     <div class="row ps-5 pe-5">
         {% if error_pages %}
@@ -45,4 +54,4 @@
             <h3>No error pages to handle.</h3>
         {% endif %}
     </div>
-{% endblock %}
+{% endblock main_card_content %}

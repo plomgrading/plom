@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import tomlkit
 
@@ -32,6 +33,7 @@ class ServerConfigService:
             "duplicate_page_papers",
             "wrong_version_papers",
             "duplicate_qr_papers",
+            "discard_pages",
         }
 
         self.valid_hw_bundle_keys = {

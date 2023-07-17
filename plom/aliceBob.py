@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 
-"""
-Utilities for canned users and auto-generated (poor) passwords
-"""
+"""Utilities for canned users and auto-generated (poor) passwords."""
 
 import math
 import secrets
@@ -80,11 +78,15 @@ weak wear weather wedding week weight welcome were well west wet what wheel when
 where which while white who why wide wife wild will win wind window wine winter
 wire wise wish with without woman wonder word work world worry yard yell yet you
 young your zero zoo
-"""
-words = words.split()
+""".split()
 
-names = """aiden azami basia bob caris carol dave duska erin evander fatima frank greg gwen haris heidi idris isla john judy kali kamal layla lucas mary malik nina noor olivia oscar peter peggy quentin quinci raisa rupert samir sybil talia trent ursula usher vanna virgil walter wendy xavier xena yuri yvonne zahara zeke"""
-names = names.split()
+names = """
+    aiden azami basia bob caris carol dave duska erin evander fatima
+    frank greg gwen haris heidi idris isla john judy kali kamal layla
+    lucas mary malik nina noor olivia oscar peter peggy quentin quinci
+    raisa rupert samir sybil talia trent ursula usher vanna virgil
+    walter wendy xavier xena yuri yvonne zahara zeke
+""".split()
 
 
 def simple_password(n=3):
@@ -105,11 +107,11 @@ def simple_password(n=3):
 def make_random_user_list(number):
     """Makes a list of random users and passwords.
 
-    args:
+    Args:
         number (int): how many randomly named users.  For a large number
             usernames will have random digits postfixed.
 
-    returns:
+    Returns:
         list: a list of (user, password) tuples
     """
     if number > len(names):
@@ -128,10 +130,11 @@ def make_numbered_user_list(number):
 
     Each user is named like "user018" where the number is zero padded
     based on the total number of users requested.
-    args:
+
+    Args:
         number (int): how many users to create.
 
-    returns:
+    Returns:
         list: a list of (user, password) tuples.
     """
     digits = max(1, int(math.ceil(math.log10(number if number > 0 else 1))))

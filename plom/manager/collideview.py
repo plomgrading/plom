@@ -100,7 +100,7 @@ class CollideTab(QWidget):
 
 
 class CollideViewWindow(QDialog):
-    """Simple view window for pageimages"""
+    """Simple view window for pageimages."""
 
     def __init__(self, parent, onames, fnames, test, page):
         super().__init__(parent)

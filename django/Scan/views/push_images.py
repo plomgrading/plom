@@ -44,7 +44,7 @@ class PushAllPageImages(ScannerRequiredView):
 
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        scanner.push_bundle_to_server(bundle)
+        scanner.push_bundle_to_server(bundle, request.user)
 
         return HttpResponseClientRefresh()
 

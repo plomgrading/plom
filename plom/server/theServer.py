@@ -243,7 +243,6 @@ class Server:
 
 def get_server_info(basedir):
     """Read the server info from config file."""
-
     log = logging.getLogger("server")
     serverInfo = {"server": "127.0.0.1", "port": Default_Port}
     try:
@@ -261,11 +260,13 @@ def get_server_info(basedir):
 
 
 def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=True):
-    """Launches the Plom server.
+    """Launches the legacy Plom server.
 
-    args:
+    Args:
         basedir (pathlib.Path/str): the directory containing the file
             space to be used by this server.
+
+    Keyword Args:
         logfile (pathlib.Path/str/None): name-only then relative to basedir else
             If omitted, use a default name with date and time included.
         logconsole (bool): if True (default) then log to the stderr.
@@ -273,6 +274,9 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
             and log-in again.  If None, a new token is created.
+
+    Returns:
+        None
     """
     basedir = Path(basedir)
     if not logfile:

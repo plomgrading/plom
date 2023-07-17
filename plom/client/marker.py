@@ -6,9 +6,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 
-"""
-The Plom Marker client
-"""
+"""The Plom Marker client."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -1180,12 +1178,10 @@ class MarkerClient(QWidget):
         return self._prefer_above_action.stored_value
 
     def loadMarkedList(self):
-        """
-        Loads the list of previously marked papers into self.examModel
+        """Loads the list of previously marked papers into self.examModel.
 
         Returns:
             None
-
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
@@ -2426,21 +2422,29 @@ class MarkerClient(QWidget):
     def manage_task_tags(self, task, parent=None):
         """Manage the tags of a task.
 
-        args:
+        Args:
             task (str): A string like "q0003g2" for paper 3 question 2.
 
-        keyword args:
+        Keyword Args:
             parent (Window/None): Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
                 would be the visual parents of this dialog.
+
+        Returns:
+            None
         """
         if not parent:
             parent = self
 
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        current_tags = self.msgr.get_tags(task)
+        try:
+            current_tags = self.msgr.get_tags(task)
+        except PlomNoPaper as e:
+            WarnMsg(parent, f"Could not get tags from {task}", info=str(e)).exec()
+            return
+
         tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(parent, current_tags, tag_choices, label=task)
@@ -2468,7 +2472,11 @@ class MarkerClient(QWidget):
                 pass
 
             # refresh the tags
-            current_tags = self.msgr.get_tags(task)
+            try:
+                current_tags = self.msgr.get_tags(task)
+            except PlomNoPaper as e:
+                WarnMsg(parent, f"Could not get tags from {task}", info=str(e)).exec()
+                return
 
             try:
                 self.examModel.setTagsByTask(task, current_tags)

@@ -26,11 +26,13 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.23
+image: docker:20.10.24
 
 services:
-  - docker:20.10.23-dind
+  - docker:20.10.24-dind
 
+# $CI_REGISTRY_IMAGE is:
+# registry.gitlab.com/plom/plom
 variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -65,9 +67,9 @@ docker-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.legacy
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.bulk
       else
-        docker build --tag $IM . -f Containerfile.legacy
+        docker build --tag $IM . -f Containerfile.bulk
       fi
     - docker push $IM
 
@@ -139,39 +141,22 @@ copyright_year:
   allow_failure: true
 
 
-# TODO: tighten up by adding `--profile django` (but not with --check?)
 djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.30.2
+    - pip install djlint~=1.31.1
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html
-
-
-# eventually replace the above job
-djlint-strict:
-  image: python:3.11
-  stage: static_analysis
-  before_script:
-    - pip install djlint~=1.30.2
-  script:
-    - djlint django/templates/Authentication/*.html --profile django
-    - djlint django/templates/base/*.html --profile django
-    - djlint django/templates/Rubrics/*.html --profile django
-    - djlint django/templates/Scan/*.html --profile django
-    - djlint django/templates/SpecCreator/*.html --profile django
-    - djlint django/templates/*/*/*.html --profile django
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --profile django
 
 
 djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.30.2
+    - pip install djlint~=1.31.1
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html --check
-  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -300,7 +285,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.3.0"
+    - pip3 install "black~=23.7.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -360,6 +345,22 @@ pylint:
   allow_failure: true
 
 
+# needs full dependencies, cannot easily run with other early static analysis
+# If exceptions are needed, see "tool.mypy" sections in pyproject.toml
+# TODO: maybe pip install unnecessary eventually, Issue #2850
+mypy-type-checking:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install mypy~=1.4.1
+  script:
+    - mypy plom --install-types --non-interactive || true
+    - mypy plom
+    - mypy django --install-types --non-interactive || true
+    - mypy django
+
+
 flake8:
   image: python:3.11
   stage: static_analysis
@@ -387,7 +388,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 590 ]]"
+    - bash -c "[[ $NUMERR -le 499 ]]"
   allow_failure: true
 
 
@@ -399,7 +400,7 @@ pydocstyle-plom:
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish
+    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish plom/solution plom/idreader plom/manager
   allow_failure: true
 
 
@@ -417,7 +418,7 @@ pydocstyle-django-count:
     - NUMERR=`pydocstyle --count django | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 467 ]]"
+    - bash -c "[[ $NUMERR -le 375 ]]"
   allow_failure: true
 
 
@@ -430,7 +431,7 @@ pydocstyle-django:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd django
-    - pydocstyle -s -e API Authentication Base Demo Identify Mark Rubrics Scan Tags
+    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Profile Progress Rubrics Scan Tags
     - popd
   allow_failure: true
 
@@ -451,7 +452,6 @@ webplom_test:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt.django
     - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
@@ -468,6 +468,7 @@ webplom_test:
         path: django/django_coverage.xml
 
 
+# a legacy-only job
 demoserver:
   stage: test
   needs: ["docker-image"]
@@ -515,6 +516,7 @@ demoserver:
     - popd
 
 
+# a legacy-only job
 hwdemoserver:
   stage: test
   needs: ["docker-image"]
@@ -581,6 +583,7 @@ hwdemoserver:
     - popd
 
 
+# a legacy-only job
 fullworkflow:
   stage: test
   needs: ["docker-image"]
@@ -711,7 +714,7 @@ docs_sphinx:
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 # TODO: likely python3-zxing-cpp is too old
-fedora_build:
+fedora_legacy:
   stage: alt_build
   needs: []
   image: fedora:38
@@ -789,7 +792,59 @@ fedora_build:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-newOS_newdeps:
+# TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+# TODO: likely python3-zxing-cpp is too old
+fedora_webplom:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+  stage: alt_build
+  needs: []
+  image: fedora:38
+  when: manual
+  allow_failure: true
+  before_script:
+    # removed python3-PyMuPDF for Issue #2874
+    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-passlib python3-pyqt6
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-aiohttp
+          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-tomlkit python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
+          python3-pytest
+          python3-scikit-learn python3-PyMySQL
+          file python3-file-magic
+          iproute
+          python3-django
+    - pip --version
+  script:
+    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - dnf install -y git
+    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
+    - pip install .
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
+    - pushd django
+    - export PLOM_USING_DOCKER=1
+    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py test
+    - popd
+
+
+# get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
+newOS_newdeps_legacy:
   stage: alt_build
   needs: []
   image: ubuntu:22.04
@@ -802,7 +857,7 @@ newOS_newdeps:
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3-pytest python3-dev
-      python3-pip python3-setuptools python3-wheel
+      python3-pip
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
     - python3 -m pip install --upgrade pip setuptools wheel
@@ -853,6 +908,44 @@ newOS_newdeps:
     - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
+    - popd
+
+
+# get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
+newOS_newdeps_webplom:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+  stage: alt_build
+  needs: []
+  image: ubuntu:22.04
+  allow_failure: true
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+    - apt-get --no-install-recommends --yes install
+      cmake make g++ imagemagick openssl
+      dvipng latexmk texlive-latex-extra texlive-fonts-recommended
+      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      python3-pytest python3-dev
+      python3-pip
+      iproute2 psmisc file python3-magic
+    # apt-get --no-install-recommends --yes install libimage-exiftool-perl
+    - python3 -m pip install --upgrade pip setuptools wheel
+    - pip --version
+  script:
+    - pip install .
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
+    - pushd django
+    - export PLOM_USING_DOCKER=1
+    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py test
     - popd
 
 
@@ -934,7 +1027,7 @@ oldOS_mindeps:
 minpy_mindeps:
   stage: alt_build
   needs: []
-  image: python:3.7
+  image: python:3.8
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
@@ -1547,7 +1640,7 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==5.10.1
+  - c:\python310\python -m pip install pyinstaller==5.13.0
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec

@@ -142,7 +142,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opt):
-        self.stdout.write(self.style.WARNING("** CAUTION: experimental tool **"))
+        self.stdout.write(
+            self.style.WARNING("CAUTION: paper_scan is an experimental tool")
+        )
 
         if opt["command"] == "list_bundles":
             self.staging_bundle_status()

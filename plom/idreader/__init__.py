@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
-"""Read student IDs using OpenCV and Scikit-learn"""
+"""Read student IDs using OpenCV and Scikit-learn."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"

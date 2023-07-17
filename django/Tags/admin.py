@@ -3,7 +3,4 @@
 
 from django.contrib import admin
 
-from Tags.models import Tag
-
-
-admin.site.register(Tag)
+# Register your models here.
