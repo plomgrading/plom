@@ -97,6 +97,5 @@ def validateStudentNumber(n):
 
 
 def isValidStudentNumber(n):
-    """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages"""
-
+    """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages."""
     return isValidUBCStudentNumber(n) or is_z_padded_integer(n)

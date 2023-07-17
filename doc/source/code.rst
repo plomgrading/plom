@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright 2021-2022 Colin B. Macdonald
+   Copyright 2021-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Python modules
@@ -17,7 +17,7 @@ various supporting code.
    module-plom-finish
 
    module-plom-client
-   module-plom-server
+   module-plom-legacy-server
 
    module-plom-db
 

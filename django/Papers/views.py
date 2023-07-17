@@ -19,9 +19,9 @@ from BuildPaperPDF.services import BuildPapersService
 
 
 class CreateTestPapers(ManagerRequiredView):
-    """
-    Create test-papers in the database, using the test specification, classlist,
-    and question-version map. Also create the associated pdf build tasks.
+    """Create test-papers in the database, using the test spec, classlist, and question-version map.
+
+    Also create the associated pdf build tasks.
     """
 
     def post(self, request):

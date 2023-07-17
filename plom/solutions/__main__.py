@@ -4,7 +4,7 @@
 # Copyright (C) 2021-2023 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Plom tools for pushing/pulling solution page images to/from a server
+"""Plom tools for pushing/pulling solution page images to/from a server.
 
 The plom-solutions command allows you to
   * extract solutions from pdfs

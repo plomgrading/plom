@@ -56,7 +56,7 @@ You may also want to consider a tool like `virtualenv`.
 Ubuntu
 ------
 
-Plom requires Python 3.7, perhaps it will soon require 3.8.
+Plom requires Python 3.8.
 It will not work on Ubuntu 18.04.  It is time to upgrade your OS.
 
 Some stuff from the package manager:

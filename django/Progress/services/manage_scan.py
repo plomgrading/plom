@@ -15,6 +15,7 @@ from Papers.models import (
     Paper,
     Image,
     Bundle,
+    DiscardPage,
 )
 from Scan.models import StagingBundle
 
@@ -305,7 +306,9 @@ class ManageScanService:
     def get_pushed_bundles_list(self):
         """Return a list of all pushed bundles."""
         bundle_list = []
-        for bundle in Bundle.objects.all().prefetch_related("staging_bundle", "user"):
+        for bundle in Bundle.objects.all().prefetch_related(
+            "staging_bundle", "user", "staging_bundle__user"
+        ):
             bundle_list.append(
                 {
                     "name": bundle.staging_bundle.slug,
@@ -326,3 +329,24 @@ class ManageScanService:
             return img
         except Image.DoesNotExist:
             return None
+
+    @transaction.atomic
+    def get_discarded_images(self):
+        discards = []
+
+        for img in (
+            Image.objects.filter(discardpage__isnull=False)
+            .prefetch_related("discardpage", "bundle", "bundle__staging_bundle")
+            .order_by("bundle", "bundle_order")
+        ):
+            discards.append(
+                {
+                    "image": img.pk,
+                    "reason": img.discardpage.discard_reason,
+                    "bundle_pk": img.bundle.pk,
+                    "bundle_name": img.bundle.staging_bundle.slug,
+                    "order": img.bundle_order,
+                }
+            )
+
+        return discards

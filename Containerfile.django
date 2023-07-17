@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
 
 # Pull base image
 FROM python:3.10.2-slim-bullseye
@@ -19,8 +24,8 @@ RUN apt-get -y update && \
 WORKDIR /src
 COPY . /src
 # RUN pip install --no-cache-dir -r requirements.txt
-# RUN pip install .
-RUN pip install --no-deps .
+# RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --no-deps .
 
 # Set work directory
 WORKDIR /code

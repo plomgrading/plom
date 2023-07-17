@@ -6,9 +6,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 
-"""
-The Plom Marker client
-"""
+"""The Plom Marker client."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -1180,12 +1178,10 @@ class MarkerClient(QWidget):
         return self._prefer_above_action.stored_value
 
     def loadMarkedList(self):
-        """
-        Loads the list of previously marked papers into self.examModel
+        """Loads the list of previously marked papers into self.examModel.
 
         Returns:
             None
-
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)

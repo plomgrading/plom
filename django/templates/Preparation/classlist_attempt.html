@@ -1,7 +1,12 @@
-<!-- Copyright (C) 2022 Andrew Rechnitzer -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block page_heading %}Manage classlist{% endblock %}
+{% block page_heading %}
+    Manage classlist
+{% endblock page_heading %}
 {% block main_content %}
     {% if success %}
         {% if warn_err %}
@@ -76,4 +81,4 @@
             {% endfor %}
         </table>
     {% endif %}
-{% endblock %}
+{% endblock main_content %}
