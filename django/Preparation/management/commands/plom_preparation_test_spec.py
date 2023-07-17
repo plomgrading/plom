@@ -28,25 +28,24 @@ class Command(BaseCommand):
 
     def show_status(self):
         speck = SpecificationService()
-        spec_dict = speck.get_the_spec()
-        toml_text = tomlkit.dumps(spec_dict)
-
-        if speck.is_there_a_spec():
-            self.stdout.write("A valid test spec is present:")
-            self.stdout.write("#" * 40)
-            self.stdout.write(f"{toml_text}")
-            self.stdout.write("#" * 40)
-        else:
+        if not speck.is_there_a_spec():
             self.stdout.write("No valid test spec present")
+            return
+
+        toml_text = speck.get_the_spec_as_toml()
+        self.stdout.write("A valid test spec is present:")
+        self.stdout.write("#" * 40)
+        self.stdout.write(f"{toml_text}")
+        self.stdout.write("#" * 40)
 
     def download_spec(self, dest=None):
         speck = SpecificationService()
-        spec_dict = speck.get_the_spec()
 
         if not speck.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
+        spec_dict = speck.get_the_spec()
         self.stdout.write(
             f"A valid test spec is present: shortname {spec_dict['name']}"
         )
