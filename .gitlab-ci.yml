@@ -468,7 +468,12 @@ webplom_test:
         path: django/django_coverage.xml
 
 
-webplom_oldOS_mindeps:
+# Ensure minimum listed dependency versions actually work on older system
+# 1. oldest reasonably supported popular OS
+# 2. take python deps from package manager
+# 3. force the minimum version from setup.py
+# Goal here is to catch changes that need newer features of a dependency.
+oldOS_mindeps_webplom:
   services:
     - postgres:12.2-alpine
   variables:
@@ -477,6 +482,7 @@ webplom_oldOS_mindeps:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
   stage: alt_build
+  needs: []
   image: ubuntu:20.04
   before_script:
     - apt-get update
