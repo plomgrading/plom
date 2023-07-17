@@ -132,7 +132,7 @@ class Command(BaseCommand):
 
     def run_randomarker(self):
         # TODO: hardcoded port numbers!
-        cmd = "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1"
+        cmd = "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1 --partial 75"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
         cmd = "python3 -m plom.client.randoIDer -s localhost:8000 -u demoMarker1 -w demoMarker1"

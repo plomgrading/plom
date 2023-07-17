@@ -59,10 +59,11 @@ def get_parser():
         "--partial",
         metavar="PERCENTAGE",
         type=float,
-        default=75.0,
+        default=100.0,
         action="store",
         help="""
-            What percentage of questions to mark?  Default: 75.
+            What percentage of questions to mark?
+            Default is 100; mark all of them.
         """,
     )
     parser.add_argument(
