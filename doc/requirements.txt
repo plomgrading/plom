@@ -6,6 +6,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+tomli~=2.0.1
 myst-parser~=1.0.0
 sphinx~=6.2.1
 sphinx_rtd_theme~=1.2.0
