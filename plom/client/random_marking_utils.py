@@ -195,7 +195,7 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
     return annot.doneAnnotating()
 
 
-def do_random_marking_backend(question, version, *, messenger):
+def do_random_marking_backend(question, version, *, messenger, partial):
     maxMark = messenger.getMaxMark(question)
 
     while True:
@@ -223,8 +223,8 @@ def do_random_marking_backend(question, version, *, messenger):
                     the_tags.append(the_tag)
                     messenger.add_single_tag(task, the_tag)
 
-        # skip marking on one in four paper-questions
-        if random.randrange(4) == 0:
+        # skip marking some percentage of paper-questions
+        if random.random() * 100 > partial:
             continue
 
         with tempfile.TemporaryDirectory() as td:
@@ -300,7 +300,9 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             negativeRubrics[question] = [com]
 
 
-def do_rando_marking(server: str, user: str, password: str) -> int:
+def do_rando_marking(
+    server: str, user: str, password: str, *, partial: float = 100.0
+) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
     .. caution:: Only for testing/demos.  Do not use for real tests.
@@ -312,6 +314,9 @@ def do_rando_marking(server: str, user: str, password: str) -> int:
         server (str)
         user (str)
         password (str)
+
+    Keyword Args:
+        partial: what percentage of papers to grade?
 
     Returns:
         0 on success, non-zero on error/unexpected.
@@ -346,7 +351,7 @@ def do_rando_marking(server: str, user: str, password: str) -> int:
             build_random_rubrics(q, username=user, messenger=messenger)
             for v in range(1, spec["numberOfVersions"] + 1):
                 print("Annotating question {} version {}".format(q, v))
-                do_random_marking_backend(q, v, messenger=messenger)
+                do_random_marking_backend(q, v, messenger=messenger, partial=partial)
     finally:
         messenger.closeUser()
         messenger.stop()
