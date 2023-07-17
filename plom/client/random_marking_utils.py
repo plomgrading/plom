@@ -249,19 +249,19 @@ def do_random_marking_backend(question, version, *, messenger):
             )
 
 
-def build_random_rubrics(question, *, username, messenger):
-    """Push random rubrics into a server: only for testing/demo purposes
+def build_random_rubrics(question, *, username, messenger) -> None:
+    """Push random rubrics into a server: only for testing/demo purposes.
 
     .. caution:: Do not use on a real production server.
 
-    args:
+    Args:
         question (int)
 
-    keyword args:
+    Keyword Args:
         messenger: a messenger object already connected to the server.
         username (str): which username to create the rubrics.
 
-    returns:
+    Returns:
         None
     """
     for d, t in positiveComments:
@@ -300,7 +300,7 @@ def build_random_rubrics(question, *, username, messenger):
             negativeRubrics[question] = [com]
 
 
-def do_rando_marking(server, user, password):
+def do_rando_marking(server: str, user: str, password: str) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
     .. caution:: Only for testing/demos.  Do not use for real tests.
@@ -308,13 +308,13 @@ def do_rando_marking(server, user, password):
     Also, for each paper, with probability 1/3, we tag with up to 3
     randomly selected tags.
 
-    args:
+    Args:
         server (str)
         user (str)
         password (str)
 
-    returns:
-        int: 0 on success, non-zero on error/unexpected.
+    Returns:
+        0 on success, non-zero on error/unexpected.
     """
     global Qapp
 
