@@ -11,10 +11,8 @@ from Progress.services import ManageScanService
 from Progress.views import BaseScanProgressPage
 
 
-class ScanInCompleteView(BaseScanProgressPage):
-    """
-    View the table of complete pushed papers
-    """
+class ScanIncompleteView(BaseScanProgressPage):
+    """View the table of complete pushed papers."""
 
     def get(self, request):
         mss = ManageScanService()

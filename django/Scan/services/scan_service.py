@@ -10,7 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Dict
+from typing import Dict, Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -469,15 +469,11 @@ class ScanService:
 
         # TODO: assert the length of question is same as pages in bundle
 
-        print(bundle_obj)
         with transaction.atomic():
             # TODO: how do we walk them in order?
             for page_img, qlist in zip(
                 bundle_obj.stagingimage_set.all().order_by("bundle_order"), questions
             ):
-                print(page_img)
-                print(page_img.rotation)
-                print(page_img.parsed_qr)
                 if not qlist:
                     page_img.image_type = StagingImage.DISCARD
                     page_img.save()
@@ -686,8 +682,8 @@ class ScanService:
     def map_bundle_pages_cmd(self, bundle_name, *, papernum, questions=None):
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
 
         if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
@@ -1044,9 +1040,10 @@ class ScanService:
         """Return a list of the missing known pages in papers in the given bundle.
 
         Args:
-            bundle_obj (StagingBundle): the given staging bundle to check
+            bundle_obj: the given staging bundle to check.
+
         Returns:
-            A list of pairs (paper_number (int), [missing pages (int)])
+            A list of pairs `(paper_number (int), [missing pages (int)])`.
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, list] = {}
@@ -1079,9 +1076,10 @@ class ScanService:
         A paper is incomplete when it has more than zero but not all its known pages.
 
         Args:
-            bundle_obj (StagingBundle): the given staging bundle to check
+            bundle_obj: the given staging bundle to check.
+
         Returns:
-            The number of incomplete papers in the bundle
+            The number of incomplete papers in the bundle.
         """
         n_pages = SpecificationService().get_n_pages()
         papers_pages: Dict[int, int] = {}
@@ -1272,8 +1270,14 @@ def huey_parent_read_qr_codes_task(bundle_pk):
 
 @db_task(queue="tasks")
 def huey_child_get_page_image(
-    bundle_pk, index, basedir, basename, *, quiet=True, debug_jpeg=False
-):
+    bundle_pk: int,
+    index: int,
+    basedir: pathlib.Path,
+    basename: str,
+    *,
+    quiet=True,
+    debug_jpeg=False,
+) -> Dict[str, Any]:
     """Render a page image and save to disk in the background.
 
     Args:
@@ -1288,7 +1292,8 @@ def huey_child_get_page_image(
             non-multiplies of 90, and save some low-quality jpegs.
 
     Returns:
-        None
+        Information about the page image, including its file name,
+        thumbnail, hash etc.
     """
     import fitz
     from plom.scan import rotate
@@ -1332,13 +1337,17 @@ def huey_child_get_page_image(
 
 
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk, *, quiet=True):
+def huey_child_parse_qr_code(image_pk: int, *, quiet=True) -> Dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     Args:
         image_pk: primary key of the image
+
     Keyword Args:
-        quiet (bool): currently unused?
+        quiet: currently unused?
+
+    Returns:
+        Information about the QR codes.
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path

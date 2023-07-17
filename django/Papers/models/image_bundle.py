@@ -77,6 +77,6 @@ class Image(models.Model):
     parsed_qr = models.JSONField(default=dict, null=True)
 
 
-class DiscardImage(models.Model):
-    image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
+class DiscardPage(models.Model):
+    image = models.OneToOneField(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()

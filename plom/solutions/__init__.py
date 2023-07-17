@@ -2,9 +2,7 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
-"""
-Plom tools associated with uploading/downloading solutions
-"""
+"""Plom tools associated with uploading/downloading solutions."""
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"

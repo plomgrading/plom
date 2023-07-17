@@ -184,7 +184,7 @@ class TestTab(QWidget):
 
 
 class UnknownViewWindow(QDialog):
-    """Simple view window for pageimages"""
+    """Simple view window for pageimages."""
 
     def __init__(self, parent, fnames, stuff, iDict):
         super().__init__(parent)

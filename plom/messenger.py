@@ -2,9 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
-"""
-Backend bits n bobs to talk to the server
-"""
+"""Backend bits 'n bobs to talk to a Plom server."""
 
 import hashlib
 from io import BytesIO
@@ -246,7 +244,7 @@ class Messenger(BaseMessenger):
         If you specify both ``tag`` and ``above``, the logic is
         currently "or" but this could change without notice!
 
-        Return:
+        Returns:
             str/None: either the task string or `None` indicated no
             more tasks available.
 
@@ -281,17 +279,18 @@ class Messenger(BaseMessenger):
     def MclaimThisTask(self, code, version):
         """Claim a task from server and get back metadata.
 
-        args:
+        Args:
             code (str): a task code such as `"q0123g2"`.
 
-        returns:
+        Returns:
             list: Consisting of image_metadata, [list of tags], integrity_check.
 
-        raises:
+        Raises:
             PlomTakenException: someone got it before you
             PlomRangeException: no such test number or not yet scanned
-        PlomVersionMismatchException: the version supplied does not match the task's version
-            PlomAuthenticationException
+            PlomVersionMismatchException: the version supplied does not
+                match the task's version.
+            PlomAuthenticationException:
             PlomSeriousException: generic unexpected error
         """
         with self.SRmutex:
@@ -396,8 +395,7 @@ class Messenger(BaseMessenger):
                 integrity_check,
             )
 
-        # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
-        img_mime_type = mimetypes.guess_type(str(annotated_img))[0]
+        img_mime_type = mimetypes.guess_type(annotated_img)[0]
         with self.SRmutex:
             try:
                 with open(annotated_img, "rb") as fh, open(plomfile, "rb") as f2:
@@ -470,15 +468,10 @@ class Messenger(BaseMessenger):
         plomfile,
         integrity_check,
     ):
-        """
-        Upload annotated image and associated data to a Django server, using it's built-in
-        multipart data handling.
+        """Upload annotated image and data to Django server, using it's built-in multipart data handling.
 
-        Args:
-            see MreturnMarkedTask
+        See :meth:`MreturnMarkedTask` for docs.
         """
-
-        # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
         with self.SRmutex:
             try:
                 with open(annotated_img, "rb") as annot_img_file, open(
@@ -537,7 +530,7 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):
-        """Ask server for the user's rubric-tabs config file for this question
+        """Ask server for the user's rubric-tabs config file for this question.
 
         Args:
             question (int): which question to save to (rubric tabs are
@@ -549,8 +542,8 @@ class Messenger(BaseMessenger):
 
         Returns:
             dict/None: a dict of information about user's tabs for that
-                question or `None` if server has no saved tabs for that
-                user/question pair.
+            question or `None` if server has no saved tabs for that
+            user/question pair.
         """
         self.SRmutex.acquire()
         try:
@@ -583,7 +576,7 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
     def MsaveUserRubricTabs(self, question, tab_config):
-        """Cache the user's rubric-tabs config for this question onto the server
+        """Cache the user's rubric-tabs config for this question onto the server.
 
         Args:
             question (int): the current question number

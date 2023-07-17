@@ -1,7 +1,12 @@
-<!-- Copyright (C) 2022 Andrew Rechnitzer -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block page_heading %}Question-version mapping upload{% endblock %}
+{% block page_heading %}
+    Question-version mapping upload
+{% endblock page_heading %}
 {% block main_content %}
     <div class="alert alert-primary">
         <span>Question-version mapping csv uploaded successfully without errors</span>
@@ -36,4 +41,4 @@
             </tr>
         {% endfor %}
     </table>
-{% endblock %}
+{% endblock main_content %}

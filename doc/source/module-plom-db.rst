@@ -1,10 +1,9 @@
 .. Plom documentation
-   Copyright 2022 Colin B. Macdonald
+   Copyright 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Plom database
-=============
-
+Plom database (legacy)
+======================
 
 The Plom database uses the `Peewee ORM
 <https://pypi.org/project/peewee>`_ as a front-end to its database.
@@ -12,7 +11,7 @@ The database itself is an `SQLite <https://www.sqlite.org>`_ database,
 stored on disc in a file.
 
 The database frontend ``plom.db.PlomDB`` has many methods.  These are
-generally connected to API calls in the :doc:`module-plom-server` module.
+generally connected to API calls in the :doc:`module-plom-legacy-server` module.
 TODO: link to the API list...
 There is a rough convention:
 

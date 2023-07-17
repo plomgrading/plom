@@ -7,7 +7,6 @@
 
 """Tools for building and solving assignment problems."""
 
-from lapsolver import solve_dense
 import numpy as np
 
 
@@ -85,6 +84,8 @@ def lap_solver(test_numbers, student_IDs, probabilities):
     a tiny fraction of a section.  The package ``lapsolver`` itself notes
     3000x3000 in around 3 seconds.
     """
+    from lapsolver import solve_dense
+
     cost_matrix = assemble_cost_matrix(test_numbers, student_IDs, probabilities)
 
     row_IDs, column_IDs = solve_dense(cost_matrix)

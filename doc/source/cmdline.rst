@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright 2022 Colin B. Macdonald
+   Copyright 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Command-line tools
@@ -22,5 +22,5 @@ There are also commands to launch the server and client themselves:
    :maxdepth: 1
 
    plom-client
-   plom-server
+   plom-legacy-server
    plom-manager

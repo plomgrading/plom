@@ -15,7 +15,7 @@ from Papers.models.paper_structure import (
 )
 from Papers.models.specifications import Specification
 from Papers.models.background_tasks import CreatePaperTask, CreateImageTask
-from Papers.models.image_bundle import Image, DiscardImage, Bundle
+from Papers.models.image_bundle import Image, DiscardPage, Bundle
 
 admin.site.register(Paper)
 admin.site.register(Specification)
@@ -28,4 +28,4 @@ admin.site.register(CreatePaperTask)
 admin.site.register(CreateImageTask)
 admin.site.register(Bundle)
 admin.site.register(Image)
-admin.site.register(DiscardImage)
+admin.site.register(DiscardPage)

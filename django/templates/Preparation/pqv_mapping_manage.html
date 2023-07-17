@@ -1,5 +1,13 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block page_heading %}Manage number of papers and question-version mapping{% endblock %}
+{% block page_heading %}
+    Manage number of papers and question-version mapping
+{% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
@@ -18,7 +26,9 @@
         {% if pqv_mapping_present %}
             <div class="alert alert-primary">
                 <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                <a href="download" target="_blank" class="btn btn-info">download</a>
+                <a href="{% url 'prep_qvmapping_download' %}"
+                   target="_blank"
+                   class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the question-version map?"
@@ -175,4 +185,4 @@
         </div>
     {% endif %}
 </div>
-{% endblock %}
+{% endblock main_content %}
