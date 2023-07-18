@@ -196,7 +196,9 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
     return annot.doneAnnotating()
 
 
-def do_random_marking_backend(question, version, *, messenger, partial):
+def do_random_marking_backend(
+    question: int, version: int, *, messenger, partial
+) -> None:
     maxMark = messenger.getMaxMark(question)
 
     while True:
