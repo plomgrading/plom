@@ -265,7 +265,9 @@ class BuildPapersService:
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
             }
-            for task in PDFTask.objects.all().order_by("paper__paper_number")
+            for task in PDFTask.objects.all()
+            .select_related("paper")
+            .order_by("paper__paper_number")
         ]
 
     def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
