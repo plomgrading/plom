@@ -66,7 +66,12 @@ class Command(BaseCommand):
         print("Generating histogram of grades.")
         fig, ax = plt.subplots()
 
-        ax.hist(marks["total_mark"], bins=range(0, totalMarks + RANGE_BIN_OFFSET))
+        ax.hist(
+            marks["total_mark"],
+            bins=range(0, totalMarks + RANGE_BIN_OFFSET),
+            ec="black",
+            alpha=0.5,
+        )
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
@@ -88,7 +93,7 @@ class Command(BaseCommand):
             marks_for_question = marks["q" + str(question) + "_mark"]
             bins = range(0, spec["question"][question]["mark"] + RANGE_BIN_OFFSET)
 
-            ax.hist(marks_for_question, bins=bins)
+            ax.hist(marks_for_question, bins=bins, ec="black", alpha=0.5)
             ax.set_title("Histogram of Q" + str(question) + " marks")
             ax.set_xlabel("Question " + str(question) + " mark")
             ax.set_ylabel("# of students")
@@ -144,7 +149,7 @@ class Command(BaseCommand):
             ]
             bins = range(0, max_score_unique + RANGE_BIN_OFFSET)
 
-            ax.hist(scores_given_for_user, bins=bins)
+            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
             ax.set_title("(rel) Grades by " + marker)
             ax.set_xlabel("Mark given")
             ax.set_ylabel("# of times assigned")
@@ -162,7 +167,7 @@ class Command(BaseCommand):
 
             bins = range(0, max_score + RANGE_BIN_OFFSET)
 
-            ax.hist(scores_given_for_user, bins=bins)
+            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
             ax.set_title("Grades by " + marker)
             ax.set_xlabel("Mark given")
             ax.set_ylabel("# of times assigned")
@@ -179,19 +184,19 @@ class Command(BaseCommand):
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
         max_time = ta_times["seconds_spent_marking"].max()
-        bin_width = 5
+        bin_width = 15  # seconds
         base64_histogram_of_time = []
         for question in spec["question"]:
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
             marking_times_for_question = ta_times.loc[
                 ta_times["question_number"] == int(question), "seconds_spent_marking"
-            ]
-            bins = range(0, max_time + bin_width, bin_width)
+            ].div(60)
+            bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
 
-            ax.hist(marking_times_for_question, bins=bins)
+            ax.hist(marking_times_for_question, bins=bins, ec="black", alpha=0.5)
             ax.set_title("Time spent marking Q" + str(question))
-            ax.set_xlabel("Time spent (s)")
+            ax.set_xlabel("Time spent (min)")
             ax.set_ylabel("# of papers")
 
             png_bytes = BytesIO()
@@ -209,14 +214,16 @@ class Command(BaseCommand):
 
             times_for_question = ta_times.loc[
                 ta_times["question_number"] == int(question), "seconds_spent_marking"
-            ]
+            ].div(60)
             mark_given_for_question = ta_grading.loc[
                 ta_grading["question_number"] == int(question), "score_given"
             ]
 
-            ax.scatter(times_for_question, mark_given_for_question)
+            ax.scatter(
+                times_for_question, mark_given_for_question, ec="black", alpha=0.5
+            )
             ax.set_title("Q" + str(question) + ": Time spent vs Mark given")
-            ax.set_xlabel("Time spent (s)")
+            ax.set_xlabel("Time spent (min)")
             ax.set_ylabel("Mark given")
 
             png_bytes = BytesIO()
