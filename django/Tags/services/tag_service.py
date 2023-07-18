@@ -61,7 +61,7 @@ class TagService:
         """
         papers = {}
         for task_tag in task_tags:
-            for task in task_tag.task.all():
+            for task in task_tag.task.all().select_related("paper"):
                 if task.paper not in papers:
                     papers.update({task.paper: set()})
                 papers[task.paper].add(task_tag)
