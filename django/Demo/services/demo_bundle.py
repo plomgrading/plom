@@ -143,13 +143,18 @@ class DemoBundleService:
         return assignment
 
     def make_last_page_with_wrong_version(self, pdf_doc, paper_number):
-        """Removes the last page of the doc and replaces it with a nearly blank page that contains a qr-code that is nearly valid except that the version is wrong.
+        """Muck around with the last page for testing purposes.
 
-        Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+        Removes the last page of the doc and replaces it with a nearly
+        blank page that contains a qr-code that is nearly valid except
+        that the version is wrong.
+
+        Args:
+            pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-        pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
+            pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
@@ -213,13 +218,19 @@ class DemoBundleService:
         pdf_doc.fullcopy_page(last_page)
 
     def insert_qr_from_previous_page(self, pdf_doc, paper_number):
-        """Stamps a qr-code for the second-last page onto the last page, in order to create a page with inconsistent qr-codes. This can happen when, for example, a folded page is fed into the scanner.
+        """Muck around with the penultimate page for testing purposes.
 
-        Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+        Stamps a qr-code for the second-last page onto the last page,
+        in order to create a page with inconsistent qr-codes. This can
+        happen when, for example, a folded page is fed into the scanner.
+
+        Args:
+            pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-        pdf_doc (fitz.Document): the updated pdf-document with the inconsistent qr-codes on its last page.
+            pdf_doc (fitz.Document): the updated pdf-document with the
+            inconsistent qr-codes on its last page.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
