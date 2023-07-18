@@ -84,7 +84,7 @@ class SpecificationService:
     def get_shortname(self):
         """Get the short name of the exam."""
         spec_obj = self.get_the_spec()
-        return spec_obj["shortName"]
+        return spec_obj["name"]
 
     @transaction.atomic
     def get_n_questions(self):

@@ -6,13 +6,14 @@ from pathlib import Path
 import tempfile
 
 from plom.finish.coverPageBuilder import makeCover
+from plom.finish.examReassembler import reassemble
 
 from django.utils import timezone
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
-from Papers.models import Paper
+from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
@@ -29,8 +30,9 @@ class ReassembleService:
         paper_tasks = MarkingTask.objects.filter(paper=paper)
         completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE)
         ood_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE)
+        n_questions = SpecificationService().get_n_questions()
         return (
-            completed_tasks.count() > 0
+            completed_tasks.count() == n_questions
             and completed_tasks.count() + ood_tasks.count() == paper_tasks.count()
         )
 
@@ -253,13 +255,44 @@ class ReassembleService:
             solution=solution,
             exam_name=SpecificationService().get_longname(),
         )
+        return cover_name
 
-    def reassemble_paper(self, paper, outname_prefix, outdir=Path("reassembled")):
+    def get_id_page_image(self, paper):
+        """Get the path and rotation for a paper's ID page."""
+        id_page_image = IDPage.objects.get(paper=paper).image
+        return [
+            {
+                "filename": id_page_image.image_file.path,
+                "rotation": id_page_image.rotation,
+            }
+        ]
+
+    def get_dnm_page_images(self, paper):
+        """Get the path and rotation for a paper's do-not-mark pages."""
+        dnm_pages = DNMPage.objects.filter(paper=paper)
+        dnm_images = [dnmpage.image for dnmpage in dnm_pages]
+        return [
+            {"filename": img.image_file.path, "rotation": img.rotation}
+            for img in dnm_images
+        ]
+
+    def get_annotation_images(self, paper):
+        """Get the paths for a paper's annotation images."""
+        n_questions = SpecificationService().get_n_questions()
+        marked_pages = []
+
+        mts = MarkingTaskService()
+        for i in range(1, n_questions + 1):
+            annotation = mts.get_latest_annotation(paper.paper_number, i)
+            marked_pages.append(annotation.image.path)
+
+        return marked_pages
+
+    def reassemble_paper(self, paper, outdir="reassembled"):
         """Reassemble a single test paper.
 
         Args:
             paper: Paper instance to re-assemble.
-            outnamne_prefix: str, the filename prefix for the PDF (i.e., the exam shortname.)
             outdir (optional): pathlib.Path, the directory to save the test PDF.
 
         Returns:
@@ -271,11 +304,27 @@ class ReassembleService:
         paper_id = self.get_paper_id_or_none(paper)
         if not paper_id:
             raise ValueError(f"Paper {paper.paper_number} is not identified.")
+        student_id, student_name = paper_id
 
         if not self.is_paper_marked(paper):
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
+        shortname = SpecificationService().get_shortname()
+        outname = outdir / f"{shortname}_{student_id}.pdf"
+
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)
             cover_file = self.build_paper_cover_page(tmpdir, paper)
-            print("Built a cover file!")
+            id_pages = self.get_id_page_image(paper)
+            dnm_pages = self.get_dnm_page_images(paper)
+            marked_pages = self.get_annotation_images(paper)
+            reassemble(
+                outname,
+                shortname,
+                student_id,
+                cover_file,
+                id_pages,
+                marked_pages,
+                dnm_pages,
+            )
+        return outname

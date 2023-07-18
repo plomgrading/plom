@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 
+from tqdm import trange
+
 from django.core.management.base import BaseCommand, CommandError
 
 from Finish.services import ReassembleService
@@ -31,12 +33,29 @@ class Command(BaseCommand):
         paper = Paper.objects.get(paper_number=test_num)
         reassembler = ReassembleService()
 
-        reassembler.reassemble_paper(paper, SpecificationService().get_shortname)
+        out_path = reassembler.reassemble_paper(paper)
+        self.stdout.write(f"File written to {out_path.absolute()}")
+
+    def reassemble_all_papers(self):
+        paper_service = PaperInfoService()
+        if not paper_service.is_paper_database_populated():
+            raise CommandError("Paper database is not populated - stopping.")
+
+        papers = Paper.objects.all()
+        reassembler = ReassembleService()
+        for i in trange(1, len(papers) + 1, desc="Reassembly progress"):
+            try:
+                paper = papers.get(paper_number=i)
+                out_path = reassembler.reassemble_paper(paper)
+            except ValueError as e:
+                self.stderr.write(f"Warning: {e}")
+        self.stdout.write(f"Papers written to {out_path.parent.absolute()}")
 
     def handle(self, *args, **options):
         test_num = options["testnum"]
         if test_num:
-            self.stdout.write(f"Building test {test_num}...")
+            self.stdout.write(f"Reassembling paper {test_num}...")
             self.reassemble_one_paper(test_num)
         else:
-            self.stdout.write("Building all papers!")
+            self.stdout.write("Reassembling all papers...")
+            self.reassemble_all_papers()
