@@ -8,13 +8,12 @@ from collections import defaultdict
 import csv
 from pathlib import Path
 import tempfile
-
-import fitz
+from typing import List, Dict
 
 from django.core.management import call_command
+import fitz
 
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
-
 from Papers.services import SpecificationService
 
 
@@ -50,7 +49,6 @@ class DemoBundleService:
             config (dict): server config
         """
         bundles = config["bundles"]
-        n_bundles = len(bundles)
         default_n_pages = self.get_default_paper_length()
 
         with fitz.open(out_file) as scribble_pdf:
@@ -95,7 +93,7 @@ class DemoBundleService:
                 from_page_idx = to_page_idx + 1
                 to_page_idx = from_page_idx + default_n_pages - 1
 
-    def get_extra_page(self):
+    def get_extra_page(self) -> None:
         # Assumes that the extra page has been generated
         call_command(
             "plom_preparation_extrapage",
@@ -103,7 +101,7 @@ class DemoBundleService:
             "media/papersToPrint/extra_page.pdf",
         )
 
-    def assign_students_to_papers(self, paper_list, classlist):
+    def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
         # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
         all_sid = [row["id"] for row in classlist]
         id_to_name = {X["id"]: X["name"] for X in classlist}
@@ -212,7 +210,7 @@ class DemoBundleService:
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
-    def append_duplicate_page(self, pdf_doc, page_number):
+    def append_duplicate_page(self, pdf_doc: fitz.Document, page_number: int) -> None:
         last_page = len(pdf_doc) - 1
         pdf_doc.fullcopy_page(last_page)
 
