@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
+
+import pathlib
+from pathlib import Path
+from typing import Union
 
 from django.db import models
 from django.db.models.signals import pre_delete
@@ -8,8 +13,6 @@ from django.dispatch import receiver
 
 from Base.models import HueyTask
 from Papers.models import Paper
-
-from pathlib import Path
 
 
 class PDFTask(HueyTask):
@@ -33,14 +36,15 @@ class PDFTask(HueyTask):
         )
         self.file_path().unlink(missing_ok=True)
 
-    def file_path(self):
+    def file_path(self) -> Union[pathlib.Path, None]:
         """Get the path of the generated PDF file.
 
         Returns:
-            pathlib.Path | None: If the file exists, return the path. If it doesn't, return None.
+            If the file exists, return the path. If it doesn't, return `None`.
         """
-        if self.pdf_file:
-            return Path(self.pdf_file.path)
+        if not self.pdf_file:
+            return None
+        return Path(self.pdf_file.path)
 
     def file_display_name(self):
         """Return a file name for displaying on the PDF builder GUI."""

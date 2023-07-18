@@ -4,9 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
+import imghdr
 import json
 import pathlib
-import imghdr
+from typing import Union
 
 from rest_framework.exceptions import ValidationError
 
@@ -225,7 +226,9 @@ class MarkingTaskService:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
 
-    def get_first_available_task(self, question=None, version=None):
+    def get_first_available_task(
+        self, question=None, version=None
+    ) -> Union[MarkingTask, None]:
         """Return the first marking task with a 'todo' status.
 
         Args:
@@ -233,8 +236,7 @@ class MarkingTaskService:
             version (optional): int, requested version number
 
         Returns:
-            MarkingTask or None: The first available task, or None if
-                no such task exists.
+            The first available task, or `None` if no such task exists.
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
@@ -246,10 +248,9 @@ class MarkingTaskService:
 
         available = available.order_by("paper__paper_number")
 
-        if available.exists():
-            return available.first()
-        else:
+        if not available.exists():
             return None
+        return available.first()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
@@ -557,20 +558,20 @@ class MarkingTaskService:
         tag.task.add(task)
         tag.save()
 
-    def get_tag_from_text(self, text):
+    def get_tag_from_text(self, text: str) -> Union[MarkingTaskTag, None]:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
 
         Args:
-            text: str, the text contents of a tag.
+            text: the text contents of a tag.
 
         Returns:
-            MarkingTaskTag | None: The tag if it exists, and
-            None if it does not exist.
+            The tag if it exists, otherwise `None` if it does not exist.
         """
         text_tags = MarkingTaskTag.objects.filter(text=text)
-        if text_tags.exists():
-            # Assuming the queryset will always have a length of one
-            return text_tags.first()
+        if not text_tags.exists():
+            return None
+        # Assuming the queryset will always have a length of one
+        return text_tags.first()
 
     def add_tag_text_from_task_code(self, tag_text: str, code: str, user: str) -> None:
         """Add a tag to a task, creating the tag if it does not exist.
