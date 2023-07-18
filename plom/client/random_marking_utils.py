@@ -10,7 +10,7 @@ import random
 import sys
 import tempfile
 import time
-from typing import Union
+from typing import Union, Iterable
 
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Dict, List
@@ -184,7 +184,9 @@ class SceneParent(QWidget):
         pass
 
 
-def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
+def annotatePaper(
+    question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication
+) -> tuple:
     print("Starting random marking to task {}".format(task))
     annot = SceneParent(question, maxMark)
     annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
@@ -197,7 +199,7 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
 
 
 def do_random_marking_backend(
-    question: int, version: int, *, messenger, partial
+    question: int, version: int, *, Qapp: QApplication, messenger, partial: float
 ) -> None:
     maxMark = messenger.getMaxMark(question)
 
@@ -236,7 +238,7 @@ def do_random_marking_backend(
 
             basefile = Path(td) / "argh"
             score, rubrics, aname, plomfile = annotatePaper(
-                question, maxMark, task, src_img_data, basefile, tags
+                question, maxMark, task, src_img_data, basefile, tags, Qapp=Qapp
             )
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
@@ -332,8 +334,6 @@ def do_rando_marking(
     Returns:
         0 on success, non-zero on error/unexpected.
     """
-    global Qapp
-
     messenger = Messenger(server)
     messenger.start()
 
@@ -359,12 +359,12 @@ def do_rando_marking(
         Qapp = QApplication(L)
 
         if question is None:
-            questions = list(range(1, spec["numberOfQuestions"] + 1))
+            questions: Iterable = range(1, spec["numberOfQuestions"] + 1)
         else:
             questions = [question]
 
         if version is None:
-            versions = list(range(1, spec["numberOfVersions"] + 1))
+            versions: Iterable = range(1, spec["numberOfVersions"] + 1)
         else:
             versions = [version]
 
@@ -372,7 +372,9 @@ def do_rando_marking(
             build_random_rubrics(q, username=user, messenger=messenger)
             for v in versions:
                 print(f"Annotating question {q} version {v}")
-                do_random_marking_backend(q, v, messenger=messenger, partial=partial)
+                do_random_marking_backend(
+                    q, v, Qapp=Qapp, messenger=messenger, partial=partial
+                )
     finally:
         messenger.closeUser()
         messenger.stop()
