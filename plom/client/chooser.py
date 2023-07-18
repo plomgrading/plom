@@ -144,6 +144,7 @@ class Chooser(QDialog):
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.get_server_info)
+        self.ui.loginButton.clicked.connect(self.login)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
@@ -222,7 +223,7 @@ class Chooser(QDialog):
             else:
                 self.messenger = Messenger(server, port=port, webplom=self.webplom)
 
-        if not self._pre_login_connection():
+        if not self._pre_login_connection(self.messenger):
             return
 
         try:
@@ -407,10 +408,12 @@ class Chooser(QDialog):
             self.messenger.stop()
         self.messenger = None
 
-    def _pre_login_connection(self):
+    def _pre_login_connection(self, msgr):
+        # This msgr object may or may not be logged in: it can be temporary: we
+        # only use it to get public info from the server.
         try:
             try:
-                server_ver_str = self.messenger.start()
+                server_ver_str = msgr.start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     self,
@@ -420,15 +423,15 @@ class Chooser(QDialog):
                 )
                 msg.setDefaultButton(QMessageBox.StandardButton.No)
                 if msg.exec() == QMessageBox.StandardButton.No:
-                    self.messenger = None
                     return False
-                self.messenger.force_ssl_unverified()
-                server_ver_str = self.messenger.start()
+                # TODO: how to deal with this?  use instance var here instead?
+                # TODO: or just print the warning in the info: let login deal with forgiveness?
+                msgr.force_ssl_unverified()
+                server_ver_str = msgr.start()
         except PlomBenignException as e:
             WarnMsg(
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
             ).exec()
-            self.messenger = None
             return False
 
         try:
@@ -472,12 +475,29 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
+        local_msgr = Messenger(server, port=port)
+
+        if not self._pre_login_connection(local_msgr):
+            # no action required currently: optional cleanup?
+            pass
+
+    def login(self):
+        # TODO: if legacy and if manager, enable the manager button
+
+        server = self.ui.serverLE.text().strip()
+        if not server:
+            log.warning("No server URI")
+            return
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
+
         if not self.messenger:
             self.messenger = Messenger(server, port=port, webplom=self.webplom)
 
-        if not self._pre_login_connection():
+        if not self._pre_login_connection(self.messenger):
+            self.messenger = None
             return
-
+        # TODO:  should still do this self.get_server_info()
         try:
             spec = self.messenger.get_spec()
         except PlomServerNotReady as e:
@@ -494,7 +514,9 @@ class Chooser(QDialog):
             WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None
             return
+        self._set_restrictions_from_spec(spec)
 
+    def _set_restrictions_from_spec(self, spec):
         self.ui.markGBox.setTitle("Choose a task for “{}”".format(spec["name"]))
         question = self.getQuestion()
         v = self.getv()
@@ -519,11 +541,12 @@ class Chooser(QDialog):
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
+        # TODO: commented out: validate should still do this this!
         # put focus at username or password line-edit
-        if len(self.ui.userLE.text()) > 0:
-            self.ui.passwordLE.setFocus()
-        else:
-            self.ui.userLE.setFocus()
+        # if len(self.ui.userLE.text()) > 0:
+        #    self.ui.passwordLE.setFocus()
+        # else:
+        #    self.ui.userLE.setFocus()
 
     def _partial_parse_address_manual(self):
         address = self.ui.serverLE.text()
