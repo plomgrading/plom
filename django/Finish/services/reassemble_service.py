@@ -2,14 +2,18 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+import tempfile
+
+from plom.finish.coverPageBuilder import makeCover
+
 from django.utils import timezone
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 from Papers.models import Paper
-from Papers.services import SpecificationService
-from Preparation.services import PQVMappingService
+from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 
@@ -111,8 +115,9 @@ class ReassembleService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
-        qvmap = PQVMappingService().get_pqv_map_dict()
-        version = qvmap[paper.paper_number][question_number]
+        version = PaperInfoService().get_version_from_paper_question(
+            paper.paper_number, question_number
+        )
         if self.is_paper_marked(paper):
             annotation = MarkingTaskService().get_latest_annotation(
                 paper.paper_number, question_number
@@ -200,22 +205,77 @@ class ReassembleService:
             spreadsheet_data[paper.paper_number] = self.get_paper_status(paper)
         return spreadsheet_data
 
-    def get_cover_page_info(self, paper):
+    def get_cover_page_info(self, paper, solution=False):
         """Return information needed to build a cover page for a reassembled test.
 
         Args:
             paper: a reference to a Paper instance
+            solution (optional): bool, leave out the max possible mark.
         """
         cover_page_info = []
-        paper_id_info = self.get_paper_id_or_none(paper)
-        if paper_id_info:
-            cover_page_info.append(list(paper_id_info))
-        else:
-            cover_page_info.append([None, None])
 
-        n_questions = SpecificationService().get_n_questions()
+        spec_service = SpecificationService()
+        n_questions = spec_service.get_n_questions()
         for i in range(1, n_questions + 1):
+            question_label = spec_service.get_question_label(i)
+            max_mark = spec_service.get_question_mark(i)
             version, mark = self.get_question_data(paper, i)
-            cover_page_info.append([i, version, mark])
+
+            if solution:
+                cover_page_info.append([question_label, version, max_mark])
+            else:
+                cover_page_info.append([question_label, version, mark, max_mark])
 
         return cover_page_info
+
+    def build_paper_cover_page(self, tmpdir, paper, solution=False):
+        """Build a cover page for a reassembled PDF or a solution.
+
+        Args:
+            tmpdir (pathlib.Path): where to save the coverpage.
+            paper: a reference to a Paper instance.
+            solution (optional): bool, build coverpage for solutions.
+
+        Returns:
+            pathlib.Path: filename of the coverpage.
+        """
+        paper_id = self.get_paper_id_or_none(paper)
+        if not paper_id:
+            paper_id = (None, None)
+
+        cover_page_info = self.get_cover_page_info(paper, solution)
+        cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
+        makeCover(
+            cover_page_info,
+            cover_name,
+            test_num=paper.paper_number,
+            info=paper_id,
+            solution=solution,
+            exam_name=SpecificationService().get_longname(),
+        )
+
+    def reassemble_paper(self, paper, outname_prefix, outdir=Path("reassembled")):
+        """Reassemble a single test paper.
+
+        Args:
+            paper: Paper instance to re-assemble.
+            outnamne_prefix: str, the filename prefix for the PDF (i.e., the exam shortname.)
+            outdir (optional): pathlib.Path, the directory to save the test PDF.
+
+        Returns:
+            pathlib.Path: the full path of the reassembled test PDF.
+        """
+        outdir = Path(outdir)
+        outdir.mkdir(exist_ok=True)
+
+        paper_id = self.get_paper_id_or_none(paper)
+        if not paper_id:
+            raise ValueError(f"Paper {paper.paper_number} is not identified.")
+
+        if not self.is_paper_marked(paper):
+            raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
+
+        with tempfile.TemporaryDirectory() as _td:
+            tmpdir = Path(_td)
+            cover_file = self.build_paper_cover_page(tmpdir, paper)
+            print("Built a cover file!")

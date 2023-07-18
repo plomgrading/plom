@@ -75,6 +75,18 @@ class SpecificationService:
         Specification.objects.filter().delete()
 
     @transaction.atomic
+    def get_longname(self):
+        """Get the long name of the exam."""
+        spec_obj = self.get_the_spec()
+        return spec_obj["longName"]
+
+    @transaction.atomic
+    def get_shortname(self):
+        """Get the short name of the exam."""
+        spec_obj = self.get_the_spec()
+        return spec_obj["shortName"]
+
+    @transaction.atomic
     def get_n_questions(self):
         """
         Get the number of questions in the test.
@@ -134,3 +146,16 @@ class SpecificationService:
         spec_obj = self.get_the_spec()
         pages = spec_obj["question"][str(question_one_index)]["pages"]
         return len(pages)
+
+    @transaction.atomic
+    def get_question_label(self, question_one_index):
+        """Get the question label from its one-index.
+
+        Args:
+            question_one_index (str | int): question number indexed from 1.
+
+        Returns:
+            str: the question label.
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj["question"][str(question_one_index)]["label"]
