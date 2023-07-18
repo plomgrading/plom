@@ -25,7 +25,7 @@ class Command(BaseCommand):
     """Generates a PDF report of the marking progress."""
 
     help = "Generates a PDF report of the marking progress."
-    matplotlib.use("Agg")
+    matplotlib.use("Pdf")
 
     def handle(self, *args, **options):
         print("Building report.")
@@ -67,9 +67,9 @@ class Command(BaseCommand):
         fig, ax = plt.subplots()
 
         ax.hist(marks["total_mark"], bins=range(0, totalMarks + RANGE_BIN_OFFSET))
-        ax.set_title("Histogram of Total Marks")
-        ax.set_xlabel("Total Mark")
-        ax.set_ylabel("Number of Students")
+        ax.set_title("Histogram of total marks")
+        ax.set_xlabel("Total mark")
+        ax.set_ylabel("# of students")
 
         # encode the bytes as a base64 string
         png_bytes = BytesIO()
@@ -89,9 +89,9 @@ class Command(BaseCommand):
             bins = range(0, spec["question"][question]["mark"] + RANGE_BIN_OFFSET)
 
             ax.hist(marks_for_question, bins=bins)
-            ax.set_title("Histogram of Q" + str(question) + " Marks")
-            ax.set_xlabel("Question " + str(question) + " Mark")
-            ax.set_ylabel("Number of Students")
+            ax.set_title("Histogram of Q" + str(question) + " marks")
+            ax.set_xlabel("Question " + str(question) + " mark")
+            ax.set_ylabel("# of students")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
@@ -108,11 +108,18 @@ class Command(BaseCommand):
         marks_corr = (
             marks_corr.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
         )
-        marks_corr.columns = marks_corr.columns.str.split("_").str[0]
-        marks_corr.index = marks_corr.index.str.split("_").str[0]
+
+        col_names = []
+        for i, col_name in enumerate(marks_corr.columns.str.split("_").str[0]):
+            col_names.append("Q" + str(i + 1))
+
+        marks_corr.columns = col_names
+        marks_corr.index = col_names
 
         plt.figure(figsize=(6.4, 5.12))
-        sns.heatmap(marks_corr, annot=True, cmap="coolwarm")
+        sns.heatmap(
+            marks_corr, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True
+        )
         plt.title("Correlation between questions")
 
         png_bytes = BytesIO()
@@ -139,8 +146,8 @@ class Command(BaseCommand):
 
             ax.hist(scores_given_for_user, bins=bins)
             ax.set_title("(rel) Grades by " + marker)
-            ax.set_xlabel("Mark Given")
-            ax.set_ylabel("Times Assigned")
+            ax.set_xlabel("Mark given")
+            ax.set_ylabel("# of times assigned")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
@@ -157,8 +164,8 @@ class Command(BaseCommand):
 
             ax.hist(scores_given_for_user, bins=bins)
             ax.set_title("Grades by " + marker)
-            ax.set_xlabel("Mark Given")
-            ax.set_ylabel("Times Assigned")
+            ax.set_xlabel("Mark given")
+            ax.set_ylabel("# of times assigned")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
@@ -184,8 +191,8 @@ class Command(BaseCommand):
 
             ax.hist(marking_times_for_question, bins=bins)
             ax.set_title("Time spent marking Q" + str(question))
-            ax.set_xlabel("Time Taken")
-            ax.set_ylabel("Number of Papers")
+            ax.set_xlabel("Time spent (s)")
+            ax.set_ylabel("# of papers")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
@@ -208,9 +215,9 @@ class Command(BaseCommand):
             ]
 
             ax.scatter(times_for_question, mark_given_for_question)
-            ax.set_title("Q" + str(question) + ": Time Spent vs Mark Given")
-            ax.set_xlabel("Time Taken")
-            ax.set_ylabel("Mark Given")
+            ax.set_title("Q" + str(question) + ": Time spent vs Mark given")
+            ax.set_xlabel("Time spent (s)")
+            ax.set_ylabel("Mark given")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
@@ -221,7 +228,7 @@ class Command(BaseCommand):
 
         html = f"""
         <body>
-        <h2>{longName} report</h2>
+        <h2>Marking report: {longName}</h2>
         <p>Date: {date}</p>
         <br>
         <h3>Overview</h3>

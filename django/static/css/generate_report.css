@@ -17,6 +17,10 @@
         background      : url('https://plomgrading.org/images/plomLogo.png');
         background-size : 100%;
     }
+    @bottom-right {
+        content         : "Page " counter(page) " of " counter(pages);
+        margin-bottom   : 10mm;
+    }
 }
 
 div {
