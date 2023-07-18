@@ -257,7 +257,7 @@ def do_random_marking_backend(
             # remark every 6th paper
             if (remarking_counter % 6) == 0:
                 score, rubrics, aname, plomfile = annotatePaper(
-                    question, maxMark, task, src_img_data, basefile, tags
+                    question, maxMark, task, src_img_data, basefile, tags, Qapp=Qapp
                 )
                 print("Remarking to {} out of {}".format(score, maxMark))
                 messenger.MreturnMarkedTask(
