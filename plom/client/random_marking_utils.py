@@ -171,15 +171,15 @@ class SceneParent(QWidget):
             )
         )
 
-    def doneAnnotating(self):
+    def doneAnnotating(self) -> tuple:
         aname, plomfile = self.pickleIt()
         return self.scene.score, self.scene.get_rubric_ids(), aname, plomfile
 
-    def refreshDisplayedMark(self, score):
+    def refreshDisplayedMark(self, score) -> None:
         # needed for compat with pagescene.py
         pass
 
-    def setModeLabels(self, mode):
+    def setModeLabels(self, mode) -> None:
         # needed for compat with pagescene.py
         pass
 
