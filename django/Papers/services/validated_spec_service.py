@@ -40,12 +40,11 @@ class SpecificationService:
     def get_the_spec_as_toml(self):
         """Return the test-specification from the database.
 
-        If present, remove the private seed and public code.
-        TODO: or should we just remove the private seed?
+        If present, remove the private seed.  But the public code
+        is included (if present).
         """
         sv = SpecVerifier(self.get_the_spec())
         spec = sv.get_public_spec_dict()
-        spec.pop("publicCode", None)
         spec.pop("privateSeed", None)
         sv = SpecVerifier(spec)
         return sv.as_toml_string()
@@ -54,7 +53,11 @@ class SpecificationService:
     def get_the_spec_as_toml_with_codes(self):
         """Return the test-specification from the database.
 
-        TODO: or with the public code but not the private seed?
+        .. warning::
+            Note this includes both the public code and the private
+            seed.  If you are calling this, consider carefully whether
+            you need the private seed.  At the time of writing, no one
+            is calling this.
         """
         sv = SpecVerifier(self.get_the_spec())
         return sv.as_toml_string()
