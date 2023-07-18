@@ -146,6 +146,8 @@ packages = [
     "plom.solutions",
     "plom.canvas",
     "plom.scripts",
+    "plom_server",
+    "plom_server.Web_Plom",
 ]
 
 # somewhat deprecated?  not supposed to package things into share?
