@@ -306,7 +306,7 @@ def build_random_rubrics(question, *, username, messenger) -> None:
 
 
 def do_rando_marking(
-    server: str,
+    server: Union[str, None],
     user: str,
     password: str,
     *,

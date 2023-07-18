@@ -5,6 +5,7 @@
 """Randomly ID papers for testing purposes."""
 
 import random
+from typing import Union
 
 from plom.plom_exceptions import (
     PlomConflict,
@@ -60,7 +61,7 @@ def do_rando_identifying_backend(messenger):
                     print(f"Already used: {person}")
 
 
-def do_rando_identifying(server: str, user: str, password: str) -> int:
+def do_rando_identifying(server: Union[str, None], user: str, password: str) -> int:
     """Randomly associate papers with students: only for testing please.
 
     Args:
