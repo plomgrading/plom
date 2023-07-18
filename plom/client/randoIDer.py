@@ -57,6 +57,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.server = args.server or os.environ.get("PLOM_SERVER")
+    assert args.server is not None
 
     if not args.user:
         args.user = "scanner"
