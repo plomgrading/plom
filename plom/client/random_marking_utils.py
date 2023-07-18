@@ -202,6 +202,7 @@ def do_random_marking_backend(
     question: int, version: int, *, Qapp: QApplication, messenger, partial: float
 ) -> None:
     maxMark = messenger.getMaxMark(question)
+    remarking_counter = 0
 
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -252,6 +253,24 @@ def do_random_marking_backend(
                 rubrics,
                 integrity_check,
             )
+
+            # remark every 6th paper
+            if (remarking_counter % 6) == 0:
+                score, rubrics, aname, plomfile = annotatePaper(
+                    question, maxMark, task, src_img_data, basefile, tags
+                )
+                print("Remarking to {} out of {}".format(score, maxMark))
+                messenger.MreturnMarkedTask(
+                    task,
+                    question,
+                    version,
+                    score,
+                    max(0, round(random.gauss(180, 50))),
+                    aname,
+                    plomfile,
+                    rubrics,
+                    integrity_check,
+                )
 
 
 def build_random_rubrics(question, *, username, messenger) -> None:
