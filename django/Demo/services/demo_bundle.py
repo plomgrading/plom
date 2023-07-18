@@ -142,7 +142,9 @@ class DemoBundleService:
 
         return assignment
 
-    def make_last_page_with_wrong_version(self, pdf_doc, paper_number):
+    def make_last_page_with_wrong_version(
+        self, pdf_doc: fitz.Document, paper_number: int
+    ) -> None:
         """Muck around with the last page for testing purposes.
 
         Removes the last page of the doc and replaces it with a nearly
@@ -154,7 +156,7 @@ class DemoBundleService:
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-            pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
+            None, but modifies ``pdf_doc``  as a side effect.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
@@ -217,7 +219,9 @@ class DemoBundleService:
         last_page = len(pdf_doc) - 1
         pdf_doc.fullcopy_page(last_page)
 
-    def insert_qr_from_previous_page(self, pdf_doc, paper_number):
+    def insert_qr_from_previous_page(
+        self, pdf_doc: fitz.Document, paper_number: int
+    ) -> None:
         """Muck around with the penultimate page for testing purposes.
 
         Stamps a qr-code for the second-last page onto the last page,
@@ -229,8 +233,7 @@ class DemoBundleService:
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-            pdf_doc (fitz.Document): the updated pdf-document with the
-            inconsistent qr-codes on its last page.
+            None, but modifies ``pdf_doc`` as a side effect.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
