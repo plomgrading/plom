@@ -60,8 +60,8 @@ class TagService:
             present in the given queryset.
         """
         papers = {}
-        for task_tag in task_tags:
-            for task in task_tag.task.all().select_related("paper"):
+        for task_tag in task_tags.prefetch_related("task__paper"):
+            for task in task_tag.task.all():
                 if task.paper not in papers:
                     papers.update({task.paper: set()})
                 papers[task.paper].add(task_tag)
@@ -72,7 +72,7 @@ class TagService:
         task_tags = MarkingTaskTag.objects.all()
         counts = {}
         for task_tag in task_tags:  # TODO: this feels like n+1 query
-            counts.update({task_tag: task_tag.task.all().count()})
+            counts.update({task_tag: task_tag.task.count()})
         return counts
 
     # TODO: create_tag is defined in `marking_tasks.py`
