@@ -1039,7 +1039,7 @@ minpy_mindeps:
     - plom-demo . --num-papers 3 --prepare-only
 
 
-# Minimum Python, minimum deps: temporarily different from webplom
+# Minimum Python, minimum deps: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
     - postgres:12.2-alpine
