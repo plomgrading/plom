@@ -310,7 +310,7 @@ def do_rando_marking(
     *,
     partial: float = 100.0,
     question: Union[None, int] = None,
-    version: Union[None, int],
+    version: Union[None, int] = None,
 ) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
