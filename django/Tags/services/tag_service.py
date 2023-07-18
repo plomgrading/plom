@@ -71,7 +71,7 @@ class TagService:
         """Get a dictionary of the counts of each tag."""
         task_tags = MarkingTaskTag.objects.all()
         counts = {}
-        for task_tag in task_tags:  # TODO: this feels like n+1 query
+        for task_tag in task_tags:
             counts.update({task_tag: task_tag.task.count()})
         return counts
 
