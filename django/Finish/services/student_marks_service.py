@@ -67,7 +67,7 @@ class StudentMarkService:
             marks.update(self.get_marks_from_paper(paper_num))
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
-    
+
     def get_marks_from_papers(self, papers: dict) -> dict:
         """Get the marks for a list of papers.
 
@@ -85,16 +85,16 @@ class StudentMarkService:
             student_data = papers[student_id]
             for question_number in student_data:
                 question_info = student_data[question_number]
-                question = question_info['question']
-                student_mark = question_info['student_mark']
-                
+                question = question_info["question"]
+                student_mark = question_info["student_mark"]
+
                 if question not in question_marks:
                     question_marks[question] = []
-                
+
                 question_marks[question].append(student_mark)
-        
+
         return question_marks
-    
+
     def get_stats_for_questions(self, question_marks: dict) -> dict:
         """Get the question marks stats from a list of marks.
 
@@ -110,8 +110,8 @@ class StudentMarkService:
             marks = question_marks[question]
             avg = sum(marks) / len(marks)
             stdv = statistics.stdev(marks)
-            question_stats[question] = {'avg': avg, 'stdv': stdv}
-        
+            question_stats[question] = {"avg": avg, "stdv": stdv}
+
         return question_stats
 
     def convert_stats_to_hist_format(self, stats: dict) -> dict:
@@ -123,20 +123,13 @@ class StudentMarkService:
         Returns:
             data in dict format that can be used by the d3 histogram.
         """
-        data = {
-            "xLabel": "Question",
-            "yLabel": "Average Grade",
-            "values": []
-        }
+        data = {"xLabel": "Question", "yLabel": "Average Grade", "values": []}
 
         for question in stats:
-            data['values'].append({
-                'label': question,
-                'value': stats[question]['avg']
-            })
+            data["values"].append({"label": question, "value": stats[question]["avg"]})
 
         return data
-    
+
     def get_correlation_between_questions(self, question_data: dict) -> np.ndarray:
         """Get the correlation matrix between questions.
 
@@ -153,10 +146,10 @@ class StudentMarkService:
 
     def convert_correlation_to_heatmap_format(self, correlation: np.ndarray) -> dict:
         """Convert the correlation matrix to a format that can be used by the heatmap.
-        
+
         Args:
             correlation: The correlation matrix returned from get_correlation_between_questions.
-            
+
         Returns:
             data in dict format that can be used by the d3 heatmap.
         """

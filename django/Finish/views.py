@@ -63,8 +63,12 @@ class MarkingInformationView(ManagerRequiredView):
         grades_hist_data = self.sms.convert_stats_to_hist_format(question_stats)
         grades_hist_data = json.dumps(grades_hist_data)
 
-        question_correlation = self.sms.get_correlation_between_questions(question_marks)
-        corr_heatmap_data = self.sms.convert_correlation_to_heatmap_format(question_correlation)
+        question_correlation = self.sms.get_correlation_between_questions(
+            question_marks
+        )
+        corr_heatmap_data = self.sms.convert_correlation_to_heatmap_format(
+            question_correlation
+        )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
 
         context.update(
