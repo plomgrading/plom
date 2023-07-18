@@ -55,6 +55,37 @@ def get_parser():
             Also checks the environment variable PLOM_SERVER if omitted.
         """,
     )
+    parser.add_argument(
+        "--partial",
+        metavar="PERCENTAGE",
+        type=float,
+        default=100.0,
+        action="store",
+        help="""
+            What percentage of questions to mark?
+            Default is 100; mark all of them.
+            Technically, this is a i.i.d. probability of grading
+            each task that the server has.
+        """,
+    )
+    parser.add_argument(
+        "-q",
+        "--question",
+        metavar="N",
+        action="store",
+        help="""
+            Question number to mark.  If omitted, mark all of them.
+        """,
+    )
+    # potentially confusing with --verbose and software --version :(
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store",
+        help="""
+            Which version to mark.  If omitted, mark all of them.
+        """,
+    )
     return parser
 
 
@@ -73,4 +104,13 @@ if __name__ == "__main__":
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_marking(args.server, args.user, args.password))
+    sys.exit(
+        do_rando_marking(
+            args.server,
+            args.user,
+            args.password,
+            partial=args.partial,
+            question=args.question,
+            version=args.version,
+        )
+    )
