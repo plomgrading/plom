@@ -359,12 +359,12 @@ def do_rando_marking(
         Qapp = QApplication(L)
 
         if question is None:
-            questions = range(1, spec["numberOfQuestions"] + 1)
+            questions = list(range(1, spec["numberOfQuestions"] + 1))
         else:
             questions = [question]
 
         if version is None:
-            versions = range(1, spec["numberOfVersions"] + 1)
+            versions = list(range(1, spec["numberOfVersions"] + 1))
         else:
             versions = [version]
 
