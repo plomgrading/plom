@@ -4,19 +4,16 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
-import csv
-import fitz
-import tempfile
-from pathlib import Path
 from collections import defaultdict
+import csv
+from pathlib import Path
+import tempfile
+
+import fitz
 
 from django.core.management import call_command
 
-from plom.create.scribble_utils import (
-    scribble_name_and_id,
-    scribble_pages,
-    splitFakeFile,
-)
+from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 
 from Papers.services import SpecificationService
 
