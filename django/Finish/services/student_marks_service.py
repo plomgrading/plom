@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Divy Patel
 
 import arrow
+import numpy as np
 import statistics
 
 # Yuck, replace this below when we drop Python 3.8 support
@@ -94,19 +95,16 @@ class StudentMarkService:
         
         return question_marks
     
-    def get_stats_for_questions(self, papers: dict) -> dict:
-        """Get the question marks stats from a list of papers.
+    def get_stats_for_questions(self, question_marks: dict) -> dict:
+        """Get the question marks stats from a list of marks.
 
         Args:
-            papers: The list of questions.
+            papers: The list of questions grades. (returned from get_marks_from_papers)
 
         Returns:
             Dict keyed by question number whose values are a dictionary holding
             the average and standard deviation for each question.
         """
-        question_marks = self.get_marks_from_papers(papers)
-
-        # Calculate average and standard deviation for each question
         question_stats = {}
         for question in question_marks:
             marks = question_marks[question]
@@ -137,6 +135,40 @@ class StudentMarkService:
                 'value': stats[question]['avg']
             })
 
+        return data
+    
+    def get_correlation_between_questions(self, question_data: dict) -> np.ndarray:
+        """Get the correlation matrix between questions.
+
+        Args:
+            question_data: The question data returned from get_stats_for_questions.
+
+        Returns:
+            The correlation matrix between questions.
+        """
+        min_length = min(len(lst) for lst in question_data.values())
+        question_data = np.array([lst[:min_length] for lst in question_data.values()])
+        question_correlation = np.corrcoef(question_data)
+        return question_correlation
+
+    def convert_correlation_to_heatmap_format(self, correlation: np.ndarray) -> dict:
+        """Convert the correlation matrix to a format that can be used by the heatmap.
+        
+        Args:
+            correlation: The correlation matrix returned from get_correlation_between_questions.
+            
+        Returns:
+            data in dict format that can be used by the d3 heatmap.
+        """
+        data = {
+            "rows": len(correlation),
+            "cols": len(correlation[0]),
+            "xTitle": "Question",
+            "yTitle": "Question",
+            "xLabel": list(range(1, len(correlation) + 1)),
+            "yLabel": list(range(1, len(correlation) + 1)),
+            "values": correlation.tolist(),
+        }
         return data
 
     def get_marks_from_paper_set(self, paper_set: set) -> dict:

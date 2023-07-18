@@ -58,9 +58,14 @@ class MarkingInformationView(ManagerRequiredView):
         total_tasks = self.mts.get_n_total_tasks()
         all_marked = self.mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
-        question_stats = self.sms.get_stats_for_questions(papers)
+        question_marks = self.sms.get_marks_from_papers(papers)
+        question_stats = self.sms.get_stats_for_questions(question_marks)
         grades_hist_data = self.sms.convert_stats_to_hist_format(question_stats)
         grades_hist_data = json.dumps(grades_hist_data)
+
+        question_correlation = self.sms.get_correlation_between_questions(question_marks)
+        corr_heatmap_data = self.sms.convert_correlation_to_heatmap_format(question_correlation)
+        corr_heatmap_data = json.dumps(corr_heatmap_data)
 
         context.update(
             {
@@ -76,6 +81,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "hours_estimate": hours_estimate,
                 "days_estimate": days_estimate,
                 "grades_hist_data": grades_hist_data,
+                "corr_heatmap_data": corr_heatmap_data,
             }
         )
 
