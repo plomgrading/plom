@@ -197,6 +197,7 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
 
 def do_random_marking_backend(question, version, *, messenger):
     maxMark = messenger.getMaxMark(question)
+    remarking_counter = 0
 
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -232,6 +233,23 @@ def do_random_marking_backend(question, version, *, messenger):
                 rubrics,
                 integrity_check,
             )
+            # remark every 6th paper
+            if (remarking_counter % 6) == 0:
+                score, rubrics, aname, plomfile = annotatePaper(
+                    question, maxMark, task, src_img_data, basefile, tags
+                )
+                print("Remarking to {} out of {}".format(score, maxMark))
+                messenger.MreturnMarkedTask(
+                    task,
+                    question,
+                    version,
+                    score,
+                    max(0, round(random.gauss(180, 50))),
+                    aname,
+                    plomfile,
+                    rubrics,
+                    integrity_check,
+                )
         # tag one in three papers
         if random.randrange(3) == 0:
             # use up to 3 tags, skewed towards single tag
@@ -242,6 +260,7 @@ def do_random_marking_backend(question, version, *, messenger):
                 if the_tag not in the_tags:
                     the_tags.append(the_tag)
                     messenger.add_single_tag(task, the_tag)
+        remarking_counter += 1
 
 
 def build_random_rubrics(question, *, username, messenger):
