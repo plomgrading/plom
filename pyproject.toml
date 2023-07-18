@@ -72,7 +72,7 @@ dependencies = [
     "random-username>=1.0.2",
     "requests",
     "requests-toolbelt",
-    "scikit-learn>=0.23.1",
+    "scikit-learn>=1.0.2",
     "scipy>=1.8.1",
     "segno>=1.5.2",
     "stdiomask>=0.0.6",
