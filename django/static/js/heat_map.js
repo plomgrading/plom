@@ -9,7 +9,7 @@ function renderHeatMap(data, divId) {
 
     // Set up dimensions and margins
     const cellSize = 40; // Set the desired cell size
-    const margin = { top: 20, right: 20, bottom: 40, left: 20 }; // Higher margin on bottom for labels
+    const margin = { top: 60, right: 20, bottom: 20, left: 60 };
     const width = data.cols * cellSize + margin.left + margin.right;
     const height = data.rows * cellSize + margin.top + margin.bottom;
 
@@ -34,7 +34,7 @@ function renderHeatMap(data, divId) {
         .attr("height", cellSize) // Set the desired cell height
         .attr("fill", d => colorScale(d)); // Set the cell color based on the value
 
-    // Add x-axis labels
+    // Add x-axis labels at the top
     const xLabels = svg.selectAll(".xLabel")
         .data(data.xLabel)
         .enter()
@@ -42,7 +42,7 @@ function renderHeatMap(data, divId) {
         .text(d => d)
         .attr("class", "xLabel")
         .attr("x", (d, i) => (i + 0.5) * cellSize + margin.left)
-        .attr("y", height - margin.bottom / 2)
+        .attr("y", margin.top * 2 / 3) // Adjust the y-coordinate to be at the top
         .style("text-anchor", "middle");
 
     // Add y-axis labels
@@ -52,7 +52,24 @@ function renderHeatMap(data, divId) {
         .append("text")
         .text(d => d)
         .attr("class", "yLabel")
-        .attr("x", margin.left / 2)
-        .attr("y", (d, i) => (i + 0.5) * cellSize + margin.top)
+        .attr("x", margin.left * 2 / 3)
+        .attr("y", (d, i) => (i + 0.6) * cellSize + margin.top)
         .style("text-anchor", "middle");
+
+    // Add x-axis title
+    svg.append("text")
+        .attr("class", "xTitle")
+        .attr("x", width * 3 / 5)
+        .attr("y", margin.top / 3) // Adjust the y-coordinate for the title
+        .style("text-anchor", "middle")
+        .text(data.xTitle);
+
+    // Add y-axis title
+    svg.append("text")
+        .attr("class", "yTitle")
+        .attr("transform", "rotate(-90)") // Rotate the text for vertical display
+        .attr("x", -(margin.top + height) * 2 / 5)
+        .attr("y", margin.left / 3) // Adjust the y-coordinate for the title
+        .style("text-anchor", "middle")
+        .text(data.yTitle);
 }
