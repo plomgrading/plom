@@ -1,0 +1,104 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+<div>
+    <a class="btn btn-primary"
+       hx-post="{% url 'start_all_PDFs' %}"
+       hx-target="#pdf_table">Build All PDFs</a>
+    {% if pdf_errors %}
+        <a class="btn btn-warning"
+           hx-post="{% url 'retry_all_PDFs' %}"
+           hx-target="#pdf_table">Retry All</a>
+    {% endif %}
+    <a class="btn btn-danger"
+       hx-post="{% url 'cancel_all_PDFs' %}"
+       hx-target="#pdf_table">Cancel All</a>
+    <a class="btn btn-danger"
+       data-bs-toggle="modal"
+       data-bs-target="#deleteBtnModal">Delete All PDFs</a>
+    <a class="btn btn-secondary"
+       onclick="document.getElementById('bottom').scrollIntoView()">
+        Scroll to bottom
+        <i class="bi bi-chevron-down"></i>
+    </a>
+</div>
+<div>{{ message }}</div>
+<!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
+<table class="table table-striped"
+       {% if poll %} hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s" {% endif %}>
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Filename</th>
+            <th scope="col">Status</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+    {% for task in tasks %}
+        <tr>
+            <td>{{ task.paper_number }}</td>
+            {% if task.status == 'complete' %}
+                <td>
+                    <a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ task.pdf_filename }}</a>
+                </td>
+                <td>{{ task.status }}</td>
+                <td></td>
+            {% elif task.status == 'error' %}
+                <td>{{ task.pdf_filename }}</td>
+                <td>
+                    <p class="text-danger">{{ task.message }}</p>
+                </td>
+                <td>
+                    <a class="btn btn-warning"
+                       hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                       hx-target="#pdf_table">Retry</a>
+                </td>
+            {% elif task.status == 'queued' %}
+                <td>{{ task.pdf_filename }}</td>
+                <td>
+                    {{ task.status }}
+                    <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+                </td>
+                <td>
+                    <a class="btn btn-danger"
+                       hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
+                       hx-target="#pdf_table">Cancel</a>
+                </td>
+            {% elif task.status == 'started' %}
+                <td>{{ task.pdf_filename }}</td>
+                <td>
+                    {{ task.status }}
+                    <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+                </td>
+                <td></td>
+            {% else %}
+                <td>{{ task.pdf_filename }}</td>
+                <td>{{ task.status }}</td>
+                <td>
+                    <a class="btn btn-primary"
+                       hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                       hx-target="#pdf_table">Start</a>
+                </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+</table>
+<div id="bottom">
+    {% if zip_disabled %}
+        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
+    {% else %}
+        <a class="btn btn-primary"
+           href="{% url 'zip_stream_paperPDFs' %}"
+           download>Save as zip file</a>
+    {% endif %}
+    <a class="btn btn-secondary"
+       onclick="document.getElementById('top').scrollIntoView()">
+        Scroll to top
+        <i class="bi bi-chevron-up"></i>
+    </a>
+</div>
+</class>

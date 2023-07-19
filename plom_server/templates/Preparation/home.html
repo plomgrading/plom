@@ -1,0 +1,244 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Andrew Rechnitzer
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block page_heading %}
+    Prepare assessment
+{% endblock page_heading %}
+{% block main_content %}
+    <ul class="list-group ms-3">
+        <li class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center gap-1">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">
+                        1. Test specification
+                        {% if valid_spec and is_spec_the_same %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
+                    <p class="fs-7">&emsp;&ensp; Create a specification for your assessment.</p>
+                </div>
+                {% if valid_spec and not papers_staged %}
+                    <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+                    <a class="btn btn-danger float-end"
+                       hx-delete="{% url 'prep_reset_spec' %}"
+                       hx-confirm="Are you sure?">Reset</a>
+                    <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
+                        Modify
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% elif papers_staged %}
+                    <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+                    <a disabled>
+                        Test-papers in database
+                        <i class="bi bi-chevron-down"></i>
+                    </a>
+                {% else %}
+                    <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
+                        Create
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action {% if not can_upload_source_tests %}disabled{% endif %}">
+            <div class="d-flex align-items-center gap-1">
+                {% if can_upload_source_tests %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">
+                            2. Upload sources ({{ uploaded_test_versions }} of {{ test_versions }})
+                            {% if all_source_tests_uploaded %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                        </p>
+                        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
+                    </div>
+                    {% if uploaded_test_versions %}
+                        <a class="btn btn-danger float-end"
+                           hx-delete="{% url 'prep_reset_sources' %}"
+                           hx-confirm="Are you sure?">Reset</a>
+                    {% endif %}
+                    <a class="btn btn-primary float-end" href="{% url 'prep_sources' %}">
+                        Manage
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">2. Upload sources</p>
+                        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
+                    </div>
+                    <a>
+                        Specification needed
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center gap-1">
+                {% if prename_enabled %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
+                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+                    </div>
+                    <a disabled>Prenaming enabled</a>
+                    {% if not papers_staged %}
+                        <a class="btn btn-danger" hx-post="{% url 'prep_prename_toggle' %}">Disable</a>
+                    {% endif %}
+                {% else %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
+                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+                    </div>
+                    <a disabled>Prenaming disabled</a>
+                    {% if not papers_staged %}
+                        <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">Enable</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center gap-1">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">
+                        3. Upload classlist
+                        {% if student_list_present %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
+                    <p class="fs-7">
+                        &emsp;&ensp; Upload classlist
+                        {% if prename_enabled %}
+                            (Required with prenaming enabled)
+                        {% else %}
+                            (Optional with prenaming disabled)
+                        {% endif %}
+                    </p>
+                </div>
+                {% if not papers_staged %}
+                    {% if student_list_present %}
+                        <a class="btn btn-danger float-end"
+                           hx-delete="{% url 'prep_reset_classlist' %}"
+                           hx-confirm="Are you sure?">Reset</a>
+                    {% endif %}
+                    <a class="btn btn-primary float-end" href="{% url 'prep_classlist' %}">
+                        Manage
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <a class="btn btn-success" href="{% url 'prep_classlist_view' %}">View</a>
+                    <a disabled>
+                        Test-papers in database
+                        <i class="bi bi-chevron-down"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action {% if not can_qvmap %}disabled{% endif %}">
+            <div class="d-flex align-items-center gap-1">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">
+                        4. Question-version mapping
+                        {% if pqv_mapping_present %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
+                    <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>
+                </div>
+                {% if papers_staged %}
+                    <a class="btn btn-success float-end"
+                       href="{% url 'prep_qvmapping_view' %}">View</a>
+                    <a disabled>
+                        Test-papers in database
+                        <i class="bi bi-chevron-down"></i>
+                    </a>
+                {% elif can_qvmap %}
+                    {% if pqv_mapping_present %}
+                        <a class="btn btn-danger float-end"
+                           hx-delete="{% url 'prep_reset_qvmap' %}"
+                           hx-confirm="Are you sure?">Reset</a>
+                    {% endif %}
+                    <a class="btn btn-primary float-end" href="{% url 'prep_qvmapping' %}">
+                        Manage
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <a disabled>
+                        Specification needed
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action {% if not can_build_papers %}disabled{% endif %}">
+            <div class="d-flex align-items-center">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">
+                        5. Save to database
+                        {% if papers_staged %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
+                    <p class="fs-7">&emsp;&ensp; Write test-paper information to the database.</p>
+                </div>
+                {% if prename_enabled and not student_list_present %}
+                    <a disabled>
+                        Classlist needed
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% elif not pqv_mapping_present %}
+                    <a disabled>
+                        QV-map needed
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% else %}
+                    <a class="btn btn-primary float-end" href="{% url 'prep_test_papers' %}">
+                        Manage
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
+            <div class="d-flex align-items-center">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">
+                        6. Build test-paper PDFs
+                        {% if papers_built %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
+                    <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>
+                </div>
+                {% if not all_source_tests_uploaded %}
+                    <a>
+                        Needs test sources
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% elif not papers_staged %}
+                    <a>
+                        Needs database
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% else %}
+                    <a class="btn btn-primary float-end" href="{% url 'create_paperPDFs' %}">
+                        Manage
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">7. Miscellaneous other things</p>
+                    <p class="fs-7">
+                        &emsp;&ensp; Create extra-page pdf.
+                        {% if extra_page_status == "complete" %}
+                            <i class="bi bi-check-circle text-success"></i>
+                        {% elif extra_page_status == "todo" %}
+                        {% else %}
+                            <i class="bi bi-gear text-info"></i>
+                        {% endif %}
+                    </p>
+                </div>
+                <a class="btn btn-primary float-end" href="{% url 'misc_extras' %}">
+                    Manage
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </li>
+    </ul>
+{% endblock main_content %}

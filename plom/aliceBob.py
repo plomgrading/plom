@@ -5,9 +5,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 
-"""
-Utilities for canned users and auto-generated (poor) passwords
-"""
+"""Utilities for canned users and auto-generated (poor) passwords."""
 
 import math
 import secrets
@@ -109,11 +107,11 @@ def simple_password(n=3):
 def make_random_user_list(number):
     """Makes a list of random users and passwords.
 
-    args:
+    Args:
         number (int): how many randomly named users.  For a large number
             usernames will have random digits postfixed.
 
-    returns:
+    Returns:
         list: a list of (user, password) tuples
     """
     if number > len(names):
@@ -132,10 +130,11 @@ def make_numbered_user_list(number):
 
     Each user is named like "user018" where the number is zero padded
     based on the total number of users requested.
-    args:
+
+    Args:
         number (int): how many users to create.
 
-    returns:
+    Returns:
         list: a list of (user, password) tuples.
     """
     digits = max(1, int(math.ceil(math.log10(number if number > 0 else 1))))

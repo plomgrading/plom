@@ -6,9 +6,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 
-"""
-The Plom Marker client
-"""
+"""The Plom Marker client."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -34,6 +32,8 @@ if sys.version_info >= (3, 9):
     from importlib import resources
 else:
     import importlib_resources as resources
+
+from packaging.version import Version
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
@@ -1088,7 +1088,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
 
-        if __version__.endswith("dev"):
+        if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
             self.ui.failmodeCB.setEnabled(True)
         else:
@@ -1180,12 +1180,10 @@ class MarkerClient(QWidget):
         return self._prefer_above_action.stored_value
 
     def loadMarkedList(self):
-        """
-        Loads the list of previously marked papers into self.examModel
+        """Loads the list of previously marked papers into self.examModel.
 
         Returns:
             None
-
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)

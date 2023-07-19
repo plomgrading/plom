@@ -1,0 +1,26 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "SpecCreator/base-spec-2col.html" %}
+{% block title %}
+    Create specification
+{% endblock title %}
+{% block right_column %}
+    <div class="w-100 h-100">
+        <div class="h-100">
+            <p>
+                A <strong>&ldquo;test specification&rdquo;</strong>
+                contains information that Plom needs about the structure of your test.
+            </p>
+            <p>
+                The following screens will guide you through creating
+                the test specification.
+            </p>
+        </div>
+        <a type="button"
+           class="btn btn-primary btn-lg float-end"
+           href="{% url 'names' %}">Next</a>
+    </div>
+{% endblock right_column %}

@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 """Utilities to load the digit-prediction model."""
 
@@ -19,13 +19,13 @@ from .trainRandomForestModel import train_model
 def load_model(where=Path("model_cache")):
     """Load the digit-predictor model from disc.
 
-    args:
+    Args:
         where (None/pathlib.Path): where to find the the model, defaults
             to "model_cache/" under the current working directory.
 
-    returns:
+    Returns:
         sklearn.RandomForestClassifier: a model trained to predict
-            digits in bitmaps.
+        digits in bitmaps.
     """
     filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
     with gzip.open(where / filename, "rb") as f:
@@ -35,7 +35,7 @@ def load_model(where=Path("model_cache")):
 def is_model_present(where=Path("model_cache")):
     """Checks if the ML model is available.
 
-    args:
+    Args:
         where (pathlib.Path): where to find the the model, defaults
             to "model_cache/" under the current working directory.
 
@@ -49,7 +49,7 @@ def is_model_present(where=Path("model_cache")):
 def download_model(where=Path("model_cache")):
     """Try to download the model, respond with False if unsuccessful.
 
-    args:
+    Args:
         where (None/pathlib.Path): where to look for / put the model,
             defaults to "model_cache/" under the current directory.
 
@@ -76,11 +76,11 @@ def download_model(where=Path("model_cache")):
 def download_or_train_model(where=Path("model_cache")):
     """Download the ID detection model if possible, if not, train it.
 
-    args:
+    Args:
         where (None/pathlib.Path): where to look for / put the model,
             defaults to "model_cache/" under the current directory.
 
-    returns:
+    Returns:
         None
 
     Prints messages to stdout as it works.

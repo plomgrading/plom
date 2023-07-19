@@ -1,0 +1,84 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>User Management</title>
+        <title>
+            {% block title %}
+                Web Plom - User Management
+            {% endblock title %}
+        </title>
+    </head>
+    <body>
+        {% block page_heading %}
+            User Management
+        {% endblock page_heading %}
+        {% block main_content %}
+            {% for user in users %}
+                {% if 'marker' in user.groups.all.0.name or 'scanner' in user.groups.all.0.name %}
+                    <form method="post" action="{% url 'change_user_status' user.username %}">
+                        {% csrf_token %}
+                        <div class="card mt-2">
+                            <div class="card-body d-flex flex-row justify-content-between">
+                                <div>
+                                    <h5 class="card-title">{{ user.username }}</h5>
+                                    {% if 'marker' in user.groups.all.0.name %}Marker{% endif %}
+                                    {% if 'scanner' in user.groups.all.0.name %}Scanner{% endif %}
+                                </div>
+                                {% if user in request.online_now %}
+                                    Online
+                                {% else %}
+                                    Offline
+                                {% endif %}
+                                <button type="button"
+                                        class="btn btn-info"
+                                        name="showProgress"
+                                        value="showProgess">
+                                    <a href="{% url 'progress' user.username %}"
+                                       class="nav-link"
+                                       target="_blank">Show Progress</a>
+                                </button>
+                                {% if user.is_active %}
+                                    <input type="submit"
+                                           class="btn btn-danger"
+                                           value="Disable"
+                                           name="changeStatus">
+                                {% else %}
+                                    <input type="submit"
+                                           class="btn btn-success"
+                                           value="Enable"
+                                           name="changeStatus">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            {% endfor %}
+            <br>
+            <p>
+                <button type="button" class="btn btn-success">
+                    <a href="{% url 'enableMarkers' %}" class="nav-link">Enable Markers &nbsp;</a>
+                </button>
+                <button type="button" class="btn btn-danger">
+                    <a href="{% url 'disableMarkers' %}" class="nav-link">Disable Markers &nbsp;</a>
+                </button>
+            </p>
+            <br>
+            <p>
+                <button type="button" class="btn btn-primary">
+                    <a href="{% url 'enableScanners' %}" class="nav-link">Enable Scanners</a>
+                </button>
+                <button type="button" class="btn btn-warning">
+                    <a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a>
+                </button>
+            </p>
+        {% endblock main_content %}
+    </body>
+</html>

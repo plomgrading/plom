@@ -1,10 +1,16 @@
 .. Plom documentation
-   Copyright 2020-2022 Colin B. Macdonald
+   Copyright 2020-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-Managing a server
-=================
+Managing a legacy Plom server
+=============================
+
+.. note::
+
+   At least some of the information on this page concerns the "legacy"
+   Plom server.  You may want to read about the new server instead.
+
 
 Plom Manager is a tool to monitor the marking team's progress as well
 as perform various server oversight actions.

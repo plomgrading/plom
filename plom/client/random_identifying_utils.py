@@ -5,6 +5,7 @@
 """Randomly ID papers for testing purposes."""
 
 import random
+from typing import Union
 
 from plom.plom_exceptions import (
     PlomConflict,
@@ -60,16 +61,16 @@ def do_rando_identifying_backend(messenger):
                     print(f"Already used: {person}")
 
 
-def do_rando_identifying(server, user, password):
+def do_rando_identifying(server: Union[str, None], user: str, password: str) -> int:
     """Randomly associate papers with students: only for testing please.
 
-    args:
+    Args:
         server (str)
         user (str)
         password (str)
 
-    returns:
-        int: 0 on success, non-zero on error/unexpected.
+    Returns:
+        0 on success, non-zero on error/unexpected.
     """
     messenger = Messenger(server)
     messenger.start()

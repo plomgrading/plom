@@ -14,7 +14,7 @@ from plom.client import ImageViewWidget
 
 
 class DiscardViewWindow(QDialog):
-    """Simple view window for pageimages"""
+    """Simple view window for pageimages."""
 
     def __init__(self, parent, fnames):
         super().__init__(parent)

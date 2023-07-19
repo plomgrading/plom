@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
-"""
-Tools for managing the local page cache.
-"""
+"""Tools for managing the local page cache."""
 
 import logging
 from pathlib import Path

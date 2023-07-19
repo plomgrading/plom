@@ -3,7 +3,7 @@
 # Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
-"""Tools for working with TeX"""
+"""Tools for working with TeX."""
 
 from pathlib import Path
 import subprocess
@@ -27,12 +27,11 @@ def texFragmentToPNG(fragment, *, dpi=225):
         dpi (int): controls the resolution of the image by setting
             the dots-per-inch.  Defaults: 225.
 
-    Return:
+    Returns:
         tuple: `(True, imgdata)` or `(False, error_msg)` where `imgdata`
         is the raw contents of a PNG file, and `error_msg` is
         (currently) a string, but this could change in the future.
     """
-
     head = dedent(
         r"""
         \documentclass[12pt]{article}
@@ -158,7 +157,6 @@ def buildLaTeX(src, out):
 
     TODO: this is more generally useful but how to handle the idBox2?
     """
-
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
             fh.write((resources.files(plom) / "idBox2.pdf").read_bytes())

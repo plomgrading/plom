@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import json
 import mimetypes
@@ -67,7 +67,6 @@ class ScanMessenger(BaseMessenger):
         * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
         * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
         """
-
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -91,11 +90,10 @@ class ScanMessenger(BaseMessenger):
     def listBundles(self):
         """Ask server for list of bundles in database.
 
-        returns:
+        Returns:
             list: a list of dict, each contains the `name`, `md5sum` and
-                `numberOfPages` for each bundle.
+            `numberOfPages` for each bundle.
         """
-
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -115,9 +113,9 @@ class ScanMessenger(BaseMessenger):
     def sidToTest(self, student_id):
         """Ask server to match given student_id to a test-number.
 
-        Returns
-        * [True, test_number]
-        * [False, 'Cannot find test with that student id']
+        Returns:
+            list: either ``[True, test_number]`` or
+            ``[False, 'Cannot find test with that student id']``.
         """
         self.SRmutex.acquire()
         try:
@@ -148,7 +146,7 @@ class ScanMessenger(BaseMessenger):
         paper number, what question and what page.  We may not know the
         student depending on whether it was pre-ided or not.
 
-        args:
+        Args:
             code (str): a string such as "t0020p06v1".
             test (int): paper number.
             page (int): page number.
@@ -213,7 +211,7 @@ class ScanMessenger(BaseMessenger):
         student it belongs to and what question(s).  The order within the
         question is somewhat known too, at least within its upload bundle.
 
-        args:
+        Args:
             sid (str): which student to attach this image to.
             questions (list): a list of questions (ints) to attach to.
             order (int): something like "page number" except that HWPages
@@ -229,7 +227,7 @@ class ScanMessenger(BaseMessenger):
             bundle_order): this image's place within the bundle (e.g.,
                 PDF page number).
 
-        return:
+        Returns:
             list/tuple: a bool indicating success/failure and an error
                message.
         """

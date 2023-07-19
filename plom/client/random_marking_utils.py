@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 from pathlib import Path
@@ -9,6 +10,7 @@ import random
 import sys
 import tempfile
 import time
+from typing import Union, Iterable
 
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Dict, List
@@ -169,20 +171,22 @@ class SceneParent(QWidget):
             )
         )
 
-    def doneAnnotating(self):
+    def doneAnnotating(self) -> tuple:
         aname, plomfile = self.pickleIt()
         return self.scene.score, self.scene.get_rubric_ids(), aname, plomfile
 
-    def refreshDisplayedMark(self, score):
+    def refreshDisplayedMark(self, score) -> None:
         # needed for compat with pagescene.py
         pass
 
-    def setModeLabels(self, mode):
+    def setModeLabels(self, mode) -> None:
         # needed for compat with pagescene.py
         pass
 
 
-def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
+def annotatePaper(
+    question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication
+) -> tuple:
     print("Starting random marking to task {}".format(task))
     annot = SceneParent(question, maxMark)
     annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
@@ -194,8 +198,11 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
     return annot.doneAnnotating()
 
 
-def do_random_marking_backend(question, version, *, messenger):
+def do_random_marking_backend(
+    question: int, version: int, *, Qapp: QApplication, messenger, partial: float
+) -> None:
     maxMark = messenger.getMaxMark(question)
+    remarking_counter = 0
 
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -211,26 +218,6 @@ def do_random_marking_backend(question, version, *, messenger):
             print("Another user got task {}. Trying again...".format(task))
             continue
 
-        with tempfile.TemporaryDirectory() as td:
-            downloader = Downloader(td, msgr=messenger)
-            src_img_data = downloader.sync_downloads(src_img_data)
-
-            basefile = Path(td) / "argh"
-            score, rubrics, aname, plomfile = annotatePaper(
-                question, maxMark, task, src_img_data, basefile, tags
-            )
-            print("Score of {} out of {}".format(score, maxMark))
-            messenger.MreturnMarkedTask(
-                task,
-                question,
-                version,
-                score,
-                random.randint(1, 20),
-                aname,
-                plomfile,
-                rubrics,
-                integrity_check,
-            )
         # tag one in three papers
         if random.randrange(3) == 0:
             # use up to 3 tags, skewed towards single tag
@@ -242,20 +229,65 @@ def do_random_marking_backend(question, version, *, messenger):
                     the_tags.append(the_tag)
                     messenger.add_single_tag(task, the_tag)
 
+        # skip marking some percentage of paper-questions
+        if random.random() * 100 > partial:
+            print("Skipping task {}".format(task))
+            continue
 
-def build_random_rubrics(question, *, username, messenger):
-    """Push random rubrics into a server: only for testing/demo purposes
+        with tempfile.TemporaryDirectory() as td:
+            downloader = Downloader(td, msgr=messenger)
+            src_img_data = downloader.sync_downloads(src_img_data)
+
+            basefile = Path(td) / "argh"
+            score, rubrics, aname, plomfile = annotatePaper(
+                question, maxMark, task, src_img_data, basefile, tags, Qapp=Qapp
+            )
+            print("Score of {} out of {}".format(score, maxMark))
+            messenger.MreturnMarkedTask(
+                task,
+                question,
+                version,
+                score,
+                max(0, round(random.gauss(180, 50))),
+                aname,
+                plomfile,
+                rubrics,
+                integrity_check,
+            )
+
+            # remark every 6th paper
+            if (remarking_counter % 6) == 0:
+                score, rubrics, aname, plomfile = annotatePaper(
+                    question, maxMark, task, src_img_data, basefile, tags, Qapp=Qapp
+                )
+                print("Remarking to {} out of {}".format(score, maxMark))
+                messenger.MreturnMarkedTask(
+                    task,
+                    question,
+                    version,
+                    score,
+                    max(0, round(random.gauss(180, 50))),
+                    aname,
+                    plomfile,
+                    rubrics,
+                    integrity_check,
+                )
+        remarking_counter += 1
+
+
+def build_random_rubrics(question, *, username, messenger) -> None:
+    """Push random rubrics into a server: only for testing/demo purposes.
 
     .. caution:: Do not use on a real production server.
 
-    args:
+    Args:
         question (int)
 
-    keyword args:
+    Keyword Args:
         messenger: a messenger object already connected to the server.
         username (str): which username to create the rubrics.
 
-    returns:
+    Returns:
         None
     """
     for d, t in positiveComments:
@@ -294,7 +326,15 @@ def build_random_rubrics(question, *, username, messenger):
             negativeRubrics[question] = [com]
 
 
-def do_rando_marking(server, user, password):
+def do_rando_marking(
+    server: Union[str, None],
+    user: str,
+    password: str,
+    *,
+    partial: float = 100.0,
+    question: Union[None, int] = None,
+    version: Union[None, int] = None,
+) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
     .. caution:: Only for testing/demos.  Do not use for real tests.
@@ -302,16 +342,19 @@ def do_rando_marking(server, user, password):
     Also, for each paper, with probability 1/3, we tag with up to 3
     randomly selected tags.
 
-    args:
+    Args:
         server (str)
         user (str)
         password (str)
 
-    returns:
-        int: 0 on success, non-zero on error/unexpected.
-    """
-    global Qapp
+    Keyword Args:
+        partial: what percentage of papers to grade?
+        question: what question to mark or if omitted, mark all of them.
+        version: what version to mark or if omitted, mark all of them.
 
+    Returns:
+        0 on success, non-zero on error/unexpected.
+    """
     messenger = Messenger(server)
     messenger.start()
 
@@ -336,11 +379,23 @@ def do_rando_marking(server, user, password):
         L.extend(["-platform", "offscreen"])
         Qapp = QApplication(L)
 
-        for q in range(1, spec["numberOfQuestions"] + 1):
+        if question is None:
+            questions: Iterable = range(1, spec["numberOfQuestions"] + 1)
+        else:
+            questions = [question]
+
+        if version is None:
+            versions: Iterable = range(1, spec["numberOfVersions"] + 1)
+        else:
+            versions = [version]
+
+        for q in questions:
             build_random_rubrics(q, username=user, messenger=messenger)
-            for v in range(1, spec["numberOfVersions"] + 1):
-                print("Annotating question {} version {}".format(q, v))
-                do_random_marking_backend(q, v, messenger=messenger)
+            for v in versions:
+                print(f"Annotating question {q} version {v}")
+                do_random_marking_backend(
+                    q, v, Qapp=Qapp, messenger=messenger, partial=partial
+                )
     finally:
         messenger.closeUser()
         messenger.stop()
