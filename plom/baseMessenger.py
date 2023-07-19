@@ -10,6 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
+from typing import Union
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -51,15 +52,27 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, server=None, *, port=None, verify_ssl=True, webplom=False):
+    def __init__(
+        self,
+        server: Union[str, None] = None,
+        *,
+        port: Union[int, None] = None,
+        scheme: Union[str, None] = None,
+        verify_ssl: bool = True,
+        webplom: bool = False,
+    ):
         """Initialize a new BaseMessenger.
 
         Args:
             server (str/None): URL or None to default to localhost.
-            port (int): What port to try to connect to.  Defaults
-                to 41984 if omitted if there is no ":" in `server`.
 
         Keyword Arguments:
+            port (None/int): What port to try to connect to.  Defaults
+                to 41984 if omitted and cannot be determined from the
+                URI string.
+            scheme (None/str): What scheme to use to connect.  Defaults
+                to ``"https"`` if omitted and cannot be determined from
+                the URI string.
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
@@ -74,23 +87,39 @@ class BaseMessenger:
             log.warning("Enabling experimental WebPlom support via environment var")
             self.webplom = True
 
-        if self.webplom:
-            # The django development server cannot handle https requests.
-            # TODO: Revisit for production!  Issue #2361
-            self.scheme = "http"
-        else:
-            self.scheme = "https"
+        if not server:
+            server = "127.0.0.1"
+
+        parsed_url = urllib3.util.parse_url(server)
+
+        if not parsed_url.host:
+            # "localhost:1234" parses this way: we do it ourselves :(
+            if scheme is None:
+                scheme = "https"
+            self._raw_init(f"{scheme}://{server}", verify_ssl=verify_ssl)
+
+        # prefix with "https://" if not specified
+        if not parsed_url.scheme:
+            if scheme is None:
+                scheme = "https"
+            server = f"{scheme}://{server}"
+
+        # postfix with default port if not specified
+        if not parsed_url.port:
+            if port is None:
+                port = Default_Port
+            server = f"{server}:{port}"
+
+        self._raw_init(server, verify_ssl=verify_ssl)
+
+    def _raw_init(self, base: str, *, verify_ssl: bool) -> None:
         self.session = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        if not server:
-            server = "127.0.0.1"
-        if not port and ":" not in server:
-            port = Default_Port
-        if port:
-            server = f"{server}:{port}"
-        self.server = server
+        parsed_url = urllib3.util.parse_url(base)
+        self.scheme = parsed_url.scheme
+        self.base = base
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
@@ -109,7 +138,7 @@ class BaseMessenger:
         """
         log.debug("cloning a messeger, but building new session...")
         x = cls(
-            m.server,
+            m.base,
             verify_ssl=m.verify_ssl,
             webplom=m.webplom,
         )
@@ -141,7 +170,7 @@ class BaseMessenger:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
-        return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
+        return self.session.get(self.base + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
@@ -151,9 +180,7 @@ class BaseMessenger:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
-        return self.session.post(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.post(self.base + url, *args, **kwargs)
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
@@ -163,7 +190,7 @@ class BaseMessenger:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
-        return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
+        return self.session.put(self.base + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
@@ -173,9 +200,7 @@ class BaseMessenger:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
-        return self.session.delete(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.delete(self.base + url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
@@ -185,9 +210,7 @@ class BaseMessenger:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
-        return self.session.patch(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.patch(self.base + url, *args, **kwargs)
 
     def start(self):
         """Start the messenger session.
@@ -306,7 +329,7 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
@@ -336,7 +359,7 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
