@@ -134,8 +134,8 @@ class Command(BaseCommand):
         # TODO: hardcoded port numbers!
         cmds = [
             "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1 --partial 25",
-            "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker2 -w demoMarker2 --partial 25",
-            "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker3 -w demoMarker3 --partial 25",
+            "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker2 -w demoMarker2 --partial 33",
+            "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker3 -w demoMarker3 --partial 50",
         ]
         env = dict(os.environ, WEBPLOM="1")
         for cmd in cmds:
