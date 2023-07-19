@@ -81,7 +81,9 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        annotations = Annotation.objects.all()
+        annotations = Annotation.objects.all().prefetch_related(
+            "user", "task", "task__paper"
+        )
         csv_data = []
         for annotation in annotations:
             csv_data.append(self.get_annotation_info_download(annotation))

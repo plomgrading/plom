@@ -32,12 +32,12 @@ class StudentMarkService:
             paper_obj = Paper.objects.get(pk=paper_num)
         except Paper.DoesNotExist:
             return {}
-        marking_tasks = paper_obj.markingtask_set.all()
-
+        marking_tasks = paper_obj.markingtask_set.all().select_related(
+            "latest_annotation"
+        )
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
             current_annotation = marking_task.latest_annotation
-
             if current_annotation:
                 questions[marking_task.question_number] = {
                     "question": marking_task.question_number,
@@ -126,7 +126,9 @@ class StudentMarkService:
             paper_obj = Paper.objects.get(pk=paper_num)
         except Paper.DoesNotExist:
             raise Paper.DoesNotExist
-        marking_tasks = paper_obj.markingtask_set.all()
+        marking_tasks = paper_obj.markingtask_set.all().select_related(
+            "latest_annotation"
+        )
         paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
         last_update = None
 
