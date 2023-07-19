@@ -1320,7 +1320,9 @@ def huey_child_get_page_image(
     # make sure we load with exif rotations if required
     pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
     size = 256, 256
-    pil_img.thumbnail(size, Image.Resampling.LANCZOS)
+    # TODO: Issue #2886: when minimum Pillow > 9.1.0, we should change:
+    # pil_img.thumbnail(size, Image.Resampling.LANCZOS)
+    pil_img.thumbnail(size, Image.LANCZOS)  # deprecated
     thumb_path = basedir / ("thumb-" + basename + ".png")
     pil_img.save(thumb_path)
 

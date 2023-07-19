@@ -12,6 +12,7 @@ from imutils.perspective import four_point_transform
 import json
 import numpy as np
 from pathlib import Path
+from typing import Union
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -80,15 +81,15 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_largest_box(self, filename):
+    def get_largest_box(self, filename) -> Union[np.ndarray, None]:
         """Helper function for extracting the largest box from an image.
 
         Args:
             filename (str/pathlib.Path): the image where the largest box is extracted from.
 
         Returns:
-            numpy.ndarray | None: the image, cropped to only include the contour region
-            or None if an error occurred.
+            The image, cropped to only include the contour region
+            or `None` if an error occurred.
         """
         src_image = cv2.imread(str(filename))
         # Process the image so as to find the contours.
@@ -113,6 +114,7 @@ class Command(BaseCommand):
                 break
         if box_contour is not None:
             return four_point_transform(src_image, box_contour.reshape(4, 2))
+        return None
 
     def extract_and_resize_ID_box(self, filename):
         template_id_box_width = 1250

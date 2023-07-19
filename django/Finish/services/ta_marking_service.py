@@ -118,14 +118,14 @@ class TaMarkingService:
 
     def get_total_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> float | None:
+    ) -> Union[float, None]:
         """Get the total time spent on a question by all markers.
 
         Args:
-            question: (int) The question number to get the total time spent on.
+            question: The question number to get the total time spent on.
 
         Keyword Args:
-            version: (int) The version of the question to get the total time spent on.
+            version: The version of the question to get the total time spent on.
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
@@ -144,14 +144,14 @@ class TaMarkingService:
 
     def get_average_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> float | None:
+    ) -> Union[float, None]:
         """Get the average time spent on a question by all markers.
 
         Args:
-            question: (int) The question number to get the average time spent on.
+            question: The question number to get the average time spent on.
 
         Keyword Args:
-            version: (int) The version of the question to get the average time spent on.
+            version: The version of the question to get the average time spent on.
                 Defaults to 0 which ignores version, otherwise the version is used.
 
         Returns:
@@ -170,19 +170,21 @@ class TaMarkingService:
 
     def get_stdev_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> float | None:
+    ) -> Union[float, None]:
         """Get the standard deviation of time spent on a question by all markers.
 
         Args:
-            question: (int) The question number to get the standard deviation time spent on.
+            question: The question number to get the standard deviation time spent on.
 
         Keyword Args:
-            version: (int) The version of the question to get the standard deviation time
-                spent on. Defaults to 0 which ignores version, otherwise the version is used.
+            version: The version of the question to get the standard deviation time
+                spent on.  Defaults to 0 which ignores version, otherwise
+                the version is used.
 
         Returns:
-            None if there are no annotations for the question otherwise, the standard deviation
-            time spent on a question by all markers in seconds as a float.
+            None if there are no annotations for the question otherwise,
+            the standard deviation time spent on a question by all markers
+            in seconds as a float.
 
         Raises:
             None expected
@@ -277,11 +279,11 @@ class TaMarkingService:
 
         return num_questions_marked / num_days
 
-    def get_estimate_days_remaining(self, question: int) -> float | None:
+    def get_estimate_days_remaining(self, question: int) -> Union[float, None]:
         """Get the estimated number of days remaining to mark a given question.
 
         Args:
-            question: (int) The question number to get the estimated number of days remaining
+            question: The question number to get the estimated number of days remaining
                 to mark.
 
         Returns:
@@ -304,11 +306,11 @@ class TaMarkingService:
 
         return round(num_questions_remaining / avg_per_day, 2)
 
-    def get_estimate_hours_remaining(self, question: int) -> float | None:
+    def get_estimate_hours_remaining(self, question: int) -> Union[float, None]:
         """Get the estimated number of hours remaining to mark a given question.
 
         Args:
-            question: (int) The question number to get the estimated number of hours remaining to mark.
+            question: The question number to get the estimated number of hours remaining to mark.
 
         Returns:
             None if no questions have been marked yet otherwise, the estimated number of hours
