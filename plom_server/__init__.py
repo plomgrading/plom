@@ -18,4 +18,12 @@ __version__ = "0.14.0.dev0"
 
 # import Web_Plom
 
-__all__ = ["Web_Plom"]
+__all__ = [
+    "Web_Plom",
+    "Preparation",
+    "BuildPaperPDF",
+    "Papers",
+    "Preparation",
+    "Scan",
+    "SpecCreator",
+]
