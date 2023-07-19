@@ -78,7 +78,7 @@ class StudentMarkService:
             Dict keyed by question number whose values are a dictionary holding
             a list of marks for each question.
         """
-        question_marks = {}
+        question_marks: Dict[int, list[int]] = {}
 
         # Iterate over the data
         for student_id in papers:
@@ -123,7 +123,11 @@ class StudentMarkService:
         Returns:
             data in dict format that can be used by the d3 histogram.
         """
-        data = {"xLabel": "Question", "yLabel": "Average Grade", "values": []}
+        data: Dict[str, Any] = {
+            "xLabel": "Question",
+            "yLabel": "Average Grade",
+            "values": [],
+        }
 
         for question in stats:
             data["values"].append({"label": question, "value": stats[question]["avg"]})
@@ -140,8 +144,10 @@ class StudentMarkService:
             The correlation matrix between questions.
         """
         min_length = min(len(lst) for lst in question_data.values())
-        question_data = np.array([lst[:min_length] for lst in question_data.values()])
-        question_correlation = np.corrcoef(question_data)
+        question_data_arr: np.ndarray = np.array(
+            [lst[:min_length] for lst in question_data.values()]
+        )
+        question_correlation = np.corrcoef(question_data_arr)
         return question_correlation
 
     def convert_correlation_to_heatmap_format(self, correlation: np.ndarray) -> dict:
