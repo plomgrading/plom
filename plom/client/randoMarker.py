@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Julian Lapenna
 
 """Randomly scribble marks and annotations on papers for testing purposes.
 
@@ -22,7 +23,10 @@ import sys
 from stdiomask import getpass
 
 from plom import Default_Port
-from .random_marking_utils import do_rando_marking, build_random_rubrics
+from .random_marking_utils import (
+    do_rando_marking,
+    build_random_rubrics,
+)
 
 __all__ = [
     "do_rando_marking",
@@ -55,6 +59,37 @@ def get_parser():
             Also checks the environment variable PLOM_SERVER if omitted.
         """,
     )
+    parser.add_argument(
+        "--partial",
+        metavar="PERCENTAGE",
+        type=float,
+        default=100.0,
+        action="store",
+        help="""
+            What percentage of questions to mark?
+            Default is 100; mark all of them.
+            Technically, this is a i.i.d. probability of grading
+            each task that the server has.
+        """,
+    )
+    parser.add_argument(
+        "-q",
+        "--question",
+        metavar="N",
+        action="store",
+        help="""
+            Question number to mark.  If omitted, mark all of them.
+        """,
+    )
+    # potentially confusing with --verbose and software --version :(
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store",
+        help="""
+            Which version to mark.  If omitted, mark all of them.
+        """,
+    )
     return parser
 
 
@@ -73,4 +108,13 @@ if __name__ == "__main__":
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_marking(args.server, args.user, args.password))
+    sys.exit(
+        do_rando_marking(
+            args.server,
+            args.user,
+            args.password,
+            partial=args.partial,
+            question=args.question,
+            version=args.version,
+        )
+    )
