@@ -99,14 +99,14 @@ if __name__ == "__main__":
 
     args.server = args.server or os.environ.get("PLOM_SERVER")
 
-    # if not args.user:
-    #     args.user = "scanner"
+    if not args.user:
+        args.user = "scanner"
 
-    # if args.user == "scanner":
-    #     args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+    if args.user == "scanner":
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
-    # if not args.password:
-    #     args.password = getpass(f"Please enter the '{args.user}' password: ")
+    if not args.password:
+        args.password = getpass(f"Please enter the '{args.user}' password: ")
 
     sys.exit(
         do_rando_marking(
