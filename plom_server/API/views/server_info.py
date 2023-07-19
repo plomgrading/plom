@@ -38,11 +38,15 @@ class GetSpecification(APIView):
 
 
 class ServerVersion(APIView):
-    """Get the server version."""
+    """Get the server version.
+
+    Returns:
+        (200): and the version string as ``text/plain``.
+    """
 
     def get(self, request):
         version = f"Plom server version {__version__} with API {Plom_API_Version}"
-        return Response(version)
+        return Response(version, content_type="text/plain")
 
 
 class CloseUser(APIView):
