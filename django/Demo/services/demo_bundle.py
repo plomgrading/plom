@@ -4,20 +4,16 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
-import csv
-import fitz
-import tempfile
-from pathlib import Path
 from collections import defaultdict
+import csv
+from pathlib import Path
+import tempfile
+from typing import List, Dict
 
 from django.core.management import call_command
+import fitz
 
-from plom.create.scribble_utils import (
-    scribble_name_and_id,
-    scribble_pages,
-    splitFakeFile,
-)
-
+from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from Papers.services import SpecificationService
 
 
@@ -53,7 +49,6 @@ class DemoBundleService:
             config (dict): server config
         """
         bundles = config["bundles"]
-        n_bundles = len(bundles)
         default_n_pages = self.get_default_paper_length()
 
         with fitz.open(out_file) as scribble_pdf:
@@ -98,7 +93,7 @@ class DemoBundleService:
                 from_page_idx = to_page_idx + 1
                 to_page_idx = from_page_idx + default_n_pages - 1
 
-    def get_extra_page(self):
+    def get_extra_page(self) -> None:
         # Assumes that the extra page has been generated
         call_command(
             "plom_preparation_extrapage",
@@ -106,7 +101,7 @@ class DemoBundleService:
             "media/papersToPrint/extra_page.pdf",
         )
 
-    def assign_students_to_papers(self, paper_list, classlist):
+    def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
         # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
         all_sid = [row["id"] for row in classlist]
         id_to_name = {X["id"]: X["name"] for X in classlist}
@@ -142,14 +137,21 @@ class DemoBundleService:
 
         return assignment
 
-    def make_last_page_with_wrong_version(self, pdf_doc, paper_number):
-        """Removes the last page of the doc and replaces it with a nearly blank page that contains a qr-code that is nearly valid except that the version is wrong.
+    def make_last_page_with_wrong_version(
+        self, pdf_doc: fitz.Document, paper_number: int
+    ) -> None:
+        """Muck around with the last page for testing purposes.
 
-        Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+        Removes the last page of the doc and replaces it with a nearly
+        blank page that contains a qr-code that is nearly valid except
+        that the version is wrong.
+
+        Args:
+            pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-        pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
+            None, but modifies ``pdf_doc``  as a side effect.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
@@ -208,18 +210,25 @@ class DemoBundleService:
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
-    def append_duplicate_page(self, pdf_doc, page_number):
+    def append_duplicate_page(self, pdf_doc: fitz.Document, page_number: int) -> None:
         last_page = len(pdf_doc) - 1
         pdf_doc.fullcopy_page(last_page)
 
-    def insert_qr_from_previous_page(self, pdf_doc, paper_number):
-        """Stamps a qr-code for the second-last page onto the last page, in order to create a page with inconsistent qr-codes. This can happen when, for example, a folded page is fed into the scanner.
+    def insert_qr_from_previous_page(
+        self, pdf_doc: fitz.Document, paper_number: int
+    ) -> None:
+        """Muck around with the penultimate page for testing purposes.
 
-        Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+        Stamps a qr-code for the second-last page onto the last page,
+        in order to create a page with inconsistent qr-codes. This can
+        happen when, for example, a folded page is fed into the scanner.
+
+        Args:
+            pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
-        pdf_doc (fitz.Document): the updated pdf-document with the inconsistent qr-codes on its last page.
+            None, but modifies ``pdf_doc`` as a side effect.
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
