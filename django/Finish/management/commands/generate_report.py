@@ -7,6 +7,7 @@ from io import BytesIO
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from weasyprint import HTML, CSS
@@ -137,20 +138,17 @@ class Command(BaseCommand):
         # histogram of grades given by each marker
         print("Generating histograms of grades given by marker.")
         base64_histogram_of_grades_m = []
-        max_score = ta_grading["max_score"].max()
         for marker in ta_grading["user"].unique():
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
-            max_score_unique = ta_grading.loc[
-                ta_grading["user"] == marker, "max_score"
-            ].max()
-            scores_given_for_user = ta_grading.loc[
-                ta_grading["user"] == marker, "score_given"
-            ]
-            bins = range(0, max_score_unique + RANGE_BIN_OFFSET)
+            scores_given_for_user = (
+                ta_grading.loc[ta_grading["user"] == marker, "score_given"]
+                / ta_grading.loc[ta_grading["user"] == marker, "max_score"]
+            )
+            bins = [x / 100 for x in range(0, 120, 10)]
 
             ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("(rel) Grades by " + marker)
+            ax.set_title("(norm) Grades by " + marker)
             ax.set_xlabel("Mark given")
             ax.set_ylabel("# of times assigned")
 
@@ -164,11 +162,16 @@ class Command(BaseCommand):
 
             plt.close()
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
-            bins = range(0, max_score + RANGE_BIN_OFFSET)
+            scores_given_for_user = ta_grading.loc[
+                ta_grading["user"] == marker, "score_given"
+            ]
+            max_score_for_user = ta_grading.loc[
+                ta_grading["user"] == marker, "max_score"
+            ].max()
+            bins = range(0, max_score_for_user + RANGE_BIN_OFFSET)
 
             ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Grades by " + marker)
+            ax.set_title("(abs) Grades by " + marker)
             ax.set_xlabel("Mark given")
             ax.set_ylabel("# of times assigned")
 
@@ -179,7 +182,6 @@ class Command(BaseCommand):
             base64_histogram_of_grades_m.append(
                 base64.b64encode(png_bytes.read()).decode()
             )
-            plt.close()
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
@@ -231,6 +233,66 @@ class Command(BaseCommand):
             png_bytes.seek(0)
 
             base64_scatter_of_time.append(base64.b64encode(png_bytes.read()).decode())
+            plt.close()
+
+        # 1D scatter plot of the average grades given by each marker for each question
+        print("Generating 1D scatter plots of average grades for each question.")
+        base_64_scatter_of_avgs = []
+        for question in spec["question"]:
+            fig, ax = plt.subplots(figsize=(3.2, 1.6), tight_layout=True)
+
+            avgs = []
+            markers = ["Average"]
+            markers.extend(
+                ta_grading.loc[
+                    ta_grading["question_number"] == int(question), "user"
+                ].unique()
+            )
+            avg_for_question = ta_grading.loc[
+                ta_grading["question_number"] == int(question), "score_given"
+            ].mean()
+            avgs.append(avg_for_question)
+            for marker in markers[1:]:
+                avgs.append(
+                    ta_grading.loc[
+                        (ta_grading["question_number"] == int(question))
+                        & (ta_grading["user"] == marker),
+                        "score_given",
+                    ].mean()
+                )
+
+            ax.scatter(avgs, np.zeros_like(avgs), ec="black", alpha=0.5)
+            ax.set_xlabel("Q" + str(question) + " average marks given")
+            ax.tick_params(
+                axis="y",
+                which="both",  # both major and minor ticks are affected
+                left=False,  # ticks along the bottom edge are off
+                right=False,  # ticks along the top edge are off
+                labelleft=False,
+            )
+            for i, marker in enumerate(markers):
+                ax.annotate(
+                    marker,
+                    (avgs[i], 0),
+                    ha="left",
+                    rotation=60,
+                )
+
+            plt.xlim(
+                [
+                    0,
+                    ta_grading.loc[
+                        ta_grading["question_number"] == int(question), "max_score"
+                    ].max(),
+                ]
+            )
+            plt.ylim([-0.1, 1])
+
+            png_bytes = BytesIO()
+            fig.savefig(png_bytes, format="png")
+            png_bytes.seek(0)
+
+            base_64_scatter_of_avgs.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
 
         html = f"""
@@ -335,6 +397,33 @@ class Command(BaseCommand):
         """
 
         for i, hist in enumerate(base64_scatter_of_time):
+            odd = i % 2
+            if not odd:
+                html += f"""
+                <div class="row">
+                """
+            html += f"""
+            <div class="col" style="margin-left:0mm;">
+            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
+            </div>
+            """
+
+            if odd:
+                html += f"""
+                </div>
+                """
+        if not odd:
+            html += f"""
+            </div>
+            """
+
+        html += f"""
+        <br>
+        <p style="break-before: page;"></p>
+        <h3>1D scatter plots of average grades given by each marker for each question</h3>
+        """
+
+        for i, hist in enumerate(base_64_scatter_of_avgs):
             odd = i % 2
             if not odd:
                 html += f"""
