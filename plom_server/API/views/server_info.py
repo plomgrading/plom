@@ -2,11 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
-from django.core.exceptions import ObjectDoesNotExist
 
 from plom import __version__
 from plom import Plom_API_Version
@@ -41,12 +42,12 @@ class ServerVersion(APIView):
     """Get the server version.
 
     Returns:
-        (200): and the version string as ``text/plain``.
+        (200): and the version string as ``text/plain``, not JSON.
     """
 
     def get(self, request):
-        version = f"Plom server version {__version__} with API {Plom_API_Version}"
-        return Response(version, content_type="text/plain")
+        version_str = f"Plom server version {__version__} with API {Plom_API_Version}"
+        return HttpResponse(version_str, content_type="text/plain")
 
 
 class CloseUser(APIView):
