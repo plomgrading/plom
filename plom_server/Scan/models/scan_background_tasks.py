@@ -2,12 +2,12 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
-from django.contrib.auth.models import User
 
 from Base.models import HueyTask
-from Scan.models import StagingBundle
+from ..models import StagingBundle
 
 
 class ManagePageToImage(HueyTask):

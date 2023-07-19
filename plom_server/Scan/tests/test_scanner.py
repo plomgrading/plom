@@ -4,11 +4,12 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+import pathlib
+import shutil
+import tempfile
+
 import exif
 import fitz
-import shutil
-import pathlib
-import tempfile
 from PIL import Image
 
 from django.utils import timezone
@@ -19,8 +20,9 @@ from django.core.files import File
 from model_bakery import baker
 
 from plom.scan import QRextract, rotate
-from Scan.services import ScanService, PageImageProcessor
-from Scan.models import StagingBundle, StagingImage
+
+from ..services import ScanService, PageImageProcessor
+from ..models import StagingBundle, StagingImage
 
 
 class ScanServiceTests(TestCase):

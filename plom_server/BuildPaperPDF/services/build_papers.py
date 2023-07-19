@@ -20,10 +20,9 @@ from django.core.files import File
 from django_huey import db_task
 from django_huey import get_queue
 
-from Preparation.models import PaperSourcePDF
-
-from BuildPaperPDF.models import PDFTask
 from Papers.models import Paper
+from Preparation.models import PaperSourcePDF
+from ..models import PDFTask
 
 
 class BuildPapersService:
