@@ -17,6 +17,7 @@ from django.core.management.base import BaseCommand
 
 from Finish.services import StudentMarkService, TaMarkingService
 from Mark.models import MarkingTask
+from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
 RANGE_BIN_OFFSET = 2
@@ -33,6 +34,7 @@ class Command(BaseCommand):
 
         sms = StudentMarkService()
         tms = TaMarkingService()
+        mts = MarkingTaskService()
         spec = Specification.load().spec_dict
 
         student_df = sms.get_all_students_download(
@@ -62,6 +64,8 @@ class Command(BaseCommand):
         average_mark = marks["total_mark"].mean()
         median_mark = marks["total_mark"].median()
         stdev_mark = marks["total_mark"].std()
+        total_tasks = mts.get_n_total_tasks()
+        all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
         # histogram of grades
         print("Generating histogram of grades.")
@@ -298,6 +302,13 @@ class Command(BaseCommand):
         html = f"""
         <body>
         <h2>Marking report: {longName}</h2>
+        """
+        if not all_marked:
+            html += f"""
+            <p style="color:red;">WARNING: Not all papers have been marked.</p>
+            """
+
+        html += f"""
         <p>Date: {date}</p>
         <br>
         <h3>Overview</h3>
