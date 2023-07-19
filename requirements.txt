@@ -16,12 +16,12 @@
 
 # Not really server deps
 appdirs==1.4.4
-PyQt6==6.5.0
+PyQt6==6.5.1
 PyQt6-sip==13.5.1
 pytest-qt==4.2.0
 
 # Legacy-server only deps
-aiohttp==3.8.4
+aiohttp==3.8.5
 lapsolver==1.1.0
 peewee==3.16.2
 
@@ -29,7 +29,7 @@ arrow==1.2.3
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
 debugpy==1.6.7
-django==4.1.9
+django==4.1.10
 django-braces==1.15.0
 django-htmx==1.14.0
 django-huey==1.1.1
@@ -42,8 +42,8 @@ file-magic==0.4.1
 fonttools==4.39.4
 importlib-resources==5.12.0
 imutils==0.5.4
-model_bakery==1.11.0
-numpy==1.24.3
+model-bakery==1.11.0
+numpy==1.24.4
 opencv-python-headless==4.7.0.72
 packaging==23.1
 pandas==1.5.3
