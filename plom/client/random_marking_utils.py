@@ -231,6 +231,7 @@ def do_random_marking_backend(
 
         # skip marking some percentage of paper-questions
         if random.random() * 100 > partial:
+            print("Skipping task {}".format(task))
             continue
 
         with tempfile.TemporaryDirectory() as td:
@@ -271,6 +272,7 @@ def do_random_marking_backend(
                     rubrics,
                     integrity_check,
                 )
+        remarking_counter += 1
 
 
 def build_random_rubrics(question, *, username, messenger) -> None:

@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Julian Lapenna
 
 """Randomly scribble marks and annotations on papers for testing purposes.
 
@@ -22,7 +23,10 @@ import sys
 from stdiomask import getpass
 
 from plom import Default_Port
-from .random_marking_utils import do_rando_marking, build_random_rubrics
+from .random_marking_utils import (
+    do_rando_marking,
+    build_random_rubrics,
+)
 
 __all__ = [
     "do_rando_marking",
