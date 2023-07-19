@@ -791,18 +791,17 @@ class Annotator(QWidget):
         for x in image_md5_list:
             if x not in [p["md5"] for p in pagedata]:
                 s = dedent(
-                    """
+                    f"""
                     Unexpectedly situation!\n
                     There is an image being annotated that is not present in
                     the server's page data.  Probably that is not allowed(?)
                     How did it happen?\n
-                    Annotator's src img data is: {}\n
+                    Annotator's src img data is:
+                      {src_img_data}\n
                     Server pagedata is:
-                      {}\n
+                      {pagedata}\n
                     Consider filing a bug with this info!
-                    """.format(
-                        src_img_data, pagedata
-                    )
+                    """
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
