@@ -556,16 +556,23 @@ class Chooser(QDialog):
         when the URL seems to have a path.
         """
         address = self.ui.serverLE.text()
+        self.ui.mportSB.setEnabled(True)
         try:
             parsedurl = urllib3.util.parse_url(address)
             if not parsedurl.host:
                 # "localhost:1234" parses this way: we'll do it ourselves
                 self._partial_parse_address_manual()
                 return
+            if parsedurl.scheme and parsedurl.scheme.casefold() != "https":
+                # special case non-https uri
+                self.ui.mportSB.clear()
+                self.ui.mportSB.setEnabled(False)
+                return
             if parsedurl.path:
                 # don't muck with things like "localhost:1234/base/url"
                 # activitely remove our port setting from such things
                 self.ui.mportSB.clear()
+                self.ui.mportSB.setEnabled(False)
                 return
             if parsedurl.port:
                 self.ui.mportSB.setValue(int(parsedurl.port))
