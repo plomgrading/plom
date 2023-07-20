@@ -1,18 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
-from django.core.management.base import BaseCommand
-from django.utils.text import slugify
-from django.core.files.uploadedfile import SimpleUploadedFile
-
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
-from Papers.services import SpecificationService
-from Preparation.services import PQVMappingService
-from plom import SpecVerifier
-
-import copy
-import fitz
 from pathlib import Path
 import sys
 
@@ -20,7 +10,16 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomlkit
+
+from django.core.management.base import BaseCommand
+from django.utils.text import slugify
+from django.core.files.uploadedfile import SimpleUploadedFile
+import fitz
+from plom import SpecVerifier
+
+from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from Papers.services import SpecificationService
+from Preparation.services import PQVMappingService
 
 
 class Command(BaseCommand):
@@ -28,27 +27,26 @@ class Command(BaseCommand):
 
     def show_status(self):
         speck = SpecificationService()
-        spec_dict = speck.get_the_spec()
-        toml_text = tomlkit.dumps(spec_dict)
-
-        if speck.is_there_a_spec():
-            self.stdout.write("A valid test spec is present:")
-            self.stdout.write("#" * 40)
-            self.stdout.write(f"{toml_text}")
-            self.stdout.write("#" * 40)
-        else:
+        if not speck.is_there_a_spec():
             self.stdout.write("No valid test spec present")
+            return
+
+        toml_text = speck.get_the_spec_as_toml()
+        self.stdout.write("A valid test spec is present:")
+        self.stdout.write("#" * 40)
+        self.stdout.write(f"{toml_text}")
+        self.stdout.write("#" * 40)
 
     def download_spec(self, dest=None):
         speck = SpecificationService()
-        spec_dict = speck.get_the_spec()
 
         if not speck.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
+        spec_dict = speck.get_the_spec()
         self.stdout.write(
-            f"A valid test spec is present - shortname = {spec_dict['name']}"
+            f"A valid test spec is present: shortname {spec_dict['name']}"
         )
         if dest is None:
             fname = Path(slugify(spec_dict["name"]) + "_spec.toml")
@@ -56,10 +54,10 @@ class Command(BaseCommand):
             fname = Path(dest)
         self.stdout.write(f"Writing test spec toml to {fname}")
         if fname.exists():
-            self.stderr.write(f"File {fname} already present - cannot overwrite.")
+            self.stderr.write(f"File {fname} already present - not overwriting.")
             return
-        with open(fname, "w") as fh:
-            tomlkit.dump(spec_dict, fh)
+        with open(fname, "w") as f:
+            f.write(speck.get_the_spec_as_toml())
 
     def upload_spec(self, spec_file, pdf_file):
         speck = SpecificationService()
@@ -89,9 +87,7 @@ class Command(BaseCommand):
         elif spec_dict["numberToProduce"] == 0:
             spec_dict["numberToProduce"] = 1
 
-        # CAREFUL - vlad will change the underly dict, so pass it a copy
-        vlad = SpecVerifier(copy.deepcopy(spec_dict))
-
+        vlad = SpecVerifier(spec_dict)
         try:
             vlad.verifySpec()
             validated_spec = vlad.spec

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
+
+from plom import SpecVerifier
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
-
-import tomlkit
 
 from Papers.models import Specification
 from Papers.services import PaperInfoService
@@ -39,12 +39,28 @@ class SpecificationService:
     @transaction.atomic
     def get_the_spec_as_toml(self):
         """Return the test-specification from the database.
-        If present, remove the private seed and public code.
+
+        If present, remove the private seed.  But the public code
+        is included (if present).
         """
-        spec = self.get_the_spec()
-        spec.pop("publicCode", None)
+        sv = SpecVerifier(self.get_the_spec())
+        spec = sv.get_public_spec_dict()
         spec.pop("privateSeed", None)
-        return tomlkit.dumps(spec)
+        sv = SpecVerifier(spec)
+        return sv.as_toml_string()
+
+    @transaction.atomic
+    def get_the_spec_as_toml_with_codes(self):
+        """Return the test-specification from the database.
+
+        .. warning::
+            Note this includes both the public code and the private
+            seed.  If you are calling this, consider carefully whether
+            you need the private seed.  At the time of writing, no one
+            is calling this.
+        """
+        sv = SpecVerifier(self.get_the_spec())
+        return sv.as_toml_string()
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):
