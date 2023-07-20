@@ -72,19 +72,26 @@ class SpecificationService:
         return sv.as_toml_string()
 
     @transaction.atomic
-    def store_validated_spec(self, validated_spec):
-        """Takes the validated test specification and stores it in the db
+    def store_validated_spec(self, validated_spec: Dict) -> None:
+        """Takes the validated test specification and stores it in the db.
 
-        validated_spec (dict): A dictionary containing a validated test
-            specification.
+        Args:
+            validated_spec (dict): A dictionary containing a validated test
+                specification.
         """
         spec_obj = Specification(spec_dict=validated_spec)
         spec_obj.save()
 
     @transaction.atomic
-    def remove_spec(self):
-        """Removes the test specification from the db. This can only be done
-        if no tests have been created.
+    def remove_spec(self) -> None:
+        """Removes the test specification from the db, if possible.
+
+        This can only be done if no tests have been created.
+
+        Raises:
+            ObjectDoesNotExist: no exam specification yet.
+            MultipleObjectsReturned: cannot remve spec because
+                there are already papers.
         """
         if not self.is_there_a_spec():
             raise ObjectDoesNotExist(
@@ -160,43 +167,47 @@ class SpecificationService:
         return spec_obj["numberToProduce"]
 
     @transaction.atomic
-    def modify_n_to_produce(self, n):
-        """
-        Modify the number of papers to produce - assumes it's a valid value.
-        """
+    def modify_n_to_produce(self, n) -> None:
+        """Modify the number of papers to produce - assumes it's a valid value."""
         spec_obj = Specification.objects.get()
         spec_obj.spec_dict["numberToProduce"] = n
         spec_obj.save()
 
     @transaction.atomic
-    def get_question_mark(self, question_one_index):
-        """
-        Get the max mark of a given question
+    def get_question_mark(self, question_one_index) -> int:
+        """Get the max mark of a given question.
 
         Args:
             question_one_index (str/int): question number, indexed from 1.
 
+        Returns:
+            The maximum mark.
+
         Raises:
+            ObjectDoesNotExist: no exam specification yet.
             KeyError: question out of range
         """
         spec_obj = self.get_the_spec()
         return spec_obj["question"][str(question_one_index)]["mark"]
 
     @transaction.atomic
-    def n_pages_for_question(self, question_one_index):
+    def n_pages_for_question(self, question_one_index) -> int:
         spec_obj = self.get_the_spec()
         pages = spec_obj["question"][str(question_one_index)]["pages"]
         return len(pages)
 
     @transaction.atomic
-    def get_question_label(self, question_one_index):
+    def get_question_label(self, question_one_index) -> str:
         """Get the question label from its one-index.
 
         Args:
             question_one_index (str | int): question number indexed from 1.
 
         Returns:
-            str: the question label.
+            The question label.
+
+        Raises:
+            ObjectDoesNotExist: no exam specification yet.
         """
         spec_obj = self.get_the_spec()
         return spec_obj["question"][str(question_one_index)]["label"]
