@@ -3,6 +3,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -37,6 +38,7 @@ exif==1.2.2
 fonttools==4.37.1
 importlib_resources==5.0.0
 imutils==0.5.4
+matplotlib==3.5.3
 numpy==1.21.2
 opencv-python-headless==4.5.4.60
 Pillow==7.0.0
@@ -50,11 +52,13 @@ psycopg2-binary==2.9.6
 random-username==1.0.2
 scikit-learn==1.0.2
 scipy==1.8.1
+seaborn==0.12.2
 segno>=1.5.2
 stdiomask==0.0.6
 tabulate==0.9.0
 tqdm==4.63.2
 tomli==2.0.1
 tomlkit==0.11.7
+weasyprint==57.0
 zipfly==6.0.1
 zxing-cpp==1.4.0
