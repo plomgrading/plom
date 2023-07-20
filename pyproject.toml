@@ -224,8 +224,11 @@ exclude = [
     'digitHunter.py',
 ]
 
+# These avoid mypy errors: mostly libraries that don't yet have typing
+# Maintenance: try removing some of this and rerunning mypy locally
 [[tool.mypy.overrides]]
 module = [
+    'api_secrets',
     'canvasapi',
     'cv2',
     'exif',
@@ -236,13 +239,6 @@ module = [
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
-    'api_secrets',
-]
-ignore_missing_imports = true
-
-# another such section for django
-[[tool.mypy.overrides]]
-module = [
     'braces.*',
     'debugpy',
     'django.*',
