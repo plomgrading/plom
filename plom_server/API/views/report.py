@@ -58,5 +58,4 @@ class REPcoverPageInfo(APIView):
         for row in cover_page_info:
             legacy_cover_page_info.append(row[1:])
 
-        print(legacy_cover_page_info)
         return Response(legacy_cover_page_info, status=status.HTTP_200_OK)
