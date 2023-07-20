@@ -138,8 +138,8 @@ class Chooser(QDialog):
         self.ui.identifyButton.clicked.connect(self.run_identifier)
         self.ui.aboutButton.clicked.connect(lambda: show_about_dialog(self))
         # Hide button used for directly opening manager
-        # self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.manageButton.setVisible(False)
+        self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
@@ -547,6 +547,9 @@ class Chooser(QDialog):
             return
         self._set_restrictions_from_spec(spec)
         self.ui.loginInfoLabel.setText(f'logged in as "{user}"')
+
+        if not self.messenger.webplom and self.messenger.username == "manager":
+            self.ui.manageButton.setVisible(True)
 
     def _set_restrictions_from_spec(self, spec):
         self.ui.markGBox.setTitle("Choose a task for “{}”".format(spec["name"]))

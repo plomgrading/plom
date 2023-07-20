@@ -348,7 +348,7 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Manage &amp;server</string>
+         <string>Manage legacy &amp;server</string>
         </property>
        </widget>
       </item>
