@@ -37,6 +37,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Building report.")
 
+        gds = GraphingDataService()
         sms = StudentMarkService()
         tms = TaMarkingService()
         mts = MarkingTaskService()
@@ -66,9 +67,9 @@ class Command(BaseCommand):
             .distinct()
             .count()
         )
-        average_mark = marks["total_mark"].mean()
-        median_mark = marks["total_mark"].median()
-        stdev_mark = marks["total_mark"].std()
+        average_mark = gds.get_total_average_mark()
+        median_mark = gds.get_total_median_mark()
+        stdev_mark = gds.get_total_stdev_mark()
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
@@ -77,7 +78,7 @@ class Command(BaseCommand):
         fig, ax = plt.subplots()
 
         ax.hist(
-            marks["total_mark"],
+            gds.get_total_marks(),
             bins=range(0, totalMarks + RANGE_BIN_OFFSET),
             ec="black",
             alpha=0.5,
@@ -86,53 +87,27 @@ class Command(BaseCommand):
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
 
-        # encode the bytes as a base64 string
-        png_bytes = BytesIO()
-        fig.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
-
-        base64_histogram_of_grades = base64.b64encode(png_bytes.read()).decode()
-        plt.close()
+        base64_histogram_of_grades = gds.get_graph_as_base64(fig)
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         base64_histogram_of_grades_q = []
-        for question in spec["question"]:
+        marks_for_questions = gds.get_marks_by_question()
+        for i, marks_for_question in enumerate(marks_for_questions):
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
-            marks_for_question = marks["q" + str(question) + "_mark"]
-            print(marks_for_question)
-            gds = GraphingDataService()
-            print(gds.get_marks_by_question())
-            bins = range(0, spec["question"][question]["mark"] + RANGE_BIN_OFFSET)
+            bins = range(0, spec["question"][str(i + 1)]["mark"] + RANGE_BIN_OFFSET)
 
             ax.hist(marks_for_question, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Histogram of Q" + str(question) + " marks")
-            ax.set_xlabel("Question " + str(question) + " mark")
+            ax.set_title("Histogram of Q" + str(i + 1) + " marks")
+            ax.set_xlabel("Question " + str(i + 1) + " mark")
             ax.set_ylabel("# of students")
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_histogram_of_grades_q.append(
-                base64.b64encode(png_bytes.read()).decode()
-            )
-            plt.close()
+            base64_histogram_of_grades_q.append(gds.get_graph_as_base64(fig))
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        marks_corr = marks.copy(deep=True)
-        marks_corr = (
-            marks_corr.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
-        )
-
-        col_names = []
-        for i, col_name in enumerate(marks_corr.columns.str.split("_").str[0]):
-            col_names.append("Q" + str(i + 1))
-
-        marks_corr.columns = col_names
-        marks_corr.index = col_names
+        marks_corr = gds.get_question_correlation_heatmap()
 
         plt.figure(figsize=(6.4, 5.12))
         sns.heatmap(

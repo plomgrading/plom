@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
+import base64
+from io import BytesIO
+
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -32,6 +37,15 @@ class GraphingDataService:
 
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
+    def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
+        """ """
+        png_bytes = BytesIO()
+        fig.savefig(png_bytes, format="png")
+        png_bytes.seek(0)
+        plt.close()
+
+        return base64.b64encode(png_bytes.read()).decode()
+
     def get_total_average_mark(self) -> float:
         """Return the average total mark for all students as a float."""
         return self.student_df["total_mark"].mean()
@@ -44,6 +58,10 @@ class GraphingDataService:
         """Return the standard deviation of the total marks for all students as a float."""
         return self.student_df["total_mark"].std()
 
+    def get_total_marks(self) -> list:
+        """Return the total marks for all students as a list."""
+        return self.student_df["total_mark"].tolist()
+
     def get_marks_by_question(self):
         """Get the marks for each question as a list of lists.
 
@@ -52,5 +70,29 @@ class GraphingDataService:
         """
         marks_by_question = []
         for question in self.spec["question"]:
-            marks_by_question.append(self.student_df[f"q{question['number']}_mark"])
+            marks_by_question.append(
+                self.student_df[f"q{str(question)}_mark"].to_list()
+            )
         return marks_by_question
+
+    def get_question_correlation_heatmap(self) -> pd.DataFrame:
+        """Get the correlation heatmap for the questions.
+
+        This returns as a dataframe so that it can keep column and row names.
+
+        Returns:
+            pd.DataFrame: A dataframe containing the correlation heatmap.
+        """
+        marks_corr = (
+            self.student_df.filter(regex="q[0-9]*_mark")
+            .corr(numeric_only=True)
+            .round(2)
+        )
+
+        col_names = []
+        for i, col_name in enumerate(marks_corr.columns):
+            col_names.append("Q" + str(i + 1))
+
+        marks_corr.columns = col_names
+        marks_corr.index = col_names
+        return marks_corr
