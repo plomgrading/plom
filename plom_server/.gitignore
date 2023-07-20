@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+# Byte-compiled / optimized / DLL files:
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments:
+venv/
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Code coverage:
+.coverage
+
+# emacs backup files
+*.bak
+
+# PyCharm
+.idea/*
+
+# Migrations (ignores all files within migrations except __init__.py)
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
+
+# Ignore PDF folders/zipfiles
+produced_papers.csv
+papersToPrint/*
+sourceVersions/*
+media/*
+plomdemo.zip
+
+# whitenoise static files (need to run python3 manage.py collectstatic)
+staticfiles/
+
+# test fixtures
+fixtures/

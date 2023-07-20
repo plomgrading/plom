@@ -147,7 +147,7 @@ djlint:
   before_script:
     - pip install djlint~=1.31.1
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --profile django
+    - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
 
 djlint-check:
@@ -156,7 +156,7 @@ djlint-check:
   before_script:
     - pip install djlint~=1.31.1
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --check
+    - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -300,14 +300,14 @@ unittests:
 
 
 # TODO: may consider merging with unittests job above
-# Issue #2291: fix coverage calculations for django/
+# Issue #2291: fix coverage calculations for plom_server/
 coverage:
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]~=7.2.7
-    - coverage run -m pytest --ignore django
+    - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
@@ -357,8 +357,8 @@ mypy-type-checking:
   script:
     - mypy plom --install-types --non-interactive || true
     - mypy plom
-    - mypy django --install-types --non-interactive || true
-    - mypy django
+    - mypy plom_server --install-types --non-interactive || true
+    - mypy plom_server
 
 
 flake8:
@@ -404,18 +404,18 @@ pydocstyle-plom:
   allow_failure: true
 
 
-pydocstyle-django-count:
+pydocstyle-server-count:
   image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     # show all errors and warnings but don't fail
-    - pydocstyle django || true
+    - pydocstyle plom_server || true
     # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
-    # pydocstyle -s -e django
+    # pydocstyle -s -e plom_server
     # Instead, just ensure the total does not increase
-    - NUMERR=`pydocstyle --count django | tail -n 1 || true`
+    - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
     - bash -c "[[ $NUMERR -le 375 ]]"
@@ -423,14 +423,14 @@ pydocstyle-django-count:
 
 
 # For now, an allowlist of submodules that must pass
-# TODO: add more modules and eventually just django/
-pydocstyle-django:
+# TODO: add more modules and eventually just plom_server/
+pydocstyle-server:
   image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pushd django
+    - pushd plom_server
     - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Profile Progress Rubrics Scan Tags
     - popd
   allow_failure: true
@@ -452,7 +452,7 @@ webplom_test:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - python3 -m pip install coverage~=7.2.7
-    - pushd django
+    - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - coverage run --source='.' manage.py test
@@ -465,7 +465,7 @@ webplom_test:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: django/django_coverage.xml
+        path: plom_server/django_coverage.xml
 
 
 # a legacy-only job
@@ -835,7 +835,7 @@ fedora_webplom:
     - pip install .
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
+    - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
@@ -942,7 +942,7 @@ newOS_newdeps_webplom:
     - pip install .
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
+    - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
@@ -1063,7 +1063,7 @@ minpy_mindeps_webplom:
     - pip install .
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
+    - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
