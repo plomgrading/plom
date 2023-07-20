@@ -7,5 +7,34 @@
     User progress
 {% endblock page_heading %}
 {% block main_content %}
-    <div></div>
+    <div>
+        {% if annotations_exist %}
+            <table>
+                <tr>
+                    <th>User</th>
+                    <th>Question Marked</th>
+                </tr>
+                {% for user, annotation in annotation_data.items %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ annotation|length }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No annotations</p>
+        {% endif %}
+        <table style="width:100%">
+            <tr>
+              <td>Name</td>
+              <td>Telephone</td>
+              <td>Telephone</td>
+            </tr>
+            <tr>
+              <td>Bill Gates</td>
+              <td>555 77 854</td>
+              <td>555 77 855</td>
+            </tr>
+          </table>
+    </div>
 {% endblock main_content %}

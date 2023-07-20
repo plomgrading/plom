@@ -4,3 +4,4 @@
 
 from .manage_scan import ManageScanService
 from .manage_discard import ManageDiscardService
+from .userinfo_service import UserInfoServices
