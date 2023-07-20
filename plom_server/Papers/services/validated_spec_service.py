@@ -4,13 +4,15 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 
+from typing import Dict
+
 from plom import SpecVerifier
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 
-from Papers.models import Specification
-from Papers.services import PaperInfoService
+from ..models import Specification
+from ..services import PaperInfoService
 
 # TODO - build similar for solution specs
 # NOTE - this does not **validate** test specs, it assumes the spec is valid
@@ -27,8 +29,15 @@ class SpecificationService:
         return Specification.objects.count() == 1
 
     @transaction.atomic
-    def get_the_spec(self):
-        """Return the test-specification from the database."""
+    def get_the_spec(self) -> Dict:
+        """Return the test-specification from the database.
+
+        Returns:
+            The exam specification as a dictionary.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
+        """
         try:
             return Specification.objects.get().spec_dict
         except Specification.DoesNotExist:
