@@ -73,6 +73,8 @@ class Command(BaseCommand):
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
+
         # histogram of grades
         print("Generating histogram of grades.")
         fig, ax = plt.subplots()
@@ -88,6 +90,8 @@ class Command(BaseCommand):
         ax.set_ylabel("# of students")
 
         base64_histogram_of_grades = gds.get_graph_as_base64(fig)
+
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
@@ -105,6 +109,8 @@ class Command(BaseCommand):
 
             base64_histogram_of_grades_q.append(gds.get_graph_as_base64(fig))
 
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
+
         # correlation heatmap
         print("Generating correlation heatmap.")
         marks_corr = gds.get_question_correlation_heatmap()
@@ -114,13 +120,12 @@ class Command(BaseCommand):
             marks_corr, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True
         )
         plt.title("Correlation between questions")
+        plt.xlabel("Question number")
+        plt.ylabel("Question number")
 
-        png_bytes = BytesIO()
-        plt.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
+        base64_corr = gds.get_graph_as_base64(plt.gcf())
 
-        base64_corr = base64.b64encode(png_bytes.read()).decode()
-        plt.close("all")
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
 
         # histogram of grades given by each marker
         print("Generating histograms of grades given by marker.")
@@ -170,6 +175,10 @@ class Command(BaseCommand):
                 base64.b64encode(png_bytes.read()).decode()
             )
 
+            plt.close()
+
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
+
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
         max_time = ta_times["seconds_spent_marking"].max()
@@ -194,6 +203,8 @@ class Command(BaseCommand):
 
             base64_histogram_of_time.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
+
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
@@ -221,6 +232,8 @@ class Command(BaseCommand):
 
             base64_scatter_of_time.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
+
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
 
         # 1D scatter plot of the average grades given by each marker for each question
         print("Generating 1D scatter plots of average grades for each question.")
@@ -281,6 +294,8 @@ class Command(BaseCommand):
 
             base_64_scatter_of_avgs.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
+
+        print("Figures open (should be 0): ", len(plt.get_fignums()))
 
         html = f"""
         <body>
