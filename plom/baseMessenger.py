@@ -16,7 +16,10 @@ import requests
 from requests_toolbelt import MultipartDecoder
 import urllib3
 
-from plom import __version__, Plom_API_Version, Default_Port
+from plom import __version__
+from plom import Plom_API_Version
+from plom import Plom_Legacy_Server_API_Version
+from plom import Default_Port
 from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
@@ -400,7 +403,7 @@ class BaseMessenger:
                 json={
                     "user": user,
                     "pw": pw,
-                    "api": Plom_API_Version,
+                    "api": Plom_Legacy_Server_API_Version,
                     "client_ver": __version__,
                 },
                 timeout=5,

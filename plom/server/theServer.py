@@ -26,7 +26,7 @@ else:
     import tomllib
 
 from plom import __version__
-from plom import Plom_API_Version as serverAPI
+from plom import Plom_Legacy_Server_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecVerifier
 from plom.aliceBob import simple_password
