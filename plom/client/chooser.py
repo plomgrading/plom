@@ -100,6 +100,7 @@ class Chooser(QDialog):
         self.Qapp = Qapp
         self.messenger = None
         self._legacy = False
+        self._ssl_excused = False
 
         self.lastTime = readLastTime()
 
@@ -349,17 +350,17 @@ class Chooser(QDialog):
             try:
                 server_ver_str = msgr.start()
             except PlomSSLError as e:
-                msg = WarningQuestion(
-                    self,
-                    "SSL error: cannot verify the identity of the server.",
-                    "Do you want to disable SSL certificate verification?  Not recommended.",
-                    details=f"{e}",
-                )
-                msg.setDefaultButton(QMessageBox.StandardButton.No)
-                if msg.exec() == QMessageBox.StandardButton.No:
-                    return False
-                # TODO: how to deal with this?  use instance var here instead?
-                # TODO: or just print the warning in the info: let login deal with forgiveness?
+                if not self._ssl_excused:
+                    msg = WarningQuestion(
+                        self,
+                        "SSL error: cannot verify the identity of the server.",
+                        "Do you want to disable SSL certificate verification?  Not recommended.",
+                        details=f"{e}",
+                    )
+                    msg.setDefaultButton(QMessageBox.StandardButton.No)
+                    if msg.exec() == QMessageBox.StandardButton.No:
+                        return False
+                self._ssl_excused = True
                 msgr.force_ssl_unverified()
                 server_ver_str = msgr.start()
         except PlomBenignException as e:
@@ -383,6 +384,10 @@ class Chooser(QDialog):
             return False
         self.ui.infoLabel.setText(server_ver_str)
 
+        if self._ssl_excused:
+            s = "\nCaution: SSL exception granted."
+            self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
+
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
         self._legacy = False
@@ -391,14 +396,12 @@ class Chooser(QDialog):
             self._legacy = True
             msgr.webplom = False
             # lil' bit o' debugin
-            self.ui.infoLabel.setText(
-                self.ui.infoLabel.text() + "\nUsing legacy messenger"
-            )
+            s = "\nUsing legacy messenger"
+            self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
         if Version(__version__) < Version(srv_ver):
-            self.ui.infoLabel.setText(
-                self.ui.infoLabel.text() + "\nWARNING: old client!"
-            )
+            s = "\nWARNING: old client!"
+            self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
             msg = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
@@ -453,6 +456,7 @@ class Chooser(QDialog):
         self.messenger.stop()
         self.messenger = None
         self.ui.loginInfoLabel.setText("logged out")
+        self._ssl_excused = False
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
