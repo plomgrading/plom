@@ -187,14 +187,6 @@ class Chooser(QDialog):
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def launch_task(self, which_subapp):
-        user = self.ui.userLE.text().strip()
-        self.ui.userLE.setText(user)
-        if not user:
-            return
-        pwd = self.ui.passwordLE.text()
-        if not pwd:
-            return
-
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
@@ -202,9 +194,11 @@ class Chooser(QDialog):
         # due to special handling of blank versus default, use .text() not .value()
         port = self.ui.mportSB.text()
 
+        self.login()
+
         self.saveDetails()
 
-        if user == "manager":
+        if self._legacy and self.messenger.username == "manager":
             msg = SimpleQuestion(
                 self,
                 "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
@@ -226,51 +220,6 @@ class Chooser(QDialog):
                 )
 
         if not self._pre_login_connection(self.messenger):
-            return
-
-        try:
-            self.messenger.requestAndSaveToken(user, pwd)
-        except PlomAPIException as e:
-            WarnMsg(
-                self,
-                "Could not authenticate due to API mismatch.",
-                info=f"Client version is {__version__}.  {e}",
-                info_pre=False,
-            ).exec()
-            self.messenger = None
-            return
-        except PlomAuthenticationException as e:
-            InfoMsg(self, f"Could not authenticate: {e}").exec()
-            self.messenger = None
-            return
-        except PlomExistingLoginException:
-            msg = WarningQuestion(
-                self,
-                "You appear to be already logged in!\n\n"
-                "  * Perhaps a previous session crashed?\n"
-                "  * Do you have another client running,\n"
-                "    e.g., on another computer?\n\n"
-                "Should I force-logout the existing authorisation?"
-                " (and then you can try to log in again)\n\n"
-                "The other client will likely crash.",
-            )
-            if msg.exec() == QMessageBox.StandardButton.Yes:
-                self.messenger.clearAuthorisation(user, pwd)
-                # harmless probably useless pause, in case Issue #2328 was real
-                time.sleep(0.25)
-                # try again
-                self.launch_task(which_subapp)
-                return
-            self.messenger = None
-            return
-
-        except PlomSeriousException as e:
-            ErrorMsg(
-                self,
-                "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e),
-            ).exec()
-            self.messenger = None
             return
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
@@ -413,6 +362,8 @@ class Chooser(QDialog):
     def _pre_login_connection(self, msgr):
         # This msgr object may or may not be logged in: it can be temporary: we
         # only use it to get public info from the server.
+        # TODO: this figures out if we're talking to a legacy or new server...
+        # TODO: as a side effect it updates msgr with that info.
         try:
             try:
                 server_ver_str = msgr.start()
@@ -454,8 +405,10 @@ class Chooser(QDialog):
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
         self._legacy = False
+        msgr.webplom = True
         if "Legacy" in info["product_string"]:
             self._legacy = True
+            msgr.webplom = False
             # lil' bit o' debugin
             self.ui.infoLabel.setText(
                 self.ui.infoLabel.text() + "\nUsing legacy messenger"
@@ -506,8 +459,9 @@ class Chooser(QDialog):
             pass
 
     def login(self):
-        # TODO: if legacy and if manager, enable the manager button
+        """Login to the server but don't start any tasks yet.
 
+        Also Update the UI with restricted questions and versions."""
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
@@ -515,13 +469,66 @@ class Chooser(QDialog):
         # due to special handling of blank versus default, use .text() not .value()
         port = self.ui.mportSB.text()
 
+        user = self.ui.userLE.text().strip()
+        self.ui.userLE.setText(user)
+        if not user:
+            return
+        pwd = self.ui.passwordLE.text()
+        if not pwd:
+            return
+
         if not self.messenger:
             self.messenger = Messenger(server, port=port, webplom=(not self._legacy))
 
         if not self._pre_login_connection(self.messenger):
             self.messenger = None
             return
-        # TODO:  should still do this self.get_server_info()
+
+        try:
+            self.messenger.requestAndSaveToken(user, pwd)
+        except PlomAPIException as e:
+            WarnMsg(
+                self,
+                "Could not authenticate due to API mismatch.",
+                info=f"Client version is {__version__}.  {e}",
+                info_pre=False,
+            ).exec()
+            self.messenger = None
+            return
+        except PlomAuthenticationException as e:
+            InfoMsg(self, f"Could not authenticate: {e}").exec()
+            self.messenger = None
+            return
+        except PlomExistingLoginException:
+            msg = WarningQuestion(
+                self,
+                "You appear to be already logged in!\n\n"
+                "  * Perhaps a previous session crashed?\n"
+                "  * Do you have another client running,\n"
+                "    e.g., on another computer?\n\n"
+                "Should I force-logout the existing authorisation?"
+                " (and then you can try to log in again)\n\n"
+                "The other client will likely crash.",
+            )
+            if msg.exec() == QMessageBox.StandardButton.Yes:
+                self.messenger.clearAuthorisation(user, pwd)
+                # harmless probably useless pause, in case Issue #2328 was real
+                time.sleep(0.25)
+                # try again
+                self.login()
+                return
+            self.messenger = None
+            return
+
+        except PlomSeriousException as e:
+            ErrorMsg(
+                self,
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e),
+            ).exec()
+            self.messenger = None
+            return
+
         try:
             spec = self.messenger.get_spec()
         except PlomServerNotReady as e:
@@ -539,6 +546,7 @@ class Chooser(QDialog):
             self.messenger = None
             return
         self._set_restrictions_from_spec(spec)
+        self.ui.loginInfoLabel.setText(f'logged in as "{user}"')
 
     def _set_restrictions_from_spec(self, spec):
         self.ui.markGBox.setTitle("Choose a task for “{}”".format(spec["name"]))
