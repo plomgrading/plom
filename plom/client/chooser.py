@@ -192,23 +192,29 @@ class Chooser(QDialog):
             if not self.is_logged_in():
                 return
 
-        self.saveDetails()
+        if self._legacy and self.messenger.username == "manager":
+            if which_subapp != "Manager":
+                InfoMsg(
+                    self,
+                    "<p>You are not allowed to mark or ID papers while "
+                    "logged-in as &ldquo;manager&rdquo;.</p>",
+                ).exec()
+                return
 
-        if (
-            which_subapp != "Manager"
-            and self._legacy
-            and self.messenger.username == "manager"
-        ):
-            InfoMsg(
-                self,
-                "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
-            ).exec()
-            return
+        self.saveDetails()
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
+            if not self._legacy:
+                InfoMsg(
+                    self,
+                    "<p>Only legacy servers have a manager app: "
+                    "how did you get here?.</p>",
+                ).exec()
+                return
+
             # Importing here avoids a circular import
             from plom.manager import Manager
 
