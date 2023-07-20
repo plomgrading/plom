@@ -338,9 +338,7 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
-        if self.messenger:
-            self.messenger.stop()
-        self.messenger = None
+        self.logout()
 
     def _pre_login_connection(self, msgr):
         # This msgr object may or may not be logged in: it can be temporary: we
@@ -447,6 +445,14 @@ class Chooser(QDialog):
         if self.messenger.token:
             return True
         return False
+
+    def logout(self) -> None:
+        if not self.messenger:
+            return
+        # self.messenger.closeUser()
+        self.messenger.stop()
+        self.messenger = None
+        self.ui.loginInfoLabel.setText("logged out")
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
