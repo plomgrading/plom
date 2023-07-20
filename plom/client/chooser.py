@@ -210,19 +210,9 @@ class Chooser(QDialog):
             # Importing here avoids a circular import
             from plom.manager import Manager
 
-            server = self.ui.serverLE.text().strip()
-            # due to special handling of blank versus default, use .text() not .value()
-            # port = self.ui.mportSB.text()
-
             self.setEnabled(False)
             self.hide()
-            window = Manager(
-                self.Qapp,
-                manager_msgr=self.messenger,
-                server=server,
-                user=self.messenger.username,
-                password="",  # TODO?
-            )
+            window = Manager(self.Qapp, manager_msgr=self.messenger)
             window.show()
             # store ref in Qapp to avoid garbase collection
             self.Qapp._manager_window = window
@@ -468,6 +458,9 @@ class Chooser(QDialog):
         pwd = self.ui.passwordLE.text()
         if not pwd:
             return
+
+        # find out if its a legacy server
+        self.get_server_info()
 
         if not self.messenger:
             if self._legacy and user == "manager":
