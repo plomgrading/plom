@@ -97,6 +97,7 @@ class BaseMessenger:
             if scheme is None:
                 scheme = "https"
             self._raw_init(f"{scheme}://{server}", verify_ssl=verify_ssl)
+            return
 
         # prefix with "https://" if not specified
         if not parsed_url.scheme:
