@@ -186,9 +186,11 @@ class Chooser(QDialog):
         self.lastTime["MarkWarnings"] = opt["MarkWarnings"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def launch_task(self, which_subapp):
+    def launch_task(self, which_subapp: str):
         if not self.is_logged_in():
             self.login()
+            if not self.is_logged_in():
+                return
 
         self.saveDetails()
 
@@ -433,14 +435,14 @@ class Chooser(QDialog):
             # no action required currently: optional cleanup?
             pass
 
-    def is_logged_in(self):
+    def is_logged_in(self) -> bool:
         if not self.messenger:
             return False
         if self.messenger.token:
             return True
         return False
 
-    def login(self):
+    def login(self) -> None:
         """Login to the server but don't start any tasks yet.
 
         Also Update the UI with restricted questions and versions."""
