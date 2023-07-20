@@ -143,7 +143,7 @@ class Chooser(QDialog):
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
-        self.ui.getServerInfoButton.clicked.connect(self.get_server_info)
+        self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
@@ -478,7 +478,16 @@ class Chooser(QDialog):
             msg.exec()
         return True
 
+    def validate_server(self):
+        self.get_server_info()
+        # put focus at username or password line-edit
+        if len(self.ui.userLE.text()) > 0:
+            self.ui.passwordLE.setFocus()
+        else:
+            self.ui.userLE.setFocus()
+
     def get_server_info(self):
+        """Get info from server, update UI with server version, check SSL."""
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
@@ -556,12 +565,6 @@ class Chooser(QDialog):
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
-        # TODO: commented out: validate should still do this this!
-        # put focus at username or password line-edit
-        # if len(self.ui.userLE.text()) > 0:
-        #    self.ui.passwordLE.setFocus()
-        # else:
-        #    self.ui.userLE.setFocus()
 
     def _partial_parse_address_manual(self):
         address = self.ui.serverLE.text()
