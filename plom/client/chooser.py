@@ -93,13 +93,13 @@ def readLastTime():
 
 
 class Chooser(QDialog):
-    def __init__(self, Qapp, webplom=False):
+    def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super().__init__()
         uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
-        self.webplom = webplom
+        self._legacy = False
 
         self.lastTime = readLastTime()
 
@@ -218,10 +218,12 @@ class Chooser(QDialog):
         if not self.messenger:
             if which_subapp == "Manager":
                 self.messenger = ManagerMessenger(
-                    server, port=port, webplom=self.webplom
+                    server, port=port, webplom=(not self._legacy)
                 )
             else:
-                self.messenger = Messenger(server, port=port, webplom=self.webplom)
+                self.messenger = Messenger(
+                    server, port=port, webplom=(not self._legacy)
+                )
 
         if not self._pre_login_connection(self.messenger):
             return
@@ -451,18 +453,17 @@ class Chooser(QDialog):
 
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
+        self._legacy = False
         if "Legacy" in info["product_string"]:
-            self.webplom = False
-        else:
-            self.webplom = True
-        # lil' bit o' debugin
-        self.ui.infoLabel.setText(
-            self.ui.infoLabel.text() + f"\n  webplom={self.webplom}"
-        )
+            self._legacy = True
+            # lil' bit o' debugin
+            self.ui.infoLabel.setText(
+                self.ui.infoLabel.text() + "\nUsing legacy messenger"
+            )
 
         if Version(__version__) < Version(srv_ver):
             self.ui.infoLabel.setText(
-                self.ui.infoLabel.text() + "\n  WARNING: old client!"
+                self.ui.infoLabel.text() + "\nWARNING: old client!"
             )
             msg = WarnMsg(
                 self,
@@ -506,7 +507,7 @@ class Chooser(QDialog):
         port = self.ui.mportSB.text()
 
         if not self.messenger:
-            self.messenger = Messenger(server, port=port, webplom=self.webplom)
+            self.messenger = Messenger(server, port=port, webplom=(not self._legacy))
 
         if not self._pre_login_connection(self.messenger):
             self.messenger = None
