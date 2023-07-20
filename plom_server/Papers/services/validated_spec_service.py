@@ -100,45 +100,61 @@ class SpecificationService:
         Specification.objects.filter().delete()
 
     @transaction.atomic
-    def get_longname(self):
-        """Get the long name of the exam."""
+    def get_longname(self) -> str:
+        """Get the long name of the exam.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
+        """
         spec_obj = self.get_the_spec()
         return spec_obj["longName"]
 
     @transaction.atomic
-    def get_shortname(self):
-        """Get the short name of the exam."""
+    def get_shortname(self) -> str:
+        """Get the short name of the exam.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
+        """
         spec_obj = self.get_the_spec()
         return spec_obj["name"]
 
     @transaction.atomic
-    def get_n_questions(self):
-        """
-        Get the number of questions in the test.
+    def get_n_questions(self) -> int:
+        """Get the number of questions in the test.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberOfQuestions"]
 
     @transaction.atomic
-    def get_n_versions(self):
-        """
-        Get the number of test versions.
+    def get_n_versions(self) -> int:
+        """Get the number of test versions.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberOfVersions"]
 
     @transaction.atomic
-    def get_n_pages(self):
-        """
-        Get the number of pages in the test.
+    def get_n_pages(self) -> int:
+        """Get the number of pages in the test.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberOfPages"]
 
     @transaction.atomic
-    def get_n_to_produce(self):
-        """
-        Get the number of papers to produce.
+    def get_n_to_produce(self) -> int:
+        """Get the number of papers to produce.
+
+        Exceptions:
+            ObjectDoesNotExist: no exam specification yet.
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberToProduce"]
