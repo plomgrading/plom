@@ -300,7 +300,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     # We will reset this later after we read the config
     logging.getLogger().setLevel("Debug".upper())
 
-    log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
+    log.info(f"Plom Server {__version__} [legacy] (communicates with api {serverAPI})")
     check_server_directories(basedir)
     server_info = get_server_info(basedir)
     log.info(f'Working from directory "{basedir}"')

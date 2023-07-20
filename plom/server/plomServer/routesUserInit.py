@@ -28,9 +28,7 @@ class UserInitHandler:
     @no_authentication_only_log_request
     async def version(self, request):
         return web.Response(
-            text="Plom server version {} with API {}".format(
-                self.server.Version, self.server.API
-            ),
+            text=f"Legacy Plom server version {self.server.Version} with API {self.server.API}",
             status=200,
         )
 
