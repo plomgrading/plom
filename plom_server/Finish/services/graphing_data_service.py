@@ -53,6 +53,14 @@ class GraphingDataService:
 
         return base64.b64encode(png_bytes.read()).decode()
 
+    def get_ta_df(self) -> pd.DataFrame:
+        """Return the dataframe of TA data."""
+        return self.ta_df
+
+    def get_student_df(self) -> pd.DataFrame:
+        """Return the dataframe of student data."""
+        return self.student_df
+
     def get_total_average_mark(self) -> float:
         """Return the average total mark for all students as a float."""
         return self.student_df["total_mark"].mean()
@@ -104,8 +112,9 @@ class GraphingDataService:
         marks_corr.index = col_names
         return marks_corr
 
-    def get_marks_by_ta(self, ta: str) -> pd.DataFrame:
-        """TODO: Docstring for get_marks_by_ta."""
+    # TODO: functions passing back a Dataframe should take an input Dataframe
+    def get_ta_df_by_ta(self, ta: str) -> pd.DataFrame:
+        """TODO: Docstring for get_ta_df_by_ta."""
         marks = self.ta_df[self.ta_df["user"] == ta]
         marks.name = ta
         return marks
@@ -114,6 +123,21 @@ class GraphingDataService:
         """TODO: Docstring for get_marks_by_ta."""
         marks_by_ta = {}
         for ta in self.ta_df["user"].unique():
-            marks_by_ta[ta] = self.get_marks_by_ta(ta)
-
+            marks_by_ta[ta] = self.get_ta_df_by_ta(ta)
         return marks_by_ta
+
+    def get_ta_df_by_question(self, question: int) -> pd.DataFrame:
+        """TODO: Docstring for get_times_by_question."""
+        times = self.ta_df[self.ta_df["question_number"] == question]
+        times.name = question
+        return times
+
+    def get_times_for_all_questions(self) -> dict:
+        """TODO: Docstring for get_times_for_all_questions."""
+        times_by_question = {}
+        for question in self.spec["question"]:
+            q = int(question)
+            times_by_question[q] = self.get_ta_df_by_question(q)[
+                "seconds_spent_marking"
+            ]
+        return times_by_question

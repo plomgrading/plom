@@ -74,6 +74,7 @@ class Command(BaseCommand):
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
         def debug_print_var(var):
+            """DEBUG: Print the variable and its type."""
             print(var)
             print("type: ", type(var))
 
@@ -135,7 +136,7 @@ class Command(BaseCommand):
         if len(plt.get_fignums()) > 0:
             print("Warn: ", len(plt.get_fignums()), " figures open.")
 
-        # histogram of grades given by each marker
+        # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
         marks_by_tas = gds.get_marks_for_all_tas()
         base64_histogram_of_grades_m = []
@@ -147,7 +148,7 @@ class Command(BaseCommand):
             for question in scores_for_user["question_number"].unique():
                 scores_for_user_for_question = scores_for_user.loc[
                     scores_for_user["question_number"] == question
-                ]
+                ]  # TODO: factor this out into graphing_data_service.py
 
                 fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
                 bins = range(
@@ -174,28 +175,25 @@ class Command(BaseCommand):
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        max_time = ta_times["seconds_spent_marking"].max()
+        max_time = gds.get_ta_df()["seconds_spent_marking"].max()
         bin_width = 15  # seconds
         base64_histogram_of_time = []
-        for question in spec["question"]:
+        marking_times_for_questions = gds.get_times_for_all_questions()
+        for i, question in enumerate(marking_times_for_questions):
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
-            marking_times_for_question = ta_times.loc[
-                ta_times["question_number"] == int(question), "seconds_spent_marking"
-            ].div(60)
             bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
 
-            ax.hist(marking_times_for_question, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Time spent marking Q" + str(question))
+            ax.hist(
+                marking_times_for_questions[question].divide(60),
+                bins=bins,
+                ec="black",
+                alpha=0.5,
+            )
+            ax.set_title("Time spent marking Q" + str(i + 1))
             ax.set_xlabel("Time spent (min)")
             ax.set_ylabel("# of papers")
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_histogram_of_time.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
+            base64_histogram_of_time.append(gds.get_graph_as_base64(fig))
 
             if len(plt.get_fignums()) > 0:
                 print("Warn: ", len(plt.get_fignums()), " figures open.")
@@ -217,8 +215,8 @@ class Command(BaseCommand):
                 times_for_question, mark_given_for_question, ec="black", alpha=0.5
             )
             ax.set_title("Q" + str(question) + ": Time spent vs Mark given")
-            ax.set_xlabel("Time spent (min)")
-            ax.set_ylabel("Mark given")
+            ax.set_ylabel("Time spent (min)")
+            ax.set_xlabel("Mark given")
 
             png_bytes = BytesIO()
             fig.savefig(png_bytes, format="png")
