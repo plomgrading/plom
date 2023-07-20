@@ -187,39 +187,20 @@ class Chooser(QDialog):
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def launch_task(self, which_subapp):
-        server = self.ui.serverLE.text().strip()
-        if not server:
-            log.warning("No server URI")
-            return
-        # due to special handling of blank versus default, use .text() not .value()
-        port = self.ui.mportSB.text()
-
-        self.login()
+        if not self.is_logged_in():
+            self.login()
 
         self.saveDetails()
 
-        if self._legacy and self.messenger.username == "manager":
-            msg = SimpleQuestion(
+        if (
+            which_subapp != "Manager"
+            and self._legacy
+            and self.messenger.username == "manager"
+        ):
+            InfoMsg(
                 self,
                 "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
-                "Would you instead like to run the Server Management tool?",
-            )
-            if msg.exec() == QMessageBox.StandardButton.No:
-                return
-            which_subapp = "Manager"
-            self.messenger = None
-
-        if not self.messenger:
-            if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-            else:
-                self.messenger = Messenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-
-        if not self._pre_login_connection(self.messenger):
+            ).exec()
             return
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
@@ -229,14 +210,18 @@ class Chooser(QDialog):
             # Importing here avoids a circular import
             from plom.manager import Manager
 
+            server = self.ui.serverLE.text().strip()
+            # due to special handling of blank versus default, use .text() not .value()
+            # port = self.ui.mportSB.text()
+
             self.setEnabled(False)
             self.hide()
             window = Manager(
                 self.Qapp,
                 manager_msgr=self.messenger,
                 server=server,
-                user=user,
-                password=pwd,
+                user=self.messenger.username,
+                password="",  # TODO?
             )
             window.show()
             # store ref in Qapp to avoid garbase collection
@@ -458,6 +443,13 @@ class Chooser(QDialog):
             # no action required currently: optional cleanup?
             pass
 
+    def is_logged_in(self):
+        if not self.messenger:
+            return False
+        if self.messenger.token:
+            return True
+        return False
+
     def login(self):
         """Login to the server but don't start any tasks yet.
 
@@ -478,7 +470,14 @@ class Chooser(QDialog):
             return
 
         if not self.messenger:
-            self.messenger = Messenger(server, port=port, webplom=(not self._legacy))
+            if self._legacy and user == "manager":
+                self.messenger = ManagerMessenger(
+                    server, port=port, webplom=(not self._legacy)
+                )
+            else:
+                self.messenger = Messenger(
+                    server, port=port, webplom=(not self._legacy)
+                )
 
         if not self._pre_login_connection(self.messenger):
             self.messenger = None
