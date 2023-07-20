@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException
+from rest_framework.request import Request
 from rest_framework import status
 
 from plom import __version__
@@ -40,7 +40,7 @@ class GetSpecification(APIView):
         return Response(the_spec)
 
 
-def _version_string():
+def _version_string() -> str:
     return f"Plom server version {__version__} with API {Plom_API_Version}"
 
 
@@ -51,7 +51,7 @@ class ServerVersion(APIView):
         (200): and the version string as ``text/plain``, not JSON.
     """
 
-    def get(self, request):
+    def get(self, request: Request) -> HttpResponse:
         return HttpResponse(_version_string(), content_type="text/plain")
 
 
@@ -62,7 +62,7 @@ class ServerInfo(APIView):
         (200): a dict of information about the server as key-value pairs,
     """
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         info: Dict[str, Any] = {
             "product_string": "Plom Server",
             "version": __version__,
