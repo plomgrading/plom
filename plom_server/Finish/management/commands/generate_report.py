@@ -78,8 +78,11 @@ class Command(BaseCommand):
             print(var)
             print("type: ", type(var))
 
-        if len(plt.get_fignums()) > 0:
-            print("Warn: ", len(plt.get_fignums()), " figures open.")
+        def check_num_figs():
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
+
+        check_num_figs()
 
         # histogram of grades
         print("Generating histogram of grades.")
@@ -97,8 +100,7 @@ class Command(BaseCommand):
 
         base64_histogram_of_grades = gds.get_graph_as_base64(fig)
 
-        if len(plt.get_fignums()) > 0:
-            print("Warn: ", len(plt.get_fignums()), " figures open.")
+        check_num_figs()
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
@@ -116,8 +118,7 @@ class Command(BaseCommand):
 
             base64_histogram_of_grades_q.append(gds.get_graph_as_base64(fig))
 
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
+            check_num_figs()
 
         # correlation heatmap
         print("Generating correlation heatmap.")
@@ -170,8 +171,7 @@ class Command(BaseCommand):
 
             base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
 
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
+            check_num_figs()
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
@@ -195,8 +195,7 @@ class Command(BaseCommand):
 
             base64_histogram_of_time.append(gds.get_graph_as_base64(fig))
 
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
+            check_num_figs()
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
@@ -220,8 +219,7 @@ class Command(BaseCommand):
 
             base64_scatter_of_time.append(gds.get_graph_as_base64(fig))
 
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
+            check_num_figs()
 
         # 1D scatter plot of the average grades given by each marker for each question
         print("Generating 1D scatter plots of average grades for each question.")
@@ -278,8 +276,7 @@ class Command(BaseCommand):
 
             base_64_scatter_of_avgs.append(gds.get_graph_as_base64(fig))
 
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
+            check_num_figs()
 
         html = f"""
         <body>
