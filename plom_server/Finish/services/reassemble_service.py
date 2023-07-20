@@ -288,7 +288,7 @@ class ReassembleService:
 
         return marked_pages
 
-    def reassemble_paper(self, paper, outdir="reassembled"):
+    def reassemble_paper(self, paper, outdir):
         """Reassemble a single test paper.
 
         Args:
@@ -298,6 +298,9 @@ class ReassembleService:
         Returns:
             pathlib.Path: the full path of the reassembled test PDF.
         """
+        if outdir is None:
+            outdir = "reassembled"
+
         outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
 
