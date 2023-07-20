@@ -11,7 +11,7 @@
                     justify-content: center;
                     display:flex;
                     align-items:center">
-            {% if pg.rotation == 0 or pg.rotation == None %}
+            {% if not pg.rotation %}
                 <img class="img-thumbnail thumbnail0"
                      src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
             {% elif pg.rotation == 180 %}
@@ -30,7 +30,7 @@
     </a>
 </div>
 <div class="card-footer">
-    {% if pg.rotation == None %}
+    {% if pg.rotation is None %}
         {{ pg.order }}: no rotation
     {% else %}
         {{ pg.order }}
