@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Union
+from typing import Union, Dict, Any
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -263,11 +263,11 @@ class BaseMessenger:
     def isStarted(self):
         return bool(self.session)
 
-    def get_server_version(self):
+    def get_server_version(self) -> str:
         """The version info of the server.
 
         Returns:
-            str: the version string of the server,
+            The version string of the server,
 
         Exceptions:
         """
@@ -276,6 +276,24 @@ class BaseMessenger:
                 response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_server_info(self) -> Dict[str, Any]:
+        """Get a dictionary of server software information.
+
+        Returns:
+            Key-value pairs of information about the server software.
+
+        Exceptions:
+            TODO: maybe older servers don't have this API; they would
+                respond with 404.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get("/info/server")
+                response.raise_for_status()
+                return response.json()
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 

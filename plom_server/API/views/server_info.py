@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
+from typing import Dict, Any
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework.views import APIView
@@ -38,6 +40,10 @@ class GetSpecification(APIView):
         return Response(the_spec)
 
 
+def _version_string():
+    return f"Plom server version {__version__} with API {Plom_API_Version}"
+
+
 class ServerVersion(APIView):
     """Get the server version.
 
@@ -46,8 +52,25 @@ class ServerVersion(APIView):
     """
 
     def get(self, request):
-        version_str = f"Plom server version {__version__} with API {Plom_API_Version}"
-        return HttpResponse(version_str, content_type="text/plain")
+        return HttpResponse(_version_string(), content_type="text/plain")
+
+
+class ServerInfo(APIView):
+    """Get the server software information such as version in extensible format.
+
+    Returns:
+        (200): a dict of information about the server as key-value pairs,
+    """
+
+    def get(self, request):
+        info: Dict[str, Any] = {
+            "product_string": "Plom Server",
+            "version": __version__,
+            "API_version": Plom_API_Version,
+            "version_string": _version_string(),
+            # TODO: "acceptable_client_API": [100, 101, 107],
+        }
+        return Response(info)
 
 
 class CloseUser(APIView):
