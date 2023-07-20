@@ -2,14 +2,19 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+import tempfile
+
+from plom.finish.coverPageBuilder import makeCover
+from plom.finish.examReassembler import reassemble
+
 from django.utils import timezone
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
-from Papers.models import Paper
-from Papers.services import SpecificationService
-from Preparation.services import PQVMappingService
+from Papers.models import Paper, IDPage, DNMPage
+from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 
@@ -25,8 +30,9 @@ class ReassembleService:
         paper_tasks = MarkingTask.objects.filter(paper=paper)
         completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE)
         ood_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE)
+        n_questions = SpecificationService().get_n_questions()
         return (
-            completed_tasks.count() > 0
+            completed_tasks.count() == n_questions
             and completed_tasks.count() + ood_tasks.count() == paper_tasks.count()
         )
 
@@ -111,8 +117,9 @@ class ReassembleService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
-        qvmap = PQVMappingService().get_pqv_map_dict()
-        version = qvmap[paper.paper_number][question_number]
+        version = PaperInfoService().get_version_from_paper_question(
+            paper.paper_number, question_number
+        )
         if self.is_paper_marked(paper):
             annotation = MarkingTaskService().get_latest_annotation(
                 paper.paper_number, question_number
@@ -200,22 +207,129 @@ class ReassembleService:
             spreadsheet_data[paper.paper_number] = self.get_paper_status(paper)
         return spreadsheet_data
 
-    def get_cover_page_info(self, paper):
+    def get_cover_page_info(self, paper, solution=False):
         """Return information needed to build a cover page for a reassembled test.
 
         Args:
             paper: a reference to a Paper instance
+            solution (optional): bool, leave out the max possible mark.
         """
         cover_page_info = []
-        paper_id_info = self.get_paper_id_or_none(paper)
-        if paper_id_info:
-            cover_page_info.append(list(paper_id_info))
-        else:
-            cover_page_info.append([None, None])
 
-        n_questions = SpecificationService().get_n_questions()
+        spec_service = SpecificationService()
+        n_questions = spec_service.get_n_questions()
         for i in range(1, n_questions + 1):
+            question_label = spec_service.get_question_label(i)
+            max_mark = spec_service.get_question_mark(i)
             version, mark = self.get_question_data(paper, i)
-            cover_page_info.append([i, version, mark])
+
+            if solution:
+                cover_page_info.append([question_label, version, max_mark])
+            else:
+                cover_page_info.append([question_label, version, mark, max_mark])
 
         return cover_page_info
+
+    def build_paper_cover_page(self, tmpdir, paper, solution=False):
+        """Build a cover page for a reassembled PDF or a solution.
+
+        Args:
+            tmpdir (pathlib.Path): where to save the coverpage.
+            paper: a reference to a Paper instance.
+            solution (optional): bool, build coverpage for solutions.
+
+        Returns:
+            pathlib.Path: filename of the coverpage.
+        """
+        paper_id = self.get_paper_id_or_none(paper)
+        if not paper_id:
+            paper_id = (None, None)
+
+        cover_page_info = self.get_cover_page_info(paper, solution)
+        cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
+        makeCover(
+            cover_page_info,
+            cover_name,
+            test_num=paper.paper_number,
+            info=paper_id,
+            solution=solution,
+            exam_name=SpecificationService().get_longname(),
+        )
+        return cover_name
+
+    def get_id_page_image(self, paper):
+        """Get the path and rotation for a paper's ID page."""
+        id_page_image = IDPage.objects.get(paper=paper).image
+        return [
+            {
+                "filename": id_page_image.image_file.path,
+                "rotation": id_page_image.rotation,
+            }
+        ]
+
+    def get_dnm_page_images(self, paper):
+        """Get the path and rotation for a paper's do-not-mark pages."""
+        dnm_pages = DNMPage.objects.filter(paper=paper)
+        dnm_images = [dnmpage.image for dnmpage in dnm_pages]
+        return [
+            {"filename": img.image_file.path, "rotation": img.rotation}
+            for img in dnm_images
+        ]
+
+    def get_annotation_images(self, paper):
+        """Get the paths for a paper's annotation images."""
+        n_questions = SpecificationService().get_n_questions()
+        marked_pages = []
+
+        mts = MarkingTaskService()
+        for i in range(1, n_questions + 1):
+            annotation = mts.get_latest_annotation(paper.paper_number, i)
+            marked_pages.append(annotation.image.path)
+
+        return marked_pages
+
+    def reassemble_paper(self, paper, outdir):
+        """Reassemble a single test paper.
+
+        Args:
+            paper: Paper instance to re-assemble.
+            outdir (optional): pathlib.Path, the directory to save the test PDF.
+
+        Returns:
+            pathlib.Path: the full path of the reassembled test PDF.
+        """
+        if outdir is None:
+            outdir = "reassembled"
+
+        outdir = Path(outdir)
+        outdir.mkdir(exist_ok=True)
+
+        paper_id = self.get_paper_id_or_none(paper)
+        if not paper_id:
+            raise ValueError(
+                f"Paper {paper.paper_number} is missing student ID information."
+            )
+        student_id, student_name = paper_id
+
+        if not self.is_paper_marked(paper):
+            raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
+
+        shortname = SpecificationService().get_shortname()
+        outname = outdir / f"{shortname}_{student_id}.pdf"
+
+        with tempfile.TemporaryDirectory() as _td:
+            tmpdir = Path(_td)
+            cover_file = self.build_paper_cover_page(tmpdir, paper)
+            id_pages = self.get_id_page_image(paper)
+            dnm_pages = self.get_dnm_page_images(paper)
+            marked_pages = self.get_annotation_images(paper)
+            reassemble(
+                outname,
+                shortname,
+                student_id,
+                cover_file,
+                id_pages,
+                marked_pages,
+                dnm_pages,
+            )
+        return outname
