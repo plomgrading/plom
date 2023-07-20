@@ -43,3 +43,14 @@ class GraphingDataService:
     def get_total_stdev_mark(self) -> float:
         """Return the standard deviation of the total marks for all students as a float."""
         return self.student_df["total_mark"].std()
+
+    def get_marks_by_question(self):
+        """Get the marks for each question as a list of lists.
+
+        Returns:
+            list: A list of lists containing the marks for each question.
+        """
+        marks_by_question = []
+        for question in self.spec["question"]:
+            marks_by_question.append(self.student_df[f"q{question['number']}_mark"])
+        return marks_by_question

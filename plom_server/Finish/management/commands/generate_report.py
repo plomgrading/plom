@@ -15,7 +15,7 @@ from weasyprint import HTML, CSS
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from Finish.services import StudentMarkService, TaMarkingService
+from Finish.services import StudentMarkService, TaMarkingService, GraphingDataService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
@@ -101,6 +101,9 @@ class Command(BaseCommand):
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
             marks_for_question = marks["q" + str(question) + "_mark"]
+            print(marks_for_question)
+            gds = GraphingDataService()
+            print(gds.get_marks_by_question())
             bins = range(0, spec["question"][question]["mark"] + RANGE_BIN_OFFSET)
 
             ax.hist(marks_for_question, bins=bins, ec="black", alpha=0.5)

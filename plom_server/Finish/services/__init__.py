@@ -5,3 +5,4 @@
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
 from .reassemble_service import ReassembleService
+from .graphing_data_service import GraphingDataService
