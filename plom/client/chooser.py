@@ -448,8 +448,22 @@ class Chooser(QDialog):
             self.messenger = None
             return False
         self.ui.infoLabel.setText(server_ver_str)
+
+        # in theory we could support older servers by scrapping the API version from above
+        info = msgr.get_server_info()
+        if "Legacy" in info["product_string"]:
+            self.webplom = False
+        else:
+            self.webplom = True
+        # lil' bit o' debugin
+        self.ui.infoLabel.setText(
+            self.ui.infoLabel.text() + f"\n  webplom={self.webplom}"
+        )
+
         if Version(__version__) < Version(srv_ver):
-            self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
+            self.ui.infoLabel.setText(
+                self.ui.infoLabel.text() + "\n  WARNING: old client!"
+            )
             msg = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
