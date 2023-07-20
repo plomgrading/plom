@@ -200,8 +200,7 @@ ignored-modules = ["tensorflow", "api_secrets"]
 [tool.coverage.report]
 # our CI runs /usr/local stuff for some reason
 # python*.py errors need -i or config match here
-# TODO: Issue #2998, omitting plom_server, just to add back in .gitlab-ci.yml
-omit = ["*/test_*", "/usr/*", "*/config*", "plom_server/*"]
+omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
 # TODO: for now ignore the plom_server folder: it uses its own testing
