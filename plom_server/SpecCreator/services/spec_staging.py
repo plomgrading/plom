@@ -2,9 +2,10 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-import pathlib
 import copy
 import json
+import pathlib
+
 from django.utils.text import slugify
 from plom.specVerifier import SpecVerifier
 
@@ -19,19 +20,19 @@ class StagingSpecificationService:
     """
 
     def specification(self):
-        """Get the latest form of the StagingSpecification instance
+        """Get the latest form of the StagingSpecification instance.
 
         Returns:
-            StagingSpecification: the singleton DB object
+            StagingSpecification: the singleton DB object.
         """
         spec = StagingSpecification.load()
         return spec
 
     def reset_specification(self):
-        """Clear the StagingSpecification object
+        """Clear the StagingSpecification object.
 
         Returns:
-            StagingSpecification: the newly cleared DB object
+            StagingSpecification: the newly-cleared DB object.
         """
         spec = self.specification()
         spec.name = ""
@@ -47,18 +48,18 @@ class StagingSpecificationService:
         return spec
 
     def get_long_name(self):
-        """Return the TestSpecInfo long_name field
+        """Return the TestSpecInfo long_name field.
 
         Returns:
-            str: the test's long name
+            str: the test's long name.
         """
         return self.specification().longName
 
     def set_long_name(self, long_name: str):
-        """Set the test's long name
+        """Set the test's long name.
 
         Args:
-            long_name: the new long name
+            long_name: the new long name.
         """
         test_spec = self.specification()
         test_spec.longName = long_name
@@ -463,7 +464,7 @@ class StagingSpecificationService:
         spec_w_default_quest_labels = self.insert_default_question_labels(
             copy.deepcopy(spec_dict)
         )
-        verifier = SpecVerifier(copy.deepcopy(spec_w_default_quest_labels))
+        verifier = SpecVerifier(spec_w_default_quest_labels)
         verifier.verifySpec(verbose=verbose)
         verifier.checkCodes(verbose=verbose)
         return verifier.spec
@@ -473,7 +474,7 @@ class StagingSpecificationService:
         If any question labels are missing (might happen if the staging spec is from a
         user-uploaded toml file), insert default question labels.
         """
-        verifier = SpecVerifier(copy.deepcopy(spec_dict))
+        verifier = SpecVerifier(spec_dict)
         for i in range(spec_dict["numberOfQuestions"]):
             one_index = i + 1
             question = spec_dict["question"][i]

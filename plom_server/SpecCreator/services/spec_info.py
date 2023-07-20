@@ -2,15 +2,14 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
-import pathlib
 import json
-import fitz
-import copy
-from plom.specVerifier import SpecVerifier
+import pathlib
 
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+import fitz
+from plom.specVerifier import SpecVerifier
 
 from .. import models
 from .. import services
@@ -628,7 +627,7 @@ class TestSpecService:
         valid_spec = None
         try:
             spec_dict = services.TestSpecGenerateService(self).generate_spec_dict()
-            vlad = SpecVerifier(copy.deepcopy(spec_dict))
+            vlad = SpecVerifier(spec_dict)
             vlad.verifySpec()
             valid_spec = vlad.spec
             if valid_spec:

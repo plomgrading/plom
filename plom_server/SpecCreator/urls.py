@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.urls import include, path
 from . import views
 
@@ -22,7 +26,7 @@ urlpatterns = [
     path("summary", views.TestSpecSummaryView.as_view(), name="spec_summary"),
     path("reset/", views.TestSpecResetView.as_view(), name="reset_spec"),
     path(
-        "reset/lading/",
+        "reset/landing/",
         views.TestSpecPrepLandingResetView.as_view(),
         name="reset_spec_landing",
     ),

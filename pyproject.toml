@@ -202,11 +202,11 @@ ignored-modules = ["tensorflow", "api_secrets"]
 [tool.coverage.report]
 # our CI runs /usr/local stuff for some reason
 # python*.py errors need -i or config match here
-omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
+omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the django folder
-addopts = "--ignore plom/django"
+# TODO: for now ignore the plom_server folder: it uses its own testing
+addopts = "--ignore plom_server"
 qt_api = "pyqt6"
 
 [tool.djlint]
@@ -226,8 +226,11 @@ exclude = [
     'digitHunter.py',
 ]
 
+# These avoid mypy errors: mostly libraries that don't yet have typing
+# Maintenance: try removing some of this and rerunning mypy locally
 [[tool.mypy.overrides]]
 module = [
+    'api_secrets',
     'canvasapi',
     'cv2',
     'exif',
@@ -238,14 +241,6 @@ module = [
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
-    'api_secrets',
-]
-ignore_missing_imports = true
-
-# another such section for django
-#   - "django.*" is very confusing!  Issue #2532
-[[tool.mypy.overrides]]
-module = [
     'braces.*',
     'debugpy',
     'django.*',
