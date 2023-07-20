@@ -204,8 +204,8 @@ ignored-modules = ["tensorflow", "api_secrets"]
 omit = ["*/test_*", "/usr/*", "*/config*", "plom_server/*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the django folder
-addopts = "--ignore plom/django"
+# TODO: for now ignore the plom_server folder: it uses its own testing
+addopts = "--ignore plom_server"
 qt_api = "pyqt6"
 
 [tool.djlint]
@@ -242,7 +242,6 @@ module = [
 ignore_missing_imports = true
 
 # another such section for django
-#   - "django.*" is very confusing!  Issue #2532
 [[tool.mypy.overrides]]
 module = [
     'braces.*',
