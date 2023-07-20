@@ -4,12 +4,13 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 
+import logging
 from typing import Dict
-
-from plom import SpecVerifier
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
+
+from plom import SpecVerifier
 
 from ..models import Specification
 from ..services import PaperInfoService
@@ -17,7 +18,6 @@ from ..services import PaperInfoService
 # TODO - build similar for solution specs
 # NOTE - this does not **validate** test specs, it assumes the spec is valid
 
-import logging
 
 log = logging.getLogger("ValidatedSpecService")
 
@@ -90,7 +90,7 @@ class SpecificationService:
 
         Raises:
             ObjectDoesNotExist: no exam specification yet.
-            MultipleObjectsReturned: cannot remve spec because
+            MultipleObjectsReturned: cannot remove spec because
                 there are already papers.
         """
         if not self.is_there_a_spec():
