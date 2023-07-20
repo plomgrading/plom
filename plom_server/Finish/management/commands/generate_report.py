@@ -218,12 +218,7 @@ class Command(BaseCommand):
             ax.set_ylabel("Time spent (min)")
             ax.set_xlabel("Mark given")
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_scatter_of_time.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
+            base64_scatter_of_time.append(gds.get_graph_as_base64(fig))
 
             if len(plt.get_fignums()) > 0:
                 print("Warn: ", len(plt.get_fignums()), " figures open.")
@@ -281,12 +276,7 @@ class Command(BaseCommand):
             )
             plt.ylim([-0.1, 1])
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base_64_scatter_of_avgs.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
+            base_64_scatter_of_avgs.append(gds.get_graph_as_base64(fig))
 
             if len(plt.get_fignums()) > 0:
                 print("Warn: ", len(plt.get_fignums()), " figures open.")
