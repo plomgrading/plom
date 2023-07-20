@@ -26,7 +26,12 @@ RANGE_BIN_OFFSET = 2
 class Command(BaseCommand):
     """Generates a PDF report of the marking progress."""
 
-    help = "Generates a PDF report of the marking progress."
+    help = """Generates a PDF report of the marking progress.
+
+    Requires matplotlib, pandas, seaborn, and weasyprint. If calling on demo
+    data, run `python manage.py plom_demo --randomarker` first.
+    """
+
     matplotlib.use("Pdf")
 
     def handle(self, *args, **options):
