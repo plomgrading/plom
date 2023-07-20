@@ -108,7 +108,6 @@ class GraphingDataService:
         """TODO: Docstring for get_marks_by_ta."""
         marks = self.ta_df[self.ta_df["user"] == ta]
         marks.name = ta
-        print(f"marks by {ta}: ", marks)
         return marks
 
     def get_marks_for_all_tas(self) -> dict:
@@ -117,5 +116,4 @@ class GraphingDataService:
         for ta in self.ta_df["user"].unique():
             marks_by_ta[ta] = self.get_marks_by_ta(ta)
 
-        print(f"marks by all: ", marks_by_ta)
         return marks_by_ta

@@ -144,8 +144,6 @@ class Command(BaseCommand):
             scores_for_user = marks_by_tas[marker]
             base64_histogram_of_grades_m_q = []
 
-            debug_print_var(scores_for_user)
-
             for question in scores_for_user["question_number"].unique():
                 scores_for_user_for_question = scores_for_user.loc[
                     scores_for_user["question_number"] == question
@@ -163,7 +161,7 @@ class Command(BaseCommand):
                     ec="black",
                     alpha=0.5,
                 )
-                ax.set_title("Grades by " + marker + ": Q" + str(question))
+                ax.set_title("Grades for Q" + str(question) + " (by " + marker + ")")
                 ax.set_xlabel("Mark given")
                 ax.set_ylabel("# of times assigned")
 
@@ -349,26 +347,30 @@ class Command(BaseCommand):
         <h3>Histograms of grades given by marker</h3>
         """
 
-        for i, hist in enumerate(base64_histogram_of_grades_m):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
+        for index, marker in enumerate(marks_by_tas):
             html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
+            <h4>Grades by {marker}</h4>
             """
+            for i, hist in enumerate(base64_histogram_of_grades_m[index]):
+                odd = i % 2
+                if not odd:
+                    html += f"""
+                    <div class="row">
+                    """
+                html += f"""
+                <div class="col" style="margin-left:0mm;">
+                <img src="data:image/png;base64,{hist}" width="50px" height="40px">
+                </div>
+                """
 
-            if odd:
+                if odd:
+                    html += f"""
+                    </div>
+                    """
+            if not odd:
                 html += f"""
                 </div>
                 """
-        if not odd:
-            html += f"""
-            </div>
-            """
 
         html += f"""
         <br>
