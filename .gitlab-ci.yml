@@ -355,8 +355,8 @@ mypy-type-checking:
   before_script:
     - python3 -m pip install mypy~=1.4.1
   script:
-    - mypy plom --python-ver 3.9 --install-types --non-interactive || true
-    - mypy plom --python-ver 3.9
+    - mypy plom --python-ver 3.8 --install-types --non-interactive || true
+    - mypy plom --python-ver 3.8
     - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
     - mypy plom_server --python-ver 3.9
 

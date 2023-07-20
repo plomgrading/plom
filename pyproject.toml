@@ -235,6 +235,7 @@ module = [
     'cv2',
     'exif',
     'fitz',
+    'importlib_resources',
     'imutils.*',
     'lapsolver',
     'requests_toolbelt',
