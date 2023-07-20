@@ -418,7 +418,7 @@ pydocstyle-server-count:
     - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 375 ]]"
+    - bash -c "[[ $NUMERR -le 340 ]]"
   allow_failure: true
 
 
