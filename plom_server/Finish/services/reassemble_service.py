@@ -303,7 +303,9 @@ class ReassembleService:
 
         paper_id = self.get_paper_id_or_none(paper)
         if not paper_id:
-            raise ValueError(f"Paper {paper.paper_number} is not identified.")
+            raise ValueError(
+                f"Paper {paper.paper_number} is missing student ID information."
+            )
         student_id, student_name = paper_id
 
         if not self.is_paper_marked(paper):
