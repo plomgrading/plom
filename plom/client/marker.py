@@ -33,6 +33,8 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
+from packaging.version import Version
+
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
 
@@ -1086,7 +1088,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
 
-        if __version__.endswith("dev"):
+        if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
             self.ui.failmodeCB.setEnabled(True)
         else:
