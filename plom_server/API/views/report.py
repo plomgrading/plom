@@ -48,4 +48,15 @@ class REPcoverPageInfo(APIView):
         reasseble = ReassembleService()
         paper = get_object_or_404(Paper, paper_number=papernum)
         cover_page_info = reasseble.get_cover_page_info(paper)
-        return Response(cover_page_info, status=status.HTTP_200_OK)
+        student_info = reasseble.get_paper_id_or_none(paper)
+        if student_info:
+            student_id, student_name = student_info
+        else:
+            student_id, student_name = None, None
+
+        legacy_cover_page_info = [[student_id, student_name]]
+        for row in cover_page_info:
+            legacy_cover_page_info.append(row[1:])
+
+        print(legacy_cover_page_info)
+        return Response(legacy_cover_page_info, status=status.HTTP_200_OK)
