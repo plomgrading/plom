@@ -38,7 +38,14 @@ class GraphingDataService:
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
     def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
-        """ """
+        """Return the graph as a base64 encoded string.
+
+        Args:
+            fig: The figure to encode.
+
+        Returns:
+            The base64 encoded string.
+        """
         png_bytes = BytesIO()
         fig.savefig(png_bytes, format="png")
         png_bytes.seek(0)
@@ -62,7 +69,7 @@ class GraphingDataService:
         """Return the total marks for all students as a list."""
         return self.student_df["total_mark"].tolist()
 
-    def get_marks_by_question(self):
+    def get_marks_for_all_questions(self):
         """Get the marks for each question as a list of lists.
 
         Returns:
@@ -96,3 +103,19 @@ class GraphingDataService:
         marks_corr.columns = col_names
         marks_corr.index = col_names
         return marks_corr
+
+    def get_marks_by_ta(self, ta: str) -> pd.DataFrame:
+        """TODO: Docstring for get_marks_by_ta."""
+        marks = self.ta_df[self.ta_df["user"] == ta]
+        marks.name = ta
+        print(f"marks by {ta}: ", marks)
+        return marks
+
+    def get_marks_for_all_tas(self) -> dict:
+        """TODO: Docstring for get_marks_by_ta."""
+        marks_by_ta = {}
+        for ta in self.ta_df["user"].unique():
+            marks_by_ta[ta] = self.get_marks_by_ta(ta)
+
+        print(f"marks by all: ", marks_by_ta)
+        return marks_by_ta

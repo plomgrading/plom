@@ -73,7 +73,12 @@ class Command(BaseCommand):
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+        def debug_print_var(var):
+            print(var)
+            print("type: ", type(var))
+
+        if len(plt.get_fignums()) > 0:
+            print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # histogram of grades
         print("Generating histogram of grades.")
@@ -91,12 +96,13 @@ class Command(BaseCommand):
 
         base64_histogram_of_grades = gds.get_graph_as_base64(fig)
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+        if len(plt.get_fignums()) > 0:
+            print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         base64_histogram_of_grades_q = []
-        marks_for_questions = gds.get_marks_by_question()
+        marks_for_questions = gds.get_marks_for_all_questions()
         for i, marks_for_question in enumerate(marks_for_questions):
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
@@ -109,7 +115,8 @@ class Command(BaseCommand):
 
             base64_histogram_of_grades_q.append(gds.get_graph_as_base64(fig))
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # correlation heatmap
         print("Generating correlation heatmap.")
@@ -125,59 +132,47 @@ class Command(BaseCommand):
 
         base64_corr = gds.get_graph_as_base64(plt.gcf())
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+        if len(plt.get_fignums()) > 0:
+            print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # histogram of grades given by each marker
-        print("Generating histograms of grades given by marker.")
+        print("Generating histograms of grades given by marker by question.")
+        marks_by_tas = gds.get_marks_for_all_tas()
         base64_histogram_of_grades_m = []
-        for marker in ta_grading["user"].unique():
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
-            scores_given_for_user = (
-                ta_grading.loc[ta_grading["user"] == marker, "score_given"]
-                / ta_grading.loc[ta_grading["user"] == marker, "max_score"]
-            )
-            bins = [x / 100 for x in range(0, 120, 10)]
+        for marker in marks_by_tas:
+            scores_for_user = marks_by_tas[marker]
+            base64_histogram_of_grades_m_q = []
 
-            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("(norm) Grades by " + marker)
-            ax.set_xlabel("Mark given")
-            ax.set_ylabel("# of times assigned")
+            debug_print_var(scores_for_user)
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
+            for question in scores_for_user["question_number"].unique():
+                scores_for_user_for_question = scores_for_user.loc[
+                    scores_for_user["question_number"] == question
+                ]
 
-            base64_histogram_of_grades_m.append(
-                base64.b64encode(png_bytes.read()).decode()
-            )
+                fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+                bins = range(
+                    0,
+                    scores_for_user_for_question["max_score"].max() + RANGE_BIN_OFFSET,
+                )
 
-            plt.close()
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-            scores_given_for_user = ta_grading.loc[
-                ta_grading["user"] == marker, "score_given"
-            ]
-            max_score_for_user = ta_grading.loc[
-                ta_grading["user"] == marker, "max_score"
-            ].max()
-            bins = range(0, max_score_for_user + RANGE_BIN_OFFSET)
+                ax.hist(
+                    scores_for_user_for_question["score_given"],
+                    bins=bins,
+                    ec="black",
+                    alpha=0.5,
+                )
+                ax.set_title("Grades by " + marker + ": Q" + str(question))
+                ax.set_xlabel("Mark given")
+                ax.set_ylabel("# of times assigned")
 
-            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("(abs) Grades by " + marker)
-            ax.set_xlabel("Mark given")
-            ax.set_ylabel("# of times assigned")
+                base64_histogram_of_grades_m_q.append(gds.get_graph_as_base64(fig))
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
+            base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
 
-            base64_histogram_of_grades_m.append(
-                base64.b64encode(png_bytes.read()).decode()
-            )
-
-            plt.close()
-
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
@@ -204,7 +199,8 @@ class Command(BaseCommand):
             base64_histogram_of_time.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
@@ -233,7 +229,8 @@ class Command(BaseCommand):
             base64_scatter_of_time.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         # 1D scatter plot of the average grades given by each marker for each question
         print("Generating 1D scatter plots of average grades for each question.")
@@ -295,7 +292,8 @@ class Command(BaseCommand):
             base_64_scatter_of_avgs.append(base64.b64encode(png_bytes.read()).decode())
             plt.close()
 
-        print("Figures open (should be 0): ", len(plt.get_fignums()))
+            if len(plt.get_fignums()) > 0:
+                print("Warn: ", len(plt.get_fignums()), " figures open.")
 
         html = f"""
         <body>
