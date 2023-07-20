@@ -3,6 +3,7 @@
 
 from django.contrib.auth.models import User
 from django.db import transaction
+from typing import Dict, List
 
 from Mark.models import Annotation
 
@@ -20,11 +21,11 @@ class UserInfoServices:
         return Annotation.objects.exists()
     
     @transaction.atomic
-    def get_annotations_based_on_user(self) -> dict:
+    def get_annotations_based_on_user(self) -> Dict[User, list]:
         """Get all the annotations based on user.
 
         Returns:
-            dict: A dictionary of all annotations(Value) corresponding with the markers(key).
+            Dict: A dictionary of all annotations(Value) corresponding with the markers(key).
         
         Raises:
             Not expected to raise any exceptions.
@@ -33,7 +34,7 @@ class UserInfoServices:
         marker_ids = [marker.id for marker in markers]
         annotations = Annotation.objects.filter(user_id__in=marker_ids)
 
-        annotation_data = {marker: [] for marker in markers}
+        annotation_data: Dict[User, List] = {marker: [] for marker in markers}
 
         for annotation in annotations:
             annotation_data[annotation.user].append(annotation)
