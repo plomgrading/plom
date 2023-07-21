@@ -181,13 +181,31 @@ class BaseMessenger:
 
         return self.session.get(self.base + url, *args, **kwargs)
 
-    def post(self, url, *args, **kwargs):
+    def post_raw(self, url, *args, **kwargs):
+        """Perform a POST operation without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        return self.session.post(self.base + url, *args, **kwargs)
+
+    def post_auth(self, url, *args, **kwargs):
+        """Perform a POST operation with tokens for authentication."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        if self.webplom:
+            # Django-based servers pass token in the header
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+        else:
+            # Legacy servers expect "user" and "token" in the json.
+            json = kwargs.get("json", {})
+            json["user"] = self.user
+            json["token"] = self.token
+            kwargs["json"] = json
 
         return self.session.post(self.base + url, *args, **kwargs)
 
@@ -364,7 +382,7 @@ class BaseMessenger:
     def _requestAndSaveToken_webplom(self, user, pw):
         """Get an authorisation token from WebPlom."""
         self.SRmutex.acquire()
-        response = self.post(
+        response = self.post_raw(
             "/get_token/",
             json={
                 "username": user,
