@@ -9,32 +9,32 @@
 {% block main_content %}
     <div>
         {% if annotations_exist %}
-            <table>
+            <table class="table">
                 <tr>
-                    <th>User</th>
-                    <th>Question Marked</th>
-                </tr>
-                {% for user, annotation in annotation_data.items %}
-                    <tr>
+                    <th>Username</th>
+                    {% for user, annotation in annotation_data.items %}
                         <td>{{ user.username }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th>Questions Marked</th>
+                    {% for user, annotation in annotation_data.items %}
                         <td>{{ annotation|length }}</td>
-                    </tr>
-                {% endfor %}
+                    {% endfor %}
+                </tr>
             </table>
         {% else %}
             <p>No annotations</p>
         {% endif %}
-        <table style="width:100%">
-            <tr>
-              <td>Name</td>
-              <td>Telephone</td>
-              <td>Telephone</td>
-            </tr>
-            <tr>
-              <td>Bill Gates</td>
-              <td>555 77 854</td>
-              <td>555 77 855</td>
-            </tr>
-          </table>
+    </div>
+    <div>
+        {% if annotations_exist %}
+            {% for d in data %}
+                <p>user {{d.assigned_user}}</p>
+                <p>question number {{d.question_number}}</p>
+                <p>question version {{d.question_version}}</p>
+                <p>count {{d.count}}</p>
+            {% endfor %}
+        {% endif %}
     </div>
 {% endblock main_content %}

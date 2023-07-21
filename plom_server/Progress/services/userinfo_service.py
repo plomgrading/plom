@@ -21,7 +21,7 @@ class UserInfoServices:
         return Annotation.objects.exists()
     
     @transaction.atomic
-    def get_annotations_based_on_user(self) -> Dict[User, list]:
+    def get_total_annotations_based_on_user(self) -> Dict[User, list]:
         """Get all the annotations based on user.
 
         Returns:
