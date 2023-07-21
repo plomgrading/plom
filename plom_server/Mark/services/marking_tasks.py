@@ -258,11 +258,14 @@ class MarkingTaskService:
         return MarkingTask.objects.exists()
 
     def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
-        """Write a user to a marking task and update its status. Also creates and saves a ClaimMarkingTask action instance.
+        """Associate a user to a marking task and update the task status.
 
         Args:
             user: reference to a User instance
             task: reference to a MarkingTask instance
+
+        Exceptions:
+            RuntimeError: task is already assigned.
         """
         if task.status == MarkingTask.OUT:
             raise RuntimeError("Task is currently assigned.")
