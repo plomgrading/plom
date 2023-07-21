@@ -104,6 +104,7 @@ class GraphingDataService:
         """
         if not student_df:
             student_df = self.student_df
+        assert isinstance(student_df, pd.DataFrame)
 
         marks_corr = (
             student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
