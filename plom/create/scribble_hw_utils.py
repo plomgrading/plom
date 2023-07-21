@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 """Plom tools for scribbling fake homework answers for testing purposes."""
 
@@ -9,7 +9,6 @@ import random
 
 import fitz
 
-from plom.create import start_messenger
 from plom.create.scribble_utils import possible_answers
 
 
@@ -77,6 +76,9 @@ def scribble_doc(doc, student_num, name, maxpages, q):
 
 def download_classlist_and_spec(server=None, password=None):
     """Download list of student IDs/names and test specification from server."""
+    # I had some mypy trouble from this import so I hid it down here
+    from plom.create import start_messenger
+
     msgr = start_messenger(server, password)
     try:
         classlist = msgr.IDrequestClasslist()
