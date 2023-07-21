@@ -414,6 +414,9 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
+        # TODO: Issue #2902: better to do more generally in get/post/delete?
+        if not self.token:
+            raise PlomAuthenticationException("Trying to logout without token")
         if self.webplom:
             path = "/close_user/"
         else:
