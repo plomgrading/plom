@@ -272,6 +272,55 @@ class Command(BaseCommand):
 
             check_num_figs()
 
+        def html_add_title(title: str) -> str:
+            """Generate HTML for a title.
+
+            Args:
+                title: The title of the section.
+
+            Returns:
+                A string of HTML containing the title.
+            """
+            out = f"""
+            <br>
+            <p style="break-before: page;"></p>
+            <h3>{title}</h3>
+            """
+            return out
+
+        def html_for_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of graphs.
+
+            Args:
+                list_of_graphs: A list of base64-encoded graphs.
+
+            Returns:
+                A string of HTML containing the graphs.
+            """
+            out = ""
+            for i, graph in enumerate(list_of_graphs):
+                odd = i % 2
+                if not odd:
+                    out += f"""
+                    <div class="row">
+                    """
+                out += f"""
+                <div class="col" style="margin-left:0mm;">
+                <img src="data:image/png;base64,{graph}" width="50px" height="40px">
+                </div>
+                """
+
+                if odd:
+                    out += f"""
+                    </div>
+                    """
+            if not odd:
+                out += f"""
+                </div>
+                """
+
+            return out
+
         html = f"""
         <body>
         <h2>Marking report: {longName}</h2>
@@ -291,146 +340,40 @@ class Command(BaseCommand):
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
         <img src="data:image/png;base64,{base64_histogram_of_grades}">
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of grades by question</h3>
         """
 
-        for i, hist in enumerate(base64_histogram_of_grades_q):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
+        html += html_add_title("Histogram of total marks")
+        html += html_for_graphs(base64_histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
         <img src="data:image/png;base64,{base64_corr}">
-        </body>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of grades given by marker</h3>
         """
+
+        html += html_add_title("Histograms of grades by marker by question")
 
         for index, marker in enumerate(marks_by_tas):
             html += f"""
             <h4>Grades by {marker}</h4>
             """
-            for i, hist in enumerate(base64_histogram_of_grades_m[index]):
-                odd = i % 2
-                if not odd:
-                    html += f"""
-                    <div class="row">
-                    """
-                html += f"""
-                <div class="col" style="margin-left:0mm;">
-                <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-                </div>
-                """
 
-                if odd:
-                    html += f"""
-                    </div>
-                    """
-            if not odd:
-                html += f"""
-                </div>
-                """
+            html += html_for_graphs(base64_histogram_of_grades_m[index])
 
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of time spent marking each question (in seconds)</h3>
-        """
+        html += html_add_title(
+            "Histograms of time spent marking each question (in minutes)"
+        )
+        html += html_for_graphs(base64_histogram_of_time)
 
-        for i, hist in enumerate(base64_histogram_of_time):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
+        html += html_add_title(
+            "Scatter plots of time spent marking each question vs mark given"
+        )
+        html += html_for_graphs(base64_scatter_of_time)
 
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Scatter plots of time spent marking each question vs mark given</h3>
-        """
-
-        for i, hist in enumerate(base64_scatter_of_time):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>1D scatter plots of average grades given by each marker for each question</h3>
-        """
-
-        for i, hist in enumerate(base_64_scatter_of_avgs):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
+        html += html_add_title(
+            "1D scatter plots of average grades given by each marker for each question"
+        )
+        html += html_for_graphs(base_64_scatter_of_avgs)
 
         html += f"""
         <br>
@@ -440,8 +383,6 @@ class Command(BaseCommand):
         def create_pdf(html):
             """Generate a PDF file from a string of HTML."""
             htmldoc = HTML(string=html, base_url="")
-            # with open("styles.css", "r") as f:
-            #     css = f.read()
 
             return htmldoc.write_pdf(
                 stylesheets=[CSS("./static/css/generate_report.css")]
