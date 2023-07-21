@@ -12,6 +12,7 @@ from typing import Union
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
 from plom import is_valid_tag_text
@@ -256,7 +257,7 @@ class MarkingTaskService:
         """Return True if there is at least one marking task in the database."""
         return MarkingTask.objects.exists()
 
-    def assign_task_to_user(self, user, task):
+    def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
         """Write a user to a marking task and update its status. Also creates and saves a ClaimMarkingTask action instance.
 
         Args:
