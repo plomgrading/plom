@@ -4,6 +4,7 @@
 import datetime as dt
 
 import matplotlib
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -213,34 +214,48 @@ class Command(BaseCommand):
 
             check_num_figs()
 
-        # 1D scatter plot of the average grades given by each marker for each question
-        print("Generating 1D scatter plots of average grades for each question.")
-        base_64_scatter_of_avgs = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(3.2, 1.6), tight_layout=True)
+        def setBoxColors(bp, colour):
+            plt.setp(bp["boxes"][0], color=cm.hsv(colour))
+            plt.setp(bp["caps"][0], color=cm.hsv(colour))
+            plt.setp(bp["caps"][1], color=cm.hsv(colour))
+            plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
+            plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
+            plt.setp(bp["fliers"][0], color=cm.hsv(colour))
+            plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
-            avgs = []
-            markers = ["Average"]
+        # 1D scatter plot of the average grades given by each marker for each question
+        print("Generating 1D box plots of average grades for each question.")
+        base_64_boxplots = []
+        for question in spec["question"]:
+            fig, ax = plt.subplots(tight_layout=True)
+
+            marks = []
+            markers = ["Overall"]
             markers.extend(
                 ta_grading.loc[
                     ta_grading["question_number"] == int(question), "user"
                 ].unique()
             )
-            avg_for_question = ta_grading.loc[
+            marks_for_question = ta_grading.loc[
                 ta_grading["question_number"] == int(question), "score_given"
-            ].mean()
-            avgs.append(avg_for_question)
+            ]
+            marks.append(marks_for_question)
             for marker in markers[1:]:
-                avgs.append(
+                marks.append(
                     ta_grading.loc[
                         (ta_grading["question_number"] == int(question))
                         & (ta_grading["user"] == marker),
                         "score_given",
-                    ].mean()
+                    ]
                 )
 
-            ax.scatter(avgs, np.zeros_like(avgs), ec="black", alpha=0.5)
-            ax.set_xlabel("Q" + str(question) + " average marks given")
+            for i, mark in enumerate(marks):
+                bp = ax.boxplot(mark, positions=[i], vert=False)
+                setBoxColors(bp, i / len(marks))
+                (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=markers[i])
+                plt.legend(loc="upper right")
+
+            ax.set_xlabel("Q" + str(question) + " boxplots by grader")
             ax.tick_params(
                 axis="y",
                 which="both",  # both major and minor ticks are affected
@@ -248,13 +263,13 @@ class Command(BaseCommand):
                 right=False,  # ticks along the top edge are off
                 labelleft=False,
             )
-            for i, marker in enumerate(markers):
-                ax.annotate(
-                    marker,
-                    (avgs[i], 0),
-                    ha="left",
-                    rotation=60,
-                )
+            # for i, marker in enumerate(markers):
+            #     ax.annotate(
+            #         marker,
+            #         (marks[i], 0),
+            #         ha="left",
+            #         rotation=60,
+            #     )
 
             plt.xlim(
                 [
@@ -264,9 +279,9 @@ class Command(BaseCommand):
                     ].max(),
                 ]
             )
-            plt.ylim([-0.1, 1])
+            # plt.ylim([-0.1, 1])
 
-            base_64_scatter_of_avgs.append(gds.get_graph_as_base64(fig))
+            base_64_boxplots.append(gds.get_graph_as_base64(fig))
 
             check_num_figs()
 
@@ -307,7 +322,6 @@ class Command(BaseCommand):
                 <img src="data:image/png;base64,{graph}" width="50px" height="40px">
                 </div>
                 """
-
                 if odd:
                     out += f"""
                     </div>
@@ -316,7 +330,24 @@ class Command(BaseCommand):
                 out += f"""
                 </div>
                 """
+            return out
 
+        def html_for_big_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of large graphs.
+
+            Args:
+                list_of_graphs: A list of base64-encoded graphs.
+
+            Returns:
+                A string of HTML containing the graphs.
+            """
+            out = ""
+            for graph in list_of_graphs:
+                out += f"""
+                <div class="col" style="margin-left:0mm;">
+                <img src="data:image/png;base64,{graph}" width="100%" height="100%">
+                </div>
+                """
             return out
 
         html = f"""
@@ -369,14 +400,9 @@ class Command(BaseCommand):
         html += html_for_graphs(base64_scatter_of_time)
 
         html += html_add_title(
-            "1D scatter plots of average grades given by each marker for each question"
+            "Box plots of grades given by each marker for each question"
         )
-        html += html_for_graphs(base_64_scatter_of_avgs)
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        """
+        html += html_for_big_graphs(base_64_boxplots)
 
         def create_pdf(html):
             """Generate a PDF file from a string of HTML."""
