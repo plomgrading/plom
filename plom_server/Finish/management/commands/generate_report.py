@@ -224,10 +224,10 @@ class Command(BaseCommand):
             plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
         # 1D scatter plot of the average grades given by each marker for each question
-        print("Generating 1D box plots of average grades for each question.")
+        print("Generating box plots of average grades for each question.")
         base_64_boxplots = []
         for question in spec["question"]:
-            fig, ax = plt.subplots(tight_layout=True)
+            fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
 
             marks = []
             markers = ["Overall"]
@@ -249,11 +249,17 @@ class Command(BaseCommand):
                     ]
                 )
 
-            for i, mark in enumerate(marks):
+            for i, mark in reversed(list(enumerate(marks))):
                 bp = ax.boxplot(mark, positions=[i], vert=False)
                 setBoxColors(bp, i / len(marks))
                 (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=markers[i])
-                plt.legend(loc="upper right")
+
+            plt.legend(
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                ncol=1,
+                fancybox=True,
+            )
 
             ax.set_xlabel("Q" + str(question) + " boxplots by grader")
             ax.tick_params(
