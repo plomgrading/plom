@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-
-from django.db import transaction
-from Papers.models import Paper, FixedPage, QuestionPage
+# Copyright (C) 2023 Colin B. Macdonald
 
 import logging
+from typing import List
+
+from django.db import transaction
+
+from ..models import Paper, FixedPage, QuestionPage
 
 log = logging.getLogger("PaperInfoService")
 
@@ -31,20 +34,18 @@ class PaperInfoService:
         return Paper.objects.filter(paper_number=paper_number).exists()
 
     @transaction.atomic
-    def which_papers_in_database(self):
+    def which_papers_in_database(self) -> List:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
 
-    def page_has_image(self, paper_number, page_number):
-        """
-        Return True if a page has an Image associated with it.
-        """
+    def page_has_image(self, paper_number, page_number) -> bool:
+        """Return True if a page has an Image associated with it."""
         paper = Paper.objects.get(paper_number=paper_number)
         page = FixedPage.objects.get(paper=paper, page_number=page_number)
         return page.image is not None
 
     @transaction.atomic
-    def get_version_from_paper_page(self, paper_number, page_number):
+    def get_version_from_paper_page(self, paper_number, page_number) -> int:
         """Given a paper_number and page_number, return the version of that page."""
         try:
             paper = Paper.objects.get(paper_number=paper_number)
@@ -59,7 +60,7 @@ class PaperInfoService:
         return page.version
 
     @transaction.atomic
-    def get_version_from_paper_question(self, paper_number, question_number):
+    def get_version_from_paper_question(self, paper_number, question_number) -> int:
         """Given a paper_number and question_number, return the version of that question."""
         try:
             paper = Paper.objects.get(paper_number=paper_number)
