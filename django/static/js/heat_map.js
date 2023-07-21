@@ -9,7 +9,7 @@ function renderHeatMap(data, divId) {
 
     // Set up dimensions and margins
     const cellSize = 40; // Set the desired cell size
-    const margin = { top: 60, right: 20, bottom: 20, left: 60 };
+    const margin = { top: 60, right: 50, bottom: 20, left: 60 };
     const width = data.cols * cellSize + margin.left + margin.right;
     const height = data.rows * cellSize + margin.top + margin.bottom;
 
@@ -21,7 +21,7 @@ function renderHeatMap(data, divId) {
 
     // Create a color scale
     const colorScale = d3.scaleSequential(d3.interpolateGreens)
-        .domain([d3.min(data.values.flat()), d3.max(data.values.flat())]);
+        .domain([-1, 1]);
 
     // Create the heat map cells
     const cells = svg.selectAll("rect")
@@ -59,7 +59,7 @@ function renderHeatMap(data, divId) {
     // Add x-axis title
     svg.append("text")
         .attr("class", "xTitle")
-        .attr("x", width * 3 / 5)
+        .attr("x", width / 2)
         .attr("y", margin.top / 3) // Adjust the y-coordinate for the title
         .style("text-anchor", "middle")
         .text(data.xTitle);
@@ -68,8 +68,57 @@ function renderHeatMap(data, divId) {
     svg.append("text")
         .attr("class", "yTitle")
         .attr("transform", "rotate(-90)") // Rotate the text for vertical display
-        .attr("x", -(margin.top + height) * 2 / 5)
+        .attr("x", -(margin.top + height) / 2)
         .attr("y", margin.left / 3) // Adjust the y-coordinate for the title
         .style("text-anchor", "middle")
         .text(data.yTitle);
+
+    // Add color bar gradient
+    const defs = svg.append("defs");
+    const gradientId = "colorGradient";
+    const gradient = defs.append("linearGradient")
+        .attr("id", gradientId)
+        .attr("x1", "0%")
+        .attr("y1", "100%")
+        .attr("x2", "0%")
+        .attr("y2", "0%");
+
+    gradient.selectAll("stop")
+        .data(colorScale.ticks().map((tick, i, nodes) => ({
+            offset: `${100 * i / (nodes.length - 1)}%`,
+            color: colorScale(tick)
+        })))
+        .enter()
+        .append("stop")
+        .attr("offset", d => d.offset)
+        .attr("stop-color", d => d.color);
+
+    // Add color bar
+    const colorBarWidth = 10;
+    const colorBarHeight = height - margin.top - margin.bottom;
+    const colorBar = svg.append("g")
+        .attr("class", "colorBar")
+        .attr("transform", `translate(${width - margin.right + 10}, ${margin.top})`);
+
+    colorBar.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", colorBarWidth)
+        .attr("height", colorBarHeight)
+        .attr("fill", `url(#${gradientId})`);
+
+    const colorBarScale = d3.scaleLinear()
+        .domain([-1, 1])
+        .range([colorBarHeight, 0]);
+
+    const colorBarAxis = d3.axisRight(colorBarScale)
+        .ticks(5);
+
+    // Append the axis to the colorBar group
+    const colorBarAxisGroup = colorBar.append("g")
+        .attr("class", "colorBarAxis")
+        .call(colorBarAxis)
+        .selectAll(".tick line")
+        .attr("stroke", "#888") // Add style for tick lines
+        .attr("stroke-dasharray", "2,2"); // Add style for dashed tick lines
 }
