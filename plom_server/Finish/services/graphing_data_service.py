@@ -25,10 +25,10 @@ class GraphingDataService:
         self.spec = Specification.load().spec_dict
 
         student_dict = self.sms.get_all_students_download(
-            version_info=True, timing_info=True, warning_info=False
+            version_info=True, timing_info=False, warning_info=False
         )
         student_keys = self.sms.get_csv_header(
-            self.spec, version_info=True, timing_info=True, warning_info=False
+            self.spec, version_info=True, timing_info=False, warning_info=False
         )
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
@@ -53,11 +53,11 @@ class GraphingDataService:
 
         return base64.b64encode(png_bytes.read()).decode()
 
-    def get_ta_df(self) -> pd.DataFrame:
+    def get_ta_data(self) -> pd.DataFrame:
         """Return the dataframe of TA data."""
         return self.ta_df
 
-    def get_student_df(self) -> pd.DataFrame:
+    def get_student_data(self) -> pd.DataFrame:
         """Return the dataframe of student data."""
         return self.student_df
 
@@ -77,67 +77,116 @@ class GraphingDataService:
         """Return the total marks for all students as a list."""
         return self.student_df["total_mark"].tolist()
 
-    def get_marks_for_all_questions(self):
-        """Get the marks for each question as a list of lists.
+    def get_marks_for_all_questions(self, student_df: pd.DataFrame) -> pd.DataFrame:
+        """Get the marks for each question as a dataframe.
+
+        Args:
+            student_df: The dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df.
 
         Returns:
-            list: A list of lists containing the marks for each question.
+            A dataframe containing the marks for each question.
         """
-        marks_by_question = []
-        for question in self.spec["question"]:
-            marks_by_question.append(
-                self.student_df[f"q{str(question)}_mark"].to_list()
-            )
-        return marks_by_question
+        return student_df.filter(regex="q[0-9]*_mark")
 
-    def get_question_correlation_heatmap(self) -> pd.DataFrame:
+    def get_question_correlation_heatmap(
+        self, student_df: pd.DataFrame = None
+    ) -> pd.DataFrame:
         """Get the correlation heatmap for the questions.
 
-        This returns as a dataframe so that it can keep column and row names.
+        Args:
+            student_df: The dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df or None. If None,
+                self.student_df is used.
 
         Returns:
             pd.DataFrame: A dataframe containing the correlation heatmap.
         """
+        if student_df is None:
+            student_df = self.student_df
+
         marks_corr = (
-            self.student_df.filter(regex="q[0-9]*_mark")
-            .corr(numeric_only=True)
-            .round(2)
+            student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
         )
 
         col_names = []
-        for i, col_name in enumerate(marks_corr.columns):
+        for i, _ in enumerate(marks_corr.columns):
             col_names.append("Q" + str(i + 1))
 
         marks_corr.columns = col_names
         marks_corr.index = col_names
         return marks_corr
 
-    # TODO: functions passing back a Dataframe should take an input Dataframe
-    def get_ta_df_by_ta(self, ta: str) -> pd.DataFrame:
-        """TODO: Docstring for get_ta_df_by_ta."""
-        marks = self.ta_df[self.ta_df["user"] == ta]
-        marks.name = ta
+    def get_ta_data_for_ta(self, ta_name: str, ta_df: pd.DataFrame) -> pd.DataFrame:
+        """Get the dataframe of TA marking for a specific TA.
+
+        Args:
+            ta_name: The TA to get the data for.
+            ta_df: The dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df.
+
+        Returns:
+            A dataframe containing the TA data for the specified TA.
+        """
+        marks = ta_df[ta_df["user"] == ta_name]
+        marks.name = ta_name
         return marks
 
-    def get_marks_for_all_tas(self) -> dict:
-        """TODO: Docstring for get_marks_by_ta."""
+    def get_all_ta_data_by_ta(self) -> dict:
+        """Get TA marking data for all TAs.
+
+        Returns:
+            A dictionary keyed by the (str) TA name, containing the (pd.Dataframe)
+            marking data for each TA.
+        """
         marks_by_ta = {}
-        for ta in self.ta_df["user"].unique():
-            marks_by_ta[ta] = self.get_ta_df_by_ta(ta)
+        for ta_name in self.ta_df["user"].unique():
+            marks_by_ta[ta_name] = self.get_ta_data_for_ta(ta_name, self.ta_df)
         return marks_by_ta
 
-    def get_ta_df_by_question(self, question: int) -> pd.DataFrame:
-        """TODO: Docstring for get_times_by_question."""
-        times = self.ta_df[self.ta_df["question_number"] == question]
-        times.name = question
+    def get_ta_data_for_question(
+        self, question_number: int, ta_df: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Get the dataframe of TA marking data for a specific question.
+
+        Args:
+            question_number: The question to get the data for.
+            ta_df: The dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df.
+
+        Returns:
+            A dataframe containing the TA data for the specified question.
+        """
+        times = ta_df[ta_df["question_number"] == question_number]
+        times.name = question_number
         return times
 
     def get_times_for_all_questions(self) -> dict:
-        """TODO: Docstring for get_times_for_all_questions."""
+        """Get the marking times for all questions.
+
+        Returns:
+            A dictionary keyed by the (int) question number, containing the
+            (pd.Series) marking times for all questions.
+        """
         times_by_question = {}
         for question in self.spec["question"]:
             q = int(question)
-            times_by_question[q] = self.get_ta_df_by_question(q)[
+            times_by_question[q] = self.get_ta_data_for_question(q, self.ta_df)[
                 "seconds_spent_marking"
             ]
         return times_by_question
+
+    def get_questions_marked_by_this_ta(
+        self, ta_name: str, ta_df: pd.DataFrame
+    ) -> list:
+        """Get the questions that were marked by a specific TA.
+
+        Args:
+            ta_name: The TA to get the data for.
+            ta_df: The dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df.
+
+        Returns:
+            A list of questions marked by the specified TA.
+        """
+        return ta_df[ta_df["user"] == ta_name]["question_number"].unique().tolist()
