@@ -147,8 +147,12 @@ class Chooser(QDialog):
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.loginButton.clicked.connect(self.login)
+        # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
+        # clear the login on username / password edit
+        self.ui.userLE.textEdited.connect(self.logout)
+        self.ui.passwordLE.textEdited.connect(self.logout)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
 
