@@ -102,7 +102,7 @@ class GraphingDataService:
         Returns:
             A dataframe containing the correlation heatmap.
         """
-        if not student_df:
+        if student_df is None:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
@@ -128,7 +128,6 @@ class GraphingDataService:
             A dataframe containing the TA data for the specified TA.
         """
         marks = ta_df[ta_df["user"] == ta_name]
-        marks.name = ta_name
         return marks
 
     def get_all_ta_data_by_ta(self) -> dict:
@@ -157,13 +156,12 @@ class GraphingDataService:
         Returns:
             A dataframe containing the TA data for the specified question.
         """
-        if not ta_df:
+        if ta_df is None:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        times = ta_df[ta_df["question_number"] == question_number]
-        times.name = question_number
-        return times
+        question_df = ta_df[ta_df["question_number"] == question_number]
+        return question_df
 
     def get_times_for_all_questions(self) -> dict:
         """Get the marking times for all questions.
@@ -226,7 +224,7 @@ class GraphingDataService:
         Returns:
             A list of (int) marks assigned for the specified question.
         """
-        if not ta_df:
+        if ta_df is None:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 

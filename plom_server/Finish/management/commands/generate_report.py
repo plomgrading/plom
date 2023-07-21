@@ -6,15 +6,12 @@ import datetime as dt
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import seaborn as sns
 from weasyprint import HTML, CSS
 
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from Finish.services import StudentMarkService, TaMarkingService, GraphingDataService
+from Finish.services import GraphingDataService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
@@ -37,15 +34,8 @@ class Command(BaseCommand):
         print("Building report.")
 
         gds = GraphingDataService()
-        tms = TaMarkingService()
         mts = MarkingTaskService()
         spec = Specification.load().spec_dict
-
-        ta_df = tms.build_csv_data()
-        ta_keys = tms.get_csv_header()
-
-        ta_grading = pd.DataFrame(ta_df, columns=ta_keys)
-        ta_times = ta_grading.copy(deep=True)
 
         student_df = gds.get_student_data()
         ta_df = gds.get_ta_data()
@@ -65,11 +55,6 @@ class Command(BaseCommand):
         stdev_mark = gds.get_total_stdev_mark()
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
-
-        def debug_print_var(var):
-            """DEBUG: Print the variable and its type."""
-            print(var)
-            print("type: ", type(var))
 
         def check_num_figs():
             if len(plt.get_fignums()) > 0:
@@ -235,12 +220,12 @@ class Command(BaseCommand):
                 gds.get_tas_that_marked_this_question(int(question), ta_df)
             )
             marks.append(
-                gds.get_scores_for_question(question_number=question, ta_df=ta_df)
+                gds.get_scores_for_question(question_number=int(question), ta_df=ta_df)
             )
-            question_df = gds.get_ta_data_for_question(question_number=question)
+            question_df = gds.get_ta_data_for_question(question_number=int(question))
             for marker in marker_names[1:]:
                 marks.append(
-                    ta_df=gds.get_ta_data_for_ta(ta_name=marker, ta_df=question_df)[
+                    gds.get_ta_data_for_ta(ta_name=marker, ta_df=question_df)[
                         "score_given"
                     ],
                 )
@@ -256,7 +241,8 @@ class Command(BaseCommand):
                 fancybox=True,
             )
 
-            ax.set_xlabel("Q" + str(question) + " boxplots by grader")
+            ax.set_title("Q" + str(question) + " boxplot by marker")
+            ax.set_xlabel("Q" + str(question) + " mark")
             ax.tick_params(
                 axis="y",
                 which="both",  # both major and minor ticks are affected
@@ -271,11 +257,12 @@ class Command(BaseCommand):
             #         ha="left",
             #         rotation=60,
             #     )
-
             plt.xlim(
                 [
                     0,
-                    gds.get_scores_for_question(question_number=question).max(),
+                    gds.get_ta_data_for_question(question_number=int(question))[
+                        "max_score"
+                    ].max(),
                 ]
             )
             # plt.ylim([-0.1, 1])
