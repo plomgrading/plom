@@ -415,40 +415,23 @@ class BaseMessenger:
                 another user, other than yourself.
         """
         if self.webplom:
-            self._closeUser_webplom()
+            path = "/close_user/"
         else:
-            self._closeUser()
-
-    def _closeUser(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/users/{self.user}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def _closeUser_webplom(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/close_user/",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            self.token = None
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+            path = f"/users/{self.user}"
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    path,
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+            if self.webplom:
+                # TODO: seems like a good idea for legacy too!
+                self.token = None
 
     # ----------------------
     # ----------------------
