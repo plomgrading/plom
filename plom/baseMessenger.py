@@ -50,6 +50,11 @@ class BaseMessenger:
 
     Handles authentication and other common tasks; subclasses can add
     other features.
+
+    Instance Variables:
+        token (str/dict/Any): on legacy, this was just a string.  On
+            the django-based server, its a dict with a single key
+            ``"token"`` and value a string.
     """
 
     def __init__(
@@ -167,6 +172,9 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
+        # Legacy servers expect "user" and "token" in the json.
+        # Now with django we pass a token in the header.
+        # TODO: rework this when/if we stop supporting legacy servers.
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
