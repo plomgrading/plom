@@ -290,8 +290,7 @@ class Chooser(QDialog):
             # TODO: do we just wait forever?
             # TODO: Marker already tried to stop it: maybe never get here?
             dl.stop(-1)
-        if self.messenger:
-            self.messenger.stop()
+        self.logout()
 
     def setFont(self, n):
         """Adjust font size of user interface.
@@ -453,9 +452,17 @@ class Chooser(QDialog):
         return False
 
     def logout(self) -> None:
+        """Logout if not already logged out.
+
+        Its safe to call this if you're not logged in, don't have a messenger etc.
+        """
         if not self.messenger:
             return
-        # self.messenger.closeUser()
+        try:
+            self.messenger.closeUser()
+        except PlomAuthenticationException as e:
+            log.info(f"Authentication error during logout: {e}")
+            pass
         self.messenger.stop()
         self.messenger = None
         self.ui.loginInfoLabel.setText("logged out")
