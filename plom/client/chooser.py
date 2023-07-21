@@ -101,6 +101,7 @@ class Chooser(QDialog):
         self.messenger = None
         self._legacy = False
         self._ssl_excused = False
+        self._old_client_note_seen = False
 
         self.lastTime = readLastTime()
 
@@ -412,7 +413,9 @@ class Chooser(QDialog):
                     f"Regex-extracted server version: {srv_ver}."
                 ),
             )
-            msg.exec()
+            if not self._old_client_note_seen:
+                msg.exec()
+                self._old_client_note_seen = True
         return True
 
     def validate_server(self):
@@ -457,6 +460,7 @@ class Chooser(QDialog):
         self.messenger = None
         self.ui.loginInfoLabel.setText("logged out")
         self._ssl_excused = False
+        self._old_client_note_seen = False
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
