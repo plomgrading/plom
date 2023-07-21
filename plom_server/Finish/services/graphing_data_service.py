@@ -3,6 +3,7 @@
 
 import base64
 from io import BytesIO
+from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,7 +11,6 @@ import numpy as np
 import pandas as pd
 
 from Finish.services import StudentMarkService, TaMarkingService
-from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
@@ -90,31 +90,29 @@ class GraphingDataService:
         return student_df.filter(regex="q[0-9]*_mark")
 
     def get_question_correlation_heatmap(
-        self, student_df: pd.DataFrame = None
+        self, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the correlation heatmap for the questions.
 
         Args:
-            student_df: The dataframe containing the student data. Should be
-                a copy or filtered version of self.student_df or None. If None,
-                self.student_df is used.
+            student_df: Optional dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df. If omitted, defaults
+                to None and self.student_df is used.
 
         Returns:
             pd.DataFrame: A dataframe containing the correlation heatmap.
         """
-        if student_df is None:
+        if not student_df:
             student_df = self.student_df
 
         marks_corr = (
             student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
         )
 
-        col_names = []
-        for i, _ in enumerate(marks_corr.columns):
-            col_names.append("Q" + str(i + 1))
+        for i, name in enumerate(marks_corr.columns):
+            marks_corr.rename({name: "Q" + str(i + 1)}, axis=1, inplace=True)
+            marks_corr.rename({name: "Q" + str(i + 1)}, axis=0, inplace=True)
 
-        marks_corr.columns = col_names
-        marks_corr.index = col_names
         return marks_corr
 
     def get_ta_data_for_ta(self, ta_name: str, ta_df: pd.DataFrame) -> pd.DataFrame:

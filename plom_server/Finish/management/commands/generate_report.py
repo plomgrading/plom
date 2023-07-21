@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import base64
 import datetime as dt
-from io import BytesIO
 
 import matplotlib
 import matplotlib.pyplot as plt
