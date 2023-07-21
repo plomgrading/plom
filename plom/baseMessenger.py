@@ -176,8 +176,13 @@ class BaseMessenger:
         # Now with django we pass a token in the header.
         # TODO: rework this when/if we stop supporting legacy servers.
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.get(self.base + url, *args, **kwargs)
 
@@ -214,8 +219,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.put(self.base + url, *args, **kwargs)
 
@@ -224,8 +234,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.delete(self.base + url, *args, **kwargs)
 
@@ -234,8 +249,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.patch(self.base + url, *args, **kwargs)
 
@@ -432,9 +452,6 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
-        # TODO: Issue #2902: better to do more generally in get/post/delete?
-        if not self.token:
-            raise PlomAuthenticationException("Trying to logout without token")
         if self.webplom:
             path = "/close_user/"
         else:
