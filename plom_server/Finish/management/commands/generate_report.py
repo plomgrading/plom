@@ -115,7 +115,7 @@ class Command(BaseCommand):
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        marks_corr = gds.get_question_correlation_heatmap()
+        marks_corr = gds.get_question_correlation_heatmap_data()
 
         plt.figure(figsize=(6.4, 5.12))
         sns.heatmap(
@@ -199,9 +199,9 @@ class Command(BaseCommand):
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
             times_for_question = marking_times_for_questions[question].div(60)
-            mark_given_for_question = gds.get_ta_data_for_question(
+            mark_given_for_question = gds.get_scores_for_question(
                 question_number=question, ta_df=ta_df
-            )["score_given"]
+            )
 
             ax.scatter(
                 mark_given_for_question, times_for_question, ec="black", alpha=0.5
@@ -223,36 +223,31 @@ class Command(BaseCommand):
             plt.setp(bp["fliers"][0], color=cm.hsv(colour))
             plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
-        # 1D scatter plot of the average grades given by each marker for each question
-        print("Generating box plots of average grades for each question.")
+        # Box plot of the grades given by each marker for each question
+        print("Generating box plots of grades by each marker for each question.")
         base_64_boxplots = []
         for question in spec["question"]:
             fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
 
             marks = []
-            markers = ["Overall"]
-            markers.extend(
-                ta_grading.loc[
-                    ta_grading["question_number"] == int(question), "user"
-                ].unique()
+            marker_names = ["Overall"]
+            marker_names.extend(
+                gds.get_tas_that_marked_this_question(int(question), ta_df)
             )
-            marks_for_question = ta_grading.loc[
-                ta_grading["question_number"] == int(question), "score_given"
-            ]
-            marks.append(marks_for_question)
-            for marker in markers[1:]:
+            marks.append(
+                gds.get_scores_for_question(question_number=question, ta_df=ta_df)
+            )
+            question_df = gds.get_ta_data_for_question(question_number=question)
+            for marker in marker_names[1:]:
                 marks.append(
-                    ta_grading.loc[
-                        (ta_grading["question_number"] == int(question))
-                        & (ta_grading["user"] == marker),
-                        "score_given",
-                    ]
+                    ta_df=gds.get_ta_data_for_ta(ta_name=marker, ta_df=question_df)[
+                        "score_given"
+                    ],
                 )
-
             for i, mark in reversed(list(enumerate(marks))):
                 bp = ax.boxplot(mark, positions=[i], vert=False)
                 setBoxColors(bp, i / len(marks))
-                (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=markers[i])
+                (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=marker_names[i])
 
             plt.legend(
                 loc="center left",
@@ -280,9 +275,7 @@ class Command(BaseCommand):
             plt.xlim(
                 [
                     0,
-                    ta_grading.loc[
-                        ta_grading["question_number"] == int(question), "max_score"
-                    ].max(),
+                    gds.get_scores_for_question(question_number=question).max(),
                 ]
             )
             # plt.ylim([-0.1, 1])

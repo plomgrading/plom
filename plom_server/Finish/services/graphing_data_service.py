@@ -74,7 +74,7 @@ class GraphingDataService:
         return self.student_df["total_mark"].std()
 
     def get_total_marks(self) -> list:
-        """Return the total marks for all students as a list."""
+        """Return the total marks for all students as a list[int]."""
         return self.student_df["total_mark"].tolist()
 
     def get_marks_for_all_questions(self, student_df: pd.DataFrame) -> pd.DataFrame:
@@ -89,10 +89,10 @@ class GraphingDataService:
         """
         return student_df.filter(regex="q[0-9]*_mark")
 
-    def get_question_correlation_heatmap(
+    def get_question_correlation_heatmap_data(
         self, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
-        """Get the correlation heatmap for the questions.
+        """Get the correlation heatmap data for the questions.
 
         Args:
             student_df: Optional dataframe containing the student data. Should be
@@ -100,7 +100,7 @@ class GraphingDataService:
                 to None and self.student_df is used.
 
         Returns:
-            pd.DataFrame: A dataframe containing the correlation heatmap.
+            A dataframe containing the correlation heatmap.
         """
         if not student_df:
             student_df = self.student_df
@@ -117,7 +117,7 @@ class GraphingDataService:
         return marks_corr
 
     def get_ta_data_for_ta(self, ta_name: str, ta_df: pd.DataFrame) -> pd.DataFrame:
-        """Get the dataframe of TA marking for a specific TA.
+        """Get the dataframe of TA marking data for a specific TA.
 
         Args:
             ta_name: The TA to get the data for.
@@ -144,18 +144,23 @@ class GraphingDataService:
         return marks_by_ta
 
     def get_ta_data_for_question(
-        self, question_number: int, ta_df: pd.DataFrame
+        self, question_number: int, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
 
         Args:
             question_number: The question to get the data for.
-            ta_df: The dataframe containing the TA data. Should be a copy or
-                filtered version of self.ta_df.
+            ta_df: Optional dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df. If omitted, defaults to None and
+                self.ta_df is used.
 
         Returns:
             A dataframe containing the TA data for the specified question.
         """
+        if not ta_df:
+            ta_df = self.ta_df
+        assert isinstance(ta_df, pd.DataFrame)
+
         times = ta_df[ta_df["question_number"] == question_number]
         times.name = question_number
         return times
@@ -186,6 +191,45 @@ class GraphingDataService:
                 filtered version of self.ta_df.
 
         Returns:
-            A list of questions marked by the specified TA.
+            A list of (int) questions marked by the specified TA.
         """
         return ta_df[ta_df["user"] == ta_name]["question_number"].unique().tolist()
+
+    def get_tas_that_marked_this_question(
+        self, question_number: int, ta_df: pd.DataFrame
+    ) -> list:
+        """Get the TAs that marked a specific question.
+
+        Args:
+            question_number: The question to get the data for.
+            ta_df: The dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df.
+
+        Returns:
+            A list of (str) TA names that marked the specified question.
+        """
+        return (
+            ta_df[ta_df["question_number"] == question_number]["user"].unique().tolist()
+        )
+
+    def get_scores_for_question(
+        self, question_number: int, ta_df: Optional[pd.DataFrame] = None
+    ) -> list:
+        """Get the marks assigned for a specific question.
+
+        Args:
+            question_number: The question to get the data for.
+            ta_df: Optional dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df. If omitted, defaults to None and
+                self.ta_df is used.
+
+        Returns:
+            A list of (int) marks assigned for the specified question.
+        """
+        if not ta_df:
+            ta_df = self.ta_df
+        assert isinstance(ta_df, pd.DataFrame)
+
+        return ta_df[ta_df["question_number"] == question_number][
+            "score_given"
+        ].tolist()
