@@ -429,9 +429,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-            if self.webplom:
-                # TODO: seems like a good idea for legacy too!
-                self.token = None
+            self.token = None
 
     # ----------------------
     # ----------------------
