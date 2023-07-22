@@ -7,33 +7,28 @@ from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from Finish.services import StudentMarkService, TaMarkingService
-from Mark.services import MarkingTaskService
-from Papers.models import Specification
 
 
 class GraphingDataService:
     """Service for getting data to graph."""
 
     def __init__(self):
-        self.sms = StudentMarkService()
-        self.tms = TaMarkingService()
-        self.mts = MarkingTaskService()
-        self.spec = Specification.load().spec_dict
+        sms = StudentMarkService()
+        tms = TaMarkingService()
 
-        student_dict = self.sms.get_all_students_download(
+        student_dict = sms.get_all_students_download(
             version_info=True, timing_info=False, warning_info=False
         )
-        student_keys = self.sms.get_csv_header(
+        student_keys = sms.get_csv_header(
             self.spec, version_info=True, timing_info=False, warning_info=False
         )
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
-        ta_dict = self.tms.build_csv_data()
-        ta_keys = self.tms.get_csv_header()
+        ta_dict = tms.build_csv_data()
+        ta_keys = tms.get_csv_header()
 
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
@@ -171,8 +166,7 @@ class GraphingDataService:
             (pd.Series) marking times for all questions.
         """
         times_by_question = {}
-        for question in self.spec["question"]:
-            q = int(question)
+        for q in self.ta_df["question_number"].unique():
             times_by_question[q] = self.get_ta_data_for_question(q, self.ta_df)[
                 "seconds_spent_marking"
             ]

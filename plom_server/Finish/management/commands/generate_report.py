@@ -12,6 +12,7 @@ from weasyprint import HTML, CSS
 from django.core.management.base import BaseCommand
 
 from Finish.services import GraphingDataService
+from Finish.services.matplotlib_service import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
@@ -35,6 +36,7 @@ class Command(BaseCommand):
 
         gds = GraphingDataService()
         mts = MarkingTaskService()
+        mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
         student_df = gds.get_student_data()
@@ -64,19 +66,9 @@ class Command(BaseCommand):
 
         # histogram of grades
         print("Generating histogram of grades.")
-        fig, ax = plt.subplots()
-
-        ax.hist(
-            gds.get_total_marks(),
-            bins=range(0, totalMarks + RANGE_BIN_OFFSET),
-            ec="black",
-            alpha=0.5,
+        base64_histogram_of_grades = gds.get_graph_as_base64(
+            mpls.histogram_of_total_marks()
         )
-        ax.set_title("Histogram of total marks")
-        ax.set_xlabel("Total mark")
-        ax.set_ylabel("# of students")
-
-        base64_histogram_of_grades = gds.get_graph_as_base64(fig)
 
         check_num_figs()
 
