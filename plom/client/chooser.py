@@ -492,6 +492,15 @@ class Chooser(QDialog):
         if not pwd:
             return
 
+        # Legacy special case:
+        # restart the whole process if we've got the wrong type of messenger
+        if (
+            self.messenger
+            and user == "manager"
+            and isinstance(self.messenger, ManagerMessenger)
+        ):
+            self.logout()
+
         # find out if its a legacy server
         self.get_server_info()
 
