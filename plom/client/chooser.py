@@ -217,8 +217,11 @@ class Chooser(QDialog):
                 InfoMsg(
                     self,
                     "<p>Only legacy servers have a manager app: "
-                    "how did you get here?.</p>",
+                    "how did you get here?</p>",
                 ).exec()
+                return
+            if not self.messenger.username == "manager":
+                InfoMsg(self, 'Only "manager" can manager.').exec()
                 return
 
             # Importing here avoids a circular import
@@ -472,6 +475,7 @@ class Chooser(QDialog):
         self.ui.loginInfoLabel.setText("logged out")
         self._ssl_excused = False
         self._old_client_note_seen = False
+        self.ui.manageButton.setVisible(False)
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
