@@ -212,7 +212,7 @@ class Chooser(QDialog):
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
-            if not self.mesenger.is_legacy_server():
+            if not self.messenger.is_legacy_server():
                 InfoMsg(
                     self,
                     "<p>Only legacy servers have a manager app: "
@@ -433,7 +433,7 @@ class Chooser(QDialog):
             self.ui.userLE.setFocus()
 
     def start_messenger_get_info(
-        self, *, _legacy_username: Union[str, None] = None
+        self, *, _legacy_username: Union[str, None] = None, verify_ssl: bool = True
     ) -> None:
         """Get info from server, update UI with server version, check SSL.
 
@@ -441,6 +441,10 @@ class Chooser(QDialog):
             _legacy_username: normally we don't care who might eventually
                 login, except in the legacy case and if it might be the
                 manager.
+            verify_ssl: True by default but if False then don't pop up
+                dialogs about lacking SSL verification.  Should not be
+                used lightly!  Currently we let users make this decision
+                one login at a time.
 
         Returns:
             None, but modifies the state of the internal `messenger`
@@ -457,7 +461,7 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
-        msgr = Messenger(server, port=port)
+        msgr = Messenger(server, port=port, verify_ssl=verify_ssl)
 
         if not self._pre_login_connection(msgr):
             return
@@ -515,16 +519,19 @@ class Chooser(QDialog):
         if self.is_logged_in():
             self.logout()
 
+        verified = True
         # Legacy special cases if we already have the wrong type of messenger,
         # e.g., someone changed the username after validating but before login.
         if self.messenger and self.messenger.is_legacy_server():
             if user == "manager" and not isinstance(self.messenger, ManagerMessenger):
+                verified = self.messenger.is_ssl_verified()
                 self.logout()
             elif user != "manager" and isinstance(self.messenger, ManagerMessenger):
+                verified = self.messenger.is_ssl_verified()
                 self.logout()
 
         if not self.messenger:
-            self.start_messenger_get_info(_legacy_username=user)
+            self.start_messenger_get_info(_legacy_username=user, verify_ssl=verified)
             if not self.messenger:
                 return
 
@@ -656,7 +663,6 @@ class Chooser(QDialog):
         try:
             parsedurl = urllib3.util.parse_url(address)
             if not parsedurl.host:
-                # "localhost:1234" parses this way: we'll do it ourselves
                 self._partial_parse_address_manual()
                 return
             if parsedurl.scheme and parsedurl.scheme.casefold() != "https":
