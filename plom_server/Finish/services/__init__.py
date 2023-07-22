@@ -2,10 +2,8 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 
-from . import (
-    StudentMarkService,
-    TaMarkingService,
-    ReassembleService,
-    GraphingDataService,
-    MatplotlibService,
-)
+from .student_marks_service import StudentMarkService
+from .ta_marking_service import TaMarkingService
+from .reassemble_service import ReassembleService
+from .graphing_data_service import GraphingDataService
+from .matplotlib_service import MatplotlibService
