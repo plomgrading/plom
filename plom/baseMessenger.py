@@ -63,7 +63,7 @@ class BaseMessenger:
         *,
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
-        verify_ssl: bool = True,
+        verify_ssl: Union[bool, str] = True,
         webplom: bool = False,
     ):
         """Initialize a new BaseMessenger.
@@ -124,7 +124,7 @@ class BaseMessenger:
 
         self._raw_init(server, verify_ssl=verify_ssl)
 
-    def _raw_init(self, base: str, *, verify_ssl: bool) -> None:
+    def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
         self.session = None
         self.user = None
         self.token = None
