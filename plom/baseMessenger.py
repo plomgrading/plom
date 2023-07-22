@@ -168,6 +168,19 @@ class BaseMessenger:
     def username(self):
         return self.whoami()
 
+    def enable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = False
+
+    def disable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = True
+
+    def is_legacy_server(self) -> bool:
+        return not self.webplom
+
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout

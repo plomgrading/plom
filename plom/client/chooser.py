@@ -19,6 +19,7 @@ import re
 import sys
 import tempfile
 import time
+from typing import Union
 
 import appdirs
 import arrow
@@ -99,7 +100,6 @@ class Chooser(QDialog):
         uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
-        self._legacy = False
         self._ssl_excused = False
         self._old_client_note_seen = False
 
@@ -198,7 +198,7 @@ class Chooser(QDialog):
             if not self.is_logged_in():
                 return
 
-        if self._legacy and self.messenger.username == "manager":
+        if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             if which_subapp != "Manager":
                 InfoMsg(
                     self,
@@ -213,7 +213,7 @@ class Chooser(QDialog):
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
-            if not self._legacy:
+            if not self.mesenger.is_legacy_server():
                 InfoMsg(
                     self,
                     "<p>Only legacy servers have a manager app: "
@@ -351,8 +351,11 @@ class Chooser(QDialog):
     def _pre_login_connection(self, msgr):
         # This msgr object may or may not be logged in: it can be temporary: we
         # only use it to get public info from the server.
-        # TODO: this figures out if we're talking to a legacy or new server...
-        # TODO: as a side effect it updates msgr with that info.
+        #
+        # Side effects:
+        #    The `msgr` itself will be modified, e.g., if user excepted
+        #    SSL verification.   It also figures out if we're talking to
+        #    a legacy or new server (and stores that info).
         try:
             try:
                 server_ver_str = msgr.start()
@@ -387,7 +390,7 @@ class Chooser(QDialog):
                 "Unexpected server response on version query.",
                 details=server_ver_str.strip(),
             ).exec()
-            self.messenger = None
+            msgr.stop()
             return False
         self.ui.infoLabel.setText(server_ver_str)
 
@@ -397,12 +400,10 @@ class Chooser(QDialog):
 
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
-        self._legacy = False
-        msgr.webplom = True
+        # TODO: should be the default and/or needs an accessor method?
+        msgr.disable_legacy_server_support()
         if "Legacy" in info["product_string"]:
-            self._legacy = True
-            msgr.webplom = False
-            # lil' bit o' debugin
+            msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
@@ -425,15 +426,27 @@ class Chooser(QDialog):
         return True
 
     def validate_server(self):
-        self.get_server_info()
+        self.start_messenger_get_info()
         # put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
             self.ui.passwordLE.setFocus()
         else:
             self.ui.userLE.setFocus()
 
-    def get_server_info(self):
-        """Get info from server, update UI with server version, check SSL."""
+    def start_messenger_get_info(
+        self, *, _legacy_username: Union[str, None] = None
+    ) -> None:
+        """Get info from server, update UI with server version, check SSL.
+
+        Keyword Args:
+            _legacy_username: normally we don't care who might eventually
+                login, except in the legacy case and if it might be the
+                manager.
+
+        Returns:
+            None, but modifies the state of the internal `messenger`
+            instance variable.
+        """
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
@@ -445,11 +458,21 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
-        local_msgr = Messenger(server, port=port)
+        msgr = Messenger(server, port=port)
 
-        if not self._pre_login_connection(local_msgr):
-            # no action required currently: optional cleanup?
-            pass
+        if not self._pre_login_connection(msgr):
+            return
+
+        if msgr.is_legacy_server():
+            if _legacy_username and _legacy_username == "manager":
+                # TODO: extract the verify_SSL out first and avoid dialog again
+                msgr = ManagerMessenger(server, port=port)
+                if not self._pre_login_connection(msgr):
+                    return
+
+        # Once we're happy with the manager keep it, b/c it knows if we
+        # have made an SSL exception for example.
+        self.messenger = msgr
 
     def is_logged_in(self) -> bool:
         if not self.messenger:
@@ -480,14 +503,8 @@ class Chooser(QDialog):
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
 
-        Also Update the UI with restricted questions and versions."""
-        server = self.ui.serverLE.text().strip()
-        if not server:
-            log.warning("No server URI")
-            return
-        # due to special handling of blank versus default, use .text() not .value()
-        port = self.ui.mportSB.text()
-
+        Also update the UI with restricted questions and versions.
+        """
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
         if not user:
@@ -496,31 +513,21 @@ class Chooser(QDialog):
         if not pwd:
             return
 
-        # Legacy special case:
-        # restart the whole process if we've got the wrong type of messenger
-        if (
-            self.messenger
-            and user == "manager"
-            and isinstance(self.messenger, ManagerMessenger)
-        ):
+        if self.is_logged_in():
             self.logout()
 
-        # find out if its a legacy server
-        self.get_server_info()
+        # Legacy special cases if we already have the wrong type of messenger,
+        # e.g., someone changed the username after validating but before login.
+        if self.messenger and self.messenger.is_legacy_server():
+            if user == "manager" and not isinstance(self.messenger, ManagerMessenger):
+                self.logout()
+            elif user != "manager" and isinstance(self.messenger, ManagerMessenger):
+                self.logout()
 
         if not self.messenger:
-            if self._legacy and user == "manager":
-                self.messenger = ManagerMessenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-            else:
-                self.messenger = Messenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-
-        if not self._pre_login_connection(self.messenger):
-            self.messenger = None
-            return
+            self.start_messenger_get_info(_legacy_username=user)
+            if not self.messenger:
+                return
 
         try:
             self.messenger.requestAndSaveToken(user, pwd)
