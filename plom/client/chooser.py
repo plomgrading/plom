@@ -467,7 +467,9 @@ class Chooser(QDialog):
             self.messenger.stop()
             self.messenger = None
 
-        msgr = Messenger(server, port=port, verify_ssl=verify_ssl)
+        msgr: Union[Messenger, ManagerMessenger] = Messenger(
+            server, port=port, verify_ssl=verify_ssl
+        )
 
         if not self._pre_login_connection(msgr):
             return
