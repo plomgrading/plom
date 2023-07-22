@@ -100,7 +100,6 @@ class Chooser(QDialog):
         uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
-        self._ssl_excused = False
         self._old_client_note_seen = False
 
         self.lastTime = readLastTime()
@@ -356,21 +355,21 @@ class Chooser(QDialog):
         #    The `msgr` itself will be modified, e.g., if user excepted
         #    SSL verification.   It also figures out if we're talking to
         #    a legacy or new server (and stores that info).
+        _ssl_excused = False
         try:
             try:
                 server_ver_str = msgr.start()
             except PlomSSLError as e:
-                if not self._ssl_excused:
-                    msg = WarningQuestion(
-                        self,
-                        "SSL error: cannot verify the identity of the server.",
-                        "Do you want to disable SSL certificate verification?  Not recommended.",
-                        details=f"{e}",
-                    )
-                    msg.setDefaultButton(QMessageBox.StandardButton.No)
-                    if msg.exec() == QMessageBox.StandardButton.No:
-                        return False
-                self._ssl_excused = True
+                msg = WarningQuestion(
+                    self,
+                    "SSL error: cannot verify the identity of the server.",
+                    "Do you want to disable SSL certificate verification?  Not recommended.",
+                    details=f"{e}",
+                )
+                msg.setDefaultButton(QMessageBox.StandardButton.No)
+                if msg.exec() == QMessageBox.StandardButton.No:
+                    return False
+                _ssl_excused = True
                 msgr.force_ssl_unverified()
                 server_ver_str = msgr.start()
         except PlomBenignException as e:
@@ -394,7 +393,7 @@ class Chooser(QDialog):
             return False
         self.ui.infoLabel.setText(server_ver_str)
 
-        if self._ssl_excused:
+        if _ssl_excused:
             s = "\nCaution: SSL exception granted."
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
@@ -465,8 +464,9 @@ class Chooser(QDialog):
 
         if msgr.is_legacy_server():
             if _legacy_username and _legacy_username == "manager":
-                # TODO: extract the verify_SSL out first and avoid dialog again
-                msgr = ManagerMessenger(server, port=port)
+                verified = msgr.is_ssl_verified()
+                msgr.stop()
+                msgr = ManagerMessenger(server, port=port, verify_ssl=verified)
                 if not self._pre_login_connection(msgr):
                     return
 
@@ -496,7 +496,6 @@ class Chooser(QDialog):
         self.messenger.stop()
         self.messenger = None
         self.ui.loginInfoLabel.setText("logged out")
-        self._ssl_excused = False
         self._old_client_note_seen = False
         self.ui.manageButton.setVisible(False)
 

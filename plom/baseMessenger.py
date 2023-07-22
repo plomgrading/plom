@@ -154,6 +154,9 @@ class BaseMessenger:
         x.token = m.token
         return x
 
+    def is_ssl_verified(self):
+        return self.verify_ssl
+
     def force_ssl_unverified(self):
         """This connection (can be open) does not need to verify cert SSL going forward."""
         self.verify_ssl = False
