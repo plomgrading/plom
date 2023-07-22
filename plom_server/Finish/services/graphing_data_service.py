@@ -1,12 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import base64
-from io import BytesIO
 from typing import Optional
 
-import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from Finish.services import StudentMarkService, TaMarkingService
@@ -33,22 +29,6 @@ class GraphingDataService:
         ta_keys = tms.get_csv_header()
 
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
-
-    def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
-        """Return the graph as a base64 encoded string.
-
-        Args:
-            fig: The figure to encode.
-
-        Returns:
-            The base64 encoded string.
-        """
-        png_bytes = BytesIO()
-        fig.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
-        plt.close()
-
-        return base64.b64encode(png_bytes.read()).decode()
 
     def get_ta_data(self) -> pd.DataFrame:
         """Return the dataframe of TA data."""

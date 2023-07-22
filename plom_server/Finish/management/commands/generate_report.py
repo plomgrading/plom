@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
         # histogram of grades
         print("Generating histogram of grades.")
-        base64_histogram_of_grades = gds.get_graph_as_base64(
+        base64_histogram_of_grades = mpls.get_graph_as_base64(
             mpls.histogram_of_total_marks()
         )
 
@@ -75,7 +75,7 @@ class Command(BaseCommand):
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             base64_histogram_of_grades_q.append(
-                gds.get_graph_as_base64(
+                mpls.get_graph_as_base64(
                     mpls.histogram_of_grades_on_question(question=question)
                 )
             )
@@ -84,7 +84,7 @@ class Command(BaseCommand):
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        base64_corr = gds.get_graph_as_base64(
+        base64_corr = mpls.get_graph_as_base64(
             mpls.correlation_heatmap_of_questions(
                 gds.get_question_correlation_heatmap_data()
             )
@@ -125,7 +125,7 @@ class Command(BaseCommand):
                 ax.set_xlabel("Mark given")
                 ax.set_ylabel("# of times assigned")
 
-                base64_histogram_of_grades_m_q.append(gds.get_graph_as_base64(fig))
+                base64_histogram_of_grades_m_q.append(mpls.get_graph_as_base64(fig))
 
             base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
 
@@ -151,7 +151,7 @@ class Command(BaseCommand):
             ax.set_xlabel("Time spent (min)")
             ax.set_ylabel("# of papers")
 
-            base64_histogram_of_time.append(gds.get_graph_as_base64(fig))
+            base64_histogram_of_time.append(mpls.get_graph_as_base64(fig))
 
             mpls.check_num_figs()
 
@@ -173,7 +173,7 @@ class Command(BaseCommand):
             ax.set_ylabel("Time spent (min)")
             ax.set_xlabel("Mark given")
 
-            base64_scatter_of_time.append(gds.get_graph_as_base64(fig))
+            base64_scatter_of_time.append(mpls.get_graph_as_base64(fig))
 
             mpls.check_num_figs()
 
@@ -245,7 +245,7 @@ class Command(BaseCommand):
             )
             # plt.ylim([-0.1, 1])
 
-            base_64_boxplots.append(gds.get_graph_as_base64(fig))
+            base_64_boxplots.append(mpls.get_graph_as_base64(fig))
 
             mpls.check_num_figs()
 

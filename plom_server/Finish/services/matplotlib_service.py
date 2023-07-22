@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
+import base64
+from io import BytesIO
 from typing import Optional
 
 import matplotlib
@@ -30,6 +32,22 @@ class MatplotlibService:
     def check_num_figs(self):
         if len(plt.get_fignums()) > 0:
             print("Warn: ", len(plt.get_fignums()), " figures open.")
+
+    def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
+        """Return the graph as a base64 encoded string.
+
+        Args:
+            fig: The figure to encode.
+
+        Returns:
+            The base64 encoded string.
+        """
+        png_bytes = BytesIO()
+        fig.savefig(png_bytes, format="png")
+        png_bytes.seek(0)
+        plt.close()
+
+        return base64.b64encode(png_bytes.read()).decode()
 
     def histogram_of_total_marks(self, student_df: Optional[pd.DataFrame] = None):
         """Generate a histogram of the total marks.
