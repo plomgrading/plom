@@ -58,11 +58,7 @@ class Command(BaseCommand):
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
-        def check_num_figs():
-            if len(plt.get_fignums()) > 0:
-                print("Warn: ", len(plt.get_fignums()), " figures open.")
-
-        check_num_figs()
+        mpls.check_num_figs()
 
         # histogram of grades
         print("Generating histogram of grades.")
@@ -70,41 +66,31 @@ class Command(BaseCommand):
             mpls.histogram_of_total_marks()
         )
 
-        check_num_figs()
+        mpls.check_num_figs()
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         base64_histogram_of_grades_q = []
         marks_for_questions = gds.get_marks_for_all_questions(student_df=student_df)
-        for i, question in enumerate(marks_for_questions):
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        for question, _ in enumerate(marks_for_questions):
+            question += 1  # 1-indexing
+            base64_histogram_of_grades_q.append(
+                gds.get_graph_as_base64(
+                    mpls.histogram_of_grades_on_question(question=question)
+                )
+            )
 
-            bins = range(0, spec["question"][str(i + 1)]["mark"] + RANGE_BIN_OFFSET)
-
-            ax.hist(marks_for_questions[question], bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Histogram of Q" + str(i + 1) + " marks")
-            ax.set_xlabel("Question " + str(i + 1) + " mark")
-            ax.set_ylabel("# of students")
-
-            base64_histogram_of_grades_q.append(gds.get_graph_as_base64(fig))
-
-            check_num_figs()
+            mpls.check_num_figs()
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        marks_corr = gds.get_question_correlation_heatmap_data()
-
-        plt.figure(figsize=(6.4, 5.12))
-        sns.heatmap(
-            marks_corr, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True
+        base64_corr = gds.get_graph_as_base64(
+            mpls.correlation_heatmap_of_questions(
+                gds.get_question_correlation_heatmap_data()
+            )
         )
-        plt.title("Correlation between questions")
-        plt.xlabel("Question number")
-        plt.ylabel("Question number")
 
-        base64_corr = gds.get_graph_as_base64(plt.gcf())
-
-        check_num_figs()
+        mpls.check_num_figs()
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
@@ -143,7 +129,7 @@ class Command(BaseCommand):
 
             base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
 
-            check_num_figs()
+            mpls.check_num_figs()
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
@@ -167,7 +153,7 @@ class Command(BaseCommand):
 
             base64_histogram_of_time.append(gds.get_graph_as_base64(fig))
 
-            check_num_figs()
+            mpls.check_num_figs()
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
@@ -189,7 +175,7 @@ class Command(BaseCommand):
 
             base64_scatter_of_time.append(gds.get_graph_as_base64(fig))
 
-            check_num_figs()
+            mpls.check_num_figs()
 
         def setBoxColors(bp, colour):
             plt.setp(bp["boxes"][0], color=cm.hsv(colour))
@@ -261,7 +247,7 @@ class Command(BaseCommand):
 
             base_64_boxplots.append(gds.get_graph_as_base64(fig))
 
-            check_num_figs()
+            mpls.check_num_figs()
 
         def html_add_title(title: str) -> str:
             """Generate HTML for a title.

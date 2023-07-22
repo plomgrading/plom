@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from Finish.services import StudentMarkService, TaMarkingService
+from Papers.models import Specification
 
 
 class GraphingDataService:
@@ -18,6 +19,7 @@ class GraphingDataService:
     def __init__(self):
         sms = StudentMarkService()
         tms = TaMarkingService()
+        self.spec = Specification.load().spec_dict
 
         student_dict = sms.get_all_students_download(
             version_info=True, timing_info=False, warning_info=False

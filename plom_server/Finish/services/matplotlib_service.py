@@ -6,6 +6,7 @@ from typing import Optional
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 from Finish.services import GraphingDataService
 from Papers.models import Specification
@@ -20,11 +21,11 @@ class MatplotlibService:
     matplotlib.use("Pdf")
 
     def __init__(self):
-        gds = GraphingDataService()
+        self.gds = GraphingDataService()
         self.spec = Specification.load().spec_dict
 
-        self.student_df = gds.get_student_data()
-        self.ta_df = gds.get_ta_data()
+        self.student_df = self.gds.get_student_data()
+        self.ta_df = self.gds.get_ta_data()
 
     def check_num_figs(self):
         if len(plt.get_fignums()) > 0:
@@ -37,6 +38,9 @@ class MatplotlibService:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+
+        Returns:
+            A matplotlib figure containing the histogram.
         """
         if student_df is None:
             student_df = self.student_df
@@ -56,3 +60,61 @@ class MatplotlibService:
         ax.set_ylabel("# of students")
 
         return fig
+
+    def histogram_of_grades_on_question(
+        self, question: int, student_df: Optional[pd.DataFrame] = None
+    ):
+        """Generate a histogram of the grades on a specific question.
+
+        Args:
+            question: The question to generate the histogram for.
+            student_df: Optional dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df. If omitted, defaults
+                to None and self.student_df is used.
+
+        Returns:
+            A matplotlib figure containing the histogram.
+        """
+        if student_df is None:
+            student_df = self.student_df
+        assert isinstance(student_df, pd.DataFrame)
+
+        self.check_num_figs()
+
+        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+
+        bins = range(0, self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
+
+        ax.hist(
+            student_df["q" + str(question) + "_mark"], bins=bins, ec="black", alpha=0.5
+        )
+        ax.set_title("Histogram of Q" + str(question) + " marks")
+        ax.set_xlabel("Question " + str(question) + " mark")
+        ax.set_ylabel("# of students")
+
+        return fig
+
+    def correlation_heatmap_of_questions(self, corr_df: Optional[pd.DataFrame] = None):
+        """Generate a correlation heatmap of the questions.
+
+        Args:
+            student_df: Optional dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df. If omitted, defaults
+                to None and self.student_df is used.
+
+        Returns:
+            A matplotlib figure containing the correlation heatmap.
+        """
+        if corr_df is None:
+            corr_df = self.gds.get_question_correlation_heatmap_data()
+        assert isinstance(corr_df, pd.DataFrame)
+
+        self.check_num_figs()
+
+        plt.figure(figsize=(6.4, 5.12))
+        sns.heatmap(corr_df, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True)
+        plt.title("Correlation between questions")
+        plt.xlabel("Question number")
+        plt.ylabel("Question number")
+
+        return plt.gcf()
