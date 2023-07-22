@@ -86,6 +86,9 @@ class BaseMessenger:
 
         Returns:
             None
+
+        Raises:
+            PlomConnectionError
         """
         self.webplom = webplom
         if os.environ.get("WEBPLOM"):
@@ -95,7 +98,10 @@ class BaseMessenger:
         if not server:
             server = "127.0.0.1"
 
-        parsed_url = urllib3.util.parse_url(server)
+        try:
+            parsed_url = urllib3.util.parse_url(server)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{server}"') from e
 
         if not parsed_url.host:
             # "localhost:1234" parses this way: we do it ourselves :(
@@ -123,7 +129,10 @@ class BaseMessenger:
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        parsed_url = urllib3.util.parse_url(base)
+        try:
+            parsed_url = urllib3.util.parse_url(base)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
         self.base = base
         self.SRmutex = threading.Lock()

@@ -467,11 +467,14 @@ class Chooser(QDialog):
             self.messenger.stop()
             self.messenger = None
 
-        msgr: Union[Messenger, ManagerMessenger] = Messenger(
-            server, port=port, verify_ssl=verify_ssl
-        )
-
-        if not self._pre_login_connection(msgr):
+        try:
+            msgr: Union[Messenger, ManagerMessenger] = Messenger(
+                server, port=port, verify_ssl=verify_ssl
+            )
+            if not self._pre_login_connection(msgr):
+                return
+        except PlomException as e:
+            WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             return
 
         if msgr.is_legacy_server():
