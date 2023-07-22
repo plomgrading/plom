@@ -461,6 +461,12 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
+        if self.is_logged_in():
+            self.logout()
+        if self.messenger:
+            self.messenger.stop()
+            self.messenger = None
+
         msgr = Messenger(server, port=port, verify_ssl=verify_ssl)
 
         if not self._pre_login_connection(msgr):
