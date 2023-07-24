@@ -51,7 +51,7 @@ class MarkingTaskService:
 
         # mark other tasks with this code as 'out of date'
         previous_tasks = MarkingTask.objects.filter(code=task_code)
-        for old_task in previous_tasks:
+        for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
             old_task.status = MarkingTask.OUT_OF_DATE
             old_task.save()
 
@@ -226,6 +226,29 @@ class MarkingTaskService:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
 
+    def get_available_tasks(self, question=None, version=None):
+        """Return the marking tasks with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            Queryset[MarkingTask]: The queryset of available tasks, or
+            `None` if no such task exists.
+        """
+        available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+
+        if question:
+            available = available.filter(question_number=question)
+
+        if version:
+            available = available.filter(question_version=version)
+
+        if not available.exists():
+            return None
+        return available
+
     def get_first_available_task(
         self, question=None, version=None
     ) -> Union[MarkingTask, None]:
@@ -238,19 +261,50 @@ class MarkingTaskService:
         Returns:
             The first available task, or `None` if no such task exists.
         """
-        available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+        available = self.get_available_tasks(question=question, version=version)
 
-        if question:
-            available = available.filter(question_number=question)
-
-        if version:
-            available = available.filter(question_version=version)
-
-        available = available.order_by("paper__paper_number")
-
-        if not available.exists():
+        if available is None:
             return None
-        return available.first()
+
+        return available.order_by("paper__paper_number").first()
+
+    def get_random_available_task(
+        self, question=None, version=None
+    ) -> Union[MarkingTask, None]:
+        """Return a random marking task with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            A random available task, or `None` if no such task exists.
+        """
+        available = self.get_available_tasks(question=question, version=version)
+
+        if available is None:
+            return None
+
+        return available.order_by("?").first()
+
+    def get_priority_available_task(
+        self, question=None, version=None
+    ) -> Union[MarkingTask, None]:
+        """Return the highest priority marking task with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            The highest priority available task, or `None` if no such task exists.
+        """
+        available = self.get_available_tasks(question=question, version=version)
+
+        if available is None:
+            return None
+
+        return available.order_by("-marking_priority").first()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
