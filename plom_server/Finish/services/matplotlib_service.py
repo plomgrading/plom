@@ -184,7 +184,7 @@ class MatplotlibService:
         self,
         question_number: int,
         marking_times_minutes: List[int],
-        max_time: Optional[int] = None,
+        max_time: Optional[int] = 0,
         bin_width: Optional[int] = 15,
     ):
         """Generate a histogram of the time spent marking a question.
@@ -200,9 +200,9 @@ class MatplotlibService:
         Returns:
             A matplotlib figure containing the histogram.
         """
-        if max_time is None:
+        if max_time is 0:
             max_time = max(marking_times_minutes)
-        assert isinstance(max_time, int)
+        assert max_time > 0
 
         self.check_num_figs()
 
@@ -323,8 +323,9 @@ class MatplotlibService:
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
     def get_report_histogram_of_grades_q(self) -> list:
-        """Generate a list of base64-encoded images of the histograms of grades on each
-        question to be used in the report.
+        """Get a list of histogram graphs of grades by question.
+
+        Made to be used in the report.
 
         Returns:
             A list of base64-encoded images (str) of the histograms.
@@ -348,8 +349,9 @@ class MatplotlibService:
         return base64_histogram_of_grades_q
 
     def get_report_histogram_of_grades_m(self) -> list:
-        """Generate a list of lists of base64-encoded images of the histograms of grades by
-        marker on each question to be used in the report.
+        """Get a list of lists of histograms of grades by marker by question.
+
+        Made to be used in the report.
 
         Returns:
             A list of lists of base64-encoded images (str) of the histograms by marker by question.
@@ -383,8 +385,9 @@ class MatplotlibService:
         return base64_histogram_of_grades_m
 
     def get_report_histogram_of_time_spent_marking(self) -> list:
-        """Generate a list of base64-encoded images of the histograms of time spent
-        marking each question to be used in the report.
+        """Get a list of histograms of time spent marking each question.
+
+        Made to be used in the report.
 
         Returns:
             A list of base64-encoded images (str) of the histograms.
@@ -409,8 +412,9 @@ class MatplotlibService:
         return base64_histogram_of_time
 
     def get_report_scatter_of_time_spent_vs_marks_given(self) -> list:
-        """Generate a list of base64-encoded images of the scatter plots of time spent
-        marking each question vs mark given to be used in the report.
+        """Get a list of scatter plots of time spent marking each question vs mark given.
+
+        Made to be used in the report.
 
         Returns:
             A list of base64-encoded images (str) of the scatter plots.
@@ -437,8 +441,9 @@ class MatplotlibService:
         return base64_scatter_of_time
 
     def get_report_boxplot_by_question(self) -> list:
-        """Generate a list of base64-encoded images of the boxplots of marks given by each
-        marker for each question to be used in the report.
+        """Get a list of boxplots of marks given by each marker for each question.
+
+        Made to be used in the report.
 
         Returns:
             A list of base64-encoded images (str) of the boxplots.
