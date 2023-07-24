@@ -347,7 +347,7 @@ pylint:
 
 # needs full dependencies, cannot easily run with other early static analysis
 # If exceptions are needed, see "tool.mypy" sections in pyproject.toml
-# TODO: maybe pip install unnecessary eventually, Issue #2850
+# Issue #2880: temporarily using 3.9 although our minimum python is 3.8
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
@@ -355,10 +355,10 @@ mypy-type-checking:
   before_script:
     - python3 -m pip install mypy~=1.4.1
   script:
-    - mypy plom --install-types --non-interactive || true
-    - mypy plom
-    - mypy plom_server --install-types --non-interactive || true
-    - mypy plom_server
+    - mypy plom --python-ver 3.8 --install-types --non-interactive || true
+    - mypy plom --python-ver 3.8
+    - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
+    - mypy plom_server --python-ver 3.9
 
 
 flake8:
@@ -418,7 +418,7 @@ pydocstyle-server-count:
     - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 375 ]]"
+    - bash -c "[[ $NUMERR -le 338 ]]"
   allow_failure: true
 
 
@@ -1039,7 +1039,8 @@ minpy_mindeps:
     - plom-demo . --num-papers 3 --prepare-only
 
 
-# Minimum Python, minimum deps: temporarily different from legacy (3.9 vs 3.8)
+# Minimum Python, minimum deps
+# Issue #2880: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
     - postgres:12.2-alpine
