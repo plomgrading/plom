@@ -45,6 +45,7 @@ dependencies = [
     "debugpy>=1.6.7",
     "django>=4.0.10",
     "django-braces>=1.15.0",
+    "django-filter>=32.2",
     "django-htmx>=1.14.0",
     "django-huey>=1.1.1",
     "django-polymorphic>=3.1.0",
