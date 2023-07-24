@@ -184,17 +184,17 @@ class MatplotlibService:
         self,
         question_number: int,
         marking_times_minutes: List[int],
-        max_time: Optional[int] = 0,
-        bin_width: Optional[int] = 15,
+        max_time: int = 0,
+        bin_width: int = 15,
     ):
         """Generate a histogram of the time spent marking a question.
 
         Args:
             question_number: The question to generate the histogram for.
             marking_times_minutes: Listlike containing the marking times in minutes.
-            max_time: Optional, the maximum time to show on the histogram. If omitted,
+            max_time: The maximum time to show on the histogram. If omitted,
                 defaults to the maximum time in the marking_times_minutes series.
-            bin_width: Optional, the width of each bin on the histogram. If omitted,
+            bin_width: The width of each bin on the histogram. If omitted,
                 defaults to 15 seconds per bin.
 
         Returns:
