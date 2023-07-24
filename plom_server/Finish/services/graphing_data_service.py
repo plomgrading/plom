@@ -73,8 +73,8 @@ class GraphingDataService:
 
         Args:
             student_df: Optional dataframe containing the student data. Should be
-                a copy or filtered version of self.student_df. If omitted, defaults
-                to None and self.student_df is used.
+                a copy or filtered version of self.student_df. If omitted,
+                self.student_df is used.
 
         Returns:
             A dataframe containing the correlation heatmap.
@@ -127,8 +127,7 @@ class GraphingDataService:
         Args:
             question_number: The question to get the data for.
             ta_df: Optional dataframe containing the TA data. Should be a copy or
-                filtered version of self.ta_df. If omitted, defaults to None and
-                self.ta_df is used.
+                filtered version of self.ta_df. If omitted, self.ta_df is used.
 
         Returns:
             A dataframe containing the TA data for the specified question.
@@ -139,6 +138,20 @@ class GraphingDataService:
 
         question_df = ta_df[ta_df["question_number"] == question_number]
         return question_df
+
+    def get_all_ta_data_by_question(self) -> dict:
+        """Get TA marking data for all questions as a dict.
+
+        Returns:
+            A dictionary keyed by the (int) question number, containing the
+            (pd.Dataframe) marking data for each question.
+        """
+        marks_by_question = {}
+        for question_num in self.ta_df["question_number"].unique():
+            marks_by_question[question_num] = self.get_ta_data_for_question(
+                question_num, self.ta_df
+            )
+        return marks_by_question
 
     def get_times_for_all_questions(self) -> dict:
         """Get the marking times for all questions.
@@ -194,8 +207,7 @@ class GraphingDataService:
         Args:
             question_number: The question to get the data for.
             ta_df: Optional dataframe containing the TA data. Should be a copy or
-                filtered version of self.ta_df. If omitted, defaults to None and
-                self.ta_df is used.
+                filtered version of self.ta_df. If omitted, self.ta_df is used.
 
         Returns:
             A list of (int) marks assigned for the specified question.
@@ -207,3 +219,20 @@ class GraphingDataService:
         return ta_df[ta_df["question_number"] == question_number][
             "score_given"
         ].tolist()
+
+    def get_scores_for_ta(self, ta_name: str, ta_df: Optional[pd.DataFrame] = None):
+        """Get the marks assigned for by a specific TA.
+
+        Args:
+            ta_name: The TA to get the data for.
+            ta_df: Optional dataframe containing the TA data. Should be a copy or
+                filtered version of self.ta_df. If omitted, self.ta_df is used.
+
+        Returns:
+            A list of (int) marks assigned by the specified TA.
+        """
+        if ta_df is None:
+            ta_df = self.ta_df
+        assert isinstance(ta_df, pd.DataFrame)
+
+        return ta_df[ta_df["user"] == ta_name]["score_given"].tolist()

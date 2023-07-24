@@ -4,9 +4,6 @@
 import datetime as dt
 
 import matplotlib
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
-import seaborn as sns
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
@@ -70,20 +67,7 @@ class Command(BaseCommand):
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
-        base64_histogram_of_grades_q = []
-        # get the data
-        marks_for_questions = gds.get_marks_for_all_questions(student_df=student_df)
-        for question, _ in enumerate(marks_for_questions):
-            question += 1  # 1-indexing
-            base64_histogram_of_grades_q.append(  # add to the list
-                mpls.get_graph_as_base64(  # each base64-encoded image
-                    mpls.histogram_of_grades_on_question(  # of the histogram
-                        question=question
-                    )
-                )
-            )
-
-            mpls.check_num_figs()
+        base64_histogram_of_grades_q = mpls.get_report_histogram_of_grades_q()
 
         # correlation heatmap
         print("Generating correlation heatmap.")
@@ -97,143 +81,19 @@ class Command(BaseCommand):
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
-        base64_histogram_of_grades_m = []
-        for marker, scores_for_user in gds.get_all_ta_data_by_ta().items():
-            questions_marked_by_this_ta = gds.get_questions_marked_by_this_ta(
-                marker, ta_df
-            )
-            base64_histogram_of_grades_m_q = []
-
-            for question in questions_marked_by_this_ta:
-                scores_for_user_for_question = gds.get_ta_data_for_question(
-                    question_number=question, ta_df=scores_for_user
-                )
-
-                base64_histogram_of_grades_m_q.append(
-                    mpls.get_graph_as_base64(
-                        mpls.histogram_of_grades_on_question_by_ta(
-                            question=question,
-                            ta_name=marker,
-                            ta_df=scores_for_user_for_question,
-                        )
-                    )
-                )
-
-            base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
-
-            mpls.check_num_figs()
+        base64_histogram_of_grades_m = mpls.get_report_histogram_of_grades_m()
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        max_time = gds.get_ta_data()["seconds_spent_marking"].max()
-        bin_width = 15  # seconds
-        base64_histogram_of_time = []
-        for question, marking_times in gds.get_times_for_all_questions().items():
-            base64_histogram_of_time.append(
-                mpls.get_graph_as_base64(
-                    mpls.histogram_of_time_spent_marking_each_question(
-                        question_number=question,
-                        marking_times_minutes=marking_times.div(60),
-                        max_time=max_time,
-                        bin_width=bin_width,
-                    )
-                )
-            )
-
-            mpls.check_num_figs()
+        base64_histogram_of_time = mpls.get_report_histogram_of_time_spent_marking()
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
-        base64_scatter_of_time = []
-        for question, marking_times in gds.get_times_for_all_questions().items():
-            times_for_question = marking_times.div(60)
-            mark_given_for_question = gds.get_scores_for_question(
-                question_number=question, ta_df=ta_df
-            )
-
-            base64_scatter_of_time.append(
-                mpls.get_graph_as_base64(
-                    mpls.scatter_time_spent_vs_mark_given(
-                        question_number=question,
-                        times_spent_minutes=times_for_question,
-                        marks_given=mark_given_for_question,
-                    )
-                )
-            )
-
-            mpls.check_num_figs()
-
-        def setBoxColors(bp, colour):
-            plt.setp(bp["boxes"][0], color=cm.hsv(colour))
-            plt.setp(bp["caps"][0], color=cm.hsv(colour))
-            plt.setp(bp["caps"][1], color=cm.hsv(colour))
-            plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
-            plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
-            plt.setp(bp["fliers"][0], color=cm.hsv(colour))
-            plt.setp(bp["medians"][0], color=cm.hsv(colour))
+        base64_scatter_of_time = mpls.get_report_scatter_of_time_spent_vs_marks_given()
 
         # Box plot of the grades given by each marker for each question
         print("Generating box plots of grades by each marker for each question.")
-        base_64_boxplots = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
-
-            marks = []
-            marker_names = ["Overall"]
-            marker_names.extend(
-                gds.get_tas_that_marked_this_question(int(question), ta_df)
-            )
-            marks.append(
-                gds.get_scores_for_question(question_number=int(question), ta_df=ta_df)
-            )
-            question_df = gds.get_ta_data_for_question(question_number=int(question))
-            for marker in marker_names[1:]:
-                marks.append(
-                    gds.get_ta_data_for_ta(ta_name=marker, ta_df=question_df)[
-                        "score_given"
-                    ],
-                )
-            for i, mark in reversed(list(enumerate(marks))):
-                bp = ax.boxplot(mark, positions=[i], vert=False)
-                setBoxColors(bp, i / len(marks))
-                (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=marker_names[i])
-
-            plt.legend(
-                loc="center left",
-                bbox_to_anchor=(1, 0.5),
-                ncol=1,
-                fancybox=True,
-            )
-
-            ax.set_title("Q" + str(question) + " boxplot by marker")
-            ax.set_xlabel("Q" + str(question) + " mark")
-            ax.tick_params(
-                axis="y",
-                which="both",  # both major and minor ticks are affected
-                left=False,  # ticks along the bottom edge are off
-                right=False,  # ticks along the top edge are off
-                labelleft=False,
-            )
-            # for i, marker in enumerate(markers):
-            #     ax.annotate(
-            #         marker,
-            #         (marks[i], 0),
-            #         ha="left",
-            #         rotation=60,
-            #     )
-            plt.xlim(
-                [
-                    0,
-                    gds.get_ta_data_for_question(question_number=int(question))[
-                        "max_score"
-                    ].max(),
-                ]
-            )
-            # plt.ylim([-0.1, 1])
-
-            base_64_boxplots.append(mpls.get_graph_as_base64(fig))
-
-            mpls.check_num_figs()
+        base_64_boxplots = mpls.get_report_boxplot_by_question()
 
         def html_add_title(title: str) -> str:
             """Generate HTML for a title.
