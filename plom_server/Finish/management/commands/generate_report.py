@@ -133,7 +133,7 @@ class Command(BaseCommand):
                 mpls.get_graph_as_base64(
                     mpls.histogram_of_time_spent_marking_each_question(
                         question_number=question,
-                        marking_times=marking_times,
+                        marking_times_minutes=marking_times.div(60),
                         max_time=max_time,
                         bin_width=bin_width,
                     )
@@ -146,21 +146,20 @@ class Command(BaseCommand):
         print("Generating scatter plots of time spent marking vs mark given.")
         base64_scatter_of_time = []
         for question, marking_times in gds.get_times_for_all_questions().items():
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
             times_for_question = marking_times.div(60)
             mark_given_for_question = gds.get_scores_for_question(
                 question_number=question, ta_df=ta_df
             )
 
-            ax.scatter(
-                mark_given_for_question, times_for_question, ec="black", alpha=0.5
+            base64_scatter_of_time.append(
+                mpls.get_graph_as_base64(
+                    mpls.scatter_time_spent_vs_mark_given(
+                        question_number=question,
+                        times_spent_minutes=times_for_question,
+                        marks_given=mark_given_for_question,
+                    )
+                )
             )
-            ax.set_title("Q" + str(question) + ": Time spent vs Mark given")
-            ax.set_ylabel("Time spent (min)")
-            ax.set_xlabel("Mark given")
-
-            base64_scatter_of_time.append(mpls.get_graph_as_base64(fig))
 
             mpls.check_num_figs()
 

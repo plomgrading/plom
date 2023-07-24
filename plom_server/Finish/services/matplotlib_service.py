@@ -3,7 +3,7 @@
 
 import base64
 from io import BytesIO
-from typing import Optional
+from typing import Optional, List
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -181,7 +181,7 @@ class MatplotlibService:
     def histogram_of_time_spent_marking_each_question(
         self,
         question_number: int,
-        marking_times: pd.Series,
+        marking_times_minutes: List[int],
         max_time: Optional[int] = None,
         bin_width: Optional[int] = 15,
     ):
@@ -189,9 +189,9 @@ class MatplotlibService:
 
         Args:
             question_number: The question to generate the histogram for.
-            marking_times: Series containing the marking times.
+            marking_times_minutes: Listlike containing the marking times in minutes.
             max_time: Optional, the maximum time to show on the histogram. If omitted,
-                defaults to the maximum time in the marking_times series.
+                defaults to the maximum time in the marking_times_minutes series.
             bin_width: Optional, the width of each bin on the histogram. If omitted,
                 defaults to 15 seconds per bin.
 
@@ -199,13 +199,13 @@ class MatplotlibService:
             A matplotlib figure containing the histogram.
         """
         if max_time is None:
-            max_time = marking_times.max()
+            max_time = marking_times_minutes.max()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
         bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
 
         ax.hist(
-            marking_times.div(60),
+            marking_times_minutes,
             bins=bins,
             ec="black",
             alpha=0.5,
@@ -213,5 +213,31 @@ class MatplotlibService:
         ax.set_title("Time spent marking Q" + str(question_number))
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
+
+        return fig
+
+    def scatter_time_spent_vs_mark_given(
+        self,
+        question_number: int,
+        times_spent_minutes: List[int],
+        marks_given: List[int],
+    ):
+        """Generate a scatter plot of the time spent marking a question vs the mark given.
+
+        Args:
+            question_number: The question to generate the scatter plot for.
+            times_spent_minutes: Listlike containing the marking times in minutes.
+            marks_given: Listlike containing the marks given.
+
+        Returns:
+            A matplotlib figure containing the scatter plot.
+        """
+
+        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+
+        ax.scatter(marks_given, times_spent_minutes, ec="black", alpha=0.5)
+        ax.set_title("Q" + str(question_number) + ": Time spent vs Mark given")
+        ax.set_ylabel("Time spent (min)")
+        ax.set_xlabel("Mark given")
 
         return fig
