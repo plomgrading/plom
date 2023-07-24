@@ -136,3 +136,44 @@ class MatplotlibService:
         plt.ylabel("Question number")
 
         return plt.gcf()
+
+    def histogram_of_grades_on_question_by_ta(
+        self, question: int, ta_name: str, ta_df: Optional[pd.DataFrame] = None
+    ):
+        """Generate a histogram of the grades on a specific question.
+
+        Args:
+            question: The question to generate the histogram for.
+            ta_name: The name of the TA to generate the histogram for.
+            ta_df: Optional dataframe containing the ta data. Should be
+                a copy or filtered version of self.ta_df. If omitted, defaults
+                to None and self.ta_df is used.
+
+        Returns:
+            A matplotlib figure containing the histogram.
+        """
+        if ta_df is None:
+            ta_df = self.gds.get_ta_data_for_ta(
+                ta_name, self.gds.get_ta_data_for_question(question_number=question)
+            )
+        assert isinstance(ta_df, pd.DataFrame)
+
+        self.check_num_figs()
+
+        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        bins = range(
+            0,
+            ta_df["max_score"].max() + RANGE_BIN_OFFSET,
+        )
+
+        ax.hist(
+            ta_df["score_given"],
+            bins=bins,
+            ec="black",
+            alpha=0.5,
+        )
+        ax.set_title("Grades for Q" + str(question) + " (by " + ta_name + ")")
+        ax.set_xlabel("Mark given")
+        ax.set_ylabel("# of times assigned")
+
+        return fig

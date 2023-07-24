@@ -12,7 +12,7 @@ from weasyprint import HTML, CSS
 from django.core.management.base import BaseCommand
 
 from Finish.services import GraphingDataService
-from Finish.services.matplotlib_service import MatplotlibService
+from Finish.services import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
@@ -94,11 +94,8 @@ class Command(BaseCommand):
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
-        marks_by_tas = gds.get_all_ta_data_by_ta()
         base64_histogram_of_grades_m = []
-
-        for marker in marks_by_tas:
-            scores_for_user = marks_by_tas[marker]
+        for marker, scores_for_user in gds.get_all_ta_data_by_ta().items():
             questions_marked_by_this_ta = gds.get_questions_marked_by_this_ta(
                 marker, ta_df
             )
@@ -109,23 +106,15 @@ class Command(BaseCommand):
                     question_number=question, ta_df=scores_for_user
                 )
 
-                fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-                bins = range(
-                    0,
-                    scores_for_user_for_question["max_score"].max() + RANGE_BIN_OFFSET,
+                base64_histogram_of_grades_m_q.append(
+                    mpls.get_graph_as_base64(
+                        mpls.histogram_of_grades_on_question_by_ta(
+                            question=question,
+                            ta_name=marker,
+                            ta_df=scores_for_user_for_question,
+                        )
+                    )
                 )
-
-                ax.hist(
-                    scores_for_user_for_question["score_given"],
-                    bins=bins,
-                    ec="black",
-                    alpha=0.5,
-                )
-                ax.set_title("Grades for Q" + str(question) + " (by " + marker + ")")
-                ax.set_xlabel("Mark given")
-                ax.set_ylabel("# of times assigned")
-
-                base64_histogram_of_grades_m_q.append(mpls.get_graph_as_base64(fig))
 
             base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
 
@@ -346,7 +335,7 @@ class Command(BaseCommand):
 
         html += html_add_title("Histograms of grades by marker by question")
 
-        for index, marker in enumerate(marks_by_tas):
+        for index, marker in enumerate(gds.get_all_ta_data_by_ta()):
             html += f"""
             <h4>Grades by {marker}</h4>
             """
