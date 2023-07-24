@@ -25,6 +25,7 @@ canvasapi==3.0.0
 debugpy==1.6.7
 django==4.1.10
 django-braces==1.15.0
+django-filter==23.2
 django-htmx==1.14.0
 django-huey==1.1.1
 django-polymorphic==3.1.0
@@ -60,7 +61,7 @@ tomli==2.0.1
 tomlkit==0.11.8
 tqdm==4.65.0
 urllib3==1.26.15
-weasyprint=57.0
+weasyprint==57.0
 whitenoise==6.4.0
 zipfly==6.0.5
 zxing-cpp==2.0.0
