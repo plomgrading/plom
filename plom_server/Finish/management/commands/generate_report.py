@@ -71,12 +71,15 @@ class Command(BaseCommand):
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         base64_histogram_of_grades_q = []
+        # get the data
         marks_for_questions = gds.get_marks_for_all_questions(student_df=student_df)
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
-            base64_histogram_of_grades_q.append(
-                mpls.get_graph_as_base64(
-                    mpls.histogram_of_grades_on_question(question=question)
+            base64_histogram_of_grades_q.append(  # add to the list
+                mpls.get_graph_as_base64(  # each base64-encoded image
+                    mpls.histogram_of_grades_on_question(  # of the histogram
+                        question=question
+                    )
                 )
             )
 
@@ -125,32 +128,27 @@ class Command(BaseCommand):
         max_time = gds.get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15  # seconds
         base64_histogram_of_time = []
-        marking_times_for_questions = gds.get_times_for_all_questions()
-        for question in marking_times_for_questions:
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-            bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
-
-            ax.hist(
-                marking_times_for_questions[question].div(60),
-                bins=bins,
-                ec="black",
-                alpha=0.5,
+        for question, marking_times in gds.get_times_for_all_questions().items():
+            base64_histogram_of_time.append(
+                mpls.get_graph_as_base64(
+                    mpls.histogram_of_time_spent_marking_each_question(
+                        question_number=question,
+                        marking_times=marking_times,
+                        max_time=max_time,
+                        bin_width=bin_width,
+                    )
+                )
             )
-            ax.set_title("Time spent marking Q" + str(question))
-            ax.set_xlabel("Time spent (min)")
-            ax.set_ylabel("# of papers")
-
-            base64_histogram_of_time.append(mpls.get_graph_as_base64(fig))
 
             mpls.check_num_figs()
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
         base64_scatter_of_time = []
-        for question in marking_times_for_questions:
+        for question, marking_times in gds.get_times_for_all_questions().items():
             fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
-            times_for_question = marking_times_for_questions[question].div(60)
+            times_for_question = marking_times.div(60)
             mark_given_for_question = gds.get_scores_for_question(
                 question_number=question, ta_df=ta_df
             )

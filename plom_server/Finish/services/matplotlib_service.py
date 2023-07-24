@@ -140,7 +140,7 @@ class MatplotlibService:
     def histogram_of_grades_on_question_by_ta(
         self, question: int, ta_name: str, ta_df: Optional[pd.DataFrame] = None
     ):
-        """Generate a histogram of the grades on a specific question.
+        """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
             question: The question to generate the histogram for.
@@ -175,5 +175,43 @@ class MatplotlibService:
         ax.set_title("Grades for Q" + str(question) + " (by " + ta_name + ")")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
+
+        return fig
+
+    def histogram_of_time_spent_marking_each_question(
+        self,
+        question_number: int,
+        marking_times: pd.Series,
+        max_time: Optional[int] = None,
+        bin_width: Optional[int] = 15,
+    ):
+        """Generate a histogram of the time spent marking a question.
+
+        Args:
+            question_number: The question to generate the histogram for.
+            marking_times: Series containing the marking times.
+            max_time: Optional, the maximum time to show on the histogram. If omitted,
+                defaults to the maximum time in the marking_times series.
+            bin_width: Optional, the width of each bin on the histogram. If omitted,
+                defaults to 15 seconds per bin.
+
+        Returns:
+            A matplotlib figure containing the histogram.
+        """
+        if max_time is None:
+            max_time = marking_times.max()
+
+        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
+
+        ax.hist(
+            marking_times.div(60),
+            bins=bins,
+            ec="black",
+            alpha=0.5,
+        )
+        ax.set_title("Time spent marking Q" + str(question_number))
+        ax.set_xlabel("Time spent (min)")
+        ax.set_ylabel("# of papers")
 
         return fig
