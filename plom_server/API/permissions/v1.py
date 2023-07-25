@@ -6,6 +6,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class AllowAnyReadOnly(BasePermission):
     """Allow authenticated and unauthenticated users to access only safe methods.
+
     The default permission is IsAuthenticated, see https://gitlab.com/plom/plom/-/issues/2904.
     """
 
