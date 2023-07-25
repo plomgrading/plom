@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from Preparation.services import ExtraPageService
+from ...services import ExtraPageService
 
 
 class Command(BaseCommand):

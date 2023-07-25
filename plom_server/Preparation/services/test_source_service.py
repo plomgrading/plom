@@ -1,21 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
+from collections import defaultdict
+import hashlib
+from pathlib import Path
+import tempfile
+
+import fitz
+
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core.files import File
 from django.db import transaction
 
-from Preparation.models import PaperSourcePDF
 from Papers.services import SpecificationService
-
-from collections import defaultdict
-import fitz
-import hashlib
-from pathlib import Path
-import tempfile
+from ..models import PaperSourcePDF
 
 
 class TestSourceService:
     @transaction.atomic
     def get_source_pdf_path(self, source_version):
         """Return the path to the given source test version pdf.
+
         In practice this would instead return the URL.
 
         source_version (int): The version of the pdf.
@@ -42,14 +49,14 @@ class TestSourceService:
 
     @transaction.atomic
     def get_list_of_uploaded_sources(self):
-        """Return a dict of uploaded source versions and their urls"""
+        """Return a dict of uploaded source versions and their urls."""
         status = {}
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
 
     def get_list_of_sources(self):
-        """Return a dict of all versions, uploaded or not"""
+        """Return a dict of all versions, uploaded or not."""
         speck = SpecificationService()
 
         status = {(v + 1): None for v in range(speck.get_n_versions())}

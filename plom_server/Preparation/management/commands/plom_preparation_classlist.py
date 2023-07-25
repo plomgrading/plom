@@ -3,16 +3,15 @@
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from Preparation.services import (
+from ...services import (
     StagingClasslistCSVService,
     StagingStudentService,
     PrenameSettingService,
 )
-
-from pathlib import Path
 
 
 class Command(BaseCommand):

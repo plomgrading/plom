@@ -2,15 +2,15 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2023 Edith Coates
 
+from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 
-from Preparation.services import PQVMappingService
-from SpecCreator.services import StagingSpecificationService
-from Papers.services import SpecificationService
-
-
-from pathlib import Path
 from plom.misc_utils import format_int_list_with_runs
+from Papers.services import SpecificationService
+from SpecCreator.services import StagingSpecificationService
+
+from ...services import PQVMappingService
 
 
 class Command(BaseCommand):
