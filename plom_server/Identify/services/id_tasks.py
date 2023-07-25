@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import transaction
 
@@ -9,7 +10,7 @@ from Identify.models import (
     PaperIDTask,
     PaperIDAction,
 )
-from Papers.models import IDPage
+from Papers.models import IDPage, Paper
 
 
 class IdentifyTaskService:
@@ -18,6 +19,7 @@ class IdentifyTaskService:
     @transaction.atomic
     def are_there_id_tasks(self):
         """Return True if there is at least one ID task in the database."""
+        # TO_DO - do we need to exclude "out of date" tasks here
         return PaperIDTask.objects.exists()
 
     @transaction.atomic
@@ -33,6 +35,7 @@ class IdentifyTaskService:
     @transaction.atomic
     def id_task_exists(self, paper):
         """Return true if an ID tasks exists for a particular paper."""
+        # TO_DO - do we need to exclude "out of date" tasks here
         return PaperIDTask.objects.filter(paper=paper).exists()
 
     @transaction.atomic
@@ -42,6 +45,7 @@ class IdentifyTaskService:
         Args:
             task: reference to a PaperIDTask instance
         """
+        # TO_DO - do we need to exclude "out of date" tasks here
         latest = PaperIDAction.objects.filter(task=task)
         latest = latest.order_by("-time")
         if latest:
@@ -94,32 +98,43 @@ class IdentifyTaskService:
     def claim_task(self, user, paper_number):
         """Claim an ID task for a user."""
 
-        # TODO - adr working here.
-        
         try:
-            task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+            task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
+                paper__paper_number=paper_number
+            )
         except PaperIDTask.DoesNotExist:
             raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
 
         if task.status == PaperIDTask.OUT:
             raise RuntimeError("Task is currently assigned.")
+        elif task.status == PaperIDTask.COMPLETE:
+            raise RuntimeError("Task has already been identified.")
 
         task.assigned_user = user
         task.status = PaperIDTask.OUT
         task.save()
 
+    @transaction.atomic
     def get_id_page(self, paper_number):
         """Return the ID page image of a certain test-paper."""
         id_page = IDPage.objects.get(paper__paper_number=paper_number)
         id_img = id_page.image
         return id_img
 
+    @transaction.atomic
     def identify_paper(self, user, paper_number, student_id, student_name):
         """Identify a test-paper and close its associated task."""
         try:
-            task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+            task = PaperIDTask.objects.exclude(PaperIDTask.OUT_OF_DATE).get(
+                paper__paper_number=paper_number
+            )
         except PaperIDTask.DoesNotExist:
             raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
+
+        if task.assigned_user != user:
+            raise RuntimeError(
+                f"Task for paper number {paper_number} is not assigned to user {user}."
+            )
 
         id_action = PaperIDAction(
             user=user, task=task, student_id=student_id, student_name=student_name
@@ -129,17 +144,21 @@ class IdentifyTaskService:
         task.status = PaperIDTask.COMPLETE
         task.save()
 
+    @transaction.atomic
     def surrender_task(self, user, task):
-        """Remove a user from a marking task and set its status to 'todo'.
+        """Remove a user from an id-ing task and set its status to 'todo'.
 
         Args:
             user: reference to a User instance
             task: reference to a MarkingTask instance
         """
-        task.assigned_user = None
-        task.status = PaperIDTask.TO_DO
-        task.save()
+        # only set status back to "TODO" if the task is OUT
+        if task.status == PaperIDTask.OUT:
+            task.assigned_user = None
+            task.status = PaperIDTask.TO_DO
+            task.save()
 
+    @transaction.atomic
     def surrender_all_tasks(self, user):
         """Surrender all of the tasks currently assigned to the user.
 
@@ -152,5 +171,28 @@ class IdentifyTaskService:
         for task in user_tasks:
             self.surrender_task(user, task)
 
-    def set_task_outdated(self, task):
-        
+    @transaction.atomic
+    def set_paper_idtask_outdated(self, paper_number):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Cannot find paper {paper_number}")
+
+        try:
+            task_obj = PaperIDTask.objects.exclude(PaperIDTask.OUT_OF_DATE).get(
+                paper=paper_obj
+            )
+        except PaperIDTask.DoesNotExist:
+            raise ValueError(
+                f"Cannot find valid PaperIDTask associated with paper {paper_number}"
+            )
+        except PaperIDTask.MultipleObjectsReturned:
+            raise ValueError(
+                f"Very serious error - have found multiple valid ID-tasks for paper {paper_number}"
+            )
+
+        if task_obj.status == PaperIDTask.OUT_OF_DATE:
+            return
+        task_obj.assigned_user = None
+        task_obj.status = PaperIDTask.OUT_OF_DATE
+        task_obj.save()
