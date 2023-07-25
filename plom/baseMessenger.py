@@ -63,7 +63,7 @@ class BaseMessenger:
         *,
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
-        verify_ssl: bool = True,
+        verify_ssl: Union[bool, str] = True,
         webplom: bool = False,
     ):
         """Initialize a new BaseMessenger.
@@ -86,6 +86,9 @@ class BaseMessenger:
 
         Returns:
             None
+
+        Raises:
+            PlomConnectionError
         """
         self.webplom = webplom
         if os.environ.get("WEBPLOM"):
@@ -95,7 +98,10 @@ class BaseMessenger:
         if not server:
             server = "127.0.0.1"
 
-        parsed_url = urllib3.util.parse_url(server)
+        try:
+            parsed_url = urllib3.util.parse_url(server)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{server}"') from e
 
         if not parsed_url.host:
             # "localhost:1234" parses this way: we do it ourselves :(
@@ -118,12 +124,15 @@ class BaseMessenger:
 
         self._raw_init(server, verify_ssl=verify_ssl)
 
-    def _raw_init(self, base: str, *, verify_ssl: bool) -> None:
+    def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
         self.session = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        parsed_url = urllib3.util.parse_url(base)
+        try:
+            parsed_url = urllib3.util.parse_url(base)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
         self.base = base
         self.SRmutex = threading.Lock()
@@ -154,6 +163,9 @@ class BaseMessenger:
         x.token = m.token
         return x
 
+    def is_ssl_verified(self):
+        return self.verify_ssl
+
     def force_ssl_unverified(self):
         """This connection (can be open) does not need to verify cert SSL going forward."""
         self.verify_ssl = False
@@ -168,6 +180,19 @@ class BaseMessenger:
     def username(self):
         return self.whoami()
 
+    def enable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = False
+
+    def disable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = True
+
+    def is_legacy_server(self) -> bool:
+        return not self.webplom
+
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
@@ -176,18 +201,41 @@ class BaseMessenger:
         # Now with django we pass a token in the header.
         # TODO: rework this when/if we stop supporting legacy servers.
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.get(self.base + url, *args, **kwargs)
 
-    def post(self, url, *args, **kwargs):
+    def post_raw(self, url, *args, **kwargs):
+        """Perform a POST operation without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        return self.session.post(self.base + url, *args, **kwargs)
+
+    def post_auth(self, url, *args, **kwargs):
+        """Perform a POST operation with tokens for authentication."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        if self.webplom:
+            # Django-based servers pass token in the header
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+        else:
+            # Legacy servers expect "user" and "token" in the json.
+            json = kwargs.get("json", {})
+            json["user"] = self.user
+            json["token"] = self.token
+            kwargs["json"] = json
 
         return self.session.post(self.base + url, *args, **kwargs)
 
@@ -196,8 +244,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.put(self.base + url, *args, **kwargs)
 
@@ -206,8 +259,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.delete(self.base + url, *args, **kwargs)
 
@@ -216,8 +274,13 @@ class BaseMessenger:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
         return self.session.patch(self.base + url, *args, **kwargs)
 
@@ -364,7 +427,7 @@ class BaseMessenger:
     def _requestAndSaveToken_webplom(self, user, pw):
         """Get an authorisation token from WebPlom."""
         self.SRmutex.acquire()
-        response = self.post(
+        response = self.post_raw(
             "/get_token/",
             json={
                 "username": user,
@@ -414,9 +477,6 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
-        # TODO: Issue #2902: better to do more generally in get/post/delete?
-        if not self.token:
-            raise PlomAuthenticationException("Trying to logout without token")
         if self.webplom:
             path = "/close_user/"
         else:

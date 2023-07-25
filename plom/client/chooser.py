@@ -19,6 +19,7 @@ import re
 import sys
 import tempfile
 import time
+from typing import Union
 
 import appdirs
 import arrow
@@ -99,8 +100,6 @@ class Chooser(QDialog):
         uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
-        self._legacy = False
-        self._ssl_excused = False
         self._old_client_note_seen = False
 
         self.lastTime = readLastTime()
@@ -147,8 +146,12 @@ class Chooser(QDialog):
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.loginButton.clicked.connect(self.login)
+        # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
+        # clear the login on username / password edit
+        self.ui.userLE.textEdited.connect(self.logout)
+        self.ui.passwordLE.textEdited.connect(self.logout)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
 
@@ -194,7 +197,7 @@ class Chooser(QDialog):
             if not self.is_logged_in():
                 return
 
-        if self._legacy and self.messenger.username == "manager":
+        if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             if which_subapp != "Manager":
                 InfoMsg(
                     self,
@@ -209,12 +212,15 @@ class Chooser(QDialog):
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
-            if not self._legacy:
+            if not self.messenger.is_legacy_server():
                 InfoMsg(
                     self,
                     "<p>Only legacy servers have a manager app: "
-                    "how did you get here?.</p>",
+                    "how did you get here?</p>",
                 ).exec()
+                return
+            if not self.messenger.username == "manager":
+                InfoMsg(self, 'Only "manager" can manager.').exec()
                 return
 
             # Importing here avoids a circular import
@@ -344,23 +350,26 @@ class Chooser(QDialog):
     def _pre_login_connection(self, msgr):
         # This msgr object may or may not be logged in: it can be temporary: we
         # only use it to get public info from the server.
-        # TODO: this figures out if we're talking to a legacy or new server...
-        # TODO: as a side effect it updates msgr with that info.
+        #
+        # Side effects:
+        #    The `msgr` itself will be modified, e.g., if user excepted
+        #    SSL verification.   It also figures out if we're talking to
+        #    a legacy or new server (and stores that info).
+        _ssl_excused = False
         try:
             try:
                 server_ver_str = msgr.start()
             except PlomSSLError as e:
-                if not self._ssl_excused:
-                    msg = WarningQuestion(
-                        self,
-                        "SSL error: cannot verify the identity of the server.",
-                        "Do you want to disable SSL certificate verification?  Not recommended.",
-                        details=f"{e}",
-                    )
-                    msg.setDefaultButton(QMessageBox.StandardButton.No)
-                    if msg.exec() == QMessageBox.StandardButton.No:
-                        return False
-                self._ssl_excused = True
+                msg = WarningQuestion(
+                    self,
+                    "SSL error: cannot verify the identity of the server.",
+                    "Do you want to disable SSL certificate verification?  Not recommended.",
+                    details=f"{e}",
+                )
+                msg.setDefaultButton(QMessageBox.StandardButton.No)
+                if msg.exec() == QMessageBox.StandardButton.No:
+                    return False
+                _ssl_excused = True
                 msgr.force_ssl_unverified()
                 server_ver_str = msgr.start()
         except PlomBenignException as e:
@@ -380,22 +389,20 @@ class Chooser(QDialog):
                 "Unexpected server response on version query.",
                 details=server_ver_str.strip(),
             ).exec()
-            self.messenger = None
+            msgr.stop()
             return False
         self.ui.infoLabel.setText(server_ver_str)
 
-        if self._ssl_excused:
+        if _ssl_excused:
             s = "\nCaution: SSL exception granted."
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
-        self._legacy = False
-        msgr.webplom = True
+        # TODO: should be the default and/or needs an accessor method?
+        msgr.disable_legacy_server_support()
         if "Legacy" in info["product_string"]:
-            self._legacy = True
-            msgr.webplom = False
-            # lil' bit o' debugin
+            msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
@@ -418,15 +425,31 @@ class Chooser(QDialog):
         return True
 
     def validate_server(self):
-        self.get_server_info()
+        self.start_messenger_get_info()
         # put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
             self.ui.passwordLE.setFocus()
         else:
             self.ui.userLE.setFocus()
 
-    def get_server_info(self):
-        """Get info from server, update UI with server version, check SSL."""
+    def start_messenger_get_info(
+        self, *, _legacy_username: Union[str, None] = None, verify_ssl: bool = True
+    ) -> None:
+        """Get info from server, update UI with server version, check SSL.
+
+        Keyword Args:
+            _legacy_username: normally we don't care who might eventually
+                login, except in the legacy case and if it might be the
+                manager.
+            verify_ssl: True by default but if False then don't pop up
+                dialogs about lacking SSL verification.  Should not be
+                used lightly!  Currently we let users make this decision
+                one login at a time.
+
+        Returns:
+            None, but modifies the state of the internal `messenger`
+            instance variable.
+        """
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
@@ -438,11 +461,33 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
-        local_msgr = Messenger(server, port=port)
+        if self.is_logged_in():
+            self.logout()
+        if self.messenger:
+            self.messenger.stop()
+            self.messenger = None
 
-        if not self._pre_login_connection(local_msgr):
-            # no action required currently: optional cleanup?
-            pass
+        try:
+            msgr: Union[Messenger, ManagerMessenger] = Messenger(
+                server, port=port, verify_ssl=verify_ssl
+            )
+            if not self._pre_login_connection(msgr):
+                return
+        except PlomException as e:
+            WarnMsg(self, "Could not connect to server", info=str(e)).exec()
+            return
+
+        if msgr.is_legacy_server():
+            if _legacy_username and _legacy_username == "manager":
+                verified = msgr.is_ssl_verified()
+                msgr.stop()
+                msgr = ManagerMessenger(server, port=port, verify_ssl=verified)
+                if not self._pre_login_connection(msgr):
+                    return
+
+        # Once we're happy with the manager keep it, b/c it knows if we
+        # have made an SSL exception for example.
+        self.messenger = msgr
 
     def is_logged_in(self) -> bool:
         if not self.messenger:
@@ -466,20 +511,14 @@ class Chooser(QDialog):
         self.messenger.stop()
         self.messenger = None
         self.ui.loginInfoLabel.setText("logged out")
-        self._ssl_excused = False
         self._old_client_note_seen = False
+        self.ui.manageButton.setVisible(False)
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
 
-        Also Update the UI with restricted questions and versions."""
-        server = self.ui.serverLE.text().strip()
-        if not server:
-            log.warning("No server URI")
-            return
-        # due to special handling of blank versus default, use .text() not .value()
-        port = self.ui.mportSB.text()
-
+        Also update the UI with restricted questions and versions.
+        """
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
         if not user:
@@ -488,22 +527,24 @@ class Chooser(QDialog):
         if not pwd:
             return
 
-        # find out if its a legacy server
-        self.get_server_info()
+        if self.is_logged_in():
+            self.logout()
+
+        verified = True
+        # Legacy special cases if we already have the wrong type of messenger,
+        # e.g., someone changed the username after validating but before login.
+        if self.messenger and self.messenger.is_legacy_server():
+            if user == "manager" and not isinstance(self.messenger, ManagerMessenger):
+                verified = self.messenger.is_ssl_verified()
+                self.logout()
+            elif user != "manager" and isinstance(self.messenger, ManagerMessenger):
+                verified = self.messenger.is_ssl_verified()
+                self.logout()
 
         if not self.messenger:
-            if self._legacy and user == "manager":
-                self.messenger = ManagerMessenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-            else:
-                self.messenger = Messenger(
-                    server, port=port, webplom=(not self._legacy)
-                )
-
-        if not self._pre_login_connection(self.messenger):
-            self.messenger = None
-            return
+            self.start_messenger_get_info(_legacy_username=user, verify_ssl=verified)
+            if not self.messenger:
+                return
 
         try:
             self.messenger.requestAndSaveToken(user, pwd)
@@ -633,7 +674,6 @@ class Chooser(QDialog):
         try:
             parsedurl = urllib3.util.parse_url(address)
             if not parsedurl.host:
-                # "localhost:1234" parses this way: we'll do it ourselves
                 self._partial_parse_address_manual()
                 return
             if parsedurl.scheme and parsedurl.scheme.casefold() != "https":
@@ -658,12 +698,18 @@ class Chooser(QDialog):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+        # TODO: wall-paper for Issue #2903
+        if not self.is_logged_in():
+            self.logout()
 
     @pyqtSlot(int, list)
     def on_marker_window_close(self, value, stuff):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+        # TODO: wall-paper for Issue #2903
+        if not self.is_logged_in():
+            self.logout()
         if not stuff:
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
