@@ -12,29 +12,39 @@
             <table class="table">
                 <tr>
                     <th>Username</th>
-                    {% for user, annotation in annotation_data.items %}
-                        <td>{{ user.username }}</td>
-                    {% endfor %}
+                    {% for user, annotation in annotation_data_dict.items %}<td>{{ user.username }}</td>{% endfor %}
                 </tr>
                 <tr>
                     <th>Questions Marked</th>
-                    {% for user, annotation in annotation_data.items %}
-                        <td>{{ annotation|length }}</td>
-                    {% endfor %}
+                    {% for user, annotation in annotation_data_dict.items %}<td>{{ annotation }}</td>{% endfor %}
                 </tr>
+            </table>
+            <p>or</p>
+            <table class="table">
+                <tr>
+                    <th>Username</th>
+                    <th>Question Marked</th>
+                </tr>
+                {% for user, annotation_count in annotation_data_dict.items %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ annotation_count }}</td>
+                    </tr>
+                {% endfor %}
             </table>
         {% else %}
             <p>No annotations</p>
         {% endif %}
     </div>
     <div>
-        {% if annotations_exist %}
-            {% for d in data %}
-                <p>user {{d.assigned_user}}</p>
-                <p>question number {{d.question_number}}</p>
-                <p>question version {{d.question_version}}</p>
-                <p>count {{d.count}}</p>
+        {% for user, annotations in grouped_annotations.items %}
+            <h2>{{ user.username }}</h2>
+            {% for question, count in annotations.items %}
+                <p>Question Number: {{ question.0 }}</p>
+                <p>Question Version: {{ question.1 }}</p>
+                <p>Marked Question: {{ count }}</p>
+                <p>------------------------------------</p>
             {% endfor %}
-        {% endif %}
+        {% endfor %}
     </div>
 {% endblock main_content %}

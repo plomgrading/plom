@@ -18,21 +18,16 @@ class ProgressUserInfoHome(ManagerRequiredView):
         uis = UserInfoServices()
 
         annotations_exist = uis.annotation_exists()
-        annotation_data = uis.get_total_annotations_based_on_user()
+        annotation_data_dict = uis.get_total_annotations_based_on_user()
+        grouped_annotations = (
+            uis.get_annotations_based_on_user_and_question_number_version()
+        )
 
-        data = MarkingTask.objects.values('assigned_user', 'question_number', 'question_version').annotate(count=Count('id')).order_by('assigned_user')
-        for d in data:
-            print(d)
-            user = d['assigned_user']
-            question_number = d['question_number']
-            version_number = d['question_version']
-            count = d['count']
-            # user = User.objects.get(user=user)
-            print(f"{user} {question_number} {version_number} {count}")
-
-        context.update({
-            "annotations_exist": annotations_exist,
-            "annotation_data": annotation_data,
-            "data": data,
-        })
+        context.update(
+            {
+                "annotations_exist": annotations_exist,
+                "annotation_data_dict": annotation_data_dict,
+                "grouped_annotations": grouped_annotations,
+            }
+        )
         return render(request, "Progress/User_Info/user_info_home.html", context)
