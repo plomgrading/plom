@@ -4,6 +4,8 @@
 import datetime as dt
 
 import matplotlib
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
@@ -36,6 +38,9 @@ class Command(BaseCommand):
         mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
+        student_df = gds.get_student_data()
+        ta_df = gds.get_ta_data()
+
         # info for report
         name = spec["name"]
         longName = spec["longName"]
@@ -62,7 +67,21 @@ class Command(BaseCommand):
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
-        histogram_of_grades_q = mpls.get_report_histogram_of_grades_q()
+        histogram_of_grades_q = []
+        marks_for_questions = gds.get_marks_for_all_questions(student_df=student_df)
+        for question, _ in enumerate(marks_for_questions):
+            question += 1  # 1-indexing
+            histogram_of_grades_q.append(  # add to the list
+                mpls.get_graph_as_base64(  # each base64-encoded image
+                    mpls.histogram_of_grades_on_question(  # of the histogram
+                        question=question
+                    )
+                )
+            )
+
+            mpls.check_num_figs()
+
+        del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
         print("Generating correlation heatmap.")
@@ -76,19 +95,121 @@ class Command(BaseCommand):
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
-        histogram_of_grades_m = mpls.get_report_histogram_of_grades_m()
+        histogram_of_grades_m = []
+        for marker, scores_for_user in gds.get_all_ta_data_by_ta().items():
+            questions_marked_by_this_ta = gds.get_questions_marked_by_this_ta(
+                marker, ta_df
+            )
+            histogram_of_grades_m_q = []
+
+            for question in questions_marked_by_this_ta:
+                scores_for_user_for_question = gds.get_ta_data_for_question(
+                    question_number=question, ta_df=scores_for_user
+                )
+
+                histogram_of_grades_m_q.append(
+                    mpls.get_graph_as_base64(
+                        mpls.histogram_of_grades_on_question_by_ta(
+                            question=question,
+                            ta_name=marker,
+                            ta_df=scores_for_user_for_question,
+                        )
+                    )
+                )
+
+            histogram_of_grades_m.append(histogram_of_grades_m_q)
+
+            mpls.check_num_figs()
+
+        del (
+            marker,
+            scores_for_user,
+            questions_marked_by_this_ta,
+            histogram_of_grades_m_q,
+            question,
+            scores_for_user_for_question,
+        )
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        histogram_of_time = mpls.get_report_histogram_of_time_spent_marking()
+        max_time = gds.get_ta_data()["seconds_spent_marking"].max()
+        bin_width = 15
+        histogram_of_time = []
+        for question, marking_times in gds.get_times_for_all_questions().items():
+            histogram_of_time.append(
+                mpls.get_graph_as_base64(
+                    mpls.histogram_of_time_spent_marking_each_question(
+                        question_number=question,
+                        marking_times_minutes=marking_times.div(60),
+                        max_time=max_time,
+                        bin_width=bin_width,
+                    )
+                )
+            )
+
+            mpls.check_num_figs()
+
+        del max_time, bin_width, marking_times, question
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
-        scatter_of_time = mpls.get_report_scatter_of_time_spent_vs_marks_given()
+        scatter_of_time = []
+        for question, marking_times in gds.get_times_for_all_questions().items():
+            times_for_question = marking_times.div(60)
+            mark_given_for_question = gds.get_scores_for_question(
+                question_number=question, ta_df=ta_df
+            )
+
+            scatter_of_time.append(
+                mpls.get_graph_as_base64(
+                    mpls.scatter_time_spent_vs_mark_given(
+                        question_number=question,
+                        times_spent_minutes=times_for_question,
+                        marks_given=mark_given_for_question,
+                    )
+                )
+            )
+
+            mpls.check_num_figs()
+
+        del question, times_for_question, mark_given_for_question, marking_times
 
         # Box plot of the grades given by each marker for each question
         print("Generating box plots of grades by each marker for each question.")
-        boxplots = mpls.get_report_boxplot_by_question()
+        boxplots = []
+        for (
+            question_number,
+            question_df,
+        ) in gds.get_all_ta_data_by_question().items():
+            marks_given = []
+            # add overall to names
+            marker_names = ["Overall"]
+            marker_names.extend(
+                gds.get_tas_that_marked_this_question(question_number, question_df)
+            )
+            # add the overall marks
+            marks_given.append(
+                gds.get_scores_for_question(
+                    question_number=question_number, ta_df=ta_df
+                )
+            )
+
+            for marker_name in marker_names[1:]:
+                marks_given.append(
+                    gds.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
+                )
+
+            boxplots.append(
+                mpls.get_graph_as_base64(
+                    mpls.boxplot_of_marks_given_by_ta(
+                        marks_given, marker_names, question_number
+                    )
+                )
+            )
+
+            mpls.check_num_figs()
+
+        del question_number, question_df, marks_given, marker_names, marker_name
 
         print("Generating line graph of average mark on each question.")
         line_graph = mpls.get_graph_as_base64(

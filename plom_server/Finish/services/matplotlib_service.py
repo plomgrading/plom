@@ -8,7 +8,6 @@ from typing import Optional, List
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import seaborn as sns
 
@@ -299,6 +298,21 @@ class MatplotlibService:
 
         return fig
 
+    def boxplot_set_colors(self, bp, colour):
+        """Set the colours of a boxplot.
+
+        Args:
+            bp: The boxplot to set the colours of.
+            colour: The colour to set the boxplot to.
+        """
+        plt.setp(bp["boxes"][0], color=cm.hsv(colour))
+        plt.setp(bp["caps"][0], color=cm.hsv(colour))
+        plt.setp(bp["caps"][1], color=cm.hsv(colour))
+        plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
+        plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
+        plt.setp(bp["fliers"][0], color=cm.hsv(colour))
+        plt.setp(bp["medians"][0], color=cm.hsv(colour))
+
     def line_graph_of_avg_marks_by_question(self):
         """Generate a line graph of the average percentage marks by question.
 
@@ -321,182 +335,3 @@ class MatplotlibService:
         plt.xticks(range(1, self.spec["numberOfQuestions"] + 1))
 
         return plt.gcf()
-
-    def boxplot_set_colors(self, bp, colour):
-        """Set the colours of a boxplot.
-
-        Args:
-            bp: The boxplot to set the colours of.
-            colour: The colour to set the boxplot to.
-        """
-        plt.setp(bp["boxes"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][1], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
-        plt.setp(bp["fliers"][0], color=cm.hsv(colour))
-        plt.setp(bp["medians"][0], color=cm.hsv(colour))
-
-    def get_report_histogram_of_grades_q(self) -> List[str]:
-        """Get a list of histogram graphs of grades by question.
-
-        Made to be used in the report.
-
-        Returns:
-            A list of base64-encoded images of the histograms.
-        """
-        histogram_of_grades_q = []
-        marks_for_questions = self.gds.get_marks_for_all_questions(
-            student_df=self.student_df
-        )
-        for question, _ in enumerate(marks_for_questions):
-            question += 1  # 1-indexing
-            histogram_of_grades_q.append(  # add to the list
-                self.get_graph_as_base64(  # each base64-encoded image
-                    self.histogram_of_grades_on_question(  # of the histogram
-                        question=question
-                    )
-                )
-            )
-
-            self.check_num_figs()
-
-        return histogram_of_grades_q
-
-    def get_report_histogram_of_grades_m(self) -> List[List[str]]:
-        """Get a list of lists of histograms of grades by marker by question.
-
-        Made to be used in the report.
-
-        Returns:
-            A list of lists of base64-encoded images of the histograms by marker by question.
-        """
-        histogram_of_grades_m = []
-        for marker, scores_for_user in self.gds.get_all_ta_data_by_ta().items():
-            questions_marked_by_this_ta = self.gds.get_questions_marked_by_this_ta(
-                marker, self.ta_df
-            )
-            histogram_of_grades_m_q = []
-
-            for question in questions_marked_by_this_ta:
-                scores_for_user_for_question = self.gds.get_ta_data_for_question(
-                    question_number=question, ta_df=scores_for_user
-                )
-
-                histogram_of_grades_m_q.append(
-                    self.get_graph_as_base64(
-                        self.histogram_of_grades_on_question_by_ta(
-                            question=question,
-                            ta_name=marker,
-                            ta_df=scores_for_user_for_question,
-                        )
-                    )
-                )
-
-            histogram_of_grades_m.append(histogram_of_grades_m_q)
-
-            self.check_num_figs()
-
-        return histogram_of_grades_m
-
-    def get_report_histogram_of_time_spent_marking(self) -> List[str]:
-        """Get a list of histograms of time spent marking each question.
-
-        Made to be used in the report.
-
-        Note: The bin width is specified in seconds and is converted to minutes
-        in the plotting function. The histogram is plotted in minutes.
-
-        Returns:
-            A list of base64-encoded images of the histograms.
-        """
-        max_time = self.gds.get_ta_data()["seconds_spent_marking"].max()
-        bin_width = 15
-        histogram_of_time = []
-        for question, marking_times in self.gds.get_times_for_all_questions().items():
-            histogram_of_time.append(
-                self.get_graph_as_base64(
-                    self.histogram_of_time_spent_marking_each_question(
-                        question_number=question,
-                        marking_times_minutes=marking_times.div(60),
-                        max_time=max_time,
-                        bin_width=bin_width,
-                    )
-                )
-            )
-
-            self.check_num_figs()
-
-        return histogram_of_time
-
-    def get_report_scatter_of_time_spent_vs_marks_given(self) -> List[str]:
-        """Get a list of scatter plots of time spent marking each question vs mark given.
-
-        Made to be used in the report.
-
-        Returns:
-            A list of base64-encoded images of the scatter plots.
-        """
-        scatter_of_time = []
-        for question, marking_times in self.gds.get_times_for_all_questions().items():
-            times_for_question = marking_times.div(60)
-            mark_given_for_question = self.gds.get_scores_for_question(
-                question_number=question, ta_df=self.ta_df
-            )
-
-            scatter_of_time.append(
-                self.get_graph_as_base64(
-                    self.scatter_time_spent_vs_mark_given(
-                        question_number=question,
-                        times_spent_minutes=times_for_question,
-                        marks_given=mark_given_for_question,
-                    )
-                )
-            )
-
-            self.check_num_figs()
-
-        return scatter_of_time
-
-    def get_report_boxplot_by_question(self) -> List[str]:
-        """Get a list of boxplots of marks given by each marker for each question.
-
-        Made to be used in the report.
-
-        Returns:
-            A list of base64-encoded images of the boxplots.
-        """
-        boxplots = []
-        for (
-            question_number,
-            question_df,
-        ) in self.gds.get_all_ta_data_by_question().items():
-            marks_given = []
-            # add overall to names
-            marker_names = ["Overall"]
-            marker_names.extend(
-                self.gds.get_tas_that_marked_this_question(question_number, question_df)
-            )
-            # add the overall marks
-            marks_given.append(
-                self.gds.get_scores_for_question(
-                    question_number=question_number, ta_df=self.ta_df
-                )
-            )
-
-            for marker_name in marker_names[1:]:
-                marks_given.append(
-                    self.gds.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
-                )
-
-            boxplots.append(
-                self.get_graph_as_base64(
-                    self.boxplot_of_marks_given_by_ta(
-                        marks_given, marker_names, question_number
-                    )
-                )
-            )
-
-            self.check_num_figs()
-
-        return boxplots
