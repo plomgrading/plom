@@ -1259,7 +1259,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
             # TODO - check for error status here.
             img = StagingImage.objects.get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
-            img.rotation += X["rotation"]
+            img.rotation = X["rotation"]
             img.save()
 
         bundle_obj.has_qr_codes = True
@@ -1367,7 +1367,7 @@ def huey_child_parse_qr_code(image_pk: int, *, quiet=True) -> Dict[str, Any]:
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
 
     # Re-read QR codes if the page image needs to be rotated
-    if rotation != 0:
+    if rotation and rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)

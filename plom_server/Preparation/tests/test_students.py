@@ -1,20 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-
-import random
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
 
-from Preparation.services import StagingStudentService, PrenameSettingService
-from Preparation.models import StagingStudent
+from ..services import StagingStudentService, PrenameSettingService
+from ..models import StagingStudent
 
 
 class StagingStudentsTests(TestCase):
     def test_get_minimum_number_to_produce(self):
-        """
-        Test StagingStudentService.get_minimum_number_to_produce()
-        """
+        """Test StagingStudentService.get_minimum_number_to_produce()."""
         sstu = StagingStudentService()
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 20)

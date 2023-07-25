@@ -3,17 +3,14 @@
 
 from django.test import TestCase
 
-from Preparation.services import PQVMappingService
+from ..services import PQVMappingService
 
 
 class PQVMappingServiceTests(TestCase):
     fixtures = ["test_spec.json"]
 
     def test_num_to_produce(self):
-        """
-        Test that the created QV Map has the correct number of test-papers.
-        """
-
+        """Test that the created QV Map has the correct number of test-papers."""
         pqvs = PQVMappingService()
         self.assertFalse(pqvs.is_there_a_pqv_map())
 

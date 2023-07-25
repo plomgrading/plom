@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from django.shortcuts import render
-
 from django.http import HttpResponseRedirect, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 
-from Preparation.services import (
+from Base.base_group_views import ManagerRequiredView
+from Papers.services import SpecificationService
+from SpecCreator.services import StagingSpecificationService
+
+from ..services import (
     PQVMappingService,
     PrenameSettingService,
     StagingStudentService,
 )
-
-from Base.base_group_views import ManagerRequiredView
-from SpecCreator.services import StagingSpecificationService
-from Papers.services import SpecificationService
 
 
 class PQVMappingUploadView(ManagerRequiredView):

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -77,7 +78,13 @@ class ImageRotateService:
 
         # Rotating by 90 = counter-clockwise
         # Rotating by -90 = clockwise
-        staging_img.rotation += angle
+        if staging_img.rotation is None:
+            # if rotation has not been set yet,
+            # define absolute angle
+            staging_img.rotation = angle
+        else:
+            # otherwise append to existing angle in DB
+            staging_img.rotation += angle
 
         # keep it in [0, 360)
         staging_img.rotation %= 360

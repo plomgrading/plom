@@ -8,7 +8,7 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
-PyQt6==6.5.0
+PyQt6==6.5.1
 PyQt6-sip==13.5.1
 appdirs==1.4.4
 arrow==1.2.3
@@ -19,7 +19,7 @@ packaging==23.1
 pandas==1.5.3
 passlib==1.7.4
 Pillow==9.5.0
-pymupdf==1.22.3
+pymupdf==1.22.5
 PyMySQL==1.0.3
 requests==2.28.2
 requests-toolbelt==0.10.1

@@ -56,6 +56,7 @@ dependencies = [
     'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
     "lapsolver",  # ID reading
+    "matplotlib>=3.5.3",
     "model_bakery>=1.11.0",
     "numpy>=1.21.2",
     "opencv-python-headless>=4.5.4.60",
@@ -75,6 +76,7 @@ dependencies = [
     "requests-toolbelt",
     "scikit-learn>=1.0.2",
     "scipy>=1.8.1",
+    "seaborn>=0.12.2",
     "segno>=1.5.2",
     "stdiomask>=0.0.6",
     "tabulate>=0.9.0",
@@ -200,11 +202,11 @@ ignored-modules = ["tensorflow", "api_secrets"]
 [tool.coverage.report]
 # our CI runs /usr/local stuff for some reason
 # python*.py errors need -i or config match here
-omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
+omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
-# TODO: for now ignore the django folder
-addopts = "--ignore plom/django"
+# TODO: for now ignore the plom_server folder: it uses its own testing
+addopts = "--ignore plom_server"
 qt_api = "pyqt6"
 
 [tool.djlint]
@@ -224,26 +226,22 @@ exclude = [
     'digitHunter.py',
 ]
 
+# These avoid mypy errors: mostly libraries that don't yet have typing
+# Maintenance: try removing some of this and rerunning mypy locally
 [[tool.mypy.overrides]]
 module = [
+    'api_secrets',
     'canvasapi',
     'cv2',
     'exif',
     'fitz',
+    'importlib_resources',
     'imutils.*',
     'lapsolver',
     'requests_toolbelt',
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
-    'api_secrets',
-]
-ignore_missing_imports = true
-
-# another such section for django
-#   - "django.*" is very confusing!  Issue #2532
-[[tool.mypy.overrides]]
-module = [
     'braces.*',
     'debugpy',
     'django.*',
@@ -254,6 +252,7 @@ module = [
     'random_username.generate',
     'rest_framework.*',
     'scipy.optimize',
+    'seaborn',
     'weasyprint',
     'whitenoise',
     'zipfly',
