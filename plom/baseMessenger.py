@@ -10,12 +10,16 @@ from io import BytesIO
 import logging
 import os
 import threading
+from typing import Union, Dict, Any
 
 import requests
 from requests_toolbelt import MultipartDecoder
 import urllib3
 
-from plom import __version__, Plom_API_Version, Default_Port
+from plom import __version__
+from plom import Plom_API_Version
+from plom import Plom_Legacy_Server_API_Version
+from plom import Default_Port
 from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
@@ -49,17 +53,34 @@ class BaseMessenger:
 
     Handles authentication and other common tasks; subclasses can add
     other features.
+
+    Instance Variables:
+        token (str/dict/Any): on legacy, this was just a string.  On
+            the django-based server, its a dict with a single key
+            ``"token"`` and value a string.
     """
 
-    def __init__(self, server=None, *, port=None, verify_ssl=True, webplom=False):
+    def __init__(
+        self,
+        server: Union[str, None] = None,
+        *,
+        port: Union[int, None] = None,
+        scheme: Union[str, None] = None,
+        verify_ssl: Union[bool, str] = True,
+        webplom: bool = False,
+    ):
         """Initialize a new BaseMessenger.
 
         Args:
             server (str/None): URL or None to default to localhost.
-            port (int): What port to try to connect to.  Defaults
-                to 41984 if omitted if there is no ":" in `server`.
 
         Keyword Arguments:
+            port (None/int): What port to try to connect to.  Defaults
+                to 41984 if omitted and cannot be determined from the
+                URI string.
+            scheme (None/str): What scheme to use to connect.  Defaults
+                to ``"https"`` if omitted and cannot be determined from
+                the URI string.
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
@@ -68,29 +89,55 @@ class BaseMessenger:
 
         Returns:
             None
+
+        Raises:
+            PlomConnectionError
         """
         self.webplom = webplom
         if os.environ.get("WEBPLOM"):
             log.warning("Enabling experimental WebPlom support via environment var")
             self.webplom = True
 
-        if self.webplom:
-            # The django development server cannot handle https requests.
-            # TODO: Revisit for production!  Issue #2361
-            self.scheme = "http"
-        else:
-            self.scheme = "https"
+        if not server:
+            server = "127.0.0.1"
+
+        try:
+            parsed_url = urllib3.util.parse_url(server)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{server}"') from e
+
+        if not parsed_url.host:
+            # "localhost:1234" parses this way: we do it ourselves :(
+            if scheme is None:
+                scheme = "https"
+            self._raw_init(f"{scheme}://{server}", verify_ssl=verify_ssl)
+            return
+
+        # prefix with "https://" if not specified
+        if not parsed_url.scheme:
+            if scheme is None:
+                scheme = "https"
+            server = f"{scheme}://{server}"
+
+        # postfix with default port if not specified
+        if not parsed_url.port:
+            if port is None:
+                port = Default_Port
+            server = f"{server}:{port}"
+
+        self._raw_init(server, verify_ssl=verify_ssl)
+
+    def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
         self.session = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        if not server:
-            server = "127.0.0.1"
-        if not port and ":" not in server:
-            port = Default_Port
-        if port:
-            server = f"{server}:{port}"
-        self.server = server
+        try:
+            parsed_url = urllib3.util.parse_url(base)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
+        self.scheme = parsed_url.scheme
+        self.base = base
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
@@ -109,7 +156,7 @@ class BaseMessenger:
         """
         log.debug("cloning a messeger, but building new session...")
         x = cls(
-            m.server,
+            m.base,
             verify_ssl=m.verify_ssl,
             webplom=m.webplom,
         )
@@ -118,6 +165,9 @@ class BaseMessenger:
         x.user = m.user
         x.token = m.token
         return x
+
+    def is_ssl_verified(self):
+        return self.verify_ssl
 
     def force_ssl_unverified(self):
         """This connection (can be open) does not need to verify cert SSL going forward."""
@@ -133,61 +183,109 @@ class BaseMessenger:
     def username(self):
         return self.whoami()
 
+    def enable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = False
+
+    def disable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = True
+
+    def is_legacy_server(self) -> bool:
+        return not self.webplom
+
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
+        # Legacy servers expect "user" and "token" in the json.
+        # Now with django we pass a token in the header.
+        # TODO: rework this when/if we stop supporting legacy servers.
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
-        return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
+        return self.session.get(self.base + url, *args, **kwargs)
 
-    def post(self, url, *args, **kwargs):
+    def post_raw(self, url, *args, **kwargs):
+        """Perform a POST operation without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        return self.session.post(self.base + url, *args, **kwargs)
+
+    def post_auth(self, url, *args, **kwargs):
+        """Perform a POST operation with tokens for authentication."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        if self.webplom:
+            # Django-based servers pass token in the header
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+        else:
+            # Legacy servers expect "user" and "token" in the json.
+            json = kwargs.get("json", {})
+            json["user"] = self.user
+            json["token"] = self.token
+            kwargs["json"] = json
 
-        return self.session.post(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.post(self.base + url, *args, **kwargs)
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
-        return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
+        return self.session.put(self.base + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
-        return self.session.delete(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.delete(self.base + url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            if not self.token:
+                raise PlomAuthenticationException("Trying auth'd operation w/o token")
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+            json = kwargs["json"]
+            json.pop("token")
+            kwargs["json"] = json
 
-        return self.session.patch(
-            f"{self.scheme}://{self.server}" + url, *args, **kwargs
-        )
+        return self.session.patch(self.base + url, *args, **kwargs)
 
     def start(self):
         """Start the messenger session.
@@ -240,11 +338,11 @@ class BaseMessenger:
     def isStarted(self):
         return bool(self.session)
 
-    def get_server_version(self):
+    def get_server_version(self) -> str:
         """The version info of the server.
 
         Returns:
-            str: the version string of the server,
+            The version string of the server,
 
         Exceptions:
         """
@@ -253,6 +351,24 @@ class BaseMessenger:
                 response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_server_info(self) -> Dict[str, Any]:
+        """Get a dictionary of server software information.
+
+        Returns:
+            Key-value pairs of information about the server software.
+
+        Exceptions:
+            TODO: maybe older servers don't have this API; they would
+                respond with 404.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get("/info/server")
+                response.raise_for_status()
+                return response.json()
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
@@ -287,7 +403,7 @@ class BaseMessenger:
                 json={
                     "user": user,
                     "pw": pw,
-                    "api": Plom_API_Version,
+                    "api": Plom_Legacy_Server_API_Version,
                     "client_ver": __version__,
                 },
                 timeout=5,
@@ -306,7 +422,7 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
@@ -314,7 +430,7 @@ class BaseMessenger:
     def _requestAndSaveToken_webplom(self, user, pw):
         """Get an authorisation token from WebPlom."""
         self.SRmutex.acquire()
-        response = self.post(
+        response = self.post_raw(
             "/get_token/",
             json={
                 "username": user,
@@ -336,7 +452,7 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
@@ -365,40 +481,21 @@ class BaseMessenger:
                 another user, other than yourself.
         """
         if self.webplom:
-            self._closeUser_webplom()
+            path = "/close_user/"
         else:
-            self._closeUser()
-
-    def _closeUser(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/users/{self.user}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def _closeUser_webplom(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/close_user/",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
+            path = f"/users/{self.user}"
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    path,
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
             self.token = None
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     # ----------------------
     # ----------------------
