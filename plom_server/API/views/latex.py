@@ -6,14 +6,23 @@ from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
 
+from plom.textools import texFragmentToPNG
+
 
 class MlatexFragment(APIView):
-    # TODO: in legacy there is a "fragment" key for this get, Issue #2371
-    # TODO: is 406 ok for a placeholder, Issue #2638
-    # TODO: port the service from legacy, Issue #2639
-
-    def get(self, request):
+    def post(self, request):
         print("latex not implemented yet, Issue #2639")
+        print(request)
+        data = request.POST
+        print(data)
+        fragment = data.get("fragment")
+        valid, value = texFragmentToPNG(fragment)
+        print(fragment)
+        print(valid)
+        print(type(valid))
+        print(type(value))
+        print(len(value))
         return Response(
-            "Sorry server does not support latex", status=status.HTTP_406_NOT_ACCEPTABLE
+            "post: Sorry server does not support latex",
+            status=status.HTTP_406_NOT_ACCEPTABLE,
         )
