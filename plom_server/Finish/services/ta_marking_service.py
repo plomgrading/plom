@@ -72,7 +72,7 @@ class TaMarkingService:
         return keys
 
     def build_csv_data(self) -> list:
-        """Get the info for all students in a list for building a csv file to download.
+        """Get the latest info for all students in a list for building a csv file to download.
 
         Returns:
             List where each element is a dictionary containing the marking information
@@ -81,12 +81,23 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        annotations = Annotation.objects.all().prefetch_related(
-            "user", "task", "task__paper"
-        )
+        marking_tasks = MarkingTask.objects.filter(
+            status=MarkingTask.COMPLETE
+        ).prefetch_related("latest_annotation", "paper")
+
+        annotations = [
+            task.latest_annotation
+            for task in marking_tasks
+            if task.latest_annotation is not None
+        ]
+
         csv_data = []
         for annotation in annotations:
-            csv_data.append(self.get_annotation_info_download(annotation))
+            csv_data.append(
+                self.get_annotation_info_download(
+                    annotation.prefetch_related("user", "task", "task__paper")
+                )
+            )
 
         return csv_data
 
