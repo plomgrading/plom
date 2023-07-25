@@ -16,6 +16,8 @@ from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
 
+from .utils import _error_response
+
 
 class GetSpecification(APIView):
     """Return the public part of the specification.
@@ -28,7 +30,7 @@ class GetSpecification(APIView):
     def get(self, request):
         spec = SpecificationService()
         if not spec.is_there_a_spec():
-            return Response(
+            return _error_response(
                 "Server does not have a spec", status=status.HTTP_400_BAD_REQUEST
             )
 

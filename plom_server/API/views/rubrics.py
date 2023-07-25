@@ -5,10 +5,12 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError, APIException
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 
 from Rubrics.services import RubricService
+
+from .utils import _error_response
 
 
 class MgetRubricsByQuestion(APIView):
@@ -37,8 +39,10 @@ class McreateRubric(APIView):
         try:
             rubric = rs.create_rubric(request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
-        except (ValidationError, NotImplementedError):
-            return Response("Invalid rubric", status=status.HTTP_406_NOT_ACCEPTABLE)
+        except (ValidationError, NotImplementedError) as e:
+            return _error_response(
+                f"Invalid rubric: {str(e)}", status.HTTP_406_NOT_ACCEPTABLE
+            )
 
 
 class MmodifyRubric(APIView):
@@ -47,7 +51,7 @@ class MmodifyRubric(APIView):
         try:
             rubric = rs.modify_rubric(key, request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
-        except (ValidationError, NotImplementedError):
-            return Response(
-                "Invalid rubric data", status=status.HTTP_406_NOT_ACCEPTABLE
+        except (ValidationError, NotImplementedError) as e:
+            return _error_response(
+                f"Invalid rubric data: {str(e)}", status.HTTP_406_NOT_ACCEPTABLE
             )
