@@ -112,14 +112,6 @@ def get_parser():
             Also checks the environment variable PLOM_SERVER if omitted.
         """,
     )
-    parser.add_argument(
-        "--webplom",
-        action="store_true",
-        help="""
-            Experimental: support connecting to a Django server.
-            You can also set the WEBPLOM environment variable.
-        """,
-    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-i", "--identifier", action="store_true", help="Run the identifier"
@@ -162,10 +154,7 @@ def main():
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    if args.webplom:
-        window = Chooser(app, webplom=True)
-    else:
-        window = Chooser(app)
+    window = Chooser(app)
     window.show()
 
     if args.user:
