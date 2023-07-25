@@ -20,7 +20,7 @@ function renderHeatMap(data, divId) {
         .attr("height", height);
 
     // Create a color scale
-    const colorScale = d3.scaleSequential(d3.interpolateGreens)
+    const colorScale = d3.scaleSequential(d3.interpolateBlues)
         .domain([-1, 1]);
 
     // Create the heat map cells
