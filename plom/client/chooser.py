@@ -145,13 +145,12 @@ class Chooser(QDialog):
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
+        self.ui.logoutButton.setVisible(False)
+        self.ui.logoutButton.clicked.connect(self.logout)
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
-        # clear the login on username / password edit
-        self.ui.userLE.textEdited.connect(self.logout)
-        self.ui.passwordLE.textEdited.connect(self.logout)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
 
@@ -513,6 +512,12 @@ class Chooser(QDialog):
         self.ui.loginInfoLabel.setText("logged out")
         self._old_client_note_seen = False
         self.ui.manageButton.setVisible(False)
+        self.ui.logoutButton.setVisible(False)
+        self.ui.userLE.setEnabled(True)
+        self.ui.passwordLE.setEnabled(True)
+        self.ui.serverLE.setEnabled(True)
+        self.ui.mportSB.setEnabled(True)
+        self.ui.loginButton.setEnabled(True)
 
     def login(self) -> None:
         """Login to the server but don't start any tasks yet.
@@ -609,6 +614,12 @@ class Chooser(QDialog):
             return
         self._set_restrictions_from_spec(spec)
         self.ui.loginInfoLabel.setText(f'logged in as "{user}"')
+        self.ui.logoutButton.setVisible(True)
+        self.ui.userLE.setEnabled(False)
+        self.ui.passwordLE.setEnabled(False)
+        self.ui.serverLE.setEnabled(False)
+        self.ui.mportSB.setEnabled(False)
+        self.ui.loginButton.setEnabled(False)
 
         if not self.messenger.webplom and self.messenger.username == "manager":
             self.ui.manageButton.setVisible(True)
