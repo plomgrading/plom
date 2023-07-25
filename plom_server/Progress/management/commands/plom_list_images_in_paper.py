@@ -16,16 +16,30 @@ class Command(BaseCommand):
     def list_images_in_paper(self, paper_number: int):
         mss = ManageScanService()
         page_image_list = mss.get_pages_images_in_paper(paper_number)
-        headers = ["page_type", "page_number", "question_number", "image"]
+        headers = ["page_type", "page_number", "question_number", "page_pk", "image_pk"]
         out_list = []
         for pi in page_image_list:
             if pi["image"] is None:
                 pi["image"] = "no image"
             if pi["page_type"] == "fixed":
-                out_list.append([pi["page_type"], pi["page_number"], ".", pi["image"]])
+                out_list.append(
+                    [
+                        pi["page_type"],
+                        pi["page_number"],
+                        ".",
+                        pi["page_pk"],
+                        pi["image"],
+                    ]
+                )
             else:
                 out_list.append(
-                    [pi["page_type"], ".", pi["question_number"], pi["image"]]
+                    [
+                        pi["page_type"],
+                        ".",
+                        pi["question_number"],
+                        pi["page_pk"],
+                        pi["image"],
+                    ]
                 )
 
         self.stdout.write(

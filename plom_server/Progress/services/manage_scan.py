@@ -359,11 +359,12 @@ class ManageScanService:
         Returns:
             list(dict): list of the fixed pages and mobile pages in
             the given paper. For each fixed page a dict with
-            page-number, page-type (ie fixed), and the image pk is
-            given (if it exists). For each mobile page the page-type
-            (mobile), the question-number and image pk is given. Note
-            that a mobile page *must* have an associated image, while
-            a fixed page may not.
+            page-number, page-type (ie fixed), the page pk, and the
+            image pk is given (if it exists). For each mobile page the
+            page-type (mobile), the question-number, the page pk and
+            image pk is given. Note that a mobile page *must* have an
+            associated image, while a fixed page may not.
+
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -372,14 +373,22 @@ class ManageScanService:
 
         page_images = []
         for fp_obj in paper_obj.fixedpage_set.all().order_by("page_number"):
-            dat = {"page_type": "fixed", "page_number": fp_obj.page_number}
+            dat = {
+                "page_type": "fixed",
+                "page_number": fp_obj.page_number,
+                "page_pk": fp_obj.pk,
+            }
             if fp_obj.image:
                 dat.update({"image": fp_obj.image.pk})
             else:
                 dat.update({"image": None})
             page_images.append(dat)
         for mp_obj in paper_obj.mobilepage_set.all().order_by("question_number"):
-            dat = {"page_type": "mobile", "question_number": mp_obj.question_number}
+            dat = {
+                "page_type": "mobile",
+                "question_number": mp_obj.question_number,
+                "page_pk": mp_obj.pk,
+            }
             dat.update({"image": mp_obj.image.pk})
             page_images.append(dat)
 
