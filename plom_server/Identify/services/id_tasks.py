@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
+from django.db import transaction
+
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
@@ -13,10 +15,12 @@ from Papers.models import IDPage
 class IdentifyTaskService:
     """Class to encapsulate methods for handing out paper identification tasks to the client."""
 
+    @transaction.atomic
     def are_there_id_tasks(self):
         """Return True if there is at least one ID task in the database."""
         return PaperIDTask.objects.exists()
 
+    @transaction.atomic
     def create_task(self, paper):
         """Create an identification task for a paper.
 
@@ -26,10 +30,12 @@ class IdentifyTaskService:
         task = PaperIDTask(paper=paper)
         task.save()
 
+    @transaction.atomic
     def id_task_exists(self, paper):
         """Return true if an ID tasks exists for a particular paper."""
         return PaperIDTask.objects.filter(paper=paper).exists()
 
+    @transaction.atomic
     def get_latest_id_results(self, task):
         """Return the latest results from a PaperIDAction instance.
 
@@ -41,6 +47,7 @@ class IdentifyTaskService:
         if latest:
             return latest[0]
 
+    @transaction.atomic
     def get_done_tasks(self, user):
         """Retrieve the results of previously completed ID tasks for a user.
 
@@ -62,6 +69,7 @@ class IdentifyTaskService:
 
         return id_list
 
+    @transaction.atomic
     def get_id_progress(self):
         """Send back current ID progress counts to the client.
 
@@ -69,20 +77,25 @@ class IdentifyTaskService:
             list: A list including the number of identified papers
                 and the total number of papers.
         """
-        completed = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
-        total = PaperIDTask.objects.all()
+        n_completed = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
+        n_total = PaperIDTask.objects.all().count()
 
-        return [len(completed), len(total)]
+        return [n_completed, n_total]
 
+    @transaction.atomic
     def get_next_task(self):
-        """Return the next available identification task."""
+        """Return the next available identification task, ordered by paper_number."""
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         todo_tasks = todo_tasks.order_by("paper__paper_number")
         if todo_tasks:
             return todo_tasks.first()
 
+    @transaction.atomic
     def claim_task(self, user, paper_number):
         """Claim an ID task for a user."""
+
+        # TODO - adr working here.
+        
         try:
             task = PaperIDTask.objects.get(paper__paper_number=paper_number)
         except PaperIDTask.DoesNotExist:
@@ -138,3 +151,6 @@ class IdentifyTaskService:
         )
         for task in user_tasks:
             self.surrender_task(user, task)
+
+    def set_task_outdated(self, task):
+        
