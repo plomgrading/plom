@@ -495,7 +495,7 @@ class Messenger(BaseMessenger):
 
                     # increase read timeout relative to default: Issue #1575
                     timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
-                    response = self.post(
+                    response = self.post_auth(
                         f"/MK/tasks/{code}",
                         data=data,
                         files=files,
