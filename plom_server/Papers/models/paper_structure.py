@@ -47,11 +47,24 @@ class FixedPage(PolymorphicModel):
     page types.
 
     paper (ref to Paper): the test-paper to which this page image belongs
-    image (ref to Image): the image
+    image (ref to Image): the image (see note below)
     page_number (int): the position of this page within the test-paper
     version (int): the version of this paper/page as determined by
         the qvmap.
 
+    Note that the image associated to a fixed page is allowed to be
+    None.
+        * If the image is not-none then this indicates that there is a
+        scan of this fixed page in the system.
+        * If the image is None then this indicates that an image
+        assoicated with this fixed page has not been pushed.
+
+    Notice also that this contrasts with mobile pages where a mobile
+    page *must* have an associated image. This is because the fixed
+    pages are used by plom to record structure of papers and so are
+    fixed (independent of whether anything is scanned), while the
+    mobile pages only exist when an additional page for a given paper
+    is scanned and pushed.
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
