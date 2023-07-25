@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, Http404
@@ -5,11 +11,10 @@ from django.urls import reverse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
-
-from Preparation.services import TestSourceService
+from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from Base.base_group_views import ManagerRequiredView
+from ..services import TestSourceService
 
 
 class TestSourceUploadForm(forms.Form):

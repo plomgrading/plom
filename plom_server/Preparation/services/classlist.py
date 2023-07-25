@@ -3,17 +3,18 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
-from django.db import transaction
-
-from Preparation.models import StagingClasslistCSV, StagingStudent
-from Preparation.services import PrenameSettingService
-
 import csv
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
+from django.db import transaction
+
+from ..models import StagingClasslistCSV, StagingStudent
+from ..services import PrenameSettingService
+
 
 log = logging.getLogger("ClasslistService")
 
@@ -99,7 +100,7 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_prenamed_papers(self):
-        """return dict of prenamed papers {paper_number: (student_id, student_name)}"""
+        """Return dict of prenamed papers {paper_number: (student_id, student_name)}."""
         return {
             s_obj.paper_number: (s_obj.student_id, s_obj.student_name)
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)

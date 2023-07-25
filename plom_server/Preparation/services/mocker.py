@@ -2,11 +2,12 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 
-
-import fitz
 import shutil
-from plom.create.mergeAndCodePages import create_QR_codes, pdf_page_add_labels_QRs
+
 from django.conf import settings
+import fitz
+
+from plom.create.mergeAndCodePages import create_QR_codes, pdf_page_add_labels_QRs
 
 
 class ExamMockerService:

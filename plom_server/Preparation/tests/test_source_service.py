@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import shutil
 
@@ -8,8 +9,8 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.conf import settings
 from model_bakery import baker
 
-from Preparation.services import TestSourceService
-from Preparation.models import PaperSourcePDF
+from ..services import TestSourceService
+from ..models import PaperSourcePDF
 
 
 class SourceServiceTests(TestCase):
@@ -20,9 +21,7 @@ class SourceServiceTests(TestCase):
         return super().tearDown()
 
     def test_store_source(self):
-        """
-        Test TestSourceService.store_test_source()
-        """
+        """Test TestSourceService.store_test_source()."""
         tss = TestSourceService()
         upload_path = (
             settings.BASE_DIR / "useful_files_for_testing" / "test_version1.pdf"
@@ -39,9 +38,7 @@ class SourceServiceTests(TestCase):
             tss.store_test_source(1, upload_path)
 
     def test_check_duplicates(self):
-        """
-        Test TestSourceService.check_pdf_duplication()
-        """
+        """Test TestSourceService.check_pdf_duplication()."""
         tss = TestSourceService()
         duplicates = tss.check_pdf_duplication()
         self.assertEqual(duplicates, {})

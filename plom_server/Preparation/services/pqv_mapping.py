@@ -1,9 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.db import transaction
 
 from plom import SpecVerifier
-from Preparation.models import StagingPQVMapping
-from Preparation.services import StagingStudentService
 from Papers.services import SpecificationService
+
+from ..models import StagingPQVMapping
+from ..services import StagingStudentService
 
 
 class PQVMappingService:

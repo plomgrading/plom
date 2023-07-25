@@ -1,9 +1,15 @@
-from django.core.management.base import BaseCommand, CommandError
-
-from Preparation.services import TestSourceService
-from Papers.services import SpecificationService
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
+
+from django.core.management.base import BaseCommand, CommandError
+
+from Papers.services import SpecificationService
+
+from ...services import TestSourceService
 
 
 class Command(BaseCommand):
