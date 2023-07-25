@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "Rubrics",
     "Demo",
     "Finish",
+    "Tags",
 ]
 
 MIDDLEWARE = [
