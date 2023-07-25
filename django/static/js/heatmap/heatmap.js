@@ -32,7 +32,8 @@ function renderHeatMap(data, divId) {
         .attr("y", (d, i) => Math.floor(i / data.cols) * cellSize + margin.top) // Set the y-coordinate based on the row index
         .attr("width", cellSize) // Set the desired cell width
         .attr("height", cellSize) // Set the desired cell height
-        .attr("fill", d => colorScale(d)); // Set the cell color based on the value
+        .attr("fill", d => colorScale(d)) // Set the cell color based on the value
+        .on("click", cellClicked); // Add click event listener
 
     // Add x-axis labels at the top
     const xLabels = svg.selectAll(".xLabel")
@@ -121,4 +122,9 @@ function renderHeatMap(data, divId) {
         .selectAll(".tick line")
         .attr("stroke", "#888") // Add style for tick lines
         .attr("stroke-dasharray", "2,2"); // Add style for dashed tick lines
+}
+
+function cellClicked(d) {
+    const cellInfoDiv = d3.select("#cell_popup");
+    cellInfoDiv.text(d.target.__data__);
 }
