@@ -12,6 +12,8 @@ from rest_framework import status
 from plom import __version__
 from plom import Plom_API_Version
 
+from API.permissions.v1 import AllowAnyReadOnly
+
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
@@ -24,6 +26,8 @@ class GetSpecification(APIView):
         (200) JsonResponse: the spec
         (400) spec not found
     """
+
+    permission_classes = [AllowAnyReadOnly]
 
     def get(self, request):
         spec = SpecificationService()
@@ -44,6 +48,8 @@ class ServerVersion(APIView):
     Returns:
         (200): and the version string as ``text/plain``, not JSON.
     """
+
+    permission_classes = [AllowAnyReadOnly]
 
     def get(self, request):
         version_str = f"Plom server version {__version__} with API {Plom_API_Version}"
