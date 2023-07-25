@@ -36,9 +36,6 @@ class Command(BaseCommand):
         mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
-        student_df = gds.get_student_data()
-        ta_df = gds.get_ta_data()
-
         # info for report
         name = spec["name"]
         longName = spec["longName"]
@@ -59,19 +56,17 @@ class Command(BaseCommand):
 
         # histogram of grades
         print("Generating histogram of grades.")
-        base64_histogram_of_grades = mpls.get_graph_as_base64(
-            mpls.histogram_of_total_marks()
-        )
+        histogram_of_grades = mpls.get_graph_as_base64(mpls.histogram_of_total_marks())
 
         mpls.check_num_figs()
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
-        base64_histogram_of_grades_q = mpls.get_report_histogram_of_grades_q()
+        histogram_of_grades_q = mpls.get_report_histogram_of_grades_q()
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        base64_corr = mpls.get_graph_as_base64(
+        corr = mpls.get_graph_as_base64(
             mpls.correlation_heatmap_of_questions(
                 gds.get_question_correlation_heatmap_data()
             )
@@ -81,19 +76,26 @@ class Command(BaseCommand):
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
-        base64_histogram_of_grades_m = mpls.get_report_histogram_of_grades_m()
+        histogram_of_grades_m = mpls.get_report_histogram_of_grades_m()
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        base64_histogram_of_time = mpls.get_report_histogram_of_time_spent_marking()
+        histogram_of_time = mpls.get_report_histogram_of_time_spent_marking()
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
-        base64_scatter_of_time = mpls.get_report_scatter_of_time_spent_vs_marks_given()
+        scatter_of_time = mpls.get_report_scatter_of_time_spent_vs_marks_given()
 
         # Box plot of the grades given by each marker for each question
         print("Generating box plots of grades by each marker for each question.")
-        base_64_boxplots = mpls.get_report_boxplot_by_question()
+        boxplots = mpls.get_report_boxplot_by_question()
+
+        print("Generating line graph of average mark on each question.")
+        line_graph = mpls.get_graph_as_base64(
+            mpls.line_graph_of_avg_marks_by_question()
+        )
+
+        print("Generating HTML.")
 
         def html_add_title(title: str) -> str:
             """Generate HTML for a title.
@@ -178,16 +180,16 @@ class Command(BaseCommand):
         <p>Median total mark: {median_mark}/{totalMarks}</p>
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
-        <img src="data:image/png;base64,{base64_histogram_of_grades}">
+        <img src="data:image/png;base64,{histogram_of_grades}">
         """
 
         html += html_add_title("Histogram of total marks")
-        html += html_for_graphs(base64_histogram_of_grades_q)
+        html += html_for_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
-        <img src="data:image/png;base64,{base64_corr}">
+        <img src="data:image/png;base64,{corr}">
         """
 
         html += html_add_title("Histograms of grades by marker by question")
@@ -197,22 +199,27 @@ class Command(BaseCommand):
             <h4>Grades by {marker}</h4>
             """
 
-            html += html_for_graphs(base64_histogram_of_grades_m[index])
+            html += html_for_graphs(histogram_of_grades_m[index])
 
         html += html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        html += html_for_graphs(base64_histogram_of_time)
+        html += html_for_graphs(histogram_of_time)
 
         html += html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        html += html_for_graphs(base64_scatter_of_time)
+        html += html_for_graphs(scatter_of_time)
 
         html += html_add_title(
             "Box plots of grades given by each marker for each question"
         )
-        html += html_for_big_graphs(base_64_boxplots)
+        html += html_for_big_graphs(boxplots)
+
+        html += html_add_title("Line graph of average mark on each question")
+        html += f"""
+            <img src="data:image/png;base64,{line_graph}">
+            """
 
         def create_pdf(html):
             """Generate a PDF file from a string of HTML."""

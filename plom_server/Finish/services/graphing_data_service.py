@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-from typing import Optional
+from typing import Optional, Dict, List
 
 import pandas as pd
 
@@ -50,9 +50,25 @@ class GraphingDataService:
         """Return the standard deviation of the total marks for all students as a float."""
         return self.student_df["total_mark"].std()
 
-    def get_total_marks(self) -> list:
-        """Return the total marks for all students as a list[int]."""
+    def get_total_marks(self) -> List[int]:
+        """Return the total marks for all students as a list."""
         return self.student_df["total_mark"].tolist()
+
+    def get_average_on_question_as_percentage(self, question_number: int) -> float:
+        """Return the average mark on a specific question as a percentage."""
+        return (
+            100
+            * self.student_df[f"q{question_number}_mark"].mean()
+            / self.spec["question"][str(question_number)]["mark"]
+        )
+
+    def get_averages_on_all_questions_as_percentage(self) -> List[float]:
+        """Return the average mark on each question as a percentage."""
+        averages = []
+        for q in self.spec["question"].keys():
+            q = int(q)
+            averages.append(self.get_average_on_question_as_percentage(q))
+        return averages
 
     def get_marks_for_all_questions(self, student_df: pd.DataFrame) -> pd.DataFrame:
         """Get the marks for each question as a dataframe.
@@ -107,12 +123,12 @@ class GraphingDataService:
         marks = ta_df[ta_df["user"] == ta_name]
         return marks
 
-    def get_all_ta_data_by_ta(self) -> dict:
+    def get_all_ta_data_by_ta(self) -> Dict[str, pd.DataFrame]:
         """Get TA marking data for all TAs.
 
         Returns:
-            A dictionary keyed by the (str) TA name, containing the (pd.Dataframe)
-            marking data for each TA.
+            A dictionary keyed by the TA name, containing the marking
+            data for each TA.
         """
         marks_by_ta = {}
         for ta_name in self.ta_df["user"].unique():
@@ -139,12 +155,12 @@ class GraphingDataService:
         question_df = ta_df[ta_df["question_number"] == question_number]
         return question_df
 
-    def get_all_ta_data_by_question(self) -> dict:
+    def get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
         """Get TA marking data for all questions as a dict.
 
         Returns:
-            A dictionary keyed by the (int) question number, containing the
-            (pd.Dataframe) marking data for each question.
+            A dictionary keyed by the question number, containing the
+            marking data for each question.
         """
         marks_by_question = {}
         for question_num in self.ta_df["question_number"].unique():
@@ -153,12 +169,12 @@ class GraphingDataService:
             )
         return marks_by_question
 
-    def get_times_for_all_questions(self) -> dict:
+    def get_times_for_all_questions(self) -> Dict[int, pd.Series]:
         """Get the marking times for all questions.
 
         Returns:
-            A dictionary keyed by the (int) question number, containing the
-            (pd.Series) marking times for all questions.
+            A dictionary keyed by the question numbers, containing the
+            marking times for each question.
         """
         times_by_question = {}
         for q in self.ta_df["question_number"].unique():
@@ -169,7 +185,7 @@ class GraphingDataService:
 
     def get_questions_marked_by_this_ta(
         self, ta_name: str, ta_df: pd.DataFrame
-    ) -> list:
+    ) -> List[int]:
         """Get the questions that were marked by a specific TA.
 
         Args:
@@ -178,13 +194,13 @@ class GraphingDataService:
                 filtered version of self.ta_df.
 
         Returns:
-            A list of (int) questions marked by the specified TA.
+            A list of questions marked by the specified TA.
         """
         return ta_df[ta_df["user"] == ta_name]["question_number"].unique().tolist()
 
     def get_tas_that_marked_this_question(
         self, question_number: int, ta_df: pd.DataFrame
-    ) -> list:
+    ) -> List[str]:
         """Get the TAs that marked a specific question.
 
         Args:
@@ -193,7 +209,7 @@ class GraphingDataService:
                 filtered version of self.ta_df.
 
         Returns:
-            A list of (str) TA names that marked the specified question.
+            A list of TA names that marked the specified question.
         """
         return (
             ta_df[ta_df["question_number"] == question_number]["user"].unique().tolist()
@@ -201,7 +217,7 @@ class GraphingDataService:
 
     def get_scores_for_question(
         self, question_number: int, ta_df: Optional[pd.DataFrame] = None
-    ) -> list:
+    ) -> List[int]:
         """Get the marks assigned for a specific question.
 
         Args:
@@ -210,7 +226,7 @@ class GraphingDataService:
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
         Returns:
-            A list of (int) marks assigned for the specified question.
+            A list of marks assigned for the specified question.
         """
         if ta_df is None:
             ta_df = self.ta_df
@@ -220,7 +236,9 @@ class GraphingDataService:
             "score_given"
         ].tolist()
 
-    def get_scores_for_ta(self, ta_name: str, ta_df: Optional[pd.DataFrame] = None):
+    def get_scores_for_ta(
+        self, ta_name: str, ta_df: Optional[pd.DataFrame] = None
+    ) -> List[int]:
         """Get the marks assigned for by a specific TA.
 
         Args:
@@ -229,7 +247,7 @@ class GraphingDataService:
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
         Returns:
-            A list of (int) marks assigned by the specified TA.
+            A list of marks assigned by the specified TA.
         """
         if ta_df is None:
             ta_df = self.ta_df

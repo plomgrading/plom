@@ -8,6 +8,7 @@ from typing import Optional, List
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import seaborn as sns
 
@@ -50,21 +51,12 @@ class MatplotlibService:
 
         return base64.b64encode(png_bytes.read()).decode()
 
-    def histogram_of_total_marks(self, student_df: Optional[pd.DataFrame] = None):
+    def histogram_of_total_marks(self):
         """Generate a histogram of the total marks.
-
-        Args:
-            student_df: Optional dataframe containing the student data. Should be
-                a copy or filtered version of self.student_df. If omitted, defaults
-                to None and self.student_df is used.
 
         Returns:
             A matplotlib figure containing the histogram.
         """
-        if student_df is None:
-            student_df = self.student_df
-        assert isinstance(student_df, pd.DataFrame)
-
         self.check_num_figs()
 
         fig, ax = plt.subplots()
@@ -200,7 +192,7 @@ class MatplotlibService:
         Returns:
             A matplotlib figure containing the histogram.
         """
-        if max_time is 0:
+        if max_time == 0:
             max_time = max(marking_times_minutes)
         assert max_time > 0
 
@@ -306,6 +298,29 @@ class MatplotlibService:
         )
 
         return fig
+
+    def line_graph_of_avg_marks_by_question(self):
+        """Generate a line graph of the average percentage marks by question.
+
+        Returns:
+            A matplotlib figure containing the line graph.
+        """
+        self.check_num_figs()
+
+        plt.figure(figsize=(6.8, 4.6))
+
+        plt.plot(
+            range(1, self.spec["numberOfQuestions"] + 1),
+            self.gds.get_averages_on_all_questions_as_percentage(),
+            marker="o",
+        )
+        plt.ylim([0, 100])
+        plt.title("Average percentage by question")
+        plt.xlabel("Question number")
+        plt.ylabel("Average mark (%)")
+        plt.xticks(range(1, self.spec["numberOfQuestions"] + 1))
+
+        return plt.gcf()
 
     def boxplot_set_colors(self, bp, colour):
         """Set the colours of a boxplot.
