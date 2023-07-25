@@ -698,12 +698,18 @@ class Chooser(QDialog):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+        # TODO: wall-paper for Issue #2903
+        if not self.is_logged_in():
+            self.logout()
 
     @pyqtSlot(int, list)
     def on_marker_window_close(self, value, stuff):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+        # TODO: wall-paper for Issue #2903
+        if not self.is_logged_in():
+            self.logout()
         if not stuff:
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
