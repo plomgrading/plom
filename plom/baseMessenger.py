@@ -63,7 +63,7 @@ class BaseMessenger:
         *,
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
-        verify_ssl: bool = True,
+        verify_ssl: Union[bool, str] = True,
         webplom: bool = False,
     ):
         """Initialize a new BaseMessenger.
@@ -86,6 +86,9 @@ class BaseMessenger:
 
         Returns:
             None
+
+        Raises:
+            PlomConnectionError
         """
         self.webplom = webplom
         if os.environ.get("WEBPLOM"):
@@ -95,7 +98,10 @@ class BaseMessenger:
         if not server:
             server = "127.0.0.1"
 
-        parsed_url = urllib3.util.parse_url(server)
+        try:
+            parsed_url = urllib3.util.parse_url(server)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{server}"') from e
 
         if not parsed_url.host:
             # "localhost:1234" parses this way: we do it ourselves :(
@@ -118,12 +124,15 @@ class BaseMessenger:
 
         self._raw_init(server, verify_ssl=verify_ssl)
 
-    def _raw_init(self, base: str, *, verify_ssl: bool) -> None:
+    def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
         self.session = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        parsed_url = urllib3.util.parse_url(base)
+        try:
+            parsed_url = urllib3.util.parse_url(base)
+        except urllib3.exceptions.LocationParseError as e:
+            raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
         self.base = base
         self.SRmutex = threading.Lock()
@@ -154,6 +163,9 @@ class BaseMessenger:
         x.token = m.token
         return x
 
+    def is_ssl_verified(self):
+        return self.verify_ssl
+
     def force_ssl_unverified(self):
         """This connection (can be open) does not need to verify cert SSL going forward."""
         self.verify_ssl = False
@@ -167,6 +179,19 @@ class BaseMessenger:
     @property
     def username(self):
         return self.whoami()
+
+    def enable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = False
+
+    def disable_legacy_server_support(self) -> None:
+        if self.token:
+            raise RuntimeError('cannot change "legacy" status after login')
+        self.webplom = True
+
+    def is_legacy_server(self) -> bool:
+        return not self.webplom
 
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
