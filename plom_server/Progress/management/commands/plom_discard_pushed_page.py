@@ -19,7 +19,7 @@ class Command(BaseCommand):
         *,
         fixedpage_pk: int | None = None,
         mobilepage_pk: int | None = None,
-        not_dry_run: bool = False,
+        really_do_it: bool = False,
     ):
         mds = ManageDiscardService()
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
             username,
             fixedpage_pk=fixedpage_pk,
             mobilepage_pk=mobilepage_pk,
-            dry_run=not not_dry_run,
+            dry_run=not really_do_it,
         )
         self.stdout.write(ret)
 
@@ -49,7 +49,8 @@ class Command(BaseCommand):
             help="The pk of the mobilepage to be discarded",
         )
         parser.add_argument(
-            "--do-it",
+            "-y",
+            "--yes",
             action="store_true",
             help="By default this command does a dry-run of the discard. Add this flag to actually do the discard.",
         )
@@ -59,5 +60,5 @@ class Command(BaseCommand):
             options["username"],
             fixedpage_pk=options["fixed"],
             mobilepage_pk=options["mobile"],
-            not_dry_run=options["do_it"],
+            really_do_it=options["yes"],
         )
