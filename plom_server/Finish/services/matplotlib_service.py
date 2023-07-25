@@ -194,8 +194,8 @@ class MatplotlibService:
             marking_times_minutes: Listlike containing the marking times in minutes.
             max_time: The maximum time to show on the histogram. If omitted,
                 defaults to the maximum time in the marking_times_minutes series.
-            bin_width: The width of each bin on the histogram. If omitted,
-                defaults to 15 seconds per bin.
+            bin_width: The width of each bin on the histogram. Should be given in
+                units of seconds. If omitted, defaults to 15 seconds per bin.
 
         Returns:
             A matplotlib figure containing the histogram.
@@ -389,11 +389,14 @@ class MatplotlibService:
 
         Made to be used in the report.
 
+        Note: The bin width is specified in seconds and is converted to minutes
+        in the plotting function. The histogram is plotted in minutes.
+
         Returns:
             A list of base64-encoded images of the histograms.
         """
         max_time = self.gds.get_ta_data()["seconds_spent_marking"].max()
-        bin_width = 15  # seconds
+        bin_width = 15
         histogram_of_time = []
         for question, marking_times in self.gds.get_times_for_all_questions().items():
             histogram_of_time.append(
