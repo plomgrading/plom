@@ -322,21 +322,21 @@ class MatplotlibService:
         plt.setp(bp["fliers"][0], color=cm.hsv(colour))
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
-    def get_report_histogram_of_grades_q(self) -> list:
+    def get_report_histogram_of_grades_q(self) -> List[str]:
         """Get a list of histogram graphs of grades by question.
 
         Made to be used in the report.
 
         Returns:
-            A list of base64-encoded images (str) of the histograms.
+            A list of base64-encoded images of the histograms.
         """
-        base64_histogram_of_grades_q = []
+        histogram_of_grades_q = []
         marks_for_questions = self.gds.get_marks_for_all_questions(
             student_df=self.student_df
         )
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
-            base64_histogram_of_grades_q.append(  # add to the list
+            histogram_of_grades_q.append(  # add to the list
                 self.get_graph_as_base64(  # each base64-encoded image
                     self.histogram_of_grades_on_question(  # of the histogram
                         question=question
@@ -346,29 +346,29 @@ class MatplotlibService:
 
             self.check_num_figs()
 
-        return base64_histogram_of_grades_q
+        return histogram_of_grades_q
 
-    def get_report_histogram_of_grades_m(self) -> list:
+    def get_report_histogram_of_grades_m(self) -> List[List[str]]:
         """Get a list of lists of histograms of grades by marker by question.
 
         Made to be used in the report.
 
         Returns:
-            A list of lists of base64-encoded images (str) of the histograms by marker by question.
+            A list of lists of base64-encoded images of the histograms by marker by question.
         """
-        base64_histogram_of_grades_m = []
+        histogram_of_grades_m = []
         for marker, scores_for_user in self.gds.get_all_ta_data_by_ta().items():
             questions_marked_by_this_ta = self.gds.get_questions_marked_by_this_ta(
                 marker, self.ta_df
             )
-            base64_histogram_of_grades_m_q = []
+            histogram_of_grades_m_q = []
 
             for question in questions_marked_by_this_ta:
                 scores_for_user_for_question = self.gds.get_ta_data_for_question(
                     question_number=question, ta_df=scores_for_user
                 )
 
-                base64_histogram_of_grades_m_q.append(
+                histogram_of_grades_m_q.append(
                     self.get_graph_as_base64(
                         self.histogram_of_grades_on_question_by_ta(
                             question=question,
@@ -378,25 +378,25 @@ class MatplotlibService:
                     )
                 )
 
-            base64_histogram_of_grades_m.append(base64_histogram_of_grades_m_q)
+            histogram_of_grades_m.append(histogram_of_grades_m_q)
 
             self.check_num_figs()
 
-        return base64_histogram_of_grades_m
+        return histogram_of_grades_m
 
-    def get_report_histogram_of_time_spent_marking(self) -> list:
+    def get_report_histogram_of_time_spent_marking(self) -> List[str]:
         """Get a list of histograms of time spent marking each question.
 
         Made to be used in the report.
 
         Returns:
-            A list of base64-encoded images (str) of the histograms.
+            A list of base64-encoded images of the histograms.
         """
         max_time = self.gds.get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15  # seconds
-        base64_histogram_of_time = []
+        histogram_of_time = []
         for question, marking_times in self.gds.get_times_for_all_questions().items():
-            base64_histogram_of_time.append(
+            histogram_of_time.append(
                 self.get_graph_as_base64(
                     self.histogram_of_time_spent_marking_each_question(
                         question_number=question,
@@ -409,24 +409,24 @@ class MatplotlibService:
 
             self.check_num_figs()
 
-        return base64_histogram_of_time
+        return histogram_of_time
 
-    def get_report_scatter_of_time_spent_vs_marks_given(self) -> list:
+    def get_report_scatter_of_time_spent_vs_marks_given(self) -> List[str]:
         """Get a list of scatter plots of time spent marking each question vs mark given.
 
         Made to be used in the report.
 
         Returns:
-            A list of base64-encoded images (str) of the scatter plots.
+            A list of base64-encoded images of the scatter plots.
         """
-        base64_scatter_of_time = []
+        scatter_of_time = []
         for question, marking_times in self.gds.get_times_for_all_questions().items():
             times_for_question = marking_times.div(60)
             mark_given_for_question = self.gds.get_scores_for_question(
                 question_number=question, ta_df=self.ta_df
             )
 
-            base64_scatter_of_time.append(
+            scatter_of_time.append(
                 self.get_graph_as_base64(
                     self.scatter_time_spent_vs_mark_given(
                         question_number=question,
@@ -438,17 +438,17 @@ class MatplotlibService:
 
             self.check_num_figs()
 
-        return base64_scatter_of_time
+        return scatter_of_time
 
-    def get_report_boxplot_by_question(self) -> list:
+    def get_report_boxplot_by_question(self) -> List[str]:
         """Get a list of boxplots of marks given by each marker for each question.
 
         Made to be used in the report.
 
         Returns:
-            A list of base64-encoded images (str) of the boxplots.
+            A list of base64-encoded images of the boxplots.
         """
-        base_64_boxplots = []
+        boxplots = []
         for (
             question_number,
             question_df,
@@ -471,7 +471,7 @@ class MatplotlibService:
                     self.gds.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
                 )
 
-            base_64_boxplots.append(
+            boxplots.append(
                 self.get_graph_as_base64(
                     self.boxplot_of_marks_given_by_ta(
                         marks_given, marker_names, question_number
@@ -481,4 +481,4 @@ class MatplotlibService:
 
             self.check_num_figs()
 
-        return base_64_boxplots
+        return boxplots
