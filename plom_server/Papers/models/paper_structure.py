@@ -57,7 +57,7 @@ class FixedPage(PolymorphicModel):
         * If the image is not-none then this indicates that there is a
         scan of this fixed page in the system.
         * If the image is None then this indicates that an image
-        assoicated with this fixed page has not been pushed.
+        associated with this fixed page has not been pushed.
 
     Notice also that this contrasts with mobile pages where a mobile
     page *must* have an associated image. This is because the fixed
