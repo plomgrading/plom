@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from typing import Union
+
 from django.core.management.base import BaseCommand
 
 from Progress.services import ManageDiscardService
@@ -17,8 +19,8 @@ class Command(BaseCommand):
         self,
         username: str,
         *,
-        fixedpage_pk: int | None = None,
-        mobilepage_pk: int | None = None,
+        fixedpage_pk: Union[int, None] = None,
+        mobilepage_pk: Union[int, None] = None,
         really_do_it: bool = False,
     ):
         mds = ManageDiscardService()
