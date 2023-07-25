@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -144,6 +145,48 @@ class MarkingTaskServiceTests(TestCase):
         mts = MarkingTaskService()
         task = mts.get_first_available_task(1, 2)
         self.assertEqual(task, task2)
+
+    def test_get_priority_filter(self):
+        """
+        Test MarkingTaskService.get_priority_available_task() with a specified question and version
+        """
+
+        baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=1,
+            question_version=1,
+            paper__paper_number=1,
+            code="1",
+            marking_priority=-1.2,
+        )
+        task2 = baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=1,
+            question_version=1,
+            paper__paper_number=2,
+            code="2",
+            marking_priority=2.9,
+        )
+        task3 = baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=1,
+            question_version=1,
+            paper__paper_number=3,
+            code="3",
+            marking_priority=2.5,
+        )
+
+        mts = MarkingTaskService()
+        task = mts.get_priority_available_task(1, 1)
+        self.assertEqual(task, task2)
+        task2.status = MarkingTask.OUT
+        task2.save()
+
+        task = mts.get_priority_available_task(1, 1)
+        self.assertEqual(task, task3)
 
     def test_assign_task_to_user(self):
         """
