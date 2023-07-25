@@ -223,7 +223,9 @@ DJANGO_HUEY = {
     },
 }
 
-# DRF authentication
+# DRF authentication and permissions
+# The default permission must be set, otherwise it's AllowAny!
+# see https://gitlab.com/plom/plom/-/issues/2904
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
