@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 
-import os
 import numpy as np
 from PIL import Image
 from pathlib import Path
 from sklearn.cluster import KMeans
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User
 
 from Tags.services import TagService
+from Mark.services import MarkingTaskService
 
 
 class Command(BaseCommand):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
     help = """Add a tag to a specific paper."""
 
-    def get_digits_and_cluster(self, digit_index) -> list[list[list[np.ndarray, int]]]:
+    def get_digits_and_cluster(self, digit_index) -> list[list[int]]:
         """Get all the digits from the database and cluster them.
 
         Returns:
@@ -63,9 +63,23 @@ class Command(BaseCommand):
 
         return clustered_papers
 
-    def tag_question(self):
+    def tag_question(self, clusters) -> None:
         """Tag the first question."""
-        pass
+        ms = MarkingTaskService()
+        if not User.objects.filter(username="id_digit_tagging_temp_user").exists():
+            user = User(username="id_digit_tagging_temp_user", password="")
+            user.save()
+        else:
+            user = User.objects.get(username="id_digit_tagging_temp_user")
+        for i in range(len(clusters)):
+            if len(clusters[i]) > 0:
+                for paper_num in clusters[i]:
+                    code = f"q{paper_num}g1"
+                    text = f"cluster_{i}"
+                    try:
+                        ms.add_tag_text_from_task_code(text, code, user)
+                    except RuntimeError:
+                        print(f"{code} does not exist")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -74,3 +88,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         paper_clusters = self.get_digits_and_cluster(options["digit_index"])
+        self.tag_question(paper_clusters)
