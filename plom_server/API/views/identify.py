@@ -159,11 +159,11 @@ class IDclaimThisTask(APIView):
         its = IdentifyTaskService()
         try:
             its.identify_paper(user, paper_id, data["sid"], data["sname"])
-        except PermissionError as err:  # task not assigned to that user
-            Response(f"{err}", status=status.HTTP_403_FORBIDDEN)
+        except PermissionDenied as err:  # task not assigned to that user
+            return Response(f"{err}", status=status.HTTP_403_FORBIDDEN)
         except ObjectDoesNotExist as err:  # no valid task for that paper_id
-            Response(f"{err}", status=status.HTTP_404_NOT_FOUND)
-        except IntegrityError as err: # attempting to assign an SID that is already used
-            Response(f"{err}", status=status.HTTP_409_CONFLICT)
+            return Response(f"{err}", status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as err:  # attempting to assign an SID that is already used
+            return Response(f"{err}", status=status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_200_OK)
