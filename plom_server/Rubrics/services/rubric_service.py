@@ -301,14 +301,14 @@ class RubricService:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def get_annotation_from_rubric(self, rubric: Rubric):
+    def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
         """Get the queryset of annotations that use this rubric.
 
         Args:
             Rubric instance
 
         Returns:
-            Queryset: Annotation instances
+            A query of Annotation instances
         """
         return rubric.annotations.all()
 
