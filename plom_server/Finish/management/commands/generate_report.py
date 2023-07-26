@@ -4,15 +4,13 @@
 import datetime as dt
 
 import matplotlib
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
 
 from Finish.services import GraphingDataService
 from Finish.services import MatplotlibService
-from Mark.models import MarkingTask, Annotation
+from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
