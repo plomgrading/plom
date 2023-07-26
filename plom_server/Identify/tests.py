@@ -131,7 +131,7 @@ class IdentifyTaskTests(TestCase):
     def test_identify_paper(self):
         """Test a simple case for ``IdentifyTaskService.identify_paper()``."""
         its = IdentifyTaskService()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ObjectDoesNotExist):
             its.identify_paper(self.marker1, 1, "1", "A")
 
         p1 = baker.make(Paper, paper_number=1)

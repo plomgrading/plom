@@ -98,7 +98,6 @@ class IdentifyTaskService:
     @transaction.atomic
     def claim_task(self, user, paper_number):
         """Claim an ID task for a user."""
-
         try:
             task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
                 paper__paper_number=paper_number
