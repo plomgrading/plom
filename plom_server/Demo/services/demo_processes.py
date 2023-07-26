@@ -46,17 +46,19 @@ class DemoProcessesService:
         conn = psycopg2.connect(user="postgres", password="postgres", host=host)
 
         conn.autocommit = True
-        print("Removing old database.")
-        try:
-            with conn.cursor() as curs:
-                curs.execute("DROP DATABASE plom_db;")
-        except psycopg2.errors.InvalidCatalogName:
-            print("No database 'plom_db' - continuing")
+        db_name = settings.DATABASES["default"]["NAME"]
 
-        print("Creating database 'plom_db'")
+        print(f'Removing old database "{db_name}"')
         try:
             with conn.cursor() as curs:
-                curs.execute("CREATE DATABASE plom_db;")
+                curs.execute(f"DROP DATABASE {db_name};")
+        except psycopg2.errors.InvalidCatalogName:
+            print(f'No database "{db_name}" - continuing')
+
+        print(f'Creating database "{db_name}"')
+        try:
+            with conn.cursor() as curs:
+                curs.execute(f"CREATE DATABASE {db_name};")
         except psycopg2.errors.DuplicateDatabase:
             with conn.cursor() as curs:
                 print("We should not reach here.")
