@@ -5,20 +5,17 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import FileResponse
 
-from Papers.services import SpecificationService
-from Papers.models import Paper, Image
-
 from Mark.services import MarkingTaskService, PageDataService
-from Mark.models import AnnotationImage, MarkingTask
+from Papers.services import SpecificationService
+from Papers.models import Image
 
-import logging
+from .utils import _error_response
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -33,15 +30,15 @@ class QuestionMaxMark_how_to_get_data(APIView):
             question = int(data["q"])
             version = int(data["v"])
         except KeyError:
-            exc = APIException()
-            exc.status_code = status.HTTP_400_BAD_REQUEST
-            exc.detail = "Missing question and/or version data."
-            raise exc
+            return _error_response(
+                "Missing question and/or version data.",
+                status.HTTP_400_BAD_REQUEST,
+            )
         except (ValueError, TypeError):
-            exc = APIException()
-            exc.status_code = status.HTTP_400_BAD_REQUEST
-            exc.detail = "question and version must be integers"
-            raise exc
+            return _error_response(
+                "question and version must be integers",
+                status.HTTP_400_BAD_REQUEST,
+            )
         spec = SpecificationService()
         return Response(spec.get_question_mark(question))
 
@@ -60,10 +57,10 @@ class QuestionMaxMark(APIView):
         try:
             return Response(spec.get_question_mark(question))
         except KeyError:
-            exc = APIException()
-            exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
-            exc.detail = "question out of range"
-            raise exc
+            return _error_response(
+                "question out of range",
+                status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+            )
 
 
 class MarkingProgressCount(APIView):
@@ -84,10 +81,10 @@ class MarkingProgressCount(APIView):
             question = int(data["q"])
             version = int(data["v"])
         except (ValueError, TypeError):
-            exc = APIException()
-            exc.status_code = status.HTTP_400_BAD_REQUEST
-            exc.detail = "question and version must be integers"
-            raise exc
+            return _error_response(
+                "question and version must be integers",
+                status.HTTP_400_BAD_REQUEST,
+            )
         mts = MarkingTaskService()
         progress = mts.get_marking_progress(question, version)
         return Response(progress, status=status.HTTP_200_OK)
@@ -352,11 +349,10 @@ class MgetAnnotations(APIView):
         try:
             annotation = mts.get_latest_annotation(paper, question)
         except ObjectDoesNotExist as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = (
-                f"No annotations for paper {paper} question {question}: " + str(e)
+            return _error_response(
+                f"No annotations for paper {paper} question {question}: {str(e)}",
+                status.HTTP_404_NOT_FOUND,
             )
-            return r
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
@@ -364,14 +360,13 @@ class MgetAnnotations(APIView):
             latest_task = mts.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             # Possibly should be 410?  see baseMessenger.py
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
 
         if latest_task != annotation_task:
-            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            r.reason_phrase = "Integrity error: task has been modified by server."
-            return r
+            return _error_response(
+                "Integrity error: task has been modified by server.",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
         annotation_data["user"] = annotation.user.username
         annotation_data["annotation_edition"] = annotation.edition
@@ -388,24 +383,22 @@ class MgetAnnotationImage(APIView):
         try:
             annotation = mts.get_latest_annotation(paper, question)
         except ObjectDoesNotExist as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = (
-                f"No annotations for paper {paper} question {question}: " + str(e)
+            return _error_response(
+                f"No annotations for paper {paper} question {question}: {str(e)}",
+                status.HTTP_404_NOT_FOUND,
             )
-            return r
         annotation_task = annotation.task
         annotation_image = annotation.image
 
         try:
             latest_task = mts.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         if latest_task != annotation_task:
-            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            r.reason_phrase = "Integrity error: task has been modified by server."
-            return r
+            return _error_response(
+                "Integrity error: task has been modified by server.",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
         return FileResponse(
             open(annotation_image.path, "rb"), status=status.HTTP_200_OK
@@ -432,13 +425,9 @@ class TagsFromCodeView(APIView):
         try:
             return Response(mts.get_tags_for_task(code), status=status.HTTP_200_OK)
         except ValueError as e:
-            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         except RuntimeError as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, code):
         """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
@@ -465,20 +454,11 @@ class TagsFromCodeView(APIView):
         try:
             mts.add_tag_text_from_task_code(tag_text, code, user=user)
         except ValueError as e:
-            r = Response(status=status.HTTP_410_GONE)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_410_GONE)
         except RuntimeError as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         except ValidationError as e:
-            # TODO: why not?
-            # return Response(reason_phrase=str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
-            r = Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            # TODO: yuck but works and looks better than str(e) for ValidationError
-            (r.reason_phrase,) = e.args
-            return r
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         return Response(status=status.HTTP_200_OK)
 
     def delete(self, request, code):
@@ -503,13 +483,9 @@ class TagsFromCodeView(APIView):
         try:
             mts.remove_tag_text_from_task_code(tag_text, code)
         except ValueError as e:
-            r = Response(status=status.HTTP_409_CONFLICT)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_409_CONFLICT)
         except RuntimeError as e:
-            r = Response(status=status.HTTP_404_NOT_FOUND)
-            r.reason_phrase = str(e)
-            return r
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_200_OK)
 
 
