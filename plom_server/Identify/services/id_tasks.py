@@ -4,7 +4,8 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.db import transaction
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.db import transaction, IntegrityError
 
 from Identify.models import (
     PaperIDTask,
@@ -123,16 +124,22 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def identify_paper(self, user, paper_number, student_id, student_name):
-        """Identify a test-paper and close its associated task."""
+        """Identify a test-paper and close its associated task.
+
+        Raises:
+            ObjectDoesNotExist: when there is no valid task associated to that paper
+            PermissionDenied: when the user is not the assigned user for the id-ing task for that paper
+            IntegrityError: the student id has already been assigned to a different paper (not yet implemented).
+        """
         try:
-            task = PaperIDTask.objects.exclude(PaperIDTask.OUT_OF_DATE).get(
+            task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
                 paper__paper_number=paper_number
             )
         except PaperIDTask.DoesNotExist:
-            raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
+            raise ObjectDoesNotExist(f"Valid task for paper number {paper_number} does not exist.")
 
         if task.assigned_user != user:
-            raise RuntimeError(
+            raise PermissionDenied(
                 f"Task for paper number {paper_number} is not assigned to user {user}."
             )
 
@@ -179,7 +186,7 @@ class IdentifyTaskService:
             raise ValueError(f"Cannot find paper {paper_number}")
 
         try:
-            task_obj = PaperIDTask.objects.exclude(PaperIDTask.OUT_OF_DATE).get(
+            task_obj = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
                 paper=paper_obj
             )
         except PaperIDTask.DoesNotExist:
