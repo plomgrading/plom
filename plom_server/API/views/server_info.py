@@ -31,6 +31,7 @@ class GetSpecification(APIView):
         (400) spec not found
     """
 
+    # TODO: remove for Issue #2909
     permission_classes = [AllowAnyReadOnly]
 
     def get(self, request):
