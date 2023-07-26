@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 
 from Finish.services import GraphingDataService
 from Finish.services import MatplotlibService
-from Mark.models import MarkingTask
+from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
@@ -57,13 +57,11 @@ class Command(BaseCommand):
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
-        mpls.check_num_figs()
+        mpls.ensure_all_figures_closed()
 
         # histogram of grades
         print("Generating histogram of grades.")
-        histogram_of_grades = mpls.get_graph_as_base64(mpls.histogram_of_total_marks())
-
-        mpls.check_num_figs()
+        histogram_of_grades = mpls.histogram_of_total_marks()
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
@@ -72,26 +70,19 @@ class Command(BaseCommand):
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
-                mpls.get_graph_as_base64(  # each base64-encoded image
-                    mpls.histogram_of_grades_on_question(  # of the histogram
-                        question=question
-                    )
+                # each base64-encoded image
+                mpls.histogram_of_grades_on_question(  # of the histogram
+                    question=question
                 )
             )
-
-            mpls.check_num_figs()
 
         del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        corr = mpls.get_graph_as_base64(
-            mpls.correlation_heatmap_of_questions(
-                gds.get_question_correlation_heatmap_data()
-            )
+        corr = mpls.correlation_heatmap_of_questions(
+            gds.get_question_correlation_heatmap_data()
         )
-
-        mpls.check_num_figs()
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
@@ -108,18 +99,14 @@ class Command(BaseCommand):
                 )
 
                 histogram_of_grades_m_q.append(
-                    mpls.get_graph_as_base64(
-                        mpls.histogram_of_grades_on_question_by_ta(
-                            question=question,
-                            ta_name=marker,
-                            ta_df=scores_for_user_for_question,
-                        )
+                    mpls.histogram_of_grades_on_question_by_ta(
+                        question=question,
+                        ta_name=marker,
+                        ta_df=scores_for_user_for_question,
                     )
                 )
 
             histogram_of_grades_m.append(histogram_of_grades_m_q)
-
-            mpls.check_num_figs()
 
         del (
             marker,
@@ -137,17 +124,13 @@ class Command(BaseCommand):
         histogram_of_time = []
         for question, marking_times in gds.get_times_for_all_questions().items():
             histogram_of_time.append(
-                mpls.get_graph_as_base64(
-                    mpls.histogram_of_time_spent_marking_each_question(
-                        question_number=question,
-                        marking_times_minutes=marking_times.div(60),
-                        max_time=max_time,
-                        bin_width=bin_width,
-                    )
+                mpls.histogram_of_time_spent_marking_each_question(
+                    question_number=question,
+                    marking_times_minutes=marking_times.div(60),
+                    max_time=max_time,
+                    bin_width=bin_width,
                 )
             )
-
-            mpls.check_num_figs()
 
         del max_time, bin_width, marking_times, question
 
@@ -161,16 +144,12 @@ class Command(BaseCommand):
             )
 
             scatter_of_time.append(
-                mpls.get_graph_as_base64(
-                    mpls.scatter_time_spent_vs_mark_given(
-                        question_number=question,
-                        times_spent_minutes=times_for_question,
-                        marks_given=mark_given_for_question,
-                    )
+                mpls.scatter_time_spent_vs_mark_given(
+                    question_number=question,
+                    times_spent_minutes=times_for_question,
+                    marks_given=mark_given_for_question,
                 )
             )
-
-            mpls.check_num_figs()
 
         del question, times_for_question, mark_given_for_question, marking_times
 
@@ -200,21 +179,15 @@ class Command(BaseCommand):
                 )
 
             boxplots.append(
-                mpls.get_graph_as_base64(
-                    mpls.boxplot_of_marks_given_by_ta(
-                        marks_given, marker_names, question_number
-                    )
+                mpls.boxplot_of_marks_given_by_ta(
+                    marks_given, marker_names, question_number
                 )
             )
-
-            mpls.check_num_figs()
 
         del question_number, question_df, marks_given, marker_names, marker_name
 
         print("Generating line graph of average mark on each question.")
-        line_graph = mpls.get_graph_as_base64(
-            mpls.line_graph_of_avg_marks_by_question()
-        )
+        line_graph = mpls.line_graph_of_avg_marks_by_question()
 
         print("Generating HTML.")
 

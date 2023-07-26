@@ -30,9 +30,13 @@ class MatplotlibService:
         self.student_df = self.gds.get_student_data()
         self.ta_df = self.gds.get_ta_data()
 
-    def check_num_figs(self):
-        if len(plt.get_fignums()) > 0:
-            print("Warn: ", len(plt.get_fignums()), " figures open.")
+    def ensure_all_figures_closed(self):
+        """Ensure that all matplotlib figures are closed.
+
+        Raises:
+            AssertionError: If not all figures are closed.
+        """
+        assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
 
     def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
         """Return the graph as a base64 encoded string.
@@ -50,13 +54,13 @@ class MatplotlibService:
 
         return base64.b64encode(png_bytes.read()).decode()
 
-    def histogram_of_total_marks(self):
+    def histogram_of_total_marks(self) -> str:
         """Generate a histogram of the total marks.
 
         Returns:
-            A matplotlib figure containing the histogram.
+            A base64 encoded string containing the histogram.
         """
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots()
 
@@ -70,11 +74,13 @@ class MatplotlibService:
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def histogram_of_grades_on_question(
         self, question: int, student_df: Optional[pd.DataFrame] = None
-    ):
+    ) -> str:
         """Generate a histogram of the grades on a specific question.
 
         Args:
@@ -84,13 +90,13 @@ class MatplotlibService:
                 to None and self.student_df is used.
 
         Returns:
-            A matplotlib figure containing the histogram.
+            A base64 encoded string containing the histogram.
         """
         if student_df is None:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
@@ -103,9 +109,13 @@ class MatplotlibService:
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
-    def correlation_heatmap_of_questions(self, corr_df: Optional[pd.DataFrame] = None):
+    def correlation_heatmap_of_questions(
+        self, corr_df: Optional[pd.DataFrame] = None
+    ) -> str:
         """Generate a correlation heatmap of the questions.
 
         Args:
@@ -114,13 +124,13 @@ class MatplotlibService:
                 to None and self.student_df is used.
 
         Returns:
-            A matplotlib figure containing the correlation heatmap.
+            A base64 encoded string containing the correlation heatmap.
         """
         if corr_df is None:
             corr_df = self.gds.get_question_correlation_heatmap_data()
         assert isinstance(corr_df, pd.DataFrame)
 
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         plt.figure(figsize=(6.4, 5.12))
         sns.heatmap(corr_df, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True)
@@ -128,11 +138,13 @@ class MatplotlibService:
         plt.xlabel("Question number")
         plt.ylabel("Question number")
 
-        return plt.gcf()
+        graph_string = self.get_graph_as_base64(plt.gcf())
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def histogram_of_grades_on_question_by_ta(
         self, question: int, ta_name: str, ta_df: Optional[pd.DataFrame] = None
-    ):
+    ) -> str:
         """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
@@ -143,7 +155,7 @@ class MatplotlibService:
                 to None and self.ta_df is used.
 
         Returns:
-            A matplotlib figure containing the histogram.
+            A base64 encoded string containing the histogram.
         """
         if ta_df is None:
             ta_df = self.gds.get_ta_data_for_ta(
@@ -151,7 +163,7 @@ class MatplotlibService:
             )
         assert isinstance(ta_df, pd.DataFrame)
 
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
         bins = range(
@@ -169,7 +181,9 @@ class MatplotlibService:
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def histogram_of_time_spent_marking_each_question(
         self,
@@ -177,7 +191,7 @@ class MatplotlibService:
         marking_times_minutes: List[int],
         max_time: int = 0,
         bin_width: int = 15,
-    ):
+    ) -> str:
         """Generate a histogram of the time spent marking a question.
 
         Args:
@@ -189,13 +203,13 @@ class MatplotlibService:
                 units of seconds. If omitted, defaults to 15 seconds per bin.
 
         Returns:
-            A matplotlib figure containing the histogram.
+            A base64 encoded string containing the histogram.
         """
         if max_time == 0:
             max_time = max(marking_times_minutes)
         assert max_time > 0
 
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
         bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
@@ -210,14 +224,16 @@ class MatplotlibService:
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def scatter_time_spent_vs_mark_given(
         self,
         question_number: int,
         times_spent_minutes: List[int],
         marks_given: List[int],
-    ):
+    ) -> str:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
         Args:
@@ -226,9 +242,9 @@ class MatplotlibService:
             marks_given: Listlike containing the marks given.
 
         Returns:
-            A matplotlib figure containing the scatter plot.
+            A base64 encoded string containing the scatter plot.
         """
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
@@ -237,14 +253,16 @@ class MatplotlibService:
         ax.set_ylabel("Time spent (min)")
         ax.set_xlabel("Mark given")
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def boxplot_of_marks_given_by_ta(
         self,
         marks: List[List[int]],
         marker_names: List[str],
         question: int,
-    ):
+    ) -> str:
         """Generate a boxplot of the marks given by each TA for the specified question.
 
         The length and order of marks and marker_names should be the same such
@@ -256,10 +274,10 @@ class MatplotlibService:
             question: The question to plot the boxplot for.
 
         Returns:
-            A matplotlib figure containing the boxplot.
+            A base64 encoded string containing the boxplot.
         """
         assert len(marks) == len(marker_names)
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
 
@@ -296,7 +314,9 @@ class MatplotlibService:
             ]
         )
 
-        return fig
+        graph_string = self.get_graph_as_base64(fig)
+        self.ensure_all_figures_closed()
+        return graph_string
 
     def boxplot_set_colors(self, bp, colour):
         """Set the colours of a boxplot.
@@ -313,13 +333,13 @@ class MatplotlibService:
         plt.setp(bp["fliers"][0], color=cm.hsv(colour))
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
-    def line_graph_of_avg_marks_by_question(self):
+    def line_graph_of_avg_marks_by_question(self) -> str:
         """Generate a line graph of the average percentage marks by question.
 
         Returns:
-            A matplotlib figure containing the line graph.
+            A base64 encoded string containing the line graph.
         """
-        self.check_num_figs()
+        self.ensure_all_figures_closed()
 
         plt.figure(figsize=(6.8, 4.6))
 
@@ -334,4 +354,6 @@ class MatplotlibService:
         plt.ylabel("Average mark (%)")
         plt.xticks(range(1, self.spec["numberOfQuestions"] + 1))
 
-        return plt.gcf()
+        graph_string = self.get_graph_as_base64(plt.gcf())
+        self.ensure_all_figures_closed()
+        return graph_string
