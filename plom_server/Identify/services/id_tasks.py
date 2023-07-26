@@ -136,7 +136,9 @@ class IdentifyTaskService:
                 paper__paper_number=paper_number
             )
         except PaperIDTask.DoesNotExist:
-            raise ObjectDoesNotExist(f"Valid task for paper number {paper_number} does not exist.")
+            raise ObjectDoesNotExist(
+                f"Valid task for paper number {paper_number} does not exist."
+            )
 
         if task.assigned_user != user:
             raise PermissionDenied(

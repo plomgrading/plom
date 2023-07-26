@@ -56,6 +56,7 @@ class ServerVersion(APIView):
     Returns:
         (200): and the version string as ``text/plain``, not JSON.
     """
+
     permission_classes = [AllowAnyReadOnly]
 
     def get(self, request: Request) -> HttpResponse:
@@ -68,6 +69,7 @@ class ServerInfo(APIView):
     Returns:
         (200): a dict of information about the server as key-value pairs,
     """
+
     permission_classes = [AllowAnyReadOnly]
 
     def get(self, request: Request) -> Response:

@@ -163,7 +163,9 @@ class IDclaimThisTask(APIView):
             return Response(f"{err}", status=status.HTTP_403_FORBIDDEN)
         except ObjectDoesNotExist as err:  # no valid task for that paper_id
             return Response(f"{err}", status=status.HTTP_404_NOT_FOUND)
-        except IntegrityError as err:  # attempting to assign an SID that is already used
+        except (
+            IntegrityError
+        ) as err:  # attempting to assign an SID that is already used
             return Response(f"{err}", status=status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_200_OK)
