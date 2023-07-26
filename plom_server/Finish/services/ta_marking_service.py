@@ -17,39 +17,6 @@ from Mark.services import MarkingTaskService
 class TaMarkingService:
     """Service for the TA marking information."""
 
-    def get_all_ta_annotations(self) -> QuerySet[Annotation]:
-        """Return all annotations."""
-        return Annotation.objects.all()
-
-    def get_annotations_from_user(self, user) -> QuerySet[Annotation]:
-        """Return all annotations from a user.
-
-        Args:
-            user: (User) The user to get the annotations from.
-
-        Returns:
-            The annotations from the user.
-
-        Raises:
-            None expected
-        """
-        return Annotation.objects.filter(user=user)
-
-    def get_annotations_from_user_and_paper(self, user, paper) -> QuerySet[Annotation]:
-        """Return all annotations from a user.
-
-        Args:
-            user: (User) The user to get the annotations from.
-            paper: (Paper) The paper to get the annotations from.
-
-        Returns:
-            The annotations from the user on that paper.
-
-        Raises:
-            None expected
-        """
-        return Annotation.objects.filter(user=user, task__paper=paper)
-
     def get_csv_header(self) -> list:
         """Get the header for the csv file.
 
