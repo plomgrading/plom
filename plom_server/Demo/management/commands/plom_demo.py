@@ -180,6 +180,13 @@ class Command(BaseCommand):
             help="Stop the demo sequence at a certain breakpoint.",
         )
         parser.add_argument(
+            "--port",
+            action="store",
+            type=int,
+            default=8000,
+            help="What port number to run on, default 8000.",
+        )
+        parser.add_argument(
             "--randomarker",
             action="store_true",
             help="Run the plom-client randomarker.",
