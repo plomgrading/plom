@@ -3,14 +3,16 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Julian Lapenna
 
 import pathlib
 import uuid
 
 from plom.tpv_utils import encodePaperPageVersion
 
-from django.db import transaction
 from django.core.files import File
+from django.db import transaction
+from django.db.models import QuerySet
 
 from Scan.models import (
     StagingImage,
@@ -409,7 +411,7 @@ class ImageBundleService:
         return result
 
     @transaction.atomic
-    def get_id_pages_in_bundle(self, bundle):
+    def get_id_pages_in_bundle(self, bundle) -> QuerySet[IDPage]:
         """
         Get all of the ID pages in an uploaded bundle, in order to
         initialize ID tasks.
@@ -418,7 +420,7 @@ class ImageBundleService:
             bundle: a Bundle instance
 
         Returns:
-            QuerySet [IDPage]: a query of only the ID pages in the input bundle
+            A query of only the ID pages in the input bundle
         """
 
         return IDPage.objects.filter(image__bundle=bundle)

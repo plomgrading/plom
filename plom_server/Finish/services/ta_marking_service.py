@@ -6,6 +6,7 @@ import datetime as dt
 from typing import Union, List
 
 from django.db.models import Sum, Avg, StdDev
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from Finish.services import StudentMarkService
@@ -16,25 +17,25 @@ from Mark.services import MarkingTaskService
 class TaMarkingService:
     """Service for the TA marking information."""
 
-    def get_all_ta_annotations(self):
+    def get_all_ta_annotations(self) -> QuerySet[Annotation]:
         """Return all annotations."""
         return Annotation.objects.all()
 
-    def get_annotations_from_user(self, user):
+    def get_annotations_from_user(self, user) -> QuerySet[Annotation]:
         """Return all annotations from a user.
 
         Args:
             user: (User) The user to get the annotations from.
 
         Returns:
-            QuerySet[Annotation]: The annotations from the user.
+            The annotations from the user.
 
         Raises:
             None expected
         """
         return Annotation.objects.filter(user=user)
 
-    def get_annotations_from_user_and_paper(self, user, paper):
+    def get_annotations_from_user_and_paper(self, user, paper) -> QuerySet[Annotation]:
         """Return all annotations from a user.
 
         Args:
@@ -42,7 +43,7 @@ class TaMarkingService:
             paper: (Paper) The paper to get the annotations from.
 
         Returns:
-            QuerySet[Annotation]: The annotations from the user on that paper.
+            The annotations from the user on that paper.
 
         Raises:
             None expected
