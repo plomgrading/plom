@@ -1,15 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-import time
 
-from django.contrib.auth.models import User
-from django.db.models import Count
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 
 from Progress.services import UserInfoServices
-from Mark.models import Annotation, MarkingTask
 
 
 class ProgressUserInfoHome(ManagerRequiredView):

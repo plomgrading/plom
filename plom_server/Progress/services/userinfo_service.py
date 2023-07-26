@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+
 from typing import Dict, Tuple
 
 from django.contrib.auth.models import User
