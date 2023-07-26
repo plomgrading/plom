@@ -58,7 +58,7 @@ class UserInfoServices:
         """
         users = User.objects.prefetch_related("annotation_set").all()
 
-        grouped_annotations = {}
+        grouped_annotations: Dict[User, Dict[Tuple[int, int], int]] = {}
         for user in users:
             for annotation in user.annotation_set.all():
                 key = (
