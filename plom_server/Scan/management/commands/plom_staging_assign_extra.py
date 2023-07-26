@@ -5,9 +5,10 @@
 from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
-from Scan.services import ScanCastService, ScanService
-from Papers.services.validated_spec_service import SpecificationService
+
 from plom.scan.question_list_utils import check_question_list
+from Papers.services.validated_spec_service import SpecificationService
+from ...services import ScanCastService, ScanService
 
 
 class Command(BaseCommand):
