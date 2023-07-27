@@ -95,10 +95,14 @@ class DemoBundleService:
 
     def get_extra_page(self) -> None:
         # Assumes that the extra page has been generated
+
+        # TODO: ok to move this to the top?
+        from django.conf import settings
+
         call_command(
             "plom_preparation_extrapage",
             "download",
-            "media/papersToPrint/extra_page.pdf",
+            settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
         )
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
@@ -412,12 +416,16 @@ class DemoBundleService:
         return self._flatten([bundle[key] for bundle in filtered])
 
     def scribble_on_exams(self, config):
+        # TODO: ok to put at top?
+
+        from django.conf import settings
+
         bundles = config["bundles"]
         n_bundles = len(bundles)
 
         classlist = self.get_classlist_as_dict()
         classlist_length = len(classlist)
-        papers_to_print = Path("media/papersToPrint")
+        papers_to_print = settings.MEDIA_ROOT / "papersToPrint"
         paper_list = [paper for paper in papers_to_print.glob("exam*.pdf")]
         self.get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
         extra_page_path = papers_to_print / "extra_page.pdf"
