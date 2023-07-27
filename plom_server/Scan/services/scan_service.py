@@ -34,8 +34,9 @@ from plom.tpv_utils import (
     isValidExtraPageCode,
 )
 
-from .image_process import PageImageProcessor
-from Scan.models import (
+from Papers.services import ImageBundleService
+from Papers.services import SpecificationService
+from ..models import (
     StagingBundle,
     StagingImage,
     StagingThumbnail,
@@ -45,10 +46,8 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.services import ImageBundleService
-from Papers.services import SpecificationService
-
-from Scan.services.qr_validators import QRErrorService
+from ..services.qr_validators import QRErrorService
+from .image_process import PageImageProcessor
 
 
 class ScanService:

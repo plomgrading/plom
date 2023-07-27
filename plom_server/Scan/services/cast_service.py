@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from Papers.models import Paper, QuestionPage
-from Scan.models import (
+from Papers.services import PaperInfoService, SpecificationService
+
+from ..models import (
     StagingBundle,
     StagingImage,
     DiscardStagingImage,
@@ -14,7 +17,6 @@ from Scan.models import (
     UnknownStagingImage,
     KnownStagingImage,
 )
-from Papers.services import PaperInfoService, SpecificationService
 
 
 class ScanCastService:

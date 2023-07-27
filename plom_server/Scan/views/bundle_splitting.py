@@ -10,7 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
 
-from Scan.services import ScanService
+from ..services import ScanService
 
 
 class BundleSplittingProgressView(ScannerRequiredView):

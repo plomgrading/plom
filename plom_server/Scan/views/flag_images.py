@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechntizer
+# Copyright (C) 2023 Colin B. Macdonald
 
-from Scan.views.qr_codes import UpdateQRProgressView
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
-from Scan.services.scan_service import ScanService
-from Scan.forms import FlagImageForm
+
 from Papers.services import ImageBundleService
+
+from .qr_codes import UpdateQRProgressView
+from ..services.scan_service import ScanService
+from ..forms import FlagImageForm
 
 
 class FlagPageImage(UpdateQRProgressView):
