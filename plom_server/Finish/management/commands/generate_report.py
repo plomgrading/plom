@@ -82,6 +82,7 @@ class Command(BaseCommand):
                 marker,
             )
             histogram_of_grades_m_q = []
+            print(sorted(questions_marked_by_this_ta))
 
             for question in questions_marked_by_this_ta:
                 scores_for_user_for_question = des._get_ta_data_for_question(

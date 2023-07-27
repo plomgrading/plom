@@ -244,7 +244,12 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        return ta_df[ta_df["user"] == ta_name]["question_number"].unique().tolist()
+        return (
+            ta_df[ta_df["user"] == ta_name]["question_number"]
+            .drop_duplicates()
+            .sort_values()
+            .tolist()
+        )
 
     def get_tas_that_marked_this_question(
         self, question_number: int, ta_df: Optional[pd.DataFrame] = None
