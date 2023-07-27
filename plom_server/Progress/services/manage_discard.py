@@ -20,7 +20,7 @@ class ManageDiscardService:
     """Functions for overseeing discarding pushed images."""
 
     @transaction.atomic
-    def discard_dnm_page(self, user_obj: User, dnm_obj: DNMPage):
+    def _discard_dnm_page(self, user_obj: User, dnm_obj: DNMPage) -> None:
         DiscardPage.objects.create(
             image=dnm_obj.image,
             discard_reason=(
@@ -34,7 +34,7 @@ class ManageDiscardService:
         # Notice that no tasks need be invalidated since this is a DNM page.
 
     @transaction.atomic
-    def discard_id_page(self, user_obj: User, idpage_obj: IDPage):
+    def _discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
         raise NotImplementedError("Need to set up ID task invalidation")
 
         DiscardPage.objects.create(
@@ -52,7 +52,7 @@ class ManageDiscardService:
         idpage_obj.save()
 
     @transaction.atomic
-    def discard_question_page(self, user_obj: User, qpage_obj: QuestionPage):
+    def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
         raise NotImplementedError("Need to set up Marking task invalidation")
 
         DiscardPage.objects.create(
@@ -71,7 +71,7 @@ class ManageDiscardService:
         qpage_obj.save()
 
     @transaction.atomic
-    def discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage):
+    def _discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage) -> None:
         raise NotImplementedError("Need to set up Marking task invalidation")
 
         # note that a single mobile page is attached to an image that
@@ -130,13 +130,13 @@ class ManageDiscardService:
             msg = f"DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return "DRY-RUN: would drop " + msg
-            self.discard_dnm_page(user_obj, fp_obj)
+            self._discard_dnm_page(user_obj, fp_obj)
             return "Have dropped " + msg
         elif isinstance(fp_obj, IDPage):
             msg = f"IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
-            self.discard_id_page(user_obj, fp_obj)
+            self._discard_id_page(user_obj, fp_obj)
             return (
                 f"Have dropped {msg} and "
                 "flagged the associated ID-task as 'out of date'"
@@ -146,7 +146,7 @@ class ManageDiscardService:
             f"page {fp_obj.page_number} question {fp_obj.question_number}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
-            self.discard_question_page(user_obj, fp_obj)
+            self._discard_question_page(user_obj, fp_obj)
             return (
                 f"Have dropped {msg} and "
                 "flagged the associated marking task as 'out of date'"
@@ -154,7 +154,9 @@ class ManageDiscardService:
         else:
             raise ValueError("Cannot determine what sort of fixed-page this is")
 
-    def discard_pushed_mobile_page(self, user_obj, mobilepage_pk, *, dry_run=True):
+    def discard_pushed_mobile_page(
+        self, user_obj, mobilepage_pk, *, dry_run=True
+    ) -> str:
         try:
             mp_obj = MobilePage.objects.get(pk=mobilepage_pk)
         except ObjectDoesNotExist as e:
@@ -168,7 +170,7 @@ class ManageDiscardService:
         )
         if dry_run:
             return f"DRY-RUN: would drop {msg}"
-        self.discard_mobile_page(user_obj, mp_obj)
+        self._discard_mobile_page(user_obj, mp_obj)
         return (
             f"Have dropped {msg} and "
             "flagged the associated marking task as 'out of date'"
@@ -181,7 +183,7 @@ class ManageDiscardService:
         fixedpage_pk=None,
         mobilepage_pk=None,
         dry_run=True,
-    ):
+    ) -> str:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
