@@ -12,22 +12,11 @@
             <table class="table">
                 <tr>
                     <th>Username</th>
-                    {% for user, annotation in annotation_data_dict.items %}<td>{{ user.username }}</td>{% endfor %}
-                </tr>
-                <tr>
-                    <th>Questions Marked</th>
-                    {% for user, annotation in annotation_data_dict.items %}<td>{{ annotation }}</td>{% endfor %}
-                </tr>
-            </table>
-            <p>or</p>
-            <table class="table">
-                <tr>
-                    <th>Username</th>
                     <th>Question Marked</th>
                 </tr>
-                {% for user, annotation_count in annotation_data_dict.items %}
+                {% for user, annotation_count in annotation_count_dict .items %}
                     <tr>
-                        <td>{{ user.username }}</td>
+                        <td>{{ user }}</td>
                         <td>{{ annotation_count }}</td>
                     </tr>
                 {% endfor %}

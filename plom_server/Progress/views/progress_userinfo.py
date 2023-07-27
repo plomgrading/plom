@@ -14,7 +14,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
         uis = UserInfoServices()
 
         annotations_exist = uis.annotation_exists()
-        annotation_data_dict = uis.get_total_annotations_based_on_user()
+        annotation_count_dict = uis.get_total_annotations_based_on_user()
         grouped_annotations = (
             uis.get_annotations_based_on_user_and_question_number_version()
         )
@@ -22,7 +22,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context.update(
             {
                 "annotations_exist": annotations_exist,
-                "annotation_data_dict": annotation_data_dict,
+                "annotation_count_dict ": annotation_count_dict,
                 "grouped_annotations": grouped_annotations,
             }
         )

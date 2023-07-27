@@ -5,9 +5,9 @@ from typing import Dict, Tuple
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Count
 
 from Mark.models import Annotation
+from Mark.services import MarkingTaskService
 
 
 class UserInfoServices:
@@ -24,22 +24,30 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @transaction.atomic
-    def get_total_annotations_based_on_user(self) -> Dict[User, int]:
+    def get_total_annotations_based_on_user(self) -> Dict[str, int]:
         """Retrieve annotations based on user.
 
         Returns:
-            Dict: A dictionary of all annotations(Value) corresponding with the markers(key).
+            Dict[str, int]: A dictionary of all annotations(Value) corresponding with the markers(key).
 
         Raises:
             Not expected to raise any exceptions.
         """
-        markers = User.objects.filter(groups__name="marker").order_by("username")
-        annotation_data = markers.annotate(annotation_count=Count("annotation"))
-        annotation_data_dict: Dict[User, int] = {
-            marker: marker.annotation_count for marker in annotation_data
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        markers_and_managers = User.objects.filter(
+            groups__name__in=["manager", "marker"]
+        ).order_by("groups__name", "username")
+        annotation_count_dict: Dict[str, int] = {
+            user.username: 0 for user in markers_and_managers
         }
 
-        return annotation_data_dict
+        for annotation in annotations:
+            if annotation.user.username in annotation_count_dict:
+                annotation_count_dict[annotation.user.username] += 1
+
+        return annotation_count_dict
 
     @transaction.atomic
     def get_annotations_based_on_user_and_question_number_version(
@@ -56,19 +64,17 @@ class UserInfoServices:
                 dictionaries as values containing the count of annotations for each
                 (question_number, question_version) combination.
         """
-        users = User.objects.prefetch_related("annotation_set").all()
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
 
-        grouped_annotations: Dict[User, Dict[Tuple[int, int], int]] = {}
-        for user in users:
-            for annotation in user.annotation_set.all():
-                key = (
-                    annotation.task.question_number,
-                    annotation.task.question_version,
-                )
-                if user not in grouped_annotations:
-                    grouped_annotations[user] = {}
-                if key not in grouped_annotations[user]:
-                    grouped_annotations[user][key] = 0
-                grouped_annotations[user][key] += 1
+        grouped_annotations = {}
+        for annotation in annotations:
+            key = (annotation.task.question_number, annotation.task.question_version)
+            if annotation.user not in grouped_annotations:
+                grouped_annotations[annotation.user] = {}
+            if key not in grouped_annotations[annotation.user]:
+                grouped_annotations[annotation.user][key] = 0
+            grouped_annotations[annotation.user][key] += 1
 
         return grouped_annotations
