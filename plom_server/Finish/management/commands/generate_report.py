@@ -26,8 +26,6 @@ class Command(BaseCommand):
     data, run `python manage.py plom_demo --randomarker` first.
     """
 
-    matplotlib.use("Pdf")
-
     def handle(self, *args, **options):
         print("Building report.")
 
@@ -64,7 +62,7 @@ class Command(BaseCommand):
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         histogram_of_grades_q = []
-        marks_for_questions = des.get_marks_for_all_questions(student_df=student_df)
+        marks_for_questions = des.get_marks_for_all_questions()
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
@@ -78,9 +76,7 @@ class Command(BaseCommand):
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        corr = mpls.correlation_heatmap_of_questions(
-            des.get_question_correlation_heatmap_data()
-        )
+        corr = mpls.correlation_heatmap_of_questions()
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")

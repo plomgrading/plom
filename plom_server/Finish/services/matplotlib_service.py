@@ -3,7 +3,7 @@
 
 import base64
 from io import BytesIO
-from typing import Optional, List
+from typing import List, Optional, Union
 
 import matplotlib
 import matplotlib.cm as cm
@@ -21,7 +21,7 @@ RANGE_BIN_OFFSET = 2
 class MatplotlibService:
     """Service for generating matplotlib plots from data."""
 
-    matplotlib.use("Pdf")
+    matplotlib.use("Agg")
 
     def __init__(self):
         self.des = DataExtractionService()
@@ -29,6 +29,7 @@ class MatplotlibService:
 
         self.student_df = self.des.get_student_data()
         self.ta_df = self.des.get_ta_data()
+        self.formats = ["base64", "bytes"]
 
     def ensure_all_figures_closed(self):
         """Ensure that all matplotlib figures are closed.
@@ -38,28 +39,44 @@ class MatplotlibService:
         """
         assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
 
-    def get_graph_as_base64(self, fig: matplotlib.figure.Figure) -> str:
-        """Return the graph as a base64 encoded string.
+    def get_graph_as_BytesIO(self, fig: matplotlib.figure.Figure) -> BytesIO:
+        """Return the graph as a BytesIO.
 
         Args:
-            fig: The figure to encode.
+            fig: The figure to save.
 
         Returns:
-            The base64 encoded string.
+            The BytesIO object.
         """
         png_bytes = BytesIO()
         fig.savefig(png_bytes, format="png")
         png_bytes.seek(0)
         plt.close()
 
-        return base64.b64encode(png_bytes.read()).decode()
+        return png_bytes
 
-    def histogram_of_total_marks(self) -> str:
+    def get_graph_as_base64(self, bytes: BytesIO) -> str:
+        """Return the graph as a base64 encoded string.
+
+        Args:
+            bytes: The bytes to encode.
+
+        Returns:
+            The base64 encoded string.
+        """
+        return base64.b64encode(bytes.read()).decode()
+
+    def histogram_of_total_marks(self, format: str = "base64") -> Union[BytesIO, str]:
         """Generate a histogram of the total marks.
+
+        Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the histogram.
         """
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots()
@@ -74,13 +91,20 @@ class MatplotlibService:
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def histogram_of_grades_on_question(
-        self, question: int, student_df: Optional[pd.DataFrame] = None
-    ) -> str:
+        self,
+        question: int,
+        student_df: Optional[pd.DataFrame] = None,
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question.
 
         Args:
@@ -88,14 +112,17 @@ class MatplotlibService:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the histogram.
         """
         if student_df is None:
             student_df = self.student_df
-        assert isinstance(student_df, pd.DataFrame)
 
+        assert isinstance(student_df, pd.DataFrame)
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
@@ -109,27 +136,34 @@ class MatplotlibService:
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def correlation_heatmap_of_questions(
-        self, corr_df: Optional[pd.DataFrame] = None
-    ) -> str:
+        self, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
+    ) -> Union[BytesIO, str]:
         """Generate a correlation heatmap of the questions.
 
         Args:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the correlation heatmap.
         """
         if corr_df is None:
             corr_df = self.des.get_question_correlation_heatmap_data()
-        assert isinstance(corr_df, pd.DataFrame)
 
+        assert isinstance(corr_df, pd.DataFrame)
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         plt.figure(figsize=(6.4, 5.12))
@@ -138,13 +172,21 @@ class MatplotlibService:
         plt.xlabel("Question number")
         plt.ylabel("Question number")
 
-        graph_string = self.get_graph_as_base64(plt.gcf())
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def histogram_of_grades_on_question_by_ta(
-        self, question: int, ta_name: str, ta_df: Optional[pd.DataFrame] = None
-    ) -> str:
+        self,
+        question: int,
+        ta_name: str,
+        ta_df: Optional[pd.DataFrame] = None,
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
@@ -153,6 +195,8 @@ class MatplotlibService:
             ta_df: Optional dataframe containing the ta data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the histogram.
@@ -161,8 +205,9 @@ class MatplotlibService:
             ta_df = self.des.get_ta_data_for_ta(
                 ta_name, self.des.get_ta_data_for_question(question_number=question)
             )
-        assert isinstance(ta_df, pd.DataFrame)
 
+        assert isinstance(ta_df, pd.DataFrame)
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
@@ -181,9 +226,13 @@ class MatplotlibService:
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def histogram_of_time_spent_marking_each_question(
         self,
@@ -191,7 +240,8 @@ class MatplotlibService:
         marking_times_minutes: List[int],
         max_time: int = 0,
         bin_width: int = 15,
-    ) -> str:
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
         """Generate a histogram of the time spent marking a question.
 
         Args:
@@ -201,14 +251,17 @@ class MatplotlibService:
                 defaults to the maximum time in the marking_times_minutes series.
             bin_width: The width of each bin on the histogram. Should be given in
                 units of seconds. If omitted, defaults to 15 seconds per bin.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the histogram.
         """
         if max_time == 0:
             max_time = max(marking_times_minutes)
-        assert max_time > 0
 
+        assert max_time > 0
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
@@ -224,26 +277,34 @@ class MatplotlibService:
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def scatter_time_spent_vs_mark_given(
         self,
         question_number: int,
         times_spent_minutes: List[int],
         marks_given: List[int],
-    ) -> str:
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
         Args:
             question_number: The question to generate the scatter plot for.
             times_spent_minutes: Listlike containing the marking times in minutes.
             marks_given: Listlike containing the marks given.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the scatter plot.
         """
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
@@ -253,16 +314,21 @@ class MatplotlibService:
         ax.set_ylabel("Time spent (min)")
         ax.set_xlabel("Mark given")
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def boxplot_of_marks_given_by_ta(
         self,
         marks: List[List[int]],
         marker_names: List[str],
         question: int,
-    ) -> str:
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
         """Generate a boxplot of the marks given by each TA for the specified question.
 
         The length and order of marks and marker_names should be the same such
@@ -272,11 +338,14 @@ class MatplotlibService:
             marks: The dataframe of marks to plot.
             marker_names: The names of the markers.
             question: The question to plot the boxplot for.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the boxplot.
         """
         assert len(marks) == len(marker_names)
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
@@ -314,9 +383,13 @@ class MatplotlibService:
             ]
         )
 
-        graph_string = self.get_graph_as_base64(fig)
+        graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
 
     def boxplot_set_colors(self, bp, colour):
         """Set the colours of a boxplot.
@@ -333,12 +406,19 @@ class MatplotlibService:
         plt.setp(bp["fliers"][0], color=cm.hsv(colour))
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
-    def line_graph_of_avg_marks_by_question(self) -> str:
+    def line_graph_of_avg_marks_by_question(
+        self, format: str = "base64"
+    ) -> Union[BytesIO, str]:
         """Generate a line graph of the average percentage marks by question.
+
+        Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
 
         Returns:
             A base64 encoded string containing the line graph.
         """
+        assert format in self.formats
         self.ensure_all_figures_closed()
 
         plt.figure(figsize=(6.8, 4.6))
@@ -354,6 +434,10 @@ class MatplotlibService:
         plt.ylabel("Average mark (%)")
         plt.xticks(range(1, self.spec["numberOfQuestions"] + 1))
 
-        graph_string = self.get_graph_as_base64(plt.gcf())
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
-        return graph_string
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
