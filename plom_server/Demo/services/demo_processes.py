@@ -120,10 +120,10 @@ class DemoProcessesService:
             py_man_cmd = f"python3 manage.py {cmd}"
             return subprocess.Popen(split(py_man_cmd))
 
-    def launch_server(self):
-        print("Launching django server")
+    def launch_server(self, *, port):
+        print(f"Launching django server on localhost port {port}")
         # this needs to be run in the background
-        cmd = "python3 manage.py runserver 8000"
+        cmd = f"python3 manage.py runserver {port}"
         return subprocess.Popen(split(cmd))
 
     def remove_old_migration_files(self):

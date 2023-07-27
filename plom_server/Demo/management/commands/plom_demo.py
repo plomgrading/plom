@@ -245,7 +245,7 @@ class Command(BaseCommand):
             return
 
         print("*" * 40)
-        server_proc = proc_service.launch_server()
+        server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
             self.post_server_init(creation_service, config, stop_at)
