@@ -5,7 +5,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from API.views.experimantal import RubricViewSet
+from API.views.experimental import RubricViewSet
 
 from API.routes import (
     MarkURLPatterns,
