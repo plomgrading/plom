@@ -214,7 +214,7 @@ class MarkingTaskService:
 
     def get_tasks_from_question_with_annotation(
         self, question: int, version: int
-    ) -> PolymorphicQuerySet[MarkingTask]:
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
@@ -222,7 +222,7 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            A query of tasks
+            A PolymorphicQuerySet of tasks
 
         Raises:
             None expected
