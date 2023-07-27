@@ -4,7 +4,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.authentication import BasicAuthentication
 
-from API.permissions.v1 import IsManagerReadOnly
+from API.permissions import IsManagerReadOnly
 
 from Rubrics.models import Rubric
 from Rubrics.serializers import RubricSerializer
