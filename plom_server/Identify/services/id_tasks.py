@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.db import transaction, IntegrityError
+from django.db import transaction
 
 from Identify.models import (
     PaperIDTask,
@@ -41,20 +41,22 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def get_latest_id_results(self, task):
-        """Return the latest results from a PaperIDAction instance.
+        """Return the latest (valid) results from a PaperIDAction instance.
 
         Args:
             task: reference to a PaperIDTask instance
         """
-        # TO_DO - do we need to exclude "out of date" tasks here
-        latest = PaperIDAction.objects.filter(task=task)
-        latest = latest.order_by("-time")
+        
+        latest = task.latest_action
         if latest:
-            return latest[0]
+            if latest.is_valid:
+                return latest
+        
+        return None
 
     @transaction.atomic
     def get_done_tasks(self, user):
-        """Retrieve the results of previously completed ID tasks for a user.
+        """Retrieve the results of previously completed (and valid) ID tasks for a user.
 
         Args:
             user: reference to a User instance
@@ -64,14 +66,14 @@ class IdentifyTaskService:
             ``[[paper_id, student_id, student_name], [...]]``.
         """
         id_list = []
-        done_tasks = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
-        for task in done_tasks:
+        for task in PaperIDTask.objects.filter(
+            status=PaperIDTask.COMPLETE, assigned_user=user
+        ):
             latest = self.get_latest_id_results(task)
-            if latest and latest.user == user:
+            if latest:
                 id_list.append(
                     [task.paper.paper_number, latest.student_id, latest.student_name]
                 )
-
         return id_list
 
     @transaction.atomic
@@ -83,7 +85,7 @@ class IdentifyTaskService:
                 and the total number of papers.
         """
         n_completed = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
-        n_total = PaperIDTask.objects.all().count()
+        n_total = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).count()
 
         return [n_completed, n_total]
 
@@ -144,11 +146,23 @@ class IdentifyTaskService:
                 f"Task for paper number {paper_number} is not assigned to user {user}."
             )
 
-        id_action = PaperIDAction(
-            user=user, task=task, student_id=student_id, student_name=student_name
-        )
-        id_action.save()
+        # set the previous action (if it exists) to be invalid
+        if task.latest_action:
+            prev_action = task.latest_action
+            prev_action.is_valid = False
+            prev_action.save()
 
+        # now make a new id-action
+        new_action = PaperIDAction(
+            user=user,
+            task=task,
+            student_id=student_id,
+            student_name=student_name,
+        )
+        new_action.save()
+
+        # update the task's latest-action pointer, and set its status to completed
+        task.latest_action = new_action
         task.status = PaperIDTask.COMPLETE
         task.save()
 
@@ -201,6 +215,12 @@ class IdentifyTaskService:
 
         if task_obj.status == PaperIDTask.OUT_OF_DATE:
             return
+        # set the last id-action as invalid (if it exists)
+        if task_obj.latest_action:
+            latest_action = task_obj.latest_action
+            latest_action.is_valid = False
+            latest_action.save()
+        # now set status and make assigned user None
         task_obj.assigned_user = None
         task_obj.status = PaperIDTask.OUT_OF_DATE
         task_obj.save()

@@ -42,14 +42,17 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
 
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        baker.make(
+        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE, assigned_user=self.marker0)
+        id_act = baker.make(
             PaperIDAction,
             user=self.marker0,
             task=task,
             student_name="A",
             student_id="1",
+            is_valid=True,
         )
+        task.latest_action = id_act
+        task.save()
 
         result = its.get_done_tasks(user=self.marker0)
         self.assertEqual(result, [[1, "1", "A"]])
@@ -58,7 +61,7 @@ class IdentifyTaskTests(TestCase):
         """Test ``IdentifyTaskService.get_latest_id_results()``."""
         its = IdentifyTaskService()
         paper = baker.make(Paper, paper_number=1)
-        task1 = baker.make(PaperIDTask, paper=paper)
+        task1 = baker.make(PaperIDTask, paper=paper, assigned_user=self.marker0)
         self.assertIsNone(its.get_latest_id_results(task=task1))
 
         start_time = timezone.now()
@@ -66,13 +69,21 @@ class IdentifyTaskTests(TestCase):
             PaperIDAction,
             time=start_time,
             task=task1,
+            user=self.marker0,
+            is_valid=True,
         )
+        task1.latest_action=first
+        task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), first)
 
+        first.is_valid=False
+        first.save()
         second = baker.make(
             PaperIDAction, time=start_time + timedelta(seconds=1), task=task1
         )
+        task1.latest_action=second;
+        task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), second)
 
@@ -135,9 +146,10 @@ class IdentifyTaskTests(TestCase):
             its.identify_paper(self.marker1, 1, "1", "A")
 
         p1 = baker.make(Paper, paper_number=1)
+
         task = baker.make(
             PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.marker0
-        )
+        )        
 
         its.identify_paper(self.marker0, 1, "1", "A")
         task.refresh_from_db()
