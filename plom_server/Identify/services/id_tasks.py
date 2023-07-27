@@ -46,7 +46,6 @@ class IdentifyTaskService:
         Args:
             task: reference to a PaperIDTask instance
         """
-
         latest = task.latest_action
         if latest:
             if latest.is_valid:

@@ -35,7 +35,7 @@ class ManageDiscardService:
         # Notice that no tasks need be invalidated since this is a DNM page.
 
     @transaction.atomic
-    def discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
+    def _discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
         DiscardPage.objects.create(
             image=idpage_obj.image,
             discard_reason=(
