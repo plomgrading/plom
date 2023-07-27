@@ -188,10 +188,10 @@ class ManageDiscardService:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
             )
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions."
-            )
+            ) from e
 
         if fixedpage_pk:
             return self.discard_pushed_fixed_page(
