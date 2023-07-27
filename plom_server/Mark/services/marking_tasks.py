@@ -189,7 +189,9 @@ class MarkingTaskService:
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
-    def get_user_tasks(self, user, question=None, version=None):
+    def get_user_tasks(
+        self, user, question=None, version=None
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks that are assigned to this user.
 
         Args:
@@ -198,7 +200,7 @@ class MarkingTaskService:
             version (optional): int, the version number
 
         Returns:
-            QuerySet[MarkingTask]: tasks
+            Marking tasks assigned to user
         """
         tasks = MarkingTask.objects.filter(assigned_user=user)
         if question:
@@ -208,7 +210,9 @@ class MarkingTaskService:
 
         return tasks
 
-    def get_tasks_from_question_with_annotation(self, question: int, version: int):
+    def get_tasks_from_question_with_annotation(
+        self, question: int, version: int
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
@@ -216,7 +220,7 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            PolymorphicQuerySet[MarkingTask]: tasks
+            A PolymorphicQuerySet of tasks
 
         Raises:
             None expected
@@ -236,7 +240,9 @@ class MarkingTaskService:
             markingtask__status=MarkingTask.COMPLETE
         ).filter(markingtask__latest_annotation__isnull=False)
 
-    def get_available_tasks(self, question=None, version=None):
+    def get_available_tasks(
+        self, question=None, version=None
+    ) -> Union[QuerySet[MarkingTask], None]:
         """Return the marking tasks with a 'todo' status.
 
         Args:
@@ -244,7 +250,7 @@ class MarkingTaskService:
             version (optional): int, requested version number
 
         Returns:
-            Queryset[MarkingTask]: The queryset of available tasks, or
+            The queryset of available tasks, or
             `None` if no such task exists.
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
