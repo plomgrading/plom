@@ -40,5 +40,4 @@ class IsManagerOrAuthenticatedReadOnly(BasePermission):
         user_groups = request.user.groups.values_list("name", flat=True)
         if "manager" in user_groups:
             return True
-        else:
-            return request.method in SAFE_METHODS
+        return request.method in SAFE_METHODS

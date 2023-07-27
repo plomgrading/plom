@@ -152,6 +152,7 @@ class Tag(models.Model):
         abstract = True
 
     def __str__(self):
+        """Return the tag's text."""
         return self.text
 
 
