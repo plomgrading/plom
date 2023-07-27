@@ -27,8 +27,8 @@ class MatplotlibService:
         self.des = DataExtractionService()
         self.spec = Specification.load().spec_dict
 
-        self.student_df = self.des.get_student_data()
-        self.ta_df = self.des.get_ta_data()
+        self.student_df = self.des._get_student_data()
+        self.ta_df = self.des._get_ta_data()
         self.formats = ["base64", "bytes"]
 
     def ensure_all_figures_closed(self):
@@ -160,7 +160,7 @@ class MatplotlibService:
             A base64 encoded string containing the correlation heatmap.
         """
         if corr_df is None:
-            corr_df = self.des.get_question_correlation_heatmap_data()
+            corr_df = self.des._get_question_correlation_heatmap_data()
 
         assert isinstance(corr_df, pd.DataFrame)
         assert format in self.formats
@@ -202,8 +202,8 @@ class MatplotlibService:
             A base64 encoded string containing the histogram.
         """
         if ta_df is None:
-            ta_df = self.des.get_ta_data_for_ta(
-                ta_name, self.des.get_ta_data_for_question(question_number=question)
+            ta_df = self.des._get_ta_data_for_ta(
+                ta_name, self.des._get_ta_data_for_question(question_number=question)
             )
 
         assert isinstance(ta_df, pd.DataFrame)
@@ -377,7 +377,7 @@ class MatplotlibService:
         plt.xlim(
             [
                 0,
-                self.des.get_ta_data_for_question(question_number=int(question))[
+                self.des._get_ta_data_for_question(question_number=int(question))[
                     "max_score"
                 ].max(),
             ]

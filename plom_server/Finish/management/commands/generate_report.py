@@ -3,7 +3,6 @@
 
 import datetime as dt
 
-import matplotlib
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
@@ -34,9 +33,6 @@ class Command(BaseCommand):
         mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
-        student_df = des.get_student_data()
-        ta_df = des.get_ta_data()
-
         # info for report
         name = spec["name"]
         longName = spec["longName"]
@@ -62,7 +58,7 @@ class Command(BaseCommand):
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         histogram_of_grades_q = []
-        marks_for_questions = des.get_marks_for_all_questions()
+        marks_for_questions = des._get_marks_for_all_questions()
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
@@ -81,14 +77,14 @@ class Command(BaseCommand):
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
         histogram_of_grades_m = []
-        for marker, scores_for_user in des.get_all_ta_data_by_ta().items():
+        for marker, scores_for_user in des._get_all_ta_data_by_ta().items():
             questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
-                marker, ta_df
+                marker,
             )
             histogram_of_grades_m_q = []
 
             for question in questions_marked_by_this_ta:
-                scores_for_user_for_question = des.get_ta_data_for_question(
+                scores_for_user_for_question = des._get_ta_data_for_question(
                     question_number=question, ta_df=scores_for_user
                 )
 
@@ -113,10 +109,10 @@ class Command(BaseCommand):
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        max_time = des.get_ta_data()["seconds_spent_marking"].max()
+        max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times in des.get_times_for_all_questions().items():
+        for question, marking_times in des._get_times_for_all_questions().items():
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
@@ -131,10 +127,10 @@ class Command(BaseCommand):
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
         scatter_of_time = []
-        for question, marking_times in des.get_times_for_all_questions().items():
+        for question, marking_times in des._get_times_for_all_questions().items():
             times_for_question = marking_times.div(60)
             mark_given_for_question = des.get_scores_for_question(
-                question_number=question, ta_df=ta_df
+                question_number=question,
             )
 
             scatter_of_time.append(
@@ -153,7 +149,7 @@ class Command(BaseCommand):
         for (
             question_number,
             question_df,
-        ) in des.get_all_ta_data_by_question().items():
+        ) in des._get_all_ta_data_by_question().items():
             marks_given = []
             # add overall to names
             marker_names = ["Overall"]
@@ -163,7 +159,7 @@ class Command(BaseCommand):
             # add the overall marks
             marks_given.append(
                 des.get_scores_for_question(
-                    question_number=question_number, ta_df=ta_df
+                    question_number=question_number,
                 )
             )
 
@@ -282,7 +278,7 @@ class Command(BaseCommand):
 
         html += html_add_title("Histograms of grades by marker by question")
 
-        for index, marker in enumerate(des.get_all_ta_data_by_ta()):
+        for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
             <h4>Grades by {marker}</h4>
             """

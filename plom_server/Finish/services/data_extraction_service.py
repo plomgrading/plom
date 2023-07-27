@@ -42,14 +42,14 @@ class DataExtractionService:
 
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
-    def get_ta_data(self) -> pd.DataFrame:
+    def _get_ta_data(self) -> pd.DataFrame:
         """Return the dataframe of TA data.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
         """
         return self.ta_df
 
-    def get_student_data(self) -> pd.DataFrame:
+    def _get_student_data(self) -> pd.DataFrame:
         """Return the dataframe of student data.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
@@ -88,7 +88,7 @@ class DataExtractionService:
             averages.append(self.get_average_on_question_as_percentage(q))
         return averages
 
-    def get_marks_for_all_questions(
+    def _get_marks_for_all_questions(
         self, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the marks for each question as a dataframe.
@@ -109,7 +109,7 @@ class DataExtractionService:
 
         return student_df.filter(regex="q[0-9]*_mark")
 
-    def get_question_correlation_heatmap_data(
+    def _get_question_correlation_heatmap_data(
         self, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the correlation heatmap data for the questions.
@@ -138,7 +138,7 @@ class DataExtractionService:
 
         return marks_corr
 
-    def get_ta_data_for_ta(
+    def _get_ta_data_for_ta(
         self, ta_name: str, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific TA.
@@ -159,7 +159,7 @@ class DataExtractionService:
         marks = ta_df[ta_df["user"] == ta_name]
         return marks
 
-    def get_all_ta_data_by_ta(self) -> Dict[str, pd.DataFrame]:
+    def _get_all_ta_data_by_ta(self) -> Dict[str, pd.DataFrame]:
         """Get TA marking data for all TAs.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
@@ -170,10 +170,10 @@ class DataExtractionService:
         """
         marks_by_ta = {}
         for ta_name in self.ta_df["user"].unique():
-            marks_by_ta[ta_name] = self.get_ta_data_for_ta(ta_name, self.ta_df)
+            marks_by_ta[ta_name] = self._get_ta_data_for_ta(ta_name, self.ta_df)
         return marks_by_ta
 
-    def get_ta_data_for_question(
+    def _get_ta_data_for_question(
         self, question_number: int, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
@@ -195,7 +195,7 @@ class DataExtractionService:
         question_df = ta_df[ta_df["question_number"] == question_number]
         return question_df
 
-    def get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
+    def _get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
         """Get TA marking data for all questions as a dict.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
@@ -206,12 +206,12 @@ class DataExtractionService:
         """
         marks_by_question = {}
         for question_num in self.ta_df["question_number"].unique():
-            marks_by_question[question_num] = self.get_ta_data_for_question(
+            marks_by_question[question_num] = self._get_ta_data_for_question(
                 question_num, self.ta_df
             )
         return marks_by_question
 
-    def get_times_for_all_questions(self) -> Dict[int, pd.Series]:
+    def _get_times_for_all_questions(self) -> Dict[int, pd.Series]:
         """Get the marking times for all questions.
 
         Warning: caller will need pandas installed as this method returns a pandas series.
@@ -222,7 +222,7 @@ class DataExtractionService:
         """
         times_by_question = {}
         for q in self.ta_df["question_number"].unique():
-            times_by_question[q] = self.get_ta_data_for_question(q, self.ta_df)[
+            times_by_question[q] = self._get_ta_data_for_question(q, self.ta_df)[
                 "seconds_spent_marking"
             ]
         return times_by_question
