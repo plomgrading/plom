@@ -5,7 +5,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
+from typing import List, Dict
+
 import arrow
+
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
@@ -351,13 +354,14 @@ class ManageScanService:
         return discards
 
     @transaction.atomic
-    def get_pages_images_in_paper(self, paper_number: int):
+    def get_pages_images_in_paper(self, paper_number: int) -> List[Dict]:
         """Return the fixed/mobile pages in the paper and their images.
 
         Args:
             paper_number (int): paper ID
+
         Returns:
-            list(dict): list of the fixed pages and mobile pages in
+            List of the fixed pages and mobile pages in
             the given paper. For each fixed page a dict with
             page-number, page-type (ie fixed), the page pk, and the
             image pk is given (if it exists). For each mobile page the
@@ -365,11 +369,13 @@ class ManageScanService:
             image pk is given. Note that a mobile page *must* have an
             associated image, while a fixed page may not.
 
+        Raises:
+            ValueError: paper not in database.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
-        except Paper.DoesNotExist:
-            raise ValueError(f"Paper {paper_number} is not in the database")
+        except Paper.DoesNotExist as e:
+            raise ValueError(f"Paper {paper_number} is not in the database") from e
 
         page_images = []
         for fp_obj in paper_obj.fixedpage_set.all().order_by("page_number"):
