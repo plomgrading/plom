@@ -42,7 +42,12 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
 
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE, assigned_user=self.marker0)
+        task = baker.make(
+            PaperIDTask,
+            paper=paper,
+            status=PaperIDTask.COMPLETE,
+            assigned_user=self.marker0,
+        )
         id_act = baker.make(
             PaperIDAction,
             user=self.marker0,
@@ -72,17 +77,17 @@ class IdentifyTaskTests(TestCase):
             user=self.marker0,
             is_valid=True,
         )
-        task1.latest_action=first
+        task1.latest_action = first
         task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), first)
 
-        first.is_valid=False
+        first.is_valid = False
         first.save()
         second = baker.make(
             PaperIDAction, time=start_time + timedelta(seconds=1), task=task1
         )
-        task1.latest_action=second;
+        task1.latest_action = second
         task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), second)
@@ -149,7 +154,7 @@ class IdentifyTaskTests(TestCase):
 
         task = baker.make(
             PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.marker0
-        )        
+        )
 
         its.identify_paper(self.marker0, 1, "1", "A")
         task.refresh_from_db()

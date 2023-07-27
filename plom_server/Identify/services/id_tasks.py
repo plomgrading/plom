@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
 from Identify.models import (
     PaperIDTask,
@@ -46,12 +46,12 @@ class IdentifyTaskService:
         Args:
             task: reference to a PaperIDTask instance
         """
-        
+
         latest = task.latest_action
         if latest:
             if latest.is_valid:
                 return latest
-        
+
         return None
 
     @transaction.atomic
@@ -130,7 +130,7 @@ class IdentifyTaskService:
         Raises:
             ObjectDoesNotExist: when there is no valid task associated to that paper
             PermissionDenied: when the user is not the assigned user for the id-ing task for that paper
-            IntegrityError: the student id has already been assigned to a different paper (not yet implemented).
+            IntegrityError: the student id has already been assigned to a different paper
         """
         try:
             task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
@@ -145,6 +145,20 @@ class IdentifyTaskService:
             raise PermissionDenied(
                 f"Task for paper number {paper_number} is not assigned to user {user}."
             )
+
+        # look to see if that SID has been used in another valid PaperIDAction.
+        # if one exists, then be careful to check if we are re-id'ing the current paper with same SID.
+        try:
+            prev_action_with_that_sid = PaperIDAction.objects.filter(
+                is_valid=True, student_id=student_id
+            ).get()
+            if prev_action_with_that_sid != task.latest_action:
+                raise IntegrityError(
+                    "Student ID {student_id} has already been used in paper {prev_action_with_that_sid.PaperIDTask.paper.paper_number}"
+                )
+        except PaperIDAction.DoesNotExist:
+            # The SID has not been used previously.
+            pass
 
         # set the previous action (if it exists) to be invalid
         if task.latest_action:
