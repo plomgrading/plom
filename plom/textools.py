@@ -36,6 +36,9 @@ def texFragmentToPNG(
         tuple: `(True, imgdata)` or `(False, error_msg)` where `imgdata`
         is the raw contents of a PNG file, and `error_msg` is
         (currently) a string, but this could change in the future.
+
+    Raises:
+        Not expected to raise any exceptions.
     """
     head = dedent(
         r"""

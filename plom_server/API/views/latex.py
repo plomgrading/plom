@@ -2,14 +2,13 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import json
-from django.http import HttpResponse
 
+from django.http import HttpResponse
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.exceptions import APIException
 from rest_framework import status
 
 from plom.textools import texFragmentToPNG
+from .utils import _error_response
 
 
 class MlatexFragment(APIView):
@@ -18,29 +17,29 @@ class MlatexFragment(APIView):
             request_json = json.loads(request.body)
             fragment = request_json.get("fragment")
         except ValueError:
-            return Response(
+            return _error_response(
                 "post: Problem decoding json from client",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status.HTTP_406_NOT_ACCEPTABLE,
             )
         except KeyError:
-            return Response(
+            return _error_response(
                 "post: Json did not include required 'fragment' key",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status.HTTP_406_NOT_ACCEPTABLE,
             )
 
         try:
             valid, value = texFragmentToPNG(fragment)
         except RuntimeError:
-            return Response(
+            # TODO: but I don't think texFragmentToPNG raises this, maybe in the future
+            return _error_response(
                 "post: Sorry server does not support latex",
-                status=status.HTTP_406_NOT_ACCEPTABLE,
+                status.HTTP_406_NOT_ACCEPTABLE,
             )
-        if valid:
-            # see https://stackoverflow.com/questions/47192986/difference-between-response-and-httpresponse-django   (for example)
-            # for why to use httpresponse here instead of DRF's Response
-            return HttpResponse(value)
-        else:
-            return Response(
+        if not valid:
+            return _error_response(
                 value,
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
+        # see, for example, why to use httpresponse here instead of DRF's Response
+        # https://stackoverflow.com/questions/47192986/difference-between-response-and-httpresponse-django
+        return HttpResponse(value)
