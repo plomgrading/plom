@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -81,15 +82,34 @@ class ManageDiscardService:
         # and now delete each of those mobile pages
         mpage_obj.delete()
 
-    def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True):
+    def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True) -> str:
+        """Discard a fixed page, such an ID page, DNM page or Question page.
+
+        Args:
+            TODO
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
         try:
             fp_obj = FixedPage.objects.get(pk=fixedpage_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"A fixed page with pk {fixedpage_pk} does not exist")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"A fixed page with pk {fixedpage_pk} does not exist"
+            ) from e
 
         if fp_obj.image is None:
             raise ValueError(
-                f"There is no image attached to fixed page {fixedpage_pk} (which is paper {fp_obj.paper.paper_number} page {fp_obj.page_number})"
+                f"There is no image attached to fixed page {fixedpage_pk} "
+                f"(which is paper {fp_obj.paper.paper_number} page {fp_obj.page_number})"
             )
 
         if isinstance(fp_obj, DNMPage):
