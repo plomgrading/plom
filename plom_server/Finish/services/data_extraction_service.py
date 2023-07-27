@@ -12,6 +12,10 @@ from Papers.models import Specification
 class DataExtractionService:
     """Service for getting pulling data from the database.
 
+    Warning: Many methods return dataframes, so the caller should have pandas installed
+    or only use methods that return other data types. See method type hints for more
+    details.
+
     Upon instantiation, the service pulls data from the database. It does not refresh
     the data, so it is recommended to create a new instance of the service if the
     data in the database has changed.
@@ -39,11 +43,17 @@ class DataExtractionService:
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
     def get_ta_data(self) -> pd.DataFrame:
-        """Return the dataframe of TA data."""
+        """Return the dataframe of TA data.
+
+        Warning: caller will need pandas installed as this method returns a dataframe.
+        """
         return self.ta_df
 
     def get_student_data(self) -> pd.DataFrame:
-        """Return the dataframe of student data."""
+        """Return the dataframe of student data.
+
+        Warning: caller will need pandas installed as this method returns a dataframe.
+        """
         return self.student_df
 
     def get_total_average_mark(self) -> float:
@@ -83,6 +93,8 @@ class DataExtractionService:
     ) -> pd.DataFrame:
         """Get the marks for each question as a dataframe.
 
+        Warning: caller will need pandas installed as this method returns a dataframe.
+
         Args:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted,
@@ -101,6 +113,8 @@ class DataExtractionService:
         self, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the correlation heatmap data for the questions.
+
+        Warning: caller will need pandas installed as this method returns a dataframe.
 
         Args:
             student_df: Optional dataframe containing the student data. Should be
@@ -129,6 +143,8 @@ class DataExtractionService:
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific TA.
 
+        Warning: caller will need pandas installed as this method returns a dataframe.
+
         Args:
             ta_name: The TA to get the data for.
             ta_df: The dataframe containing the TA data. Should be a copy or
@@ -146,6 +162,8 @@ class DataExtractionService:
     def get_all_ta_data_by_ta(self) -> Dict[str, pd.DataFrame]:
         """Get TA marking data for all TAs.
 
+        Warning: caller will need pandas installed as this method returns a dataframe.
+
         Returns:
             A dictionary keyed by the TA name, containing the marking
             data for each TA.
@@ -159,6 +177,8 @@ class DataExtractionService:
         self, question_number: int, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
+
+        Warning: caller will need pandas installed as this method returns a dataframe.
 
         Args:
             question_number: The question to get the data for.
@@ -178,6 +198,8 @@ class DataExtractionService:
     def get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
         """Get TA marking data for all questions as a dict.
 
+        Warning: caller will need pandas installed as this method returns a dataframe.
+
         Returns:
             A dictionary keyed by the question number, containing the
             marking data for each question.
@@ -191,6 +213,8 @@ class DataExtractionService:
 
     def get_times_for_all_questions(self) -> Dict[int, pd.Series]:
         """Get the marking times for all questions.
+
+        Warning: caller will need pandas installed as this method returns a pandas series.
 
         Returns:
             A dictionary keyed by the question numbers, containing the
