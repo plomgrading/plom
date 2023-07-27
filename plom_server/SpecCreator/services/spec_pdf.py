@@ -8,6 +8,7 @@ from typing import List
 import fitz
 
 from django.core.exceptions import MultipleObjectsReturned
+from django.conf import settings
 
 from .. import models
 
@@ -30,7 +31,7 @@ class ReferencePDFService:
         Returns:
             models.ReferencePDF: the reference PDF object
         """
-        pdf_path = pathlib.Path("media") / "spec_reference.pdf"
+        pdf_path = settings.MEDIA_ROOT / "spec_reference.pdf"
         pdf_path.unlink(missing_ok=True)
 
         pdf = models.ReferencePDF(filename_slug=slug, num_pages=pages, pdf=pdf)
@@ -78,7 +79,7 @@ class ReferencePDFService:
         """
         pdf = self.get_pdf()
         slug = pdf.filename_slug
-        pathname = pathlib.Path("media") / f"spec_reference.pdf"
+        pathname = settings.MEDIA_ROOT / "spec_reference.pdf"
         if pathname.exists():
             pdf_doc = fitz.Document(pathname)
 
