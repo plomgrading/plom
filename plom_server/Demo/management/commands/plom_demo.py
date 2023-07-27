@@ -21,7 +21,14 @@ from Demo.services import (
 
 
 class Command(BaseCommand):
-    help = "WebPlom demo. For testing, debugging and development."
+    help = """
+        WebPlom demo. For testing, debugging and development.
+
+        Some aspects of the server can be changed via command line
+        arguments.  Others via environment variables, including
+        PLOM_DATABASE_BACKEND, PLOM_DB_NAME, and probably more
+        in the future.
+    """
 
     def papers_and_db(self, dcs: DemoCreationService):
         print("*" * 40)
