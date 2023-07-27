@@ -121,13 +121,22 @@ class ManageDiscardService:
             if dry_run:
                 return f"DRY-RUN: would drop IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             self.discard_id_page(user_obj, fp_obj)
-            return f"Have dropped IDPage paper= {fp_obj.paper.paper_number} page {fp_obj.page_number}. The associated ID-task has been flagged as 'out of date'"
+            return (
+                f"Have dropped IDPage paper= {fp_obj.paper.paper_number} page {fp_obj.page_number}."
+                " The associated ID-task has been flagged as 'out of date'"
+            )
         elif isinstance(fp_obj, QuestionPage):
             if dry_run:
-                return f"DRY-RUN: would drop QuestionPage for paper {fp_obj.paper.paper_number} page {fp_obj.page_number} question {fp_obj.question_number}"
+                return (
+                    f"DRY-RUN: would drop QuestionPage for paper {fp_obj.paper.paper_number} "
+                    f"page {fp_obj.page_number} question {fp_obj.question_number}"
+                )
             self.discard_question_page(user_obj, fp_obj)
-            return f"Have dropped QuestionPage for paper {fp_obj.paper.paper_number} page {fp_obj.page_number} question {fp_obj.question_number}. The associated marking task has been flagged as 'out of date'"
-
+            return (
+                f"Have dropped QuestionPage for paper {fp_obj.paper.paper_number} "
+                f" page {fp_obj.page_number} question {fp_obj.question_number}. "
+                "The associated marking task has been flagged as 'out of date'"
+            )
         else:
             raise ValueError("Cannot determine what sort of fixed-page this is")
 
