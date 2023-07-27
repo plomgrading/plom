@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from tabulate import tabulate
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Progress.services import ManageScanService
 
@@ -15,13 +16,17 @@ class Command(BaseCommand):
 
     def list_images_in_paper(self, paper_number: int):
         mss = ManageScanService()
-        page_image_list = mss.get_pages_images_in_paper(paper_number)
+        try:
+            page_image_list = mss.get_pages_images_in_paper(paper_number)
+        except ValueError as e:
+            raise CommandError(e)
         headers = ["page_type", "page_number", "question_number", "page_pk", "image_pk"]
         out_list = []
         for pi in page_image_list:
             if pi["image"] is None:
                 pi["image"] = "no image"
             if pi["page_type"] == "fixed":
+                # TODO: dot/blank is ok for DNM/ID, not so good in other cases
                 out_list.append(
                     [
                         pi["page_type"],

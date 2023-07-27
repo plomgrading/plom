@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from typing import Union
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Progress.services import ManageDiscardService
 
@@ -25,12 +26,15 @@ class Command(BaseCommand):
     ):
         mds = ManageDiscardService()
 
-        ret = mds.discard_pushed_page_cmd(
-            username,
-            fixedpage_pk=fixedpage_pk,
-            mobilepage_pk=mobilepage_pk,
-            dry_run=not really_do_it,
-        )
+        try:
+            ret = mds.discard_pushed_page_cmd(
+                username,
+                fixedpage_pk=fixedpage_pk,
+                mobilepage_pk=mobilepage_pk,
+                dry_run=not really_do_it,
+            )
+        except ValueError as e:
+            raise CommandError(e)
         self.stdout.write(ret)
 
     def add_arguments(self, parser):
