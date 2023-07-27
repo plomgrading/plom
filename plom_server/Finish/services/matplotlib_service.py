@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from Finish.services import GraphingDataService
+from . import DataExtractionService
 from Papers.models import Specification
 
 
@@ -24,11 +24,11 @@ class MatplotlibService:
     matplotlib.use("Pdf")
 
     def __init__(self):
-        self.gds = GraphingDataService()
+        self.des = DataExtractionService()
         self.spec = Specification.load().spec_dict
 
-        self.student_df = self.gds.get_student_data()
-        self.ta_df = self.gds.get_ta_data()
+        self.student_df = self.des.get_student_data()
+        self.ta_df = self.des.get_ta_data()
 
     def ensure_all_figures_closed(self):
         """Ensure that all matplotlib figures are closed.
@@ -65,7 +65,7 @@ class MatplotlibService:
         fig, ax = plt.subplots()
 
         ax.hist(
-            self.gds.get_total_marks(),
+            self.des.get_total_marks(),
             bins=range(0, self.spec["totalMarks"] + RANGE_BIN_OFFSET),
             ec="black",
             alpha=0.5,
@@ -127,7 +127,7 @@ class MatplotlibService:
             A base64 encoded string containing the correlation heatmap.
         """
         if corr_df is None:
-            corr_df = self.gds.get_question_correlation_heatmap_data()
+            corr_df = self.des.get_question_correlation_heatmap_data()
         assert isinstance(corr_df, pd.DataFrame)
 
         self.ensure_all_figures_closed()
@@ -158,8 +158,8 @@ class MatplotlibService:
             A base64 encoded string containing the histogram.
         """
         if ta_df is None:
-            ta_df = self.gds.get_ta_data_for_ta(
-                ta_name, self.gds.get_ta_data_for_question(question_number=question)
+            ta_df = self.des.get_ta_data_for_ta(
+                ta_name, self.des.get_ta_data_for_question(question_number=question)
             )
         assert isinstance(ta_df, pd.DataFrame)
 
@@ -308,7 +308,7 @@ class MatplotlibService:
         plt.xlim(
             [
                 0,
-                self.gds.get_ta_data_for_question(question_number=int(question))[
+                self.des.get_ta_data_for_question(question_number=int(question))[
                     "max_score"
                 ].max(),
             ]
@@ -345,7 +345,7 @@ class MatplotlibService:
 
         plt.plot(
             range(1, self.spec["numberOfQuestions"] + 1),
-            self.gds.get_averages_on_all_questions_as_percentage(),
+            self.des.get_averages_on_all_questions_as_percentage(),
             marker="o",
         )
         plt.ylim([0, 100])

@@ -8,8 +8,8 @@ from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
 
-from Finish.services import GraphingDataService
-from Finish.services import MatplotlibService
+from ...services import DataExtractionService
+from ...services import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
@@ -31,13 +31,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Building report.")
 
-        gds = GraphingDataService()
+        des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
-        student_df = gds.get_student_data()
-        ta_df = gds.get_ta_data()
+        student_df = des.get_student_data()
+        ta_df = des.get_ta_data()
 
         # info for report
         name = spec["name"]
@@ -49,9 +49,9 @@ class Command(BaseCommand):
             .distinct()
             .count()
         )
-        average_mark = gds.get_total_average_mark()
-        median_mark = gds.get_total_median_mark()
-        stdev_mark = gds.get_total_stdev_mark()
+        average_mark = des.get_total_average_mark()
+        median_mark = des.get_total_median_mark()
+        stdev_mark = des.get_total_stdev_mark()
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
         histogram_of_grades_q = []
-        marks_for_questions = gds.get_marks_for_all_questions(student_df=student_df)
+        marks_for_questions = des.get_marks_for_all_questions(student_df=student_df)
         for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
@@ -79,20 +79,20 @@ class Command(BaseCommand):
         # correlation heatmap
         print("Generating correlation heatmap.")
         corr = mpls.correlation_heatmap_of_questions(
-            gds.get_question_correlation_heatmap_data()
+            des.get_question_correlation_heatmap_data()
         )
 
         # histogram of grades given by each marker by question
         print("Generating histograms of grades given by marker by question.")
         histogram_of_grades_m = []
-        for marker, scores_for_user in gds.get_all_ta_data_by_ta().items():
-            questions_marked_by_this_ta = gds.get_questions_marked_by_this_ta(
+        for marker, scores_for_user in des.get_all_ta_data_by_ta().items():
+            questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
                 marker, ta_df
             )
             histogram_of_grades_m_q = []
 
             for question in questions_marked_by_this_ta:
-                scores_for_user_for_question = gds.get_ta_data_for_question(
+                scores_for_user_for_question = des.get_ta_data_for_question(
                     question_number=question, ta_df=scores_for_user
                 )
 
@@ -117,10 +117,10 @@ class Command(BaseCommand):
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        max_time = gds.get_ta_data()["seconds_spent_marking"].max()
+        max_time = des.get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times in gds.get_times_for_all_questions().items():
+        for question, marking_times in des.get_times_for_all_questions().items():
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
@@ -135,9 +135,9 @@ class Command(BaseCommand):
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
         scatter_of_time = []
-        for question, marking_times in gds.get_times_for_all_questions().items():
+        for question, marking_times in des.get_times_for_all_questions().items():
             times_for_question = marking_times.div(60)
-            mark_given_for_question = gds.get_scores_for_question(
+            mark_given_for_question = des.get_scores_for_question(
                 question_number=question, ta_df=ta_df
             )
 
@@ -157,23 +157,23 @@ class Command(BaseCommand):
         for (
             question_number,
             question_df,
-        ) in gds.get_all_ta_data_by_question().items():
+        ) in des.get_all_ta_data_by_question().items():
             marks_given = []
             # add overall to names
             marker_names = ["Overall"]
             marker_names.extend(
-                gds.get_tas_that_marked_this_question(question_number, question_df)
+                des.get_tas_that_marked_this_question(question_number, question_df)
             )
             # add the overall marks
             marks_given.append(
-                gds.get_scores_for_question(
+                des.get_scores_for_question(
                     question_number=question_number, ta_df=ta_df
                 )
             )
 
             for marker_name in marker_names[1:]:
                 marks_given.append(
-                    gds.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
+                    des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
                 )
 
             boxplots.append(
@@ -286,7 +286,7 @@ class Command(BaseCommand):
 
         html += html_add_title("Histograms of grades by marker by question")
 
-        for index, marker in enumerate(gds.get_all_ta_data_by_ta()):
+        for index, marker in enumerate(des.get_all_ta_data_by_ta()):
             html += f"""
             <h4>Grades by {marker}</h4>
             """

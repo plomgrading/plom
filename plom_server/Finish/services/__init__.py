@@ -5,5 +5,5 @@
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
 from .reassemble_service import ReassembleService
-from .graphing_data_service import GraphingDataService
+from .data_extraction_service import DataExtractionService
 from .matplotlib_service import MatplotlibService
