@@ -113,10 +113,11 @@ class ManageDiscardService:
             )
 
         if isinstance(fp_obj, DNMPage):
+            msg = f"DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
-                return f"DRY-RUN: would drop DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
+                return "DRY-RUN: would drop " + msg
             self.discard_dnm_page(user_obj, fp_obj)
-            return f"Have dropped DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
+            return "Have dropped " + msg
         elif isinstance(fp_obj, IDPage):
             if dry_run:
                 return f"DRY-RUN: would drop IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
