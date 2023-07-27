@@ -22,7 +22,6 @@ pytest-qt==4.2.0
 
 # Legacy-server only deps
 aiohttp==3.8.5
-lapsolver==1.1.0
 peewee==3.16.2
 
 arrow==1.2.3

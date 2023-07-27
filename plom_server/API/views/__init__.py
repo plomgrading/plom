@@ -5,6 +5,7 @@
 from .server_info import (
     GetSpecification,
     ServerVersion,
+    ServerInfo,
     CloseUser,
 )
 

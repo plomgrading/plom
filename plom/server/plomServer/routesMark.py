@@ -894,7 +894,7 @@ class MarkHandler:
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
         router.add_get("/pagedata/{number}", self.get_pagedata)
-        # some deprecated: use the /context one instead:
+        # somewhat deprecated: use the /context one instead:
         router.add_get("/pagedata/{number}/{question}", self.get_pagedata_question)
         router.add_get(
             "/pagedata/{number}/context/{question}",

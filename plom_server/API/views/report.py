@@ -11,7 +11,6 @@ from rest_framework import status
 from Finish.services import ReassembleService
 
 from Papers.models import Paper
-from Mark.services import MarkingTaskService
 
 
 class REPspreadsheet(APIView):

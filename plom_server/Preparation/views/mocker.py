@@ -1,14 +1,21 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
+
 import shutil
+
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from Preparation.services import ExamMockerService, TestSourceService
-from SpecCreator.services import StagingSpecificationService
 
 from Base.base_group_views import ManagerRequiredView
+from SpecCreator.services import StagingSpecificationService
+
+from ..services import ExamMockerService, TestSourceService
 
 
 class MockExamView(ManagerRequiredView):
-    """Create a mock test PDF"""
+    """Create a mock test PDF."""
 
     def post(self, request, version):
         mocker = ExamMockerService()

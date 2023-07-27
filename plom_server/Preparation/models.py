@@ -37,15 +37,14 @@ class StagingClasslistCSV(SingletonBaseModel):
 
 
 class StagingStudent(models.Model):
-    """Table to store information about students for the purposes of
-    preparing things for potential prenaming. Note, name is stored as a
-    single field.
+    """Table of student information for potential prenaming.
+
+    Note, name is stored as a single field.
 
     student_id (str): The students id-number or id-string. Must be unique.
-    student_name (str): The name of the student (as a single text field)
+    student_name (str): The name of the student (as a single text field).
     paper_number (int): Optional paper_number assigned to this student. For
-        prenaming - not linked to the actual DB for papers
-
+        prenaming - not linked to the actual DB for papers.
     """
 
     # To understand why a single name-field, see
@@ -61,9 +60,9 @@ class StagingStudent(models.Model):
 
 class StagingPQVMapping(models.Model):
     """Table to store the test-question-version mapping for staging.
+
     Store as triples of paper-question-version. This is very loose,
     but avoids recreating the entire paper-structure.
-
     """
 
     paper_number = models.PositiveIntegerField(null=False)
@@ -76,10 +75,10 @@ class StagingPQVMapping(models.Model):
 
 
 class ExtraPagePDFTask(HueyTask):
-    """Table to store the exta page pdf huey task.  Note that this
-    inherits fields from the HueyTask table. We add extra function to
-    this to ensure there can only be one such task.
+    """Table to store the exta page pdf huey task.
 
+    Note that this inherits fields from the HueyTask table. We add
+    extra function to this to ensure there can only be one such task.
     """
 
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")

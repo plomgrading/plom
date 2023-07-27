@@ -1131,14 +1131,7 @@ class ManagerMessenger(BaseMessenger):
             try:
                 # increase timeout as unsure how long this will take on real data
                 timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
-                response = self.post(
-                    "/ID/predictedID",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                    },
-                    timeout=timeout,
-                )
+                response = self.post_auth("/ID/predictedID", timeout=timeout)
                 response.raise_for_status()
                 return response.text
             except requests.HTTPError as e:
@@ -1190,11 +1183,9 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.post(
+            response = self.post_auth(
                 "/ID/id_reader",
                 json={
-                    "user": self.user,
-                    "token": self.token,
                     "crop_top": top,
                     "crop_bottom": bottom,
                     "ignore_timestamp": ignore_timestamp,
@@ -1404,13 +1395,8 @@ class ManagerMessenger(BaseMessenger):
     def createUser(self, someuser, password):
         self.SRmutex.acquire()
         try:
-            response = self.post(
-                f"/authorisation/{someuser}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "password": password,
-                },
+            response = self.post_auth(
+                f"/authorisation/{someuser}", json={"password": password}
             )
             response.raise_for_status()
         except requests.HTTPError as e:

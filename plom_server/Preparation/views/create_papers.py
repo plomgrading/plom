@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
@@ -6,9 +10,7 @@ from Papers.services import SpecificationService, PaperInfoService
 
 
 class PaperCreationView(ManagerRequiredView):
-    """
-    Create test-papers in the database.
-    """
+    """Create test-papers in the database."""
 
     def build_context(self):
         spec = SpecificationService()

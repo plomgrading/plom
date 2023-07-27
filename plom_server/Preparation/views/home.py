@@ -5,16 +5,15 @@
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
 
-from SpecCreator.services import StagingSpecificationService
+from Base.base_group_views import ManagerRequiredView
+from BuildPaperPDF.services import BuildPapersService
 from Papers.services import (
     SpecificationService,
     PaperInfoService,
 )
-from BuildPaperPDF.services import BuildPapersService
+from SpecCreator.services import StagingSpecificationService
 
-from Base.base_group_views import ManagerRequiredView
-
-from Preparation.services import (
+from ..services import (
     TestSourceService,
     PrenameSettingService,
     StagingStudentService,
@@ -24,7 +23,6 @@ from Preparation.services import (
 )
 
 
-# Create your views here.
 class PreparationLandingView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()

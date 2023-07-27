@@ -3,11 +3,12 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import pathlib
+from datetime import datetime
 import hashlib
+import pathlib
+
 import fitz
 from fitz import FileDataError
-from datetime import datetime
 
 from django.utils import timezone
 from django import forms
@@ -15,7 +16,7 @@ from django.forms import ValidationError
 from django.utils.text import slugify
 from django.conf import settings
 
-from Scan.services import ScanService
+from .services import ScanService
 
 
 class BundleUploadForm(forms.Form):

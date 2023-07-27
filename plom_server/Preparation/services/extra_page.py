@@ -6,12 +6,11 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django_huey import db_task
 
-from Preparation.models import ExtraPagePDFTask
+from ..models import ExtraPagePDFTask
 
 
 log = logging.getLogger("ExtraPageService")
@@ -19,11 +18,11 @@ log = logging.getLogger("ExtraPageService")
 
 class ExtraPageService:
     @transaction.atomic()
-    def get_extra_page_task_status(self):
+    def get_extra_page_task_status(self) -> str:
         """Status of the build extra page task, creating a "todo" task if it does not exist.
 
         Return:
-        str: The status as string: "todo", "queued", "started", "error" or "complete".
+            The status as string: "todo", "queued", "started", "error" or "complete".
 
         """
         return ExtraPagePDFTask.load().status
@@ -43,7 +42,7 @@ class ExtraPageService:
 
     @db_task(queue="tasks", context=True)  # so that the task knows its ID etc.
     def _build_the_extra_page_pdf(task=None):
-        """Build a single test-paper"""
+        """Build a single test-paper."""
         from plom.create import build_extra_page_pdf
 
         # build the pdf in a tempdirectory
@@ -69,7 +68,7 @@ class ExtraPageService:
 
     @transaction.atomic()
     def build_extra_page_pdf(self):
-        """Enqueue the huey task of building the extra page pdf"""
+        """Enqueue the huey task of building the extra page pdf."""
         task_obj = ExtraPagePDFTask.load()
         if task_obj.status == "complete":
             return
