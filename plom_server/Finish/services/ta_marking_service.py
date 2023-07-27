@@ -8,7 +8,7 @@ from typing import Union, List
 from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
 
-from Finish.services import StudentMarkService
+from ..services import StudentMarkService
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 
