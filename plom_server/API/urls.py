@@ -71,7 +71,7 @@ urlpatterns = [
     ),
 ]
 
-experimental_router = DefaultRouter(trailing_slash=False)
+experimental_router = DefaultRouter(trailing_slash=True)
 experimental_router.register("rubrics", RubricViewSet, basename="rubrics")
 experimental_router.register("annotations", AnnotationViewSet, basename="annotations")
 experimental_router.register(
