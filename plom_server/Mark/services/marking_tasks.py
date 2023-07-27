@@ -14,6 +14,7 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
 
 from plom import is_valid_tag_text
 
@@ -226,6 +227,14 @@ class MarkingTaskService:
         if version != 0:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
+
+    def get_latest_annotations_from_complete_marking_tasks(
+        self,
+    ) -> QuerySet[Annotation]:
+        """Returns the latest annotations from all tasks that are complete."""
+        return Annotation.objects.filter(
+            markingtask__status=MarkingTask.COMPLETE
+        ).filter(markingtask__latest_annotation__isnull=False)
 
     def get_available_tasks(self, question=None, version=None):
         """Return the marking tasks with a 'todo' status.
