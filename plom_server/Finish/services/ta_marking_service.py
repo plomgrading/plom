@@ -72,11 +72,10 @@ class TaMarkingService:
         return keys
 
     def build_csv_data(self) -> list:
-        """Get the latest info for all students in a list for building a csv file to download.
+        """Get information about the latest annotation for all marking tasks that are complete.
 
         Returns:
-            List where each element is a dictionary containing the marking information
-            for an annotation.
+            List where each element is a dict keyed by str, representing a single annotation.
 
         Raises:
             None expected
