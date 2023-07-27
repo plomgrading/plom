@@ -738,7 +738,6 @@ fedora_legacy:
           iproute
     - pip --version
   script:
-    - dnf install -y git
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
@@ -825,7 +824,6 @@ fedora_webplom:
           python3-django
     - pip --version
   script:
-    - dnf install -y git
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
