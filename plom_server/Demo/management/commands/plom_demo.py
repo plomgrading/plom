@@ -194,17 +194,6 @@ class Command(BaseCommand):
             help="What port number to run on, default 8000.",
         )
         parser.add_argument(
-            "--db_name",
-            action="store",
-            type=str,
-            default="plom_db",
-            help="""
-                What database name to use, defaults to "plom_db".
-                Changing this uses undocumented techniques so things
-                may not function correctly.
-            """,
-        )
-        parser.add_argument(
             "--randomarker",
             action="store_true",
             help="Run the plom-client randomarker.",
@@ -212,15 +201,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
-
-        if options["db_name"] != "plom_db":
-            self.stdout.write(
-                self.style.WARNING(
-                    "CAUTION: hacking settings structure to set DB name to "
-                    f'{options["db_name"]}'
-                )
-            )
-            settings.DATABASES["default"]["NAME"] = options["db_name"]
 
         if stop_at is not None:
             stop_at = stop_at[0]
