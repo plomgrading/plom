@@ -72,6 +72,8 @@ class DemoProcessesService:
         else:
             raise RuntimeError('Unexpected engine "{engine}"')
 
+        # TODO: Issue #2926:  where should these live?  And there are three
+        # hardcoded here but seems to me the toml could specify something else...
         for fname in [
             "fake_bundle1.pdf",
             "fake_bundle2.pdf",
@@ -82,10 +84,18 @@ class DemoProcessesService:
         for path in Path("huey").glob("huey_db.*"):
             path.unlink(missing_ok=True)
 
-        for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
-            shutil.rmtree(rmdir, ignore_errors=True)
+        # OK to do at top?
+        from django.conf import settings
 
-        Path("media").mkdir()
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+
+        # TODO: don't delete things that are not ours
+        # TODO: some of these don't exist any more?
+        # for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
+        #     shutil.rmtree(rmdir, ignore_errors=True)
+
+        # surely Django will do this?  Else we need the settings here
+        # Path("media").mkdir()
 
     def sqlite_set_wal(self):
         import sqlite3
