@@ -80,15 +80,8 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        marking_tasks = MarkingTask.objects.filter(
-            status=MarkingTask.COMPLETE
-        ).prefetch_related("latest_annotation", "paper")
-
-        annotations = [
-            task.latest_annotation
-            for task in marking_tasks
-            if task.latest_annotation is not None
-        ]
+        mts = MarkingTaskService()
+        annotations = mts.get_latest_annotations_from_complete_marking_tasks()
 
         csv_data = []
         for annotation in annotations:
