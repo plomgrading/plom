@@ -22,7 +22,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context.update(
             {
                 "annotations_exist": annotations_exist,
-                "annotation_count_dict ": annotation_count_dict,
+                "annotation_count_dict": annotation_count_dict,
                 "grouped_annotations": grouped_annotations,
             }
         )

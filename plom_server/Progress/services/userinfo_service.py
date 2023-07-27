@@ -47,6 +47,7 @@ class UserInfoServices:
             if annotation.user.username in annotation_count_dict:
                 annotation_count_dict[annotation.user.username] += 1
 
+        print(annotation_count_dict)
         return annotation_count_dict
 
     @transaction.atomic
