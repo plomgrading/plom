@@ -18,6 +18,23 @@ class MarkingTask(BaseTask):
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
     marking_priority: float, the priority of this task
+
+    Status
+    ~~~~~~
+
+    Inherited from the superclass, MarkingTasks also have a status:
+
+      - `StatusChoices.TO_DO`: No user has started work on this task.
+      - `StatusChoices.OUT`: Some user has this task signed out.  If they
+        surrender the task later, it goes back to being TO_DO.
+      - `StatusChoices.COMPLETE`: The task is finished.  However the
+        new annotations associated with it could arrive: this is tracked
+        via idea of the "Latest Annotation".
+      - `StatusChoices.OUT_OF_DATE`: various actions could invalidate
+        the work, such as removing a Page, or adding a new one.  In this
+        case the task becomes out-of-date, in lieu of being deleted.
+        It cannot transition back to earlier states.
+        OUT_OF_DATE can still have a Latest Annotation.
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
