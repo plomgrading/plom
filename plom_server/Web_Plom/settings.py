@@ -133,7 +133,7 @@ DATABASES = {
     },
     "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / f"{plom_db_name}.sqlite3",
     },
 }
 # Issue #2619: users can choose a database backend via env var
