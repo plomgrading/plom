@@ -28,7 +28,6 @@ from Papers.models import (
     Paper,
 )
 from .paper_info import PaperInfoService
-from .validated_spec_service import SpecificationService
 
 
 class ImageBundleService:

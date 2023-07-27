@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
 import sys
 
@@ -15,14 +16,12 @@ from django.urls import reverse
 from django.conf import settings
 from model_bakery import baker
 
-from Preparation.views import PreparationLandingView
 from Papers.models import Specification
+from Preparation.views import PreparationLandingView
 
 
 class PreparationLandingTests(TestCase):
-    """
-    Test the preparation app landing view.
-    """
+    """Test the preparation app landing view."""
 
     def setUp(self):
         """Create and force login a manager user so the client can request the page."""
@@ -37,7 +36,7 @@ class PreparationLandingTests(TestCase):
         return super().setUp()
 
     def test_reverses(self):
-        """Test the expected URL path and shortcut name"""
+        """Test the expected URL path and shortcut name."""
         landing = reverse("prep_landing")
         self.assertEqual(landing, "/create/")
 
@@ -47,10 +46,7 @@ class PreparationLandingTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_default_seatbelts(self):
-        """
-        Test an empty preparation page: should only allow creating
-        a specification.
-        """
+        """Test an empty preparation page: should only allow creating a specification."""
         landing_view = PreparationLandingView()
         context = landing_view.build_context()
 
@@ -70,9 +66,9 @@ class PreparationLandingTests(TestCase):
         self.assertFalse(context["papers_built"])
 
     def test_after_spec_made(self):
-        """
-        Test the seatbelts after a specification is saved - it should reveal
-        source versions and QV map.
+        """Test the seatbelts after a specification is saved.
+
+        Tt should reveal source versions and QV map.
         """
         testing_test_spec_file_path = (
             settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"

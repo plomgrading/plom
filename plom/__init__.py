@@ -22,7 +22,8 @@ if sys.version_info[0] == 2:
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
 
-Plom_API_Version = "59"
+Plom_API_Version = "100"
+Plom_Legacy_Server_API_Version = "60"
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase

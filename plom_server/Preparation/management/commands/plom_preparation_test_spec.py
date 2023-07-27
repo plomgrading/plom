@@ -15,11 +15,12 @@ from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 import fitz
-from plom import SpecVerifier
 
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from plom import SpecVerifier
 from Papers.services import SpecificationService
-from Preparation.services import PQVMappingService
+from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+
+from ...services import PQVMappingService
 
 
 class Command(BaseCommand):
