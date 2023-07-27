@@ -5,7 +5,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from API.views.experimental import RubricViewSet
+from API.views.experimental import (
+    RubricViewSet,
+    AnnotationViewSet,
+    MarkingTaskViewSet,
+)
 
 from API.routes import (
     MarkURLPatterns,
@@ -67,10 +71,11 @@ urlpatterns = [
     ),
 ]
 
-v1_router = DefaultRouter(trailing_slash=False)
-v1_router.register("rubrics", RubricViewSet)
+experimental_router = DefaultRouter(trailing_slash=False)
+experimental_router.register("rubrics", RubricViewSet, basename="rubrics")
+experimental_router.register("annotations", AnnotationViewSet, basename="annotations")
+experimental_router.register(
+    "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
+)
 
-# do this for, perhaps, annotations too!
-
-# rename "v1" to "experimental"
-urlpatterns += [path("experimental/", include(v1_router.urls))]
+urlpatterns += [path("experimental/", include(experimental_router.urls))]

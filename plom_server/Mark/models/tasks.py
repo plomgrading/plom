@@ -29,6 +29,9 @@ class MarkingTask(BaseTask):
     )
     marking_priority = models.FloatField(null=False, default=1.0)
 
+    def __str__(self):
+        return f"MarkingTask (paper={self.paper.paper_number}, question={self.question_number})"
+
 
 class MarkingTaskTag(Tag):
     """Represents a tag that can be assigned to one or more marking tasks."""

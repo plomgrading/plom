@@ -151,6 +151,9 @@ class Tag(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.text
+
 
 # ---------------------------------
 # Define the signal handlers for huey tasks.

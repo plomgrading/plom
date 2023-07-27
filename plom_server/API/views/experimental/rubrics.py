@@ -1,17 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.authentication import BasicAuthentication
-
-from API.permissions import IsManagerReadOnly
+from .base import ManagerReadOnlyViewSet
 
 from Rubrics.models import Rubric
 from Rubrics.serializers import RubricSerializer
 
 
-class RubricViewSet(ModelViewSet):
-    """Handles views for Rubrics. Only safe endpoints are enabled, because of the viewset permissions.
+class RubricViewSet(ManagerReadOnlyViewSet):
+    """Endpoints for the Rubric model. Only safe methods are enabled.
 
     'rubrics/':
         GET: list all rubrics (can be filtered)
@@ -26,7 +23,5 @@ class RubricViewSet(ModelViewSet):
 
     queryset = Rubric.objects.all()
     serializer_class = RubricSerializer
-    authentication_classes = [BasicAuthentication]
-    permission_classes = [IsManagerReadOnly]
     filterset_fields = ("kind", "display_delta", "value", "out_of", "text")
     lookup_field = "key"

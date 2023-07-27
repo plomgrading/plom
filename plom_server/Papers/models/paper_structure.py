@@ -21,6 +21,9 @@ class Paper(models.Model):
 
     paper_number = models.PositiveIntegerField(null=False, unique=True)
 
+    def __str__(self):
+        return f"Paper (paper_number={self.paper_number})"
+
 
 class MobilePage(models.Model):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
