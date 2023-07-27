@@ -23,7 +23,10 @@ class ManageDiscardService:
     def discard_dnm_page(self, user_obj: User, dnm_obj: DNMPage):
         DiscardPage.objects.create(
             image=dnm_obj.image,
-            discard_reason=f"User {user_obj.username} discarded dnm paper {dnm_obj.paper.paper_number} page {dnm_obj.page_number}",
+            discard_reason=(
+                f"User {user_obj.username} discarded DNM page: "
+                f"page {dnm_obj.paper.paper_number} page {dnm_obj.page_number}"
+            ),
         )
         # Set the original dnm page to have no image, but **DO NOT** delete the DNM page
         dnm_obj.image = None
@@ -36,7 +39,10 @@ class ManageDiscardService:
 
         DiscardPage.objects.create(
             image=idpage_obj.image,
-            discard_reason=f"User {user_obj.username} discarded id paper {idpage_obj.paper.paper_number} page {idpage_obj.page_number}",
+            discard_reason=(
+                f"User {user_obj.username} discarded ID page: "
+                f"page {idpage_obj.paper.paper_number} page {idpage_obj.page_number}"
+            ),
         )
         # set the associated IDing task to "OUT_OF_DATE"
         # >>> TODO <<<
@@ -51,7 +57,11 @@ class ManageDiscardService:
 
         DiscardPage.objects.create(
             image=qpage_obj.image,
-            discard_reason=f"User {user_obj.username} discarded paper {qpage_obj.paper.paper_number} page {qpage_obj.page_number} question {qpage_obj.question_number}.",
+            discard_reason=(
+                f"User {user_obj.username} discarded paper "
+                f"{qpage_obj.paper.paper_number} page {qpage_obj.page_number} "
+                f"question {qpage_obj.question_number}."
+            ),
         )
         # set the associated IDing task to "OUT_OF_DATE"
         # >>> TODO <<<
@@ -73,7 +83,11 @@ class ManageDiscardService:
 
         DiscardPage.objects.create(
             image=mpage_obj.image,
-            discard_reason=f"User {user_obj.username} discarded mobile paper {mpage_obj.paper.paper_number} question {mpage_obj.question_number}.",
+            discard_reason=(
+                f"User {user_obj.username} discarded mobile "
+                f"paper {mpage_obj.paper.paper_number} "
+                f"question {mpage_obj.question_number}."
+            ),
         )
 
         # find all the mobile pages associated with this image
@@ -113,29 +127,29 @@ class ManageDiscardService:
             )
 
         if isinstance(fp_obj, DNMPage):
+            msg = f"DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
-                return f"DRY-RUN: would drop DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
+                return "DRY-RUN: would drop " + msg
             self.discard_dnm_page(user_obj, fp_obj)
-            return f"Have dropped DNMPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
+            return "Have dropped " + msg
         elif isinstance(fp_obj, IDPage):
+            msg = f"IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
             if dry_run:
-                return f"DRY-RUN: would drop IDPage paper {fp_obj.paper.paper_number} page {fp_obj.page_number}"
+                return f"DRY-RUN: would drop {msg}"
             self.discard_id_page(user_obj, fp_obj)
             return (
-                f"Have dropped IDPage paper= {fp_obj.paper.paper_number} page {fp_obj.page_number}."
-                " The associated ID-task has been flagged as 'out of date'"
+                f"Have dropped {msg} and "
+                "flagged the associated ID-task as 'out of date'"
             )
         elif isinstance(fp_obj, QuestionPage):
+            msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
+            f"page {fp_obj.page_number} question {fp_obj.question_number}"
             if dry_run:
-                return (
-                    f"DRY-RUN: would drop QuestionPage for paper {fp_obj.paper.paper_number} "
-                    f"page {fp_obj.page_number} question {fp_obj.question_number}"
-                )
+                return f"DRY-RUN: would drop {msg}"
             self.discard_question_page(user_obj, fp_obj)
             return (
-                f"Have dropped QuestionPage for paper {fp_obj.paper.paper_number} "
-                f" page {fp_obj.page_number} question {fp_obj.question_number}. "
-                "The associated marking task has been flagged as 'out of date'"
+                f"Have dropped {msg} and "
+                "flagged the associated marking task as 'out of date'"
             )
         else:
             raise ValueError("Cannot determine what sort of fixed-page this is")
@@ -143,14 +157,22 @@ class ManageDiscardService:
     def discard_pushed_mobile_page(self, user_obj, mobilepage_pk, *, dry_run=True):
         try:
             mp_obj = MobilePage.objects.get(pk=mobilepage_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"A mobile page with pk {mobilepage_pk} does not exist")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"A mobile page with pk {mobilepage_pk} does not exist"
+            ) from e
 
+        msg = (
+            f"a MobilePage for paper {mp_obj.paper.paper_number} "
+            f"question {mp_obj.question_number}"
+        )
         if dry_run:
-            return f"DRY-RUN: would drop a MobilePage for paper {mp_obj.paper.paper_number} question {mp_obj.question_number}"
-        else:
-            self.discard_mobile_page(user_obj, mp_obj)
-            return f"Have dropped a Mobilepage for paper {mp_obj.paper.paper_number} question {mp_obj.question_number} and flagged the associated marking task as 'out of date'"
+            return f"DRY-RUN: would drop {msg}"
+        self.discard_mobile_page(user_obj, mp_obj)
+        return (
+            f"Have dropped {msg} and "
+            "flagged the associated marking task as 'out of date'"
+        )
 
     def discard_pushed_page_cmd(
         self,
