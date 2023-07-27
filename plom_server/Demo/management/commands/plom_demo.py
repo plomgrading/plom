@@ -130,20 +130,20 @@ class Command(BaseCommand):
         print("*" * 40)
         dcs.create_rubrics()
 
-    def run_randomarker(self):
-        # TODO: hardcoded port numbers!
+    def run_randomarker(self, *, port):
         # TODO: hardcoded http://
-        cmds = [
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker1 -w demoMarker1 --partial 25",
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker2 -w demoMarker2 --partial 33",
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker3 -w demoMarker3 --partial 50",
-        ]
+        srv = f"http://localhost:{port}"
+        cmds = (
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker1 -w demoMarker1 --partial 25",
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker3 -w demoMarker3 --partial 50",
+        )
         env = dict(os.environ, WEBPLOM="1")
         for cmd in cmds:
             print(f"RandoMarking!  calling: {cmd}")
             subprocess.check_call(split(cmd), env=env)
 
-        cmd = "python3 -m plom.client.randoIDer -s http://localhost:8000 -u demoMarker1 -w demoMarker1"
+        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
         print(f"RandoIDing!  calling: {cmd}")
         subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
 
@@ -178,6 +178,13 @@ class Command(BaseCommand):
             ],
             nargs=1,
             help="Stop the demo sequence at a certain breakpoint.",
+        )
+        parser.add_argument(
+            "--port",
+            action="store",
+            type=int,
+            default=8000,
+            help="What port number to run on, default 8000.",
         )
         parser.add_argument(
             "--randomarker",
@@ -238,13 +245,13 @@ class Command(BaseCommand):
             return
 
         print("*" * 40)
-        server_proc = proc_service.launch_server()
+        server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
             self.post_server_init(creation_service, config, stop_at)
 
             if options["randomarker"]:
-                self.run_randomarker()
+                self.run_randomarker(port=options["port"])
 
             if not options["no_waiting"]:
                 sleep(2)

@@ -76,19 +76,17 @@ def lap_solver(test_numbers, student_IDs, probabilities):
         list: triples of (`paper_number`, `student_ID`, `certainty`),
         where certainty is the mean of digit probabilities for the student_ID selected by LAP solver.
 
-    use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-    (as implemented in the ``lapsolver`` package)
+    Use a version of the Jonker-Volgenant algorithm, as cited by SciPy,
     to find least cost assignment of tests to studentIDs.
 
     This is potentially time-consuming but in practice for 1000 papers I observed
-    a tiny fraction of a section.  The package ``lapsolver`` itself notes
-    3000x3000 in around 3 seconds.
+    a tiny fraction of a section.
     """
-    from lapsolver import solve_dense
+    from scipy.optimize import linear_sum_assignment
 
     cost_matrix = assemble_cost_matrix(test_numbers, student_IDs, probabilities)
 
-    row_IDs, column_IDs = solve_dense(cost_matrix)
+    row_IDs, column_IDs = linear_sum_assignment(cost_matrix)
 
     predictions = []
     for r, c in zip(row_IDs, column_IDs):
