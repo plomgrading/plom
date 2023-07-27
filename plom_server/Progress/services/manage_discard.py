@@ -193,7 +193,9 @@ class ManageDiscardService:
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
 
-        if fixedpage_pk:
+        if fixedpage_pk and mobilepage_pk:
+            raise ValueError("You cannot specify both fixedpage AND mobilepage")
+        elif fixedpage_pk:
             return self.discard_pushed_fixed_page(
                 user_obj, fixedpage_pk, dry_run=dry_run
             )
