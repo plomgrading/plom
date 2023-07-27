@@ -25,6 +25,7 @@ class Command(BaseCommand):
             if pi["image"] is None:
                 pi["image"] = "no image"
             if pi["page_type"] == "fixed":
+                # TODO: dot/blank is ok for DNM/ID, not so good in other cases
                 out_list.append(
                     [
                         pi["page_type"],
