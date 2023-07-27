@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Natalie Balashov
 
 import html
 import logging
@@ -24,11 +25,11 @@ from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
 from Papers.services import SpecificationService
-from Rubrics.serializers import (
+from ..serializers import (
     RubricSerializer,
 )
-from Rubrics.models import Rubric
-from Rubrics.models import RubricPane
+from ..models import Rubric
+from ..models import RubricPane
 
 
 log = logging.getLogger("RubricServer")
@@ -47,6 +48,10 @@ class RubricService:
 
         Returns:
             Rubric: the created and saved rubric instance.
+
+        Raises:
+            KeyError: if rubric_data contains missing username or kind fields.
+            ValidationError: if rubric kind is not a valid option.
         """
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
@@ -149,21 +154,32 @@ class RubricService:
         """
         return Rubric.objects.all()
 
-    def init_rubrics(self):
+    def init_rubrics(self, username):
         """Add special rubrics such as deltas and per-question specific.
 
         Returns:
             bool: true if initialized or False if it was already initialized.
+
+        Exceptions:
+            ValueError: username does not exist or is not part of the manager group.
         """
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
         # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
         spec = SpecificationService().get_the_spec()
-        self._build_special_rubrics(spec)
+        self._build_special_rubrics(spec, username)
         return True
 
-    def _build_special_rubrics(self, spec):
+    def _build_special_rubrics(self, spec, username):
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in range(1, 1 + spec["numberOfQuestions"]):
@@ -179,7 +195,7 @@ class RubricService:
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -196,7 +212,7 @@ class RubricService:
                 "question": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -213,7 +229,7 @@ class RubricService:
                 "question": q,
                 "meta": "",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -233,7 +249,7 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": "manager",
+                    "username": username,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
@@ -247,7 +263,7 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": "manager",
+                    "username": username,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
