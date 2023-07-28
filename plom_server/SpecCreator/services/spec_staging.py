@@ -387,25 +387,25 @@ class StagingSpecificationService:
         """Return True if the staging spec has question 'one_index'."""
         return str(one_index) in self.specification().questions  # JSON field!
 
-    def get_question(self, one_index: int):
-        """
-        Return a quetion dictionary given its one-index. If it doesn't exist, return None
-        """
+    def get_question(self, one_index: int) -> Union[Dict, None]:
+        """Return a question dictionary given its one-index. If it doesn't exist, return None."""
         if self.has_question(one_index):
             return self.specification().questions[str(one_index)]  # JSON field!
+        return None
 
-    def get_marks_assigned_to_other_questions(self, one_index: int):
-        """
-        Return the total number of marks assigned to questions other than the one at one_index
-        """
+    def get_marks_assigned_to_other_questions(self, one_index: int) -> int:
+        """Return the total number of marks assigned to questions other than the one at one_index."""
         the_spec = self.specification()
-        total_so_far = sum([self.get_question(q)["mark"] for q in the_spec.questions])
+        total = 0
+        for q in the_spec.questions:
+            if q == one_index:
+                continue
+            qdict = self.get_question(q)
+            if not qdict:
+                continue
+            total += qdict["mark"]
 
-        if self.has_question(one_index):
-            assigned_to_this_q = self.get_question(one_index)["mark"]
-            return total_so_far - assigned_to_this_q
-        else:
-            return total_so_far
+        return total
 
     def get_staging_spec_dict(self) -> Dict:
         """Generate a dictionary from the current state of the specification."""
