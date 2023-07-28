@@ -5,14 +5,17 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
+from typing import Dict, List, Tuple
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
 
-from Papers.models import (
+from ..models import (
     Specification,
     Paper,
+    Image,
     FixedPage,
     IDPage,
     DNMPage,
@@ -25,9 +28,9 @@ log = logging.getLogger("PaperCreatorService")
 
 
 class PaperCreatorService:
-    """Class to encapsulate all the functions to build the test-papers and
-    groups in the db. DB must have a validated test spec before we can use
-    this.
+    """Class to encapsulate functions to build the test-papers and groups in the DB.
+
+    DB must have a validated test spec before we can use this.
     """
 
     def __init__(self):
@@ -39,7 +42,9 @@ class PaperCreatorService:
             )
 
     @transaction.atomic
-    def create_paper_with_qvmapping(self, paper_number, qv_mapping, user):
+    def create_paper_with_qvmapping(
+        self, paper_number: int, qv_mapping: Dict, user: User
+    ) -> None:
         paper_task = self._create_paper_with_qvmapping(
             self.spec, paper_number, qv_mapping, user
         )
@@ -51,16 +56,20 @@ class PaperCreatorService:
 
     @db_task(queue="tasks")
     @transaction.atomic
-    def _create_paper_with_qvmapping(spec, paper_number, qv_mapping, user):
-        """Creates a paper with the given paper number and the given
-        question-version mapping.
+    def _create_paper_with_qvmapping(
+        spec: Dict, paper_number: int, qv_mapping: Dict, user: User
+    ) -> None:
+        """Creates a paper with the given paper number and the given question-version mapping.
 
         Also initializes prename ID predictions in DB, if applicable.
 
-        spec (dict): The test specification
-        paper_number (int): The number of the paper being created
-        qv_mapping (dict): Mapping from each question-number to
-            version for this particular paper. Of the form {q: v}
+        Args:
+            spec: The test specification
+            paper_number: The number of the paper being created
+            qv_mapping: Mapping from each question-number to
+                version for this particular paper. Of the form {q: v}
+            user: User to be associated with prename predictions
+                created during paper creation.
         """
         # private to prevent circular imports
         from Preparation.services import StagingStudentService
@@ -106,20 +115,24 @@ class PaperCreatorService:
                 )
                 question_page.save()
 
-    def add_all_papers_in_qv_map(self, qv_map, user, background=True):
-        """Build all the papers given by the qv-map
+    def add_all_papers_in_qv_map(
+        self, qv_map: Dict, user: User, background: bool = True
+    ) -> Tuple[bool, List]:
+        """Build all the papers given by the qv-map.
 
-        qv_map (dict): For each paper give the question-version map.
-            Of the form {paper_number: {q: v}}
+        Args:
+            qv_map: For each paper give the question-version map.
+                Of the form {paper_number: {q: v}}
+            user: User to be associated with prename predictions
+                created during paper creation.
+            background (optional): Run in the background. If false,
+                run with call_local.
 
-        background (optional, bool): Run in the background. If false,
-        run with call_local.
-
-        returns (pair): If all papers added to DB without errors then
+        Returns:
+            If all papers added to DB without errors then
             return (True, []) else return (False, list of errors) where
             the list of errors is a list of pairs (paper_number, error)
         """
-
         errors = []
         for paper_number, qv_mapping in qv_map.items():
             try:
@@ -136,15 +149,29 @@ class PaperCreatorService:
         else:
             return True, []
 
-    def add_all_papers_in_qv_map_cmd(self, qv_map, username, background=True):
-        """Wrapper around add_all_papers_in_qv_map in order to retrieve the User object."""
+    def add_all_papers_in_qv_map_cmd(
+        self, qv_map: Dict, username: User, background: bool = True
+    ):
+        """Wrapper around add_all_papers_in_qv_map in order to retrieve the User object.
+
+        Args:
+            qv_map: For each paper give the question-version map.
+                Of the form {paper_number: {q: v}}
+            username: Name of user to be associated with prename predictions
+                created during paper creation.
+            background (optional): Run in the background. If false,
+                run with call_local.
+
+        Raises:
+            ValueError: provided username does not exist
+        """
         try:
             user = User.objects.get(username__iexact=username)
         except ObjectDoesNotExist:
             raise ValueError(f"User '{username}' does not exist")
         self.add_all_papers_in_qv_map(qv_map, user, background=background)
 
-    def remove_all_papers_from_db(self):
+    def remove_all_papers_from_db(self) -> None:
         # hopefully we don't actually need to call this outside of testing.
         # Have to use a loop because of a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34
@@ -152,16 +179,16 @@ class PaperCreatorService:
             page.delete()
         Paper.objects.all().delete()
 
-    def update_page_image(self, paper_number, page_index, image):
-        """
-        Add a reference to an Image instance.
+    def update_page_image(
+        self, paper_number: int, page_index: int, image: Image
+    ) -> None:
+        """Add a reference to an Image instance.
 
         Args:
-            paper_number: (int) a Paper instance id
-            page_index: (int) the page number
-            image: (Image) the page-image
+            paper_number: a Paper instance id
+            page_index: the page number
+            image: the page-image
         """
-
         paper = Paper.objects.get(paper_number=paper_number)
         page = FixedPage.objects.get(paper=paper, page_number=page_index)
         page.image = image

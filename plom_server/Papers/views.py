@@ -52,18 +52,14 @@ class CreateTestPapers(ManagerRequiredView):
         )
 
     def delete(self, request):
-        """
-        For testing purposes: delete all papers from the database, and the associated build tasks.
-        """
+        """For testing purposes: delete all papers from the database, and the associated build tasks."""
         PaperCreatorService().remove_all_papers_from_db()
         # note - when a paper is deleted, the associated pdf-build task is deleted as well via a signal.
         return HttpResponseClientRefresh()
 
 
 class TestPaperProgress(ManagerRequiredView):
-    """
-    Get the database creation progress.
-    """
+    """Get the database creation progress."""
 
     def get(self, request):
         pinfo = PaperInfoService()

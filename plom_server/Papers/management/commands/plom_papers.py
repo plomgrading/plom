@@ -39,10 +39,7 @@ class Command(BaseCommand):
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
     def papers_status(self):
-        """
-        Get the status of test-papers in the database.
-        """
-
+        """Get the status of test-papers in the database."""
         pqvs = PQVMappingService()
         if not pqvs.is_there_a_pqv_map():
             self.stdout.write("Question-version map not present.")
@@ -58,11 +55,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
     def build_papers(self, username):
-        """
-        Write test-papers to the database, so long as the Papers table is empty
-        and a QV map is present.
-        """
-
+        """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
         pqvs = PQVMappingService()
         if not pqvs.is_there_a_pqv_map():
             self.stderr.write("No question-version map found - stopping.")
@@ -87,10 +80,7 @@ class Command(BaseCommand):
         bp_service.stage_all_pdf_jobs(classdict=StagingStudentService().get_classdict())
 
     def clear_papers(self):
-        """
-        Remove all test-papers from the database.
-        """
-
+        """Remove all test-papers from the database."""
         paper_info = PaperInfoService()
         if paper_info.how_many_papers_in_database() == 0:
             self.stdout.write("No test-papers found in database - stopping.")
