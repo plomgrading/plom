@@ -18,14 +18,12 @@ class DemoProcessesService:
 
     def setup_django(self):
         """Setup the django server and apply settings.py."""
-
         # this will not work as settings was already imported, only conflicts will result IMHO
         # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
         setup()
 
     def get_database_engine(self):
         """Which database engine are we using?"""
-
         engine = settings.DATABASES["default"]["ENGINE"]
         if "postgres" in engine:
             return "postgres"
