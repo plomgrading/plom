@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
 from polymorphic.models import PolymorphicModel
@@ -9,14 +10,14 @@ from .image_bundle import Image
 
 
 class Paper(models.Model):
-    """Table to store papers. Each entry corresponds to one (physical)
-    test-paper that a student submits. The pages of that test-paper
+    """Table to store papers, each corresponding to one (physical) test-paper.
+
+    The pages of that test-paper
     are divided into pages - see the FixedPage class.
     The Paper object does not contain explicit refs to pages, but rather
     the pages will reference the paper (as is usual in a database).
 
     paper_number (int): The number of the given test-paper.
-
     """
 
     paper_number = models.PositiveIntegerField(null=False, unique=True)

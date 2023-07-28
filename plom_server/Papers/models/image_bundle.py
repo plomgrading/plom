@@ -10,8 +10,7 @@ from Scan.models import StagingBundle
 
 
 class Bundle(models.Model):
-    """Table to store information on the bundle (pdf) that a given
-    uploaded image comes from.
+    """Table to store information on the bundle (pdf) that a given uploaded image comes from.
 
     Notice that this does not include a ref to the bundle-file - since
     we are not(?) intending to store the bundle itself after
