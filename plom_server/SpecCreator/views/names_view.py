@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
@@ -7,8 +8,8 @@ from django.urls import reverse
 
 from Preparation.services import TestSourceService, PQVMappingService
 
-from SpecCreator.views import TestSpecPageView
-from SpecCreator.services import StagingSpecificationService
+from . import TestSpecPageView
+from ..services import StagingSpecificationService
 from .. import forms
 
 
