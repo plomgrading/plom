@@ -10,8 +10,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from Identify.models import PaperIDTask, IDPrediction
-from Identify.services import IdentifyTaskService
+from ..models import PaperIDTask, IDPrediction
+from ..services import IdentifyTaskService
 from Papers.models import IDPage, Paper
 from Scan.services.image_process import PageImageProcessor
 
@@ -125,11 +125,6 @@ class IDReaderService:
         self, user, paper_num, student_id, certainty, predictor
     ):
         """Add a new ID prediction or change an existing prediction in the DB."""
-        try:
-            # TODO: hardcoded to use "first" manager user in DB
-            user_obj = User.objects.filter(groups__name="manager").first()
-        except ObjectDoesNotExist:
-            raise ValueError("Manager user does not exist")
         paper = Paper.objects.get(paper_number=paper_num)
         try:
             existing_pred = IDPrediction.objects.get(paper=paper, predictor=predictor)
@@ -137,7 +132,7 @@ class IDReaderService:
             existing_pred = None
         if not existing_pred:
             new_prediction = IDPrediction(
-                user=user_obj,
+                user=user,
                 paper=paper,
                 predictor=predictor,
                 student_id=student_id,
@@ -148,6 +143,29 @@ class IDReaderService:
             existing_pred.student_id = student_id
             existing_pred.certainty = certainty
             existing_pred.save()
+
+    def add_or_change_prediction_cmd(
+        self, username, paper_num, student_id, certainty, predictor
+    ):
+        """Wrapper around add_or_change_prediction for use by the management command-line tool.
+
+        Checks whether username is valid and fetches the corresponding User from the DB.
+
+        Args:
+            username (str): the username to associate with the new prediction.
+
+        Raises:
+            ValueError: if the username provided is not valid, or is not part of the manager group.
+        """
+        try:
+            user = User.objects.get(username__iexact=username, groups__name="manager")
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+        self.add_or_change_ID_prediction(
+            user, paper_num, student_id, certainty, predictor
+        )
 
     @transaction.atomic
     def delete_ID_predictions(self, predictor=None):
