@@ -150,7 +150,7 @@ class IDReaderService:
             existing_pred.save()
 
     @transaction.atomic
-    def delete_ID_predictions(self, user, predictor=None):
+    def delete_ID_predictions(self, predictor=None):
         """Delete all ID predictions from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()

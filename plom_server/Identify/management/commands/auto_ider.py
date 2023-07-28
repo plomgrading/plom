@@ -49,7 +49,7 @@ class Command(BaseCommand):
             num_predictions = len(
                 id_reader_service.get_ID_predictions(predictor=predictor)
             )
-            id_reader_service.delete_ID_predictions(None, predictor=predictor)
+            id_reader_service.delete_ID_predictions(predictor=predictor)
             self.stdout.write(f"Deleted {num_predictions} predictions by {predictor}.")
         except ValueError as err:
             raise CommandError(err)
