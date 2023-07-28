@@ -83,7 +83,7 @@ class PaperCreatorTests(TestCase):
         qv_map = {1: 2, 2: 1}
         pcs = PaperCreatorService()
         pcs._create_paper_with_qvmapping.call_local(
-            pcs.spec, 1, qv_map, self.test_user_username
+            pcs.spec, 1, qv_map, self.test_username
         )
 
         with self.assertRaises(IntegrityError):
