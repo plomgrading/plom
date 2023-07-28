@@ -237,10 +237,11 @@ REST_FRAMEWORK = {
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
-MEDIA_ROOT = os.environ.get("PLOM_MEDIA_ROOT")
-if not MEDIA_ROOT:
+_ = os.environ.get("PLOM_MEDIA_ROOT")
+if _:
+    MEDIA_ROOT = Path(_)
+else:
     MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_ROOT = Path(MEDIA_ROOT)
 
 # Test fixtures directory
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
