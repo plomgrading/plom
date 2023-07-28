@@ -3,12 +3,12 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
-import os
+from pathlib import Path
 import shutil
 import subprocess
 from shlex import split
-from pathlib import Path
 
+from django import setup
 from django.core.management import call_command
 from django.conf import settings
 
@@ -17,15 +17,14 @@ class DemoProcessesService:
     """Handle starting and stopping the server and the Huey background process."""
 
     def setup_django(self):
-        from django import setup
-
         """Setup the django server and apply settings.py."""
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
+
+        # this will not work as settings was already imported, only conflicts will result IMHO
+        # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
         setup()
 
     def get_database_engine(self):
         """Which database engine are we using?"""
-        from Web_Plom import settings
 
         engine = settings.DATABASES["default"]["ENGINE"]
         if "postgres" in engine:
