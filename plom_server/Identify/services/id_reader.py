@@ -175,13 +175,6 @@ class IDReaderService:
         else:
             IDPrediction.objects.all().delete()
 
-    def add_prename_ID_prediction(self, student_id, paper_number):
+    def add_prename_ID_prediction(self, user, student_id, paper_number):
         """Add ID prediction for a prenamed paper."""
-        try:
-            # TODO: hardcoded to use "first" manager user in DB
-            user_obj = User.objects.filter(groups__name="manager").first()
-        except ObjectDoesNotExist:
-            raise ValueError("Manager user does not exist")
-        self.add_or_change_ID_prediction(
-            user_obj, paper_number, student_id, 0.9, "prename"
-        )
+        self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")

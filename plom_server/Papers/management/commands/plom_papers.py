@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from django.core.management.base import BaseCommand
 
@@ -20,7 +21,8 @@ class Command(BaseCommand):
         sp.add_parser(
             "status", help="Show the current state of test-papers in the database."
         )
-        sp.add_parser(
+
+        sp_build = sp.add_parser(
             "build_db",
             help="""
                 Populate the database with test-papers using information
@@ -28,6 +30,12 @@ class Command(BaseCommand):
                 Also constructs the associate pdf-build tasks.
             """,
         )
+        sp_build.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is building papers.",
+        )
+
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
     def papers_status(self):
@@ -49,7 +57,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
-    def build_papers(self):
+    def build_papers(self, username):
         """
         Write test-papers to the database, so long as the Papers table is empty
         and a QV map is present.
@@ -68,7 +76,10 @@ class Command(BaseCommand):
         self.stdout.write("Creating test-papers...")
         pcs = PaperCreatorService()
         qv_map = pqvs.get_pqv_map_dict()
-        pcs.add_all_papers_in_qv_map(qv_map, background=False)
+        try:
+            pcs.add_all_papers_in_qv_map_cmd(qv_map, username, background=False)
+        except ValueError as e:
+            raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
         self.stdout.write("Creating associated pdf-build tasks.")
@@ -94,7 +105,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.papers_status()
         elif options["command"] == "build_db":
-            self.build_papers()
+            self.build_papers(options["username"])
         elif options["command"] == "clear":
             self.clear_papers()
         else:

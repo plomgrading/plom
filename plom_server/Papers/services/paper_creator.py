@@ -39,9 +39,9 @@ class PaperCreatorService:
             )
 
     @transaction.atomic
-    def create_paper_with_qvmapping(self, paper_number, qv_mapping):
+    def create_paper_with_qvmapping(self, paper_number, qv_mapping, user):
         paper_task = self._create_paper_with_qvmapping(
-            self.spec, paper_number, qv_mapping
+            self.spec, paper_number, qv_mapping, user
         )
         paper_task_obj = CreatePaperTask(
             huey_id=paper_task.id, paper_number=paper_number
@@ -51,7 +51,7 @@ class PaperCreatorService:
 
     @db_task(queue="tasks")
     @transaction.atomic
-    def _create_paper_with_qvmapping(spec, paper_number, qv_mapping):
+    def _create_paper_with_qvmapping(spec, paper_number, qv_mapping, user):
         """Creates a paper with the given paper number and the given
         question-version mapping.
 
@@ -91,7 +91,7 @@ class PaperCreatorService:
         prename_sid = student_service.get_prename_for_paper(paper_number)
         if prename_sid:
             id_reader_service = IDReaderService()
-            id_reader_service.add_prename_ID_prediction(prename_sid, paper_number)
+            id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
 
         for q_id, question in spec["question"].items():
             index = int(q_id)
@@ -106,7 +106,7 @@ class PaperCreatorService:
                 )
                 question_page.save()
 
-    def add_all_papers_in_qv_map(self, qv_map, background=True):
+    def add_all_papers_in_qv_map(self, qv_map, user, background=True):
         """Build all the papers given by the qv-map
 
         qv_map (dict): For each paper give the question-version map.
@@ -124,10 +124,10 @@ class PaperCreatorService:
         for paper_number, qv_mapping in qv_map.items():
             try:
                 if background:
-                    self.create_paper_with_qvmapping(paper_number, qv_mapping)
+                    self.create_paper_with_qvmapping(paper_number, qv_mapping, user)
                 else:
                     self._create_paper_with_qvmapping.call_local(
-                        self.spec, paper_number, qv_mapping
+                        self.spec, paper_number, qv_mapping, user
                     )
             except ValueError as err:
                 errors.append((paper_number, err))
@@ -135,6 +135,14 @@ class PaperCreatorService:
             return False, errors
         else:
             return True, []
+
+    def add_all_papers_in_qv_map_cmd(self, qv_map, username, background=True):
+        """Wrapper around add_all_papers_in_qv_map in order to retrieve the User object."""
+        try:
+            user = User.objects.get(username__iexact=username)
+        except ObjectDoesNotExist:
+            raise ValueError(f"User '{username}' does not exist")
+        self.add_all_papers_in_qv_map(qv_map, user, background=background)
 
     def remove_all_papers_from_db(self):
         # hopefully we don't actually need to call this outside of testing.
