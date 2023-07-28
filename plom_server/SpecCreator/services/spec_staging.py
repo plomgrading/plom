@@ -464,14 +464,15 @@ class StagingSpecificationService:
                 )
         return spec_dict
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """Return True if the current state of the specification is valid."""
         try:
             valid_spec = self.validate_specification()
-            if valid_spec:
-                return True
         except ValueError:
             return False
+        if valid_spec:
+            return True
+        return False
 
     def dump_json(self) -> str:
         """Convert the specification to a JSON object and dump into a string."""
