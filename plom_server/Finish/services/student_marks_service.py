@@ -32,8 +32,10 @@ class StudentMarkService:
             paper_obj = Paper.objects.get(pk=paper_num)
         except Paper.DoesNotExist:
             return {}
-        marking_tasks = paper_obj.markingtask_set.all().select_related(
-            "latest_annotation"
+        marking_tasks = (
+            paper_obj.markingtask_set.all()
+            .select_related("latest_annotation")
+            .filter(status=MarkingTask.COMPLETE)
         )
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
