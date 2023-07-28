@@ -22,6 +22,7 @@ from ..models import (
     QuestionPage,
     CreatePaperTask,
 )
+from ..models import Image
 
 
 log = logging.getLogger("PaperCreatorService")
@@ -173,7 +174,9 @@ class PaperCreatorService:
         """Add a reference to an Image instance.
 
         Args:
-            paper_number: a Paper instance id
+            paper_number: a Paper instance id.
+                TODO: which is it?  not sure paper number will always be
+                the same as the pk of the paper!
             page_index: the page number
             image: the page-image
         """
