@@ -57,7 +57,7 @@ class PaperCreatorService:
     @db_task(queue="tasks")
     @transaction.atomic
     def _create_paper_with_qvmapping(
-        spec: Dict, paper_number: int, qv_mapping: Dict, user: User
+        self, spec: Dict, paper_number: int, qv_mapping: Dict, user: User
     ) -> None:
         """Creates a paper with the given paper number and the given question-version mapping.
 
