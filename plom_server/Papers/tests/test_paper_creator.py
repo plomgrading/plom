@@ -29,7 +29,8 @@ class PaperCreatorTests(TestCase):
                 },
             },
         )
-        self.test_user = baker.make(User, username="user0")
+        self.test_username = "user0"
+        self.test_user = baker.make(User, username=self.test_username)
         return super().setUp()
 
     def get_n_models(self):
@@ -53,7 +54,9 @@ class PaperCreatorTests(TestCase):
         qv_map = {1: 2, 2: 1}
 
         pcs = PaperCreatorService()
-        pcs._create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_user)
+        pcs._create_paper_with_qvmapping.call_local(
+            pcs.spec, 1, qv_map, self.test_username
+        )
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
@@ -79,11 +82,13 @@ class PaperCreatorTests(TestCase):
 
         qv_map = {1: 2, 2: 1}
         pcs = PaperCreatorService()
-        pcs._create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_user)
+        pcs._create_paper_with_qvmapping.call_local(
+            pcs.spec, 1, qv_map, self.test_user_username
+        )
 
         with self.assertRaises(IntegrityError):
             pcs._create_paper_with_qvmapping.call_local(
-                pcs.spec, 1, qv_map, self.test_user
+                pcs.spec, 1, qv_map, self.test_username
             )
 
     def test_clear_papers(self):

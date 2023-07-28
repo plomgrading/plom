@@ -43,10 +43,10 @@ class PaperCreatorService:
 
     @transaction.atomic
     def create_paper_with_qvmapping(
-        self, paper_number: int, qv_mapping: Dict, user: User
+        self, paper_number: int, qv_mapping: Dict, username: str
     ) -> None:
         paper_task = self._create_paper_with_qvmapping(
-            self.spec, paper_number, qv_mapping, user
+            self.spec, paper_number, qv_mapping, username
         )
         paper_task_obj = CreatePaperTask(
             huey_id=paper_task.id, paper_number=paper_number
@@ -57,7 +57,7 @@ class PaperCreatorService:
     @db_task(queue="tasks")
     @transaction.atomic
     def _create_paper_with_qvmapping(
-        spec: Dict, paper_number: int, qv_mapping: Dict, user: User
+        spec: Dict, paper_number: int, qv_mapping: Dict, username: str
     ) -> None:
         """Creates a paper with the given paper number and the given question-version mapping.
 
@@ -68,8 +68,11 @@ class PaperCreatorService:
             paper_number: The number of the paper being created
             qv_mapping: Mapping from each question-number to
                 version for this particular paper. Of the form {q: v}
-            user: User to be associated with prename predictions
+            username: Name of user to be associated with prename predictions
                 created during paper creation.
+
+        Raises:
+            ValueError: if provided username does not have a valid User object in DB.
         """
         # private to prevent circular imports
         from Preparation.services import StagingStudentService
@@ -99,6 +102,10 @@ class PaperCreatorService:
         student_service = StagingStudentService()
         prename_sid = student_service.get_prename_for_paper(paper_number)
         if prename_sid:
+            try:
+                user = User.objects.get(username__iexact=username)
+            except ObjectDoesNotExist:
+                raise ValueError(f"User '{username}' does not exist")
             id_reader_service = IDReaderService()
             id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
 
@@ -116,14 +123,14 @@ class PaperCreatorService:
                 question_page.save()
 
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict, user: User, background: bool = True
+        self, qv_map: Dict, username: str, background: bool = True
     ) -> Tuple[bool, List]:
         """Build all the papers given by the qv-map.
 
         Args:
             qv_map: For each paper give the question-version map.
                 Of the form {paper_number: {q: v}}
-            user: User to be associated with prename predictions
+            username: Name of user to be associated with prename predictions
                 created during paper creation.
             background (optional): Run in the background. If false,
                 run with call_local.
@@ -137,10 +144,10 @@ class PaperCreatorService:
         for paper_number, qv_mapping in qv_map.items():
             try:
                 if background:
-                    self.create_paper_with_qvmapping(paper_number, qv_mapping, user)
+                    self.create_paper_with_qvmapping(paper_number, qv_mapping, username)
                 else:
                     self._create_paper_with_qvmapping.call_local(
-                        self.spec, paper_number, qv_mapping, user
+                        self.spec, paper_number, qv_mapping, username
                     )
             except ValueError as err:
                 errors.append((paper_number, err))
@@ -148,28 +155,6 @@ class PaperCreatorService:
             return False, errors
         else:
             return True, []
-
-    def add_all_papers_in_qv_map_cmd(
-        self, qv_map: Dict, username: User, background: bool = True
-    ):
-        """Wrapper around add_all_papers_in_qv_map in order to retrieve the User object.
-
-        Args:
-            qv_map: For each paper give the question-version map.
-                Of the form {paper_number: {q: v}}
-            username: Name of user to be associated with prename predictions
-                created during paper creation.
-            background (optional): Run in the background. If false,
-                run with call_local.
-
-        Raises:
-            ValueError: provided username does not exist
-        """
-        try:
-            user = User.objects.get(username__iexact=username)
-        except ObjectDoesNotExist:
-            raise ValueError(f"User '{username}' does not exist")
-        self.add_all_papers_in_qv_map(qv_map, user, background=background)
 
     def remove_all_papers_from_db(self) -> None:
         # hopefully we don't actually need to call this outside of testing.
