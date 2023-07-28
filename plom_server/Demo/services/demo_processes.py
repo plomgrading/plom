@@ -84,9 +84,6 @@ class DemoProcessesService:
         for path in Path("huey").glob("huey_db.*"):
             path.unlink(missing_ok=True)
 
-        # OK to do at top?
-        from django.conf import settings
-
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
         # TODO: don't delete things that are not ours
