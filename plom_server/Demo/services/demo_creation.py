@@ -38,12 +38,13 @@ class DemoCreationService:
                 f"{spec_path}",
             )
 
-        (settings.BASE_DIR / "fixtures").mkdir(exist_ok=True)
+        fixdir = settings.FIXTURE_DIRS[0]
+        fixdir.mkdir(exist_ok=True)
         call_command(
             "dumpdata",
             "--natural-foreign",
             "Papers.Specification",
-            f"-o{settings.BASE_DIR}/fixtures/test_spec.json",
+            f"-o{fixdir}/test_spec.json",
         )
 
         if "test_sources" in config.keys():
@@ -89,20 +90,22 @@ class DemoCreationService:
             "dumpdata",
             "--natural-foreign",
             "Preparation",
-            f"-o{settings.BASE_DIR}/fixtures/preparation.json",
+            f"-o{fixdir}/preparation.json",
         )
 
     def build_db_and_papers(self):
         print("Populating database in background")
         call_command("plom_papers", "build_db")
 
+        fixdir = settings.FIXTURE_DIRS[0]
+        fixdir.mkdir(exist_ok=True)
         call_command(
             "dumpdata",
             "--natural-foreign",
             "Papers.Paper",
             "--exclude=Papers.FixedPage",
             "--exclude=Papers.IDPage",
-            f"-o{settings.BASE_DIR}/fixtures/papers.json",
+            f"-o{fixdir}/papers.json",
         )
 
         call_command("plom_preparation_extrapage", "build")

@@ -243,7 +243,7 @@ if _:
 else:
     MEDIA_ROOT = BASE_DIR / "media"
 
-# Test fixtures directory
+# List of test fixture directories
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 
 # Configurable variables for Web Plom
