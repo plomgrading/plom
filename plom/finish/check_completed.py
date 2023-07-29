@@ -125,8 +125,9 @@ def main(server=None, password=None, dangling_check=False):
     msgr = start_messenger(server, password)
     try:
         spec = msgr.get_spec()
+        exam_info = msgr.get_exam_info()
         classlist = msgr.IDrequestClasslist()
-        max_papers = spec["numberToProduce"]
+        max_papers = exam_info["current_largest_paper_num"]
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
