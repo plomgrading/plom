@@ -157,8 +157,10 @@ class SpecificationService:
         return spec_obj["numberOfPages"]
 
     @transaction.atomic
-    def get_n_to_produce(self) -> int:
+    def _get_n_to_produce(self) -> int:
         """Get the number of papers to produce.
+
+        Deprecated.
 
         Exceptions:
             ObjectDoesNotExist: no exam specification yet.
@@ -167,8 +169,11 @@ class SpecificationService:
         return spec_obj["numberToProduce"]
 
     @transaction.atomic
-    def modify_n_to_produce(self, n) -> None:
-        """Modify the number of papers to produce - assumes it's a valid value."""
+    def _modify_n_to_produce(self, n) -> None:
+        """Modify the number of papers to produce - assumes it's a valid value.
+
+        Deprecated.
+        """
         spec_obj = Specification.objects.get()
         spec_obj.spec_dict["numberToProduce"] = n
         spec_obj.save()

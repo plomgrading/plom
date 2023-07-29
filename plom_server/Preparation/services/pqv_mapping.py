@@ -98,7 +98,9 @@ class PQVMappingService:
         # grab the spec as dict from the test creator services
         speck = SpecificationService()
         spec_dict = speck.get_the_spec()
-        # this spec_dict does not include numberToProduce so we add in by hand
+        # Legacy make_random_version_map will be unhappy if not fed a numberToProduce
+        # so we add one.
+        # this spec_dict does not include numberToProduce so we add it
         spec_dict["numberToProduce"] = numberToProduce
 
         # now pass it through spec verifier and feed the **verifier** to the

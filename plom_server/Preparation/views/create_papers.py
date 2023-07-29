@@ -19,7 +19,7 @@ class PaperCreationView(ManagerRequiredView):
         context.update(
             {
                 "is_populated": paper_info.is_paper_database_populated(),
-                "n_papers": spec.get_n_to_produce(),
+                "n_papers": spec._get_n_to_produce(),
                 "n_questions": spec.get_n_questions(),
                 "n_versions": spec.get_n_versions(),
                 "n_pages": spec.get_n_pages(),

@@ -108,11 +108,11 @@ class TestSpecService:
         test_spec.n_versions = n
         test_spec.save()
 
-    def get_n_to_produce(self) -> int:
+    def _get_n_to_produce(self) -> int:
         """Get the number of test papers to produce."""
         return self.specification().n_to_produce
 
-    def set_n_to_produce(self, n: int) -> None:
+    def _set_n_to_produce(self, n: int) -> None:
         """Set the number of test papers to produce.
 
         Args:
@@ -354,7 +354,6 @@ class TestSpecService:
             'numberOfVersions': int,
             'totalMarks': int,
             'numberOfQuestions': int,
-            'numberToProduce': int,
             'idPage': int,
             'doNotMarkPages': list(int),
             'question': list(dict) {
@@ -392,7 +391,6 @@ class TestSpecService:
 
         # Questions and total marks
         self.set_n_questions(input_spec["numberOfQuestions"])
-        self.set_n_to_produce(input_spec["numberToProduce"])
         self.set_total_marks(input_spec["totalMarks"])
 
         # question details
