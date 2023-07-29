@@ -27,6 +27,75 @@ from ..models import (
 log = logging.getLogger("PaperCreatorService")
 
 
+@db_task(queue="tasks")
+@transaction.atomic
+def _create_paper_with_qvmapping(
+    spec: Dict, paper_number: int, qv_mapping: Dict, username: str
+) -> None:
+    """Creates a paper with the given paper number and the given question-version mapping.
+
+    Also initializes prename ID predictions in DB, if applicable.
+
+    Args:
+        spec: The test specification
+        paper_number: The number of the paper being created
+        qv_mapping: Mapping from each question-number to
+            version for this particular paper. Of the form {q: v}
+        username: Name of user to be associated with prename predictions
+            created during paper creation.
+
+    Raises:
+        ValueError: if provided username does not have a valid User object in DB.
+    """
+    # private to prevent circular imports
+    from Preparation.services import StagingStudentService
+    from Identify.services import IDReaderService
+
+    paper_obj = Paper(paper_number=paper_number)
+    try:
+        paper_obj.save()
+    except IntegrityError as err:
+        log.warn(f"Cannot create Paper {paper_number}: {err}")
+        raise IntegrityError(
+            f"An entry paper {paper_number} already exists in the database"
+        )
+    # TODO - idpage and dnmpage versions might be not one in future.
+    # For time being assume that IDpage and DNMPage are always version 1.
+    id_page = IDPage(
+        paper=paper_obj, image=None, page_number=int(spec["idPage"]), version=1
+    )
+    id_page.save()
+
+    for dnm_idx in spec["doNotMarkPages"]:
+        dnm_page = DNMPage(
+            paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
+        )
+        dnm_page.save()
+
+    student_service = StagingStudentService()
+    prename_sid = student_service.get_prename_for_paper(paper_number)
+    if prename_sid:
+        try:
+            user = User.objects.get(username__iexact=username)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"User '{username}' does not exist") from e
+        id_reader_service = IDReaderService()
+        id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
+
+    for q_id, question in spec["question"].items():
+        index = int(q_id)
+        version = qv_mapping[index]
+        for q_page in question["pages"]:
+            question_page = QuestionPage(
+                paper=paper_obj,
+                image=None,
+                page_number=int(q_page),
+                question_number=index,
+                version=version,  # I don't like having to double-up here, but....
+            )
+            question_page.save()
+
+
 class PaperCreatorService:
     """Class to encapsulate functions to build the test-papers and groups in the DB.
 
@@ -45,7 +114,7 @@ class PaperCreatorService:
     def create_paper_with_qvmapping(
         self, paper_number: int, qv_mapping: Dict, username: str
     ) -> None:
-        paper_task = self._create_paper_with_qvmapping(
+        paper_task = _create_paper_with_qvmapping(
             self.spec, paper_number, qv_mapping, username
         )
         paper_task_obj = CreatePaperTask(
@@ -53,74 +122,6 @@ class PaperCreatorService:
         )
         paper_task_obj.status = "queued"
         paper_task_obj.save()
-
-    @db_task(queue="tasks")
-    @transaction.atomic
-    def _create_paper_with_qvmapping(
-        spec: Dict, paper_number: int, qv_mapping: Dict, username: str
-    ) -> None:
-        """Creates a paper with the given paper number and the given question-version mapping.
-
-        Also initializes prename ID predictions in DB, if applicable.
-
-        Args:
-            spec: The test specification
-            paper_number: The number of the paper being created
-            qv_mapping: Mapping from each question-number to
-                version for this particular paper. Of the form {q: v}
-            username: Name of user to be associated with prename predictions
-                created during paper creation.
-
-        Raises:
-            ValueError: if provided username does not have a valid User object in DB.
-        """
-        # private to prevent circular imports
-        from Preparation.services import StagingStudentService
-        from Identify.services import IDReaderService
-
-        paper_obj = Paper(paper_number=paper_number)
-        try:
-            paper_obj.save()
-        except IntegrityError as err:
-            log.warn(f"Cannot create Paper {paper_number}: {err}")
-            raise IntegrityError(
-                f"An entry paper {paper_number} already exists in the database"
-            )
-        # TODO - idpage and dnmpage versions might be not one in future.
-        # For time being assume that IDpage and DNMPage are always version 1.
-        id_page = IDPage(
-            paper=paper_obj, image=None, page_number=int(spec["idPage"]), version=1
-        )
-        id_page.save()
-
-        for dnm_idx in spec["doNotMarkPages"]:
-            dnm_page = DNMPage(
-                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
-            )
-            dnm_page.save()
-
-        student_service = StagingStudentService()
-        prename_sid = student_service.get_prename_for_paper(paper_number)
-        if prename_sid:
-            try:
-                user = User.objects.get(username__iexact=username)
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"User '{username}' does not exist") from e
-            id_reader_service = IDReaderService()
-            id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
-
-        for q_id, question in spec["question"].items():
-            index = int(q_id)
-            version = qv_mapping[index]
-            for q_page in question["pages"]:
-                question_page = QuestionPage(
-                    paper=paper_obj,
-                    image=None,
-                    page_number=int(q_page),
-                    question_number=index,
-                    version=version,  # I don't like having to double-up here, but....
-                )
-                question_page.save()
 
     def add_all_papers_in_qv_map(
         self, qv_map: Dict, username: str, background: bool = True
@@ -146,7 +147,7 @@ class PaperCreatorService:
                 if background:
                     self.create_paper_with_qvmapping(paper_number, qv_mapping, username)
                 else:
-                    self._create_paper_with_qvmapping.call_local(
+                    _create_paper_with_qvmapping.call_local(
                         self.spec, paper_number, qv_mapping, username
                     )
             except ValueError as err:
