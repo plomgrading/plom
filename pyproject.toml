@@ -4,7 +4,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Natalia Accomazzo Scotti
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
@@ -46,6 +46,7 @@ dependencies = [
     "debugpy>=1.6.7",
     "django>=4.0.10",
     "django-braces>=1.15.0",
+    "django-filter>=23.2",
     "django-htmx>=1.14.0",
     "django-huey>=1.1.1",
     "django-polymorphic>=3.1.0",
