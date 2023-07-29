@@ -108,20 +108,6 @@ class TestSpecService:
         test_spec.n_versions = n
         test_spec.save()
 
-    def _get_n_to_produce(self) -> int:
-        """Get the number of test papers to produce."""
-        return self.specification().n_to_produce
-
-    def _set_n_to_produce(self, n: int) -> None:
-        """Set the number of test papers to produce.
-
-        Args:
-            n: number of test papers
-        """
-        test_spec = self.specification()
-        test_spec.n_to_produce = n
-        test_spec.save()
-
     def get_n_questions(self) -> int:
         """Get the number of questions in the test."""
         return self.specification().n_questions

@@ -52,6 +52,13 @@ class PQVMappingService:
 
         return pqvmapping
 
+    @transaction.atomic()
+    def get_pqv_map_length(self):
+        # TODO: likely not the most efficient way!
+        return len(self.get_pqv_map_dict())
+        # But careful, its certainly not this:
+        # return StagingPQVMapping.objects.count()
+
     def get_pqv_map_as_table(self, prenaming=False):
         # format the data in a way that makes it easy to display for django-template
         # in particular, a dict of lists.

@@ -157,28 +157,6 @@ class SpecificationService:
         return spec_obj["numberOfPages"]
 
     @transaction.atomic
-    def _get_n_to_produce(self) -> int:
-        """Get the number of papers to produce.
-
-        Deprecated.
-
-        Exceptions:
-            ObjectDoesNotExist: no exam specification yet.
-        """
-        spec_obj = self.get_the_spec()
-        return spec_obj["numberToProduce"]
-
-    @transaction.atomic
-    def _modify_n_to_produce(self, n) -> None:
-        """Modify the number of papers to produce - assumes it's a valid value.
-
-        Deprecated.
-        """
-        spec_obj = Specification.objects.get()
-        spec_obj.spec_dict["numberToProduce"] = n
-        spec_obj.save()
-
-    @transaction.atomic
     def get_question_mark(self, question_one_index) -> int:
         """Get the max mark of a given question.
 
