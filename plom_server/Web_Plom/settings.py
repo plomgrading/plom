@@ -326,6 +326,14 @@ else:
 # List of test fixture directories
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 
+
+# yuck?
+print(MEDIA_ROOT / "huey")
+MEDIA_ROOT.mkdir(exist_ok=True)
+(MEDIA_ROOT / "huey").mkdir(exist_ok=True)
+print(MEDIA_ROOT / "huey")
+
+
 # Configurable variables for Web Plom
 # ----------------------------------------------
 
