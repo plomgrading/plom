@@ -27,6 +27,8 @@ class StagingSpecificationTests(TestCase):
 
     @classmethod
     def get_sample_pages(self):
+        # TODO: do these refer to files in-tree?  Issue #2937
+        # TODO: or are they subdirs of static?
         return {
             "0": {
                 "id_page": False,
