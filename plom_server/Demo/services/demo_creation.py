@@ -6,13 +6,20 @@
 import subprocess
 from time import sleep
 from shlex import split
+import sys
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from django.core.management import call_command
 from django.conf import settings
 
-from Scan.services import ScanCastService
-from Scan.models import ExtraStagingImage, StagingImage
+from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
+
+from plom_server import useful_files_for_testing as useful_files
 
 
 class DemoCreationService:
@@ -49,17 +56,14 @@ class DemoCreationService:
 
         if "test_sources" in config.keys():
             sources = config["test_sources"]
-            for i in range(len(sources)):
-                if sources[i] == "demo":
-                    file = f"useful_files_for_testing/test_version{i+1}.pdf"
-                else:
-                    file = sources[i]
-
+            for i, src in enumerate(sources):
+                if src == "demo":
+                    src = resources.files(useful_files) / f"test_version{i+1}.pdf"
                 call_command(
                     "plom_preparation_test_source",
                     "upload",
                     f"-v {i+1}",
-                    file,
+                    src,
                 )
         else:
             print("No test sources specified. Stopping.")
@@ -69,14 +73,13 @@ class DemoCreationService:
             call_command("plom_preparation_prenaming", enable=True)
 
         if "classlist" in config.keys():
-            if config["classlist"] == "demo":
-                file = "useful_files_for_testing/cl_for_demo.csv"
-            else:
-                file = config["classlist"]
+            f = config["classlist"]
+            if f == "demo":
+                f = resources.files(useful_files) / "cl_for_demo.csv"
             call_command(
                 "plom_preparation_classlist",
                 "upload",
-                file,
+                f,
             )
 
         if "num_to_produce" in config.keys():
