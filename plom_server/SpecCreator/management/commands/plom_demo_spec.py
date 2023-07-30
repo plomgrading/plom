@@ -6,7 +6,8 @@
 
 import sys
 
-if sys.version_info >= (3, 9):
+if sys.version_info >= (3, 10):
+    # built-in normally ok on 3.9, for some reason fails here
     from importlib import resources
 else:
     import importlib_resources as resources
@@ -24,6 +25,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Papers.services import SpecificationService
 from ...services import StagingSpecificationService, ReferencePDFService
 
+# TODO: maybe above resources failure is about this strange self-referencial import?
 from .. import commands
 
 
