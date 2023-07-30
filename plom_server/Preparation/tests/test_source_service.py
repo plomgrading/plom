@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-import shutil
 import sys
 
 if sys.version_info >= (3, 9):
@@ -21,12 +20,6 @@ from .. import useful_files_for_testing as useful_files
 
 
 class SourceServiceTests(TestCase):
-    def tearDown(self):
-        source_versions_path = settings.BASE_DIR / "sourceVersions"
-        if source_versions_path.exists():
-            shutil.rmtree(source_versions_path)
-        return super().tearDown()
-
     def test_store_source(self):
         """Test TestSourceService.store_test_source()."""
         tss = TestSourceService()
