@@ -73,14 +73,11 @@ class Command(BaseCommand):
                 with open(resources.files(commands) / "demo_spec.toml", "rb") as f:
                     data = tomllib.load(f)
 
-                # upload reference PDF
-                fitzed_doc = fitz.Document(
-                    resources.files(commands) / "demo_version1.pdf"
-                )
-                n_pdf_pages = fitzed_doc.page_count
+                # extract page count and upload reference PDF
+                with fitz.open(resources.files(commands) / "demo_version1.pdf") as doc:
+                    n_pdf_pages = doc.page_count
                 with open(resources.files(commands) / "demo_version1.pdf", "rb") as f:
                     pdf_doc = SimpleUploadedFile("spec_reference.pdf", f.read())
-
                 # TODO: why can't it count the pages itself?
                 ref_service.new_pdf(
                     staged_spec_service, "spec_reference.pdf", n_pdf_pages, pdf_doc
