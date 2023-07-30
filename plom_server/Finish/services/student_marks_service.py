@@ -7,8 +7,6 @@ import arrow
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Dict, Any
 
-from django.db.models import Max
-
 from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper

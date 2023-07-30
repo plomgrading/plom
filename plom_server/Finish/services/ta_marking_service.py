@@ -9,7 +9,7 @@ from django.db.models import Sum, Avg, StdDev
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
-from Finish.services import StudentMarkService
+from ..services import StudentMarkService
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 

@@ -3,7 +3,7 @@
 
 from django.urls import path
 
-from Finish.views import MarkingInformationView, MarkingInformationPaperView
+from .views import MarkingInformationView, MarkingInformationPaperView
 
 
 urlpatterns = [

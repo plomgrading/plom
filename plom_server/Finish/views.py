@@ -9,8 +9,8 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import StudentMarkService, TaMarkingService
-from Finish.forms import StudentMarksFilterForm
+from .services import StudentMarkService, TaMarkingService
+from .forms import StudentMarksFilterForm
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService

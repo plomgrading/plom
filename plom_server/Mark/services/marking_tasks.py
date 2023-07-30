@@ -23,7 +23,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
-from Mark.models import (
+from ..models import (
     MarkingTask,
     MarkingTaskTag,
     Annotation,
