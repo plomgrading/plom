@@ -96,7 +96,7 @@ class ExamInfo(APIView):
         # TODO: hardcoded, and needs more info
         # TODO: suggest progress info here too
         info: Dict[str, Any] = {
-            "current_largest_paper_num": 420,
+            "current_largest_paper_num": 9999,
         }
         return Response(info)
 
