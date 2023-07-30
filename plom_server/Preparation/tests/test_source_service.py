@@ -3,6 +3,12 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import shutil
+import sys
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from django.test import TestCase
 from django.core.exceptions import MultipleObjectsReturned
@@ -11,6 +17,7 @@ from model_bakery import baker
 
 from ..services import TestSourceService
 from ..models import PaperSourcePDF
+from .. import useful_files_for_testing as useful_files
 
 
 class SourceServiceTests(TestCase):
@@ -23,9 +30,9 @@ class SourceServiceTests(TestCase):
     def test_store_source(self):
         """Test TestSourceService.store_test_source()."""
         tss = TestSourceService()
-        upload_path = (
-            settings.BASE_DIR / "useful_files_for_testing" / "test_version1.pdf"
-        )
+        upload_path = resources.files(useful_files) / "test_version1.pdf"
+        # TODO: this writes to settings.MEDIA_ROOT
+        # TODO: would one normally use a special "tests" settings?
         tss.store_test_source(1, upload_path)
 
         n_sources = len(PaperSourcePDF.objects.all())

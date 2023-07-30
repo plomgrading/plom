@@ -18,8 +18,7 @@ from django.conf import settings
 
 from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
-
-from plom_server import useful_files_for_testing as useful_files
+from Preparation import useful_files_for_testing as useful_files
 
 
 class DemoCreationService:

@@ -23,7 +23,7 @@ from model_bakery import baker
 from Papers.models import Specification
 from ...views import PreparationLandingView
 
-from plom_server import useful_files_for_testing as useful_files
+from ... import useful_files_for_testing as useful_files
 
 
 class PreparationLandingTests(TestCase):

@@ -5,14 +5,19 @@
 
 import sys
 
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 
 from django.test import TestCase
-from django.conf import settings
 
+from Preparation import useful_files_for_testing as useful_files
 from ..services import StagingSpecificationService
 from ..models import StagingSpecification
 
@@ -206,11 +211,8 @@ class StagingSpecificationTests(TestCase):
 
     def test_from_dict(self):
         """Test `StagingSpecService.create_from_dict()`."""
-        upload_path = (
-            settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
-        )
-        with open(upload_path, "rb") as toml_file:
-            toml_dict = tomllib.load(toml_file)
+        with open(resources.files(useful_files) / "testing_test_spec.toml", "rb") as f:
+            toml_dict = tomllib.load(f)
 
         spec = StagingSpecificationService()
         spec.create_from_dict(toml_dict)
