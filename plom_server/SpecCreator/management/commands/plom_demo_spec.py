@@ -6,6 +6,11 @@
 
 import sys
 
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
@@ -14,12 +19,12 @@ else:
 import fitz
 
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from plom.specVerifier import SpecVerifier
 
 from Papers.services import SpecificationService
 from ...services import StagingSpecificationService, ReferencePDFService
+
+from .. import commands
 
 
 class Command(BaseCommand):
@@ -65,20 +70,18 @@ class Command(BaseCommand):
                 )
             else:
                 self.stdout.write("Writing test specification...")
-                curr_path = (
-                    settings.BASE_DIR / "SpecCreator" / "management" / "commands"
-                )
-                toml_path = curr_path / "demo_spec.toml"
-                with open(toml_path, "rb") as tomal_file:
-                    data = tomllib.load(tomal_file)
-                pdf_path = curr_path / "demo_version1.pdf"
+                with open(resources.files(commands) / "demo_spec.toml", "rb") as f:
+                    data = tomllib.load(f)
 
                 # upload reference PDF
-                with open(pdf_path, "rb") as f:
-                    fitzed_doc = fitz.Document(pdf_path)
-                    n_pdf_pages = fitzed_doc.page_count
+                fitzed_doc = fitz.Document(
+                    resources.files(commands) / "demo_version1.pdf"
+                )
+                n_pdf_pages = fitzed_doc.page_count
+                with open(resources.files(commands) / "demo_version1.pdf", "rb") as f:
                     pdf_doc = SimpleUploadedFile("spec_reference.pdf", f.read())
 
+                # TODO: why can't it count the pages itself?
                 ref_service.new_pdf(
                     staged_spec_service, "spec_reference.pdf", n_pdf_pages, pdf_doc
                 )
