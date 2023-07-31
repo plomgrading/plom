@@ -404,35 +404,14 @@ pydocstyle-plom:
   allow_failure: true
 
 
-pydocstyle-server-count:
-  image: python:3.11
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pydocstyle[toml]~=6.3.0
-  script:
-    # show all errors and warnings but don't fail
-    - pydocstyle plom_server || true
-    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
-    # pydocstyle -s -e plom_server
-    # Instead, just ensure the total does not increase
-    - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
-    - echo $NUMERR
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 87 ]]"
-  allow_failure: true
-
-
-# For now, an allowlist of submodules that must pass
-# TODO: add more modules and eventually just plom_server/
+# TODO: we may still have to tighten the rules in pyproject.toml
 pydocstyle-server:
   image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pushd plom_server
-    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Preparation Profile Progress Rubrics Scan SpecCreator Tags
-    - popd
+    - pydocstyle -s -e plom_server
   allow_failure: true
 
 
