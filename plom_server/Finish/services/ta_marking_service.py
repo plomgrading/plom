@@ -40,21 +40,24 @@ class TaMarkingService:
         return keys
 
     def build_csv_data(self) -> list:
-        """Get the info for all students in a list for building a csv file to download.
+        """Get information about the latest annotation for all marking tasks that are complete.
 
         Returns:
-            List where each element is a dictionary containing the marking information
-            for an annotation.
+            List where each element is a dict keyed by str, representing a single annotation.
 
         Raises:
             None expected
         """
-        annotations = Annotation.objects.all().prefetch_related(
-            "user", "task", "task__paper"
-        )
+        mts = MarkingTaskService()
+        annotations = mts.get_latest_annotations_from_complete_marking_tasks()
+
         csv_data = []
         for annotation in annotations:
-            csv_data.append(self.get_annotation_info_download(annotation))
+            csv_data.append(
+                self.get_annotation_info_download(
+                    annotation.prefetch_related("user", "task", "task__paper")
+                )
+            )
 
         return csv_data
 
