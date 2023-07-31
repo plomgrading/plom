@@ -46,15 +46,14 @@ class Command(BaseCommand):
             digit_images = plom_id_command.get_digit_images(
                 ID_box, student_number_length
             )
-            if len(digit_images) == 0:
+            if len(digit_images) != student_number_length:
                 self.stdout.write("Trouble finding digits inside the ID box")
                 continue
-            for digit_image in digit_images:
-                image = np.array(digit_image)
-                image = image.flatten()
-                if image.shape[0] == 784:
-                    images.append(image)
-                    labels.append(paper_num)
+            image = np.array(digit_images[digit_index])
+            image = image.flatten()
+            if image.shape[0] == 784:
+                images.append(image)
+                labels.append(paper_num)
 
         kmeans = KMeans(n_clusters=10, random_state=0)
         images_np = np.array(images)
