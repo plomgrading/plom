@@ -16,6 +16,7 @@ from operator import itemgetter
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
@@ -138,13 +139,13 @@ class RubricService:
 
         return new_rubric_data
 
-    def get_all_rubrics(self):
+    def get_all_rubrics(self) -> QuerySet[Rubric]:
         """Get all the rubrics lazily, so that lazy filtering is possible.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
 
         Returns:
-            QuerySet: lazy queryset of all rubrics.
+            Lazy queryset of all rubrics.
         """
         return Rubric.objects.all()
 
@@ -300,59 +301,59 @@ class RubricService:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def get_annotation_from_rubric(self, rubric: Rubric):
+    def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
         """Get the queryset of annotations that use this rubric.
 
         Args:
             Rubric instance
 
         Returns:
-            Queryset: Annotation instances
+            A query of Annotation instances
         """
         return rubric.annotations.all()
 
-    def get_rubrics_from_annotation(self, annotation):
+    def get_rubrics_from_annotation(self, annotation) -> QuerySet[Rubric]:
         """Get the queryset of rubrics that are used by this annotation.
 
         Args:
             annotation: (Annotation) Annotation instance
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         return Rubric.objects.filter(annotations=annotation)
 
-    def get_rubrics_from_paper(self, paper_obj: Paper):
+    def get_rubrics_from_paper(self, paper_obj: Paper) -> QuerySet[Rubric]:
         """Get the queryset of rubrics that are used by this paper.
 
         Args:
             paper_obj: Paper instance
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
         annotations = Annotation.objects.filter(task__in=marking_tasks)
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         return rubrics
 
-    def get_rubrics_from_user(self, username: str):
+    def get_rubrics_from_user(self, username: str) -> QuerySet[Rubric]:
         """Get the queryset of rubrics used by this user.
 
         Args:
             username: username of the user
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def get_all_annotations(self):
+    def get_all_annotations(self) -> QuerySet[Annotation]:
         """Gets all annotations.
 
         Returns:
-            QuerySet: lazy queryset of all rubrics.
+            Lazy queryset of all rubrics.
         """
         return Annotation.objects.all()
 

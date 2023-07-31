@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import sys
 
@@ -10,20 +11,20 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-import copy
 import fitz
+
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from plom.specVerifier import SpecVerifier
 
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 from Papers.services import SpecificationService
+from ...services import StagingSpecificationService, ReferencePDFService
 
 
 class Command(BaseCommand):
-    """
-    Push simple demo data to the test specification creator app.
+    """Push simple demo data to the test specification creator app.
+
     Also, can clear the current test specification.
     """
 

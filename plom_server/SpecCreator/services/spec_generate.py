@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import Any, Dict
+
 from . import TestSpecService
 
 
@@ -11,9 +13,9 @@ class TestSpecGenerateService:
     def __init__(self, spec_service: TestSpecService):
         self.spec = spec_service
 
-    def generate_spec_dict(self) -> dict:
+    def generate_spec_dict(self) -> Dict[str, Any]:
         """Create a dictionary that can be dumped into a .toml file."""
-        spec_dict = {}
+        spec_dict: Dict[str, Any] = {}
         spec = self.spec.specification()
 
         spec_dict["name"] = self.spec.get_short_name()

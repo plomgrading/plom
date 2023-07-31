@@ -10,8 +10,8 @@ from model_bakery import baker
 from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
 
-from Mark.services import MarkingTaskService
-from Mark.models import MarkingTask
+from ..services import MarkingTaskService
+from ..models import MarkingTask
 
 
 class MarkingTaskServiceTests(TestCase):

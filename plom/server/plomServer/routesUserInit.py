@@ -35,7 +35,7 @@ class UserInitHandler:
             status=200,
         )
 
-    # @routes.get("/Version")
+    # @routes.get("/info/server")
     @no_authentication_only_log_request
     async def get_server_info(self, request):
         info = {

@@ -14,7 +14,7 @@ from rest_framework import status
 from plom import __version__
 from plom import Plom_API_Version
 
-from API.permissions.v1 import AllowAnyReadOnly
+from API.permissions import AllowAnyReadOnly
 
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
