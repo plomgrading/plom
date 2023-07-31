@@ -4,8 +4,8 @@
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
-from Tags.forms import TagFormFilter, TagEditForm
-from Tags.services.tag_service import TagService
+from .forms import TagFormFilter, TagEditForm
+from .services import TagService
 
 
 class TagLandingPageView(ManagerRequiredView):

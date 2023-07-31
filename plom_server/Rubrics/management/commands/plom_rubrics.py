@@ -6,12 +6,7 @@ import json
 from pathlib import Path
 import sys
 
-# try to avoid importing Pandas unless we use specific functions: Issue #2154
-# import pandas
-
-from tabulate import tabulate
-
-if sys.version_info >= (3, 9):
+if sys.version_info >= (3, 10):
     from importlib import resources
 else:
     import importlib_resources as resources
@@ -22,7 +17,11 @@ else:
     import tomllib
 import tomlkit
 
-from django.contrib.auth.models import User
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
+
+from tabulate import tabulate
+
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService

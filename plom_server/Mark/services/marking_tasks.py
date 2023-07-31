@@ -23,7 +23,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
-from Mark.models import (
+from ..models import (
     MarkingTask,
     MarkingTaskTag,
     Annotation,
@@ -104,7 +104,7 @@ class MarkingTaskService:
             )
             total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
-            )
+            ).exclude(status=MarkingTask.OUT_OF_DATE)
         except MarkingTask.DoesNotExist:
             return (0, 0)
 

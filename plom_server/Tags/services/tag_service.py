@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-from Mark.models.tasks import MarkingTaskTag
+from Mark.models import MarkingTaskTag
 
 
 class TagService:

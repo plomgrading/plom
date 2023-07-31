@@ -1,11 +1,15 @@
-from select import select
-from django import forms
-from django.forms import ModelForm
-import fitz
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 import re
+
+import fitz
+
+from django import forms
 from django.core.exceptions import ValidationError
 
-from SpecCreator.services import StagingSpecificationService
+from .services import StagingSpecificationService
 from . import models
 
 
@@ -173,7 +177,8 @@ class SpecQuestionDetailsForm(TestSpecPDFSelectForm):
 
 class SpecValidateForm(forms.Form):
     def clean(self):
-        """
+        """Clean up and check.
+
         Things to check:
 
         Is there a long name and a short name?
