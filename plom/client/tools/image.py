@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
+from typing import Optional
+
 from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
 from PyQt6.QtGui import QBrush, QColor, QImage, QPixmap, QPen
 from PyQt6.QtWidgets import (
@@ -130,11 +132,11 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             pickle = ["Image", self.x(), self.y(), self.data, self.scale(), self.border]
         return pickle
 
-    def mouseDoubleClickEvent(self, event: "QGraphicsSceneMouseEvent"):
+    def mouseDoubleClickEvent(self, event: Optional[QGraphicsSceneMouseEvent]) -> None:
         """On double-click, show menu and modify image according to user inputs.
 
         Args:
-            event (QMouseEvent): the double mouse click.
+            event: the double mouse click.
 
         Returns:
             None
