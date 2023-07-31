@@ -14,10 +14,10 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-# Not really server deps
+# Not server deps
 appdirs==1.4.4
-PyQt6==6.5.1
-PyQt6-sip==13.5.1
+PyQt6==6.5.2
+PyQt6-sip==13.5.2
 pytest-qt==4.2.0
 
 # Legacy-server only deps
