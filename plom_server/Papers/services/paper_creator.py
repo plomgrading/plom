@@ -33,10 +33,10 @@ class PaperCreatorService:
     def __init__(self):
         try:
             self.spec = Specification.load().spec_dict
-        except Specification.DoesNotExist:
+        except Specification.DoesNotExist as e:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
-            )
+            ) from e
 
     @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number, qv_mapping):
