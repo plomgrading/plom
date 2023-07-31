@@ -141,10 +141,12 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         Returns:
             None
         """
+        # not sure if this can happen but the possibility offends mypy
+        if self.scene() is None:
+            raise RuntimeError("Unexpected the scaling dialog had no scene")
+        parent = self.scene().views()[0]
         # yuck, had to go way up the chain to find someone who can parent a dialog!
         # maybe that means this code should NOT be opening dialogs
-        assert self.scene() is not None
-        parent = self.scene().views()[0]
         dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
