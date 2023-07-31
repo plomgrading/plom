@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 import json
 from pathlib import Path
@@ -32,7 +33,7 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, *, numquestions=None):
+    def upload_demo_rubrics(self, username, *, numquestions=None):
         """Load some demo rubrics and upload to server.
 
         Keyword Args:
@@ -68,7 +69,7 @@ class Command(BaseCommand):
             rub.pop("delta")
 
             # TODO: didn't need to do this on legacy, Issue #2640
-            rub["username"] = "manager"
+            rub["username"] = username
             rub["tags"] = ""
             rub["meta"] = ""
 
@@ -86,9 +87,9 @@ class Command(BaseCommand):
             service.create_rubric(rubric)
         return len(rubrics)
 
-    def init_rubrics_cmd(self):
+    def init_rubrics_cmd(self, username):
         service = RubricService()
-        return service.init_rubrics()
+        return service.init_rubrics(username)
 
     def erase_all_rubrics_cmd(self):
         service = RubricService()
@@ -157,6 +158,7 @@ class Command(BaseCommand):
                 we'll try to append `.toml`.
 
         TODO: anything need done about missing fields etc?  See also Issue #2640.
+        Currently RubricService.create_rubric() raises a KeyError on missing fields.
 
         TODO: in legacy, there is logic about HAL vs Manager about what to upload.
         There is also some incorrect logic about absolute rubrics being always
@@ -198,10 +200,15 @@ class Command(BaseCommand):
             description="Various tasks about rubrics.",
         )
 
-        sub.add_parser(
+        sp_init = sub.add_parser(
             "init",
             help="Initialize the rubric system with system rubrics",
             description="Initialize the rubric system with system rubrics.",
+        )
+        sp_init.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is initializing the rubrics.",
         )
 
         sp_wipe = sub.add_parser(
@@ -224,6 +231,11 @@ class Command(BaseCommand):
                 build their own rubrics but if you have premade rubrics you can
                 add them here.
             """,
+        )
+        sp_push.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is pushing the demo rubrics.",
         )
         group = sp_push.add_mutually_exclusive_group(required=True)
         group.add_argument(
@@ -263,10 +275,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opt):
         if opt["command"] == "init":
-            if self.init_rubrics_cmd():
-                self.stdout.write(self.style.SUCCESS("rubric system initialized"))
-            else:
-                raise CommandError("rubric system already initialized")
+            try:
+                if self.init_rubrics_cmd(opt["username"]):
+                    self.stdout.write(self.style.SUCCESS("rubric system initialized"))
+                else:
+                    raise CommandError("rubric system already initialized")
+            except ValueError as e:
+                raise CommandError(e)
 
         elif opt["command"] == "wipe":
             self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
@@ -279,7 +294,7 @@ class Command(BaseCommand):
 
         elif opt["command"] == "push":
             if opt["demo"]:
-                N = self.upload_demo_rubrics()
+                N = self.upload_demo_rubrics(opt["username"])
                 self.stdout.write(self.style.SUCCESS(f"Added {N} demo rubrics"))
                 return
             f = Path(opt["file"])

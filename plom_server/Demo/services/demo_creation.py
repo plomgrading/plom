@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 import subprocess
 from time import sleep
@@ -97,7 +98,7 @@ class DemoCreationService:
 
     def build_db_and_papers(self):
         print("Populating database in background")
-        call_command("plom_papers", "build_db")
+        call_command("plom_papers", "build_db", "manager")
 
         fixdir = settings.FIXTURE_DIRS[0]
         fixdir.mkdir(exist_ok=True)
@@ -245,8 +246,8 @@ class DemoCreationService:
                 break
 
     def create_rubrics(self):
-        call_command("plom_rubrics", "init")
-        call_command("plom_rubrics", "push", "--demo")
+        call_command("plom_rubrics", "init", "manager")
+        call_command("plom_rubrics", "push", "--demo", "manager")
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
