@@ -120,10 +120,12 @@ if in_docker:
 else:
     postgres_hostname = "127.0.0.1"
 
+plom_db_name = os.environ.get("PLOM_DB_NAME") or "plom_db"
+
 DATABASES = {
     "postgres": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "plom_db",
+        "NAME": plom_db_name,
         "USER": "postgres",
         "PASSWORD": "postgres",
         "HOST": postgres_hostname,
@@ -131,7 +133,7 @@ DATABASES = {
     },
     "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / f"{plom_db_name}.sqlite3",
     },
 }
 # Issue #2619: users can choose a database backend via env var
