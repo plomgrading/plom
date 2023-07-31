@@ -2,17 +2,14 @@
 # Copyright (C) 2023 Divy Patel
 
 import numpy as np
-from PIL import Image
 from pathlib import Path
 from sklearn.cluster import KMeans
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 
 from Identify.services import IDReaderService
 from Identify.management.commands.plom_id import Command as PlomIDCommand
-from Tags.services import TagService
 from Mark.services import MarkingTaskService
 
 
@@ -21,7 +18,7 @@ class Command(BaseCommand):
 
     Currently only does clustering on student id digits and tags the first question.
 
-    python3 manage.py cluster_and_tag
+    python3 manage.py cluster_tag_id_digits
     """
 
     help = """Add a tag to a specific paper."""

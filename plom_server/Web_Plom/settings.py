@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "Demo",
     "Finish",
     "Tags",
+    "Contrib",
 ]
 
 MIDDLEWARE = [
