@@ -171,10 +171,10 @@ class RubricService:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
             )
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
-            )
+            ) from e
         # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:

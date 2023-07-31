@@ -104,8 +104,8 @@ class PaperCreatorService:
         if prename_sid:
             try:
                 user = User.objects.get(username__iexact=username)
-            except ObjectDoesNotExist:
-                raise ValueError(f"User '{username}' does not exist")
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User '{username}' does not exist") from e
             id_reader_service = IDReaderService()
             id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
 

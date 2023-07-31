@@ -159,10 +159,10 @@ class IDReaderService:
         """
         try:
             user = User.objects.get(username__iexact=username, groups__name="manager")
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
-            )
+            ) from e
         self.add_or_change_ID_prediction(
             user, paper_num, student_id, certainty, predictor
         )
