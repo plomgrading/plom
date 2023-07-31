@@ -56,7 +56,7 @@ class UserInfoServices:
     @transaction.atomic
     def get_annotations_based_on_user_and_question_number_version(
         self,
-    ) -> Dict[User, Dict[Tuple[int, int], Dict[int, str]]]:
+    ) -> Dict[User, Dict[Tuple[int, int], Dict[str, str]]]:
         """Retrieve annotations based on the combination of user, question number, and version.
 
         Returns a dictionary with users as keys and nested dictionaries as values.
@@ -72,13 +72,13 @@ class UserInfoServices:
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
         grouped_annotations: Dict[
-            User, Dict[Tuple[int, int], Dict[int, str]]
-        ] = defaultdict(lambda: defaultdict(int))
+            User, Dict[Tuple[int, int], Dict[str, str]]
+        ] = dict()
 
         for annotation in annotations:
             key = (annotation.task.question_number, annotation.task.question_version)
-            user_data = grouped_annotations[annotation.user]
-            user_data[key] += 1
+            user_data = grouped_annotations.setdefault(annotation.user, {})
+            user_data[key] = user_data.get(key, 0) + 1
 
         present = arrow.utcnow()
         for user, user_data in grouped_annotations.items():
@@ -112,5 +112,5 @@ class UserInfoServices:
                             granularity=["minute", "second"],
                         ),
                     }
-
+        print(grouped_annotations)
         return grouped_annotations
