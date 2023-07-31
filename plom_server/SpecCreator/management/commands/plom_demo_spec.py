@@ -101,5 +101,4 @@ class Command(BaseCommand):
                     self.stdout.write("Demo test specification uploaded!")
                     self.stdout.write(str(valid_spec_service.get_the_spec()))
                 except ValueError as e:
-                    self.stderr.write(e)
                     raise CommandError(e)

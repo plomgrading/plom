@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 from textwrap import wrap
@@ -50,6 +50,7 @@ def status(*, msgr):
     print("-------------\n")
     try:
         spec = msgr.get_spec()
+        exam_info = msgr.get_exam_info()
     except PlomServerNotReady:
         print(cross + " Server does not yet have a spec")
         print("    You will need to add specification for your test.")
@@ -110,7 +111,8 @@ def status(*, msgr):
     else:
         papernums = []
     if spec:
-        not_named = set(range(1, spec["numberToProduce"]))
+        # TODO: Issue #1745: this assumes contiguous test numbers
+        not_named = set(range(1, exam_info["current_largest_paper_num"]))
         not_named.difference_update(papernums)
         print(
             check_mark

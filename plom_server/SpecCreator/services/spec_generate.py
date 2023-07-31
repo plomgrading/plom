@@ -26,7 +26,6 @@ class TestSpecGenerateService:
         spec_dict["totalMarks"] = self.spec.get_total_marks()
 
         spec_dict["numberOfQuestions"] = self.spec.get_n_questions()
-        spec_dict["numberToProduce"] = self.spec.get_n_to_produce()
 
         spec_dict["idPage"] = self.spec.get_id_page_number()
         spec_dict["doNotMarkPages"] = self.spec.get_dnm_page_numbers()
