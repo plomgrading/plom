@@ -39,6 +39,7 @@ from Base.models import SingletonBaseModel
 
 class Specification(SingletonBaseModel):
     """Store the json of the test specification dictionary.
+
     There can be at most one Specification entry
 
     spec_dict (json): The json'd test specification dictionary.
@@ -49,6 +50,7 @@ class Specification(SingletonBaseModel):
 
 class SolutionSpecification(SingletonBaseModel):
     """Store the json of the solution specification dictionary.
+
     There can be at most one SolutionSpecification entry
 
     spec_dict (json): The json'd solution specification dictionary.
