@@ -23,6 +23,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Papers.services import SpecificationService
+from Preparation import useful_files_for_testing as useful_files
 from ...services import StagingSpecificationService, ReferencePDFService
 
 # TODO: maybe above resources failure is about this strange self-referencial import?
@@ -76,9 +77,13 @@ class Command(BaseCommand):
                     data = tomllib.load(f)
 
                 # extract page count and upload reference PDF
-                with fitz.open(resources.files(commands) / "demo_version1.pdf") as doc:
+                with fitz.open(
+                    resources.files(useful_files) / "test_version1.pdf"
+                ) as doc:
                     n_pdf_pages = doc.page_count
-                with open(resources.files(commands) / "demo_version1.pdf", "rb") as f:
+                with open(
+                    resources.files(useful_files) / "test_version1.pdf", "rb"
+                ) as f:
                     pdf_doc = SimpleUploadedFile("spec_reference.pdf", f.read())
                 # TODO: why can't it count the pages itself?
                 ref_service.new_pdf(
