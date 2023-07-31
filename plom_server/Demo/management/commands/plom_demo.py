@@ -7,17 +7,23 @@ import os
 import subprocess
 from time import sleep
 from shlex import split
+import sys
+
+if sys.version_info >= (3, 10):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 
-from Demo.services import (
+from ...services import (
     DemoProcessesService,
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
     ServerConfigService,
 )
+from ... import config_files as demo_config_files
 
 
 class Command(BaseCommand):
@@ -215,7 +221,7 @@ class Command(BaseCommand):
         config_service = ServerConfigService()
         if config_path is None:
             config = config_service.read_server_config(
-                settings.BASE_DIR / "Demo/config_files/full_demo_config.toml"
+                resources.files(demo_config_files) / "full_demo_config.toml"
             )
         else:
             try:

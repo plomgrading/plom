@@ -37,7 +37,7 @@ django-session-timeout==0.1.0
 djangorestframework==3.14.0
 exif==1.2.2
 fonttools==4.37.1
-importlib_resources==5.0.0
+importlib_resources==5.0.7
 imutils==0.5.4
 matplotlib==3.5.3
 numpy==1.21.2

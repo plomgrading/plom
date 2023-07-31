@@ -214,6 +214,9 @@ class TestSpecService:
         """
         test_spec = self.specification()
 
+        # TODO: Issue #2937: are these automatically relative to static?  It
+        # *looks* like they are using direct file access inside the source tree
+        # but the eventual files I see are created in static/SpecCreator/thumbnails/
         thumbnail_folder = pathlib.Path("SpecCreator") / "thumbnails" / "spec_reference"
 
         for i in range(pdf.num_pages):

@@ -8,19 +8,12 @@ import shutil
 import subprocess
 from shlex import split
 
-from django import setup
 from django.core.management import call_command
 from django.conf import settings
 
 
 class DemoProcessesService:
     """Handle starting and stopping the server and the Huey background process."""
-
-    def setup_django(self):
-        """Setup the django server and apply settings.py."""
-        # this will not work as settings was already imported, only conflicts will result IMHO
-        # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
-        setup()
 
     def get_database_engine(self):
         """Which database engine are we using?"""
@@ -142,8 +135,6 @@ class DemoProcessesService:
 
     def initialize_server_and_db(self):
         """Configure Django settings and flush the previous database and media files."""
-        self.setup_django()
-
         engine = self.get_database_engine()
         print(f"You appear to be running with a {engine} database.")
 
