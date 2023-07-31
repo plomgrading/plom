@@ -41,7 +41,6 @@ class StagingSpecificationService:
         spec.numberOfVersions = 0
         spec.totalMarks = 0
         spec.numberOfQuestions = 0
-        spec.numberToProduce = -1
         spec.pages = {}
         spec.questions = {}
         spec.save()
@@ -109,24 +108,6 @@ class StagingSpecificationService:
         """
         test_spec = self.specification()
         test_spec.numberOfVersions = n
-        test_spec.save()
-
-    def get_n_to_produce(self) -> int:
-        """Get the number of test papers to produce.
-
-        Returns:
-            The number to produce.
-        """
-        return self.specification().numberToProduce
-
-    def set_n_to_produce(self, n: int) -> None:
-        """Set the number of test papers to produce.
-
-        Args:
-            n: number of test papers.
-        """
-        test_spec = self.specification()
-        test_spec.numberToProduce = n
         test_spec.save()
 
     def get_n_questions(self) -> int:
@@ -490,9 +471,6 @@ class StagingSpecificationService:
         self.set_n_versions(spec_dict["numberOfVersions"])
         self.set_total_marks(spec_dict["totalMarks"])
         self.set_n_questions(spec_dict["numberOfQuestions"])
-
-        if "numberToProduce" in spec_dict:
-            self.set_n_to_produce(spec_dict["numberToProduce"])
 
         self.set_pages(spec_dict["numberOfPages"])
         self.set_id_page(spec_dict["idPage"] - 1)

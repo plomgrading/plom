@@ -59,15 +59,11 @@ class CreateTestPapers(ManagerRequiredView):
 
 
 class TestPaperProgress(ManagerRequiredView):
-    """
-    Get the database creation progress.
-    """
+    """Get the database creation progress."""
 
     def get(self, request):
+        n_to_produce = PQVMappingService().get_pqv_map_length()
         pinfo = PaperInfoService()
-        spec = SpecificationService()
-
-        n_to_produce = spec.get_n_to_produce()
         papers_in_database = pinfo.how_many_papers_in_database()
 
         if papers_in_database == n_to_produce:
