@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -50,21 +51,20 @@ class Image(models.Model):
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
     """
 
-    def _image_upload_path(self, filename):
-        """Given a image instance and a filename create a path to which
-        the associated file should be saved. We use this function to set
-        save-paths for pushed images rather than 'hand-coding' them
-        elsewhere.
+    def _image_upload_path(self, filename: str) -> str:
+        """Given a image instance and a filename, create a path to which the associated file should be saved.
+
+        We use this function to set save-paths for pushed images rather
+        than 'hand-coding' them elsewhere.
 
         Args:
-            self (Image): the Image model instance whose path is being created
-            filename (str): the name of the file to be saved at the created path.
+            filename: the name of the file to be saved at the created path.
 
-        Returns: (str): The string of the path to which the image file
+        Returns:
+            The string of the path to which the image file
             will be saved (relative to the media directory, and including the
-            actual filename)
+            actual filename).
         """
-
         return f"pushed_images/{self.bundle.pk:05}/{filename}"
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)

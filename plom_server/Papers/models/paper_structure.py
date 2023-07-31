@@ -23,6 +23,7 @@ class Paper(models.Model):
     paper_number = models.PositiveIntegerField(null=False, unique=True)
 
     def __str__(self):
+        """Render a row of the Paper table as a string."""
         return f"Paper (paper_number={self.paper_number})"
 
 
@@ -35,8 +36,9 @@ class MobilePage(models.Model):
 
 
 class FixedPage(PolymorphicModel):
-    """Fixed-page table to store information about the "fixed" pages
-    within a given paper. Since every "fixed" page has a definite
+    """Table to store information about the "fixed" pages within a given paper.
+
+    Since every "fixed" page has a definite
     page-number and version-number, these appear here in the base
     class. However, only certain pages have question-numbers, so we
     use polymorphism to put that information in various derived
@@ -78,18 +80,20 @@ class FixedPage(PolymorphicModel):
 
 
 class DNMPage(FixedPage):
-    """Table to store information about the do-not-mark pages. At
-    present all DNM pages have version 1. This may change in the
-    future."""
+    """Table to store information about the do-not-mark pages.
+
+    At present all DNM pages have version 1. This may change in the
+    future.
+    """
 
     pass
 
 
 class IDPage(FixedPage):
-    """Table to store information about the IDPage of the paper. At
-    present the ID page always has version 1. This may change in the
-    future.
+    """Table to store information about the IDPage of the paper.
 
+    At present the ID page always has version 1. This may change in the
+    future.
     """
 
     pass
