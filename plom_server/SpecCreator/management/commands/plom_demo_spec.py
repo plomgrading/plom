@@ -26,9 +26,6 @@ from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
 from ...services import StagingSpecificationService, ReferencePDFService
 
-# TODO: maybe above resources failure is about this strange self-referencial import?
-from .. import commands
-
 
 class Command(BaseCommand):
     """Push simple demo data to the test specification creator app.
@@ -73,7 +70,9 @@ class Command(BaseCommand):
                 )
             else:
                 self.stdout.write("Writing test specification...")
-                with open(resources.files(commands) / "demo_spec.toml", "rb") as f:
+                with open(
+                    resources.files(useful_files) / "testing_test_spec.toml", "rb"
+                ) as f:
                     data = tomllib.load(f)
 
                 # extract page count and upload reference PDF
