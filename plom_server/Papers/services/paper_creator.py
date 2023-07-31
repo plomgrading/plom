@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -22,7 +22,6 @@ from ..models import (
     QuestionPage,
     CreatePaperTask,
 )
-from ..models import Image
 
 
 log = logging.getLogger("PaperCreatorService")
