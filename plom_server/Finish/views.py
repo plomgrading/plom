@@ -1,19 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import arrow
 import csv
 from io import StringIO
+
+import arrow
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from .services import StudentMarkService, TaMarkingService, ReassembleService
-from .forms import StudentMarksFilterForm
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
+from .services import StudentMarkService, TaMarkingService, ReassembleService
+from .forms import StudentMarksFilterForm
 
 
 class MarkingInformationView(ManagerRequiredView):
