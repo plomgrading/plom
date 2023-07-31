@@ -9,7 +9,7 @@ from time import sleep
 from shlex import split
 import sys
 
-if sys.version_info >= (3, 9):
+if sys.version_info >= (3, 10):
     from importlib import resources
 else:
     import importlib_resources as resources
