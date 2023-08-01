@@ -4,7 +4,7 @@
 import arrow
 from collections import defaultdict
 from datetime import timedelta
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -56,7 +56,7 @@ class UserInfoServices:
     @transaction.atomic
     def get_annotations_based_on_user_and_question_number_version(
         self,
-    ) -> Dict[User, Dict[Tuple[int, int], Dict[str, str]]]:
+    ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
         """Retrieve annotations based on the combination of user, question number, and version.
 
         Returns a dictionary with users as keys and nested dictionaries as values.
@@ -64,30 +64,38 @@ class UserInfoServices:
         and the count of annotations and average marking time as values.
 
         Returns:
-            Dict[User, Dict[Tuple[int, int], Dict[int, str]]]: A dictionary with users as keys, and nested
-                dictionaries as values containing the count of annotations and average marking time
-                for each (question_number, question_version) combination.
+            Dict[str, Dict[Tuple[int, int], Dict[str, Union(int, str)]]]: A dictionary with users
+                as keys, and nested dictionaries as values containing the count of annotations
+                and average marking time for each (question_number, question_version) combination.
         """
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
-        grouped_annotations: Dict[
-            User, Dict[Tuple[int, int], Dict[str, str]]
-        ] = dict()
+        count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
+        total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
 
         for annotation in annotations:
             key = (annotation.task.question_number, annotation.task.question_version)
-            user_data = grouped_annotations.setdefault(annotation.user, {})
-            user_data[key] = user_data.get(key, 0) + 1
+            count_data.setdefault(annotation.user.username, {}).setdefault(key, 0)
+            count_data[annotation.user.username][key] += 1
 
+            total_marking_time_data.setdefault(annotation.user.username, {}).setdefault(
+                key, 0
+            )
+            total_marking_time_data[annotation.user.username][
+                key
+            ] += annotation.marking_time
+
+        grouped_annotations: Dict[
+            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
+        ] = dict()
         present = arrow.utcnow()
-        for user, user_data in grouped_annotations.items():
-            for key, count in user_data.items():
-                total_marking_time = annotations.filter(
-                    user=user,
-                    task__question_number=key[0],
-                    task__question_version=key[1],
-                ).aggregate(Sum("marking_time"))["marking_time__sum"]
+
+        for user in count_data:
+            grouped_annotations[user] = dict()
+            for key in count_data[user]:
+                count = count_data[user][key]
+                total_marking_time = total_marking_time_data[user][key]
 
                 if total_marking_time is None:
                     total_marking_time = 0
@@ -95,15 +103,15 @@ class UserInfoServices:
                 average_marking_time = total_marking_time / count if count > 0 else 0
 
                 if average_marking_time <= 60:
-                    user_data[key] = {
-                        "count": count,
+                    grouped_annotations[user][key] = {
+                        "annotations_count": count,
                         "average_marking_time": present.shift(
                             seconds=average_marking_time
-                        ).humanize(present, only_distance=True, granularity="second"),
+                        ).humanize(present, only_distance=True, granularity=["second"]),
                     }
                 else:
-                    user_data[key] = {
-                        "count": count,
+                    grouped_annotations[user][key] = {
+                        "annotations_count": count,
                         "average_marking_time": present.shift(
                             seconds=average_marking_time
                         ).humanize(
@@ -112,5 +120,5 @@ class UserInfoServices:
                             granularity=["minute", "second"],
                         ),
                     }
-        print(grouped_annotations)
+
         return grouped_annotations

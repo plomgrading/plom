@@ -27,11 +27,12 @@
     </div>
     <div>
         {% for user, annotations in grouped_annotations.items %}
-            <h2>{{ user.username }}</h2>
+            <h2>{{ user }}</h2>
             {% for question, count in annotations.items %}
                 <p>Question Number: {{ question.0 }}</p>
                 <p>Question Version: {{ question.1 }}</p>
-                <p>Marked Question: {{ count }}</p>
+                <p>Marked Question: {{ count.annotations_count }}</p>
+                <p>Average Marking Time: {{ count.average_marking_time }}</p>
                 <p>------------------------------------</p>
             {% endfor %}
         {% endfor %}
