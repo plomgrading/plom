@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
 from polymorphic.models import PolymorphicModel
@@ -38,11 +39,10 @@ class MobilePage(models.Model):
 class FixedPage(PolymorphicModel):
     """Table to store information about the "fixed" pages within a given paper.
 
-    Since every "fixed" page has a definite
-    page-number and version-number, these appear here in the base
-    class. However, only certain pages have question-numbers, so we
-    use polymorphism to put that information in various derived
-    classes.
+    Since every "fixed" page has a definite page-number and version-number,
+    these appear here in the base class. However, only certain pages have
+    question-numbers, so we use polymorphism to put that information in
+    various derived classes.
 
     IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
     QuestionPage = has question-number and a non-trivial version
