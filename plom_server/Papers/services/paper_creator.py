@@ -130,16 +130,18 @@ class PaperCreatorService:
 
         Args:
             qv_map: For each paper give the question-version map.
-                Of the form {paper_number: {q: v}}
+                Of the form `{paper_number: {q: v}}`
             username: Name of user to be associated with prename predictions
                 created during paper creation.
-            background (optional): Run in the background. If false,
-                run with call_local.
+
+        Keyword Args:
+            background (optional, bool): Run in the background. If false,
+                run with `call_local`.
 
         Returns:
-            If all papers added to DB without errors then
-            return (True, []) else return (False, list of errors) where
-            the list of errors is a list of pairs (paper_number, error)
+            A pair such that if all papers added to DB without errors then
+            return `(True, [])` else return `(False, list_of_errors)` where
+            the list of errors is a list of pairs `(paper_number, error)`.
         """
         errors = []
         for paper_number, qv_mapping in qv_map.items():
@@ -171,7 +173,9 @@ class PaperCreatorService:
         """Add a reference to an Image instance.
 
         Args:
-            paper_number: a Paper instance id
+            paper_number: a Paper instance id.
+                TODO: which is it?  not sure paper number will always be
+                the same as the pk of the paper!
             page_index: the page number
             image: the page-image
         """

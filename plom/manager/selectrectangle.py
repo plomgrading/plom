@@ -34,7 +34,7 @@ class SelectRectangleWindow(QDialog):
     def __init__(self, parent, fnames):
         super().__init__(parent)
 
-        if type(fnames) == list:
+        if isinstance(fnames, list):
             self.initUI(fnames)
         else:
             self.initUI([fnames])
