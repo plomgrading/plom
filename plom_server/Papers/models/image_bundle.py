@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -52,10 +53,12 @@ class Image(models.Model):
     """
 
     def _image_upload_path(self, filename: str) -> str:
-        """Given a image instance and a filename, create a path to which the associated file should be saved.
+        """Create a path to which the associated file should be saved.
 
-        We use this function to set save-paths for pushed images rather
-        than 'hand-coding' them elsewhere.
+        Given a image instance and a filename create a path to which
+        the associated file should be saved. We use this function to set
+        save-paths for pushed images rather than 'hand-coding' them
+        elsewhere.
 
         Args:
             filename: the name of the file to be saved at the created path.

@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
-
 """ASGI config for Plom project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
