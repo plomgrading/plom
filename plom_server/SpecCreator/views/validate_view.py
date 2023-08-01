@@ -1,14 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.urls import reverse
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
-from SpecCreator.views import TestSpecPageView
-from SpecCreator.services import StagingSpecificationService
-from SpecCreator.forms import SpecValidateForm
+from . import TestSpecPageView
+from ..services import StagingSpecificationService
+from ..forms import SpecValidateForm
 
 
 class TestSpecValidateView(TestSpecPageView):
-    """Validate the test specification"""
+    """Validate the test specification."""
 
     def build_context(self):
         context = super().build_context("validate")

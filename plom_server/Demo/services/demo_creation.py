@@ -2,17 +2,24 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 import subprocess
 from time import sleep
 from shlex import split
+import sys
+
+if sys.version_info >= (3, 10):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from django.core.management import call_command
 from django.conf import settings
 
-from Scan.services import ScanCastService
-from Scan.models import ExtraStagingImage, StagingImage
+from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
+from Preparation import useful_files_for_testing as useful_files
 
 
 class DemoCreationService:
@@ -38,27 +45,25 @@ class DemoCreationService:
                 f"{spec_path}",
             )
 
-        (settings.BASE_DIR / "fixtures").mkdir(exist_ok=True)
+        fixdir = settings.FIXTURE_DIRS[0]
+        fixdir.mkdir(exist_ok=True)
         call_command(
             "dumpdata",
             "--natural-foreign",
             "Papers.Specification",
-            f"-o{settings.BASE_DIR}/fixtures/test_spec.json",
+            f"-o{fixdir}/test_spec.json",
         )
 
         if "test_sources" in config.keys():
             sources = config["test_sources"]
-            for i in range(len(sources)):
-                if sources[i] == "demo":
-                    file = f"useful_files_for_testing/test_version{i+1}.pdf"
-                else:
-                    file = sources[i]
-
+            for i, src in enumerate(sources):
+                if src == "demo":
+                    src = resources.files(useful_files) / f"test_version{i+1}.pdf"
                 call_command(
                     "plom_preparation_test_source",
                     "upload",
                     f"-v {i+1}",
-                    file,
+                    src,
                 )
         else:
             print("No test sources specified. Stopping.")
@@ -68,14 +73,13 @@ class DemoCreationService:
             call_command("plom_preparation_prenaming", enable=True)
 
         if "classlist" in config.keys():
-            if config["classlist"] == "demo":
-                file = "useful_files_for_testing/cl_for_demo.csv"
-            else:
-                file = config["classlist"]
+            f = config["classlist"]
+            if f == "demo":
+                f = resources.files(useful_files) / "cl_for_demo.csv"
             call_command(
                 "plom_preparation_classlist",
                 "upload",
-                file,
+                f,
             )
 
         if "num_to_produce" in config.keys():
@@ -89,20 +93,22 @@ class DemoCreationService:
             "dumpdata",
             "--natural-foreign",
             "Preparation",
-            f"-o{settings.BASE_DIR}/fixtures/preparation.json",
+            f"-o{fixdir}/preparation.json",
         )
 
     def build_db_and_papers(self):
         print("Populating database in background")
-        call_command("plom_papers", "build_db")
+        call_command("plom_papers", "build_db", "manager")
 
+        fixdir = settings.FIXTURE_DIRS[0]
+        fixdir.mkdir(exist_ok=True)
         call_command(
             "dumpdata",
             "--natural-foreign",
             "Papers.Paper",
             "--exclude=Papers.FixedPage",
             "--exclude=Papers.IDPage",
-            f"-o{settings.BASE_DIR}/fixtures/papers.json",
+            f"-o{fixdir}/papers.json",
         )
 
         call_command("plom_preparation_extrapage", "build")
@@ -240,8 +246,8 @@ class DemoCreationService:
                 break
 
     def create_rubrics(self):
-        call_command("plom_rubrics", "init")
-        call_command("plom_rubrics", "push", "--demo")
+        call_command("plom_rubrics", "init", "manager")
+        call_command("plom_rubrics", "push", "--demo", "manager")
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""

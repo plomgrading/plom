@@ -119,7 +119,7 @@ class ReplaceImageForm(forms.Form):
             # turn that pdf file into page image
             timestamp = datetime.timestamp(timezone.now())
             file_name = f"{timestamp}.pdf"
-            replace_dir = pathlib.Path("media") / "replace_pages"
+            replace_dir = settings.MEDIA_ROOT / "replace_pages"
             replace_dir.mkdir(exist_ok=True)
             save_as_pdf = replace_dir / "pdfs"
             save_as_pdf.mkdir(exist_ok=True)

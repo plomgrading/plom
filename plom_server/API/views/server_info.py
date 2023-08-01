@@ -14,7 +14,7 @@ from rest_framework import status
 from plom import __version__
 from plom import Plom_API_Version
 
-from API.permissions.v1 import AllowAnyReadOnly
+from API.permissions import AllowAnyReadOnly
 
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
@@ -80,6 +80,23 @@ class ServerInfo(APIView):
             "API_version": Plom_API_Version,
             "version_string": _version_string(),
             # TODO: "acceptable_client_API": [100, 101, 107],
+        }
+        return Response(info)
+
+
+class ExamInfo(APIView):
+    """Get the assessment information in an extensible format.
+
+    Returns:
+        (200): a dict of information about the exam/assessment as
+           key-value pairs,
+    """
+
+    def get(self, request: Request) -> Response:
+        # TODO: hardcoded, and needs more info
+        # TODO: suggest progress info here too
+        info: Dict[str, Any] = {
+            "current_largest_paper_num": 9999,
         }
         return Response(info)
 
