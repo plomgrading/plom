@@ -17,8 +17,7 @@ class Command(BaseCommand):
     help = "Displays the current status of the question-version map and allows user generate/download/remove it."
 
     def show_status(self):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stdout.write("There no valid test specification. Stopping.")
 
         pqvms = PQVMappingService()
@@ -34,8 +33,7 @@ class Command(BaseCommand):
             )
 
     def generate_pqv_map(self, number_to_produce=None):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stdout.write("There no valid test specification. Stopping.")
             return
         pqvms = PQVMappingService()

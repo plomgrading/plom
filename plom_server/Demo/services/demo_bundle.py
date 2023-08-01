@@ -43,7 +43,7 @@ class DemoBundleService:
 
     def get_default_paper_length(self):
         """Get the default number of pages in a paper from the specification."""
-        return SpecificationService().get_n_pages()
+        return SpecificationService.get_n_pages()
 
     def split_into_bundle_files(self, out_file, config):
         """Split the single scribble PDF file into the designated number of bundles.

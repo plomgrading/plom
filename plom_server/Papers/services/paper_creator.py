@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
 
+from .SpecificationService import get_the_spec
 from Papers.models import (
     Specification,
     Paper,
@@ -32,7 +33,7 @@ class PaperCreatorService:
 
     def __init__(self):
         try:
-            self.spec = Specification.load().spec_dict
+            self.spec = get_the_spec()
         except Specification.DoesNotExist as e:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
@@ -93,8 +94,8 @@ class PaperCreatorService:
             id_reader_service = IDReaderService()
             id_reader_service.add_prename_ID_prediction(prename_sid, paper_number)
 
-        for q_id, question in spec["question"].items():
-            index = int(q_id)
+        for index, question in spec["question"].items():
+            index = int(index)
             version = qv_mapping[index]
             for q_page in question["pages"]:
                 question_page = QuestionPage(

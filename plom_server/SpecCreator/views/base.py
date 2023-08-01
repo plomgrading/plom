@@ -24,11 +24,10 @@ class TestSpecPageView(ManagerRequiredView):
     def build_context(self, page_name):
         context = super().build_context()
         spec = StagingSpecificationService()
-        valid_spec = SpecificationService()
 
         show_alert = False
         try:
-            the_valid_spec = valid_spec.get_the_spec()
+            the_valid_spec = SpecificationService.get_the_spec()
             if not spec.compare_spec(the_valid_spec):
                 show_alert = True
         except ObjectDoesNotExist:

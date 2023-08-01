@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Papers.services import SpecificationService
+from Papers.serializers import SpecSerializer
 from Preparation import useful_files_for_testing as useful_files
 from ...services import StagingSpecificationService, ReferencePDFService
 
@@ -48,7 +49,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         staged_spec_service = StagingSpecificationService()
-        valid_spec_service = SpecificationService()
         ref_service = ReferencePDFService()
         if options["clear"]:
             if staged_spec_service.not_empty():
@@ -57,13 +57,16 @@ class Command(BaseCommand):
                 ref_service.delete_pdf()
                 staged_spec_service.reset_specification()
 
-                if valid_spec_service.is_there_a_spec():
-                    valid_spec_service.remove_spec()
+                if SpecificationService.is_there_a_spec():
+                    SpecificationService.remove_spec()
                 self.stdout.write("Test specification cleared.")
             else:
                 self.stdout.write("No specification uploaded.")
         else:
-            if valid_spec_service.is_there_a_spec() or staged_spec_service.not_empty():
+            if (
+                SpecificationService.is_there_a_spec()
+                or staged_spec_service.not_empty()
+            ):
                 self.stderr.write(
                     "Test specification data already present. Run manage.py plom_demo_spec --clear to clear the current specification."
                 )
@@ -90,16 +93,20 @@ class Command(BaseCommand):
 
                 # verify spec, stage + save to DB
                 try:
-                    staged_spec_service.create_from_dict(data)
-                    valid_spec = staged_spec_service.get_valid_spec_dict()
+                    data["question"] = SpecificationService.question_list_to_dict(
+                        data["question"]
+                    )
+                    serializer = SpecSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    valid_spec = serializer.validated_data
+                    staged_spec_service.create_from_dict(valid_spec)
 
                     if options["publicCode"]:
                         code = options["publicCode"]
                         valid_spec["publicCode"] = code
 
-                    valid_spec_service.store_validated_spec(valid_spec)
+                    SpecificationService.store_validated_spec(valid_spec)
                     self.stdout.write("Demo test specification uploaded!")
-                    self.stdout.write(str(valid_spec_service.get_the_spec()))
+                    self.stdout.write(str(SpecificationService.get_the_spec()))
                 except ValueError as e:
-                    self.stderr.write(e)
                     raise CommandError(e)

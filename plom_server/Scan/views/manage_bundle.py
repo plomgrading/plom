@@ -118,7 +118,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
             # TODO - we really need a list of question-labels: Issue #2716
             # This is a hack to be fixed vvvvvvvvvvvv
             question_labels = [
-                f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
+                f"Q.{n+1}" for n in range(SpecificationService.get_n_questions())
             ]
             paper_numbers = scanner.get_bundle_paper_numbers(bundle)
             all_paper_numbers = paper_info.which_papers_in_database()

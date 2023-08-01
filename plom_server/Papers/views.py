@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import reverse
@@ -65,9 +65,8 @@ class TestPaperProgress(ManagerRequiredView):
 
     def get(self, request):
         pinfo = PaperInfoService()
-        spec = SpecificationService()
 
-        n_to_produce = spec.get_n_to_produce()
+        n_to_produce = SpecificationService.get_n_to_produce()
         papers_in_database = pinfo.how_many_papers_in_database()
 
         if papers_in_database == n_to_produce:

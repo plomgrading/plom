@@ -7,7 +7,7 @@ from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.scan.question_list_utils import check_question_list
-from Papers.services.validated_spec_service import SpecificationService
+from Papers.services import SpecificationService
 from ...services import ScanCastService, ScanService
 
 
@@ -133,7 +133,7 @@ class Command(BaseCommand):
         elif options["command"] == "assign":
             if options["question"] is None:
                 options["question"] = "all"
-            n_questions = SpecificationService().get_n_questions()
+            n_questions = SpecificationService.get_n_questions()
             question_list = check_question_list(options["question"], n_questions)
             self.assign_extra_page(
                 options["username"],

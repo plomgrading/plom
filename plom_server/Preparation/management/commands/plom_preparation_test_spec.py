@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -19,6 +19,7 @@ import fitz
 from plom import SpecVerifier
 from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from SpecCreator.serializers import SpecSerializer
 
 from ...services import PQVMappingService
 
@@ -27,25 +28,22 @@ class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
 
     def show_status(self):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stdout.write("No valid test spec present")
             return
 
-        toml_text = speck.get_the_spec_as_toml()
+        toml_text = SpecificationService.get_the_spec_as_toml()
         self.stdout.write("A valid test spec is present:")
         self.stdout.write("#" * 40)
         self.stdout.write(f"{toml_text}")
         self.stdout.write("#" * 40)
 
     def download_spec(self, dest=None):
-        speck = SpecificationService()
-
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
-        spec_dict = speck.get_the_spec()
+        spec_dict = SpecificationService.get_the_spec()
         self.stdout.write(
             f"A valid test spec is present: shortname {spec_dict['name']}"
         )
@@ -61,8 +59,7 @@ class Command(BaseCommand):
             f.write(speck.get_the_spec_as_toml())
 
     def upload_spec(self, spec_file, pdf_file):
-        speck = SpecificationService()
-        if speck.is_there_a_spec():
+        if SpecificationService.is_there_a_spec():
             self.stderr.write(
                 "There is already a spec present. Cannot proceed with upload."
             )
@@ -88,10 +85,8 @@ class Command(BaseCommand):
         elif spec_dict["numberToProduce"] == 0:
             spec_dict["numberToProduce"] = 1
 
-        vlad = SpecVerifier(spec_dict)
         try:
-            vlad.verifySpec()
-            validated_spec = vlad.spec
+            validated_spec = SpecSerializer(spec_dict)
         except ValueError as err:
             self.stderr.write(f"There was an error validating the spec: {err}")
             return
@@ -134,11 +129,10 @@ class Command(BaseCommand):
             )
             return
         staging_spec = StagingSpecificationService()
-        speck = SpecificationService()
         self.stdout.write("Removing the test specification.")
         staging_spec.reset_specification()
-        if speck.is_there_a_spec():
-            speck.remove_spec()
+        if SpecificationService.is_there_a_spec():
+            SpecificationService.remove_spec()
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(

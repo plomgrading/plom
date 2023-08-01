@@ -38,8 +38,7 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
         ref_service.delete_pdf()
         spec.reset_specification()
 
-        valid_spec = SpecificationService()
-        valid_spec.remove_spec()
+        SpecificationService.remove_spec()
         return HttpResponseRedirect(reverse("prep_landing"))
 
 
@@ -59,11 +58,10 @@ class TestSpecViewRefPDF(ManagerRequiredView):
 
 class TestSpecGenTomlView(ManagerRequiredView):
     def get(self, request):
-        valid_spec = SpecificationService()
-        if not valid_spec.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             raise PermissionDenied("Specification not completed yet.")
 
-        toml_file = valid_spec.get_the_spec_as_toml()
+        toml_file = SpecificationService.get_the_spec_as_toml()
 
         response = HttpResponse(toml_file)
         response["mimetype"] = "text/plain"
@@ -150,8 +148,7 @@ class TestSpecSubmitView(TestSpecPageView):
         staging_spec = StagingSpecificationService()
         spec_dict = staging_spec.get_valid_spec_dict()
 
-        spec = SpecificationService()
-        spec.store_validated_spec(spec_dict)
+        SpecificationService.store_validated_spec(spec_dict)
 
         return HttpResponseRedirect(reverse("download"))
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -122,7 +122,7 @@ class PageDataService:
 
         # loops below do not actually check if the question is valid: do that first
         if question is not None:
-            numq = SpecificationService().get_n_questions()
+            numq = SpecificationService.get_n_questions()
             if question not in range(1, numq + 1):
                 raise ObjectDoesNotExist(
                     f"question {question} is out of bounds [1, {numq}]"

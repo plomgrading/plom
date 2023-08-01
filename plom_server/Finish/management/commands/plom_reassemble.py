@@ -7,7 +7,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from Finish.services import ReassembleService
-from Papers.services import PaperInfoService, SpecificationService
+from Papers.services import PaperInfoService
 from Papers.models import Paper
 
 
