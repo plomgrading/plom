@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 """Django settings for Plom project.
 
