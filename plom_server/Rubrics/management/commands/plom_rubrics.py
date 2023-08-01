@@ -33,8 +33,11 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, username, *, numquestions=None):
+    def upload_demo_rubrics(self, username: str, *, numquestions=None):
         """Load some demo rubrics and upload to server.
+
+        Args:
+            username: rubrics need to be associated to a rubric.
 
         Keyword Args:
             numquestions (None/int): how many questions should we build for.
@@ -68,7 +71,6 @@ class Command(BaseCommand):
             rub["display_delta"] = rub["delta"]
             rub.pop("delta")
 
-            # TODO: didn't need to do this on legacy, Issue #2640
             rub["username"] = username
 
             # Multiply rubrics w/o question numbers, avoids repetition in demo file
