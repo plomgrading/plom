@@ -46,6 +46,8 @@ class RubricService:
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
+                This must have a `"kind"` field and must have `"username"`
+                field, both are strings.
 
         Returns:
             The created and saved rubric instance.
