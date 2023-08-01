@@ -124,13 +124,10 @@ class Command(BaseCommand):
             # list of lists of times spent marking each version of the question
             times_for_question = []
             marks_given_for_question = []
-            print(marking_times_df.columns.values)
             for version in marking_times_df["question_version"].unique():
-                print(question, version)
                 temp_df = marking_times_df[
                     (marking_times_df["question_version"] == version)
                 ]
-                print(temp_df)
                 times_for_question.append(
                     temp_df["seconds_spent_marking"].div(60),
                 )
@@ -179,7 +176,7 @@ class Command(BaseCommand):
 
         # line graph of average mark on each question
         print("Generating line graph of average mark on each question.")
-        line_graph = mpls.line_graph_of_avg_marks_by_question()
+        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=True)
 
         print("Generating HTML.")
 

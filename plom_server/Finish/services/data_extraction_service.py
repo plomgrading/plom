@@ -80,12 +80,37 @@ class DataExtractionService:
             / self.spec["question"][str(question_number)]["mark"]
         )
 
+    def get_average_on_question_version_as_percentage(
+        self, question_number: int, version_number: int
+    ) -> float:
+        """Return the average mark on a specific question as a percentage."""
+        return (
+            100
+            * self.student_df[
+                (self.student_df[f"q{question_number}_version"] == version_number)
+            ][f"q{question_number}_mark"].mean()
+            / self.spec["question"][str(question_number)]["mark"]
+        )
+
     def get_averages_on_all_questions_as_percentage(self) -> List[float]:
         """Return the average mark on each question as a percentage."""
         averages = []
         for q in self.spec["question"].keys():
             q = int(q)
             averages.append(self.get_average_on_question_as_percentage(q))
+        return averages
+
+    def get_averages_on_all_questions_versions_as_percentage(self) -> List[List[float]]:
+        """Return the average mark on each question as a percentage."""
+        averages = []
+        for q in self.spec["question"].keys():
+            q = int(q)
+            _averages = []
+            for v in range(1, self.spec["numberOfVersions"] + 1):
+                _averages.append(
+                    self.get_average_on_question_version_as_percentage(q, v)
+                )
+            averages.append(_averages)
         return averages
 
     def _get_marks_for_all_questions(

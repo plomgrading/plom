@@ -110,7 +110,8 @@ class MatplotlibService:
 
         Args:
             question: The question number.
-            versions: Whether to split the histogram into versions.
+            versions: Whether to split the histogram into versions. If omitted,
+                defaults to False.
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
@@ -264,7 +265,8 @@ class MatplotlibService:
             marking_times_df: Optional dataframe containing the marking times. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
-            versions: Whether to split the histogram into versions.
+            versions: Whether to split the histogram into versions. If omitted,
+                defaults to False.
             max_time: The maximum time to show on the histogram. If omitted,
                 defaults to the maximum time in the marking_times_minutes series.
             bin_width: The width of each bin on the histogram. Should be given in
@@ -337,11 +339,14 @@ class MatplotlibService:
     ) -> Union[BytesIO, str]:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
+        TODO: Fix these docs
+
         Args:
             question_number: The question to generate the scatter plot for.
             times_spent_minutes: Listlike containing the marking times in minutes.
             marks_given: Listlike containing the marks given.
-            versions: Whether to split the scatter plot into versions.
+            versions: Whether to split the scatter plot into versions. If omitted,
+                defaults to False.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -463,11 +468,13 @@ class MatplotlibService:
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
     def line_graph_of_avg_marks_by_question(
-        self, format: str = "base64"
+        self, versions: bool = False, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a line graph of the average percentage marks by question.
 
         Args:
+            versions: Whether to split the line graph into versions. If omitted,
+                defaults to False.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -479,11 +486,22 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, 4.6))
 
-        plt.plot(
-            range(1, self.spec["numberOfQuestions"] + 1),
-            self.des.get_averages_on_all_questions_as_percentage(),
-            marker="o",
-        )
+        if versions is True:
+            averages = self.des.get_averages_on_all_questions_versions_as_percentage()
+            for version in range(1, self.spec["numberOfQuestions"] + 1):
+                plt.plot(
+                    range(1, self.spec["numberOfQuestions"] + 1),
+                    averages[version - 1],
+                    marker="o",
+                    label="Version " + str(version),
+                )
+        else:
+            plt.plot(
+                range(1, self.spec["numberOfQuestions"] + 1),
+                self.des.get_averages_on_all_questions_as_percentage(),
+                marker="o",
+            )
+
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
         plt.xlabel("Question number")
