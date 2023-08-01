@@ -21,12 +21,12 @@ import tomlkit
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 
+from django.core.management.base import BaseCommand, CommandError
+from rest_framework.exceptions import ValidationError
 from tabulate import tabulate
 
-from django.core.management.base import BaseCommand, CommandError
-
 from Papers.services import SpecificationService
-from Rubrics.services import RubricService
+from ...services import RubricService
 
 
 class Command(BaseCommand):
@@ -90,7 +90,10 @@ class Command(BaseCommand):
 
         service = RubricService()
         for rubric in rubrics:
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except (KeyError, ValidationError) as e:
+                raise CommandError(e) from e
         return len(rubrics)
 
     def init_rubrics_cmd(self, username):
