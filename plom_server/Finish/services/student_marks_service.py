@@ -156,7 +156,6 @@ class StudentMarkService:
             [lst[:min_length] for lst in question_data.values()]
         )
         question_correlation = np.corrcoef(question_data_arr)
-        np.fill_diagonal(question_correlation, -1)
         return question_correlation
 
     def convert_correlation_to_heatmap_format(

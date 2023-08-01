@@ -19,7 +19,18 @@ function renderHeatMap(data, divId) {
         .attr("width", width)
         .attr("height", height);
 
-    // title for the histogram
+    // Define the diagonal stripe pattern for the cells on the diagonal
+    svg.append("pattern")
+        .attr("id", "diagonal-stripe")
+        .attr("patternUnits", "userSpaceOnUse")
+        .attr("width", 4)
+        .attr("height", 4)
+        .append("path")
+        .attr("d", "M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2")
+        .attr("stroke", "#000")
+        .attr("stroke-width", 1);
+
+    // title for the heatmap
     svg.append("text")
         .attr("x", width / 2)
         .attr("y", margin.top / 4)
@@ -40,7 +51,11 @@ function renderHeatMap(data, divId) {
         .attr("y", (d, i) => Math.floor(i / data.cols) * cellSize + margin.top) // Set the y-coordinate based on the row index
         .attr("width", cellSize) // Set the desired cell width
         .attr("height", cellSize) // Set the desired cell height
-        .attr("fill", d => colorScale(d)) // Set the cell color based on the value
+        .attr("fill", (d, i) => {
+            const rowIndex = Math.floor(i / data.cols);
+            const colIndex = i % data.cols;
+            return rowIndex === colIndex ? "url(#diagonal-stripe)" : colorScale(d);
+        }) // Apply diagonal stripes to the cells on the diagonal
         .on("click", cellClicked); // Add click event listener
 
     // Add x-axis labels at the top
@@ -51,7 +66,7 @@ function renderHeatMap(data, divId) {
         .text(d => d)
         .attr("class", "xLabel")
         .attr("x", (d, i) => (i + 0.5) * cellSize + margin.left)
-        .attr("y", margin.top * 3 / 4) // Adjust the y-coordinate to be at the top
+        .attr("y", margin.top * 3 / 4)
         .style("text-anchor", "middle");
 
     // Add y-axis labels
@@ -69,16 +84,16 @@ function renderHeatMap(data, divId) {
     svg.append("text")
         .attr("class", "xTitle")
         .attr("x", width / 2)
-        .attr("y", margin.top / 2) // Adjust the y-coordinate for the title
+        .attr("y", margin.top / 2)
         .style("text-anchor", "middle")
         .text(data.xTitle);
 
     // Add y-axis title
     svg.append("text")
         .attr("class", "yTitle")
-        .attr("transform", "rotate(-90)") // Rotate the text for vertical display
+        .attr("transform", "rotate(-90)")
         .attr("x", -(margin.top + height) / 2)
-        .attr("y", margin.left / 3) // Adjust the y-coordinate for the title
+        .attr("y", margin.left / 3)
         .style("text-anchor", "middle")
         .text(data.yTitle);
 
