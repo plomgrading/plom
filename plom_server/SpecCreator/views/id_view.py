@@ -1,12 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 import re
+
 from django.urls import reverse
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
-from SpecCreator.views import TestSpecPDFView
-from SpecCreator.services import StagingSpecificationService, SpecCreatorFrontendService
-
-from .. import forms
+from . import TestSpecPDFView
+from ..services import StagingSpecificationService, SpecCreatorFrontendService
+from ..forms import TestSpecIDPageForm
 
 
 class TestSpecCreatorIDPage(TestSpecPDFView):
@@ -15,7 +19,7 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
     def build_form(self):
         spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
-        form = forms.TestSpecIDPageForm(n_pages)
+        form = TestSpecIDPageForm(n_pages)
         return form
 
     def build_context(self):
@@ -41,7 +45,7 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
     def post(self, request):
         spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
-        form = forms.TestSpecIDPageForm(n_pages, request.POST)
+        form = TestSpecIDPageForm(n_pages, request.POST)
         if form.is_valid():
             data = form.cleaned_data
             spec.clear_id_page()

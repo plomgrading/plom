@@ -3,7 +3,7 @@
 
 from django.urls import path
 
-from Tags.views import TagLandingPageView, TagItemView
+from .views import TagLandingPageView, TagItemView
 
 
 urlpatterns = [

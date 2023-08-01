@@ -4,7 +4,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Scan.services import ImageRotateService
+from ...services import ImageRotateService
 
 
 class Command(BaseCommand):

@@ -1,19 +1,27 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 import pathlib
+from typing import List
+
 import fitz
+
 from django.core.exceptions import MultipleObjectsReturned
+from django.conf import settings
+
 from .. import models
 
 
 class ReferencePDFService:
-    """Keep track of the reference PDF"""
+    """Keep track of the reference PDF."""
 
-    def is_there_a_reference_pdf(self):
-        """Return True if the user has uploaded a reference PDF already"""
+    def is_there_a_reference_pdf(self) -> bool:
+        """Return True if the user has uploaded a reference PDF already."""
         return models.ReferencePDF.objects.exists()
 
     def create_pdf(self, slug: str, pages: int, pdf) -> models.ReferencePDF:
-        """
-        Create a PDF in the database and save the file on disk
+        """Create a PDF in the database and save the file on disk.
 
         Args:
             slug: url-safe filename (w/o extension)
@@ -23,8 +31,7 @@ class ReferencePDFService:
         Returns:
             models.ReferencePDF: the reference PDF object
         """
-
-        pdf_path = pathlib.Path("media") / "spec_reference.pdf"
+        pdf_path = settings.MEDIA_ROOT / "spec_reference.pdf"
         pdf_path.unlink(missing_ok=True)
 
         pdf = models.ReferencePDF(filename_slug=slug, num_pages=pages, pdf=pdf)
@@ -32,14 +39,12 @@ class ReferencePDFService:
         return pdf
 
     def delete_pdf(self):
-        """
-        Clear the ReferencePDF table
-        """
+        """Clear the ReferencePDF table."""
         pdfs = models.ReferencePDF.objects.all()
         pdfs.delete()
 
     def new_pdf(self, spec_service, slug, pages, file_bytes):
-        """Create and save a new PDF given an opened file"""
+        """Create and save a new PDF given an opened file."""
         self.delete_pdf()
         spec_service.clear_questions()  # clear questions from the test specification
         pdf = self.create_pdf(slug, pages, file_bytes)
@@ -49,8 +54,7 @@ class ReferencePDFService:
         return pdf
 
     def get_pdf(self):
-        """
-        Get the reference PDF
+        """Get the reference PDF.
 
         Raises:
             RuntimeError: if there is no PDF uploaded yet.
@@ -68,15 +72,14 @@ class ReferencePDFService:
         return pdfs[0]
 
     def get_and_save_pdf_images(self) -> None:
-        """
-        Get raster image of each PDF page, and save them to disk for displaying
+        """Get raster image of each PDF page, and save them to disk for displaying.
 
         Raises:
             RuntimeError: if the ReferencePDF's path doesn't point to a PDF
         """
         pdf = self.get_pdf()
         slug = pdf.filename_slug
-        pathname = pathlib.Path("media") / f"spec_reference.pdf"
+        pathname = settings.MEDIA_ROOT / "spec_reference.pdf"
         if pathname.exists():
             pdf_doc = fitz.Document(pathname)
 
@@ -96,9 +99,8 @@ class ReferencePDFService:
         else:
             raise RuntimeError(f"Document at {pathname} does not exist.")
 
-    def create_page_thumbnail_list(self):
-        """
-        Create list of image paths to send to frontend for pdf thumbnail rendering
+    def create_page_thumbnail_list(self) -> List[pathlib.Path]:
+        """Create list of image paths to send to frontend for pdf thumbnail rendering.
 
         Returns:
             list: page thumbnail paths

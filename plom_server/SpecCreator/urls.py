@@ -2,8 +2,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.urls import include, path
+from django.urls import path
+
 from . import views
+
 
 # TODO: Document the API here? Sphinx best practices?
 

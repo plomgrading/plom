@@ -418,7 +418,7 @@ pydocstyle-server-count:
     - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 326 ]]"
+    - bash -c "[[ $NUMERR -le 87 ]]"
   allow_failure: true
 
 
@@ -431,7 +431,7 @@ pydocstyle-server:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd plom_server
-    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Preparation Profile Progress Rubrics Scan Tags
+    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Preparation Profile Progress Rubrics Scan SpecCreator Tags
     - popd
   allow_failure: true
 
@@ -738,9 +738,6 @@ fedora_legacy:
           iproute
     - pip --version
   script:
-    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
-    - dnf install -y git
-    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
@@ -827,9 +824,6 @@ fedora_webplom:
           python3-django
     - pip --version
   script:
-    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
-    - dnf install -y git
-    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .

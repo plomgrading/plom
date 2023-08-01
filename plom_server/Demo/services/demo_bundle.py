@@ -10,9 +10,13 @@ from pathlib import Path
 import tempfile
 from typing import List, Dict
 
-from django.core.management import call_command
 import fitz
 
+from django.core.management import call_command
+from django.conf import settings
+
+from plom import SpecVerifier
+from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from Papers.services import SpecificationService
 
@@ -98,7 +102,7 @@ class DemoBundleService:
         call_command(
             "plom_preparation_extrapage",
             "download",
-            "media/papersToPrint/extra_page.pdf",
+            settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
         )
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
@@ -153,9 +157,6 @@ class DemoBundleService:
         Returns:
             None, but modifies ``pdf_doc``  as a side effect.
         """
-        from plom import SpecVerifier
-        from plom.create.mergeAndCodePages import create_QR_codes
-
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -230,9 +231,6 @@ class DemoBundleService:
         Returns:
             None, but modifies ``pdf_doc`` as a side effect.
         """
-        from plom import SpecVerifier
-        from plom.create.mergeAndCodePages import create_QR_codes
-
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -260,9 +258,6 @@ class DemoBundleService:
         )
 
     def insert_page_from_another_assessment(self, pdf_doc):
-        from plom import SpecVerifier
-        from plom.create.mergeAndCodePages import create_QR_codes
-
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -292,9 +287,6 @@ class DemoBundleService:
 
     def append_out_of_range_paper_and_page(self, pdf_doc):
         """Append two new pages to the pdf - one as test-1 page-999 and one as test-99999 page-1."""
-        from plom import SpecVerifier
-        from plom.create.mergeAndCodePages import create_QR_codes
-
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -417,7 +409,7 @@ class DemoBundleService:
 
         classlist = self.get_classlist_as_dict()
         classlist_length = len(classlist)
-        papers_to_print = Path("media/papersToPrint")
+        papers_to_print = settings.MEDIA_ROOT / "papersToPrint"
         paper_list = [paper for paper in papers_to_print.glob("exam*.pdf")]
         self.get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
         extra_page_path = papers_to_print / "extra_page.pdf"

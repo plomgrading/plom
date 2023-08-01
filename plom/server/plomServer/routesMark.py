@@ -128,7 +128,7 @@ class MarkHandler:
             return web.Response(status=204)  # no papers left
         return web.json_response(give)
 
-    # @routes.get("/MK/latex")
+    # @routes.post("/MK/latex")
     @authenticate_by_token_required_fields(["user", "fragment"])
     def MlatexFragment(self, data, request):
         """Return the latex image for the string included in the request.
@@ -884,7 +884,7 @@ class MarkHandler:
         router.add_get("/MK/progress", self.MprogressCount)
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)
         router.add_get("/MK/tasks/available", self.MgetNextTask)
-        router.add_get("/MK/latex", self.MlatexFragment)
+        router.add_post("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
@@ -894,7 +894,7 @@ class MarkHandler:
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
         router.add_get("/pagedata/{number}", self.get_pagedata)
-        # some deprecated: use the /context one instead:
+        # somewhat deprecated: use the /context one instead:
         router.add_get("/pagedata/{number}/{question}", self.get_pagedata_question)
         router.add_get(
             "/pagedata/{number}/context/{question}",

@@ -2,8 +2,9 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
-import shutil
 import pathlib
+import shutil
+
 from django.db import models
 from django.db.models.signals import pre_delete
 
@@ -62,9 +63,9 @@ class TestSpecQuestion(models.Model):
 
 
 class StagingSpecification(SingletonBaseModel):
-    """
-    Store the current state of the test specification as the
-    user creates it. Not necessarily a valid spec - at the end of
+    """Store the current state of the test specification as the user creates it.
+
+    Not necessarily a valid spec - at the end of
     the specification creator wizard, the information stored here
     will be validated + converted to a JSON object
     """
@@ -75,6 +76,5 @@ class StagingSpecification(SingletonBaseModel):
     numberOfVersions = models.PositiveIntegerField(default=0)
     totalMarks = models.PositiveIntegerField(default=0)
     numberOfQuestions = models.PositiveIntegerField(default=0)
-    numberToProduce = models.IntegerField(default=-1)
     pages = models.JSONField(default=dict)
     questions = models.JSONField(default=dict)

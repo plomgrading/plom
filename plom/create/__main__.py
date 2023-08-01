@@ -234,8 +234,9 @@ def get_parser():
               * paper_number - the test-number to assign to that student for
                                prenaming papers. If unsure, include the column,
                                but leave it blank. Each paper_number must be
-                               unique and in the range [1, NumberToProduce]
-                               but they need not be contiguous nor ordered.
+                               unique and on legacy servers they must be in the
+                               range [1, NumberToProduce] but they need not be
+                               contiguous nor ordered.
 
             Plom will accept uppercase or lowercase column headers.
             """
@@ -262,9 +263,9 @@ def get_parser():
         help="""
             By default, it is an error to upload a new classlist.
             This overrides that check; for which you accept responsibility.
-            If you are using "numberToProduce = -1" then the first classlist
-            will have chosen a value; you may want to reupload your spec
-            before pushing a second classlist.
+            On a legacy server, if you are using "numberToProduce = -1"
+            then the first classlist will have chosen a value; you may
+            want to reupload your spec before pushing a second classlist.
             This is a non-exaustive list of what could go wrong.
             If you've already produced and printed papers, you should be
             careful with this option, although we are not aware of any
