@@ -60,16 +60,24 @@ class MarkingInformationView(ManagerRequiredView):
         total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
         all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
 
+        # histogram of grades per question
         question_marks = self.sms.get_marks_from_papers(papers)
         question_stats = self.sms.get_stats_for_questions(question_marks)
-        grades_hist_data = self.sms.convert_stats_to_hist_format(question_stats)
+        # sort by key (question number)
+        sorted_question_stats = sorted(question_stats.items())
+        question_stats.clear()
+        question_stats.update(sorted_question_stats)
+        grades_hist_data = self.sms.convert_stats_to_hist_format(
+            question_stats, "Question number", "Grade", "Quesion vs Grade"
+        )
         grades_hist_data = json.dumps(grades_hist_data)
 
+        # heatmap of correlation between questions
         question_correlation = self.sms.get_correlation_between_questions(
             question_marks
         )
         corr_heatmap_data = self.sms.convert_correlation_to_heatmap_format(
-            question_correlation
+            question_correlation, "Question correlation", "Question", "Question"
         )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
 

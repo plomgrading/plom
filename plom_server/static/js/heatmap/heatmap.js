@@ -9,7 +9,7 @@ function renderHeatMap(data, divId) {
 
     // Set up dimensions and margins
     const cellSize = 40; // Set the desired cell size
-    const margin = { top: 60, right: 50, bottom: 20, left: 60 };
+    const margin = { top: 90, right: 50, bottom: 20, left: 60 };
     const width = data.cols * cellSize + margin.left + margin.right;
     const height = data.rows * cellSize + margin.top + margin.bottom;
 
@@ -18,6 +18,14 @@ function renderHeatMap(data, divId) {
         .append("svg")
         .attr("width", width)
         .attr("height", height);
+
+    // title for the histogram
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", margin.top / 4)
+        .attr("text-anchor", "middle")
+        .style("font-size", "20px")
+        .text(data.title);
 
     // Create a color scale
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
@@ -43,7 +51,7 @@ function renderHeatMap(data, divId) {
         .text(d => d)
         .attr("class", "xLabel")
         .attr("x", (d, i) => (i + 0.5) * cellSize + margin.left)
-        .attr("y", margin.top * 2 / 3) // Adjust the y-coordinate to be at the top
+        .attr("y", margin.top * 3 / 4) // Adjust the y-coordinate to be at the top
         .style("text-anchor", "middle");
 
     // Add y-axis labels
@@ -61,7 +69,7 @@ function renderHeatMap(data, divId) {
     svg.append("text")
         .attr("class", "xTitle")
         .attr("x", width / 2)
-        .attr("y", margin.top / 3) // Adjust the y-coordinate for the title
+        .attr("y", margin.top / 2) // Adjust the y-coordinate for the title
         .style("text-anchor", "middle")
         .text(data.xTitle);
 

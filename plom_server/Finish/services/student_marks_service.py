@@ -114,18 +114,24 @@ class StudentMarkService:
 
         return question_stats
 
-    def convert_stats_to_hist_format(self, stats: dict) -> dict:
+    def convert_stats_to_hist_format(
+        self, stats: dict, xlabel: str, ylabel: str, title: str
+    ) -> dict:
         """Convert the question stats to a format that can be used by the histogram.
 
         Args:
             stats: The question stats returned from get_stats_for_questions.
+            xlabel: The x-axis label.
+            ylabel: The y-axis label.
+            title: The title of the histogram.
 
         Returns:
             data in dict format that can be used by the d3 histogram.
         """
         data: Dict[str, Any] = {
-            "xLabel": "Question",
-            "yLabel": "Average Grade",
+            "title": title,
+            "xLabel": xlabel,
+            "yLabel": ylabel,
             "values": [],
         }
 
@@ -143,6 +149,8 @@ class StudentMarkService:
         Returns:
             The correlation matrix between questions.
         """
+        if len(question_data) == 0:
+            return np.array([[0]])
         min_length = min(len(lst) for lst in question_data.values())
         question_data_arr: np.ndarray = np.array(
             [lst[:min_length] for lst in question_data.values()]
@@ -151,7 +159,9 @@ class StudentMarkService:
         np.fill_diagonal(question_correlation, -1)
         return question_correlation
 
-    def convert_correlation_to_heatmap_format(self, correlation: np.ndarray) -> dict:
+    def convert_correlation_to_heatmap_format(
+        self, correlation: np.ndarray, title="", xtitle="", ytitle=""
+    ) -> dict:
         """Convert the correlation matrix to a format that can be used by the heatmap.
 
         Args:
@@ -161,10 +171,11 @@ class StudentMarkService:
             data in dict format that can be used by the d3 heatmap.
         """
         data = {
+            "title": title,
             "rows": len(correlation),
             "cols": len(correlation[0]),
-            "xTitle": "Question",
-            "yTitle": "Question",
+            "xTitle": xtitle,
+            "yTitle": ytitle,
             "xLabel": list(range(1, len(correlation) + 1)),
             "yLabel": list(range(1, len(correlation) + 1)),
             "values": correlation.tolist(),
