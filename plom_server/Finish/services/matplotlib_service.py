@@ -74,7 +74,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the histogram.
+            Base64 encoded string or bytes containing the histogram.
         """
         assert format in self.formats
         self.ensure_all_figures_closed()
@@ -110,7 +110,7 @@ class MatplotlibService:
 
         Args:
             question: The question number.
-            version: The version number.
+            versions: Whether to split the histogram into versions.
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
@@ -118,7 +118,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the histogram.
+            Base64 encoded string or bytes containing the histogram.
         """
         if student_df is None:
             student_df = self.student_df
@@ -129,21 +129,21 @@ class MatplotlibService:
 
         # split the dataframe into versions
         if versions is True:
-            plot_df = []
+            plot_series = []
             for version in range(1, self.spec["numberOfVersions"] + 1):
-                plot_df.append(
+                plot_series.append(
                     student_df[
                         (student_df["q" + str(question) + "_version"] == version)
                     ]["q" + str(question) + "_mark"]
                 )
         else:
-            plot_df = student_df["q" + str(question) + "_mark"]
+            plot_series = student_df["q" + str(question) + "_mark"]
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
         bins = range(0, self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
 
-        ax.hist(plot_df, bins=bins, ec="black", alpha=0.5)
+        ax.hist(plot_series, bins=bins, ec="black", alpha=0.5)
         ax.set_title("Histogram of Q" + str(question) + " marks")
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
@@ -169,7 +169,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the correlation heatmap.
+            Base64 encoded string or bytes containing the correlation heatmap.
         """
         if corr_df is None:
             corr_df = self.des._get_question_correlation_heatmap_data()
@@ -211,7 +211,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the histogram.
+            Base64 encoded string or bytes containing the histogram.
         """
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
@@ -249,7 +249,8 @@ class MatplotlibService:
     def histogram_of_time_spent_marking_each_question(
         self,
         question_number: int,
-        marking_times_minutes: List[int],
+        marking_times_df: Optional[pd.DataFrame] = None,
+        versions: bool = False,
         max_time: int = 0,
         bin_width: int = 15,
         format: str = "base64",
@@ -258,7 +259,10 @@ class MatplotlibService:
 
         Args:
             question_number: The question to generate the histogram for.
-            marking_times_minutes: Listlike containing the marking times in minutes.
+            marking_times_df: Optional dataframe containing the marking times. Should be
+                a copy or filtered version of self.ta_df. If omitted, defaults
+                to None and self.ta_df is used.
+            versions: Whether to split the histogram into versions.
             max_time: The maximum time to show on the histogram. If omitted,
                 defaults to the maximum time in the marking_times_minutes series.
             bin_width: The width of each bin on the histogram. Should be given in
@@ -267,10 +271,15 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the histogram.
+            Base64 encoded string or bytes containing the histogram.
         """
+        if marking_times_df is None:
+            marking_times_df = self.ta_df()
+
+        assert isinstance(marking_times_df, pd.DataFrame)
+
         if max_time == 0:
-            max_time = max(marking_times_minutes)
+            max_time = max(marking_times_df["seconds_spent_marking"].div(60))
 
         assert max_time > 0
         assert format in self.formats
@@ -279,8 +288,25 @@ class MatplotlibService:
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
         bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
 
+        if versions is True:
+            plot_series = []
+            for version in range(1, self.spec["numberOfVersions"] + 1):
+                plot_series.append(
+                    marking_times_df[
+                        (marking_times_df["question_number"] == question_number)
+                    ][(marking_times_df["question_version"] == version)][
+                        "seconds_spent_marking"
+                    ].div(
+                        60
+                    )
+                )
+        else:
+            plot_series = marking_times_df[
+                (marking_times_df["question_number"] == question_number)
+            ]["seconds_spent_marking"].div(60)
+
         ax.hist(
-            marking_times_minutes,
+            plot_series,
             bins=bins,
             ec="black",
             alpha=0.5,
@@ -314,7 +340,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the scatter plot.
+            Base64 encoded string or bytes containing the scatter plot.
         """
         assert format in self.formats
         self.ensure_all_figures_closed()
@@ -354,7 +380,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the boxplot.
+            Base64 encoded string or bytes containing the boxplot.
         """
         assert len(marks) == len(marker_names)
         assert format in self.formats
@@ -428,7 +454,7 @@ class MatplotlibService:
                 or "bytes". If omitted, defaults to "base64".
 
         Returns:
-            A base64 encoded string containing the line graph.
+            Base64 encoded string or bytes containing the line graph.
         """
         assert format in self.formats
         self.ensure_all_figures_closed()

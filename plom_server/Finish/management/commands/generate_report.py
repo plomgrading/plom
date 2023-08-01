@@ -104,11 +104,12 @@ class Command(BaseCommand):
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times in des._get_times_for_all_questions().items():
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
-                    marking_times_minutes=marking_times.div(60),
+                    marking_times_df=marking_times_df,
+                    versions=True,
                     max_time=max_time,
                     bin_width=bin_width,
                 )
@@ -170,15 +171,8 @@ class Command(BaseCommand):
 
         print("Generating HTML.")
 
-        def html_add_title(title: str) -> str:
-            """Generate HTML for a title.
-
-            Args:
-                title: The title of the section.
-
-            Returns:
-                A string of HTML containing the title.
-            """
+        def _html_add_title(title: str) -> str:
+            """Generate HTML for a title."""
             out = f"""
             <br>
             <p style="break-before: page;"></p>
@@ -186,15 +180,8 @@ class Command(BaseCommand):
             """
             return out
 
-        def html_for_graphs(list_of_graphs: list) -> str:
-            """Generate HTML for a list of graphs.
-
-            Args:
-                list_of_graphs: A list of base64-encoded graphs.
-
-            Returns:
-                A string of HTML containing the graphs.
-            """
+        def _html_for_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of graphs."""
             out = ""
             odd = 0
             for i, graph in enumerate(list_of_graphs):
@@ -218,15 +205,8 @@ class Command(BaseCommand):
                 """
             return out
 
-        def html_for_big_graphs(list_of_graphs: list) -> str:
-            """Generate HTML for a list of large graphs.
-
-            Args:
-                list_of_graphs: A list of base64-encoded graphs.
-
-            Returns:
-                A string of HTML containing the graphs.
-            """
+        def _html_for_big_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of large graphs."""
             out = ""
             for graph in list_of_graphs:
                 out += f"""
@@ -257,8 +237,8 @@ class Command(BaseCommand):
         <img src="data:image/png;base64,{histogram_of_grades}">
         """
 
-        html += html_add_title("Histogram of total marks")
-        html += html_for_graphs(histogram_of_grades_q)
+        html += _html_add_title("Histogram of total marks")
+        html += _html_for_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
@@ -266,31 +246,31 @@ class Command(BaseCommand):
         <img src="data:image/png;base64,{corr}">
         """
 
-        html += html_add_title("Histograms of grades by marker by question")
+        html += _html_add_title("Histograms of grades by marker by question")
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
             <h4>Grades by {marker}</h4>
             """
 
-            html += html_for_graphs(histogram_of_grades_m[index])
+            html += _html_for_graphs(histogram_of_grades_m[index])
 
-        html += html_add_title(
+        html += _html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        html += html_for_graphs(histogram_of_time)
+        html += _html_for_graphs(histogram_of_time)
 
-        html += html_add_title(
+        html += _html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        html += html_for_graphs(scatter_of_time)
+        html += _html_for_graphs(scatter_of_time)
 
-        html += html_add_title(
+        html += _html_add_title(
             "Box plots of grades given by each marker for each question"
         )
-        html += html_for_big_graphs(boxplots)
+        html += _html_for_big_graphs(boxplots)
 
-        html += html_add_title("Line graph of average mark on each question")
+        html += _html_add_title("Line graph of average mark on each question")
         html += f"""
             <img src="data:image/png;base64,{line_graph}">
             """
