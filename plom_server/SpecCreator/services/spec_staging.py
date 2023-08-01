@@ -478,7 +478,7 @@ class StagingSpecificationService:
 
         questions = spec_dict["question"]
         # make sure the questions are a dict-of-dicts
-        if type(questions) != dict:
+        if not isinstance(questions, dict):
             questions_dict = {}
             for i in range(len(questions)):
                 questions_dict[str(i + 1)] = questions[i]
@@ -559,7 +559,7 @@ class StagingSpecificationService:
         """Return True if the input specification is the same as that saved to the StagingSpecification table."""
         staged_spec_dict = self.get_staging_spec_dict()
         # if questions is a list-of-dicts, convert to dict
-        if type(staged_spec_dict["question"]) == list:
+        if isinstance(staged_spec_dict["question"], list):
             questions = staged_spec_dict.pop("question")
             question_dict = {}
             for i in range(len(questions)):

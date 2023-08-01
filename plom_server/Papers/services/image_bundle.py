@@ -7,6 +7,7 @@
 
 import pathlib
 import uuid
+from typing import Dict, List, Tuple, Union
 
 from plom.tpv_utils import encodePaperPageVersion
 
@@ -33,14 +34,10 @@ from .paper_info import PaperInfoService
 
 
 class ImageBundleService:
-    """
-    Class to encapsulate all functions around validated page images and bundles.
-    """
+    """Class to encapsulate all functions around validated page images and bundles."""
 
     def create_bundle(self, name, hash):
-        """
-        Create a bundle and store its name and sha256 hash.
-        """
+        """Create a bundle and store its name and sha256 hash."""
         if Bundle.objects.filter(hash=hash).exists():
             raise RuntimeError("A bundle with that hash already exists.")
         bundle = Bundle(name=name, hash=hash)
@@ -48,32 +45,23 @@ class ImageBundleService:
         return bundle
 
     def get_bundle(self, hash):
-        """
-        Get a bundle from its hash.
-        """
+        """Get a bundle from its hash."""
         return Bundle.objects.get(hash=hash)
 
     def get_or_create_bundle(self, name, hash):
-        """
-        Get a Bundle instance, or create if it doesn't exist
-        """
-
+        """Get a Bundle instance, or create if it doesn't exist."""
         if not Bundle.objects.filter(hash=hash).exists():
             return self.create_bundle(name, hash)
         else:
             return self.get_bundle(hash)
 
-    def image_exists(self, hash):
-        """
-        Return True if a page image with the input hash exists in the database.
-        """
+    def image_exists(self, hash) -> bool:
+        """Return True if a page image with the input hash exists in the database."""
         return Image.objects.filter(hash=hash).exists()
 
     @transaction.atomic
-    def get_image_pushing_status(self, staged_image):
-        """
-        Return the status of a staged image's associated CreateImageTask instance
-        """
+    def get_image_pushing_status(self, staged_image) -> Union[str, None]:
+        """Return the status of a staged image's associated CreateImageTask instance."""
         try:
             task_obj = CreateImageTask.objects.get(staging_image=staged_image)
             return task_obj.status
@@ -81,10 +69,8 @@ class ImageBundleService:
             return None
 
     @transaction.atomic
-    def get_image_pushing_message(self, staged_image):
-        """
-        Return the error message of a staged image's CreateImageTask instance
-        """
+    def get_image_pushing_message(self, staged_image) -> Union[str, None]:
+        """Return the error message of a staged image's CreateImageTask instance."""
         try:
             task_obj = CreateImageTask.objects.get(staging_image=staged_image)
             return task_obj.message
@@ -92,19 +78,17 @@ class ImageBundleService:
             return None
 
     @transaction.atomic
-    def is_image_pushing_in_progress(self, completed_images):
-        """
-        Return True if at least one CreateImageTask for a bundle has the status 'queued'
-        or 'running'.
-        """
+    def is_image_pushing_in_progress(self, completed_images) -> bool:
+        """Return True if at least one CreateImageTask for a bundle has the status 'queued' or 'running'."""
         for img in completed_images:
             status = self.get_image_pushing_status(img)
             if status == "queued" or status == "running":
                 return True
         return False
 
-    def upload_valid_bundle(self, staged_bundle, user_obj):
-        """
+    def upload_valid_bundle(self, staged_bundle, user_obj) -> None:
+        """Upload all the pages using bulk calls under certain assumptions.
+
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
         paper number, and don't collide with any currently uploaded pages) upload all the pages
         using bulk ORM calls.
@@ -113,8 +97,11 @@ class ImageBundleService:
         2. Check that no staging images collide with each other
         3. Check that no staging images collide with any uploaded images
         4. Bulk-create images
-        """
 
+        Raises:
+            RuntimeError
+            ValueError
+        """
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(
@@ -231,9 +218,11 @@ class ImageBundleService:
             if not its.id_task_exists(paper):
                 its.create_task(paper)
 
-    def get_staged_img_location(self, staged_image):
-        """
-        Get the image's paper number and page number from its QR code dict
+    def get_staged_img_location(
+        self, staged_image
+    ) -> Tuple[Union[int, None], Union[int, None]]:
+        """Get the image's paper number and page number from its QR code dict.
+
         TODO: this same thing is implemented in ScanService. We need to choose which one stays!
 
         Args:
@@ -242,7 +231,6 @@ class ImageBundleService:
         Returns:
             (int or None, int or None): paper number and page number
         """
-
         if not staged_image.parsed_qr:
             return (None, None)
 
@@ -254,9 +242,10 @@ class ImageBundleService:
         return paper_number, page_number
 
     @transaction.atomic
-    def all_staged_imgs_valid(self, staged_imgs):
-        """Check that all staged images in the bundle are ready to be
-        uploaded. Each image must be "known" or "discard" or be
+    def all_staged_imgs_valid(self, staged_imgs: QuerySet) -> bool:
+        """Check that all staged images in the bundle are ready to be uploaded.
+
+        Each image must be "known" or "discard" or be
         "extra" with data. There can be no "unknown", "unread",
         "error" or "extra"-without-data.
 
@@ -264,8 +253,7 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            bool: True if all images are valid, false otherwise
-
+            True if all images are valid, False otherwise.
         """
         # while this is done by staging, we redo it here to be **very** sure.
         if staged_imgs.filter(
@@ -287,7 +275,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
-        """Check for collisions *within* a bundle
+        """Check for collisions *within* a bundle.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
@@ -297,7 +285,6 @@ class ImageBundleService:
                 of unordered collisions so that in each sub-list each image (as
                 determined by its primary key) collides with others in that sub-list.
         """
-
         known_imgs = {}  # dict of short-tpv to list of known-images with that tpv
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
@@ -317,10 +304,8 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def find_external_collisions(self, staged_imgs):
-        """
-        Check for collisions between images in the input list and all the
-        *currently uploaded* images.
+    def find_external_collisions(self, staged_imgs: QuerySet) -> List:
+        """Check for collisions between images in the input list and all the *currently uploaded* images.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
@@ -328,7 +313,6 @@ class ImageBundleService:
         Returns:
             list [(StagingImage, Image)]: list of unordered collisions.
         """
-
         collisions = []
         # note that only known images can cause collisions
         for image in staged_imgs.filter(image_type=StagingImage.KNOWN):
@@ -344,9 +328,10 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def get_ready_questions(self, bundle):
-        """Find questions across all test-papers in the database that
-        now ready.  A question is ready when either it has all of its
+    def get_ready_questions(self, bundle) -> Dict[str, List[Tuple[int, int]]]:
+        """Find questions across all test-papers in the database that now ready.
+
+        A question is ready when either it has all of its
         fixed-pages, or it has no fixed-pages but has some
         mobile-pages.
 
@@ -357,13 +342,12 @@ class ImageBundleService:
             bundle: a Bundle instance that has just been uploaded.
 
         Returns:
-            dict {}: Two lists of (int, int). "ready" is the list of paper_number/question_number pairs
-            that have pages in this bundle, and are now ready to be marked. "not_ready" are
-            paper_number/question_number pairs that have pages in this bundle, but are not ready to be
-            marked yet.
-
+            Dict with two keys, each to a list of ints.
+            "ready" is the list of paper_number/question_number pairs
+            that have pages in this bundle, and are now ready to be marked.
+            "not_ready" are paper_number/question_number pairs that have pages
+            in this bundle, but are not ready to be marked yet.
         """
-
         # find all question-pages (ie fixed pages) that attach to images in the current bundle.
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         # find all mobile pages (extra pages) that attach to images in the current bundle
@@ -381,7 +365,7 @@ class ImageBundleService:
         # all fixed pages, or no fixed pages but some mobile-pages.
         # if some, but not all, fixed pages then is not ready.
 
-        result = {"ready": [], "not_ready": []}
+        result: Dict[str, List[Tuple[int, int]]] = {"ready": [], "not_ready": []}
 
         for paper_number, question_number in papers_questions_updated_by_bundle:
             q_pages = QuestionPage.objects.filter(
@@ -411,9 +395,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def get_id_pages_in_bundle(self, bundle) -> QuerySet[IDPage]:
-        """
-        Get all of the ID pages in an uploaded bundle, in order to
-        initialize ID tasks.
+        """Get all of the ID pages in an uploaded bundle, in order to initialize ID tasks.
 
         Args:
             bundle: a Bundle instance
@@ -421,5 +403,4 @@ class ImageBundleService:
         Returns:
             A query of only the ID pages in the input bundle
         """
-
         return IDPage.objects.filter(image__bundle=bundle)
