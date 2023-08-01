@@ -10,8 +10,8 @@ from model_bakery import baker
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models.paper_structure import Paper
-from Rubrics.models import Rubric
-from Rubrics.services import RubricService
+from ..models import Rubric
+from ..services import RubricService
 
 
 # helper function: extract a rubric dict from Rubric model
@@ -25,10 +25,21 @@ def _rubric_to_dict(x):
     return d
 
 
+class RubricServiceTests_exceptions(TestCase):
+    def test_no_user(self):
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "XXX_no_such_user_XXX",
+            "question": 1,
+        }
+        with self.assertRaises(KeyError):
+            RubricService().create_rubric(rub)
+
+
 class RubricServiceTests(TestCase):
-    """
-    Tests for Rubric.service.RubricService()
-    """
+    """Tests for `Rubric.service.RubricService()`."""
 
     def setUp(self):
         user1 = baker.make(User, username="Liam")
@@ -114,9 +125,7 @@ class RubricServiceTests(TestCase):
         return super().setUp()
 
     def test_create_neutral_rubric(self):
-        """
-        Test RubricService.create_rubric() to create a neural rubric
-        """
+        """Test RubricService.create_rubric() to create a neural rubric."""
         simulated_client_data = {
             "kind": "neutral",
             "display_delta": ".",
@@ -144,9 +153,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
     def test_create_relative_rubric(self):
-        """
-        Test RubricService.create_rubric() to create a relative rubric
-        """
+        """Test RubricService.create_rubric() to create a relative rubric."""
         simulated_client_data = {
             "kind": "relative",
             "display_delta": "+3",
@@ -174,9 +181,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
     def test_create_absolute_rubric(self):
-        """
-        Test RubricService.create_rubric() to create an absolute rubric
-        """
+        """Test RubricService.create_rubric() to create an absolute rubric."""
         simulated_client_data = {
             "kind": "absolute",
             "display_delta": "2 of 5",
@@ -204,9 +209,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
     def test_modify_neutral_rubric(self):
-        """
-        Test RubricService.modify_rubric() to modify a neural rubric
-        """
+        """Test RubricService.modify_rubric() to modify a neural rubric."""
         service = RubricService()
         key = self.modified_neutral_rubric.key
 
@@ -231,9 +234,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.display_delta, self.modified_neutral_rubric.display_delta)
 
     def test_modify_relative_rubric(self):
-        """
-        Test RubricService.modify_rubric() to modify a relative rubric
-        """
+        """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
         key = self.modified_relative_rubric.key
 
@@ -290,8 +291,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.user, self.modified_absolute_rubric.user)
 
     def test_modify_rubric_change_kind(self):
-        """
-        Test RubricService.modify_rubric(), can change the "kind" of rubrics.
+        """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
         For each of the three kinds of rubric, we ensure we can change them
         into the other three kinds.  The key should not change.
