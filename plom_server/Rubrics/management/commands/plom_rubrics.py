@@ -35,7 +35,7 @@ class Command(BaseCommand):
     help = "Manipulate rubrics"
 
     def upload_demo_rubrics(
-        self, username: str, *, numquestions: Optional[int]
+        self, username: str, *, numquestions: Optional[int] = None
     ) -> None:
         """Load some demo rubrics and upload to server.
 
