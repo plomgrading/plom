@@ -70,8 +70,6 @@ class Command(BaseCommand):
 
             # TODO: didn't need to do this on legacy, Issue #2640
             rub["username"] = username
-            rub["tags"] = ""
-            rub["meta"] = ""
 
             # Multiply rubrics w/o question numbers, avoids repetition in demo file
             if rub.get("question") is None:
