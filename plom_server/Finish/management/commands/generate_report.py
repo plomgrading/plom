@@ -6,6 +6,7 @@ import datetime as dt
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
+from django.http import HttpResponse
 
 from ...services import DataExtractionService
 from ...services import MatplotlibService
@@ -63,8 +64,8 @@ class Command(BaseCommand):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
                 # each base64-encoded image
-                mpls.histogram_of_grades_on_question(  # of the histogram
-                    question=question
+                mpls.histogram_of_grades_on_question_version(  # of the histogram
+                    question=question, versions=True
                 )
             )
 
@@ -82,7 +83,6 @@ class Command(BaseCommand):
                 marker,
             )
             histogram_of_grades_m_q = []
-            print(sorted(questions_marked_by_this_ta))
 
             for question in questions_marked_by_this_ta:
                 scores_for_user_for_question = des._get_ta_data_for_question(
@@ -99,15 +99,6 @@ class Command(BaseCommand):
 
             histogram_of_grades_m.append(histogram_of_grades_m_q)
 
-        del (
-            marker,
-            scores_for_user,
-            questions_marked_by_this_ta,
-            histogram_of_grades_m_q,
-            question,
-            scores_for_user_for_question,
-        )
-
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
@@ -123,7 +114,7 @@ class Command(BaseCommand):
                 )
             )
 
-        del max_time, bin_width, marking_times, question
+        del max_time, bin_width
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
@@ -141,8 +132,6 @@ class Command(BaseCommand):
                     marks_given=mark_given_for_question,
                 )
             )
-
-        del question, times_for_question, mark_given_for_question, marking_times
 
         # Box plot of the grades given by each marker for each question
         print("Generating box plots of grades by each marker for each question.")
@@ -175,8 +164,7 @@ class Command(BaseCommand):
                 )
             )
 
-        del question_number, question_df, marks_given, marker_names, marker_name
-
+        # line graph of average mark on each question
         print("Generating line graph of average mark on each question.")
         line_graph = mpls.line_graph_of_avg_marks_by_question()
 
@@ -208,6 +196,7 @@ class Command(BaseCommand):
                 A string of HTML containing the graphs.
             """
             out = ""
+            odd = 0
             for i, graph in enumerate(list_of_graphs):
                 odd = i % 2
                 if not odd:
@@ -319,8 +308,11 @@ class Command(BaseCommand):
             with open(file_path, "wb") as f:
                 f.write(pdf_data)
 
-        date_filename = ""  # dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        filename = "Report-" + name + "--" + date_filename + ".pdf"
+        date_filename = (
+            ""  # "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        )
+        filename = "Report-" + name + date_filename + ".pdf"
+
         print("Writing to " + filename + ".")
 
         pdf_data = create_pdf(html)

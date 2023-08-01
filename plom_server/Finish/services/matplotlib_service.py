@@ -99,16 +99,18 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
-    def histogram_of_grades_on_question(
+    def histogram_of_grades_on_question_version(
         self,
         question: int,
+        versions: bool = False,
         student_df: Optional[pd.DataFrame] = None,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question.
 
         Args:
-            question: The question to generate the histogram for.
+            question: The question number.
+            version: The version number.
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
@@ -125,13 +127,23 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
+        # split the dataframe into versions
+        if versions is True:
+            plot_df = []
+            for version in range(1, self.spec["numberOfVersions"] + 1):
+                plot_df.append(
+                    student_df[
+                        (student_df["q" + str(question) + "_version"] == version)
+                    ]["q" + str(question) + "_mark"]
+                )
+        else:
+            plot_df = student_df["q" + str(question) + "_mark"]
+
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
         bins = range(0, self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
 
-        ax.hist(
-            student_df["q" + str(question) + "_mark"], bins=bins, ec="black", alpha=0.5
-        )
+        ax.hist(plot_df, bins=bins, ec="black", alpha=0.5)
         ax.set_title("Histogram of Q" + str(question) + " marks")
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
