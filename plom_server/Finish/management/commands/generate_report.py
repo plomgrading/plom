@@ -120,17 +120,29 @@ class Command(BaseCommand):
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
         scatter_of_time = []
-        for question, marking_times in des._get_times_for_all_questions().items():
-            times_for_question = marking_times.div(60)
-            mark_given_for_question = des.get_scores_for_question(
-                question_number=question,
-            )
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+            # list of lists of times spent marking each version of the question
+            times_for_question = []
+            marks_given_for_question = []
+            print(marking_times_df.columns.values)
+            for version in marking_times_df["question_version"].unique():
+                print(question, version)
+                temp_df = marking_times_df[
+                    (marking_times_df["question_version"] == version)
+                ]
+                print(temp_df)
+                times_for_question.append(
+                    temp_df["seconds_spent_marking"].div(60),
+                )
+
+                marks_given_for_question.append(temp_df["score_given"])
 
             scatter_of_time.append(
                 mpls.scatter_time_spent_vs_mark_given(
                     question_number=question,
                     times_spent_minutes=times_for_question,
-                    marks_given=mark_given_for_question,
+                    marks_given=marks_given_for_question,
+                    versions=True,
                 )
             )
 

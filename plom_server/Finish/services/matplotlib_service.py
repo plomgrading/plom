@@ -3,7 +3,7 @@
 
 import base64
 from io import BytesIO
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 
 import matplotlib
 import matplotlib.cm as cm
@@ -130,7 +130,9 @@ class MatplotlibService:
         # split the dataframe into versions
         if versions is True:
             plot_series = []
-            for version in range(1, self.spec["numberOfVersions"] + 1):
+            for version in range(
+                1, round(student_df["q" + str(question) + "_version"].max()) + 1
+            ):
                 plot_series.append(
                     student_df[
                         (student_df["q" + str(question) + "_version"] == version)
@@ -290,7 +292,9 @@ class MatplotlibService:
 
         if versions is True:
             plot_series = []
-            for version in range(1, self.spec["numberOfVersions"] + 1):
+            for version in range(
+                1, round(marking_times_df["question_version"].max()) + 1
+            ):
                 plot_series.append(
                     marking_times_df[
                         (marking_times_df["question_number"] == question_number)
@@ -326,8 +330,9 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_number: int,
-        times_spent_minutes: List[int],
-        marks_given: List[int],
+        times_spent_minutes: Any,
+        marks_given: Any,
+        versions: bool = False,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
@@ -336,6 +341,7 @@ class MatplotlibService:
             question_number: The question to generate the scatter plot for.
             times_spent_minutes: Listlike containing the marking times in minutes.
             marks_given: Listlike containing the marks given.
+            versions: Whether to split the scatter plot into versions.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -347,7 +353,19 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
 
-        ax.scatter(marks_given, times_spent_minutes, ec="black", alpha=0.5)
+        if versions is True:
+            graphs = len(times_spent_minutes)
+            assert graphs == len(marks_given)
+            for i in range(0, graphs):
+                ax.scatter(
+                    marks_given[i],
+                    times_spent_minutes[i],
+                    ec="black",
+                    alpha=0.5,
+                )
+        else:
+            ax.scatter(marks_given, times_spent_minutes, ec="black", alpha=0.5)
+
         ax.set_title("Q" + str(question_number) + ": Time spent vs Mark given")
         ax.set_ylabel("Time spent (min)")
         ax.set_xlabel("Mark given")
