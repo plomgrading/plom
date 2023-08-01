@@ -14,6 +14,7 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
 
 from plom import is_valid_tag_text
 
@@ -22,7 +23,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
-from Mark.models import (
+from ..models import (
     MarkingTask,
     MarkingTaskTag,
     Annotation,
@@ -52,7 +53,7 @@ class MarkingTaskService:
 
         # mark other tasks with this code as 'out of date'
         previous_tasks = MarkingTask.objects.filter(code=task_code)
-        for old_task in previous_tasks:
+        for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
             old_task.status = MarkingTask.OUT_OF_DATE
             old_task.save()
 
@@ -103,7 +104,7 @@ class MarkingTaskService:
             )
             total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
-            )
+            ).exclude(status=MarkingTask.OUT_OF_DATE)
         except MarkingTask.DoesNotExist:
             return (0, 0)
 
@@ -188,7 +189,9 @@ class MarkingTaskService:
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
-    def get_user_tasks(self, user, question=None, version=None):
+    def get_user_tasks(
+        self, user, question=None, version=None
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks that are assigned to this user.
 
         Args:
@@ -197,7 +200,7 @@ class MarkingTaskService:
             version (optional): int, the version number
 
         Returns:
-            QuerySet[MarkingTask]: tasks
+            Marking tasks assigned to user
         """
         tasks = MarkingTask.objects.filter(assigned_user=user)
         if question:
@@ -207,7 +210,9 @@ class MarkingTaskService:
 
         return tasks
 
-    def get_tasks_from_question_with_annotation(self, question: int, version: int):
+    def get_tasks_from_question_with_annotation(
+        self, question: int, version: int
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
@@ -215,7 +220,7 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            PolymorphicQuerySet[MarkingTask]: tasks
+            A PolymorphicQuerySet of tasks
 
         Raises:
             None expected
@@ -226,6 +231,39 @@ class MarkingTaskService:
         if version != 0:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
+
+    def get_latest_annotations_from_complete_marking_tasks(
+        self,
+    ) -> QuerySet[Annotation]:
+        """Returns the latest annotations from all tasks that are complete."""
+        return Annotation.objects.filter(
+            markingtask__status=MarkingTask.COMPLETE
+        ).filter(markingtask__latest_annotation__isnull=False)
+
+    def get_available_tasks(
+        self, question=None, version=None
+    ) -> Union[QuerySet[MarkingTask], None]:
+        """Return the marking tasks with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            The queryset of available tasks, or
+            `None` if no such task exists.
+        """
+        available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+
+        if question:
+            available = available.filter(question_number=question)
+
+        if version:
+            available = available.filter(question_version=version)
+
+        if not available.exists():
+            return None
+        return available
 
     def get_first_available_task(
         self, question=None, version=None
@@ -239,19 +277,50 @@ class MarkingTaskService:
         Returns:
             The first available task, or `None` if no such task exists.
         """
-        available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+        available = self.get_available_tasks(question=question, version=version)
 
-        if question:
-            available = available.filter(question_number=question)
-
-        if version:
-            available = available.filter(question_version=version)
-
-        available = available.order_by("paper__paper_number")
-
-        if not available.exists():
+        if available is None:
             return None
-        return available.first()
+
+        return available.order_by("paper__paper_number").first()
+
+    def get_random_available_task(
+        self, question=None, version=None
+    ) -> Union[MarkingTask, None]:
+        """Return a random marking task with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            A random available task, or `None` if no such task exists.
+        """
+        available = self.get_available_tasks(question=question, version=version)
+
+        if available is None:
+            return None
+
+        return available.order_by("?").first()
+
+    def get_priority_available_task(
+        self, question=None, version=None
+    ) -> Union[MarkingTask, None]:
+        """Return the highest priority marking task with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
+
+        Returns:
+            The highest priority available task, or `None` if no such task exists.
+        """
+        available = self.get_available_tasks(question=question, version=version)
+
+        if available is None:
+            return None
+
+        return available.order_by("-marking_priority").first()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""

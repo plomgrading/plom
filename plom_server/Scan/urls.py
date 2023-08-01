@@ -4,7 +4,7 @@
 
 from django.urls import path
 
-from Scan.views import (
+from .views import (
     ScannerHomeView,
     BundleSplittingProgressView,
     BundleSplittingUpdateView,

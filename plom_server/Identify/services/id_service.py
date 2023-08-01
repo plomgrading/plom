@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Julian Lapenna
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Identify.services import IdentifyTaskService
@@ -13,12 +15,11 @@ class IDService:
     """Functions for Identify HTML page."""
 
     @transaction.atomic
-    def get_all_id_papers(self):
+    def get_all_id_papers(self) -> QuerySet[IDPage]:
         """Get all the ID papers.
 
         Returns:
-            PolymorphicQuerySet: A collection of all IDPage objects
-            that is iterable.
+            A PolymorphicQuerySet of all IDPage objects that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -26,12 +27,11 @@ class IDService:
         return IDPage.objects.all().order_by("paper")
 
     @transaction.atomic
-    def get_id_papers(self):
+    def get_id_papers(self) -> QuerySet[IDPage]:
         """Get all the scanned ID papers.
 
         Returns:
-            PolymorphicQuerySet: A collection of all scanned IDPage objects
-            that is iterable.
+            A PolymorphicQuerySet of all scanned IDPage objects that is iterable.
 
         Raises:
             Not expected to raise any exceptions.
@@ -39,12 +39,11 @@ class IDService:
         return IDPage.objects.exclude(image=None).order_by("paper")
 
     @transaction.atomic
-    def get_no_id_papers(self):
+    def get_no_id_papers(self) -> QuerySet[IDPage]:
         """Get all the unscanned ID papers.
 
         Returns:
-            PolymorphicQuerySet: A collection of all unscanned IDPage objects
-            that is iterable.
+            A PolymorphicQuerySet of all unscanned IDPage objects that is iterable.
 
         Raises:
             Not expected to raise any exceptions.

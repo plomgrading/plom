@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import re
+
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
@@ -10,14 +12,13 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Preparation.services import TestSourceService, PQVMappingService
 
-from SpecCreator.views import TestSpecPageView
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
-from .. import forms
-from .. import models
+from . import TestSpecPageView
+from ..services import StagingSpecificationService, ReferencePDFService
+from ..forms import TestSpecVersionsRefPDFForm
 
 
 class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
-    """Upload a reference PDF for rendering page thumbnails"""
+    """Upload a reference PDF for rendering page thumbnails."""
 
     def build_form(self):
         ref = ReferencePDFService()
@@ -28,7 +29,7 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
         except RuntimeError:
             files = {}
 
-        return forms.TestSpecVersionsRefPDFForm(files=files)
+        return TestSpecVersionsRefPDFForm(files=files)
 
     def build_context(self):
         spec = StagingSpecificationService()
@@ -55,7 +56,7 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
 
     def post(self, request):
         context = self.build_context()
-        form = forms.TestSpecVersionsRefPDFForm(request.POST, request.FILES)
+        form = TestSpecVersionsRefPDFForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data
 

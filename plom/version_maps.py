@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
 
@@ -13,17 +13,19 @@ import random
 def check_version_map(vm, spec=None):
     """Sanity checks on version maps.
 
-    args:
+    Args:
         vm (dict): a dict-of-dicts describing versions.  See the output
             of :func:`plom.finish.make_random_version_map`.
         spec (plom.SpecVerifier/dict): a plom spec or the underlying
             dict, see :func:`plom.SpecVerifier`.
 
-    return:
+    Return:
         None
 
-    raises:
+    Raises:
         AssertionError
+
+    This function currently only works properly for legacy servers.
     """
     if spec:
         # Issue #1745: no such restriction and/or not accurate
@@ -50,18 +52,18 @@ def check_version_map(vm, spec=None):
 def make_random_version_map(spec):
     """Build a random version map.
 
-    args:
+    Args:
         spec (plom.SpecVerifier/dict): A plom exam specification or the
             underlying dict.  See :func:`plom.SpecVerifier`.  The most
             important properties are the `numberToProduce`, the
             `numberOfQuestions`, and the `select` of each question.
 
-    return:
+    Return:
         dict: a dict-of-dicts keyed by paper number (int) and then
             question number (int, but indexed from 1 not 0).  Values are
             integers.
 
-    raises:
+    Raises:
         KeyError: invalid question selection scheme in spec.
     """
     # we want to have nearly equal numbers of each version - issue #1470

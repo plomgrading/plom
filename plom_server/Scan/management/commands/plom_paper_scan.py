@@ -4,9 +4,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from tabulate import tabulate
+
 from django.core.management.base import BaseCommand, CommandError
 
-from Scan.services import ScanService
+from ...services import ScanService
 
 
 class Command(BaseCommand):

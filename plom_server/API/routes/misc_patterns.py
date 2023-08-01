@@ -6,8 +6,10 @@
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 
-from API.views import (
+from ..views import (
+    ExamInfo,
     GetSpecification,
+    ServerInfo,
     ServerVersion,
     CloseUser,
     QuestionMaxMark,
@@ -23,8 +25,10 @@ class MiscURLPatterns:
     @classmethod
     def patterns(cls):
         misc_patterns = [
-            path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
+            path("info/server/", ServerInfo.as_view(), name="api_server_info"),
+            path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
+            path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path(
                 "maxmark/<int:question>",
                 QuestionMaxMark.as_view(),

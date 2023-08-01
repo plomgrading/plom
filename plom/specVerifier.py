@@ -299,6 +299,9 @@ class SpecVerifier:
                 specVerifier makes a copy of that dict.
         """
         local_d = deepcopy(d)  # see issue 2258
+        # Issue #2276, we're removing numberToProduce but legacy servers still need it
+        # So its not an error if the new server uses SpecVerifier without a numberToProduce
+        local_d.setdefault("numberToProduce", -1)
         question = local_d.get("question", None)
         if not question:
             raise ValueError("Specification error - must contain at least one question")

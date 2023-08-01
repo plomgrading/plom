@@ -3,8 +3,10 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
 from .server_info import (
+    ExamInfo,
     GetSpecification,
     ServerVersion,
+    ServerInfo,
     CloseUser,
 )
 
