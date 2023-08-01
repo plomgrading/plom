@@ -5,6 +5,7 @@
 import json
 from pathlib import Path
 import sys
+from typing import Optional
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -33,7 +34,9 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, username: str, *, numquestions=None):
+    def upload_demo_rubrics(
+        self, username: str, *, numquestions: Optional[int]
+    ) -> None:
         """Load some demo rubrics and upload to server.
 
         Args:
@@ -42,6 +45,9 @@ class Command(BaseCommand):
         Keyword Args:
             numquestions (None/int): how many questions should we build for.
                 Get it from the spec if omitted.
+
+        Returns:
+            None
 
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
