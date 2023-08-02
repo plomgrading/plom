@@ -1,0 +1,71 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Julian Lapenna
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block page_heading %}
+    Task Ordering
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="row">
+        <div class="col">
+            <form action="{% url 'upload_task_priorities' %}"
+                  method="post"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ order_form.as_p }}
+                {{ upload_form.as_p }}
+                <button class="btn btn-outline-primary" type="submit">Update task order</button>
+            </form>
+            <form method="post"
+                  action="{% url 'download_priorities' %}"
+                  style="padding-top: 0.3%">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-success">Download priorities</button>
+            </form>
+        </div>
+        <div class="col">
+            <h4>Instructions:</h4>
+            <ol>
+                <li style="padding-bottom: 1.5%;">Select one of the options on the left</li>
+                <li style="padding-bottom: 1.5%;">
+                    Click "Update task order" to change the order TAs receive questions to mark (they will receive tasks with higher priority values first)
+                </li>
+                <li style="padding-bottom: 1.5%;">
+                    When uploading a custom order a `.csv` file must be uploaded (click "Download priorities" for the current priorities as a `.csv` file)
+                </li>
+                <ul>
+                    <li style="padding-bottom: 0.5%;">
+                        The `.csv` file must have headers "Paper Number", "Question Number", "Priority Value"
+                    </li>
+                    <li style="padding-bottom: 0.5%;">Each row must have a paper number, question number, and priority value</li>
+                    <li style="padding-bottom: 0.5%;">The file must be less than 10MB</li>
+                    <li style="padding-bottom: 0.5%;">Questions that are not listed, or listed questions that don't exist are ignored</li>
+                </ul>
+            </ol>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <h4>Current Task Order</h4>
+        <p>Tooltip: Click on a header to sort by that column.</p>
+        <table style="width: auto" class="table table-bordered sortable">
+            <thead>
+                <th scope="col" class="border border-secondary">Paper ID</th>
+                <th scope="col" class="border border-secondary">Question</th>
+                <th scope="col" class="border border-secondary">Priority Value</th>
+            </thead>
+            <tbody>
+                {% for pq, priority in pq_priority_dict.items %}
+                    <tr>
+                        <td class="border border-secondary">{{ pq.0 }}</td>
+                        <td class="border border-secondary">{{ pq.1 }}</td>
+                        <td class="border border-secondary">{{ priority|floatformat:1 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
+{% endblock main_content %}
