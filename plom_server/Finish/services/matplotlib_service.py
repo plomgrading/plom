@@ -153,9 +153,14 @@ class MatplotlibService:
         ax.set_title("Histogram of Q" + str(question) + " marks")
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
-        ax.legend(
-            labels, loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True
-        )
+        if versions is True:
+            ax.legend(
+                labels,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                ncol=1,
+                fancybox=True,
+            )
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -330,9 +335,14 @@ class MatplotlibService:
         ax.set_title("Time spent marking Q" + str(question_number))
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
-        ax.legend(
-            labels, loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True
-        )
+        if versions is True:
+            ax.legend(
+                labels,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                ncol=1,
+                fancybox=True,
+            )
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -395,7 +405,8 @@ class MatplotlibService:
         ax.set_title("Q" + str(question_number) + ": Time spent vs Mark given")
         ax.set_ylabel("Time spent (min)")
         ax.set_xlabel("Mark given")
-        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
+        if versions is True:
+            ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -536,13 +547,13 @@ class MatplotlibService:
                 marker="o",
                 label="All versions",
             )
-
-        plt.legend(
-            loc="center left",
-            bbox_to_anchor=(1, 0.5),
-            ncol=1,
-            fancybox=True,
-        )
+        if versions is True:
+            plt.legend(
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                ncol=1,
+                fancybox=True,
+            )
         plt.grid(True, alpha=0.5)
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
