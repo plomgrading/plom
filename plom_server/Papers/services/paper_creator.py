@@ -82,18 +82,18 @@ def _create_paper_with_qvmapping(
         id_reader_service = IDReaderService()
         id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
 
-        for index, question in spec.question.items():
-            index = int(index)
-            version = qv_mapping[index]
-            for q_page in question.pages:
-                question_page = QuestionPage(
-                    paper=paper_obj,
-                    image=None,
-                    page_number=int(q_page),
-                    question_number=index,
-                    version=version,  # I don't like having to double-up here, but....
-                )
-                question_page.save()
+    for index, question in spec.question.items():
+        index = int(index)
+        version = qv_mapping[index]
+        for q_page in question.pages:
+            question_page = QuestionPage(
+                paper=paper_obj,
+                image=None,
+                page_number=int(q_page),
+                question_number=index,
+                version=version,  # I don't like having to double-up here, but....
+            )
+            question_page.save()
 
 
 class PaperCreatorService:
