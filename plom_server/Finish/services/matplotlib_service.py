@@ -306,6 +306,8 @@ class MatplotlibService:
                         60
                     )
                 )
+            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
+            fig.legend(labels=labels, loc="center left", bbox_to_anchor=(1, 0.5))
         else:
             plot_series = marking_times_df[
                 (marking_times_df["question_number"] == question_number)
@@ -484,24 +486,42 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        plt.figure(figsize=(6.8, 4.6))
+        plt.figure(figsize=(6.8, 4.6), tight_layout=True)
 
         if versions is True:
-            averages = self.des.get_averages_on_all_questions_versions_as_percentage()
-            for version in range(1, self.spec["numberOfQuestions"] + 1):
-                plt.plot(
-                    range(1, self.spec["numberOfQuestions"] + 1),
-                    averages[version - 1],
-                    marker="o",
-                    label="Version " + str(version),
-                )
+            averages = self.des.get_averages_on_all_questions_versions_as_percentage(
+                overall=True
+            )
+            for i, v in enumerate(averages):
+                if i == 0:
+                    plt.plot(
+                        range(1, self.spec["numberOfQuestions"] + 1),
+                        v,
+                        marker="o",
+                        label="Overall",
+                    )
+                else:
+                    plt.plot(
+                        range(1, self.spec["numberOfQuestions"] + 1),
+                        v,
+                        marker="o",
+                        label="Version " + str(i),
+                    )
         else:
             plt.plot(
                 range(1, self.spec["numberOfQuestions"] + 1),
                 self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
+                label="Overall",
             )
 
+        plt.legend(
+            loc="center left",
+            bbox_to_anchor=(1, 0.5),
+            ncol=1,
+            fancybox=True,
+        )
+        plt.grid(True)
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
         plt.xlabel("Question number")
