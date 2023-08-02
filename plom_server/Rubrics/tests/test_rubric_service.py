@@ -29,7 +29,18 @@ def _rubric_to_dict(x):
 
 
 class RubricServiceTests_exceptions(TestCase):
-    def test_no_user(self):
+    """Tests for `Rubric.service.RubricService()` exceptions."""
+
+    def setUp(self):
+        baker.make(User, username="Liam")
+
+    def test_no_user_ObjectDoesNotExist(self):
+        """Test ObjectDoesNotExist in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises an ObjectDoesNotExist exception when attempting
+        to create a rubric with a non-existent user.
+        """
         rub = {
             "kind": "neutral",
             "value": 0,
@@ -38,30 +49,37 @@ class RubricServiceTests_exceptions(TestCase):
             "question": 1,
         }
 
-        rub2 = {
+        with self.assertRaises(ObjectDoesNotExist):
+            RubricService().create_rubric(rub)
+
+    def test_no_user_KeyError(self):
+        """Test KeyError in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises a KeyError when attempting to create a rubric
+        without providing the 'username' key in the rubric dictionary.
+        """
+        rub = {
             "kind": "neutral",
             "value": 0,
             "text": "qwerty",
             "question": 1,
         }
-        with self.assertRaises(ObjectDoesNotExist):
-            RubricService().create_rubric(rub)
 
         with self.assertRaises(KeyError):
-            RubricService().create_rubric(rub2)
+            RubricService().create_rubric(rub)
 
-    def test_no_kind(self):
-        baker.make(User, username="Liam")
+    def test_no_kind_ValidationError(self):
+        """Test for the RubricService.create_rubric() method when 'kind' is invalid.
 
+        This test case checks if the RubricService.create_rubric()
+        method raises a ValidationError when attempting to create
+        a rubric with an invalid 'kind' value. The 'kind' value
+        is expected to be one of the following: "absolute", "neutral",
+        or "relative".
+        """
         rub = {
             "kind": "No kind",
-            "value": 0,
-            "text": "qwerty",
-            "username": "Liam",
-            "question": 1,
-        }
-
-        rub2 = {
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
@@ -71,8 +89,22 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
+    def test_no_kind_KeyError(self):
+        """Test KeyError in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises a KeyError when attempting to create a rubric
+        without providing the 'kind' key in the rubric dictionary.
+        """
+        rub = {
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+        }
+
         with self.assertRaises(KeyError):
-            RubricService().create_rubric(rub2)
+            RubricService().create_rubric(rub)
 
 
 class RubricServiceTests(TestCase):
