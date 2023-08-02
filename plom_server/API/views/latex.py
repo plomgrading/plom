@@ -36,10 +36,7 @@ class MlatexFragment(APIView):
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
         if not valid:
-            return _error_response(
-                value,
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
+            return _error_response(value, status.HTTP_406_NOT_ACCEPTABLE)
         # see, for example, why to use httpresponse here instead of DRF's Response
         # https://stackoverflow.com/questions/47192986/difference-between-response-and-httpresponse-django
         return HttpResponse(value)
