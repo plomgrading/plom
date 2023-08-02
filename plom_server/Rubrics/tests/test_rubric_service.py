@@ -49,7 +49,7 @@ class RubricServiceTests_exceptions(TestCase):
 
         with self.assertRaises(KeyError):
             RubricService().create_rubric(rub2)
-    
+
     def test_no_kind(self):
         baker.make(User, username="Liam")
 

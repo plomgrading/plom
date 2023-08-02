@@ -60,7 +60,7 @@ class RubricService:
         username = rubric_data.pop("username")
         user = User.objects.get(username=username)
         rubric_data["user"] = user.pk
-        
+
         kind = rubric_data["kind"]
 
         if kind not in RubricService.__valid_kinds:
