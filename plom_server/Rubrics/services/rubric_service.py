@@ -26,9 +26,11 @@ from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
 from Papers.services import SpecificationService
+from ..serializers import (
+    RubricSerializer,
+)
 from ..models import Rubric
 from ..models import RubricPane
-from ..serializers import RubricSerializer
 
 
 log = logging.getLogger("RubricServer")
@@ -44,8 +46,6 @@ class RubricService:
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
-                This must have a `"kind"` field and must have `"username"`
-                field, both are strings.
 
         Returns:
             The created and saved rubric instance.
@@ -53,7 +53,6 @@ class RubricService:
         Raises:
             KeyError: if rubric_data contains missing username or kind fields.
             ValidationError: if rubric kind is not a valid option.
-            TODO: perhaps others in the future, such as from the Serializer.
         """
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
@@ -61,7 +60,7 @@ class RubricService:
         username = rubric_data.pop("username")
         user = User.objects.get(username=username)
         rubric_data["user"] = user.pk
-
+        
         kind = rubric_data["kind"]
 
         if kind not in RubricService.__valid_kinds:

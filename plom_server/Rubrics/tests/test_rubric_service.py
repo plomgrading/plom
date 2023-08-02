@@ -4,8 +4,11 @@
 # Copyright (C) 2023 Julian Lapenna
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
+
 from model_bakery import baker
+from rest_framework.exceptions import ValidationError
 
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
@@ -34,8 +37,42 @@ class RubricServiceTests_exceptions(TestCase):
             "username": "XXX_no_such_user_XXX",
             "question": 1,
         }
-        with self.assertRaises(KeyError):
+
+        rub2 = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "question": 1,
+        }
+        with self.assertRaises(ObjectDoesNotExist):
             RubricService().create_rubric(rub)
+
+        with self.assertRaises(KeyError):
+            RubricService().create_rubric(rub2)
+    
+    def test_no_kind(self):
+        baker.make(User, username="Liam")
+
+        rub = {
+            "kind": "No kind",
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+        }
+
+        rub2 = {
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+        }
+
+        with self.assertRaises(ValidationError):
+            RubricService().create_rubric(rub)
+
+        with self.assertRaises(KeyError):
+            RubricService().create_rubric(rub2)
 
 
 class RubricServiceTests(TestCase):
