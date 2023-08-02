@@ -8,6 +8,7 @@ from typing import List, Optional, Union, Any
 import matplotlib
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -83,9 +84,11 @@ class MatplotlibService:
 
         ax.hist(
             self.des.get_total_marks(),
-            bins=range(0, self.spec["totalMarks"] + RANGE_BIN_OFFSET),
+            bins=np.arange(self.spec["totalMarks"] + RANGE_BIN_OFFSET) - 0.5,
             ec="black",
             alpha=0.5,
+            width=0.8,
+            align="mid",
         )
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
@@ -147,7 +150,10 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        bins = range(0, self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
+        bins = (
+            np.arange(self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
+            - 0.5
+        )
 
         ax.hist(plot_series, bins=bins, ec="black", alpha=0.5)
         ax.set_title("Histogram of Q" + str(question) + " marks")
@@ -193,8 +199,24 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        plt.figure(figsize=(6.4, 5.12))
-        sns.heatmap(corr_df, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True)
+        plt.figure(figsize=(7.5, 9))
+        sns.heatmap(
+            corr_df,
+            annot=True,
+            cmap="coolwarm",
+            vmin=-1,
+            vmax=1,
+            square=True,
+            linewidths=0.5,
+            linecolor="black",
+            clip_on=False,
+            cbar_kws=dict(
+                use_gridspec=False,
+                location="bottom",
+                orientation="horizontal",
+                shrink=0.9,
+            ),
+        )
         plt.title("Correlation between questions")
         plt.xlabel("Question number")
         plt.ylabel("Question number")
@@ -212,6 +234,7 @@ class MatplotlibService:
         question: int,
         ta_name: str,
         ta_df: Optional[pd.DataFrame] = None,
+        versions: bool = False,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question by a specific TA.
@@ -222,6 +245,8 @@ class MatplotlibService:
             ta_df: Optional dataframe containing the ta data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
+            versions: Whether to split the histogram into versions. If omitted,
+                defaults to False.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -238,13 +263,21 @@ class MatplotlibService:
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
-        bins = range(
-            0,
-            ta_df["max_score"].max() + RANGE_BIN_OFFSET,
-        )
+        bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
+
+        if versions is True:
+            plot_series = []
+            for version in range(1, round(ta_df["question_version"].max()) + 1):
+                plot_series.append(
+                    ta_df[(ta_df["question_version"] == version)]["score_given"]
+                )
+            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
+        else:
+            plot_series = ta_df["score_given"]
+            labels = ["All versions"]
 
         ax.hist(
-            ta_df["score_given"],
+            plot_series,
             bins=bins,
             ec="black",
             alpha=0.5,
@@ -252,6 +285,15 @@ class MatplotlibService:
         ax.set_title("Grades for Q" + str(question) + " (by " + ta_name + ")")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
+        if versions is True:
+            ax.legend(
+                labels,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                ncol=1,
+                fancybox=True,
+            )
+
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -303,7 +345,7 @@ class MatplotlibService:
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
-        bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
+        bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
         if versions is True:
             plot_series = []

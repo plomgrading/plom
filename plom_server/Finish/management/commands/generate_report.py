@@ -94,6 +94,7 @@ class Command(BaseCommand):
                         question=question,
                         ta_name=marker,
                         ta_df=scores_for_user_for_question,
+                        versions=True,
                     )
                 )
 
@@ -243,10 +244,11 @@ class Command(BaseCommand):
         <p>Median total mark: {median_mark}/{totalMarks}</p>
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
+        <h3>Histogram of total marks</h3>
         <img src="data:image/png;base64,{histogram_of_grades}">
         """
 
-        html += _html_add_title("Histogram of total marks")
+        html += _html_add_title("Histogram of marks by question")
         html += _html_for_big_graphs(histogram_of_grades_q)
 
         html += f"""
