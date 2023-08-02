@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plom Client supports `http://` URLs, if specified explicitly, e.g., for development.  The default remains `https://`
 
 ### Changed
+* On the next-gen server, by default papers are now graded in a random but predetermined order.
+* On the next-gen server, the priority for papers to be graded can be changed.
 * Plom now requires at least Python 3.8.
 
 ### Fixed
