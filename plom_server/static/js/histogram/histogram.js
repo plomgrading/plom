@@ -7,6 +7,14 @@ function renderHist(data, divId) {
     // Clear existing contents of the div
     d3.select("#" + divId).html("");
 
+    if (!data || !data.values || data.values.length <= 1 || data.values[0].length <= 1) {
+        d3.select("#" + divId)
+            .append("div")
+            .attr("class", "error")
+            .text("No data for histogram");
+        return;
+    }
+
     // Set up dimensions and margins
     const margin = { top: 50, right: 30, bottom: 50, left: 50 };
     const width = 400 - margin.left - margin.right;

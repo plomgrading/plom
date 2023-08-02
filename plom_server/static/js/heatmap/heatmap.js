@@ -7,6 +7,14 @@ function renderHeatMap(data, divId) {
     // Clear existing contents of the div
     d3.select("#" + divId).html("");
 
+    if (!data || !data.values|| data.values.length <= 1 || data.values[0].length <= 1) {
+        d3.select("#" + divId)
+            .append("div")
+            .attr("class", "error")
+            .text("No data for heatmap");
+        return;
+    }
+
     // Set up dimensions and margins
     const cellSize = 40; // Set the desired cell size
     const margin = { top: 90, right: 50, bottom: 20, left: 60 };
