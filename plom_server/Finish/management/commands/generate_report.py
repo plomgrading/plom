@@ -247,7 +247,7 @@ class Command(BaseCommand):
         """
 
         html += _html_add_title("Histogram of total marks")
-        html += _html_for_graphs(histogram_of_grades_q)
+        html += _html_for_big_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
@@ -262,17 +262,17 @@ class Command(BaseCommand):
             <h4>Grades by {marker}</h4>
             """
 
-            html += _html_for_graphs(histogram_of_grades_m[index])
+            html += _html_for_big_graphs(histogram_of_grades_m[index])
 
         html += _html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        html += _html_for_graphs(histogram_of_time)
+        html += _html_for_big_graphs(histogram_of_time)
 
         html += _html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        html += _html_for_graphs(scatter_of_time)
+        html += _html_for_big_graphs(scatter_of_time)
 
         html += _html_add_title(
             "Box plots of grades given by each marker for each question"

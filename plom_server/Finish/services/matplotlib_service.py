@@ -90,6 +90,7 @@ class MatplotlibService:
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
+        plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -139,10 +140,12 @@ class MatplotlibService:
                         (student_df["q" + str(question) + "_version"] == version)
                     ]["q" + str(question) + "_mark"]
                 )
+            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series = student_df["q" + str(question) + "_mark"]
+            labels = ["All versions"]
 
-        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         bins = range(0, self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
 
@@ -150,6 +153,10 @@ class MatplotlibService:
         ax.set_title("Histogram of Q" + str(question) + " marks")
         ax.set_xlabel("Question " + str(question) + " mark")
         ax.set_ylabel("# of students")
+        ax.legend(
+            labels, loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True
+        )
+        plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -225,7 +232,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
         bins = range(
             0,
             ta_df["max_score"].max() + RANGE_BIN_OFFSET,
@@ -240,6 +247,7 @@ class MatplotlibService:
         ax.set_title("Grades for Q" + str(question) + " (by " + ta_name + ")")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
+        plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -289,7 +297,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
         bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
 
         if versions is True:
@@ -307,11 +315,11 @@ class MatplotlibService:
                     )
                 )
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
-            fig.legend(labels=labels, loc="center left", bbox_to_anchor=(1, 0.5))
         else:
             plot_series = marking_times_df[
                 (marking_times_df["question_number"] == question_number)
             ]["seconds_spent_marking"].div(60)
+            labels = ["All versions"]
 
         ax.hist(
             plot_series,
@@ -322,6 +330,10 @@ class MatplotlibService:
         ax.set_title("Time spent marking Q" + str(question_number))
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
+        ax.legend(
+            labels, loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True
+        )
+        plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -358,7 +370,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         if versions is True:
             graphs = len(times_spent_minutes)
@@ -369,13 +381,22 @@ class MatplotlibService:
                     times_spent_minutes[i],
                     ec="black",
                     alpha=0.5,
+                    label="Version " + str(i + 1),
                 )
         else:
-            ax.scatter(marks_given, times_spent_minutes, ec="black", alpha=0.5)
+            ax.scatter(
+                marks_given,
+                times_spent_minutes,
+                ec="black",
+                alpha=0.5,
+                label="All versions",
+            )
 
         ax.set_title("Q" + str(question_number) + ": Time spent vs Mark given")
         ax.set_ylabel("Time spent (min)")
         ax.set_xlabel("Mark given")
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
+        plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -411,7 +432,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        fig, ax = plt.subplots(figsize=(7.2, 4.0), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         # create boxplot and set colours
         for i, mark in reversed(list(enumerate(marks))):
@@ -426,6 +447,7 @@ class MatplotlibService:
             ncol=1,
             fancybox=True,
         )
+        plt.grid(True, alpha=0.5)
 
         ax.set_title("Q" + str(question) + " boxplot by marker")
         ax.set_xlabel("Q" + str(question) + " mark")
@@ -486,7 +508,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        plt.figure(figsize=(6.8, 4.6), tight_layout=True)
+        plt.figure(figsize=(6.8, 4.2), tight_layout=True)
 
         if versions is True:
             averages = self.des.get_averages_on_all_questions_versions_as_percentage(
@@ -498,7 +520,7 @@ class MatplotlibService:
                         range(1, self.spec["numberOfQuestions"] + 1),
                         v,
                         marker="o",
-                        label="Overall",
+                        label="All versions",
                     )
                 else:
                     plt.plot(
@@ -512,7 +534,7 @@ class MatplotlibService:
                 range(1, self.spec["numberOfQuestions"] + 1),
                 self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
-                label="Overall",
+                label="All versions",
             )
 
         plt.legend(
@@ -521,7 +543,7 @@ class MatplotlibService:
             ncol=1,
             fancybox=True,
         )
-        plt.grid(True)
+        plt.grid(True, alpha=0.5)
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
         plt.xlabel("Question number")
