@@ -82,12 +82,7 @@ class PQVMappingView(ManagerRequiredView):
             return HttpResponseRedirect(".")
 
         pqvs = PQVMappingService()
-        staged_spec = StagingSpecificationService()
         pqvs.generate_and_set_pqvmap(number_to_produce)
-        staged_spec.set_n_to_produce(number_to_produce)
-        spec_dict = staged_spec.get_valid_spec_dict()
-
-        SpecificationService.store_validated_spec(spec_dict)
         return HttpResponseRedirect(".")
 
 

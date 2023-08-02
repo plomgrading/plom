@@ -584,7 +584,8 @@ class Manager(QWidget):
 
     def getTPQV(self):
         info = self.msgr.get_spec()
-        self.max_papernum = info["numberToProduce"]
+        exam_info = self.msgr.get_exam_info()
+        self.max_papernum = exam_info["current_largest_paper_num"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]

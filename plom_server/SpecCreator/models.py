@@ -76,6 +76,5 @@ class StagingSpecification(SingletonBaseModel):
     numberOfVersions = models.PositiveIntegerField(default=0)
     totalMarks = models.PositiveIntegerField(default=0)
     numberOfQuestions = models.PositiveIntegerField(default=0)
-    numberToProduce = models.IntegerField(default=-1)
     pages = models.JSONField(default=dict)
     questions = models.JSONField(default=dict)

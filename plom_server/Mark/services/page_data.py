@@ -145,15 +145,15 @@ class PageDataService:
                 # what the legacy server does...
                 included = True
             else:
-                if type(page) == QuestionPage:
+                if isinstance(page, QuestionPage):
                     included = page.question_number == question
                 else:
                     included = False
-            if type(page) == QuestionPage:
+            if isinstance(page, QuestionPage):
                 prefix = "t"
-            elif type(page) == IDPage:
+            elif isinstance(page, IDPage):
                 prefix = "id"
-            elif type(page) == DNMPage:
+            elif isinstance(page, DNMPage):
                 prefix = "dnm"
             else:
                 raise NotImplementedError(f"Page type {type(page)} not handled")

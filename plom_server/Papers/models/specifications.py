@@ -86,6 +86,7 @@ class Specification(SingletonBaseModel):
 
 class SolutionSpecification(SingletonBaseModel):
     """Store the json of the solution specification dictionary.
+
     There can be at most one SolutionSpecification entry
 
     spec_dict (json): The json'd solution specification dictionary.

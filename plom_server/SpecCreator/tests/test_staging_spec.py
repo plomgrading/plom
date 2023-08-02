@@ -222,5 +222,4 @@ class StagingSpecificationTests(TestCase):
         the_spec = StagingSpecification.load()
         self.assertEqual(the_spec.numberOfPages, 6)
         self.assertEqual(the_spec.numberOfVersions, 2)
-        self.assertEqual(the_spec.numberToProduce, -1)
         self.assertEqual(type(the_spec.questions), dict)

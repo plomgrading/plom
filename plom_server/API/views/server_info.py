@@ -83,6 +83,23 @@ class ServerInfo(APIView):
         return Response(info)
 
 
+class ExamInfo(APIView):
+    """Get the assessment information in an extensible format.
+
+    Returns:
+        (200): a dict of information about the exam/assessment as
+           key-value pairs,
+    """
+
+    def get(self, request: Request) -> Response:
+        # TODO: hardcoded, and needs more info
+        # TODO: suggest progress info here too
+        info: Dict[str, Any] = {
+            "current_largest_paper_num": 9999,
+        }
+        return Response(info)
+
+
 class CloseUser(APIView):
     """Delete the user's token and log them out.
 

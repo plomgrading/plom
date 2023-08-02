@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from django.urls import reverse
 from django.http import HttpResponse
@@ -30,8 +31,9 @@ class CreateTestPapers(ManagerRequiredView):
         qvs = PQVMappingService()
 
         qvmap = qvs.get_pqv_map_dict()
+        username = request.user.username
         # by default we do not create the papers in background
-        status, err = pcs.add_all_papers_in_qv_map(qvmap, background=False)
+        status, err = pcs.add_all_papers_in_qv_map(qvmap, username, background=False)
         # TODO - if we want to do this in the background, then we
         # cannot build pdf tasks at the same time, since they need the
         # classlist...  else we have to pass required classlist info
@@ -50,23 +52,18 @@ class CreateTestPapers(ManagerRequiredView):
         )
 
     def delete(self, request):
-        """
-        For testing purposes: delete all papers from the database, and the associated build tasks.
-        """
+        """For testing purposes: delete all papers from the database, and the associated build tasks."""
         PaperCreatorService().remove_all_papers_from_db()
         # note - when a paper is deleted, the associated pdf-build task is deleted as well via a signal.
         return HttpResponseClientRefresh()
 
 
 class TestPaperProgress(ManagerRequiredView):
-    """
-    Get the database creation progress.
-    """
+    """Get the database creation progress."""
 
     def get(self, request):
+        n_to_produce = PQVMappingService().get_pqv_map_length()
         pinfo = PaperInfoService()
-
-        n_to_produce = SpecificationService.get_n_to_produce()
         papers_in_database = pinfo.how_many_papers_in_database()
 
         if papers_in_database == n_to_produce:

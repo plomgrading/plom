@@ -5,8 +5,9 @@
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-
 from Papers.services import SpecificationService, PaperInfoService
+
+from ..services import PQVMappingService
 
 
 class PaperCreationView(ManagerRequiredView):
@@ -15,10 +16,11 @@ class PaperCreationView(ManagerRequiredView):
     def build_context(self):
         paper_info = PaperInfoService()
         context = super().build_context()
+        n_to_produce = PQVMappingService().get_pqv_map_length()
         context.update(
             {
                 "is_populated": paper_info.is_paper_database_populated(),
-                "n_papers": SpecificationService.get_n_to_produce(),
+                "n_papers": n_to_produce,
                 "n_questions": SpecificationService.get_n_questions(),
                 "n_versions": SpecificationService.get_n_versions(),
                 "n_pages": SpecificationService.get_n_pages(),

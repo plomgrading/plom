@@ -145,7 +145,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.31.1
+    - pip install djlint~=1.32.1
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.31.1
+    - pip install djlint~=1.32.1
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -338,8 +338,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.5
-    - python3 -m pip install pylint~=2.17.4
+    - python3 -m pip install astroid~=2.15.6
+    - python3 -m pip install pylint~=2.17.5
   script:
     - pylint plom
   allow_failure: true
@@ -365,7 +365,7 @@ flake8:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install flake8~=6.0.0
+    - python3 -m pip install flake8~=6.1.0
   script:
     # show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -388,7 +388,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 499 ]]"
+    - bash -c "[[ $NUMERR -le 487 ]]"
   allow_failure: true
 
 
@@ -404,35 +404,14 @@ pydocstyle-plom:
   allow_failure: true
 
 
-pydocstyle-server-count:
-  image: python:3.11
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pydocstyle[toml]~=6.3.0
-  script:
-    # show all errors and warnings but don't fail
-    - pydocstyle plom_server || true
-    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
-    # pydocstyle -s -e plom_server
-    # Instead, just ensure the total does not increase
-    - NUMERR=`pydocstyle --count plom_server | tail -n 1 || true`
-    - echo $NUMERR
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 87 ]]"
-  allow_failure: true
-
-
-# For now, an allowlist of submodules that must pass
-# TODO: add more modules and eventually just plom_server/
+# TODO: we may still have to tighten the rules in pyproject.toml
 pydocstyle-server:
   image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pushd plom_server
-    - pydocstyle -s -e API Authentication Base Demo Identify Finish Mark Preparation Profile Progress Rubrics Scan SpecCreator Tags
-    - popd
+    - pydocstyle -s -e plom_server
   allow_failure: true
 
 

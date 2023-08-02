@@ -52,6 +52,13 @@ class PQVMappingService:
 
         return pqvmapping
 
+    @transaction.atomic()
+    def get_pqv_map_length(self):
+        # TODO: likely not the most efficient way!
+        return len(self.get_pqv_map_dict())
+        # But careful, its certainly not this:
+        # return StagingPQVMapping.objects.count()
+
     def get_pqv_map_as_table(self, prenaming=False):
         # format the data in a way that makes it easy to display for django-template
         # in particular, a dict of lists.
@@ -95,7 +102,9 @@ class PQVMappingService:
 
         # grab the spec as dict from the test creator services
         spec_dict = SpecificationService.get_the_spec()
-        # this spec_dict does not include numberToProduce so we add in by hand
+        # Legacy make_random_version_map will be unhappy if not fed a numberToProduce
+        # so we add one.
+        # this spec_dict does not include numberToProduce so we add it
         spec_dict["numberToProduce"] = numberToProduce
 
         # now pass it through spec verifier and feed the **verifier** to the
