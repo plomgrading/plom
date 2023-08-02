@@ -132,9 +132,8 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        # split the dataframe into versions
+        plot_series = []
         if versions is True:
-            plot_series = []
             for version in range(
                 1, round(student_df["q" + str(question) + "_version"].max()) + 1
             ):
@@ -145,8 +144,7 @@ class MatplotlibService:
                 )
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
-            plot_series = student_df["q" + str(question) + "_mark"]
-            labels = ["All versions"]
+            plot_series.append(student_df["q" + str(question) + "_mark"])
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
@@ -265,16 +263,15 @@ class MatplotlibService:
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
         bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
 
+        plot_series = []
         if versions is True:
-            plot_series = []
             for version in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
                     ta_df[(ta_df["question_version"] == version)]["score_given"]
                 )
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
-            plot_series = ta_df["score_given"]
-            labels = ["All versions"]
+            plot_series.append(ta_df["score_given"])
 
         ax.hist(
             plot_series,
@@ -347,8 +344,8 @@ class MatplotlibService:
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
         bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
+        plot_series = []
         if versions is True:
-            plot_series = []
             for version in range(
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
@@ -363,10 +360,11 @@ class MatplotlibService:
                 )
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
-            plot_series = marking_times_df[
-                (marking_times_df["question_number"] == question_number)
-            ]["seconds_spent_marking"].div(60)
-            labels = ["All versions"]
+            plot_series.append(
+                marking_times_df[
+                    (marking_times_df["question_number"] == question_number)
+                ]["seconds_spent_marking"].div(60)
+            )
 
         ax.hist(
             plot_series,
@@ -449,6 +447,7 @@ class MatplotlibService:
         ax.set_xlabel("Mark given")
         if versions is True:
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
+
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
