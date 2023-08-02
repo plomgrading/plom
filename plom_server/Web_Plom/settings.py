@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "Rubrics",
     "Demo",
     "Finish",
+    "TaskOrder",
 ]
 
 MIDDLEWARE = [
