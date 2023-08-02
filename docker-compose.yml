@@ -13,7 +13,7 @@
 #             "request": "attach",
 #             "pathMappings": [
 #                 {
-#                     "localRoot": "${workspaceFolder}/django",
+#                     "localRoot": "${workspaceFolder}/plom_server",
 #                     "remoteRoot": "/code"
 #                 }
 #             ],
@@ -42,8 +42,9 @@ services:
     command: ./docker_run.sh
     # TODO: careful here: there is already a /code inside the container
     # for some reason we're mounting our own there instead...
+    # TODO: those on Fedora, might need a :z at the end
     volumes:
-      - ./django:/code
+      - ./plom_server:/code
     depends_on:
       - postgres
   postgres:
