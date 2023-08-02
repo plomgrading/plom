@@ -126,14 +126,14 @@ class Command(BaseCommand):
             times_for_question = []
             marks_given_for_question = []
             for version in marking_times_df["question_version"].unique():
-                temp_df = marking_times_df[
+                version_df = marking_times_df[
                     (marking_times_df["question_version"] == version)
                 ]
                 times_for_question.append(
-                    temp_df["seconds_spent_marking"].div(60),
+                    version_df["seconds_spent_marking"].div(60),
                 )
 
-                marks_given_for_question.append(temp_df["score_given"])
+                marks_given_for_question.append(version_df["score_given"])
 
             scatter_of_time.append(
                 mpls.scatter_time_spent_vs_mark_given(

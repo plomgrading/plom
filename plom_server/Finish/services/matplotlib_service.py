@@ -181,7 +181,7 @@ class MatplotlibService:
         """Generate a correlation heatmap of the questions.
 
         Args:
-            student_df: Optional dataframe containing the student data. Should be
+            corr_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
             format: The format to return the graph in. Should be either "base64"
@@ -314,13 +314,14 @@ class MatplotlibService:
 
         Args:
             question_number: The question to generate the histogram for.
-            marking_times_df: Optional dataframe containing the marking times. Should be
+            marking_times_df: Optional dataframe containing the marking data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
             versions: Whether to split the histogram into versions. If omitted,
                 defaults to False.
             max_time: The maximum time to show on the histogram. If omitted,
-                defaults to the maximum time in the marking_times_minutes series.
+                defaults to the maximum time in the "seconds_spent_marking" column
+                of marking_times_df.
             bin_width: The width of each bin on the histogram. Should be given in
                 units of seconds. If omitted, defaults to 15 seconds per bin.
             format: The format to return the graph in. Should be either "base64"
@@ -335,7 +336,7 @@ class MatplotlibService:
         assert isinstance(marking_times_df, pd.DataFrame)
 
         if max_time == 0:
-            max_time = max(marking_times_df["seconds_spent_marking"].div(60))
+            max_time = round(max(marking_times_df["seconds_spent_marking"].div(60)))
 
         assert max_time > 0
         assert format in self.formats
@@ -396,19 +397,20 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_number: int,
-        times_spent_minutes: Any,
-        marks_given: Any,
+        times_spent_minutes: Union[List[int], List[List[float]]],
+        marks_given: Union[List[int], List[List[float]]],
         versions: bool = False,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
-        TODO: Fix these docs
-
         Args:
             question_number: The question to generate the scatter plot for.
-            times_spent_minutes: Listlike containing the marking times in minutes.
-            marks_given: Listlike containing the marks given.
+            times_spent_minutes: Listlike containing the marking times in minutes or
+                a list of listlikes containing the marking times in minutes for each
+                version.
+            marks_given: Listlike containing the marks given or a list of listlikes
+                containing the marks given for each version.
             versions: Whether to split the scatter plot into versions. If omitted,
                 defaults to False.
             format: The format to return the graph in. Should be either "base64"
@@ -572,13 +574,13 @@ class MatplotlibService:
                         range(1, self.spec["numberOfQuestions"] + 1),
                         v,
                         marker="o",
-                        label="All versions",
+                        label="Overall",
                     )
                 else:
                     plt.plot(
                         range(1, self.spec["numberOfQuestions"] + 1),
                         v,
-                        marker="o",
+                        marker="x",
                         label="Version " + str(i),
                     )
         else:
