@@ -52,7 +52,7 @@ class SpecSerializer(serializers.ModelSerializer):
             return True
         except ValueError as e:
             if raise_exception:
-                raise e
+                raise e from None  # TODO: Best practice for re-raising exceptions?
             else:
                 return False
 
