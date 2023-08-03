@@ -28,10 +28,10 @@ arrow==1.2.3
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
 debugpy==1.6.7
-django==4.1.10
+django==4.2.4
 django-braces==1.15.0
 django-filter==23.2
-django-htmx==1.14.0
+django-htmx==1.16.0
 django-huey==1.1.1
 django-polymorphic==3.1.0
 django-reset-migrations==0.4.0
@@ -43,7 +43,7 @@ fonttools==4.41.1
 importlib-resources==5.13.0
 imutils==0.5.4
 matplotlib==3.5.3
-model-bakery==1.11.0
+model-bakery==1.12.0
 numpy==1.24.4
 opencv-python-headless==4.7.0.72
 packaging==23.1
@@ -67,7 +67,7 @@ tomlkit==0.12.1
 tqdm==4.65.0
 urllib3==2.0.4
 weasyprint==59.0
-whitenoise==6.4.0
+whitenoise==6.5.0
 zipfly==6.0.5
 zxing-cpp==2.1.0
 
