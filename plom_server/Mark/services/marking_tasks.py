@@ -6,7 +6,6 @@
 
 import imghdr
 import json
-import math
 import pathlib
 import random
 from typing import Union, Dict
