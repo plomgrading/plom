@@ -140,14 +140,15 @@ class MarkHandler:
             request (aiohttp.web_request.Request): Request of type GET /MK/latex.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: A response which includes the image for
-            the latex string.
+            Response: the bytes of the png image on success or a json blob
+            including the fields `"error"` and `"tex_output"`.  May change
+            in the future.
         """
         valid, value = self.server.MlatexFragment(data["fragment"])
         if valid:
             return web.Response(body=value, status=200)
-        else:
-            return web.json_response(status=406, text=value)
+        r = {"error": True, "tex_output": value}
+        return web.json_response(r, status=406)
 
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "version"])
