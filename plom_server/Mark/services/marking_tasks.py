@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
+from django.db import transaction
 
 from plom import is_valid_tag_text
 
@@ -36,6 +37,7 @@ from ..models import (
 class MarkingTaskService:
     """Functions for creating and modifying marking tasks."""
 
+    @transaction.atomic
     def create_task(self, paper, question_number, user=None):
         """Create a marking task.
 
@@ -268,6 +270,7 @@ class MarkingTaskService:
 
         return available.order_by("-marking_priority").first()
 
+    @transaction.atomic
     def set_task_priorities(
         self,
         order_by: str = "random",
@@ -346,6 +349,7 @@ class MarkingTaskService:
         task.status = MarkingTask.OUT
         task.save()
 
+    @transaction.atomic
     def surrender_task(self, user, task):
         """Remove a user from a marking task, set its status to 'todo', and save the action to the database.
 
@@ -391,6 +395,7 @@ class MarkingTaskService:
 
         return True
 
+    @transaction.atomic
     def mark_task(self, user, code, score, time, image, data):
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
@@ -428,12 +433,14 @@ class MarkingTaskService:
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
 
+    @transaction.atomic
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
         task = self.get_task_from_code(code)
         task.status = MarkingTask.COMPLETE
         task.save()
 
+    @transaction.atomic
     def save_annotation_image(self, md5sum, annot_img):
         """Save an annotation image to disk and the database.
 
@@ -603,6 +610,7 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
+    @transaction.atomic
     def create_tag(self, user, tag_text):
         """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
 
@@ -624,6 +632,7 @@ class MarkingTaskService:
         new_tag.save()
         return new_tag
 
+    @transaction.atomic
     def add_tag(self, tag, task):
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
 
@@ -693,6 +702,7 @@ class MarkingTaskService:
         the_task = self.get_task_from_code(code)
         self.remove_tag_from_task(the_tag, the_task)
 
+    @transaction.atomic
     def remove_tag_from_task(self, tag, task):
         """Backend to remove a tag from a marking task.
 
