@@ -215,7 +215,7 @@ class DataExtractionService:
         """
         marks_by_ta = {}
         for ta_name in self.ta_df["user"].unique():
-            marks_by_ta[ta_name] = self._get_ta_data_for_ta(ta_name, self.ta_df)
+            marks_by_ta[ta_name] = self._get_ta_data_for_ta(ta_name)
         return marks_by_ta
 
     def _get_ta_data_for_question(
@@ -254,7 +254,7 @@ class DataExtractionService:
         marks_by_question = {}
         for question_num in self.ta_df["question_number"].unique():
             marks_by_question[question_num] = self._get_ta_data_for_question(
-                question_num, self.ta_df
+                question_num
             )
         return marks_by_question
 
@@ -269,7 +269,7 @@ class DataExtractionService:
         """
         times_by_question = {}
         for q in self.ta_df["question_number"].unique():
-            times_by_question[q] = self._get_ta_data_for_question(q, self.ta_df)[
+            times_by_question[q] = self._get_ta_data_for_question(q)[
                 "seconds_spent_marking"
             ]
         return times_by_question
