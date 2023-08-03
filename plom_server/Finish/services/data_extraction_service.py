@@ -102,9 +102,19 @@ class DataExtractionService:
         return averages
 
     def get_averages_on_all_questions_versions_as_percentage(
-        self, overall: bool = False
+        self, *, overall: bool = False
     ) -> List[List[float]]:
-        """Return the average mark on each question as a percentage."""
+        """Return the average mark on each question as a percentage.
+
+        Keyword Args:
+            overall: If True, the overall average for all questions is returned as the first
+                element in the list.
+
+        Returns:
+            A list of lists of floats. The first list contains the averages for
+            all questions. The remaining lists contain the averages for each
+            question version.
+        """
         averages = []
 
         if overall:
@@ -122,13 +132,13 @@ class DataExtractionService:
         return averages
 
     def _get_marks_for_all_questions(
-        self, student_df: Optional[pd.DataFrame] = None
+        self, *, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the marks for each question as a dataframe.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
 
-        Args:
+        Keyword Args:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted,
                 self.student_df is used.
@@ -143,13 +153,13 @@ class DataExtractionService:
         return student_df.filter(regex="q[0-9]*_mark")
 
     def _get_question_correlation_heatmap_data(
-        self, student_df: Optional[pd.DataFrame] = None
+        self, *, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the correlation heatmap data for the questions.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
 
-        Args:
+        Keyword Args:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted,
                 self.student_df is used.
@@ -172,7 +182,7 @@ class DataExtractionService:
         return marks_corr
 
     def _get_ta_data_for_ta(
-        self, ta_name: str, ta_df: Optional[pd.DataFrame] = None
+        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific TA.
 
@@ -180,6 +190,8 @@ class DataExtractionService:
 
         Args:
             ta_name: The TA to get the data for.
+
+        Keyword Args:
             ta_df: The dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
@@ -207,7 +219,7 @@ class DataExtractionService:
         return marks_by_ta
 
     def _get_ta_data_for_question(
-        self, question_number: int, ta_df: Optional[pd.DataFrame] = None
+        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
 
@@ -215,6 +227,8 @@ class DataExtractionService:
 
         Args:
             question_number: The question to get the data for.
+
+        Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
@@ -261,12 +275,14 @@ class DataExtractionService:
         return times_by_question
 
     def get_questions_marked_by_this_ta(
-        self, ta_name: str, ta_df: Optional[pd.DataFrame] = None
+        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[int]:
         """Get the questions that were marked by a specific TA.
 
         Args:
             ta_name: The TA to get the data for.
+
+        Keyword Args:
             ta_df: The dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
@@ -285,12 +301,14 @@ class DataExtractionService:
         )
 
     def get_tas_that_marked_this_question(
-        self, question_number: int, ta_df: Optional[pd.DataFrame] = None
+        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[str]:
         """Get the TAs that marked a specific question.
 
         Args:
             question_number: The question to get the data for.
+
+        Keyword Args:
             ta_df: The dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
@@ -306,12 +324,14 @@ class DataExtractionService:
         )
 
     def get_scores_for_question(
-        self, question_number: int, ta_df: Optional[pd.DataFrame] = None
+        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[int]:
         """Get the marks assigned for a specific question.
 
         Args:
             question_number: The question to get the data for.
+
+        Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 
@@ -327,12 +347,14 @@ class DataExtractionService:
         ].tolist()
 
     def get_scores_for_ta(
-        self, ta_name: str, ta_df: Optional[pd.DataFrame] = None
+        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[int]:
         """Get the marks assigned for by a specific TA.
 
         Args:
             ta_name: The TA to get the data for.
+
+        Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
 

@@ -72,7 +72,7 @@ class MatplotlibService:
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the total marks.
 
-        Kwargs:
+        Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -118,7 +118,7 @@ class MatplotlibService:
         Args:
             question: The question number.
 
-        Kwargs:
+        Keyword Args:
             versions: Whether to split the histogram into versions. If omitted,
                 defaults to False.
             student_df: Optional dataframe containing the student data. Should be
@@ -185,7 +185,7 @@ class MatplotlibService:
     ) -> Union[BytesIO, str]:
         """Generate a correlation heatmap of the questions.
 
-        Kwargs:
+        Keyword Args:
             corr_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
@@ -247,7 +247,7 @@ class MatplotlibService:
             question: The question to generate the histogram for.
             ta_name: The name of the TA to generate the histogram for.
 
-        Kwargs:
+        Keyword Args:
             ta_df: Optional dataframe containing the ta data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
@@ -324,7 +324,7 @@ class MatplotlibService:
         Args:
             question_number: The question to generate the histogram for.
 
-        Kwargs:
+        Keyword Args:
             marking_times_df: Optional dataframe containing the marking data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
@@ -424,7 +424,7 @@ class MatplotlibService:
             marks_given: Listlike containing the marks given or a list of listlikes
                 containing the marks given for each version.
 
-        Kwargs:
+        Keyword Args:
             versions: Whether to split the scatter plot into versions. If omitted,
                 defaults to False.
             format: The format to return the graph in. Should be either "base64"
@@ -492,7 +492,7 @@ class MatplotlibService:
             marker_names: The names of the markers.
             question: The question to plot the boxplot for.
 
-        Kwargs:
+        Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -567,7 +567,7 @@ class MatplotlibService:
     ) -> Union[BytesIO, str]:
         """Generate a line graph of the average percentage marks by question.
 
-        Kwargs:
+        Keyword Args:
             versions: Whether to split the line graph into versions. If omitted,
                 defaults to False.
             format: The format to return the graph in. Should be either "base64"
