@@ -465,6 +465,10 @@ class MatplotlibService:
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
 
         plt.grid(True, alpha=0.5)
+        plt.xlim(
+            left=-0.5, right=self.spec["question"][str(question_number)]["mark"] + 0.5
+        )
+        plt.ylim(bottom=-0.2)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -533,7 +537,7 @@ class MatplotlibService:
         plt.xlim(
             [
                 0,
-                self.des._get_ta_data_for_question(question_number=int(question))[
+                self.des._get_ta_data_for_question(question_number=question)[
                     "max_score"
                 ].max(),
             ]

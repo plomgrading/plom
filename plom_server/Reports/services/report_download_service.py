@@ -109,18 +109,24 @@ class ReportDownloadService:
         # scatter plot of time taken to mark each question vs mark given
         scatter_of_time = []
         for question, marking_times_df in des._get_all_ta_data_by_question().items():
-            # list of lists of times spent marking each version of the question
-            times_for_question = []
-            marks_given_for_question = []
-            for version in marking_times_df["question_version"].unique():
-                version_df = marking_times_df[
-                    (marking_times_df["question_version"] == version)
-                ]
-                times_for_question.append(
-                    version_df["seconds_spent_marking"].div(60),
-                )
+            if versions:
+                # list of lists of times spent marking each version of the question
+                times_for_question = []
+                marks_given_for_question = []
+                for version in marking_times_df["question_version"].unique():
+                    version_df = marking_times_df[
+                        (marking_times_df["question_version"] == version)
+                    ]
+                    times_for_question.append(
+                        version_df["seconds_spent_marking"].div(60),
+                    )
 
-                marks_given_for_question.append(version_df["score_given"])
+                    marks_given_for_question.append(version_df["score_given"])
+            else:
+                times_for_question = marking_times_df["seconds_spent_marking"].div(60)
+                marks_given_for_question = des.get_scores_for_question(
+                    question_number=question,
+                )
 
             scatter_of_time.append(
                 mpls.scatter_time_spent_vs_mark_given(

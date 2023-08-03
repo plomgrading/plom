@@ -13,7 +13,12 @@
     <p>Download the report with basic information and analysis.</p>
     <form method="post" action="{% url 'report_download' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-success">Download Report</button>
+        <div class="row">
+            <div>
+                <button type="submit" class="btn btn-primary" style="display: inline-block;">Download Report</button>
+                <small style="display: inline-block;">(allow up to 20 seconds for it to generate and download)</small>
+            </div>
+        </div>
     </form>
     <br>
     <br>
