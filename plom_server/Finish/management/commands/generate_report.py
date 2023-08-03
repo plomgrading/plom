@@ -156,7 +156,9 @@ Generating..."""
 
                     marks_given_for_question.append(version_df["score_given"])
             else:
-                times_for_question = marking_times_df["seconds_spent_marking"].div(60)
+                times_for_question = (
+                    marking_times_df["seconds_spent_marking"].div(60).to_list()
+                )
                 marks_given_for_question = des.get_scores_for_question(
                     question_number=question,
                 )

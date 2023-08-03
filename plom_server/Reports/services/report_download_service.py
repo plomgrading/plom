@@ -123,7 +123,9 @@ class ReportDownloadService:
 
                     marks_given_for_question.append(version_df["score_given"])
             else:
-                times_for_question = marking_times_df["seconds_spent_marking"].div(60)
+                times_for_question = (
+                    marking_times_df["seconds_spent_marking"].div(60).to_list()
+                )
                 marks_given_for_question = des.get_scores_for_question(
                     question_number=question,
                 )
@@ -237,10 +239,7 @@ class ReportDownloadService:
         """
 
         html += _html_add_title("Histogram of marks by question")
-        if versions:
-            html += _html_for_big_graphs(histogram_of_grades_q)
-        else:
-            html += _html_for_graphs(histogram_of_grades_q)
+        html += _html_for_big_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
@@ -254,26 +253,17 @@ class ReportDownloadService:
             html += f"""
             <h4>Grades by {marker}</h4>
             """
-            if versions:
-                html += _html_for_big_graphs(histogram_of_grades_m[index])
-            else:
-                html += _html_for_graphs(histogram_of_grades_m[index])
+            html += _html_for_big_graphs(histogram_of_grades_m[index])
 
         html += _html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        if versions:
-            html += _html_for_big_graphs(histogram_of_time)
-        else:
-            html += _html_for_graphs(histogram_of_time)
+        html += _html_for_big_graphs(histogram_of_time)
 
         html += _html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        if versions:
-            html += _html_for_big_graphs(scatter_of_time)
-        else:
-            html += _html_for_graphs(scatter_of_time)
+        html += _html_for_big_graphs(scatter_of_time)
 
         html += _html_add_title(
             "Box plots of grades given by each marker for each question"
