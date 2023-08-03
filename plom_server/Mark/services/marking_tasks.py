@@ -324,10 +324,11 @@ class MarkingTaskService:
             assert isinstance(
                 custom_order, dict
             ), "`custom_order` must be of type Dict[tuple[int, int], float]."
-            for k, v in custom_order.items():
-                task = self.get_latest_task(k[0], k[1])
-                task.marking_priority = v
-                task.save()
+            with transaction.atomic():
+                for k, v in custom_order.items():
+                    task = self.get_latest_task(k[0], k[1])
+                    task.marking_priority = v
+                    task.save()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
