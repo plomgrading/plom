@@ -270,7 +270,6 @@ class MarkingTaskService:
 
         return available.order_by("-marking_priority").first()
 
-    @transaction.atomic
     def set_task_priorities(
         self,
         order_by: str = "random",
@@ -306,18 +305,20 @@ class MarkingTaskService:
         ), "Invalid value for order_by"
         if order_by == "random":
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
-            for task in tasks:
-                task.marking_priority = random.random() * 1000
-                task.save()
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = random.random() * 1000
+                    task.save()
 
         elif order_by == "papernum":
             n_papers = Paper.objects.count()
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related(
                 "paper"
             )
-            for task in tasks:
-                task.marking_priority = n_papers - task.paper.paper_number
-                task.save()
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = n_papers - task.paper.paper_number
+                    task.save()
 
         elif order_by == "custom":
             assert isinstance(
@@ -349,7 +350,6 @@ class MarkingTaskService:
         task.status = MarkingTask.OUT
         task.save()
 
-    @transaction.atomic
     def surrender_task(self, user, task):
         """Remove a user from a marking task, set its status to 'todo', and save the action to the database.
 
@@ -370,8 +370,9 @@ class MarkingTaskService:
         user_tasks = MarkingTask.objects.filter(
             assigned_user=user, status=MarkingTask.OUT
         )
-        for task in user_tasks:
-            self.surrender_task(user, task)
+        with transaction.atomic():
+            for task in user_tasks:
+                self.surrender_task(user, task)
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
@@ -433,7 +434,6 @@ class MarkingTaskService:
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
 
-    @transaction.atomic
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
         task = self.get_task_from_code(code)
@@ -610,7 +610,6 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    @transaction.atomic
     def create_tag(self, user, tag_text):
         """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
 
@@ -632,7 +631,6 @@ class MarkingTaskService:
         new_tag.save()
         return new_tag
 
-    @transaction.atomic
     def add_tag(self, tag, task):
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
 
@@ -702,7 +700,6 @@ class MarkingTaskService:
         the_task = self.get_task_from_code(code)
         self.remove_tag_from_task(the_tag, the_task)
 
-    @transaction.atomic
     def remove_tag_from_task(self, tag, task):
         """Backend to remove a tag from a marking task.
 
