@@ -67,10 +67,12 @@ class MatplotlibService:
         """
         return base64.b64encode(bytes.read()).decode()
 
-    def histogram_of_total_marks(self, format: str = "base64") -> Union[BytesIO, str]:
+    def histogram_of_total_marks(
+        self, *, format: str = "base64"
+    ) -> Union[BytesIO, str]:
         """Generate a histogram of the total marks.
 
-        Args:
+        Kwargs:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -106,6 +108,7 @@ class MatplotlibService:
     def histogram_of_grades_on_question_version(
         self,
         question: int,
+        *,
         versions: bool = False,
         student_df: Optional[pd.DataFrame] = None,
         format: str = "base64",
@@ -114,6 +117,8 @@ class MatplotlibService:
 
         Args:
             question: The question number.
+
+        Kwargs:
             versions: Whether to split the histogram into versions. If omitted,
                 defaults to False.
             student_df: Optional dataframe containing the student data. Should be
@@ -176,11 +181,11 @@ class MatplotlibService:
             return self.get_graph_as_base64(graph_bytes)
 
     def correlation_heatmap_of_questions(
-        self, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
+        self, *, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a correlation heatmap of the questions.
 
-        Args:
+        Kwargs:
             corr_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
@@ -231,6 +236,7 @@ class MatplotlibService:
         self,
         question: int,
         ta_name: str,
+        *,
         ta_df: Optional[pd.DataFrame] = None,
         versions: bool = False,
         format: str = "base64",
@@ -240,6 +246,8 @@ class MatplotlibService:
         Args:
             question: The question to generate the histogram for.
             ta_name: The name of the TA to generate the histogram for.
+
+        Kwargs:
             ta_df: Optional dataframe containing the ta data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
@@ -304,6 +312,7 @@ class MatplotlibService:
     def histogram_of_time_spent_marking_each_question(
         self,
         question_number: int,
+        *,
         marking_times_df: Optional[pd.DataFrame] = None,
         versions: bool = False,
         max_time: int = 0,
@@ -314,6 +323,8 @@ class MatplotlibService:
 
         Args:
             question_number: The question to generate the histogram for.
+
+        Kwargs:
             marking_times_df: Optional dataframe containing the marking data. Should be
                 a copy or filtered version of self.ta_df. If omitted, defaults
                 to None and self.ta_df is used.
@@ -399,6 +410,7 @@ class MatplotlibService:
         question_number: int,
         times_spent_minutes: Union[List[int], List[List[float]]],
         marks_given: Union[List[int], List[List[float]]],
+        *,
         versions: bool = False,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
@@ -411,6 +423,8 @@ class MatplotlibService:
                 version.
             marks_given: Listlike containing the marks given or a list of listlikes
                 containing the marks given for each version.
+
+        Kwargs:
             versions: Whether to split the scatter plot into versions. If omitted,
                 defaults to False.
             format: The format to return the graph in. Should be either "base64"
@@ -465,6 +479,7 @@ class MatplotlibService:
         marks: List[List[int]],
         marker_names: List[str],
         question: int,
+        *,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a boxplot of the marks given by each TA for the specified question.
@@ -476,6 +491,8 @@ class MatplotlibService:
             marks: The dataframe of marks to plot.
             marker_names: The names of the markers.
             question: The question to plot the boxplot for.
+
+        Kwargs:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -491,7 +508,7 @@ class MatplotlibService:
         # create boxplot and set colours
         for i, mark in reversed(list(enumerate(marks))):
             bp = ax.boxplot(mark, positions=[i], vert=False)
-            self.boxplot_set_colors(bp, i / len(marks))
+            self._boxplot_set_colors(bp, i / len(marks))
             (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=marker_names[i])
 
         # set legend
@@ -530,7 +547,7 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
-    def boxplot_set_colors(self, bp, colour):
+    def _boxplot_set_colors(self, bp, colour):
         """Set the colours of a boxplot.
 
         Args:
@@ -546,11 +563,11 @@ class MatplotlibService:
         plt.setp(bp["medians"][0], color=cm.hsv(colour))
 
     def line_graph_of_avg_marks_by_question(
-        self, versions: bool = False, format: str = "base64"
+        self, *, versions: bool = False, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a line graph of the average percentage marks by question.
 
-        Args:
+        Kwargs:
             versions: Whether to split the line graph into versions. If omitted,
                 defaults to False.
             format: The format to return the graph in. Should be either "base64"
