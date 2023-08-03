@@ -2,50 +2,33 @@
 # Copyright (C) 2023 Julian Lapenna
 
 import datetime as dt
-from tqdm import tqdm
 
 from weasyprint import HTML, CSS
 
-from django.core.management.base import BaseCommand
-
-from ...services import DataExtractionService
-from ...services import MatplotlibService
+from Finish.services import DataExtractionService, MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
 
-class Command(BaseCommand):
-    """Generates a PDF report of the marking progress."""
+class ReportDownloadService:
+    """Class to encapsulate code for downloading the report."""
 
-    help = """Generates a PDF report of the marking progress.
+    def get_report_bytes(self, versions: bool) -> str:
+        """Get the report as a string.
 
-    Requires matplotlib, pandas, seaborn, and weasyprint. If calling on demo
-    data, run `python manage.py plom_demo --randomarker` first.
-    """
+        Args:
+            versions: Whether to include versions in the report.
 
-    def handle(self, *args, **options):
-        print("Building report.")
-        graphs_message = """Graphs to generate:
-    1. Histogram of total marks
-    2. Histogram of marks by question
-    3. Correlation heatmap
-    4. Histograms of grades by marker by question
-    5. Histograms of time spent marking each question
-    6. Scatter plots of time spent marking vs mark given
-    7. Box plots of grades given by marker by question
-    8. Line graph of average mark by question
-
-Generating..."""
-        print(graphs_message)
-
+        Returns:
+            The report as a bytes object.
+        """
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
         spec = Specification.load().spec_dict
 
         # info for report
-        name = spec["name"]
         longName = spec["longName"]
         totalMarks = spec["totalMarks"]
         date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
@@ -63,36 +46,28 @@ Generating..."""
         mpls.ensure_all_figures_closed()
 
         # histogram of grades
-        print("Histogram of total marks.")
         histogram_of_grades = mpls.histogram_of_total_marks()
 
         # histogram of grades for each question
         histogram_of_grades_q = []
         marks_for_questions = des._get_marks_for_all_questions()
-        for question, _ in tqdm(
-            enumerate(marks_for_questions),
-            desc="Histograms of marks by question",
-        ):
+        for question, _ in enumerate(marks_for_questions):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
                 # each base64-encoded image
                 mpls.histogram_of_grades_on_question_version(  # of the histogram
-                    question=question, versions=True
+                    question=question, versions=versions
                 )
             )
 
         del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
-        print("Correlation heatmap.")
         corr = mpls.correlation_heatmap_of_questions()
 
         # histogram of grades given by each marker by question
         histogram_of_grades_m = []
-        for marker, scores_for_user in tqdm(
-            des._get_all_ta_data_by_ta().items(),
-            desc="Histograms of marks by marker by question",
-        ):
+        for marker, scores_for_user in des._get_all_ta_data_by_ta().items():
             questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
                 marker,
             )
@@ -108,7 +83,7 @@ Generating..."""
                         question=question,
                         ta_name=marker,
                         ta_df=scores_for_user_for_question,
-                        versions=True,
+                        versions=versions,
                     )
                 )
 
@@ -118,15 +93,12 @@ Generating..."""
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times_df in tqdm(
-            des._get_all_ta_data_by_question().items(),
-            desc="Histograms of time spent marking each question",
-        ):
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
                     marking_times_df=marking_times_df,
-                    versions=True,
+                    versions=versions,
                     max_time=max_time,
                     bin_width=bin_width,
                 )
@@ -136,10 +108,7 @@ Generating..."""
 
         # scatter plot of time taken to mark each question vs mark given
         scatter_of_time = []
-        for question, marking_times_df in tqdm(
-            des._get_all_ta_data_by_question().items(),
-            desc="Scatter plots of time spent marking vs mark given",
-        ):
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
             # list of lists of times spent marking each version of the question
             times_for_question = []
             marks_given_for_question = []
@@ -158,19 +127,13 @@ Generating..."""
                     question_number=question,
                     times_spent_minutes=times_for_question,
                     marks_given=marks_given_for_question,
-                    versions=True,
+                    versions=versions,
                 )
             )
 
         # Box plot of the grades given by each marker for each question
         boxplots = []
-        for (
-            question_number,
-            question_df,
-        ) in tqdm(
-            des._get_all_ta_data_by_question().items(),
-            desc="Box plots of marks given by marker by question",
-        ):
+        for question_number, question_df in des._get_all_ta_data_by_question().items():
             marks_given = []
             # add overall to names
             marker_names = ["Overall"]
@@ -198,10 +161,7 @@ Generating..."""
             )
 
         # line graph of average mark on each question
-        print("Line graph of average mark by question.")
-        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=True)
-
-        print("\nGenerating HTML.")
+        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=versions)
 
         def _html_add_title(title: str) -> str:
             """Generate HTML for a title."""
@@ -271,7 +231,10 @@ Generating..."""
         """
 
         html += _html_add_title("Histogram of marks by question")
-        html += _html_for_big_graphs(histogram_of_grades_q)
+        if versions:
+            html += _html_for_big_graphs(histogram_of_grades_q)
+        else:
+            html += _html_for_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
@@ -285,18 +248,26 @@ Generating..."""
             html += f"""
             <h4>Grades by {marker}</h4>
             """
-
-            html += _html_for_big_graphs(histogram_of_grades_m[index])
+            if versions:
+                html += _html_for_big_graphs(histogram_of_grades_m[index])
+            else:
+                html += _html_for_graphs(histogram_of_grades_m[index])
 
         html += _html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        html += _html_for_big_graphs(histogram_of_time)
+        if versions:
+            html += _html_for_big_graphs(histogram_of_time)
+        else:
+            html += _html_for_graphs(histogram_of_time)
 
         html += _html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        html += _html_for_big_graphs(scatter_of_time)
+        if versions:
+            html += _html_for_big_graphs(scatter_of_time)
+        else:
+            html += _html_for_graphs(scatter_of_time)
 
         html += _html_add_title(
             "Box plots of grades given by each marker for each question"
@@ -308,27 +279,6 @@ Generating..."""
             <img src="data:image/png;base64,{line_graph}">
             """
 
-        def create_pdf(html):
-            """Generate a PDF file from a string of HTML."""
-            htmldoc = HTML(string=html, base_url="")
-
-            return htmldoc.write_pdf(
-                stylesheets=[CSS("./static/css/generate_report.css")]
-            )
-
-        def save_pdf_to_disk(pdf_data, file_path):
-            """Save the PDF data to a file."""
-            with open(file_path, "wb") as f:
-                f.write(pdf_data)
-
-        date_filename = (
-            ""  # "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        return HTML(string=html, base_url="").write_pdf(
+            stylesheets=[CSS("./static/css/generate_report.css")]
         )
-        filename = "Report-" + name + date_filename + ".pdf"
-
-        print("Writing to " + filename + ".")
-
-        pdf_data = create_pdf(html)
-        save_pdf_to_disk(pdf_data, filename)
-
-        print("Finished saving report.")

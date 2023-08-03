@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Julian Lapenna
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -9,8 +10,11 @@
 {% endblock page_heading %}
 {% block main_content %}
     <h3>Main Report</h3>
-    <p>Download the report with basic information and analysis for submission to department.</p>
-    <button type="button" class="btn btn-primary">Download Main Report</button>
+    <p>Download the report with basic information and analysis.</p>
+    <form method="post" action="{% url 'report_download' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Download Report</button>
+    </form>
     <br>
     <br>
     <h3>Enhanced Report</h3>
