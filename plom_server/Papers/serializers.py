@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 
+import random
 from copy import deepcopy
 from rest_framework import serializers
 
 from plom import SpecVerifier
+from plom.tpv_utils import new_magic_code
 
 from .models import SpecQuestion, Specification
 
@@ -22,6 +24,11 @@ class SpecQuestionSerializer(serializers.ModelSerializer):
         exclude = ["question_number"]
 
 
+def new_private_seed() -> str:
+    """Generate a random seed for a specification."""
+    return str(random.randrange(0, 10**16)).zfill(16)
+
+
 class SpecSerializer(serializers.ModelSerializer):
     """Handle serializing a test specification."""
 
@@ -31,8 +38,8 @@ class SpecSerializer(serializers.ModelSerializer):
     numberOfPages = serializers.IntegerField(min_value=1)
     numberOfQuestions = serializers.IntegerField(min_value=1)
     totalMarks = serializers.IntegerField(min_value=0)
-    privateSeed = serializers.CharField(required=False)
-    publicCode = serializers.CharField(required=False)
+    privateSeed = serializers.CharField(default=new_private_seed)
+    publicCode = serializers.CharField(default=new_magic_code)
     idPage = serializers.IntegerField(min_value=1)
     doNotMarkPages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     question = serializers.DictField(child=SpecQuestionSerializer())

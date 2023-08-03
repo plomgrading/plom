@@ -54,7 +54,7 @@ class QuestionMaxMark(APIView):
 
     def get(self, request, *, question):
         try:
-            max_mark = SpecificationService, get_question_mark(question)
+            max_mark = SpecificationService.get_question_mark(question)
             return Response(max_mark)
         except KeyError:
             return _error_response(
