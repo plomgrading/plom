@@ -80,7 +80,6 @@ class TagService:
         return counts
 
     # TODO: create_tag is defined in `marking_tasks.py`
-    @transaction.atomic
     def delete_tag(self, tag_id: int):
         """Delete a tag by its id.
 
@@ -90,7 +89,6 @@ class TagService:
         tag = self.get_tag_from_id(tag_id)
         tag.delete()
 
-    @transaction.atomic
     def update_tag_content(self, tag: MarkingTaskTag, content: Any) -> None:
         """Update the content of a tag."""
         for key, value in content.items():
