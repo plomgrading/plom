@@ -132,7 +132,7 @@ class Command(BaseCommand):
             filename += "reverse_"
         filename += "sorted.csv"
 
-        with open(f"q{question_number}_v{question_version}_sorted.csv", "w") as f:
+        with open(filename, "w") as f:
             writer = csv.writer(f)
             writer.writerow(["Paper Number", "Question Number", "Priority Value"])
             for (paper_number, question_number), th_sum in sorted_imgs.items():
