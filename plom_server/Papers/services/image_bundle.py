@@ -404,3 +404,37 @@ class ImageBundleService:
             A query of only the ID pages in the input bundle
         """
         return IDPage.objects.filter(image__bundle=bundle)
+
+    @transaction.atomic
+    def is_given_paper_question_ready(self, paper_obj, question_number):
+        """Check if a given paper/question is ready for marking"""
+        # to be ready the question must either
+        # * have all its fixed pages with images (and any number of mobile pages), or
+        # * have no fixed pages with images but some mobile pages
+
+        q_pages = QuestionPage.objects.filter(
+            paper=paper_obj, question_number=question_number
+        )
+        qp_no_img = q_pages.filter(image__isnull=True).exists()
+        qp_with_img = q_pages.filter(image__isnull=False).exists()
+        # note that (qp_no_img or qp_with_img == True)
+        mp_present = MobilePage.objects.filter(
+            paper=paper_obj, question_number=question_number
+        ).exists()
+
+        if qp_with_img:
+            # there are some fixed pages with images
+            if qp_no_img:
+                # there are some fixed pages without images, so partially scanned. not ready.
+                return False
+            else:
+                # all fixed question pages have images, so it is ready
+                return True
+        else:
+            # all fixed pages have no images.
+            if mp_present:
+                # the question has no fixed pages scanned, but does have a mobile page, so ready.
+                return True
+            else:
+                # no images present at all, so not ready
+                return False

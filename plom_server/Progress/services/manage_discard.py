@@ -15,6 +15,7 @@ from Papers.models import (
     DiscardPage,
 )
 from Identify.services import IdentifyTaskService
+from Mark.services import MarkingTaskService
 
 
 class ManageDiscardService:
@@ -49,6 +50,8 @@ class ManageDiscardService:
 
         # now set the associated id-task to out of date.
         IdentifyTaskService().set_paper_idtask_outdated(idpage_obj.paper.paper_number)
+        # notice that since there is only a single ID page we cannot
+        # automatically create a new id-task, we need a new page to be uploaded.
 
     @transaction.atomic
     def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
@@ -62,8 +65,13 @@ class ManageDiscardService:
                 f"question {qpage_obj.question_number}."
             ),
         )
-        # set the associated IDing task to "OUT_OF_DATE"
-        # >>> TODO <<<
+        # set the associated Markinging task to "OUT_OF_DATE"
+        MarkingTaskService().set_paper_marking_task_outdated(
+            qpage_obj.paper.paper_number, qpage_obj.question_number
+        )
+        # TODO
+        # Try to make a new marking task
+        # TODO
 
         # Set the original question page to have no image, but **DO NOT** delete the question page
         qpage_obj.image = None
@@ -80,20 +88,32 @@ class ManageDiscardService:
         # the marking tasks associated with those mobile pages as 'out
         # of date'
 
+        img_to_disc = mpage_obj.image
+        paper_number = mpage_obj.paper.paper_number
+
         DiscardPage.objects.create(
-            image=mpage_obj.image,
+            image=img_to_disc,
             discard_reason=(
                 f"User {user_obj.username} discarded mobile "
-                f"paper {mpage_obj.paper.paper_number} "
+                f"paper {paper_number} "
                 f"question {mpage_obj.question_number}."
             ),
         )
 
         # find all the mobile pages associated with this image
         # set the associated marking tasks to "OUT_OF_DATE"
-        # >>> TODO <<<
+        qn_to_outdate = [
+            mpg.question_number for mpg in img_to_disc.mobilepage_set.all()
+        ]
+        # outdate the associated marking tasks
+        for qn in qn_to_outdate:
+            MarkingTaskService.set_paper_marking_task_outdated(paper_number, qn)
         # and now delete each of those mobile pages
-        mpage_obj.delete()
+        for mpg in img_to_disc.mobilepage_set.all():
+            mpg.delete()
+        # TODO
+        # Now for each of the questions try to make a new marking task
+        # TODO
 
     def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True) -> str:
         """Discard a fixed page, such an ID page, DNM page or Question page.

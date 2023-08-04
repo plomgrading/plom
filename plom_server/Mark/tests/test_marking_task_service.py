@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -11,7 +12,7 @@ from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
 
 from ..services import MarkingTaskService
-from ..models import MarkingTask
+from ..models import MarkingTask, AnnotationImage
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -360,6 +361,57 @@ class MarkingTaskServiceTests(TestCase):
         self.assertFalse(mts.user_can_update_task(user, "q0003g1"))
         self.assertTrue(mts.user_can_update_task(user, "q0004g1"))
         self.assertFalse(mts.user_can_update_task(user, "q0005g1"))
+
+    def test_marking_outdated(self):
+        mts = MarkingTaskService()
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
+        paper1 = baker.make(Paper, paper_number=1)
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
+
+        user0 = baker.make(User)
+        task1a = baker.make(
+            MarkingTask,
+            code="q0001g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper1,
+            question_number=1,
+        )
+        task1b = baker.make(
+            MarkingTask,
+            code="q0001g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper1,
+            question_number=1,
+        )
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
+
+        task1c = baker.make(
+            MarkingTask,
+            code="q0001g2",
+            status=MarkingTask.OUT_OF_DATE,
+            assigned_user=user0,
+            paper=paper1,
+            question_number=2,
+        )
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
+
+        paper2 = baker.make(Paper, paper_number=2)
+        task2a = baker.make(
+            MarkingTask,
+            code="q0002g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper2,
+            question_number=1,
+        )
+        mts.assign_task_to_user(user0, task2a)
+        an_img1 = baker.make(AnnotationImage)
+        mts.mark_task(user0, "q0002g1", 3, 17, an_img1, {"sceneItems": []})
+        an_img2 = baker.make(AnnotationImage)
+        mts.mark_task(user0, "q0002g1", 2, 21, an_img2, {"sceneItems": []})
+        mts.set_paper_marking_task_outdated(2, 1)
 
 
 class TestMarkingTasksWithFixtures(TestCase):

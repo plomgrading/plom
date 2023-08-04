@@ -21,7 +21,7 @@ from django.db import transaction
 from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, ImageBundleService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -55,9 +55,11 @@ class MarkingTaskService:
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
         # mark other tasks with this code as 'out of date'
+        # and set the assigned user to None
         previous_tasks = MarkingTask.objects.filter(code=task_code)
         for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
             old_task.status = MarkingTask.OUT_OF_DATE
+            old_task.assigned_user = None
             old_task.save()
 
         the_task = MarkingTask(
@@ -712,3 +714,44 @@ class MarkingTaskService:
             tag.save()
         except MarkingTask.DoesNotExist:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
+
+    @transaction.atomic
+    def recreate_marking_task(self, paper_number, question_number):
+        pass
+
+    @transaction.atomic
+    def set_paper_marking_task_outdated(self, paper_number, question_number):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Cannot find paper {paper_number}")
+
+        try:
+            task_obj = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).get(
+                paper=paper_obj, question_number=question_number
+            )
+        except MarkingTask.DoesNotExist:
+            raise ValueError(
+                f"Cannot find valid MarkingTask associated with paper {paper_number} question {question_number}"
+            )
+        except MarkingTask.MultipleObjectsReturned:
+            raise ValueError(
+                f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
+            )
+
+        # set the last id-action as invalid (if it exists)
+        if task_obj.latest_annotation:
+            latest_annotation = task_obj.latest_annotation
+            latest_annotation.is_valid = False
+            latest_annotation.save()
+
+        # now set status and make assigned user None
+        task_obj.assigned_user = None
+        task_obj.status = MarkingTask.OUT_OF_DATE
+        task_obj.save()
+
+        # if the paper/question is ready then create a new marking task for it.
+        if ImageBundleService().is_given_paper_question_ready(
+            paper_obj, question_number
+        ):
+            self.create_task(paper_obj, question_number)
