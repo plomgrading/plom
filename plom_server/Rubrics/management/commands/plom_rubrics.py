@@ -93,8 +93,12 @@ class Command(BaseCommand):
         for rubric in rubrics:
             try:
                 service.create_rubric(rubric)
-            except (KeyError, ValidationError) as e:
-                raise CommandError(e) from e
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
     def init_rubrics_cmd(self, username):
@@ -201,7 +205,14 @@ class Command(BaseCommand):
         service = RubricService()
         for rubric in rubrics:
             # rubric.pop("id")
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
     def add_arguments(self, parser):
