@@ -35,7 +35,7 @@ class UserInitHandler:
             status=200,
         )
 
-    # @routes.get("/Version")
+    # @routes.get("/info/server")
     @no_authentication_only_log_request
     async def get_server_info(self, request):
         info = {
@@ -166,6 +166,17 @@ class UserInitHandler:
             # various sorts of non-auth conflated: response has details
             return web.json_response(rmsg[2], status=401)
 
+    # @routes.get("/info/exam")
+    @authenticate_by_token_required_fields([])
+    def get_exam_info(self, data, request):
+        spec = self.server.info_spec()
+        if not spec:
+            raise web.HTTPBadRequest(reason="Server does not yet have a spec")
+        info = {
+            "current_largest_paper_num": spec["numberToProduce"],
+        }
+        return web.json_response(info, status=200)
+
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
@@ -232,6 +243,7 @@ class UserInitHandler:
     def setUpRoutes(self, router):
         router.add_get("/Version", self.version)
         router.add_get("/info/server", self.get_server_info)
+        router.add_get("/info/exam", self.get_exam_info)
         router.add_delete("/users/{user}", self.closeUser)
         router.add_put("/users/{user}", self.giveUserToken)
         router.add_get("/info/shortName", self.InfoShortName)

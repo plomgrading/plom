@@ -166,6 +166,13 @@
           </spacer>
          </item>
          <item>
+          <widget class="QPushButton" name="logoutButton">
+           <property name="text">
+            <string>Logout</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="loginButton">
            <property name="text">
             <string>&amp;Login</string>

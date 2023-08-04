@@ -43,7 +43,7 @@ At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
-  # pip install --user imutils lapsolver opencv-python-headless
+  # pip install --user imutils opencv-python-headless
 ```
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:

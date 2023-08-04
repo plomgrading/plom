@@ -1,22 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import base64
 import datetime as dt
-from io import BytesIO
 
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
 from weasyprint import HTML, CSS
 
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
+from django.http import HttpResponse
 
-from Finish.services import StudentMarkService, TaMarkingService
+from ...services import DataExtractionService
+from ...services import MatplotlibService
 from Mark.models import MarkingTask
+from Mark.services import MarkingTaskService
 from Papers.models import Specification
 
 RANGE_BIN_OFFSET = 2
@@ -25,29 +20,19 @@ RANGE_BIN_OFFSET = 2
 class Command(BaseCommand):
     """Generates a PDF report of the marking progress."""
 
-    help = "Generates a PDF report of the marking progress."
-    matplotlib.use("Pdf")
+    help = """Generates a PDF report of the marking progress.
+
+    Requires matplotlib, pandas, seaborn, and weasyprint. If calling on demo
+    data, run `python manage.py plom_demo --randomarker` first.
+    """
 
     def handle(self, *args, **options):
         print("Building report.")
 
-        sms = StudentMarkService()
-        tms = TaMarkingService()
+        des = DataExtractionService()
+        mts = MarkingTaskService()
+        mpls = MatplotlibService()
         spec = Specification.load().spec_dict
-
-        student_df = sms.get_all_students_download(
-            version_info=True, timing_info=True, warning_info=False
-        )
-        student_keys = sms.get_csv_header(
-            spec, version_info=True, timing_info=True, warning_info=False
-        )
-        marks = pd.DataFrame(student_df, columns=student_keys)
-
-        ta_df = tms.build_csv_data()
-        ta_keys = tms.get_csv_header()
-
-        ta_grading = pd.DataFrame(ta_df, columns=ta_keys)
-        ta_times = ta_grading.copy(deep=True)
 
         # info for report
         name = spec["name"]
@@ -59,245 +44,198 @@ class Command(BaseCommand):
             .distinct()
             .count()
         )
-        average_mark = marks["total_mark"].mean()
-        median_mark = marks["total_mark"].median()
-        stdev_mark = marks["total_mark"].std()
+        average_mark = des.get_total_average_mark()
+        median_mark = des.get_total_median_mark()
+        stdev_mark = des.get_total_stdev_mark()
+        total_tasks = mts.get_n_total_tasks()
+        all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
+
+        mpls.ensure_all_figures_closed()
 
         # histogram of grades
         print("Generating histogram of grades.")
-        fig, ax = plt.subplots()
-
-        ax.hist(
-            marks["total_mark"],
-            bins=range(0, totalMarks + RANGE_BIN_OFFSET),
-            ec="black",
-            alpha=0.5,
-        )
-        ax.set_title("Histogram of total marks")
-        ax.set_xlabel("Total mark")
-        ax.set_ylabel("# of students")
-
-        # encode the bytes as a base64 string
-        png_bytes = BytesIO()
-        fig.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
-
-        base64_histogram_of_grades = base64.b64encode(png_bytes.read()).decode()
-        plt.close()
+        histogram_of_grades = mpls.histogram_of_total_marks()
 
         # histogram of grades for each question
         print("Generating histograms of grades by question.")
-        base64_histogram_of_grades_q = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
-            marks_for_question = marks["q" + str(question) + "_mark"]
-            bins = range(0, spec["question"][question]["mark"] + RANGE_BIN_OFFSET)
-
-            ax.hist(marks_for_question, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Histogram of Q" + str(question) + " marks")
-            ax.set_xlabel("Question " + str(question) + " mark")
-            ax.set_ylabel("# of students")
-
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_histogram_of_grades_q.append(
-                base64.b64encode(png_bytes.read()).decode()
+        histogram_of_grades_q = []
+        marks_for_questions = des._get_marks_for_all_questions()
+        for question, _ in enumerate(marks_for_questions):
+            question += 1  # 1-indexing
+            histogram_of_grades_q.append(  # add to the list
+                # each base64-encoded image
+                mpls.histogram_of_grades_on_question_version(  # of the histogram
+                    question=question, versions=True
+                )
             )
-            plt.close()
+
+        del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
         print("Generating correlation heatmap.")
-        marks_corr = marks.copy(deep=True)
-        marks_corr = (
-            marks_corr.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
-        )
+        corr = mpls.correlation_heatmap_of_questions()
 
-        col_names = []
-        for i, col_name in enumerate(marks_corr.columns.str.split("_").str[0]):
-            col_names.append("Q" + str(i + 1))
-
-        marks_corr.columns = col_names
-        marks_corr.index = col_names
-
-        plt.figure(figsize=(6.4, 5.12))
-        sns.heatmap(
-            marks_corr, annot=True, cmap="coolwarm", vmin=-1, vmax=1, square=True
-        )
-        plt.title("Correlation between questions")
-
-        png_bytes = BytesIO()
-        plt.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
-
-        base64_corr = base64.b64encode(png_bytes.read()).decode()
-        plt.close("all")
-
-        # histogram of grades given by each marker
-        print("Generating histograms of grades given by marker.")
-        base64_histogram_of_grades_m = []
-        for marker in ta_grading["user"].unique():
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
-            scores_given_for_user = (
-                ta_grading.loc[ta_grading["user"] == marker, "score_given"]
-                / ta_grading.loc[ta_grading["user"] == marker, "max_score"]
+        # histogram of grades given by each marker by question
+        print("Generating histograms of grades given by marker by question.")
+        histogram_of_grades_m = []
+        for marker, scores_for_user in des._get_all_ta_data_by_ta().items():
+            questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
+                marker,
             )
-            bins = [x / 100 for x in range(0, 120, 10)]
+            histogram_of_grades_m_q = []
 
-            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("(norm) Grades by " + marker)
-            ax.set_xlabel("Mark given")
-            ax.set_ylabel("# of times assigned")
+            for question in questions_marked_by_this_ta:
+                scores_for_user_for_question = des._get_ta_data_for_question(
+                    question_number=question, ta_df=scores_for_user
+                )
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
+                histogram_of_grades_m_q.append(
+                    mpls.histogram_of_grades_on_question_by_ta(
+                        question=question,
+                        ta_name=marker,
+                        ta_df=scores_for_user_for_question,
+                        versions=True,
+                    )
+                )
 
-            base64_histogram_of_grades_m.append(
-                base64.b64encode(png_bytes.read()).decode()
-            )
-
-            plt.close()
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-            scores_given_for_user = ta_grading.loc[
-                ta_grading["user"] == marker, "score_given"
-            ]
-            max_score_for_user = ta_grading.loc[
-                ta_grading["user"] == marker, "max_score"
-            ].max()
-            bins = range(0, max_score_for_user + RANGE_BIN_OFFSET)
-
-            ax.hist(scores_given_for_user, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("(abs) Grades by " + marker)
-            ax.set_xlabel("Mark given")
-            ax.set_ylabel("# of times assigned")
-
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_histogram_of_grades_m.append(
-                base64.b64encode(png_bytes.read()).decode()
-            )
+            histogram_of_grades_m.append(histogram_of_grades_m_q)
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
-        max_time = ta_times["seconds_spent_marking"].max()
-        bin_width = 15  # seconds
-        base64_histogram_of_time = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
+        max_time = des._get_ta_data()["seconds_spent_marking"].max()
+        bin_width = 15
+        histogram_of_time = []
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+            histogram_of_time.append(
+                mpls.histogram_of_time_spent_marking_each_question(
+                    question_number=question,
+                    marking_times_df=marking_times_df,
+                    versions=True,
+                    max_time=max_time,
+                    bin_width=bin_width,
+                )
+            )
 
-            marking_times_for_question = ta_times.loc[
-                ta_times["question_number"] == int(question), "seconds_spent_marking"
-            ].div(60)
-            bins = [t / 60.0 for t in range(0, max_time + bin_width, bin_width)]
-
-            ax.hist(marking_times_for_question, bins=bins, ec="black", alpha=0.5)
-            ax.set_title("Time spent marking Q" + str(question))
-            ax.set_xlabel("Time spent (min)")
-            ax.set_ylabel("# of papers")
-
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_histogram_of_time.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
+        del max_time, bin_width
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
-        base64_scatter_of_time = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(3.2, 2.4), tight_layout=True)
-
-            times_for_question = ta_times.loc[
-                ta_times["question_number"] == int(question), "seconds_spent_marking"
-            ].div(60)
-            mark_given_for_question = ta_grading.loc[
-                ta_grading["question_number"] == int(question), "score_given"
-            ]
-
-            ax.scatter(
-                times_for_question, mark_given_for_question, ec="black", alpha=0.5
-            )
-            ax.set_title("Q" + str(question) + ": Time spent vs Mark given")
-            ax.set_xlabel("Time spent (min)")
-            ax.set_ylabel("Mark given")
-
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
-
-            base64_scatter_of_time.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
-
-        # 1D scatter plot of the average grades given by each marker for each question
-        print("Generating 1D scatter plots of average grades for each question.")
-        base_64_scatter_of_avgs = []
-        for question in spec["question"]:
-            fig, ax = plt.subplots(figsize=(3.2, 1.6), tight_layout=True)
-
-            avgs = []
-            markers = ["Average"]
-            markers.extend(
-                ta_grading.loc[
-                    ta_grading["question_number"] == int(question), "user"
-                ].unique()
-            )
-            avg_for_question = ta_grading.loc[
-                ta_grading["question_number"] == int(question), "score_given"
-            ].mean()
-            avgs.append(avg_for_question)
-            for marker in markers[1:]:
-                avgs.append(
-                    ta_grading.loc[
-                        (ta_grading["question_number"] == int(question))
-                        & (ta_grading["user"] == marker),
-                        "score_given",
-                    ].mean()
-                )
-
-            ax.scatter(avgs, np.zeros_like(avgs), ec="black", alpha=0.5)
-            ax.set_xlabel("Q" + str(question) + " average marks given")
-            ax.tick_params(
-                axis="y",
-                which="both",  # both major and minor ticks are affected
-                left=False,  # ticks along the bottom edge are off
-                right=False,  # ticks along the top edge are off
-                labelleft=False,
-            )
-            for i, marker in enumerate(markers):
-                ax.annotate(
-                    marker,
-                    (avgs[i], 0),
-                    ha="left",
-                    rotation=60,
-                )
-
-            plt.xlim(
-                [
-                    0,
-                    ta_grading.loc[
-                        ta_grading["question_number"] == int(question), "max_score"
-                    ].max(),
+        scatter_of_time = []
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+            # list of lists of times spent marking each version of the question
+            times_for_question = []
+            marks_given_for_question = []
+            for version in marking_times_df["question_version"].unique():
+                version_df = marking_times_df[
+                    (marking_times_df["question_version"] == version)
                 ]
+                times_for_question.append(
+                    version_df["seconds_spent_marking"].div(60),
+                )
+
+                marks_given_for_question.append(version_df["score_given"])
+
+            scatter_of_time.append(
+                mpls.scatter_time_spent_vs_mark_given(
+                    question_number=question,
+                    times_spent_minutes=times_for_question,
+                    marks_given=marks_given_for_question,
+                    versions=True,
+                )
             )
-            plt.ylim([-0.1, 1])
 
-            png_bytes = BytesIO()
-            fig.savefig(png_bytes, format="png")
-            png_bytes.seek(0)
+        # Box plot of the grades given by each marker for each question
+        print("Generating box plots of grades by each marker for each question.")
+        boxplots = []
+        for (
+            question_number,
+            question_df,
+        ) in des._get_all_ta_data_by_question().items():
+            marks_given = []
+            # add overall to names
+            marker_names = ["Overall"]
+            marker_names.extend(
+                des.get_tas_that_marked_this_question(question_number, question_df)
+            )
+            # add the overall marks
+            marks_given.append(
+                des.get_scores_for_question(
+                    question_number=question_number,
+                )
+            )
 
-            base_64_scatter_of_avgs.append(base64.b64encode(png_bytes.read()).decode())
-            plt.close()
+            for marker_name in marker_names[1:]:
+                marks_given.append(
+                    des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df),
+                )
+
+            boxplots.append(
+                mpls.boxplot_of_marks_given_by_ta(
+                    marks_given, marker_names, question_number
+                )
+            )
+
+        # line graph of average mark on each question
+        print("Generating line graph of average mark on each question.")
+        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=True)
+
+        print("Generating HTML.")
+
+        def _html_add_title(title: str) -> str:
+            """Generate HTML for a title."""
+            out = f"""
+            <br>
+            <p style="break-before: page;"></p>
+            <h3>{title}</h3>
+            """
+            return out
+
+        def _html_for_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of graphs."""
+            out = ""
+            odd = 0
+            for i, graph in enumerate(list_of_graphs):
+                odd = i % 2
+                if not odd:
+                    out += f"""
+                    <div class="row">
+                    """
+                out += f"""
+                <div class="col" style="margin-left:0mm;">
+                <img src="data:image/png;base64,{graph}" width="50px" height="40px">
+                </div>
+                """
+                if odd:
+                    out += f"""
+                    </div>
+                    """
+            if not odd:
+                out += f"""
+                </div>
+                """
+            return out
+
+        def _html_for_big_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of large graphs."""
+            out = ""
+            for graph in list_of_graphs:
+                out += f"""
+                <div class="col" style="margin-left:0mm;">
+                <img src="data:image/png;base64,{graph}" width="100%" height="100%">
+                </div>
+                """
+            return out
 
         html = f"""
         <body>
         <h2>Marking report: {longName}</h2>
+        """
+        if not all_marked:
+            html += f"""
+            <p style="color:red;">WARNING: Not all papers have been marked.</p>
+            """
+
+        html += f"""
         <p>Date: {date}</p>
         <br>
         <h3>Overview</h3>
@@ -306,154 +244,51 @@ class Command(BaseCommand):
         <p>Median total mark: {median_mark}/{totalMarks}</p>
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
-        <img src="data:image/png;base64,{base64_histogram_of_grades}">
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of grades by question</h3>
+        <h3>Histogram of total marks</h3>
+        <img src="data:image/png;base64,{histogram_of_grades}">
         """
 
-        for i, hist in enumerate(base64_histogram_of_grades_q):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
+        html += _html_add_title("Histogram of marks by question")
+        html += _html_for_big_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
-        <img src="data:image/png;base64,{base64_corr}">
-        </body>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of grades given by marker</h3>
+        <img src="data:image/png;base64,{corr}">
         """
 
-        for i, hist in enumerate(base64_histogram_of_grades_m):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
+        html += _html_add_title("Histograms of grades by marker by question")
+
+        for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
+            <h4>Grades by {marker}</h4>
             """
 
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
+            html += _html_for_big_graphs(histogram_of_grades_m[index])
 
+        html += _html_add_title(
+            "Histograms of time spent marking each question (in minutes)"
+        )
+        html += _html_for_big_graphs(histogram_of_time)
+
+        html += _html_add_title(
+            "Scatter plots of time spent marking each question vs mark given"
+        )
+        html += _html_for_big_graphs(scatter_of_time)
+
+        html += _html_add_title(
+            "Box plots of grades given by each marker for each question"
+        )
+        html += _html_for_big_graphs(boxplots)
+
+        html += _html_add_title("Line graph of average mark on each question")
         html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Histograms of time spent marking each question (in seconds)</h3>
-        """
-
-        for i, hist in enumerate(base64_histogram_of_time):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
+            <img src="data:image/png;base64,{line_graph}">
             """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>Scatter plots of time spent marking each question vs mark given</h3>
-        """
-
-        for i, hist in enumerate(base64_scatter_of_time):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>1D scatter plots of average grades given by each marker for each question</h3>
-        """
-
-        for i, hist in enumerate(base_64_scatter_of_avgs):
-            odd = i % 2
-            if not odd:
-                html += f"""
-                <div class="row">
-                """
-            html += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{hist}" width="50px" height="40px">
-            </div>
-            """
-
-            if odd:
-                html += f"""
-                </div>
-                """
-        if not odd:
-            html += f"""
-            </div>
-            """
-
-        html += f"""
-        <br>
-        <p style="break-before: page;"></p>
-        """
 
         def create_pdf(html):
             """Generate a PDF file from a string of HTML."""
             htmldoc = HTML(string=html, base_url="")
-            # with open("styles.css", "r") as f:
-            #     css = f.read()
 
             return htmldoc.write_pdf(
                 stylesheets=[CSS("./static/css/generate_report.css")]
@@ -464,8 +299,11 @@ class Command(BaseCommand):
             with open(file_path, "wb") as f:
                 f.write(pdf_data)
 
-        date_filename = ""  # dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        filename = "Report-" + name + "--" + date_filename + ".pdf"
+        date_filename = (
+            ""  # "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        )
+        filename = "Report-" + name + date_filename + ".pdf"
+
         print("Writing to " + filename + ".")
 
         pdf_data = create_pdf(html)

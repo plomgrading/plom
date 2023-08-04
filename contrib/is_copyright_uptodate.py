@@ -30,7 +30,7 @@ ok_no_copyright = [
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
     ".mailmap",
-    "*/cl_for_demo.csv",
+    "*/cl_*.csv",
     "*papers_to_rooms.csv",
     "django/static/*.svg",
     "testTemplates/idBox*.eps",

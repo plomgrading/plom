@@ -10,8 +10,8 @@ from model_bakery import baker
 from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
 
-from Mark.services import MarkingTaskService
-from Mark.models import MarkingTask
+from ..services import MarkingTaskService
+from ..models import MarkingTask
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -90,17 +90,28 @@ class MarkingTaskServiceTests(TestCase):
         """
 
         baker.make(
-            MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=1, code="1"
+            MarkingTask,
+            status=MarkingTask.COMPLETE,
+            paper__paper_number=1,
+            code="1",
         )
         baker.make(MarkingTask, status=MarkingTask.OUT, paper__paper_number=2, code="2")
         task3 = baker.make(
-            MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=3, code="3"
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            paper__paper_number=3,
+            code="3",
+            marking_priority=2,
         )
         baker.make(
             MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
         )
         task5 = baker.make(
-            MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=5, code="5"
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            paper__paper_number=5,
+            code="5",
+            marking_priority=1,
         )
 
         mts = MarkingTaskService()
@@ -118,6 +129,39 @@ class MarkingTaskServiceTests(TestCase):
         """
 
         baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=1,
+            question_version=1,
+            paper__paper_number=1,
+            code="1",
+            marking_priority=1,
+        )
+        task2 = baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=1,
+            question_version=2,
+            paper__paper_number=2,
+            code="2",
+            marking_priority=2,
+        )
+        baker.make(
+            MarkingTask,
+            status=MarkingTask.TO_DO,
+            question_number=2,
+            question_version=2,
+            paper__paper_number=3,
+            code="3",
+            marking_priority=3,
+        )
+
+        mts = MarkingTaskService()
+        task = mts.get_first_available_task(1, 2)
+        self.assertEqual(task, task2)
+
+    def test_set_task_priorities(self):
+        task1 = baker.make(
             MarkingTask,
             status=MarkingTask.TO_DO,
             question_number=1,
@@ -143,14 +187,17 @@ class MarkingTaskServiceTests(TestCase):
         )
 
         mts = MarkingTaskService()
-        task = mts.get_first_available_task(1, 2)
+        mts.set_task_priorities("papernum")
+
+        task = mts.get_first_available_task()
+        self.assertEqual(task, task1)
+        task1.status = MarkingTask.COMPLETE
+        task1.save()
+
+        task = mts.get_first_available_task()
         self.assertEqual(task, task2)
 
-    def test_get_priority_filter(self):
-        """
-        Test MarkingTaskService.get_priority_available_task() with a specified question and version
-        """
-
+    def test_set_task_priorities_more(self):
         baker.make(
             MarkingTask,
             status=MarkingTask.TO_DO,
@@ -158,35 +205,66 @@ class MarkingTaskServiceTests(TestCase):
             question_version=1,
             paper__paper_number=1,
             code="1",
-            marking_priority=-1.2,
         )
-        task2 = baker.make(
+        baker.make(
             MarkingTask,
             status=MarkingTask.TO_DO,
             question_number=1,
-            question_version=1,
+            question_version=2,
             paper__paper_number=2,
             code="2",
-            marking_priority=2.9,
         )
-        task3 = baker.make(
+        baker.make(
             MarkingTask,
             status=MarkingTask.TO_DO,
-            question_number=1,
-            question_version=1,
+            question_number=2,
+            question_version=2,
             paper__paper_number=3,
             code="3",
-            marking_priority=2.5,
         )
 
         mts = MarkingTaskService()
-        task = mts.get_priority_available_task(1, 1)
-        self.assertEqual(task, task2)
-        task2.status = MarkingTask.OUT
-        task2.save()
+        mts.set_task_priorities(
+            order_by="custom", custom_order={(1, 1): 8.9, (2, 1): 359.2, (3, 2): -16.3}
+        )
 
-        task = mts.get_priority_available_task(1, 1)
-        self.assertEqual(task, task3)
+        task = mts.get_first_available_task()
+        self.assertEqual(task.code, "2")
+        task.status = MarkingTask.COMPLETE
+        task.save()
+
+        self.assertAlmostEqual(MarkingTask.objects.get(code="1").marking_priority, 8.9)
+        self.assertAlmostEqual(
+            MarkingTask.objects.get(code="3").marking_priority, -16.3
+        )
+
+        task = mts.get_first_available_task()
+        task.status = MarkingTask.COMPLETE
+        task.save()
+
+        task = mts.get_first_available_task()
+        self.assertEqual(task.code, "3")
+
+    def test_set_task_priorities_random(self):
+        p = 1
+        for q in range(2, 4):
+            for v in range(1, 3):
+                baker.make(
+                    MarkingTask,
+                    status=MarkingTask.TO_DO,
+                    question_number=q,
+                    question_version=v,
+                    paper__paper_number=p,
+                    code="1",
+                    marking_priority=-1,
+                )
+                p += 1
+
+        mts = MarkingTaskService()
+        mts.set_task_priorities(order_by="random")
+
+        for task in MarkingTask.objects.all():
+            self.assertNotEqual(task.marking_priority, -1)
 
     def test_assign_task_to_user(self):
         """

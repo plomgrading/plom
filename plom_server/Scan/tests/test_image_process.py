@@ -12,8 +12,8 @@ import pathlib
 import tempfile
 from PIL import Image
 
-from Scan.services import PageImageProcessor, ScanService
 from plom.scan import QRextract
+from ..services import PageImageProcessor, ScanService
 
 
 class PageImageProcessorTests(TestCase):

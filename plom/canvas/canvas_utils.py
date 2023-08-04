@@ -2,7 +2,7 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
-"""Misc utils for interacting with Canvas"""
+"""Misc utils for interacting with Canvas."""
 
 import csv
 from pathlib import Path
@@ -15,8 +15,7 @@ from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
 def get_student_list(course_or_section):
-    """
-    Get the list of students in a Course or a Section.
+    """Get the list of students in a Course or a Section.
 
     Args:
         course (canvasapi.course.Course/canvasapi.section.Section):
@@ -33,8 +32,7 @@ def get_student_list(course_or_section):
 
 
 def download_classlist(course, *, section=None, server_dir="."):
-    """
-    Download .csv of the classlist and various conversion tables.
+    """Download .csv of the classlist and various conversion tables.
 
     Args:
         course (canvasapi.course.Course): we will query for enrollment.
@@ -103,7 +101,7 @@ def download_classlist(course, *, section=None, server_dir="."):
         if (
             not stud_id
             or stud_id is None
-            or (type(stud_id) == str and stud_id in string.whitespace)
+            or (isinstance(stud_id, str) and stud_id in string.whitespace)
         ):
             stud_id = str(default_id)
             # 5-7 characters is what I've seen, so let's just go with 7
@@ -113,7 +111,7 @@ def download_classlist(course, *, section=None, server_dir="."):
         if (
             not stud_sis_id
             or stud_sis_id is None
-            or (type(stud_sis_id) == str and stud_sis_id in string.whitespace)
+            or (isinstance(stud_sis_id, str) and stud_sis_id in string.whitespace)
         ):
             stud_sis_id = str(default_sis_id)
             # 8 characters is necessary for UBC ID
@@ -124,7 +122,7 @@ def download_classlist(course, *, section=None, server_dir="."):
             not stud_sis_login_id
             or stud_sis_login_id is None
             or (
-                type(stud_sis_login_id) == str
+                isinstance(stud_sis_login_id, str)
                 and stud_sis_login_id in string.whitespace
             )
         ):

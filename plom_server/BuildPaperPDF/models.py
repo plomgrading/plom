@@ -34,7 +34,11 @@ class PDFTask(HueyTask):
         print(
             f"Deleting pdf associated with paper {self.paper.paper_number} if it exists"
         )
-        self.file_path().unlink(missing_ok=True)
+        f = self.file_path()
+        if not f:
+            print(f"  But no file associated with paper {self.paper.paper_number}")
+            return
+        f.unlink(missing_ok=True)
 
     def file_path(self) -> Union[pathlib.Path, None]:
         """Get the path of the generated PDF file.

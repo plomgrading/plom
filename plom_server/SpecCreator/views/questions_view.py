@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import reverse
 from django.shortcuts import render
@@ -7,13 +8,13 @@ from django.http import HttpResponseRedirect
 
 from Preparation.services import TestSourceService, PQVMappingService
 
-from SpecCreator.views import TestSpecPageView
-from SpecCreator.services import StagingSpecificationService
-from .. import forms
+from . import TestSpecPageView
+from ..services import StagingSpecificationService
+from ..forms import TestSpecQuestionsMarksForm
 
 
 class TestSpecCreatorQuestionsPage(TestSpecPageView):
-    """Set the number of questions and total marks"""
+    """Set the number of questions and total marks."""
 
     def build_form(self):
         spec = StagingSpecificationService()
@@ -24,7 +25,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
             "total_marks": marks if marks > 0 else None,
         }
 
-        form = forms.TestSpecQuestionsMarksForm(initial=initial)
+        form = TestSpecQuestionsMarksForm(initial=initial)
         return form
 
     def build_context(self):
@@ -43,7 +44,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
         return render(request, "SpecCreator/questions-marks-page.html", context)
 
     def post(self, request):
-        form = forms.TestSpecQuestionsMarksForm(request.POST)
+        form = TestSpecQuestionsMarksForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
             spec = StagingSpecificationService()

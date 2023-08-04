@@ -36,6 +36,15 @@ class ReassembleService:
             and completed_tasks.count() + ood_tasks.count() == paper_tasks.count()
         )
 
+    def are_all_papers_marked(self) -> bool:
+        """Return True if all of the papers that have a task are marked."""
+        papers = Paper.objects.exclude(markingtask__isnull=True)
+
+        for paper in papers:
+            if not self.is_paper_marked(paper):
+                return False
+        return True
+
     def get_n_questions_marked(self, paper):
         """Return the number of questions that are marked in a paper.
 

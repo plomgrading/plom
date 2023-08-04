@@ -52,12 +52,6 @@ class Command(BaseCommand):
                 f"Number-to-produce not supplied, using recommended number = {number_to_produce}."
             )
 
-            # modify test specification
-            staging_spec = StagingSpecificationService()
-            staging_spec.set_n_to_produce(number_to_produce)
-            staging_spec.validate_specification(verbose=False)
-            speck.modify_n_to_produce(number_to_produce)
-
         elif number_to_produce < pqvms.get_minimum_number_to_produce():
             self.stdout.write(
                 f"Warning: Supplied number-to-produce={number_to_produce} is less than the recommended minimum={min_production}."

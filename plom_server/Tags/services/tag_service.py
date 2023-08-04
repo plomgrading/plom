@@ -2,7 +2,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-from Mark.models.tasks import MarkingTaskTag
+from typing import Any
+
+from django.db import transaction
+
+from Mark.models import MarkingTaskTag
 
 
 class TagService:
@@ -84,3 +88,9 @@ class TagService:
         """
         tag = self.get_tag_from_id(tag_id)
         tag.delete()
+
+    def update_tag_content(self, tag: MarkingTaskTag, content: Any) -> None:
+        """Update the content of a tag."""
+        for key, value in content.items():
+            tag.__setattr__(key, value)
+        tag.save()

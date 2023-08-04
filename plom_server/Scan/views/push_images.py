@@ -9,9 +9,9 @@ from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
-
 from Papers.services import ImageBundleService
-from Scan.services import ScanService
+
+from ..services import ScanService
 
 
 class PushPageImage(ScannerRequiredView):

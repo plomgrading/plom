@@ -11,11 +11,10 @@ from huey.signals import (
     SIGNAL_INTERRUPTED,
 )
 
-from django.utils import timezone
-
 from django.db import models
 from django.contrib.auth.models import User
 from django_huey import get_queue
+from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
 import logging
@@ -155,6 +154,10 @@ class Tag(models.Model):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        """Return the tag's text."""
+        return self.text
 
 
 # ---------------------------------

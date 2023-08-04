@@ -4,9 +4,10 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Natalia Accomazzo Scotti
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Natalie Balashov
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -35,7 +36,8 @@ classifiers=[
 ]
 dynamic = ['version']
 requires-python = '>=3.8'
-# note aiohttp, lapsolver and peewee are legacy deps only
+# note aiohttp and peewee are legacy deps only
+# Note: importlib_resources for < 3.10 in plom_server, not sure why
 dependencies = [
     "aiohttp>=3.7.2",
     "appdirs>=1.4.3",
@@ -45,6 +47,7 @@ dependencies = [
     "debugpy>=1.6.7",
     "django>=4.0.10",
     "django-braces>=1.15.0",
+    "django-filter>=23.2",
     "django-htmx>=1.14.0",
     "django-huey>=1.1.1",
     "django-polymorphic>=3.1.0",
@@ -53,9 +56,8 @@ dependencies = [
     "djangorestframework>=3.14.0",
     "exif>=1.2.2",
     "fonttools>=4.37.1",
-    'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
+    'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
-    "lapsolver",  # ID reading
     "matplotlib>=3.5.3",
     "model_bakery>=1.11.0",
     "numpy>=1.21.2",
@@ -237,7 +239,6 @@ module = [
     'fitz',
     'importlib_resources',
     'imutils.*',
-    'lapsolver',
     'requests_toolbelt',
     'sklearn.*',
     'stdiomask',

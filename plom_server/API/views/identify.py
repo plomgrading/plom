@@ -75,17 +75,16 @@ class GetIDPredictions(APIView):
 
     def delete(self, request, predictor=None):
         """Remove ID predictions from either a particular predictor or all predictors."""
-        user = request.user
         id_reader_service = IDReaderService()
         if predictor:
             try:
-                id_reader_service.delete_ID_predictions(user, predictor)
+                id_reader_service.delete_ID_predictions(predictor)
                 return Response(status=status.HTTP_200_OK)
             except RuntimeError:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             for predictor_name in ("MLLAP", "MLGreedy"):
-                id_reader_service.delete_ID_predictions(user, predictor_name)
+                id_reader_service.delete_ID_predictions(predictor_name)
             return Response(status=status.HTTP_200_OK)
 
 
@@ -143,7 +142,7 @@ class IDclaimThisTask(APIView):
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
             return _error_response(
-                f"ID task {paper_id} already claimed", status=status.HTTP_409_CONFLICT
+                f"ID task {paper_id} already claimed", status.HTTP_409_CONFLICT
             )
 
     def put(self, request, paper_id):

@@ -3,17 +3,14 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
-
 from django.shortcuts import render, redirect
-from django.http import Http404, FileResponse, HttpResponse
+from django.http import Http404, FileResponse
 
 from Base.base_group_views import ScannerRequiredView
-
-from Scan.services import ScanService
 from Papers.services import SpecificationService, PaperInfoService
+from ..services import ScanService
 
-
-# from Scan.models import StagingImage
+# from ..models import StagingImage
 # from Progress.services import ManageScanService
 
 # change to valid page

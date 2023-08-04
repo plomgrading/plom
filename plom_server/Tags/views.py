@@ -4,8 +4,8 @@
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
-from Tags.forms import TagFormFilter, TagEditForm
-from Tags.services.tag_service import TagService
+from .forms import TagFormFilter, TagEditForm
+from .services import TagService
 
 
 class TagLandingPageView(ManagerRequiredView):
@@ -74,12 +74,12 @@ class TagItemView(ManagerRequiredView):
 
     def post(request, tag_id):
         form = TagEditForm(request.POST)
+        ts = TagService()
 
         if form.is_valid():
             tag = TagItemView.ts.get_tag_from_id(tag_id=tag_id)
-            for key, value in form.cleaned_data.items():
-                tag.__setattr__(key, value)
-            tag.save()
+            ts.update_tag_content(tag=tag, content=form.cleaned_data)
+
         return redirect("tag_item", tag_id=tag_id)
 
     def tag_delete(request, tag_id):

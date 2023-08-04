@@ -1,16 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 import json
 from pathlib import Path
 import sys
+from typing import Optional
 
-# try to avoid importing Pandas unless we use specific functions: Issue #2154
-# import pandas
-
-from tabulate import tabulate
-
-if sys.version_info >= (3, 9):
+if sys.version_info >= (3, 10):
     from importlib import resources
 else:
     import importlib_resources as resources
@@ -21,10 +18,17 @@ else:
     import tomllib
 import tomlkit
 
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
+
 from django.core.management.base import BaseCommand, CommandError
+from rest_framework.exceptions import ValidationError
+from tabulate import tabulate
+
+import plom
 
 from Papers.services import SpecificationService
-from Rubrics.services import RubricService
+from ...services import RubricService
 
 
 class Command(BaseCommand):
@@ -32,12 +36,20 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, *, numquestions=None):
+    def upload_demo_rubrics(
+        self, username: str, *, numquestions: Optional[int] = None
+    ) -> int:
         """Load some demo rubrics and upload to server.
+
+        Args:
+            username: rubrics need to be associated to a rubric.
 
         Keyword Args:
             numquestions (None/int): how many questions should we build for.
                 Get it from the spec if omitted.
+
+        Returns:
+            The number of rubrics uploaded.
 
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
@@ -46,9 +58,8 @@ class Command(BaseCommand):
             spec = SpecificationService().get_the_spec()
             numquestions = spec["numberOfQuestions"]
 
-        with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
-            rubrics_in = tomllib.load(f)
-        rubrics_in = rubrics_in["rubric"]
+        with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
+            rubrics_in = tomllib.load(f)["rubric"]
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):
@@ -67,10 +78,7 @@ class Command(BaseCommand):
             rub["display_delta"] = rub["delta"]
             rub.pop("delta")
 
-            # TODO: didn't need to do this on legacy, Issue #2640
-            rub["username"] = "manager"
-            rub["tags"] = ""
-            rub["meta"] = ""
+            rub["username"] = username
 
             # Multiply rubrics w/o question numbers, avoids repetition in demo file
             if rub.get("question") is None:
@@ -83,12 +91,19 @@ class Command(BaseCommand):
 
         service = RubricService()
         for rubric in rubrics:
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
-    def init_rubrics_cmd(self):
+    def init_rubrics_cmd(self, username):
         service = RubricService()
-        return service.init_rubrics()
+        return service.init_rubrics(username)
 
     def erase_all_rubrics_cmd(self):
         service = RubricService()
@@ -157,6 +172,7 @@ class Command(BaseCommand):
                 we'll try to append `.toml`.
 
         TODO: anything need done about missing fields etc?  See also Issue #2640.
+        Currently RubricService.create_rubric() raises a KeyError on missing fields.
 
         TODO: in legacy, there is logic about HAL vs Manager about what to upload.
         There is also some incorrect logic about absolute rubrics being always
@@ -189,7 +205,14 @@ class Command(BaseCommand):
         service = RubricService()
         for rubric in rubrics:
             # rubric.pop("id")
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
     def add_arguments(self, parser):
@@ -198,10 +221,15 @@ class Command(BaseCommand):
             description="Various tasks about rubrics.",
         )
 
-        sub.add_parser(
+        sp_init = sub.add_parser(
             "init",
             help="Initialize the rubric system with system rubrics",
             description="Initialize the rubric system with system rubrics.",
+        )
+        sp_init.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is initializing the rubrics.",
         )
 
         sp_wipe = sub.add_parser(
@@ -224,6 +252,11 @@ class Command(BaseCommand):
                 build their own rubrics but if you have premade rubrics you can
                 add them here.
             """,
+        )
+        sp_push.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is pushing the demo rubrics.",
         )
         group = sp_push.add_mutually_exclusive_group(required=True)
         group.add_argument(
@@ -263,10 +296,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opt):
         if opt["command"] == "init":
-            if self.init_rubrics_cmd():
-                self.stdout.write(self.style.SUCCESS("rubric system initialized"))
-            else:
-                raise CommandError("rubric system already initialized")
+            try:
+                if self.init_rubrics_cmd(opt["username"]):
+                    self.stdout.write(self.style.SUCCESS("rubric system initialized"))
+                else:
+                    raise CommandError("rubric system already initialized")
+            except ValueError as e:
+                raise CommandError(e)
 
         elif opt["command"] == "wipe":
             self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
@@ -279,7 +315,7 @@ class Command(BaseCommand):
 
         elif opt["command"] == "push":
             if opt["demo"]:
-                N = self.upload_demo_rubrics()
+                N = self.upload_demo_rubrics(opt["username"])
                 self.stdout.write(self.style.SUCCESS(f"Added {N} demo rubrics"))
                 return
             f = Path(opt["file"])

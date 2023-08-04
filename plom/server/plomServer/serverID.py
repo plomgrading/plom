@@ -219,9 +219,6 @@ def predict_id_lap_solver(self):
 
     Insert these predictions into the database as "MLLAP" predictions.
 
-    TODO: consider doing this client-side, although Manager tool would
-    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
-
     Returns:
         str: multiline status text, appropriate to show to a user.
 

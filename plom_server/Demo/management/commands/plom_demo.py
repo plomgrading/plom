@@ -7,21 +7,34 @@ import os
 import subprocess
 from time import sleep
 from shlex import split
+import sys
+
+if sys.version_info >= (3, 10):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 
-from Demo.services import (
+from ...services import (
     DemoProcessesService,
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
     ServerConfigService,
 )
+from ... import config_files as demo_config_files
 
 
 class Command(BaseCommand):
-    help = "WebPlom demo. For testing, debugging and development."
+    help = """
+        WebPlom demo. For testing, debugging and development.
+
+        Some aspects of the server can be changed via command line
+        arguments.  Others via environment variables, including
+        PLOM_DATABASE_BACKEND, PLOM_DB_NAME, and probably more
+        in the future.
+    """
 
     def papers_and_db(self, dcs: DemoCreationService):
         print("*" * 40)
@@ -130,20 +143,20 @@ class Command(BaseCommand):
         print("*" * 40)
         dcs.create_rubrics()
 
-    def run_randomarker(self):
-        # TODO: hardcoded port numbers!
+    def run_randomarker(self, *, port):
         # TODO: hardcoded http://
-        cmds = [
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker1 -w demoMarker1 --partial 25",
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker2 -w demoMarker2 --partial 33",
-            "python3 -m plom.client.randoMarker -s http://localhost:8000 -u demoMarker3 -w demoMarker3 --partial 50",
-        ]
+        srv = f"http://localhost:{port}"
+        cmds = (
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker1 -w demoMarker1 --partial 25",
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
+            f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker3 -w demoMarker3 --partial 50",
+        )
         env = dict(os.environ, WEBPLOM="1")
         for cmd in cmds:
             print(f"RandoMarking!  calling: {cmd}")
             subprocess.check_call(split(cmd), env=env)
 
-        cmd = "python3 -m plom.client.randoIDer -s http://localhost:8000 -u demoMarker1 -w demoMarker1"
+        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
         print(f"RandoIDing!  calling: {cmd}")
         subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
 
@@ -180,6 +193,13 @@ class Command(BaseCommand):
             help="Stop the demo sequence at a certain breakpoint.",
         )
         parser.add_argument(
+            "--port",
+            action="store",
+            type=int,
+            default=8000,
+            help="What port number to run on, default 8000.",
+        )
+        parser.add_argument(
             "--randomarker",
             action="store_true",
             help="Run the plom-client randomarker.",
@@ -201,7 +221,7 @@ class Command(BaseCommand):
         config_service = ServerConfigService()
         if config_path is None:
             config = config_service.read_server_config(
-                settings.BASE_DIR / "Demo/config_files/full_demo_config.toml"
+                resources.files(demo_config_files) / "full_demo_config.toml"
             )
         else:
             try:
@@ -238,13 +258,13 @@ class Command(BaseCommand):
             return
 
         print("*" * 40)
-        server_proc = proc_service.launch_server()
+        server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
             self.post_server_init(creation_service, config, stop_at)
 
             if options["randomarker"]:
-                self.run_randomarker()
+                self.run_randomarker(port=options["port"])
 
             if not options["no_waiting"]:
                 sleep(2)

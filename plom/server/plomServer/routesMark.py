@@ -128,7 +128,7 @@ class MarkHandler:
             return web.Response(status=204)  # no papers left
         return web.json_response(give)
 
-    # @routes.get("/MK/latex")
+    # @routes.post("/MK/latex")
     @authenticate_by_token_required_fields(["user", "fragment"])
     def MlatexFragment(self, data, request):
         """Return the latex image for the string included in the request.
@@ -140,14 +140,15 @@ class MarkHandler:
             request (aiohttp.web_request.Request): Request of type GET /MK/latex.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: A response which includes the image for
-            the latex string.
+            Response: the bytes of the png image on success or a json blob
+            including the fields `"error"` and `"tex_output"`.  May change
+            in the future.
         """
         valid, value = self.server.MlatexFragment(data["fragment"])
         if valid:
             return web.Response(body=value, status=200)
-        else:
-            return web.json_response(status=406, text=value)
+        r = {"error": True, "tex_output": value}
+        return web.json_response(r, status=406)
 
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "version"])
@@ -884,7 +885,7 @@ class MarkHandler:
         router.add_get("/MK/progress", self.MprogressCount)
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)
         router.add_get("/MK/tasks/available", self.MgetNextTask)
-        router.add_get("/MK/latex", self.MlatexFragment)
+        router.add_post("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
@@ -894,7 +895,7 @@ class MarkHandler:
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
         router.add_get("/pagedata/{number}", self.get_pagedata)
-        # some deprecated: use the /context one instead:
+        # somewhat deprecated: use the /context one instead:
         router.add_get("/pagedata/{number}/{question}", self.get_pagedata_question)
         router.add_get(
             "/pagedata/{number}/context/{question}",

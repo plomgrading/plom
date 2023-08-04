@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from .spec_staging import StagingSpecificationService
 from .spec_frontend import SpecCreatorFrontendService
 from .spec_info import TestSpecService

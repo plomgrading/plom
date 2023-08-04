@@ -3,11 +3,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
-import os
+from pathlib import Path
 import shutil
 import subprocess
 from shlex import split
-from pathlib import Path
 
 from django.core.management import call_command
 from django.conf import settings
@@ -16,17 +15,8 @@ from django.conf import settings
 class DemoProcessesService:
     """Handle starting and stopping the server and the Huey background process."""
 
-    def setup_django(self):
-        from django import setup
-
-        """Setup the django server and apply settings.py."""
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
-        setup()
-
     def get_database_engine(self):
         """Which database engine are we using?"""
-        from Web_Plom import settings
-
         engine = settings.DATABASES["default"]["ENGINE"]
         if "postgres" in engine:
             return "postgres"
@@ -46,17 +36,19 @@ class DemoProcessesService:
         conn = psycopg2.connect(user="postgres", password="postgres", host=host)
 
         conn.autocommit = True
-        print("Removing old database.")
-        try:
-            with conn.cursor() as curs:
-                curs.execute("DROP DATABASE plom_db;")
-        except psycopg2.errors.InvalidCatalogName:
-            print("No database 'plom_db' - continuing")
+        db_name = settings.DATABASES["default"]["NAME"]
 
-        print("Creating database 'plom_db'")
+        print(f'Removing old database "{db_name}"')
         try:
             with conn.cursor() as curs:
-                curs.execute("CREATE DATABASE plom_db;")
+                curs.execute(f"DROP DATABASE {db_name};")
+        except psycopg2.errors.InvalidCatalogName:
+            print(f'No database "{db_name}" - continuing')
+
+        print(f'Creating database "{db_name}"')
+        try:
+            with conn.cursor() as curs:
+                curs.execute(f"CREATE DATABASE {db_name};")
         except psycopg2.errors.DuplicateDatabase:
             with conn.cursor() as curs:
                 print("We should not reach here.")
@@ -73,6 +65,8 @@ class DemoProcessesService:
         else:
             raise RuntimeError('Unexpected engine "{engine}"')
 
+        # TODO: Issue #2926:  where should these live?  And there are three
+        # hardcoded here but seems to me the toml could specify something else...
         for fname in [
             "fake_bundle1.pdf",
             "fake_bundle2.pdf",
@@ -83,10 +77,15 @@ class DemoProcessesService:
         for path in Path("huey").glob("huey_db.*"):
             path.unlink(missing_ok=True)
 
-        for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
-            shutil.rmtree(rmdir, ignore_errors=True)
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
-        Path("media").mkdir()
+        # TODO: don't delete things that are not ours
+        # TODO: some of these don't exist any more?
+        # for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
+        #     shutil.rmtree(rmdir, ignore_errors=True)
+
+        # surely Django will do this?  Else we need the settings here
+        # Path("media").mkdir()
 
     def sqlite_set_wal(self):
         import sqlite3
@@ -118,10 +117,10 @@ class DemoProcessesService:
             py_man_cmd = f"python3 manage.py {cmd}"
             return subprocess.Popen(split(py_man_cmd))
 
-    def launch_server(self):
-        print("Launching django server")
+    def launch_server(self, *, port):
+        print(f"Launching django server on localhost port {port}")
         # this needs to be run in the background
-        cmd = "python3 manage.py runserver 8000"
+        cmd = f"python3 manage.py runserver {port}"
         return subprocess.Popen(split(cmd))
 
     def remove_old_migration_files(self):
@@ -136,8 +135,6 @@ class DemoProcessesService:
 
     def initialize_server_and_db(self):
         """Configure Django settings and flush the previous database and media files."""
-        self.setup_django()
-
         engine = self.get_database_engine()
         print(f"You appear to be running with a {engine} database.")
 

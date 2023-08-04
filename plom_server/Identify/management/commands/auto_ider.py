@@ -29,13 +29,13 @@ class Command(BaseCommand):
         You need to run `python3 manage.py plom_id idreader` first.
     """
 
-    def run_auto_iding(self):
+    def run_auto_iding(self, username):
         """Runs the matching with Greedy and Linear Sum Assignment."""
         try:
             sids = self.get_sids()
             probs = self.get_probabilities()
-            self.predict_id_greedy(sids, probs)
-            self.predict_id_lap_solver(sids, probs)
+            self.predict_id_greedy(sids, probs, username)
+            self.predict_id_lap_solver(sids, probs, username)
             self.stdout.write("Ran matching problems and saved results.")
         except ValueError as err:
             raise CommandError(err)
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             num_predictions = len(
                 id_reader_service.get_ID_predictions(predictor=predictor)
             )
-            id_reader_service.delete_ID_predictions(None, predictor=predictor)
+            id_reader_service.delete_ID_predictions(predictor=predictor)
             self.stdout.write(f"Deleted {num_predictions} predictions by {predictor}.")
         except ValueError as err:
             raise CommandError(err)
@@ -76,7 +76,7 @@ class Command(BaseCommand):
         probabilities = {int(k): v for k, v in probabilities.items()}
         return probabilities
 
-    def predict_id_greedy(self, sids, probabilities):
+    def predict_id_greedy(self, sids, probabilities, username):
         """Match each unidentified paper against best fit in classlist.
 
         Returns:
@@ -85,11 +85,11 @@ class Command(BaseCommand):
         id_reader_service = IDReaderService()
         greedy_predictions = self.greedy(sids, probabilities)
         for pred in greedy_predictions:
-            id_reader_service.add_or_change_ID_prediction(
-                None, pred[0], pred[1], pred[2], "MLGreedy"
+            id_reader_service.add_or_change_ID_prediction_cmd(
+                username, pred[0], pred[1], pred[2], "MLGreedy"
             )
 
-    def predict_id_lap_solver(self, sids, probabilities):
+    def predict_id_lap_solver(self, sids, probabilities, username):
         """Matching unidentified papers against classlist via linear assignment problem.
 
         Get the classlist and remove all people that are already IDed
@@ -142,7 +142,7 @@ class Command(BaseCommand):
 
         for pred in lap_predictions:
             id_reader_service.add_or_change_ID_prediction(
-                None, pred[0], pred[1], pred[2], "MLLAP"
+                username, pred[0], pred[1], pred[2], "MLLAP"
             )
 
     def calc_log_likelihood(self, student_ID, prediction_probs):
@@ -279,6 +279,11 @@ class Command(BaseCommand):
             description="ID matching tools to generate and delete ID predictions.",
         )
         sp_match = sp.add_parser("run", help="Run existing ID matching tools.")
+        sp_match.add_argument(
+            "username",
+            type=str,
+            help="Name of user to associate with predictions.",
+        )
         sp_del_pred = sp.add_parser(
             "delete", help="Delete ID predictions from a particular predictor."
         )
@@ -295,7 +300,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["command"] == "run":
-            self.run_auto_iding()
+            self.run_auto_iding(options["username"])
         elif options["command"] == "delete":
             self.delete_predictions(options["predictor"])
         else:

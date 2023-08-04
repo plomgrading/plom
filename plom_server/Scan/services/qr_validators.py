@@ -7,8 +7,9 @@
 from django.db import transaction
 
 from plom.tpv_utils import parse_paper_page_version
+
 from Papers.services import SpecificationService, PaperInfoService
-from Scan.models import (
+from ..models import (
     StagingImage,
     UnknownStagingImage,
     KnownStagingImage,

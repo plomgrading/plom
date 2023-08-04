@@ -3,7 +3,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Scan.services import ScanCastService
+from ...services import ScanCastService
 
 
 class Command(BaseCommand):

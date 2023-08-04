@@ -14,13 +14,13 @@ from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from Base.base_group_views import ManagerRequiredView
+from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import PQVMappingService, StagingStudentService
 from SpecCreator.services import StagingSpecificationService
-from Papers.services import SpecificationService, PaperInfoService
 
-from .services import BuildPapersService, RenamePDFFile
 from .models import PDFTask
-from Base.base_group_views import ManagerRequiredView
+from .services import BuildPapersService, RenamePDFFile
 
 
 class BuildPaperPDFs(ManagerRequiredView):

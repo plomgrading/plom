@@ -2,16 +2,16 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
-
 from Papers.services import ImageBundleService
-from Scan.services import ScanService
-from Scan.forms import FlagImageForm, ReplaceImageForm
+from ..services import ScanService
+from ..forms import FlagImageForm, ReplaceImageForm
 
 
 class ReadQRcodesView(ScannerRequiredView):

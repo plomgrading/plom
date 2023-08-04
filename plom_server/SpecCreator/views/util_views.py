@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -12,8 +11,7 @@ from django.urls import reverse
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from SpecCreator.views import TestSpecPageView
-
+from . import TestSpecPageView
 from ..services import (
     StagingSpecificationService,
     ReferencePDFService,
@@ -31,7 +29,7 @@ class TestSpecResetView(ManagerRequiredView):
 
 
 class TestSpecPrepLandingResetView(ManagerRequiredView):
-    """Clear the test specification from the preparation landing page"""
+    """Clear the test specification from the preparation landing page."""
 
     def post(self, request):
         spec = StagingSpecificationService()
@@ -46,7 +44,7 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
 
 
 class TestSpecViewRefPDF(ManagerRequiredView):
-    """Return the reference PDF in a file response"""
+    """Return the reference PDF in a file response."""
 
     def get(self, request):
         ref = ReferencePDFService()
@@ -87,7 +85,7 @@ class TestSpecDownloadView(TestSpecPageView):
 
 
 class TestSpecSubmitView(TestSpecPageView):
-    """Prompt the user to confirm the test specification before submitting it to the database"""
+    """Prompt the user to confirm the test specification before submitting it to the database."""
 
     def build_context(self):
         context = super().build_context("submit")

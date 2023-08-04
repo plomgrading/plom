@@ -7,13 +7,16 @@
 import imghdr
 import json
 import pathlib
-from typing import Union
+import random
+from typing import Union, Dict
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
+from django.db import transaction
 
 from plom import is_valid_tag_text
 
@@ -22,7 +25,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
-from Mark.models import (
+from ..models import (
     MarkingTask,
     MarkingTaskTag,
     Annotation,
@@ -33,6 +36,7 @@ from Mark.models import (
 class MarkingTaskService:
     """Functions for creating and modifying marking tasks."""
 
+    @transaction.atomic
     def create_task(self, paper, question_number, user=None):
         """Create a marking task.
 
@@ -103,7 +107,7 @@ class MarkingTaskService:
             )
             total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
-            )
+            ).exclude(status=MarkingTask.OUT_OF_DATE)
         except MarkingTask.DoesNotExist:
             return (0, 0)
 
@@ -188,7 +192,9 @@ class MarkingTaskService:
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
-    def get_user_tasks(self, user, question=None, version=None):
+    def get_user_tasks(
+        self, user, question=None, version=None
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks that are assigned to this user.
 
         Args:
@@ -197,7 +203,7 @@ class MarkingTaskService:
             version (optional): int, the version number
 
         Returns:
-            QuerySet[MarkingTask]: tasks
+            Marking tasks assigned to user
         """
         tasks = MarkingTask.objects.filter(assigned_user=user)
         if question:
@@ -207,7 +213,9 @@ class MarkingTaskService:
 
         return tasks
 
-    def get_tasks_from_question_with_annotation(self, question: int, version: int):
+    def get_tasks_from_question_with_annotation(
+        self, question: int, version: int
+    ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
@@ -215,7 +223,7 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            PolymorphicQuerySet[MarkingTask]: tasks
+            A PolymorphicQuerySet of tasks
 
         Raises:
             None expected
@@ -227,15 +235,25 @@ class MarkingTaskService:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
 
-    def get_available_tasks(self, question=None, version=None):
-        """Return the marking tasks with a 'todo' status.
+    def get_latest_annotations_from_complete_marking_tasks(
+        self,
+    ) -> QuerySet[Annotation]:
+        """Returns the latest annotations from all tasks that are complete."""
+        return Annotation.objects.filter(
+            markingtask__status=MarkingTask.COMPLETE
+        ).filter(markingtask__latest_annotation__isnull=False)
+
+    def get_first_available_task(
+        self, question=None, version=None
+    ) -> Union[QuerySet[MarkingTask], None]:
+        """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
 
         Returns:
-            Queryset[MarkingTask]: The queryset of available tasks, or
+            The queryset of available tasks, or
             `None` if no such task exists.
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
@@ -248,64 +266,68 @@ class MarkingTaskService:
 
         if not available.exists():
             return None
-        return available
-
-    def get_first_available_task(
-        self, question=None, version=None
-    ) -> Union[MarkingTask, None]:
-        """Return the first marking task with a 'todo' status.
-
-        Args:
-            question (optional): int, requested question number
-            version (optional): int, requested version number
-
-        Returns:
-            The first available task, or `None` if no such task exists.
-        """
-        available = self.get_available_tasks(question=question, version=version)
-
-        if available is None:
-            return None
-
-        return available.order_by("paper__paper_number").first()
-
-    def get_random_available_task(
-        self, question=None, version=None
-    ) -> Union[MarkingTask, None]:
-        """Return a random marking task with a 'todo' status.
-
-        Args:
-            question (optional): int, requested question number
-            version (optional): int, requested version number
-
-        Returns:
-            A random available task, or `None` if no such task exists.
-        """
-        available = self.get_available_tasks(question=question, version=version)
-
-        if available is None:
-            return None
-
-        return available.order_by("?").first()
-
-    def get_priority_available_task(
-        self, question=None, version=None
-    ) -> Union[MarkingTask, None]:
-        """Return the highest priority marking task with a 'todo' status.
-
-        Args:
-            question (optional): int, requested question number
-            version (optional): int, requested version number
-
-        Returns:
-            The highest priority available task, or `None` if no such task exists.
-        """
-        available = self.get_available_tasks(question=question, version=version)
-
-        if available is None:
-            return None
 
         return available.order_by("-marking_priority").first()
+
+    def set_task_priorities(
+        self,
+        order_by: str = "random",
+        *,
+        custom_order: Union[Dict[tuple[int, int], float], None] = None,
+    ):
+        """Set the marking task priorities.
+
+        Updates the marking task priorities of all remaining TO_DO tasks in the
+        database. If `order_by` is "random", then the tasks are assigned a random
+        priority between 0 and 1000. If `order_by` is "papernum", then the tasks are
+        assigned a priority based on their paper number and question number. If
+        `order_by` is "custom", then the tasks are assigned a priority based on
+        the values in `custom_order`.
+
+        If `order_by` is "custom", then `custom_order` must be provided. It must
+        be a dictionary keyed by tuple (paper_number: int, question: int)
+        containing the corresponding task's priority. If a task is not included in
+        `custom_order`, then it remains the same. If `custom_order` is not a
+        dictionary, then it is ignored.
+
+        Args:
+            order_by: (str) the method to use for ordering the tasks. Options are "random", "papernum", and "custom".
+            custom_order: (dict) a dictionary keyed by tuple (paper_number, question) containing the corresponding task's priority.
+
+        Raises:
+            AssertionError: invalid value for `order_by`.
+        """
+        assert order_by in (
+            "random",
+            "papernum",
+            "custom",
+        ), "Invalid value for order_by"
+        if order_by == "random":
+            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = random.random() * 1000
+                    task.save()
+
+        elif order_by == "papernum":
+            n_papers = Paper.objects.count()
+            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related(
+                "paper"
+            )
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = n_papers - task.paper.paper_number
+                    task.save()
+
+        elif order_by == "custom":
+            assert isinstance(
+                custom_order, dict
+            ), "`custom_order` must be of type Dict[tuple[int, int], float]."
+            with transaction.atomic():
+                for k, v in custom_order.items():
+                    task = self.get_latest_task(k[0], k[1])
+                    task.marking_priority = v
+                    task.save()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
@@ -348,8 +370,9 @@ class MarkingTaskService:
         user_tasks = MarkingTask.objects.filter(
             assigned_user=user, status=MarkingTask.OUT
         )
-        for task in user_tasks:
-            self.surrender_task(user, task)
+        with transaction.atomic():
+            for task in user_tasks:
+                self.surrender_task(user, task)
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
@@ -373,6 +396,7 @@ class MarkingTaskService:
 
         return True
 
+    @transaction.atomic
     def mark_task(self, user, code, score, time, image, data):
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
@@ -416,6 +440,7 @@ class MarkingTaskService:
         task.status = MarkingTask.COMPLETE
         task.save()
 
+    @transaction.atomic
     def save_annotation_image(self, md5sum, annot_img):
         """Save an annotation image to disk and the database.
 

@@ -8,10 +8,10 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 
 
-def _error_response(e: Union[Exception, str], s) -> Response:
+def _error_response(e: Union[Exception, str], status) -> Response:
     # s is e.g., `status.HTTP_404_NOT_FOUND`
     # I think those are int but not sure that's the right type
-    r = Response(status=s)
+    r = Response(status=status)
     if isinstance(e, ValidationError):
         # special case: looks better than str(e)
         (r.reason_phrase,) = e.args

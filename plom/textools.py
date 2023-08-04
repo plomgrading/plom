@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from textwrap import dedent
+from typing import Tuple, Union
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -19,18 +20,25 @@ else:
 import plom
 
 
-def texFragmentToPNG(fragment, *, dpi=225):
+def texFragmentToPNG(
+    fragment: str, *, dpi: int = 225
+) -> Tuple[bool, Union[bytes, str]]:
     """Process a fragment of latex and produce a png image.
 
     Args:
-        fragment (str): a string of text to be rendered with LaTeX.
-        dpi (int): controls the resolution of the image by setting
+        fragment: a string of text to be rendered with LaTeX.
+
+    Keyword Args:
+        dpi: controls the resolution of the image by setting
             the dots-per-inch.  Defaults: 225.
 
     Returns:
         tuple: `(True, imgdata)` or `(False, error_msg)` where `imgdata`
         is the raw contents of a PNG file, and `error_msg` is
         (currently) a string, but this could change in the future.
+
+    Raises:
+        Not expected to raise any exceptions.
     """
     head = dedent(
         r"""

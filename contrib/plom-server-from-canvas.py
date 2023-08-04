@@ -235,7 +235,7 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            assert type(obj) == dict, "Perhaps attachments are not always dicts?"
+            assert isinstance(obj, dict), "Perhaps attachments are not always dicts?"
             assert "content-type" in obj.keys()
             assert "url" in obj.keys()
             assert obj["upload_status"] == "success"  # TODO, or just "continue"

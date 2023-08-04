@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from Scan.models import StagingBundle, StagingImage
+from ..models import StagingBundle, StagingImage
 
 
 class ImageRotateService:

@@ -3,11 +3,12 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import pathlib
+from datetime import datetime
 import hashlib
+import pathlib
+
 import fitz
 from fitz import FileDataError
-from datetime import datetime
 
 from django.utils import timezone
 from django import forms
@@ -15,7 +16,7 @@ from django.forms import ValidationError
 from django.utils.text import slugify
 from django.conf import settings
 
-from Scan.services import ScanService
+from .services import ScanService
 
 
 class BundleUploadForm(forms.Form):
@@ -118,7 +119,7 @@ class ReplaceImageForm(forms.Form):
             # turn that pdf file into page image
             timestamp = datetime.timestamp(timezone.now())
             file_name = f"{timestamp}.pdf"
-            replace_dir = pathlib.Path("media") / "replace_pages"
+            replace_dir = settings.MEDIA_ROOT / "replace_pages"
             replace_dir.mkdir(exist_ok=True)
             save_as_pdf = replace_dir / "pdfs"
             save_as_pdf.mkdir(exist_ok=True)

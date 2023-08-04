@@ -5,18 +5,18 @@
 import copy
 import json
 import pathlib
+from typing import Any, Dict, List, Union
 
 from django.utils.text import slugify
 from plom.specVerifier import SpecVerifier
 
-from SpecCreator.models import StagingSpecification
+from ..models import StagingSpecification
 
 
 class StagingSpecificationService:
-    """
-    Class for all functions related to staging a test specification,
-    i.e. keeping track of the user's progress in the specification creator
-    wizard.
+    """All functions related to staging a test specification.
+
+    E.g., keeping track of the user's progress in the specification creator wizard.
     """
 
     def specification(self):
@@ -41,7 +41,6 @@ class StagingSpecificationService:
         spec.numberOfVersions = 0
         spec.totalMarks = 0
         spec.numberOfQuestions = 0
-        spec.numberToProduce = -1
         spec.pages = {}
         spec.questions = {}
         spec.save()
@@ -66,25 +65,25 @@ class StagingSpecificationService:
         test_spec.save()
 
     def get_short_name(self):
-        """Return the TestSpecInfo short_name field
+        """Return the TestSpecInfo short_name field.
 
         Returns:
             str: the test's short name
         """
         return self.specification().name
 
-    def get_short_name_slug(self):
-        """Return django-sluggified TestSpecInfo short_name
-        field. This makes sure that it is sanitised for use, say, in
-        filenames.
+    def get_short_name_slug(self) -> str:
+        """Return django-sluggified TestSpecInfo short_name field.
+
+        This ensures that it is sanitised for use, say, in filenames.
 
         Returns:
             str: slug of the test's short name
         """
         return slugify(self.specification().name)
 
-    def set_short_name(self, short_name: str):
-        """Set the short name of the test
+    def set_short_name(self, short_name: str) -> None:
+        """Set the short name of the test.
 
         Args:
             short_name: the short name
@@ -93,7 +92,7 @@ class StagingSpecificationService:
         test_spec.name = short_name
         test_spec.save()
 
-    def get_n_versions(self):
+    def get_n_versions(self) -> int:
         """Get the number of test versions.
 
         Returns:
@@ -101,7 +100,7 @@ class StagingSpecificationService:
         """
         return self.specification().numberOfVersions
 
-    def set_n_versions(self, n: int):
+    def set_n_versions(self, n: int) -> None:
         """Set the number of test versions.
 
         Args:
@@ -111,67 +110,47 @@ class StagingSpecificationService:
         test_spec.numberOfVersions = n
         test_spec.save()
 
-    def get_n_to_produce(self):
-        """Get the number of test papers to produce
+    def get_n_questions(self) -> int:
+        """Get the number of questions.
 
         Returns:
-            int: number to produce
-        """
-        return self.specification().numberToProduce
-
-    def set_n_to_produce(self, n: int):
-        """Set the number of test papers to produce
-
-        Args:
-            n: number of test papers
-        """
-        test_spec = self.specification()
-        test_spec.numberToProduce = n
-        test_spec.save()
-
-    def get_n_questions(self):
-        """Get the number of questions
-
-        Returns:
-            int: number of questions in the test
+            The number of questions in the test.
         """
         return self.specification().numberOfQuestions
 
-    def set_n_questions(self, n: int):
-        """Set the number of questions in the test
+    def set_n_questions(self, n: int) -> None:
+        """Set the number of questions in the test.
 
         Args:
-            n: the number of questions
+            n: the number of questions.
         """
         test_spec = self.specification()
         test_spec.numberOfQuestions = n
         test_spec.save()
 
-    def get_total_marks(self):
-        """Get the total number of marks in the teest
+    def get_total_marks(self) -> int:
+        """Get the total number of marks in the test.
 
         Returns:
-            int: total marks
+            How many total marks.
         """
         return self.specification().totalMarks
 
-    def set_total_marks(self, total: int):
-        """Set the total number of marks in the test
+    def set_total_marks(self, total: int) -> None:
+        """Set the total number of marks in the test.
 
         Args:
-            total: full number of marks
-
+            total: full number of marks.
         """
         test_spec = self.specification()
         test_spec.totalMarks = total
         test_spec.save()
 
-    def set_pages(self, n_pages: int):
-        """
-        Initialize page dictionary
+    def set_pages(self, n_pages: int) -> None:
+        """Initialize page dictionary.
 
         Args:
-            n_pages: number of pages in the reference PDF
+            n_pages: number of pages in the reference PDF.
         """
         test_spec = self.specification()
         test_spec.pages = {}
@@ -189,29 +168,25 @@ class StagingSpecificationService:
         test_spec.numberOfPages = n_pages
         test_spec.save()
 
-    def get_page_list(self):
-        """
-        Convert page dict into a list of dicts for looping over in a template
+    def get_page_list(self) -> List[Dict[str, Any]]:
+        """Convert page dict into a list of dicts for looping over in a template.
 
         Returns:
-            list: List of page dictionaries in order
+            List of page dictionaries in order.
         """
         test_spec = self.specification()
         return [test_spec.pages[str(i)] for i in range(len(test_spec.pages))]
 
     def clear_pages(self):
-        """
-        Clear the page dictionary
-        """
+        """Clear the page dictionary."""
         self.set_pages(0)
 
     def get_n_pages(self):
         """Get the number of pages in the test specification."""
         return self.specification().numberOfPages
 
-    def set_id_page(self, page_idx: int):
-        """
-        Set a page as the test's only ID page
+    def set_id_page(self, page_idx: int) -> None:
+        """Set a page as the test's only ID page.
 
         Args:
             page_idx: the index of the ID page
@@ -225,21 +200,18 @@ class StagingSpecificationService:
                 test_spec.pages[idx]["id_page"] = False
         test_spec.save()
 
-    def clear_id_page(self):
-        """
-        Remove the ID page from the test
-        """
+    def clear_id_page(self) -> None:
+        """Remove the ID page from the test."""
         test_spec = self.specification()
         for idx, value in test_spec.pages.items():
             test_spec.pages[idx]["id_page"] = False
         test_spec.save()
 
-    def get_id_page_number(self):
-        """
-        Get the 1-indexed page number of the ID page
+    def get_id_page_number(self) -> Union[int, None]:
+        """Get the 1-indexed page number of the ID page.
 
         Returns:
-            int or None: ID page index
+            ID page index or None if there isn't yet an ID page.
         """
         pages = self.specification().pages
         for idx, page in pages.items():
@@ -248,7 +220,7 @@ class StagingSpecificationService:
 
         return None
 
-    def set_do_not_mark_pages(self, pages: list):
+    def set_do_not_mark_pages(self, pages: list) -> None:
         """Set these pages as the test's do-not-mark pages.
 
         Args:
@@ -266,12 +238,11 @@ class StagingSpecificationService:
                 test_spec.pages[idx]["dnm_page"] = False
         test_spec.save()
 
-    def get_dnm_page_numbers(self):
-        """
-        Return a list of one-indexed page numbers for do-not-mark pages
+    def get_dnm_page_numbers(self) -> List[int]:
+        """Return a list of one-indexed page numbers for do-not-mark pages.
 
         Returns:
-            list: 0-indexed page numbers
+            0-indexed page numbers.
         """
         dnm_pages = []
         pages = self.specification().pages
@@ -280,9 +251,8 @@ class StagingSpecificationService:
                 dnm_pages.append(int(idx) + 1)
         return dnm_pages
 
-    def set_question_pages(self, pages: list, question: int):
-        """
-        Set these pages as the test's pages for question i
+    def set_question_pages(self, pages: list, question: int) -> None:
+        """Set these pages as the test's pages for a particular question.
 
         Args:
             pages: 0-indexed list of page numbers
@@ -298,15 +268,14 @@ class StagingSpecificationService:
 
         test_spec.save()
 
-    def get_question_pages(self, question_id: int):
-        """
-        Returns a 1-indexed list of page numbers for a question
+    def get_question_pages(self, question_id: int) -> List[int]:
+        """Returns a 1-indexed list of page numbers for a question.
 
         Args:
             question_id: index of the question
 
         Returns:
-            list: 0-indexed page numbers
+            0-indexed page numbers.
         """
         question_pages = []
         pages = self.specification().pages
@@ -315,9 +284,8 @@ class StagingSpecificationService:
                 question_pages.append(int(idx) + 1)
         return question_pages
 
-    def set_questions(self, n_questions: int):
-        """
-        Initialize questions dictionary
+    def set_questions(self, n_questions: int) -> None:
+        """Initialize questions dictionary.
 
         Args:
             n_questions: number of questions in the specification
@@ -337,10 +305,8 @@ class StagingSpecificationService:
         the_spec.numberOfQuestions = n_questions
         the_spec.save()
 
-    def clear_questions(self):
-        """
-        Clear the questions dictionary
-        """
+    def clear_questions(self) -> None:
+        """Clear the questions dictionary."""
         self.set_questions(0)
         self.set_total_marks(0)
 
@@ -353,10 +319,8 @@ class StagingSpecificationService:
 
     def create_or_replace_question(
         self, one_index: int, label: str, mark: int, shuffle: bool, pages=[]
-    ):
-        """
-        Create a question for the specification. If a question with the same
-        index exists, overwrite it
+    ) -> None:
+        """Create a question for the specification. If a question with the same index exists, overwrite it.
 
         Args:
             one_index: question number
@@ -380,9 +344,8 @@ class StagingSpecificationService:
                 [p - 1 for p in pages], one_index
             )  # warning: page list is zero-indexed and pages in the spec are one-indexed
 
-    def set_question_select(self, one_index: int, set_as_shuffle: bool):
-        """
-        Change the status of a question's 'select' property
+    def set_question_select(self, one_index: int, set_as_shuffle: bool) -> None:
+        """Change the status of a question's 'select' property.
 
         Args:
             one_index: the question number
@@ -395,44 +358,38 @@ class StagingSpecificationService:
             the_spec.questions[one_index].update({"select": "fix"})
         the_spec.save()
 
-    def fix_all_questions(self):
-        """
-        Set all questions to 'fix': used when the number of versions is set to 1.
-        """
+    def fix_all_questions(self) -> None:
+        """Set all questions to 'fix': used when the number of versions is set to 1."""
         for i in range(self.get_n_questions()):
             one_index = i + 1
             self.set_question_select(one_index, False)
 
-    def has_question(self, one_index: int):
-        """
-        Return True if the staging spec has question 'one_index'
-        """
+    def has_question(self, one_index: int) -> bool:
+        """Return True if the staging spec has question 'one_index'."""
         return str(one_index) in self.specification().questions  # JSON field!
 
-    def get_question(self, one_index: int):
-        """
-        Return a quetion dictionary given its one-index. If it doesn't exist, return None
-        """
+    def get_question(self, one_index: int) -> Union[Dict, None]:
+        """Return a question dictionary given its one-index. If it doesn't exist, return None."""
         if self.has_question(one_index):
             return self.specification().questions[str(one_index)]  # JSON field!
+        return None
 
-    def get_marks_assigned_to_other_questions(self, one_index: int):
-        """
-        Return the total number of marks assigned to questions other than the one at one_index
-        """
+    def get_marks_assigned_to_other_questions(self, one_index: int) -> int:
+        """Return the total number of marks assigned to questions other than the one at one_index."""
         the_spec = self.specification()
-        total_so_far = sum([self.get_question(q)["mark"] for q in the_spec.questions])
+        total = 0
+        for q in the_spec.questions:
+            if q == one_index:
+                continue
+            qdict = self.get_question(q)
+            if not qdict:
+                continue
+            total += qdict["mark"]
 
-        if self.has_question(one_index):
-            assigned_to_this_q = self.get_question(one_index)["mark"]
-            return total_so_far - assigned_to_this_q
-        else:
-            return total_so_far
+        return total
 
-    def get_staging_spec_dict(self):
-        """
-        Generate a dictionary from the current state of the specification.
-        """
+    def get_staging_spec_dict(self) -> Dict:
+        """Generate a dictionary from the current state of the specification."""
         spec_dict = self.specification().__dict__
 
         # remove django model-related fields
@@ -448,14 +405,12 @@ class StagingSpecificationService:
         spec_dict["question"] = questions_list
         return spec_dict
 
-    def get_valid_spec_dict(self, verbose=True):
-        """
-        Validate specification and get public code/private seed, return as dict
-        """
+    def get_valid_spec_dict(self, verbose=True) -> Dict:
+        """Validate specification and get public code/private seed, return as dict."""
         valid_dict = self.validate_specification(verbose=verbose)
         return valid_dict
 
-    def validate_specification(self, verbose=True):
+    def validate_specification(self, verbose=True) -> Dict:
         """Verify the specification, assign public/private codes, return validated spec.
 
         Uses the original SpecVerifier.
@@ -469,10 +424,10 @@ class StagingSpecificationService:
         verifier.checkCodes(verbose=verbose)
         return verifier.spec
 
-    def insert_default_question_labels(self, spec_dict: dict):
-        """
-        If any question labels are missing (might happen if the staging spec is from a
-        user-uploaded toml file), insert default question labels.
+    def insert_default_question_labels(self, spec_dict: dict) -> Dict:
+        """If any question labels are missing. insert default question labels.
+
+        This might happen if the staging spec is from a user-uploaded toml file.
         """
         verifier = SpecVerifier(spec_dict)
         for i in range(spec_dict["numberOfQuestions"]):
@@ -490,27 +445,26 @@ class StagingSpecificationService:
                 )
         return spec_dict
 
-    def is_valid(self):
-        """
-        Return True if the current state of the specification is valid.
-        """
+    def is_valid(self) -> bool:
+        """Return True if the current state of the specification is valid."""
         try:
             valid_spec = self.validate_specification()
-            if valid_spec:
-                return True
         except ValueError:
             return False
+        if valid_spec:
+            return True
+        return False
 
-    def dump_json(self):
-        """
-        Convert the specification to a JSON object and dump into a string
-        """
+    def dump_json(self) -> str:
+        """Convert the specification to a JSON object and dump into a string."""
         spec_dict = self.get_staging_spec_dict()
         return json.dumps(spec_dict)
 
-    def create_from_dict(self, spec_dict: dict):
-        """
-        Take a dictionary (which has previously been validated) and stage a test specification from it.
+    def create_from_dict(self, spec_dict: dict) -> None:
+        """Take a dictionary (which has previously been validated) and stage a test specification from it.
+
+        Returns:
+            None, but modifies the internal state.
         """
         self.set_long_name(spec_dict["longName"])
         self.set_short_name(spec_dict["name"])
@@ -518,16 +472,13 @@ class StagingSpecificationService:
         self.set_total_marks(spec_dict["totalMarks"])
         self.set_n_questions(spec_dict["numberOfQuestions"])
 
-        if "numberToProduce" in spec_dict:
-            self.set_n_to_produce(spec_dict["numberToProduce"])
-
         self.set_pages(spec_dict["numberOfPages"])
         self.set_id_page(spec_dict["idPage"] - 1)
         self.set_do_not_mark_pages([p - 1 for p in spec_dict["doNotMarkPages"]])
 
         questions = spec_dict["question"]
         # make sure the questions are a dict-of-dicts
-        if type(questions) != dict:
+        if not isinstance(questions, dict):
             questions_dict = {}
             for i in range(len(questions)):
                 questions_dict[str(i + 1)] = questions[i]
@@ -553,13 +504,10 @@ class StagingSpecificationService:
             pages = question["pages"]
             self.create_or_replace_question(one_index, label, mark, select, pages)
 
-    def are_all_pages_selected(self):
-        """
-        Return True if all of the pages in the specification are selected, otherwise return false. If there
-        are no pages, return None
-        """
+    def are_all_pages_selected(self) -> Union[bool, None]:
+        """Return True if all of the pages in the specification are selected, otherwise return false. If there are no pages, return None."""
         if self.get_n_pages() == 0:
-            return
+            return None
 
         for page_key, page in self.specification().pages.items():
             if (
@@ -570,10 +518,8 @@ class StagingSpecificationService:
                 return False
         return True
 
-    def get_progress_dict(self):
-        """
-        Get a dict representing the completion state of the specification
-        """
+    def get_progress_dict(self) -> Dict[str, Any]:
+        """Get a dict representing the completion state of the specification."""
         progress_dict = {
             "has_names": len(self.get_short_name()) > 0
             and len(self.get_long_name()) > 0,
@@ -601,24 +547,19 @@ class StagingSpecificationService:
         progress_dict.update({"complete_questions": complete_questions})
         return progress_dict
 
-    def not_empty(self):
-        """
-        Return True if the staging specification isn't empty.
-        """
+    def not_empty(self) -> bool:
+        """Return True if the staging specification isn't empty."""
         prog_dict = self.get_progress_dict()
         for key, item in prog_dict.items():
             if item:
                 return True
         return False
 
-    def compare_spec(self, spec):
-        """
-        Return True if the input specification is the same as the one saved to
-        the StagingSpecification table
-        """
+    def compare_spec(self, spec) -> bool:
+        """Return True if the input specification is the same as that saved to the StagingSpecification table."""
         staged_spec_dict = self.get_staging_spec_dict()
         # if questions is a list-of-dicts, convert to dict
-        if type(staged_spec_dict["question"]) == list:
+        if isinstance(staged_spec_dict["question"], list):
             questions = staged_spec_dict.pop("question")
             question_dict = {}
             for i in range(len(questions)):

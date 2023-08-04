@@ -1,24 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-
 from model_bakery import baker
 
-from Scan.models import StagingBundle, StagingImage
-from Scan.models import (
+from ..models import StagingBundle, StagingImage
+from ..models import (
     UnknownStagingImage,
     KnownStagingImage,
     ErrorStagingImage,
     DiscardStagingImage,
     ExtraStagingImage,
 )
-
-
-from Scan.services import ScanCastService
+from ..services import ScanCastService
 
 
 class ScanCastServiceTests(TestCase):

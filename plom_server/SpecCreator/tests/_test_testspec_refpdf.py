@@ -2,19 +2,21 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
+from pathlib import Path
+
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from pathlib import Path
+
 from ..services import TestSpecService, ReferencePDFService
 from .. import models
 
 
 class TestSpecRefPDFTests(TestCase):
-    """Tests services code for models.ReferencePDF"""
+    """Tests services code for models.ReferencePDF."""
 
     @classmethod
     def setUpClass(cls):
-        """Init a dummy pdf file"""
+        """Init a dummy pdf file."""
         cls.dummy_file = SimpleUploadedFile(
             "dummy.pdf", b"Test text", content_type="application/pdf"
         )
@@ -22,8 +24,7 @@ class TestSpecRefPDFTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Remove all saved dummy files from disk"""
-
+        """Remove all saved dummy files from disk."""
         # TODO: I guess the on delete signal doesn't get called when running tests?
         media_path = Path("SpecCreator/media")
         for f in media_path.iterdir():
@@ -31,7 +32,7 @@ class TestSpecRefPDFTests(TestCase):
         return super().tearDownClass()
 
     def test_create_refpdf(self):
-        """Test services.create_pdf"""
+        """Test `services.create_pdf`."""
         spec = TestSpecService()
         ref_service = ReferencePDFService(spec)
         new_pdf = ref_service.create_pdf("dummy", 1, self.dummy_file)
@@ -39,7 +40,7 @@ class TestSpecRefPDFTests(TestCase):
         self.assertEqual(new_pdf.num_pages, 1)
 
     def test_delete_refpdf(self):
-        """Test services.delete_pdf"""
+        """Test `services.delete_pdf`."""
         spec = TestSpecService()
         ref_service = ReferencePDFService(spec)
         new_pdf = ref_service.create_pdf("dummy", 1, self.dummy_file)

@@ -1,19 +1,34 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.exceptions import APIException
+from django.http import HttpResponse
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from plom.textools import texFragmentToPNG
+from .utils import _error_response
 
 
 class MlatexFragment(APIView):
-    # TODO: in legacy there is a "fragment" key for this get, Issue #2371
-    # TODO: is 406 ok for a placeholder, Issue #2638
-    # TODO: port the service from legacy, Issue #2639
+    def post(self, request):
+        try:
+            fragment = request.data["fragment"]
+        except KeyError as e:
+            return _error_response(
+                f"post: json not as required: {e}", status.HTTP_400_BAD_REQUEST
+            )
 
-    def get(self, request):
-        print("latex not implemented yet, Issue #2639")
-        return Response(
-            "Sorry server does not support latex", status=status.HTTP_406_NOT_ACCEPTABLE
-        )
+        try:
+            valid, value = texFragmentToPNG(fragment)
+        except RuntimeError:
+            # TODO: but I don't think texFragmentToPNG raises this, maybe in the future
+            valid = False
+            value = "Sorry server does not support latex"
+        if not valid:
+            r = {"error": True, "tex_output": value}
+            return Response(r, status=status.HTTP_406_NOT_ACCEPTABLE)
+        # see, for example, why to use httpresponse here instead of DRF's Response
+        # https://stackoverflow.com/questions/47192986/difference-between-response-and-httpresponse-django
+        # TODO: maybe in future, we pack it uuencoded inside json, include the tex output etc
+        return HttpResponse(value)

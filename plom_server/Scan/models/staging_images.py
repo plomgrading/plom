@@ -3,11 +3,11 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
-from Scan.models import StagingBundle
 
-import logging
+from ..models import StagingBundle
 
 
 class StagingImage(models.Model):

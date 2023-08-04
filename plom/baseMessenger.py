@@ -501,6 +501,24 @@ class BaseMessenger:
     # ----------------------
     # Test information
 
+    def get_exam_info(self) -> Dict[str, Any]:
+        """Get a dictionary of information about this assessment.
+
+        Returns:
+            Key-value pairs of information about this particular
+            assessment.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/info/exam",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_spec(self):
         """Get the specification of the exam from the server.
 

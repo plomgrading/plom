@@ -10,11 +10,12 @@ import pathlib
 
 import fitz
 from tabulate import tabulate
+
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
-from Scan.services import ScanService
+from ...services import ScanService
 
 
 class Command(BaseCommand):

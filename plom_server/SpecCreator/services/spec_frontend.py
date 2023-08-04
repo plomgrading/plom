@@ -1,22 +1,24 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 import json
+from typing import Any, Dict, List
 
 
 class SpecCreatorFrontendService:
-    """
-    Handles passing data from the frontend to the staging test specification
-    object, and vice versa.
-    """
+    """Handles passing data from the frontend to the staging test specification object, and vice versa."""
 
-    def get_pages_for_id_select_page(self, pages):
-        """
-        Return a list of pages, with an extra field representing the @click statement to pass to alpine
-        For the ID page
+    def get_pages_for_id_select_page(self, pages) -> List[Dict[str, Any]]:
+        """Return a list of pages, with an extra field representing the @click statement to pass to alpine.
+
+        For the ID page.
 
         Args:
             pages: a list of dictionaries, passed from StagingSpecificationService.get_page_list
 
         Returns:
-            list: page dictionaries
+            List of page dictionaries.
         """
         for i in range(len(pages)):
             page = pages[i]
@@ -26,15 +28,14 @@ class SpecCreatorFrontendService:
                 page["at_click"] = ""
         return pages
 
-    def get_id_page_alpine_xdata(self, pages):
-        """
-        Generate top-level x-data object for the ID page template
+    def get_id_page_alpine_xdata(self, pages) -> str:
+        """Generate top-level x-data object for the ID page template.
 
         Args:
-            pages: a list of dictionaries, passed from StagingSpecificationService.get_page_list
+            pages: a list of dictionaries, passed from `StagingSpecificationService.get_page_list`.
 
         Returns:
-            str: JSON object dump
+            JSON object dump.
         """
         x_data = {}
         for i in range(len(pages)):
@@ -46,17 +47,19 @@ class SpecCreatorFrontendService:
 
         return json.dumps(x_data)
 
-    def get_pages_for_question_detail_page(self, pages, question_id: int):
-        """
-        Return a list of pages, with an extra field representing the @click statement to pass to alpine
-        For the question detail page
+    def get_pages_for_question_detail_page(
+        self, pages, question_id: int
+    ) -> List[Dict[str, Any]]:
+        """Return a list of pages, with an extra field representing the @click statement to pass to alpine.
+
+        For the question detail page.
 
         Args:
             pages: a list of dictionaries, passed from StagingSpecificationService.get_page_list
             question_id: The index of the question page
 
         Returns:
-            list: page dictionaries
+            List of page dictionaries.
         """
         for i in range(len(pages)):
             page = pages[i]
@@ -70,16 +73,15 @@ class SpecCreatorFrontendService:
                 page["at_click"] = f"page{i}selected = !page{i}selected"
         return pages
 
-    def get_question_detail_page_alpine_xdata(self, pages, question_id: int):
-        """
-        Generate top-level x-data object for the question detail page template
+    def get_question_detail_page_alpine_xdata(self, pages, question_id: int) -> str:
+        """Generate top-level x-data object for the question detail page template.
 
         Args:
             pages: a list of dictionaries, passed from StagingSpecificationService.pages
             question_id: question index
 
         Returns:
-            str: JSON object dump
+            JSON object dump.
         """
         x_data = {}
         for i in range(len(pages)):
@@ -91,16 +93,16 @@ class SpecCreatorFrontendService:
 
         return json.dumps(x_data)
 
-    def get_pages_for_dnm_select_page(self, pages):
-        """
-        Return a list of pages, with an extra field representing the @click statement to pass to alpine
-        For the do-not-mark page
+    def get_pages_for_dnm_select_page(self, pages) -> List[Dict[str, Any]]:
+        """Return a list of pages, with an extra field representing the @click statement to pass to alpine.
+
+        For the do-not-mark page.
 
         Args:
             pages: a list of dictionaries, passed from StagingSpecificationService.pages
 
         Returns:
-            list: page dictionaries
+            List of page dictionaries.
         """
         for i in range(len(pages)):
             page = pages[i]
@@ -110,15 +112,14 @@ class SpecCreatorFrontendService:
                 page["at_click"] = ""
         return pages
 
-    def get_dnm_page_alpine_xdata(self, pages):
-        """
-        Generate top-level x-data object for the do not mark page template
+    def get_dnm_page_alpine_xdata(self, pages) -> str:
+        """Generate top-level x-data object for the do not mark page template.
 
         Args:
             pages: a list of dictionaries, passed from StagingSpecificationService.pages
 
         Returns:
-            str: JSON object dump
+            JSON object dump.
         """
         x_data = {}
         for i in range(len(pages)):

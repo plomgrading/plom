@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
-
-"""
-WSGI config for Web_Plom project.
+"""WSGI config for Plom project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

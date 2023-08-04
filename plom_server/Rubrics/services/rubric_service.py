@@ -7,15 +7,18 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Natalie Balashov
 
 import html
 import logging
+from typing import Dict, List, Union
 
 from operator import itemgetter
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
@@ -23,11 +26,11 @@ from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
 from Papers.services import SpecificationService
-from Rubrics.serializers import (
+from ..serializers import (
     RubricSerializer,
 )
-from Rubrics.models import Rubric
-from Rubrics.models import RubricPane
+from ..models import Rubric
+from ..models import RubricPane
 
 
 log = logging.getLogger("RubricServer")
@@ -38,21 +41,29 @@ class RubricService:
 
     __valid_kinds = ("absolute", "neutral", "relative")
 
-    def create_rubric(self, rubric_data):
+    def create_rubric(self, rubric_data: Dict) -> Rubric:
         """Create a rubric using data submitted by a marker.
 
         Args:
-            rubric_data: (dict) data for a rubric submitted by a web request.
+            rubric_data: data for a rubric submitted by a web request.
 
         Returns:
-            Rubric: the created and saved rubric instance.
+            The created and saved rubric instance.
+
+        Raises:
+            KeyError: if rubric_data contains missing username or kind fields.
+            ValidationError: if rubric kind is not a valid option.
+            ValueError: if username does not exist in the DB.
         """
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
         username = rubric_data.pop("username")
-        user = User.objects.get(username=username)
-        rubric_data["user"] = user.pk
+        try:
+            user = User.objects.get(username=username)
+            rubric_data["user"] = user.pk
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"User {username} does not exist.") from e
 
         kind = rubric_data["kind"]
 
@@ -67,15 +78,15 @@ class RubricService:
         return rubric
 
     @transaction.atomic
-    def modify_rubric(self, key, rubric_data):
+    def modify_rubric(self, key: str, rubric_data: Dict) -> Rubric:
         """Modify a rubric.
 
         Args:
-            key: (str) a sequence of ints representing
-            rubric_data: (dict) data for a rubric submitted by a web request.
+            key: a sequence of ints that uniquely identify a specific rubric.
+            rubric_data: data for a rubric submitted by a web request.
 
         Returns:
-            Rubric: the modified rubric instance.
+            The modified rubric instance.
 
         Exceptions:
             ValueError: wrong "kind" or invalid rubric data.
@@ -102,14 +113,14 @@ class RubricService:
 
         return rubric_instance
 
-    def get_rubrics(self, *, question=None):
+    def get_rubrics(self, *, question: Union[None, str] = None) -> List[Dict]:
         """Get the rubrics, possibly filtered by question number.
 
         Args:
-            question: (None/str) question number or None for all.
+            question: question number or None for all.
 
         Returns:
-            list: dictionaries, one for each rubric.
+            Collection of dictionaries, one for each rubric.
         """
         if question is None:
             rubric_list = Rubric.objects.all()
@@ -138,31 +149,45 @@ class RubricService:
 
         return new_rubric_data
 
-    def get_all_rubrics(self):
+    def get_all_rubrics(self) -> QuerySet[Rubric]:
         """Get all the rubrics lazily, so that lazy filtering is possible.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
 
         Returns:
-            QuerySet: lazy queryset of all rubrics.
+            Lazy queryset of all rubrics.
         """
         return Rubric.objects.all()
 
-    def init_rubrics(self):
+    def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
+        Args:
+            Username to associate with the initialized rubrics.
+
         Returns:
-            bool: true if initialized or False if it was already initialized.
+            True if initialized or False if it was already initialized.
+
+        Exceptions:
+            ValueError: username does not exist or is not part of the manager group.
         """
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            ) from e
         # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
         spec = SpecificationService().get_the_spec()
-        self._build_special_rubrics(spec)
+        self._build_special_rubrics(spec, username)
         return True
 
-    def _build_special_rubrics(self, spec):
+    def _build_special_rubrics(self, spec: Dict, username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in range(1, 1 + spec["numberOfQuestions"]):
@@ -178,12 +203,12 @@ class RubricService:
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
             except AssertionError:
-                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+                print("Skipping absolute rubric, not implemented yet, Issue #2641")
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -195,12 +220,12 @@ class RubricService:
                 "question": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
             except AssertionError:
-                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+                print("Skipping absolute rubric, not implemented yet, Issue #2641")
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -212,12 +237,12 @@ class RubricService:
                 "question": q,
                 "meta": "",
                 "tags": "",
-                "username": "manager",
+                "username": username,
             }
             try:
                 r = self.create_rubric(rubric)
             except AssertionError:
-                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+                print("Skipping absolute rubric, not implemented yet, Issue #2641")
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
             # now make delta-rubrics
@@ -232,7 +257,7 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": "manager",
+                    "username": username,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
@@ -246,16 +271,16 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": "manager",
+                    "username": username,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
 
-    def erase_all_rubrics(self):
+    def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
         Returns:
-            int: how many rubrics were removed.
+            How many rubrics were removed.
         """
         n = 0
         for r in Rubric.objects.all():
@@ -263,12 +288,12 @@ class RubricService:
             n += 1
         return n
 
-    def get_rubric_pane(self, user, question):
+    def get_rubric_pane(self, user: User, question: int) -> Dict:
         """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: (int)
+            question: the question number
 
         Returns:
             dict: the JSON representation of the pane.
@@ -278,81 +303,81 @@ class RubricService:
             return {}
         return pane.data
 
-    def update_rubric_pane(self, user, question, data):
+    def update_rubric_pane(self, user: User, question: int, data: Dict) -> None:
         """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: int
+            question: question number associated with the rubric pane
             data: dict representing the new pane
         """
         pane = RubricPane.objects.get(user=user, question=question)
         pane.data = data
         pane.save()
 
-    def check_rubric(self, rubric_data):
+    def check_rubric(self, rubric_data: Dict) -> None:
         """Check rubric data to ensure the data is consistent.
 
         Args:
-            rubric_data: (dict) data for a rubric submitted by a web request.
+            rubric_data: data for a rubric submitted by a web request.
         """
         # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def get_annotation_from_rubric(self, rubric: Rubric):
+    def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
         """Get the queryset of annotations that use this rubric.
 
         Args:
             Rubric instance
 
         Returns:
-            Queryset: Annotation instances
+            A query of Annotation instances
         """
         return rubric.annotations.all()
 
-    def get_rubrics_from_annotation(self, annotation):
+    def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
         """Get the queryset of rubrics that are used by this annotation.
 
         Args:
-            annotation: (Annotation) Annotation instance
+            annotation: Annotation instance
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         return Rubric.objects.filter(annotations=annotation)
 
-    def get_rubrics_from_paper(self, paper_obj: Paper):
+    def get_rubrics_from_paper(self, paper_obj: Paper) -> QuerySet[Rubric]:
         """Get the queryset of rubrics that are used by this paper.
 
         Args:
             paper_obj: Paper instance
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
         annotations = Annotation.objects.filter(task__in=marking_tasks)
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         return rubrics
 
-    def get_rubrics_from_user(self, username: str):
+    def get_rubrics_from_user(self, username: str) -> QuerySet[Rubric]:
         """Get the queryset of rubrics used by this user.
 
         Args:
             username: username of the user
 
         Returns:
-            Queryset: Rubric instances
+            Rubric instances
         """
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def get_all_annotations(self):
+    def get_all_annotations(self) -> QuerySet[Annotation]:
         """Gets all annotations.
 
         Returns:
-            QuerySet: lazy queryset of all rubrics.
+            Lazy queryset of all rubrics.
         """
         return Annotation.objects.all()
 

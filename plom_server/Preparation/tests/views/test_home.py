@@ -5,6 +5,11 @@
 
 import sys
 
+if sys.version_info >= (3, 10):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
@@ -13,11 +18,12 @@ else:
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
-from django.conf import settings
 from model_bakery import baker
 
 from Papers.models import Specification
-from Preparation.views import PreparationLandingView
+from ...views import PreparationLandingView
+
+from ... import useful_files_for_testing as useful_files
 
 
 class PreparationLandingTests(TestCase):
@@ -70,11 +76,8 @@ class PreparationLandingTests(TestCase):
 
         Tt should reveal source versions and QV map.
         """
-        testing_test_spec_file_path = (
-            settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
-        )
-        with open(testing_test_spec_file_path, "rb") as toml_file:
-            demo_spec = tomllib.load(toml_file)
+        with open(resources.files(useful_files) / "testing_test_spec.toml", "rb") as f:
+            demo_spec = tomllib.load(f)
         baker.make(Specification, spec_dict=demo_spec)
 
         landing = PreparationLandingView()

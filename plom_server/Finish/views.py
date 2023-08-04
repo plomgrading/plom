@@ -1,24 +1,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-import arrow
 import csv
 from io import StringIO
+
+import arrow
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import StudentMarkService, TaMarkingService
-from Finish.forms import StudentMarksFilterForm
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
+from .services import StudentMarkService, TaMarkingService, ReassembleService
+from .forms import StudentMarksFilterForm
 
 
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
+    ras = ReassembleService()
     mts = MarkingTaskService()
     sms = StudentMarkService()
     smff = StudentMarksFilterForm()
@@ -53,8 +55,8 @@ class MarkingInformationView(ManagerRequiredView):
             self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
         ]
 
-        total_tasks = self.mts.get_n_total_tasks()
-        all_marked = self.mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
+        total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
+        all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
 
         context.update(
             {

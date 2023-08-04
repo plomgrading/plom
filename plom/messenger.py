@@ -9,6 +9,7 @@ from io import BytesIO
 import json
 import logging
 import mimetypes
+from typing import Union, Tuple
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -314,27 +315,35 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MlatexFragment(self, latex):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/latex",
-                json={"user": self.user, "token": self.token, "fragment": latex},
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return (True, image)
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 406:
-                return (False, response.text)
-                # raise PlomLatexException(
-                #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
-                # ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def MlatexFragment(self, latex: str) -> Tuple[bool, Union[bytes, str]]:
+        """Give some text to the server, it comes back as a PNG image processed via TeX.
+
+        Args:
+            latex: a fragment of text including TeX markup.
+
+        Returns:
+            `(True, png_bytes)` or `(False, fail_reason)`.
+        """
+        with self.SRmutex:
+            try:
+                response = self.post_auth(
+                    "/MK/latex",
+                    json={"fragment": latex},
+                )
+                response.raise_for_status()
+                image = BytesIO(response.content).getvalue()
+                return (True, image)
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 406:
+                    r = response.json()
+                    assert r["error"]
+                    return (False, r["tex_output"])
+                    # raise PlomLatexException(
+                    #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
+                    # ) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MreturnMarkedTask(
         self,

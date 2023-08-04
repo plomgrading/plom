@@ -6,48 +6,16 @@ import datetime as dt
 from typing import Union, List
 
 from django.db.models import Sum, Avg, StdDev
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
-from Finish.services import StudentMarkService
+from ..services import StudentMarkService
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 
 
 class TaMarkingService:
     """Service for the TA marking information."""
-
-    def get_all_ta_annotations(self):
-        """Return all annotations."""
-        return Annotation.objects.all()
-
-    def get_annotations_from_user(self, user):
-        """Return all annotations from a user.
-
-        Args:
-            user: (User) The user to get the annotations from.
-
-        Returns:
-            QuerySet[Annotation]: The annotations from the user.
-
-        Raises:
-            None expected
-        """
-        return Annotation.objects.filter(user=user)
-
-    def get_annotations_from_user_and_paper(self, user, paper):
-        """Return all annotations from a user.
-
-        Args:
-            user: (User) The user to get the annotations from.
-            paper: (Paper) The paper to get the annotations from.
-
-        Returns:
-            QuerySet[Annotation]: The annotations from the user on that paper.
-
-        Raises:
-            None expected
-        """
-        return Annotation.objects.filter(user=user, task__paper=paper)
 
     def get_csv_header(self) -> list:
         """Get the header for the csv file.
@@ -72,18 +40,21 @@ class TaMarkingService:
         return keys
 
     def build_csv_data(self) -> list:
-        """Get the info for all students in a list for building a csv file to download.
+        """Get information about the latest annotation for all marking tasks that are complete.
 
         Returns:
-            List where each element is a dictionary containing the marking information
-            for an annotation.
+            List where each element is a dict keyed by str, representing a single annotation.
 
         Raises:
             None expected
         """
-        annotations = Annotation.objects.all().prefetch_related(
-            "user", "task", "task__paper"
+        mts = MarkingTaskService()
+        annotations = (
+            mts.get_latest_annotations_from_complete_marking_tasks().prefetch_related(
+                "user", "task", "task__paper"
+            )
         )
+
         csv_data = []
         for annotation in annotations:
             csv_data.append(self.get_annotation_info_download(annotation))

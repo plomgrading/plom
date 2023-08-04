@@ -934,6 +934,7 @@ class MarkerClient(QWidget):
         self.question = None
         self.version = None
         self.exam_spec = None
+        self.max_papernum = None
 
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
@@ -974,6 +975,9 @@ class MarkerClient(QWidget):
         # Get the number of Tests, Pages, Questions and Versions
         # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
+        stuff = self.msgr.get_exam_info()
+        # TODO: is never changed even if server changes it
+        self.max_papernum = stuff["current_largest_paper_num"]
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
@@ -1156,7 +1160,6 @@ class MarkerClient(QWidget):
         a = self._prefer_above_action
         if not a.isChecked():
             return
-        max_papernum = self.exam_spec["numberToProduce"]
         n, ok = QInputDialog.getInt(
             self,
             "Prefer paper numbers above...",
@@ -1164,7 +1167,7 @@ class MarkerClient(QWidget):
             "<p>Preference for paper numbers at or above this value.</p>",
             0,
             a.stored_value,
-            max_papernum,
+            self.max_papernum,
         )
         if not ok:
             a.setChecked(False)
@@ -1393,8 +1396,9 @@ class MarkerClient(QWidget):
         """
         s = "<p>Which paper number would you like to get?</p>"
         s += f"<p>Note: you are marking version {self.version} of question {self.question}.</p>"
-        max_papernum = self.exam_spec["numberToProduce"]
-        n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, max_papernum)
+        n, ok = QInputDialog.getInt(
+            self, "Which paper to get", s, 1, 1, self.max_papernum
+        )
         if not ok:
             return
         log.info("getting paper num %s", n)
@@ -2499,9 +2503,10 @@ class MarkerClient(QWidget):
 
     def view_other(self):
         """Shows a particular paper number and question."""
-        max_papernum = self.exam_spec["numberToProduce"]
         max_question_idx = self.exam_spec["numberOfQuestions"]
-        tgs = SelectTestQuestion(self, max_papernum, max_question_idx, self.question)
+        tgs = SelectTestQuestion(
+            self, self.max_papernum, max_question_idx, self.question
+        )
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         tn, q, get_annotated = tgs.get_results()
