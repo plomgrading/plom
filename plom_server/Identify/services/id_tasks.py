@@ -226,8 +226,6 @@ class IdentifyTaskService:
                 f"Very serious error - have found multiple valid ID-tasks for paper {paper_number}"
             )
 
-        if task_obj.status == PaperIDTask.OUT_OF_DATE:
-            return
         # set the last id-action as invalid (if it exists)
         if task_obj.latest_action:
             latest_action = task_obj.latest_action

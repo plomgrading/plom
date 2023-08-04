@@ -8,7 +8,8 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.db import IntegrityError
 from model_bakery import baker
 
 from Papers.models import Paper
@@ -212,3 +213,74 @@ class IdentifyTaskTests(TestCase):
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
 
         self.assertQuerysetEqual(PaperIDAction.objects.all(), [])
+
+    def test_id_already_used(self):
+        """Test that using same ID twice raises exception."""
+        its = IdentifyTaskService()
+        for k in range(1, 3):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+            its.claim_task(self.marker0, k)
+
+        its.identify_paper(self.marker0, 1, "1", "ABC")
+        self.assertRaises(
+            IntegrityError, its.identify_paper, self.marker0, 2, "1", "ABC"
+        )
+
+    def test_claim_and_surrender(self):
+        its = IdentifyTaskService()
+        for k in range(1, 5):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+        for k in range(1, 3):
+            its.claim_task(self.marker0, k)
+        its.surrender_all_tasks(self.marker0)
+
+    def test_id_task_misc(self):
+        """Test the number of id'd papers."""
+        its = IdentifyTaskService()
+        for k in range(1, 5):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+
+        for k in range(1, 3):
+            its.claim_task(self.marker0, k)
+            its.identify_paper(self.marker0, k, f"{k}", f"A{k}")
+
+        # test reclaiming a completed task
+        self.assertRaises(RuntimeError, its.claim_task, self.marker1, 1)
+
+        # test user ID'ing a task that does not belong to them
+        self.assertRaises(
+            PermissionDenied, its.identify_paper, self.marker1, 1, "1", "A1"
+        )
+
+        # test re-id'ing a task
+        for k in range(1, 3):
+            its.identify_paper(self.marker0, k, f"{k+2}", f"A{k+2}")
+
+        # test task existence
+        paper = baker.make(Paper, paper_number=10)
+        self.assertFalse(its.id_task_exists(paper))
+        its.create_task(paper)
+        self.assertTrue(its.id_task_exists(paper))
+
+    def test_idtask_outdated(self):
+        its = IdentifyTaskService()
+        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 7)
+
+        paper1 = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
+        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 1)
+
+        paper2 = baker.make(Paper, paper_number=2)
+        baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
+        baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
+        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 2)
+
+        paper3 = baker.make(Paper, paper_number=3)
+        baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
+        its.claim_task(self.marker0, 3)
+        its.identify_paper(self.marker0, 3, "3", "ABC")
+        its.identify_paper(self.marker0, 3, "4", "CBA")
+        its.set_paper_idtask_outdated(3)

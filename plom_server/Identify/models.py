@@ -13,7 +13,7 @@ from Papers.models import Paper
 class PaperIDTask(BaseTask):
     """Represents a test-paper that needs to be identified."""
 
-    paper = models.OneToOneField(Paper, on_delete=models.CASCADE)
+    paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
     latest_action = models.OneToOneField(
         "PaperIDAction", unique=True, null=True, on_delete=models.SET_NULL
     )
