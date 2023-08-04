@@ -12,32 +12,36 @@ from Papers.models import QuestionPage, Specification
 
 
 class Command(BaseCommand):
-    help = """Sorts the tasks by the amount written on the page image.
+    help = """
+        Sorts the tasks by the amount written on the page image.
 
-    The sorted tasks are saved as a csv file in the current directory.
-
-    Requires the following arguments:
-        --q_n: the question number of the tasks to sort
-
-    Optional arguments:
-        --q_v: the question version of the tasks to sort. Defaults to 0.
+        The sorted tasks are saved as a csv file in the current
+        directory. By default, the tasks are assigned priority
+        values with the pages that have the most written on them
+        getting the highest priority value.
     """
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--q_n", nargs=1, type=int, required=True, metavar="question_number (int)"
+            "--q_n", nargs=1, type=int, required=True, help="The question number (int)"
         )
         parser.add_argument(
             "--q_v",
             nargs=1,
             type=int,
             default=[0],
-            metavar="question_version (optional int)",
+            help="The question version (optional int)",
+        )
+        parser.add_argument(
+            "--reverse",
+            action="store_true",
+            help="Reverse the ordering of the tasks (optional bool)",
         )
 
     def handle(self, *args, **options):
         question_number = options["q_n"]
         question_version = options["q_v"]
+        reverse = options["reverse"]
         spec = Specification.load().spec_dict
 
         if question_number is None:
@@ -109,6 +113,9 @@ class Command(BaseCommand):
                 min = np.sum(th)
             if min == 0:
                 min = np.sum(th)
+
+        if reverse:
+            min, max = max, min
 
         mapped = {}
         for (paper_number, question_number), th_sum in imgs_by_th_sum.items():
