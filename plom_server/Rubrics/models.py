@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 import random
 
@@ -27,15 +28,15 @@ class Rubric(models.Model):
     """Represents a marker's comment and mark delta for a particular question."""
 
     key = models.TextField(null=False, default=generate_unique_key)
-    kind = models.TextField(null=False, default="")
+    kind = models.TextField(null=False)
     display_delta = models.TextField(null=False, default="")  # is short
     value = models.IntegerField(null=False, default=0)
     out_of = models.IntegerField(null=False, default=0)
     text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    tags = models.TextField(null=True)  # can be long
-    meta = models.TextField(null=True, blank=True)  # can be long
+    tags = models.TextField(null=True, default="")  # can be long
+    meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)

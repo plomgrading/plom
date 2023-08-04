@@ -2,16 +2,19 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+
 from model_bakery import baker
+from rest_framework.exceptions import ValidationError
 
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models.paper_structure import Paper
-from Rubrics.models import Rubric
-from Rubrics.services import RubricService
+from ..models import Rubric
+from ..services import RubricService
 
 
 # helper function: extract a rubric dict from Rubric model
@@ -25,10 +28,87 @@ def _rubric_to_dict(x):
     return d
 
 
+class RubricServiceTests_exceptions(TestCase):
+    """Tests for `Rubric.service.RubricService()` exceptions."""
+
+    def setUp(self):
+        baker.make(User, username="Liam")
+
+    def test_no_user_ValueError(self):
+        """Test ValueError in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises an ValueError exception when attempting
+        to create a rubric with a non-existent user.
+        """
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "XXX_no_such_user_XXX",
+            "question": 1,
+        }
+
+        with self.assertRaises(ValueError):
+            RubricService().create_rubric(rub)
+
+    def test_no_user_KeyError(self):
+        """Test KeyError in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises a KeyError when attempting to create a rubric
+        without providing the 'username' key in the rubric dictionary.
+        """
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "question": 1,
+        }
+
+        with self.assertRaises(KeyError):
+            RubricService().create_rubric(rub)
+
+    def test_no_kind_ValidationError(self):
+        """Test for the RubricService.create_rubric() method when 'kind' is invalid.
+
+        This test case checks if the RubricService.create_rubric()
+        method raises a ValidationError when attempting to create
+        a rubric with an invalid 'kind' value. The 'kind' value
+        is expected to be one of the following: "absolute", "neutral",
+        or "relative".
+        """
+        rub = {
+            "kind": "No kind",
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+        }
+
+        with self.assertRaises(ValidationError):
+            RubricService().create_rubric(rub)
+
+    def test_no_kind_KeyError(self):
+        """Test KeyError in RubricService.create_rubric().
+
+        This test case checks if the RubricService.create_rubric()
+        method raises a KeyError when attempting to create a rubric
+        without providing the 'kind' key in the rubric dictionary.
+        """
+        rub = {
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+        }
+
+        with self.assertRaises(KeyError):
+            RubricService().create_rubric(rub)
+
+
 class RubricServiceTests(TestCase):
-    """
-    Tests for Rubric.service.RubricService()
-    """
+    """Tests for `Rubric.service.RubricService()`."""
 
     def setUp(self):
         user1 = baker.make(User, username="Liam")
@@ -114,9 +194,7 @@ class RubricServiceTests(TestCase):
         return super().setUp()
 
     def test_create_neutral_rubric(self):
-        """
-        Test RubricService.create_rubric() to create a neural rubric
-        """
+        """Test RubricService.create_rubric() to create a neural rubric."""
         simulated_client_data = {
             "kind": "neutral",
             "display_delta": ".",
@@ -144,9 +222,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
     def test_create_relative_rubric(self):
-        """
-        Test RubricService.create_rubric() to create a relative rubric
-        """
+        """Test RubricService.create_rubric() to create a relative rubric."""
         simulated_client_data = {
             "kind": "relative",
             "display_delta": "+3",
@@ -174,9 +250,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
     def test_create_absolute_rubric(self):
-        """
-        Test RubricService.create_rubric() to create an absolute rubric
-        """
+        """Test RubricService.create_rubric() to create an absolute rubric."""
         simulated_client_data = {
             "kind": "absolute",
             "display_delta": "2 of 5",
@@ -204,9 +278,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
     def test_modify_neutral_rubric(self):
-        """
-        Test RubricService.modify_rubric() to modify a neural rubric
-        """
+        """Test RubricService.modify_rubric() to modify a neural rubric."""
         service = RubricService()
         key = self.modified_neutral_rubric.key
 
@@ -231,9 +303,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.display_delta, self.modified_neutral_rubric.display_delta)
 
     def test_modify_relative_rubric(self):
-        """
-        Test RubricService.modify_rubric() to modify a relative rubric
-        """
+        """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
         key = self.modified_relative_rubric.key
 
@@ -290,8 +360,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.user, self.modified_absolute_rubric.user)
 
     def test_modify_rubric_change_kind(self):
-        """
-        Test RubricService.modify_rubric(), can change the "kind" of rubrics.
+        """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
         For each of the three kinds of rubric, we ensure we can change them
         into the other three kinds.  The key should not change.
