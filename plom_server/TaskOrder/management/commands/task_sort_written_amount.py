@@ -124,10 +124,18 @@ class Command(BaseCommand):
             )
 
         sorted_imgs = dict(sorted(mapped.items(), key=lambda item: item[1]))
+
+        filename = f"q{question_number}_"
+        if question_version != 0:
+            filename += f"v{question_version}_"
+        if reverse:
+            filename += "reverse_"
+        filename += "sorted.csv"
+
         with open(f"q{question_number}_v{question_version}_sorted.csv", "w") as f:
             writer = csv.writer(f)
             writer.writerow(["Paper Number", "Question Number", "Priority Value"])
             for (paper_number, question_number), th_sum in sorted_imgs.items():
                 writer.writerow([paper_number, question_number, th_sum])
 
-        print(f"Saved to q{question_number}_v{question_version}_sorted.csv")
+        print(f"Saved to {filename}")
