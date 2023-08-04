@@ -2,9 +2,9 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from model_bakery import baker
@@ -34,11 +34,11 @@ class RubricServiceTests_exceptions(TestCase):
     def setUp(self):
         baker.make(User, username="Liam")
 
-    def test_no_user_ObjectDoesNotExist(self):
-        """Test ObjectDoesNotExist in RubricService.create_rubric().
+    def test_no_user_ValueError(self):
+        """Test ValueError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
-        method raises an ObjectDoesNotExist exception when attempting
+        method raises an ValueError exception when attempting
         to create a rubric with a non-existent user.
         """
         rub = {
@@ -49,7 +49,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question": 1,
         }
 
-        with self.assertRaises(ObjectDoesNotExist):
+        with self.assertRaises(ValueError):
             RubricService().create_rubric(rub)
 
     def test_no_user_KeyError(self):
