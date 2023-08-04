@@ -9,7 +9,7 @@
 {% block main_content %}
     <div>
         {% if annotations_exist %}
-            <table class="table">
+            <table class="table text-center align-middle">
                 <tr>
                     <th>Username</th>
                     <th>Question Marked</th>
@@ -21,20 +21,45 @@
                     </tr>
                 {% endfor %}
             </table>
+            <div>
+                <table class="table text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Question Number</th>
+                            <th>Question Version</th>
+                            <th>Annotations Count</th>
+                            <th>Average Marking Time</th>
+                            <th>Percentage Marked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user, annotations in grouped_annotations.items %}
+                            {% for question_data, annotation_data in annotations.items %}
+                                <tr>
+                                    <td>{{ user }}</td>
+                                    <td>{{ question_data.0 }}</td>
+                                    <td>{{ question_data.1 }}</td>
+                                    <td>{{ annotation_data.annotations_count }}</td>
+                                    <td>{{ annotation_data.average_marking_time }}</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar"
+                                                 role="progressbar"
+                                                 style="width: {{ annotation_data.percentage_marked }}%"
+                                                 aria-valuenow="{{ annotation_data.percentage_marked }}"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">{{ annotation_data.percentage_marked }}%</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
             <p>No annotations</p>
         {% endif %}
-    </div>
-    <div>
-        {% for user, annotations in grouped_annotations.items %}
-            <h2>{{ user }}</h2>
-            {% for question, count in annotations.items %}
-                <p>Question Number: {{ question.0 }}</p>
-                <p>Question Version: {{ question.1 }}</p>
-                <p>Marked Question: {{ count.annotations_count }}</p>
-                <p>Average Marking Time: {{ count.average_marking_time }}</p>
-                <p>------------------------------------</p>
-            {% endfor %}
-        {% endfor %}
     </div>
 {% endblock main_content %}

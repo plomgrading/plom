@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Sum
 
-from Mark.models import Annotation
+from Mark.models import Annotation, MarkingTask
 from Mark.services import MarkingTaskService
 
 
@@ -89,7 +89,6 @@ class UserInfoServices:
         grouped_annotations: Dict[
             str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
         ] = dict()
-        present = arrow.utcnow()
 
         for user in count_data:
             grouped_annotations[user] = dict()
@@ -102,23 +101,64 @@ class UserInfoServices:
 
                 average_marking_time = total_marking_time / count if count > 0 else 0
 
-                if average_marking_time <= 60:
-                    grouped_annotations[user][key] = {
-                        "annotations_count": count,
-                        "average_marking_time": present.shift(
-                            seconds=average_marking_time
-                        ).humanize(present, only_distance=True, granularity=["second"]),
-                    }
-                else:
-                    grouped_annotations[user][key] = {
-                        "annotations_count": count,
-                        "average_marking_time": present.shift(
-                            seconds=average_marking_time
-                        ).humanize(
-                            present,
-                            only_distance=True,
-                            granularity=["minute", "second"],
-                        ),
-                    }
-
+                grouped_annotations[user][key] = {
+                    "annotations_count": count,
+                    "average_marking_time": self.seconds_to_humanize_time(
+                        average_marking_time
+                    ),
+                    "percentage_marked": int(
+                        (
+                            count
+                            / self.get_marking_task_count_based_on_question_number_and_version(
+                                question=key[0], version=key[1]
+                            )
+                        )
+                        * 100
+                    ),
+                }
+        print(grouped_annotations)
         return grouped_annotations
+
+    def seconds_to_humanize_time(self, seconds: float) -> str:
+        """Convert the given number of seconds to a human-readable time string.
+
+        Args:
+            seconds: (float) The number of seconds.
+
+        Returns:
+            str: A human-readable time string.
+
+        """
+        present = arrow.utcnow()
+
+        if seconds < 60:
+            time = present.shift(seconds=seconds).humanize(
+                present, only_distance=True, granularity=["second"]
+            )
+        elif seconds > 3599:
+            time = present.shift(seconds=seconds).humanize(
+                present, only_distance=True, granularity=["hour", "minute", "second"]
+            )
+        else:
+            time = present.shift(seconds=seconds).humanize(
+                present, only_distance=True, granularity=["minute", "second"]
+            )
+
+        return time
+
+    @transaction.atomic
+    def get_marking_task_count_based_on_question_number_and_version(
+        self, question: int, version: int
+    ) -> int:
+        """Get the count of MarkingTasks based on the given question number and version.
+
+        Args:
+            question: (int) The question number.
+            version: (int) The question version.
+
+        Returns:
+            int: The count of MarkingTask for the specific question number and version.
+        """
+        return MarkingTask.objects.filter(
+            question_number=question, question_version=version
+        ).count()
