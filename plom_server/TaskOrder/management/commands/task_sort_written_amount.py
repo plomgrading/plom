@@ -96,11 +96,17 @@ class Command(BaseCommand):
             if min == 0:
                 min = np.sum(th)
 
-        sorted_imgs = dict(sorted(imgs_by_th_sum.items(), key=lambda item: item[1]))
+        mapped = {}
+        for (paper_number, question_number), th_sum in imgs_by_th_sum.items():
+            mapped[(paper_number, question_number)] = np.interp(
+                th_sum, (min, max), (1000, 0)
+            )
+
+        sorted_imgs = dict(sorted(mapped.items(), key=lambda item: item[1]))
         with open(f"q{question_number}_v{question_version}_sorted.csv", "w") as f:
             writer = csv.writer(f)
             writer.writerow(["Paper Number", "Question Number", "Priority Value"])
             for (paper_number, question_number), th_sum in sorted_imgs.items():
                 writer.writerow([paper_number, question_number, th_sum])
 
-        print(f"Saved to task_written_amount_sorted.csv")
+        print(f"Saved to q{question_number}_v{question_version}_sorted.csv")
