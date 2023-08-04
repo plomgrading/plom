@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.models import QuestionPage
+from Papers.models import QuestionPage, Specification
 
 
 class Command(BaseCommand):
@@ -20,7 +20,7 @@ class Command(BaseCommand):
         --q_n: the question number of the tasks to sort
 
     Optional arguments:
-        --q_v: the question version of the tasks to sort
+        --q_v: the question version of the tasks to sort. Defaults to 0.
     """
 
     def add_arguments(self, parser):
@@ -38,6 +38,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         question_number = options["q_n"]
         question_version = options["q_v"]
+        spec = Specification.load().spec_dict
 
         if question_number is None:
             raise CommandError("Please provide one question number.")
@@ -47,6 +48,19 @@ class Command(BaseCommand):
 
         question_number = question_number[0]
         question_version = question_version[0]
+
+        q_range = range(1, spec["numberOfQuestions"] + 1)
+        v_range = range(0, spec["numberOfVersions"] + 1)
+
+        if question_number not in q_range:
+            raise CommandError(
+                f"Question {question_number} out of valid range. Valid range: {list(q_range)}."
+            )
+
+        if question_version not in v_range:
+            raise CommandError(
+                f"Version {question_version} out of valid range. Valid range: {list(v_range)}."
+            )
 
         pages = QuestionPage.objects.filter(
             question_number=question_number
