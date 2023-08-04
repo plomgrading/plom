@@ -727,7 +727,7 @@ class MarkingTaskService:
             raise ValueError(f"Cannot find paper {paper_number}")
 
         try:
-            task_obj = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).get(
+            task_obj = MarkingTask.objects.get(
                 paper=paper_obj, question_number=question_number
             )
         except MarkingTask.DoesNotExist:

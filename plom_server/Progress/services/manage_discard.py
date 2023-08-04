@@ -55,8 +55,6 @@ class ManageDiscardService:
 
     @transaction.atomic
     def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
-        raise NotImplementedError("Need to set up Marking task invalidation")
-
         DiscardPage.objects.create(
             image=qpage_obj.image,
             discard_reason=(
@@ -79,8 +77,6 @@ class ManageDiscardService:
 
     @transaction.atomic
     def _discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage) -> None:
-        raise NotImplementedError("Need to set up Marking task invalidation")
-
         # note that a single mobile page is attached to an image that
         # might be associated with multiple questions. Accordingly
         # when we discard this mobile-page we also discard any other
@@ -107,7 +103,7 @@ class ManageDiscardService:
         ]
         # outdate the associated marking tasks
         for qn in qn_to_outdate:
-            MarkingTaskService.set_paper_marking_task_outdated(paper_number, qn)
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
         # and now delete each of those mobile pages
         for mpg in img_to_disc.mobilepage_set.all():
             mpg.delete()
