@@ -77,8 +77,6 @@ class Command(BaseCommand):
         count = pages.count()
         print(f"Found {count} tasks. Getting images...")
 
-        imgs_by_th_sum = {}
-
         def crop_img(img, scale=1.0):
             center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
             width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
@@ -95,8 +93,7 @@ class Command(BaseCommand):
                 img = cv.resize(img, (1200, 1600))
             return img
 
-        min = 0
-        max = 0
+        imgs_by_th_list = {}
 
         for page in tqdm(pages, desc="Analyzing pages"):
             image = cv.imread(page.image.image_file.path)
@@ -104,23 +101,41 @@ class Command(BaseCommand):
             grey = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
             blur = cv.GaussianBlur(grey, ksize=(5, 5), sigmaX=0)
             th = cv.adaptiveThreshold(
-                blur, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2
+                blur, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2
             )
-            imgs_by_th_sum[(page.paper.paper_number, page.question_number)] = np.sum(th)
-            if np.sum(th) > max:
-                max = np.sum(th)
-            if np.sum(th) < min:
-                min = np.sum(th)
-            if min == 0:
-                min = np.sum(th)
+            if (
+                imgs_by_th_list.get((page.paper.paper_number, page.question_number))
+                is None
+            ):
+                imgs_by_th_list[(page.paper.paper_number, page.question_number)] = []
+            imgs_by_th_list[(page.paper.paper_number, page.question_number)].append(
+                np.sum(th)
+            )
 
+        imgs_by_th_sum = {}
+
+        min = -1
+        max = 0
+
+        for (paper_number, question_number), list_of_th in imgs_by_th_list.items():
+            avg = np.average(list_of_th)
+            imgs_by_th_sum[(paper_number, question_number)] = avg
+
+            if avg > max:
+                max = avg
+            if avg < min or min == -1:
+                min = avg
+            if min == -1:
+                min = avg
+
+        min_out, max_out = 0, 1000
         if reverse:
-            min, max = max, min
+            min_out, max_out = max_out, min_out
 
         mapped = {}
         for (paper_number, question_number), th_sum in imgs_by_th_sum.items():
             mapped[(paper_number, question_number)] = np.interp(
-                th_sum, (min, max), (1000, 0)
+                th_sum, (min, max), (min_out, max_out)
             )
 
         sorted_imgs = dict(sorted(mapped.items(), key=lambda item: item[1]))
