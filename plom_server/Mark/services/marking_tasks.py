@@ -726,8 +726,12 @@ class MarkingTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
+        # Replace this with a check for **any** marking task
+        # then filter out those that are out-of-date
+        # need to be able to handle workflow when there was never any task
+        # see comments in !2187
         try:
-            task_obj = MarkingTask.objects.get(
+            task_obj = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).get(
                 paper=paper_obj, question_number=question_number
             )
         except MarkingTask.DoesNotExist:
@@ -754,4 +758,8 @@ class MarkingTaskService:
         if ImageBundleService().is_given_paper_question_ready(
             paper_obj, question_number
         ):
-            self.create_task(paper_obj, question_number)
+            print(
+                f"Paper {paper_number} question {question_number} is ready for marking. Creating a task now"
+            )
+            tsk = self.create_task(paper_obj, question_number)
+            print("Task = ", tsk.status)

@@ -422,19 +422,30 @@ class ImageBundleService:
             paper=paper_obj, question_number=question_number
         ).exists()
 
+        print(
+            f"Checking paper/question {paper_obj.paper_number}.{question_number} ready ",
+            qp_no_img,
+            qp_with_img,
+            mp_present,
+        )
+
         if qp_with_img:
             # there are some fixed pages with images
             if qp_no_img:
                 # there are some fixed pages without images, so partially scanned. not ready.
+                print("Ret false")
                 return False
             else:
                 # all fixed question pages have images, so it is ready
+                print("Ret True")
                 return True
         else:
             # all fixed pages have no images.
             if mp_present:
                 # the question has no fixed pages scanned, but does have a mobile page, so ready.
+                print("Ret True")
                 return True
             else:
                 # no images present at all, so not ready
+                print("Ret False")
                 return False
