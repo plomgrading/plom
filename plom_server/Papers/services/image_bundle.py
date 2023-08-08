@@ -407,7 +407,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def is_given_paper_question_ready(self, paper_obj, question_number):
-        """Check if a given paper/question is ready for marking"""
+        """Check if a given paper/question is ready for marking."""
         # to be ready the question must either
         # * have all its fixed pages with images (and any number of mobile pages), or
         # * have no fixed pages with images but some mobile pages
