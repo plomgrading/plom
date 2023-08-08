@@ -5,7 +5,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
-from typing import Dict
+from typing import Dict, Union
 from pathlib import Path
 import sys
 
@@ -31,7 +31,9 @@ log = logging.getLogger("ValidatedSpecService")
 
 @transaction.atomic
 def load_spec_from_toml(
-    pathname: Path | str, update_staging: bool = False, public_code: str | None = None
+    pathname: Union(Path, str),
+    update_staging: bool = False,
+    public_code: Union(str, None) = None,
 ) -> Specification:
     """Load a test spec from a TOML file, and saves to the database.
 
