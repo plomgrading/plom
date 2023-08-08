@@ -47,6 +47,7 @@
                 {{ student_marks_form.as_p }}
                 <button type="submit" class="btn btn-success">Download Grades</button>
             </form>
+            <p>Note: download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</p>
         </div>
         <div class="col">
             <table style="width: auto" class="table table-striped table-bordered">
@@ -84,6 +85,7 @@
                 {% endif %}
                 <button type="submit" class="btn btn-success">Download TA Marking Info</button>
             </form>
+            <p>Note: download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</p>
         </div>
     </div>
     <br>
@@ -117,7 +119,15 @@
         </div>
     </div>
     <br>
+    <br>
     <div>
+        <p>
+            In the table below,
+            <span style="border: black 1px solid; background-color: #BEF6CC;">&nbspgreen cells&nbsp</span> have received a mark,
+            <span style="border: black 1px solid;
+                         background-color: lightgoldenrodyellow">&nbspyellow cells&nbsp</span> are waiting to be marked, and
+            <span style="border: black 1px solid; background-color: #FF999E;">&nbspred cells&nbsp</span> are missing pages and cannot be marked.
+        </p>
         <table style="width: auto"
                class="table table-striped table-bordered sortable">
             <thead>
@@ -145,7 +155,7 @@
                                 {% with p_val|get_item:i as t_val %}
                                     {% comment %}Equivalent to t_val = p_val.get(i) where p_val is a dict{% endcomment %}
                                     {% if t_val == None %}
-                                        <td style="background-color: #FF999E;">Task DNE</td>
+                                        <td style="background-color: #FF999E;">Task missing</td>
                                     {% elif t_val.student_mark is not None %}
                                         <td style="background-color: #BEF6CC;">{{ t_val.student_mark }}</td>
                                     {% else %}
