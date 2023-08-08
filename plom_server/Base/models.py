@@ -74,11 +74,15 @@ class BaseTask(PolymorphicModel):
     https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
     for more info
 
-    assigned_user: reference to User, the user currently attached to the task.
-        Can be null, can change over time.
+    assigned_user: reference to User, the user currently attached to
+        the task.  Can be null, can change over time. Notice that when
+        a tasks has status "out" or "complete" then it must have an
+        assigned_user, and when it is set to "to do" or "out of date"
+        it must have assigned_user set to none.
     time: the time the task was originally created.
         TODO: is this used for anything?
-    status: str, represents the status of the task: not started, sent to a client, completed
+    status: str, represents the status of the task: not started, sent to a client, completed, out of date.
+
     """
 
     # TODO: UUID for indexing
