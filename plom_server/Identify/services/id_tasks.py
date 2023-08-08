@@ -19,9 +19,11 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def are_there_id_tasks(self):
-        """Return True if there is at least one ID task in the database."""
-        # TO_DO - do we need to exclude "out of date" tasks here
-        return PaperIDTask.objects.exists()
+        """Return True if there is at least one ID task in the database.
+
+        Note that this *does* exclude out-of-date tasks.
+        """
+        return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).exists()
 
     @transaction.atomic
     def create_task(self, paper):
@@ -132,9 +134,9 @@ class IdentifyTaskService:
             IntegrityError: the student id has already been assigned to a different paper
         """
         try:
-            task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
-                paper__paper_number=paper_number
-            )
+            task = PaperIDTask.objects.exclude(
+                status__in=[PaperIDTask.OUT_OF_DATE, PaperIDTask.TO_DO]
+            ).get(paper__paper_number=paper_number)
         except PaperIDTask.DoesNotExist:
             raise ObjectDoesNotExist(
                 f"Valid task for paper number {paper_number} does not exist."
