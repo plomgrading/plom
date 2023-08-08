@@ -53,13 +53,17 @@ class RubricService:
         Raises:
             KeyError: if rubric_data contains missing username or kind fields.
             ValidationError: if rubric kind is not a valid option.
+            ValueError: if username does not exist in the DB.
         """
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
         username = rubric_data.pop("username")
-        user = User.objects.get(username=username)
-        rubric_data["user"] = user.pk
+        try:
+            user = User.objects.get(username=username)
+            rubric_data["user"] = user.pk
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"User {username} does not exist.") from e
 
         kind = rubric_data["kind"]
 

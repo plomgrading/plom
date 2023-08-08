@@ -6,8 +6,8 @@
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
-from Rubrics.services import RubricService
-from Rubrics.forms import RubricFilterForm, RubricEditForm
+from .services import RubricService
+from .forms import RubricFilterForm, RubricEditForm
 
 
 class RubricLandingPageView(ManagerRequiredView):
