@@ -54,6 +54,8 @@ class Command(BaseCommand):
             if image.shape[0] == 784:
                 images.append(image)
                 labels.append(paper_num)
+            else:
+                raise ValueError("Image is not 28x28")
 
         kmeans = KMeans(n_clusters=10, random_state=0)
         images_np = np.array(images)
