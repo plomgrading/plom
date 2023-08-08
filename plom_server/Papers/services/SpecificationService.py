@@ -107,7 +107,7 @@ def get_the_spec_as_toml():
 
 
 @transaction.atomic
-def get_the_spec_as_toml_with_codes(self):
+def get_the_spec_as_toml_with_codes():
     """Return the test-specification from the database.
 
     .. warning::
@@ -143,7 +143,7 @@ def remove_spec() -> None:
         MultipleObjectsReturned: cannot remove spec because
             there are already papers.
     """
-    if not self.is_there_a_spec():
+    if not is_there_a_spec():
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
     from .paper_info import PaperInfoService

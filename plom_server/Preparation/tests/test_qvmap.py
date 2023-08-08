@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 
 import sys
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
