@@ -5,6 +5,8 @@ import random
 from copy import deepcopy
 from rest_framework import serializers
 
+from django.db import transaction
+
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
 
@@ -63,8 +65,15 @@ class SpecSerializer(serializers.ModelSerializer):
             else:
                 return False
 
+    @transaction.atomic
     def create(self, validated_data):
-        """Create a Specification instance and SpecQuestion instances."""
+        """Create a Specification instance and SpecQuestion instances.
+
+        If a spec instance already exists, this method overwrites the old spec.
+        """
+        Specification.objects.all().delete()
+        SpecQuestion.objects.all().delete()
+
         questions = validated_data.pop("question")
         for idx, question in questions.items():
             question["question_number"] = int(idx)

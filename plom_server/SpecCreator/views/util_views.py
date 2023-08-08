@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -147,6 +147,9 @@ class TestSpecSubmitView(TestSpecPageView):
     def post(self, request):
         staging_spec = StagingSpecificationService()
         spec_dict = staging_spec.get_valid_spec_dict()
+        spec_dict.pop(
+            "numberToProduce", None
+        )  # TODO: numToProduce shouldn't be in here in the first place!
 
         SpecificationService.store_validated_spec(spec_dict)
 
