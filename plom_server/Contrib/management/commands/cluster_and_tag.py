@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     Currently only does clustering on student id digits and tags the first question.
 
-    python3 manage.py cluster_tag_id_digits
+    python3 manage.py cluster_tag_id_digits [digit_index] [username]
     """
 
     help = """Add a tag to a specific paper."""
@@ -71,14 +71,14 @@ class Command(BaseCommand):
 
         return clustered_papers
 
-    def tag_question(self, clusters) -> None:
+    def tag_question(self, clusters, username) -> None:
         """Tag the first question."""
         ms = MarkingTaskService()
-        if not User.objects.filter(username="id_digit_tagging_temp_user").exists():
-            user = User(username="id_digit_tagging_temp_user", password="")
-            user.save()
-        else:
-            user = User.objects.get(username="id_digit_tagging_temp_user")
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            self.stdout.write(f"User {username} does not exist")
+            return
         for i in range(len(clusters)):
             if len(clusters[i]) > 0:
                 for paper_num in clusters[i]:
@@ -93,7 +93,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "digit_index", type=int, help="Digit index to cluster on, range: [0-7]"
         )
+        parser.add_argument("username", type=str, help="Username")
 
     def handle(self, *args, **options):
         paper_clusters = self.get_digits_and_cluster(options["digit_index"])
-        self.tag_question(paper_clusters)
+        self.tag_question(paper_clusters, options["username"])
