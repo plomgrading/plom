@@ -143,7 +143,7 @@ class DataExtractionService:
         """
         return self.student_df[f"q{question_number}_mark"].mean()
 
-    def get_average_grade_on_all_questions(self) -> List[float]:
+    def get_average_grade_on_all_questions(self) -> Dict[str, float]:
         """Return the average grade on each question (not percentage).
 
         Returns:
