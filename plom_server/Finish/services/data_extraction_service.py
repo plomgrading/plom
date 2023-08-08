@@ -131,6 +131,28 @@ class DataExtractionService:
 
         return averages
 
+    def _get_average_grade_on_question(self, question_number: int) -> float:
+        """Return the average grade on a specific question (not percentage).
+
+        Args:
+            question_number: The question number to get the average grade for.
+
+        Returns:
+            The average grade on the question as a float.
+        """
+        return self.student_df[f"q{question_number}_mark"].mean()
+
+    def get_average_grade_on_all_questions(self) -> List[float]:
+        """Return the average grade on each question (not percentage).
+
+        Returns:
+            A list of floats containing the average grade on each question.
+        """
+        averages = {}
+        for q in self.spec["question"].keys():
+            averages[q] = self._get_average_grade_on_question(int(q))
+        return averages
+
     def _get_marks_for_all_questions(
         self, *, student_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:

@@ -68,59 +68,13 @@ class StudentMarkService:
         # Sort by paper number
         return {k: marks[k] for k in sorted(marks)}
 
-    def get_marks_from_papers(self, papers: dict) -> dict:
-        """Get the marks for a list of papers.
-
-        Args:
-            papers: The list of papers.
-
-        Returns:
-            Dict keyed by question number whose values are a dictionary holding
-            a list of marks for each question.
-        """
-        question_marks: Dict[int, list[int]] = {}
-
-        # Iterate over the data
-        for student_id in papers:
-            student_data = papers[student_id]
-            for question_number in student_data:
-                question_info = student_data[question_number]
-                question = question_info["question"]
-                student_mark = question_info["student_mark"]
-
-                if question not in question_marks:
-                    question_marks[question] = []
-
-                question_marks[question].append(student_mark)
-
-        return question_marks
-
-    def get_stats_for_questions(self, question_marks: dict) -> dict:
-        """Get the question marks stats from a list of marks.
-
-        Args:
-            papers: The list of questions grades. (returned from get_marks_from_papers)
-
-        Returns:
-            Dict keyed by question number whose values are a dictionary holding
-            the average and standard deviation for each question.
-        """
-        question_stats = {}
-        for question in question_marks:
-            marks = question_marks[question]
-            avg = sum(marks) / len(marks)
-            stdv = statistics.stdev(marks)
-            question_stats[question] = {"avg": avg, "stdv": stdv}
-
-        return question_stats
-
-    def convert_stats_to_hist_format(
+    def convert_stats_to_d3_hist_format(
         self, stats: dict, xlabel: str, ylabel: str, title: str
     ) -> dict:
         """Convert the question stats to a format that can be used by the histogram.
 
         Args:
-            stats: The question stats returned from get_stats_for_questions.
+            stats: The stats in a dict format: {label: value, ...}
             xlabel: The x-axis label.
             ylabel: The y-axis label.
             title: The title of the histogram.
@@ -136,35 +90,17 @@ class StudentMarkService:
         }
 
         for question in stats:
-            data["values"].append({"label": question, "value": stats[question]["avg"]})
+            data["values"].append({"label": question, "value": stats[question]})
 
         return data
 
-    def get_correlation_between_questions(self, question_data: dict) -> np.ndarray:
-        """Get the correlation matrix between questions.
-
-        Args:
-            question_data: The question data returned from get_stats_for_questions.
-
-        Returns:
-            The correlation matrix between questions.
-        """
-        if len(question_data) == 0:
-            return np.array([[0]])
-        min_length = min(len(lst) for lst in question_data.values())
-        question_data_arr: np.ndarray = np.array(
-            [lst[:min_length] for lst in question_data.values()]
-        )
-        question_correlation = np.corrcoef(question_data_arr)
-        return question_correlation
-
-    def convert_correlation_to_heatmap_format(
+    def convert_correlation_to_d3_heatmap_format(
         self, correlation: np.ndarray, title="", xtitle="", ytitle=""
     ) -> dict:
         """Convert the correlation matrix to a format that can be used by the heatmap.
 
         Args:
-            correlation: The correlation matrix returned from get_correlation_between_questions.
+            correlation: The 2d correlation matrix.
 
         Returns:
             data in dict format that can be used by the d3 heatmap.
