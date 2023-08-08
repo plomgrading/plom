@@ -35,7 +35,7 @@ class StudentMarkService:
             .select_related("latest_annotation")
             .exclude(status=MarkingTask.OUT_OF_DATE)
         )
-        questions: Union[str, Dict[str, Any]] = {}
+        questions: Dict[int, Union[Dict, str]] = {}
         for marking_task in marking_tasks.order_by("question_number"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
