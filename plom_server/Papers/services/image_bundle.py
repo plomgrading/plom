@@ -407,7 +407,17 @@ class ImageBundleService:
 
     @transaction.atomic
     def is_given_paper_question_ready(self, paper_obj, question_number):
-        """Check if a given paper/question is ready for marking."""
+        """Check if a given paper/question is ready for marking.
+
+        Args:
+            paper_obj (Paper): the database paper object to check
+            question_number (int): the question number to check
+        Returns:
+            bool: true when the question of the given paper is ready for marking, false otherwise
+        Raises:
+            ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
+
+        """
         # to be ready the question must either
         # * have all its fixed pages with images (and any number of mobile pages), or
         # * have no fixed pages with images but some mobile pages
@@ -415,6 +425,11 @@ class ImageBundleService:
         q_pages = QuestionPage.objects.filter(
             paper=paper_obj, question_number=question_number
         )
+        if not q_pages.exists():
+            raise ValueError(
+                f"There are no question_pages at all for paper {paper_obj.paper_number} question {question_number}"
+            )
+
         qp_no_img = q_pages.filter(image__isnull=True).exists()
         qp_with_img = q_pages.filter(image__isnull=False).exists()
         # note that (qp_no_img or qp_with_img == True)
@@ -422,30 +437,19 @@ class ImageBundleService:
             paper=paper_obj, question_number=question_number
         ).exists()
 
-        print(
-            f"Checking paper/question {paper_obj.paper_number}.{question_number} ready ",
-            qp_no_img,
-            qp_with_img,
-            mp_present,
-        )
-
         if qp_with_img:
             # there are some fixed pages with images
             if qp_no_img:
                 # there are some fixed pages without images, so partially scanned. not ready.
-                print("Ret false")
                 return False
             else:
                 # all fixed question pages have images, so it is ready
-                print("Ret True")
                 return True
         else:
             # all fixed pages have no images.
             if mp_present:
                 # the question has no fixed pages scanned, but does have a mobile page, so ready.
-                print("Ret True")
                 return True
             else:
                 # no images present at all, so not ready
-                print("Ret False")
                 return False

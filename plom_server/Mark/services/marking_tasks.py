@@ -726,40 +726,35 @@ class MarkingTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
-        # Replace this with a check for **any** marking task
-        # then filter out those that are out-of-date
-        # need to be able to handle workflow when there was never any task
-        # see comments in !2187
-        try:
-            task_obj = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).get(
-                paper=paper_obj, question_number=question_number
-            )
-        except MarkingTask.DoesNotExist:
-            raise ValueError(
-                f"Cannot find valid MarkingTask associated with paper {paper_number} question {question_number}"
-            )
-        except MarkingTask.MultipleObjectsReturned:
+        ibs = ImageBundleService()
+
+        # now we know there is at least one task (either valid or out of date)
+        valid_tasks = MarkingTask.objects.exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).filter(paper=paper_obj, question_number=question_number)
+        valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
+        # do a integrity check - there can only at most one valid task
+        if valid_task_count > 1:
             raise ValueError(
                 f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
             )
+        # we know there is at most one valid task.
+        if valid_task_count == 1:
+            # there is an "in date" task - get it and set it as out of date
+            task_obj = valid_tasks.get()
+            # set the last id-action as invalid (if it exists)
+            if task_obj.latest_annotation:
+                latest_annotation = task_obj.latest_annotation
+                latest_annotation.is_valid = False
+                latest_annotation.save()
+            # now set status and make assigned user None
+            task_obj.assigned_user = None
+            task_obj.status = MarkingTask.OUT_OF_DATE
+            task_obj.save()
+        else:
+            # there is no "in date" task, so we don't have to mark anything as out of date.
+            pass
 
-        # set the last id-action as invalid (if it exists)
-        if task_obj.latest_annotation:
-            latest_annotation = task_obj.latest_annotation
-            latest_annotation.is_valid = False
-            latest_annotation.save()
-
-        # now set status and make assigned user None
-        task_obj.assigned_user = None
-        task_obj.status = MarkingTask.OUT_OF_DATE
-        task_obj.save()
-
-        # if the paper/question is ready then create a new marking task for it.
-        if ImageBundleService().is_given_paper_question_ready(
-            paper_obj, question_number
-        ):
-            print(
-                f"Paper {paper_number} question {question_number} is ready for marking. Creating a task now"
-            )
-            tsk = self.create_task(paper_obj, question_number)
-            print("Task = ", tsk.status)
+        # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
+        if ibs.is_given_paper_question_ready(paper_obj, question_number):
+            self.create_task(paper_obj, question_number)
