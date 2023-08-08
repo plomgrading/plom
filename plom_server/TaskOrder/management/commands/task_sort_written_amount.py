@@ -77,7 +77,7 @@ class Command(BaseCommand):
         count = pages.count()
         print(f"Found {count} tasks. Getting images...")
 
-        def crop_img(img, scale=1.0):
+        def _crop_img(img, scale=1.0):
             center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
             width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
             left_x, right_x = center_x - width_scaled / 2, center_x + width_scaled / 2
@@ -85,23 +85,23 @@ class Command(BaseCommand):
             img_cropped = img[int(top_y) : int(bottom_y), int(left_x) : int(right_x)]
             return img_cropped
 
-        def set_aspect_ratio(img):
+        def _set_aspect_ratio(img, scale=1.0):
             width, height = img.shape[1], img.shape[0]
             if width > height:
-                img = cv.resize(img, (1600, 1200))
+                dim = (int(1600 * scale), int(1200 * scale))
             else:
-                img = cv.resize(img, (1200, 1600))
+                dim = (int(1200 * scale), int(1600 * scale))
+            img = cv.resize(img, dsize=dim)
             return img
 
         imgs_by_th_list = {}
 
         for page in tqdm(pages, desc="Analyzing pages"):
             image = cv.imread(page.image.image_file.path)
-            crop = set_aspect_ratio(crop_img(image, 0.8))
+            crop = _set_aspect_ratio(_crop_img(image, scale=0.8), scale=0.2)
             grey = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
-            blur = cv.GaussianBlur(grey, ksize=(5, 5), sigmaX=0)
             th = cv.adaptiveThreshold(
-                blur, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2
+                grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2
             )
             if (
                 imgs_by_th_list.get((page.paper.paper_number, page.question_number))
@@ -111,15 +111,20 @@ class Command(BaseCommand):
             imgs_by_th_list[(page.paper.paper_number, page.question_number)].append(
                 np.sum(th)
             )
+            # paper_list = [19,14]  # <-- put pages you want to look at here
+            # paper_num = page.paper.paper_number
+            # if paper_num in paper_list:
+            #     cv.imwrite(f"TEST_ORIG_{paper_num}.jpg", image)
+            #     cv.imwrite(f"TEST_THRESH_{paper_num}.jpg", th)
 
         imgs_by_th_sum = {}
 
         min = -1
         max = 0
 
-        for (paper_number, question_number), list_of_th in imgs_by_th_list.items():
+        for (paper_number, question_num), list_of_th in imgs_by_th_list.items():
             avg = np.average(list_of_th)
-            imgs_by_th_sum[(paper_number, question_number)] = avg
+            imgs_by_th_sum[(paper_number, question_num)] = avg
 
             if avg > max:
                 max = avg
@@ -128,13 +133,13 @@ class Command(BaseCommand):
             if min == -1:
                 min = avg
 
-        min_out, max_out = 0, 1000
+        min_out, max_out = 1000, 0
         if reverse:
             min_out, max_out = max_out, min_out
 
         mapped = {}
-        for (paper_number, question_number), th_sum in imgs_by_th_sum.items():
-            mapped[(paper_number, question_number)] = np.interp(
+        for (paper_number, question_num), th_sum in imgs_by_th_sum.items():
+            mapped[(paper_number, question_num)] = np.interp(
                 th_sum, (min, max), (min_out, max_out)
             )
 
