@@ -19,8 +19,9 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def are_there_id_tasks(self):
-        """Return True if there is at least one ID task in the
-        database. Note that this *does* exclude out-of-date tasks.
+        """Return True if there is at least one ID task in the database.
+
+        Note that this *does* exclude out-of-date tasks.
         """
         return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).exists()
 
