@@ -93,7 +93,7 @@ class Command(BaseCommand):
             The file names to be of the format paper_{paper_num}_digit_{digit_index}.png
         """
         images = []
-        labels = []
+        paper_nums = []
 
         # load images from media/digit_images
         dir = Path(settings.MEDIA_ROOT / "digit_images")
@@ -102,8 +102,8 @@ class Command(BaseCommand):
                 image = cv2.imread(str(p), cv2.IMREAD_GRAYSCALE)
                 image = image.flatten()
                 images.append(image)
-                label = p.stem.split("_")[1]
-                labels.append(label)
+                paper_num = p.stem.split("_")[1]
+                paper_nums.append(paper_num)
 
         kmeans = KMeans(n_clusters=10, random_state=0, n_init="auto")
         images_np = np.array(images)
@@ -114,7 +114,7 @@ class Command(BaseCommand):
             curr_papers = []
             for i in range(len(images)):
                 if kmeans.labels_[i] == label:
-                    paper_num = labels[i]
+                    paper_num = paper_nums[i]
                     curr_papers.append(paper_num)
             clustered_papers.append(curr_papers)
 
