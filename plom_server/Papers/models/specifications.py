@@ -48,7 +48,7 @@ class SpecQuestion(models.Model):
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)
-    question_number = models.PositiveIntegerField(null=False)
+    question_number = models.PositiveIntegerField(null=False, unique=True)
 
 
 class Specification(SingletonBaseModel):
