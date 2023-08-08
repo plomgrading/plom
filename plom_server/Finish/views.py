@@ -64,14 +64,14 @@ class MarkingInformationView(ManagerRequiredView):
 
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()
-        grades_hist_data = self.sms.convert_stats_to_d3_hist_format(
+        grades_hist_data = self.des.convert_stats_to_d3_hist_format(
             question_avgs, "Question number", "Grade", "Quesion vs Grade"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
         corr = self.des._get_question_correlation_heatmap_data().values
-        corr_heatmap_data = self.sms.convert_correlation_to_d3_heatmap_format(
+        corr_heatmap_data = self.des.convert_correlation_to_d3_heatmap_format(
             corr, "Question correlation", "Question", "Question"
         )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
