@@ -425,6 +425,7 @@ class ImageBundleService:
         q_pages = QuestionPage.objects.filter(
             paper=paper_obj, question_number=question_number
         )
+        # todo - this should likely be replaced with a spec check
         if not q_pages.exists():
             raise ValueError(
                 f"There are no question_pages at all for paper {paper_obj.paper_number} question {question_number}"

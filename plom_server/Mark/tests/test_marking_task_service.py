@@ -9,10 +9,11 @@ from django.contrib.auth.models import User
 from model_bakery import baker
 
 from Preparation.models import StagingPQVMapping
-from Papers.models import Paper
+from Papers.models import Paper, QuestionPage, Image
 
 from ..services import MarkingTaskService
 from ..models import MarkingTask, AnnotationImage
+from Papers.services import ImageBundleService
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -398,6 +399,10 @@ class MarkingTaskServiceTests(TestCase):
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
 
         paper2 = baker.make(Paper, paper_number=2)
+        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
+        # todo - this should likely be replaced with a spec check
+        qp2 = baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
+
         task2a = baker.make(
             MarkingTask,
             code="q0002g1",
