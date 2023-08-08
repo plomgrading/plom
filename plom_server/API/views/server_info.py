@@ -38,7 +38,7 @@ class GetSpecification(APIView):
         spec = SpecificationService()
         if not spec.is_there_a_spec():
             return _error_response(
-                "Server does not have a spec", status=status.HTTP_400_BAD_REQUEST
+                "Server does not have a spec", status.HTTP_400_BAD_REQUEST
             )
 
         the_spec = spec.get_the_spec()
