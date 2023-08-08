@@ -87,8 +87,10 @@ class Command(BaseCommand):
 
     def compute_clusters(self, digit_index) -> None:
         """Cluster the digits and store the clusters at media/paper_clusters.json.
-        Assumes that the digits have already been extracted and stored at media/digit_images.
-        And we expect the file name to be paper_{paper_num}_digit_{digit_index}.png
+
+        Requires:
+            The digits have already been extracted and stored at media/digit_images.
+            The file names to be of the format paper_{paper_num}_digit_{digit_index}.png
         """
         images = []
         labels = []
