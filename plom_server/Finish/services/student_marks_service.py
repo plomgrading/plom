@@ -46,7 +46,7 @@ class StudentMarkService:
                     "student_mark": current_annotation.score,
                 }
             else:
-                # use of None indicates that it exists but has no mark
+                # String value so that it questions.get(i) doesn't return None
                 questions[marking_task.question_number] = "Not marked"
 
         return {paper_num: questions}

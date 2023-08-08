@@ -131,24 +131,25 @@
                     <tr>
                         <td>{{ p_key }}</td>
                         {% if p_val|length == n_questions|length %}
-                            {% comment %}All tasks exist{% endcomment %}
+                            {% comment %}All tasks exist for paper{% endcomment %}
                             {% for q_key, q_val in p_val.items %}
-                                {% if q_val.student_mark %}
+                                {% if q_val.student_mark is not None %}
                                     <td style="background-color: #BEF6CC;">{{ q_val.student_mark }}</td>
                                 {% else %}
                                     <td style="background-color: lightgoldenrodyellow;">Not marked</td>
                                 {% endif %}
                             {% endfor %}
                         {% else %}
-                            {% comment %}Not all tasks exist{% endcomment %}
+                            {% comment %}Not all tasks exist for paper{% endcomment %}
                             {% for i in n_questions %}
-                                {% with p_val|get_item:i as dict %}
-                                    {% if dict.student_mark %}
-                                        <td style="background-color: #BEF6CC;">{{ dict.student_mark }}</td>
-                                    {% elif dict %}
-                                        <td style="background-color: lightgoldenrodyellow;">{{ dict }}</td>
+                                {% with p_val|get_item:i as t_val %}
+                                    {% comment %}Equivalent to t_val = p_val.get(i) where p_val is a dict{% endcomment %}
+                                    {% if t_val == None %}
+                                        <td style="background-color: #FF999E;">Task DNE</td>
+                                    {% elif t_val.student_mark is not None %}
+                                        <td style="background-color: #BEF6CC;">{{ t_val.student_mark }}</td>
                                     {% else %}
-                                        <td style="background-color: lightcoral;">Task DNE</td>
+                                        <td style="background-color: lightgoldenrodyellow;">{{ t_val }}</td>
                                     {% endif %}
                                 {% endwith %}
                             {% endfor %}
