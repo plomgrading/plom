@@ -33,6 +33,8 @@ class MarkingInformationView(ManagerRequiredView):
         context = self.build_context()
 
         papers = self.sms.get_all_marks()
+        print(papers[19])
+        print(papers[20])
         n_questions = self.scs.get_n_questions()
         n_versions = self.scs.get_n_versions()
         marked_question_counts = [

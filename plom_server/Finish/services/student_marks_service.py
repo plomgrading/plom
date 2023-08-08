@@ -33,7 +33,7 @@ class StudentMarkService:
         marking_tasks = (
             paper_obj.markingtask_set.all()
             .select_related("latest_annotation")
-            .filter(status=MarkingTask.COMPLETE)
+            .exclude(status=MarkingTask.OUT_OF_DATE)
         )
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
@@ -45,6 +45,9 @@ class StudentMarkService:
                     "out_of": current_annotation.annotation_data["maxMark"],
                     "student_mark": current_annotation.score,
                 }
+            else:
+                # use of None indicates that it exists but has no mark
+                questions[marking_task.question_number] = "Not marked"
 
         return {paper_num: questions}
 

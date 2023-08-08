@@ -130,23 +130,27 @@
                 {% for p_key, p_val in papers.items %}
                     <tr>
                         <td>{{ p_key }}</td>
-                        {% if not p_val %}
-                            {% for i in n_questions %}<td>None</td>{% endfor %}
-                        {% elif p_val|length == n_questions|length %}
-                            {% comment %}Fully graded{% endcomment %}
-                            {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
+                        {% if p_val|length == n_questions|length %}
+                            {% comment %}All tasks exist{% endcomment %}
+                            {% for q_key, q_val in p_val.items %}
+                                {% if q_val.student_mark %}
+                                    <td style="background-color: #BEF6CC;">{{ q_val.student_mark }}</td>
+                                {% else %}
+                                    <td style="background-color: lightgoldenrodyellow;">Not marked</td>
+                                {% endif %}
+                            {% endfor %}
                         {% else %}
-                            {% comment %}Partially graded{% endcomment %}
+                            {% comment %}Not all tasks exist{% endcomment %}
                             {% for i in n_questions %}
-                                <td>
-                                    {% with p_val|get_item:i as dict %}
-                                        {% if dict %}
-                                            {{ dict.student_mark }}
-                                        {% else %}
-                                            None
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
+                                {% with p_val|get_item:i as dict %}
+                                    {% if dict.student_mark %}
+                                        <td style="background-color: #BEF6CC;">{{ dict.student_mark }}</td>
+                                    {% elif dict %}
+                                        <td style="background-color: lightgoldenrodyellow;">{{ dict }}</td>
+                                    {% else %}
+                                        <td style="background-color: lightcoral;">Task DNE</td>
+                                    {% endif %}
+                                {% endwith %}
                             {% endfor %}
                         {% endif %}
                     </tr>
