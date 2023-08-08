@@ -6,6 +6,7 @@ import datetime as dt
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
+from django.http import HttpResponse
 
 from ...services import DataExtractionService
 from ...services import MatplotlibService
@@ -63,8 +64,8 @@ class Command(BaseCommand):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
                 # each base64-encoded image
-                mpls.histogram_of_grades_on_question(  # of the histogram
-                    question=question
+                mpls.histogram_of_grades_on_question_version(  # of the histogram
+                    question=question, versions=True
                 )
             )
 
@@ -93,55 +94,55 @@ class Command(BaseCommand):
                         question=question,
                         ta_name=marker,
                         ta_df=scores_for_user_for_question,
+                        versions=True,
                     )
                 )
 
             histogram_of_grades_m.append(histogram_of_grades_m_q)
-
-        del (
-            marker,
-            scores_for_user,
-            questions_marked_by_this_ta,
-            histogram_of_grades_m_q,
-            question,
-            scores_for_user_for_question,
-        )
 
         # histogram of time taken to mark each question
         print("Generating histograms of time spent marking each question.")
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times in des._get_times_for_all_questions().items():
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
-                    marking_times_minutes=marking_times.div(60),
+                    marking_times_df=marking_times_df,
+                    versions=True,
                     max_time=max_time,
                     bin_width=bin_width,
                 )
             )
 
-        del max_time, bin_width, marking_times, question
+        del max_time, bin_width
 
         # scatter plot of time taken to mark each question vs mark given
         print("Generating scatter plots of time spent marking vs mark given.")
         scatter_of_time = []
-        for question, marking_times in des._get_times_for_all_questions().items():
-            times_for_question = marking_times.div(60)
-            mark_given_for_question = des.get_scores_for_question(
-                question_number=question,
-            )
+        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+            # list of lists of times spent marking each version of the question
+            times_for_question = []
+            marks_given_for_question = []
+            for version in marking_times_df["question_version"].unique():
+                version_df = marking_times_df[
+                    (marking_times_df["question_version"] == version)
+                ]
+                times_for_question.append(
+                    version_df["seconds_spent_marking"].div(60),
+                )
+
+                marks_given_for_question.append(version_df["score_given"])
 
             scatter_of_time.append(
                 mpls.scatter_time_spent_vs_mark_given(
                     question_number=question,
                     times_spent_minutes=times_for_question,
-                    marks_given=mark_given_for_question,
+                    marks_given=marks_given_for_question,
+                    versions=True,
                 )
             )
-
-        del question, times_for_question, mark_given_for_question, marking_times
 
         # Box plot of the grades given by each marker for each question
         print("Generating box plots of grades by each marker for each question.")
@@ -174,22 +175,14 @@ class Command(BaseCommand):
                 )
             )
 
-        del question_number, question_df, marks_given, marker_names, marker_name
-
+        # line graph of average mark on each question
         print("Generating line graph of average mark on each question.")
-        line_graph = mpls.line_graph_of_avg_marks_by_question()
+        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=True)
 
         print("Generating HTML.")
 
-        def html_add_title(title: str) -> str:
-            """Generate HTML for a title.
-
-            Args:
-                title: The title of the section.
-
-            Returns:
-                A string of HTML containing the title.
-            """
+        def _html_add_title(title: str) -> str:
+            """Generate HTML for a title."""
             out = f"""
             <br>
             <p style="break-before: page;"></p>
@@ -197,16 +190,10 @@ class Command(BaseCommand):
             """
             return out
 
-        def html_for_graphs(list_of_graphs: list) -> str:
-            """Generate HTML for a list of graphs.
-
-            Args:
-                list_of_graphs: A list of base64-encoded graphs.
-
-            Returns:
-                A string of HTML containing the graphs.
-            """
+        def _html_for_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of graphs."""
             out = ""
+            odd = 0
             for i, graph in enumerate(list_of_graphs):
                 odd = i % 2
                 if not odd:
@@ -228,15 +215,8 @@ class Command(BaseCommand):
                 """
             return out
 
-        def html_for_big_graphs(list_of_graphs: list) -> str:
-            """Generate HTML for a list of large graphs.
-
-            Args:
-                list_of_graphs: A list of base64-encoded graphs.
-
-            Returns:
-                A string of HTML containing the graphs.
-            """
+        def _html_for_big_graphs(list_of_graphs: list) -> str:
+            """Generate HTML for a list of large graphs."""
             out = ""
             for graph in list_of_graphs:
                 out += f"""
@@ -264,11 +244,12 @@ class Command(BaseCommand):
         <p>Median total mark: {median_mark}/{totalMarks}</p>
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
+        <h3>Histogram of total marks</h3>
         <img src="data:image/png;base64,{histogram_of_grades}">
         """
 
-        html += html_add_title("Histogram of total marks")
-        html += html_for_graphs(histogram_of_grades_q)
+        html += _html_add_title("Histogram of marks by question")
+        html += _html_for_big_graphs(histogram_of_grades_q)
 
         html += f"""
         <p style="break-before: page;"></p>
@@ -276,31 +257,31 @@ class Command(BaseCommand):
         <img src="data:image/png;base64,{corr}">
         """
 
-        html += html_add_title("Histograms of grades by marker by question")
+        html += _html_add_title("Histograms of grades by marker by question")
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
             <h4>Grades by {marker}</h4>
             """
 
-            html += html_for_graphs(histogram_of_grades_m[index])
+            html += _html_for_big_graphs(histogram_of_grades_m[index])
 
-        html += html_add_title(
+        html += _html_add_title(
             "Histograms of time spent marking each question (in minutes)"
         )
-        html += html_for_graphs(histogram_of_time)
+        html += _html_for_big_graphs(histogram_of_time)
 
-        html += html_add_title(
+        html += _html_add_title(
             "Scatter plots of time spent marking each question vs mark given"
         )
-        html += html_for_graphs(scatter_of_time)
+        html += _html_for_big_graphs(scatter_of_time)
 
-        html += html_add_title(
+        html += _html_add_title(
             "Box plots of grades given by each marker for each question"
         )
-        html += html_for_big_graphs(boxplots)
+        html += _html_for_big_graphs(boxplots)
 
-        html += html_add_title("Line graph of average mark on each question")
+        html += _html_add_title("Line graph of average mark on each question")
         html += f"""
             <img src="data:image/png;base64,{line_graph}">
             """
@@ -318,8 +299,11 @@ class Command(BaseCommand):
             with open(file_path, "wb") as f:
                 f.write(pdf_data)
 
-        date_filename = ""  # dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        filename = "Report-" + name + "--" + date_filename + ".pdf"
+        date_filename = (
+            ""  # "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        )
+        filename = "Report-" + name + date_filename + ".pdf"
+
         print("Writing to " + filename + ".")
 
         pdf_data = create_pdf(html)

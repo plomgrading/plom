@@ -5,6 +5,7 @@
 import json
 from pathlib import Path
 import sys
+from typing import Optional
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -20,12 +21,14 @@ import tomlkit
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 
+from django.core.management.base import BaseCommand, CommandError
+from rest_framework.exceptions import ValidationError
 from tabulate import tabulate
 
-from django.core.management.base import BaseCommand, CommandError
+import plom
 
 from Papers.services import SpecificationService
-from Rubrics.services import RubricService
+from ...services import RubricService
 
 
 class Command(BaseCommand):
@@ -33,12 +36,20 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, username, *, numquestions=None):
+    def upload_demo_rubrics(
+        self, username: str, *, numquestions: Optional[int] = None
+    ) -> int:
         """Load some demo rubrics and upload to server.
+
+        Args:
+            username: rubrics need to be associated to a rubric.
 
         Keyword Args:
             numquestions (None/int): how many questions should we build for.
                 Get it from the spec if omitted.
+
+        Returns:
+            The number of rubrics uploaded.
 
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
@@ -47,9 +58,8 @@ class Command(BaseCommand):
             spec = SpecificationService().get_the_spec()
             numquestions = spec["numberOfQuestions"]
 
-        with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
-            rubrics_in = tomllib.load(f)
-        rubrics_in = rubrics_in["rubric"]
+        with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
+            rubrics_in = tomllib.load(f)["rubric"]
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):
@@ -68,10 +78,7 @@ class Command(BaseCommand):
             rub["display_delta"] = rub["delta"]
             rub.pop("delta")
 
-            # TODO: didn't need to do this on legacy, Issue #2640
             rub["username"] = username
-            rub["tags"] = ""
-            rub["meta"] = ""
 
             # Multiply rubrics w/o question numbers, avoids repetition in demo file
             if rub.get("question") is None:
@@ -84,7 +91,14 @@ class Command(BaseCommand):
 
         service = RubricService()
         for rubric in rubrics:
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
     def init_rubrics_cmd(self, username):
@@ -191,7 +205,14 @@ class Command(BaseCommand):
         service = RubricService()
         for rubric in rubrics:
             # rubric.pop("id")
-            service.create_rubric(rubric)
+            try:
+                service.create_rubric(rubric)
+            except KeyError as e:
+                raise CommandError(f"{e} field(s) missing from rubrics file.")
+            except ValidationError as e:
+                raise CommandError(e.args[0])
+            except ValueError as e:
+                raise CommandError(e)
         return len(rubrics)
 
     def add_arguments(self, parser):

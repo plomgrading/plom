@@ -140,7 +140,7 @@ class IDclaimThisTask(APIView):
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
             return _error_response(
-                f"ID task {paper_id} already claimed", status=status.HTTP_409_CONFLICT
+                f"ID task {paper_id} already claimed", status.HTTP_409_CONFLICT
             )
 
     def put(self, request, paper_id):
