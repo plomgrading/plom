@@ -155,7 +155,9 @@ class Command(BaseCommand):
             # add overall to names
             marker_names = ["Overall"]
             marker_names.extend(
-                des.get_tas_that_marked_this_question(question_number, question_df)
+                des.get_tas_that_marked_this_question(
+                    question_number, ta_df=question_df
+                )
             )
             # add the overall marks
             marks_given.append(
