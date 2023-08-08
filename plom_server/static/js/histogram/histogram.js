@@ -72,7 +72,7 @@ function renderHist(data, divId) {
         .attr("class", "axis-y")
         .call(yAxis);
 
-    // Append scondary x and y axes to the SVG for top and right sides
+    // Append secondary x and y axes to the SVG for top and right sides
     svg.append("g")
         .attr("class", "axis-x-top")
         .call(xAxisTop);
