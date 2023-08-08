@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.db import IntegrityError
 from model_bakery import baker
 
-from ..services import PaperCreatorService
+from ..services import PaperCreatorService, SpecificationService
 from ..services.paper_creator import _create_paper_with_qvmapping
 from ..models import Paper, IDPage, DNMPage, QuestionPage, FixedPage, Specification
 
@@ -20,17 +20,21 @@ class PaperCreatorTests(TestCase):
     """
 
     def setUp(self):
-        baker.make(
-            Specification,
-            spec_dict={
-                "idPage": 1,
-                "doNotMarkPages": [2, 5],
-                "question": {
-                    "1": {"pages": [3]},
-                    "2": {"pages": [4]},
-                },
+        spec_dict = {
+            "idPage": 1,
+            "numberOfVersions": 2,
+            "numberOfPages": 5,
+            "totalMarks": 10,
+            "numberOfQuestions": 2,
+            "name": "papers_demo",
+            "longName": "Papers Test",
+            "doNotMarkPages": [2, 5],
+            "question": {
+                "1": {"pages": [3], "mark": 5},
+                "2": {"pages": [4], "mark": 5},
             },
-        )
+        }
+        SpecificationService.store_validated_spec(spec_dict)
         self.test_username = "user0"
         self.test_user = baker.make(User, username=self.test_username)
         return super().setUp()

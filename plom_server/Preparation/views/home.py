@@ -76,7 +76,9 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_shortname": spec.get_short_name(),
                     "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
-                    "is_spec_the_same": spec.compare_spec(valid_spec.get_the_spec()),
+                    "is_spec_the_same": spec.compare_spec(
+                        SpecificationService.get_the_spec()
+                    ),
                 }
             )
         else:

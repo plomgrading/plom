@@ -6,6 +6,13 @@
 
 import logging
 from typing import Dict
+from pathlib import Path
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
@@ -20,6 +27,42 @@ from ..serializers import SpecSerializer
 
 
 log = logging.getLogger("ValidatedSpecService")
+
+
+@transaction.atomic
+def load_spec_from_toml(
+    pathname: Path | str, update_staging: bool = False, public_code: str | None = None
+) -> Specification:
+    """Load a test spec from a TOML file, and saves to the database.
+
+    Will call the SpecSerializer on the loaded TOML string and validate.
+
+    Args:
+        pathname (pathlib.Path or string): the filename on disk.
+        update_staging (bool): if true, update the staging specification (mainly for UI purposes)
+        public_code (str | None): pass a manually specified public code (mainly for unit testing)
+
+    Returns:
+        Specification: saved test spec instance.
+    """
+    with open(Path(pathname), "rb") as toml_f:
+        data = tomllib.load(toml_f)
+
+        # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+        data["question"] = question_list_to_dict(data["question"])
+        serializer = SpecSerializer(data=data)
+        serializer.is_valid()
+        valid_data = serializer.validated_data
+
+        if public_code:
+            valid_data["publicCode"] = public_code
+
+        if update_staging:
+            from SpecCreator.services import StagingSpecificationService
+
+            StagingSpecificationService().create_from_dict(serializer.validated_data)
+
+        return serializer.create(serializer.validated_data)
 
 
 @transaction.atomic

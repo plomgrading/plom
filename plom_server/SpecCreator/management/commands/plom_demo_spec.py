@@ -11,11 +11,6 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 import fitz
 
 from django.core.management.base import BaseCommand, CommandError
@@ -72,10 +67,6 @@ class Command(BaseCommand):
                 )
             else:
                 self.stdout.write("Writing test specification...")
-                with open(
-                    resources.files(useful_files) / "testing_test_spec.toml", "rb"
-                ) as f:
-                    data = tomllib.load(f)
 
                 # extract page count and upload reference PDF
                 with fitz.open(
@@ -93,19 +84,21 @@ class Command(BaseCommand):
 
                 # verify spec, stage + save to DB
                 try:
-                    data["question"] = SpecificationService.question_list_to_dict(
-                        data["question"]
+                    demo_toml_path = (
+                        resources.files(useful_files) / "testing_test_spec.toml"
                     )
-                    serializer = SpecSerializer(data=data)
-                    serializer.is_valid(raise_exception=True)
-                    valid_spec = serializer.validated_data
-                    staged_spec_service.create_from_dict(valid_spec)
 
                     if options["publicCode"]:
                         code = options["publicCode"]
-                        valid_spec["publicCode"] = code
+                    else:
+                        code = None
 
-                    SpecificationService.store_validated_spec(valid_spec)
+                    SpecificationService.load_spec_from_toml(
+                        pathname=demo_toml_path,
+                        update_staging=True,
+                        public_code=code,
+                    )
+
                     self.stdout.write("Demo test specification uploaded!")
                     self.stdout.write(str(SpecificationService.get_the_spec()))
                 except ValueError as e:
