@@ -46,6 +46,15 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
+    def update_task_priority(self, paper: Paper, priority: float) -> None:
+        try:
+            task_to_update = PaperIDTask.objects.get(paper=paper)
+            task_to_update.iding_priorit = priority
+            task_to_update.save()
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Task with paper number {paper.paper_number} does not exist.")
+
+    @transaction.atomic
     def id_task_exists(self, paper):
         """Return true if an ID tasks exists for a particular paper."""
         # TO_DO - do we need to exclude "out of date" tasks here

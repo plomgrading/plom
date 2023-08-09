@@ -143,6 +143,7 @@ class IDReaderService:
             existing_pred.student_id = student_id
             existing_pred.certainty = certainty
             existing_pred.save()
+        update_task_priority(self, paper, priority)
 
     def add_or_change_ID_prediction_cmd(
         self, username, paper_num, student_id, certainty, predictor
@@ -178,3 +179,25 @@ class IDReaderService:
     def add_prename_ID_prediction(self, user, student_id, paper_number):
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
+
+    @transaction.atomic
+    def update_priority_min_cert(self, paper: Paper) -> None:
+        try:
+            pred_query = IDPrediction.objects.filter(paper=paper)
+            cert_list = [pred.certainty for pred in pred_query]
+            priority = min(cert_list)
+
+            task = PaperIDTask.objects.get(paper=paper)
+            task.iding_priority = -priority
+            task.save()
+        except IDPrediction.DoesNotExist as e:
+            raise ValueError(f"No predictions exist for paper number {paper.paper_number}.")
+        except PaperIDTask.DoesNotExist as e:
+            raise ValueError(f"Task with paper number {paper.paper_number} does not exist.")
+
+    @transaction.atomic
+    def reverse_priority_max_cert(self) -> None:
+        all_tasks = PaperIDTask.objects.all()
+        for task in all_tasks:
+            task.iding_priority = -priority
+            task.save()

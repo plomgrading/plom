@@ -11,12 +11,22 @@ from Papers.models import Paper
 
 
 class PaperIDTask(BaseTask):
-    """Represents a test-paper that needs to be identified."""
+    """Represents a test-paper that needs to be identified.
+
+    paper: reference to Paper that needs to be IDed.
+    latest_action: reference to PaperIDAction, the latest identification for the paper.
+    priority: a float priority that provides the ordering for tasks presented for IDing,
+        which is equal to the inverse of the paper number by default.
+    """
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
     latest_action = models.OneToOneField(
         "PaperIDAction", unique=True, null=True, on_delete=models.SET_NULL
     )
+    iding_priority = models.FloatField(null=False, default=_determine_priority)
+
+    def _determine_priority(self) -> float:
+        return 1 / self.paper.paper_number
 
 
 class PaperIDAction(BaseAction):
