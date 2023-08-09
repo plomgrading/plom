@@ -44,11 +44,10 @@ class PQVMappingView(ManagerRequiredView):
         pqvs = PQVMappingService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
-        speck = SpecificationService()
 
         context = {
-            "number_of_questions": speck.get_n_questions(),
-            "question_list": range(1, 1 + speck.get_n_questions()),
+            "number_of_questions": SpecificationService.get_n_questions(),
+            "question_list": range(1, 1 + SpecificationService.get_n_questions()),
             "prenaming": pss.get_prenaming_setting(),
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),
@@ -91,13 +90,12 @@ class PQVMappingReadOnlyView(ManagerRequiredView):
     def build_context(self):
         context = super().build_context()
         pqvs = PQVMappingService()
-        speck = SpecificationService()
         pss = PrenameSettingService()
 
         context.update(
             {
                 "prenaming": pss.get_prenaming_setting(),
-                "question_list": range(1, 1 + speck.get_n_questions()),
+                "question_list": range(1, 1 + SpecificationService.get_n_questions()),
                 "pqv_table": pqvs.get_pqv_map_as_table(pss.get_prenaming_setting()),
             }
         )

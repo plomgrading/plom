@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from collections import defaultdict
@@ -41,9 +41,10 @@ class TestSourceService:
 
     @transaction.atomic
     def are_all_test_versions_uploaded(self):
-        speck = SpecificationService()
-        if speck.is_there_a_spec():
-            return PaperSourcePDF.objects.count() == speck.get_n_versions()
+        if SpecificationService.is_there_a_spec():
+            return (
+                PaperSourcePDF.objects.count() == SpecificationService.get_n_versions()
+            )
         else:
             return False
 
@@ -57,9 +58,7 @@ class TestSourceService:
 
     def get_list_of_sources(self):
         """Return a dict of all versions, uploaded or not."""
-        speck = SpecificationService()
-
-        status = {(v + 1): None for v in range(speck.get_n_versions())}
+        status = {(v + 1): None for v in range(SpecificationService.get_n_versions())}
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status

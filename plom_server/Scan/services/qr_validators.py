@@ -26,7 +26,7 @@ class QRErrorService:
         # * check all images have correct public-key
         # * check all distinct test/page/version
 
-        spec_dictionary = SpecificationService().get_the_spec()
+        spec_dictionary = SpecificationService.get_the_spec()
 
         # lists of various image types
         no_qr_imgs = []  # no qr-codes could be read

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
@@ -66,8 +66,7 @@ class PreparationLandingView(ManagerRequiredView):
             )
 
         spec = StagingSpecificationService()
-        valid_spec = SpecificationService()
-        if valid_spec.is_there_a_spec():
+        if SpecificationService.is_there_a_spec():
             context.update(
                 {
                     "valid_spec": True,
@@ -77,7 +76,9 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_shortname": spec.get_short_name(),
                     "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
-                    "is_spec_the_same": spec.compare_spec(valid_spec.get_the_spec()),
+                    "is_spec_the_same": spec.compare_spec(
+                        SpecificationService.get_the_spec()
+                    ),
                 }
             )
         else:
@@ -106,8 +107,7 @@ class PreparationLandingView(ManagerRequiredView):
 
 class LandingResetSpec(ManagerRequiredView):
     def delete(self, request):
-        spec_service = SpecificationService()
-        spec_service.remove_spec()
+        SpecificationService.remove_spec()
 
         staging_spec = StagingSpecificationService()
         staging_spec.reset_specification()

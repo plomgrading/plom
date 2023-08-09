@@ -189,7 +189,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 class StartAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
@@ -201,7 +201,7 @@ class StartAllPDFs(PDFTableView):
 class StartOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
@@ -228,7 +228,7 @@ class CancelOnePDF(PDFTableView):
 class RetryAllPDF(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
