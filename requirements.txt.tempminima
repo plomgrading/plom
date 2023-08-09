@@ -60,6 +60,6 @@ tabulate==0.9.0
 tqdm==4.63.2
 tomli==2.0.1
 tomlkit==0.11.7
-weasyprint==59.0
+weasyprint==57.0
 zipfly==6.0.1
 zxing-cpp==1.4.0
