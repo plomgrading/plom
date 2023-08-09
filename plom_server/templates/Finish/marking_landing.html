@@ -97,7 +97,6 @@
         <div class="col">
             <h5>Estimates</h5>
             <p>Hours formula: &nbsp &nbsp &nbsp # of questions remaining * average time to mark</p>
-            <p>Days formula: &nbsp &nbsp &nbsp # of questions remaining / average questions marked per day</p>
         </div>
         <div class="col">
             <table style="width: auto"
@@ -112,10 +111,6 @@
                     <tr>
                         <td>Hours remaining</td>
                         {% for time in hours_estimate %}<td>{{ time }}</td>{% endfor %}
-                    </tr>
-                    <tr>
-                        <td>Days remaining</td>
-                        {% for time in days_estimate %}<td>{{ time }}</td>{% endfor %}
                     </tr>
                 </tbody>
             </table>
