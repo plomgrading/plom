@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Papers.models import (
+    Paper,
     FixedPage,
     MobilePage,
     IDPage,
@@ -216,3 +217,60 @@ class ManageDiscardService:
             )
         else:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
+
+    @transaction.atomic
+    def _assign_discard_to_fixed(self, user_obj, discard_pk, paper_number, page_number):
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+
+        try:
+            fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"Paper {paper_number} does not have a fixed page with page number {page_number}"
+            )
+
+        if fpage_obj.image:
+            raise ValueError(
+                f"Fixed page {page_number} of paper {paper_number} already has an image."
+            )
+
+        # assign the image to the fixed page
+        fpage_obj.image = discard_obj.image
+        fpage_obj.save()
+        # delete the discard page
+        discard_obj.delete()
+
+        if isinstance(fpage_obj, DNMPage):
+            pass
+        elif isinstance(fpage_obj, IDPage):
+            IdentifyTaskService().set_paper_idtask_outdated(paper_number)
+        elif isinstance(fpage_obj, QuestionPage):
+            MarkingTaskService().set_paper_marking_task_outdated(
+                paper_number, fpage_obj.question_number
+            )
+        else:
+            raise RuntimeError(
+                f"Cannot identify the type of the fixed page with pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
+            )
+
+    def reassign_discard_page_to_fixed_page_cmd(
+        self, username, discard_pk, paper_number, page_number
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions."
+            ) from e
+
+        self._assign_discard_to_fixed(user_obj, discard_pk, paper_number, page_number)

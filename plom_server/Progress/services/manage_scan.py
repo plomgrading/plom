@@ -348,6 +348,7 @@ class ManageScanService:
                     "bundle_pk": img.bundle.pk,
                     "bundle_name": img.bundle.staging_bundle.slug,
                     "order": img.bundle_order,
+                    "discard_pk": img.discardpage.pk,
                 }
             )
 
