@@ -28,13 +28,15 @@ from .forms import StudentMarksFilterForm
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
-    ras = ReassembleService()
-    mts = MarkingTaskService()
-    sms = StudentMarkService()
-    smff = StudentMarksFilterForm()
-    scs = StagingSpecificationService()
-    tms = TaMarkingService()
-    d3s = D3Service()
+    def __init__(self):
+        self.ras = ReassembleService()
+        self.mts = MarkingTaskService()
+        self.sms = StudentMarkService()
+        self.smff = StudentMarksFilterForm()
+        self.scs = StagingSpecificationService()
+        self.tms = TaMarkingService()
+        self.des = DataExtractionService()
+        self.d3s = D3Service()
 
     template = "Finish/marking_landing.html"
 
@@ -68,14 +70,14 @@ class MarkingInformationView(ManagerRequiredView):
         all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
-        question_avgs = DataExtractionService().get_average_grade_on_all_questions()
+        question_avgs = self.des.get_average_grade_on_all_questions()
         grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
             question_avgs, "Question number", "Grade", "Quesion vs Grade"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
-        corr = DataExtractionService()._get_question_correlation_heatmap_data().values
+        corr = self.des._get_question_correlation_heatmap_data().values
         corr_heatmap_data = self.d3s.convert_correlation_to_d3_heatmap_format(
             corr, "Question correlation", "Question", "Question"
         )
