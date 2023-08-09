@@ -23,9 +23,18 @@ class Command(BaseCommand):
 
     help = """Generates a PDF report of the marking progress.
 
+    Report is saved as a pdf in the server `plom_server` directory.
+
     Requires matplotlib, pandas, seaborn, and weasyprint. If calling on demo
     data, run `python manage.py plom_demo --randomarker` first.
     """
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--versions",
+            action="store_true",
+            help="Include version in report graphics (optional bool)",
+        )
 
     def handle(self, *args, **options):
         print("Building report.")
@@ -41,6 +50,8 @@ class Command(BaseCommand):
 
 Generating..."""
         print(graphs_message)
+
+        versions = options["versions"]
 
         des = DataExtractionService()
         mts = MarkingTaskService()
