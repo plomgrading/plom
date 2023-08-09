@@ -2,8 +2,6 @@
 # Copyright (C) 2023 Brennen Chiu
 
 import arrow
-from collections import defaultdict
-from datetime import timedelta
 from typing import Dict, Tuple, Union
 
 from django.contrib.auth.models import User
@@ -99,7 +97,9 @@ class UserInfoServices:
                 if total_marking_time is None:
                     total_marking_time = 0
 
-                average_marking_time = total_marking_time / count if count > 0 else 0
+                average_marking_time = round(
+                    total_marking_time / count if count > 0 else 0
+                )
 
                 grouped_annotations[user][key] = {
                     "annotations_count": count,
@@ -115,8 +115,11 @@ class UserInfoServices:
                         )
                         * 100
                     ),
+                    "date_format": arrow.utcnow()
+                    .shift(seconds=average_marking_time)
+                    .format("YYYYMMDDHHmmss"),
                 }
-        print(grouped_annotations)
+
         return grouped_annotations
 
     def seconds_to_humanize_time(self, seconds: float) -> str:

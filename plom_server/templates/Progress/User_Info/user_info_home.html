@@ -22,7 +22,7 @@
                 {% endfor %}
             </table>
             <div>
-                <table class="table text-center align-middle">
+                <table class="table text-center align-middle sortable">
                     <thead>
                         <tr>
                             <th>Username</th>
@@ -41,7 +41,8 @@
                                     <td>{{ question_data.0 }}</td>
                                     <td>{{ question_data.1 }}</td>
                                     <td>{{ annotation_data.annotations_count }}</td>
-                                    <td>{{ annotation_data.average_marking_time }}</td>
+                                    <td sorttable_customkey={{ annotation_data.date_format }}>{{ annotation_data.average_marking_time }}
+                                    </td>
                                     <td>
                                         <div class="progress">
                                             <div class="progress-bar"
