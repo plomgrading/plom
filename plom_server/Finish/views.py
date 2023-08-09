@@ -20,6 +20,7 @@ from .services import (
     TaMarkingService,
     ReassembleService,
     DataExtractionService,
+    D3Service,
 )
 from .forms import StudentMarksFilterForm
 
@@ -33,6 +34,7 @@ class MarkingInformationView(ManagerRequiredView):
     smff = StudentMarksFilterForm()
     scs = StagingSpecificationService()
     tms = TaMarkingService()
+    d3s = D3Service()
 
     template = "Finish/marking_landing.html"
 
@@ -67,17 +69,15 @@ class MarkingInformationView(ManagerRequiredView):
 
         # histogram of grades per question
         question_avgs = DataExtractionService().get_average_grade_on_all_questions()
-        grades_hist_data = DataExtractionService().convert_stats_to_d3_hist_format(
+        grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
             question_avgs, "Question number", "Grade", "Quesion vs Grade"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
         corr = DataExtractionService()._get_question_correlation_heatmap_data().values
-        corr_heatmap_data = (
-            DataExtractionService().convert_correlation_to_d3_heatmap_format(
-                corr, "Question correlation", "Question", "Question"
-            )
+        corr_heatmap_data = self.d3s.convert_correlation_to_d3_heatmap_format(
+            corr, "Question correlation", "Question", "Question"
         )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
 
