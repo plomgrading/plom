@@ -49,15 +49,15 @@ class TaMarkingService:
             None expected
         """
         mts = MarkingTaskService()
-        annotations = mts.get_latest_annotations_from_complete_marking_tasks()
+        annotations = (
+            mts.get_latest_annotations_from_complete_marking_tasks().prefetch_related(
+                "user", "task", "task__paper"
+            )
+        )
 
         csv_data = []
         for annotation in annotations:
-            csv_data.append(
-                self.get_annotation_info_download(
-                    annotation.prefetch_related("user", "task", "task__paper")
-                )
-            )
+            csv_data.append(self.get_annotation_info_download(annotation))
 
         return csv_data
 

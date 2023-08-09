@@ -4,6 +4,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.db import IntegrityError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -140,13 +142,29 @@ class IDclaimThisTask(APIView):
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
             return _error_response(
-                f"ID task {paper_id} already claimed", status=status.HTTP_409_CONFLICT
+                f"ID task {paper_id} already claimed", status.HTTP_409_CONFLICT
             )
 
     def put(self, request, paper_id):
-        """Assigns a name and a student ID to the paper."""
+        """Assigns a name and a student ID to the paper.
+
+        Raises:
+            HTTP_403_FORBIDDEN: user is not the assigned user for the id-ing task for that paper
+            HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper
+            HTTP_409_CONFLICT: the student_id has already been assigned to another paper  (not yet implemented)
+        """
         data = request.data
         user = request.user
         its = IdentifyTaskService()
-        its.identify_paper(user, paper_id, data["sid"], data["sname"])
+        try:
+            its.identify_paper(user, paper_id, data["sid"], data["sname"])
+        except PermissionDenied as err:  # task not assigned to that user
+            return Response(f"{err}", status=status.HTTP_403_FORBIDDEN)
+        except ObjectDoesNotExist as err:  # no valid task for that paper_id
+            return Response(f"{err}", status=status.HTTP_404_NOT_FOUND)
+        except (
+            IntegrityError
+        ) as err:  # attempting to assign an SID that is already used
+            return Response(f"{err}", status=status.HTTP_409_CONFLICT)
+
         return Response(status=status.HTTP_200_OK)

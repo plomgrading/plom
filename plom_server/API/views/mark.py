@@ -178,24 +178,25 @@ class MclaimThisTask(APIView):
                 request.user, code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
-            return Response(e, status=status.HTTP_404_NOT_FOUND)
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         except RuntimeError as e:
-            return Response(e, status=status.HTTP_409_CONFLICT)
+            return _error_response(e, status.HTTP_409_CONFLICT)
         except ValidationError as e:
-            return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # TODO: explicitly throwing server 500 is ok?  Better to just remove this block?
+            return _error_response(e, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         annotation_image = files["annotation_image"]
         try:
             img_md5sum = data["md5sum"]
             img = mts.save_annotation_image(img_md5sum, annotation_image)
         except FileExistsError:
-            return Response(
-                "Annotation image already exists.", status=status.HTTP_409_CONFLICT
+            return _error_response(
+                "Annotation image already exists.", status.HTTP_409_CONFLICT
             )
         except ValidationError:
-            return Response(
+            return _error_response(
                 "Unsupported media type for annotation image",
-                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             )
 
         mts.mark_task(
@@ -318,9 +319,9 @@ class MgetPageDataQuestionInContext(APIView):
                 paper, question=question, include_idpage=True, include_dnmpages=True
             )
         except ObjectDoesNotExist as e:
-            r = Response(status=status.HTTP_409_CONFLICT)
-            r.reason_phrase = f"Test paper does not exist: {str(e)}"
-            return r
+            return _error_response(
+                f"Test paper does not exist: {str(e)}", status.HTTP_409_CONFLICT
+            )
         return Response(page_metadata, status=status.HTTP_200_OK)
 
 
@@ -335,10 +336,7 @@ class MgetOneImage(APIView):
             img_path = pds.get_image_path(pk, hash)
             return FileResponse(open(img_path, "rb"), status=status.HTTP_200_OK)
         except Image.DoesNotExist:
-            return Response(
-                detail="Image does not exist.",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return _error_response("Image does not exist.", status.HTTP_400_BAD_REQUEST)
 
 
 class MgetAnnotations(APIView):
