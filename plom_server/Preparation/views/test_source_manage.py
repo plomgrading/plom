@@ -27,13 +27,12 @@ class TestSourceUploadForm(forms.Form):
 class TestSourceManageView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
-        speck = SpecificationService()
 
         return {
             "form": TestSourceUploadForm(),
-            "test_versions": speck.get_n_versions(),
+            "test_versions": SpecificationService.get_n_versions(),
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
-            "number_of_pages": speck.get_n_pages(),
+            "number_of_pages": SpecificationService.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
             "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
@@ -66,9 +65,8 @@ class TestSourceManageView(ManagerRequiredView):
             )
         else:
             tss = TestSourceService()
-            speck = SpecificationService()
             success, message = tss.take_source_from_upload(
-                version, speck.get_n_pages(), request.FILES["source_pdf"]
+                version, SpecificationService.get_n_pages(), request.FILES["source_pdf"]
             )
             context.update({"version": version, "success": success, "message": message})
 

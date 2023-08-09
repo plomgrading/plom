@@ -61,9 +61,7 @@ class KnowifyImageView(ScannerRequiredView):
             }
         )
 
-        page_labels = [
-            f"page {n+1}" for n in range(SpecificationService().get_n_pages())
-        ]
+        page_labels = [f"page {n+1}" for n in range(SpecificationService.get_n_pages())]
         all_paper_numbers = paper_info.which_papers_in_database()
         missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers(bundle)
         context.update(
@@ -140,7 +138,7 @@ class ExtraliseImageView(ScannerRequiredView):
         if extra_page_data.get("questionAll", "off") == "all":
             # set all the questions
             question_list = [
-                n + 1 for n in range(SpecificationService().get_n_questions())
+                n + 1 for n in range(SpecificationService.get_n_questions())
             ]
         else:
             if len(extra_page_data.get("questions", [])):

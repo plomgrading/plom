@@ -9,7 +9,7 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, SpecificationService
 from Papers.models import (
     Bundle,
     Image,
@@ -31,9 +31,21 @@ class ImageBundleTests(TestCase):
 
     def setUp(self):
         # make a spec and a paper
-        self.spec = baker.make(
-            Specification, spec_dict={"question": {"1": {"pages": [1]}}}
-        )
+        spec_dict = {
+            "idPage": 1,
+            "numberOfVersions": 2,
+            "numberOfPages": 5,
+            "totalMarks": 10,
+            "numberOfQuestions": 2,
+            "name": "papers_demo",
+            "longName": "Papers Test",
+            "doNotMarkPages": [2, 5],
+            "question": {
+                "1": {"pages": [3], "mark": 5},
+                "2": {"pages": [4], "mark": 5},
+            },
+        }
+        SpecificationService.store_validated_spec(spec_dict)
         self.user = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)

@@ -17,10 +17,10 @@ from .services.task_ordering_service import TaskOrderService
 class TaskOrderPageView(ManagerRequiredView):
     """A page for setting the task marking priorities."""
 
-    template_name = "TaskOrder/task_order_landing.html"
-    tos = TaskOrderService()
-
     def get(self, request):
+        template_name = "TaskOrder/task_order_landing.html"
+        tos = TaskOrderService()
+
         context = self.build_context()
         order_form = TaskOrderForm()
         upload_form = UploadFileForm()
@@ -28,7 +28,7 @@ class TaskOrderPageView(ManagerRequiredView):
         order_form.fields["order_tasks_by"].initial = request.session.get(
             "order_tasks_by",
         )
-        pq_priority_dict = self.tos.get_task_priorities()
+        pq_priority_dict = tos.get_task_priorities()
 
         context.update(
             {
@@ -38,7 +38,7 @@ class TaskOrderPageView(ManagerRequiredView):
             }
         )
 
-        return render(request, self.template_name, context=context)
+        return render(request, template_name, context=context)
 
     def upload_task_priorities(request):
         """Upload the task priorities as a CSV file and update the database."""

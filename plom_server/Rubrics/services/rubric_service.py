@@ -183,7 +183,7 @@ class RubricService:
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         self._build_special_rubrics(spec, username)
         return True
 

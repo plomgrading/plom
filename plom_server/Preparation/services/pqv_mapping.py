@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import transaction
@@ -64,9 +64,8 @@ class PQVMappingService:
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
-        speck = SpecificationService()
         question_list = [
-            q + 1 for q in range(speck.get_n_questions())
+            q + 1 for q in range(SpecificationService.get_n_questions())
         ]  # todo - replace with spec lookup
 
         for paper_number, qvmap in pqvmapping.items():
@@ -85,8 +84,7 @@ class PQVMappingService:
     @transaction.atomic()
     def get_pqv_map_as_csv(self):
         pqvmap = self.get_pqv_map_dict()
-        speck = SpecificationService()
-        qlist = [q + 1 for q in range(speck.get_n_questions())]
+        qlist = [q + 1 for q in range(SpecificationService.get_n_questions())]
         # TODO - replace this with some python csv module stuff
         txt = '"paper_number"'
         for q in qlist:
@@ -103,8 +101,7 @@ class PQVMappingService:
         from plom import make_random_version_map
 
         # grab the spec as dict from the test creator services
-        speck = SpecificationService()
-        spec_dict = speck.get_the_spec()
+        spec_dict = SpecificationService.get_the_spec()
         # Legacy make_random_version_map will be unhappy if not fed a numberToProduce
         # so we add one.
         # this spec_dict does not include numberToProduce so we add it

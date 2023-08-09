@@ -11,11 +11,10 @@ from .services import TagService
 class TagLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing papers by tag."""
 
-    template_name = "Tags/tags_landing.html"
-    ts = TagService()
-    form = TagEditForm
-
     def get(self, request):
+        template_name = "Tags/tags_landing.html"
+        ts = TagService()
+
         context = self.build_context()
         text_field_form = TagFormFilter()
 
@@ -28,12 +27,12 @@ class TagLandingPageView(ManagerRequiredView):
             text_field_form.fields["strict_match"].initial = True
 
         if tag_filter_strict == "on":
-            task_tags = self.ts.get_task_tags_with_tag_exact(tag_filter_text)
+            task_tags = ts.get_task_tags_with_tag_exact(tag_filter_text)
         else:
-            task_tags = self.ts.get_task_tags_with_tag(tag_filter_text)
+            task_tags = ts.get_task_tags_with_tag(tag_filter_text)
 
-        papers = self.ts.get_papers_from_task_tags(task_tags)
-        tag_counts = self.ts.get_task_tags_counts()
+        papers = ts.get_papers_from_task_tags(task_tags)
+        tag_counts = ts.get_task_tags_counts()
 
         context.update(
             {
@@ -47,7 +46,7 @@ class TagLandingPageView(ManagerRequiredView):
             }
         )
 
-        return render(request, self.template_name, context=context)
+        return render(request, template_name, context=context)
 
     def tag_filter(request):
         """Filter papers by tag."""
@@ -60,17 +59,17 @@ class TagLandingPageView(ManagerRequiredView):
 class TagItemView(ManagerRequiredView):
     """A page for displaying a single tag and related information."""
 
-    template_name = "Tags/tag_item.html"
-    ts = TagService()
-    form = TagEditForm
-
     def get(self, request, tag_id):
+        template_name = "Tags/tag_item.html"
+        ts = TagService()
+        form = TagEditForm
+
         context = self.build_context()
 
-        tag = self.ts.get_tag_from_id(tag_id=tag_id)
-        context.update({"tag": tag, "form": self.form(instance=tag)})
+        tag = ts.get_tag_from_id(tag_id=tag_id)
+        context.update({"tag": tag, "form": form(instance=tag)})
 
-        return render(request, self.template_name, context=context)
+        return render(request, template_name, context=context)
 
     def post(request, tag_id):
         form = TagEditForm(request.POST)

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -38,8 +38,7 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
         ref_service.delete_pdf()
         spec.reset_specification()
 
-        valid_spec = SpecificationService()
-        valid_spec.remove_spec()
+        SpecificationService.remove_spec()
         return HttpResponseRedirect(reverse("prep_landing"))
 
 
@@ -59,11 +58,10 @@ class TestSpecViewRefPDF(ManagerRequiredView):
 
 class TestSpecGenTomlView(ManagerRequiredView):
     def get(self, request):
-        valid_spec = SpecificationService()
-        if not valid_spec.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             raise PermissionDenied("Specification not completed yet.")
 
-        toml_file = valid_spec.get_the_spec_as_toml()
+        toml_file = SpecificationService.get_the_spec_as_toml()
 
         response = HttpResponse(toml_file)
         response["mimetype"] = "text/plain"
@@ -149,9 +147,11 @@ class TestSpecSubmitView(TestSpecPageView):
     def post(self, request):
         staging_spec = StagingSpecificationService()
         spec_dict = staging_spec.get_valid_spec_dict()
+        spec_dict.pop(
+            "numberToProduce", None
+        )  # TODO: numToProduce shouldn't be in here in the first place!
 
-        spec = SpecificationService()
-        spec.store_validated_spec(spec_dict)
+        SpecificationService.store_validated_spec(spec_dict)
 
         return HttpResponseRedirect(reverse("download"))
 

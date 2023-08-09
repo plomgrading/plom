@@ -16,5 +16,9 @@ from .paper_structure import (
     QuestionPage,
     MobilePage,
 )
-from .specifications import Specification, SolutionSpecification
+from .specifications import (
+    SpecQuestion,
+    Specification,
+    SolutionSpecification,
+)
 from .background_tasks import CreatePaperTask, CreateImageTask
