@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __copyright__ = "Copyright (C) 2023  Natalie Balashov"
+__copyright__ = "Copyright (C) 2023 Julian Lapenna"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -67,10 +68,11 @@ Some stuff from the package manager:
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pillow \
-        python3-tqdm \
+        python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
         python3-defusedxml python3-jsmin python3-cairosvg \
         libxcb-cursor0
 ```
+The `pango` stuff is needed for `weasyprint` to produce pdf reports.
 
 `libxcb-cursor0` is needed to prevent the Plom client from crashing when [loading plugins for PyQt6](https://stackoverflow.com/questions/68036484/qt6-qt-qpa-plugin-could-not-load-the-qt-platform-plugin-xcb-in-even-thou/75941575#75941575).
 

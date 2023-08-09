@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -15,7 +16,8 @@ RUN apt-get -y update && \
         cmake make g++ \
         imagemagick \
         openssl \
-        dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
+        dvipng latexmk texlive-latex-extra texlive-fonts-recommended texlive-pictures \
+        libpango-1.0-0 libpangocairo-1.0-0 \
         file \
         python3 \
         python3-dev \
