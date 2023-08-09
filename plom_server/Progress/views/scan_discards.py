@@ -2,6 +2,9 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.shortcuts import render
+from django_htmx.http import HttpResponseClientRefresh
+from django.http import HttpResponse
+
 
 from Papers.services import PaperInfoService, SpecificationService
 from Progress.services import ManageScanService
@@ -26,21 +29,55 @@ class ScanReassignView(BaseScanProgressPage):
         context = self.build_context("reassign")
         context.update({"image_pk": img_pk, "angle": img_angle})
 
-        paper_info = PaperInfoService()
-        all_paper_numbers = paper_info.which_papers_in_database()
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
-        specinfo = SpecificationService()
-        page_labels = [f"page {n+1}" for n in range(specinfo.get_n_pages())]
-        question_labels = [f"Q.{n+1}" for n in range(specinfo.get_n_questions())]
+        question_labels = [
+            f"Q.{n+1}" for n in range(SpecificationService.get_n_questions())
+        ]
         used_papers = mss.get_all_used_test_papers()
+
         context.update(
             {
-                "all_paper_numbers": all_paper_numbers,
                 "papers_missing_fixed_pages": papers_missing_fixed_pages,
-                "page_labels": page_labels,
                 "question_labels": question_labels,
                 "used_papers": used_papers,
             }
         )
 
         return render(request, "Progress/scan_reassign.html", context)
+
+    def post(self, request, img_pk):
+        reassignment_data = request.POST
+        print(reassignment_data)
+
+        if reassignment_data.get("assignment_type", "fixed") == "fixed":
+            try:
+                paper_number, page_number = reassignment_data.get(
+                    "missingPaperPage", ","
+                ).split(",")
+            except ValueError:
+                return HttpResponse(
+                    """<div class="alert alert-danger">Choose paper/page</div>"""
+                )
+        else:
+            paper_number = reassignment_data.get("usedPaper", None)
+
+            try:
+                paper_number = int(paper_number)
+            except ValueError:
+                return HttpResponse(
+                    """<div class="alert alert-danger">Invalid paper number</div>"""
+                )
+            if reassignment_data.get("questionAll", "off") == "all":
+                # set all the questions
+                question_list = [
+                    n + 1 for n in range(SpecificationService.get_n_questions())
+                ]
+            else:
+                if len(reassignment_data.get("questions", [])):
+                    question_list = [int(q) for q in reassignment_data["questions"]]
+                else:
+                    return HttpResponse(
+                        """<span class="alert alert-danger">At least one question</span>"""
+                    )
+
+        return HttpResponse("""<div class="alert alert-success">Got to here</div>""")
