@@ -30,7 +30,7 @@ class ReassembleService:
         paper_tasks = MarkingTask.objects.filter(paper=paper)
         completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE)
         ood_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE)
-        n_questions = SpecificationService().get_n_questions()
+        n_questions = SpecificationService.get_n_questions()
         return (
             completed_tasks.count() == n_questions
             and completed_tasks.count() + ood_tasks.count() == paper_tasks.count()
@@ -51,7 +51,7 @@ class ReassembleService:
         Args:
             paper: a reference to a Paper instance
         """
-        n_questions = SpecificationService().get_n_questions()
+        n_questions = SpecificationService.get_n_questions()
         n_marked = 0
         for i in range(1, n_questions + 1):
             question_number_tasks = MarkingTask.objects.filter(
@@ -156,7 +156,7 @@ class ReassembleService:
             paper_dict["sname"] = ""
         paper_dict["identified"] = paper_id_info is not None
 
-        n_questions = SpecificationService().get_n_questions()
+        n_questions = SpecificationService.get_n_questions()
         paper_marked = self.is_paper_marked(paper)
         for i in range(1, n_questions + 1):
             version, mark = self.get_question_data(paper, i)
@@ -225,7 +225,7 @@ class ReassembleService:
         """
         cover_page_info = []
 
-        spec_service = SpecificationService()
+        spec_service = SpecificationService
         n_questions = spec_service.get_n_questions()
         for i in range(1, n_questions + 1):
             question_label = spec_service.get_question_label(i)
@@ -262,7 +262,7 @@ class ReassembleService:
             test_num=paper.paper_number,
             info=paper_id,
             solution=solution,
-            exam_name=SpecificationService().get_longname(),
+            exam_name=SpecificationService.get_longname(),
         )
         return cover_name
 
@@ -287,7 +287,7 @@ class ReassembleService:
 
     def get_annotation_images(self, paper):
         """Get the paths for a paper's annotation images."""
-        n_questions = SpecificationService().get_n_questions()
+        n_questions = SpecificationService.get_n_questions()
         marked_pages = []
 
         mts = MarkingTaskService()
@@ -323,7 +323,7 @@ class ReassembleService:
         if not self.is_paper_marked(paper):
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
-        shortname = SpecificationService().get_shortname()
+        shortname = SpecificationService.get_shortname()
         outname = outdir / f"{shortname}_{student_id}.pdf"
 
         with tempfile.TemporaryDirectory() as _td:

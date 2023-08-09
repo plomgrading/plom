@@ -74,11 +74,10 @@ class MarkingTaskService:
 
     def init_all_tasks(self):
         """Initialize all of the marking tasks for an entire exam, with null users."""
-        spec_service = SpecificationService()
-        if not spec_service.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             raise RuntimeError("The server does not have a spec.")
 
-        spec = spec_service.get_the_spec()
+        spec = SpecificationService.get_the_spec()
         n_questions = spec["numberOfQuestions"]
 
         all_papers = Paper.objects.all()
