@@ -219,7 +219,9 @@ class ManageDiscardService:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
 
     @transaction.atomic
-    def _assign_discard_to_fixed(self, user_obj, discard_pk, paper_number, page_number):
+    def _assign_discard_to_fixed_page(
+        self, user_obj, discard_pk, paper_number, page_number
+    ):
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
         except ObjectDoesNotExist:
@@ -261,6 +263,40 @@ class ManageDiscardService:
                 f"Cannot identify the type of the fixed page with pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
             )
 
+    @transaction.atomic
+    def _assign_discard_to_mobile_page(
+        self, user_obj, discard_pk, paper_number, question_list
+    ):
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+
+        for qn in question_list:
+            # get the version from an associated question-page
+            version = (
+                QuestionPage.objects.filter(paper=paper_obj, question_number=qn)
+                .first()
+                .version
+            )
+            MobilePage.objects.create(
+                paper=paper_obj,
+                question_number=qn,
+                image=discard_obj.image,
+                version=version,
+            )
+
+        # delete the discard page
+        discard_obj.delete()
+        # reset the associated marking tasks
+        for qn in question_list:
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+
     def reassign_discard_page_to_fixed_page_cmd(
         self, username, discard_pk, paper_number, page_number
     ):
@@ -273,4 +309,22 @@ class ManageDiscardService:
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
 
-        self._assign_discard_to_fixed(user_obj, discard_pk, paper_number, page_number)
+        self._assign_discard_to_fixed_page(
+            user_obj, discard_pk, paper_number, page_number
+        )
+
+    def reassign_discard_page_to_mobile_page_cmd(
+        self, username, discard_pk, paper_number, question_list
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions."
+            ) from e
+
+        self._assign_discard_to_mobile_page(
+            user_obj, discard_pk, paper_number, question_list
+        )

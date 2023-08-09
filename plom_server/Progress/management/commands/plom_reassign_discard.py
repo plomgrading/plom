@@ -37,7 +37,9 @@ class Command(BaseCommand):
                     username, discard_pk, paper_number, page_number
                 )
             elif question_list:
-                pass
+                mds.reassign_discard_page_to_mobile_page_cmd(
+                    username, discard_pk, paper_number, question_list
+                )
         except ValueError as e:
             raise CommandError(e)
 
