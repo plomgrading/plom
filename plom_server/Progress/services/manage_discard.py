@@ -14,6 +14,7 @@ from Papers.models import (
     QuestionPage,
     DiscardPage,
 )
+from Identify.services import IdentifyTaskService
 
 
 class ManageDiscardService:
@@ -35,8 +36,6 @@ class ManageDiscardService:
 
     @transaction.atomic
     def _discard_id_page(self, user_obj: User, idpage_obj: IDPage) -> None:
-        raise NotImplementedError("Need to set up ID task invalidation")
-
         DiscardPage.objects.create(
             image=idpage_obj.image,
             discard_reason=(
@@ -44,12 +43,12 @@ class ManageDiscardService:
                 f"page {idpage_obj.paper.paper_number} page {idpage_obj.page_number}"
             ),
         )
-        # set the associated IDing task to "OUT_OF_DATE"
-        # >>> TODO <<<
-
         # Set the original id page to have no image, but **DO NOT** delete the idpage
         idpage_obj.image = None
         idpage_obj.save()
+
+        # now set the associated id-task to out of date.
+        IdentifyTaskService().set_paper_idtask_outdated(idpage_obj.paper.paper_number)
 
     @transaction.atomic
     def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:

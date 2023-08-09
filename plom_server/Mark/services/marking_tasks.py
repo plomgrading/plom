@@ -16,6 +16,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
+from django.db import transaction
 
 from plom import is_valid_tag_text
 
@@ -35,6 +36,7 @@ from ..models import (
 class MarkingTaskService:
     """Functions for creating and modifying marking tasks."""
 
+    @transaction.atomic
     def create_task(self, paper, question_number, user=None):
         """Create a marking task.
 
@@ -304,27 +306,30 @@ class MarkingTaskService:
         ), "Invalid value for order_by"
         if order_by == "random":
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
-            for task in tasks:
-                task.marking_priority = random.random() * 1000
-                task.save()
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = random.random() * 1000
+                    task.save()
 
         elif order_by == "papernum":
             n_papers = Paper.objects.count()
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related(
                 "paper"
             )
-            for task in tasks:
-                task.marking_priority = n_papers - task.paper.paper_number
-                task.save()
+            with transaction.atomic():
+                for task in tasks:
+                    task.marking_priority = n_papers - task.paper.paper_number
+                    task.save()
 
         elif order_by == "custom":
             assert isinstance(
                 custom_order, dict
             ), "`custom_order` must be of type Dict[tuple[int, int], float]."
-            for k, v in custom_order.items():
-                task = self.get_latest_task(k[0], k[1])
-                task.marking_priority = v
-                task.save()
+            with transaction.atomic():
+                for k, v in custom_order.items():
+                    task = self.get_latest_task(k[0], k[1])
+                    task.marking_priority = v
+                    task.save()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
@@ -367,8 +372,9 @@ class MarkingTaskService:
         user_tasks = MarkingTask.objects.filter(
             assigned_user=user, status=MarkingTask.OUT
         )
-        for task in user_tasks:
-            self.surrender_task(user, task)
+        with transaction.atomic():
+            for task in user_tasks:
+                self.surrender_task(user, task)
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
@@ -392,6 +398,7 @@ class MarkingTaskService:
 
         return True
 
+    @transaction.atomic
     def mark_task(self, user, code, score, time, image, data):
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
@@ -435,6 +442,7 @@ class MarkingTaskService:
         task.status = MarkingTask.COMPLETE
         task.save()
 
+    @transaction.atomic
     def save_annotation_image(self, md5sum, annot_img):
         """Save an annotation image to disk and the database.
 
