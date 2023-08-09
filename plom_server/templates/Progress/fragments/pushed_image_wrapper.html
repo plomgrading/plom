@@ -21,8 +21,8 @@
                 hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
                 hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
     {% else %}
-        <button class="btn btn-warning"
-                hx-confirm="Are you sure you wish to proceed?"
-                hx-post="">reassign this discarded image</button>
+        <a href="{% url 'progress_reassign_discard' image_pk %}">
+            <button class="btn btn-warning">reassign this discarded image</button>
+        </a>
     {% endif %}
 </div>
