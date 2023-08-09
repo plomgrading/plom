@@ -12,11 +12,15 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import DataExtractionService
 from Mark.services import MarkingTaskService
 from Papers.models import Specification
 from SpecCreator.services import StagingSpecificationService
-from .services import StudentMarkService, TaMarkingService, ReassembleService
+from .services import (
+    StudentMarkService,
+    TaMarkingService,
+    ReassembleService,
+    DataExtractionService,
+)
 from .forms import StudentMarksFilterForm
 
 
@@ -29,7 +33,6 @@ class MarkingInformationView(ManagerRequiredView):
     smff = StudentMarksFilterForm()
     scs = StagingSpecificationService()
     tms = TaMarkingService()
-    des = DataExtractionService()
 
     template = "Finish/marking_landing.html"
 
@@ -63,16 +66,18 @@ class MarkingInformationView(ManagerRequiredView):
         all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
-        question_avgs = self.des.get_average_grade_on_all_questions()
-        grades_hist_data = self.des.convert_stats_to_d3_hist_format(
+        question_avgs = DataExtractionService().get_average_grade_on_all_questions()
+        grades_hist_data = DataExtractionService().convert_stats_to_d3_hist_format(
             question_avgs, "Question number", "Grade", "Quesion vs Grade"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
-        corr = self.des._get_question_correlation_heatmap_data().values
-        corr_heatmap_data = self.des.convert_correlation_to_d3_heatmap_format(
-            corr, "Question correlation", "Question", "Question"
+        corr = DataExtractionService()._get_question_correlation_heatmap_data().values
+        corr_heatmap_data = (
+            DataExtractionService().convert_correlation_to_d3_heatmap_format(
+                corr, "Question correlation", "Question", "Question"
+            )
         )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
 
