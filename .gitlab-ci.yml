@@ -829,7 +829,6 @@ newOS_newdeps_legacy:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
-      libpango-1.0-0 libpangocairo-1.0-0
       python3-pytest python3-dev
       python3-pip
       iproute2 psmisc file python3-magic
@@ -906,7 +905,6 @@ newOS_newdeps_webplom:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
-      libpango-1.0-0 libpangocairo-1.0-0
       python3-pytest python3-dev
       python3-pip
       iproute2 psmisc file python3-magic
@@ -940,7 +938,6 @@ oldOS_mindeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
-      libpango-1.0-0 libpangocairo-1.0-0
       python3 python3-dev
       python3-pip python3-setuptools python3-wheel
       python3-passlib python3-pandas
@@ -1580,7 +1577,7 @@ macos_server:
   - brew --version
   # brew update
   # brew --version
-  - brew install cmake pango
+  - brew install cmake
   - brew install imagemagick
   - brew install openssl
   - time brew install basictex
