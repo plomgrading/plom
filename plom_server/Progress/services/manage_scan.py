@@ -333,6 +333,24 @@ class ManageScanService:
             return None
 
     @transaction.atomic
+    def get_pushed_image_page_type(self, img_pk) -> str:
+        try:
+            img = Image.objects.get(pk=img_pk)
+        except Image.DoesNotExist:
+            return None
+
+        if img.fixedpage_set.exists():  # linked by foreign key
+            return "fixed"
+        elif img.mobilepage_set.exists():  # linked by foreign key
+            return "mobile"
+        elif img.discardpage:  # linked by one-to-one
+            return "discard"
+        else:
+            raise ValueError(
+                "Cannot determine what sort of page image {img_pk} is attached to."
+            )
+
+    @transaction.atomic
     def get_discarded_images(self):
         discards = []
 

@@ -1,7 +1,28 @@
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
-<img class="shadow-sm"
-     src="{% url 'progress_pushed_img' image_pk %}"
-     style="max-height: 100%;
-            max-width: 100%;
-            transform: rotate({{ angle }}deg)">
+<div style="height: 30vw;
+            width: 30vw;
+            justify-content: center;
+            display:flex;
+            align-items:center">
+    <img class="shadow-sm"
+         src="{% url 'progress_pushed_img' image_pk %}"
+         style="max-height: 100%;
+                max-width: 100%;
+                transform: rotate({{ angle }}deg)">
 </img>
+</div>
+<div class="m-2">
+    {% if page_type == 'fixed' %}
+        <button class="btn btn-danger"
+                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
+    {% elif page_type == 'mobile' %}
+        <button class="btn btn-danger"
+                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
+    {% else %}
+        <button class="btn btn-warning"
+                hx-confirm="Are you sure you wish to proceed?"
+                hx-post="">reassign this discarded image</button>
+    {% endif %}
+</div>

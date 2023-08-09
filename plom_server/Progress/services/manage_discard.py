@@ -14,6 +14,7 @@ from Papers.models import (
     DNMPage,
     QuestionPage,
     DiscardPage,
+    Image,
 )
 from Identify.services import IdentifyTaskService
 from Mark.services import MarkingTaskService
@@ -187,6 +188,25 @@ class ManageDiscardService:
             f"Have dropped {msg} and "
             "flagged the associated marking task as 'out of date'"
         )
+
+    def discard_pushed_image_from_pk(self, user_obj, image_pk):
+        """Discard a pushed image from its pk."""
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"An image with pk {image_pk} does not exist.") from e
+        # is either a fixed page, mobile page or discard page
+        if image_obj.fixedpage_set.exists():
+            self.discard_pushed_fixed_page(
+                user_obj, image_obj.fixedpage_set.first().pk, dry_run=False
+            )
+        elif image_obj.mobilepage_set.exists():
+            # notice that this will discard all mobile pages with that image.
+            self.discard_pushed_mobile_page(
+                user_obj, image_obj.mobilepage_set.first().pk, dry_run=False
+            )
+        else:
+            pass
 
     def discard_pushed_page_cmd(
         self,
