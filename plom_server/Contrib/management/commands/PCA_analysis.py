@@ -34,7 +34,11 @@ class Command(BaseCommand):
         num_components = options["num_components"]
 
         data = self.question_df.loc[:, :].values
-        norm_data = StandardScaler().fit_transform(data)
+        try:
+            norm_data = StandardScaler().fit_transform(data)
+        except ValueError:
+            print("No data to analyse")
+            return
 
         feat_cols = [f"feature{i}" for i in range(norm_data.shape[1])]
         df = pd.DataFrame(norm_data, columns=feat_cols)
