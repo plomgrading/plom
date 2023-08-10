@@ -5,6 +5,7 @@ import pandas as pd
 
 from argparse import RawTextHelpFormatter
 from django.core.management.base import BaseCommand
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
@@ -72,14 +73,18 @@ class Command(BaseCommand):
         num_components = options["num_components"]
 
         data = self.question_df.loc[:, :].values
+        index = self.question_df.index
+        columns = self.question_df.columns
         if not options["of_students"]:
             # transpose the data to perform PCA on the questions
             data = data.T
+            index = self.question_df.columns
+            columns = self.question_df.index
 
         print(f"Performing PCA on {data.shape[0]} rows and {data.shape[1]} columns")
         print("See python3 manage.py PCA_analysis --help for more information on PCA\n")
         print("Raw data:")
-        print(data)
+        print(pd.DataFrame(data, index=index, columns=columns))
         print("")
 
         try:
@@ -98,10 +103,27 @@ class Command(BaseCommand):
             f"Explained variance ratio (Eigenvalues): {pca.explained_variance_ratio_}\n"
         )
         principalDf = pd.DataFrame(
-            principalComponents, columns=[f"PC{i}" for i in range(num_components)]
+            principalComponents,
+            columns=[f"PC{i}" for i in range(num_components)],
+            index=index,
         )
 
         # add a linear combination of the principal components to the dataframe as the last column
         principalDf["PC_linear_comb"] = principalDf.dot(pca.explained_variance_ratio_)
-
         print(principalDf)
+        print("")
+
+        # plot first 2 principal components using matplotlib
+        if num_components >= 2:
+            plt.scatter(
+                principalDf["PC0"],
+                principalDf["PC1"],
+            )
+            row_labels = principalDf.index.tolist()
+            for txt in row_labels:
+                plt.text(principalDf["PC0"][txt] + 0.1, principalDf["PC1"][txt], txt)
+            plt.scatter(principalDf["PC0"], principalDf["PC1"])
+            plt.xlabel("PC0")
+            plt.ylabel("PC1")
+            plt.savefig("media/PCA_plot.png")
+            print("PCA plot saved to media/PCA_plot.png")
