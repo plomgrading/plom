@@ -78,6 +78,17 @@ class Command(BaseCommand):
         print(f"Found {count} tasks. Getting images...")
 
         def _crop_img(img, scale=1.0):
+            """Crops the image from the center by the given scale.
+
+            Args:
+                img (np.array): The image to crop.
+                scale (float, optional): The scale to crop by. Defaults
+                    to 1.0 which means no cropping.
+
+            Returns:
+                np.array: The cropped image.
+            """
+            assert scale <= 1.0 and scale > 0.0, "Scale must be between 0 and 1"
             center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
             width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
             left_x, right_x = center_x - width_scaled / 2, center_x + width_scaled / 2
@@ -86,6 +97,16 @@ class Command(BaseCommand):
             return img_cropped
 
         def _set_aspect_ratio(img, scale=1.0):
+            """Sets the aspect ratio of the image to 4:3 and resizes it.
+
+            Args:
+                img (np.array): The image to set the aspect ratio of.
+                scale (float, optional): The scale to resize by. Defaults
+                    to 1.0 which means no resizing.
+
+            Returns:
+                np.array: The image with the aspect ratio set.
+            """
             width, height = img.shape[1], img.shape[0]
             if width > height:
                 dim = (int(1600 * scale), int(1200 * scale))
@@ -94,38 +115,55 @@ class Command(BaseCommand):
             img = cv.resize(img, dsize=dim)
             return img
 
-        imgs_by_th_list = {}
+        imgs_threshold_list = {}
 
         for page in tqdm(pages, desc="Analyzing pages"):
+            # get the image
             image = cv.imread(page.image.image_file.path)
-            crop = _set_aspect_ratio(_crop_img(image, scale=0.8), scale=0.2)
-            grey = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
-            th = cv.adaptiveThreshold(
-                grey, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2
+            cropped_im = _set_aspect_ratio(
+                _crop_img(image, scale=0.8),  # crop to keep center 80% of image
+                scale=0.2,  # resize to 20% of original size
             )
-            if (
-                imgs_by_th_list.get((page.paper.paper_number, page.question_number))
-                is None
-            ):
-                imgs_by_th_list[(page.paper.paper_number, page.question_number)] = []
-            imgs_by_th_list[(page.paper.paper_number, page.question_number)].append(
-                np.sum(th)
+            # greyscale image
+            greyscale_im = cv.cvtColor(cropped_im, cv.COLOR_BGR2GRAY)
+            # threshold image dynamically so that the background is white
+            # regardless of lighting conditions
+            threshold_im = cv.adaptiveThreshold(
+                greyscale_im,
+                maxValue=255,
+                adaptiveMethod=cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                thresholdType=cv.THRESH_BINARY,
+                blockSize=11,
+                C=2,
             )
-            # paper_list = [19,14]  # <-- put pages you want to look at here
-            # paper_num = page.paper.paper_number
+
+            paper_num = page.paper.paper_number
+            question_num = page.question_number
+
+            # add the sum of the pixels in the thresholded image to a list corresponding
+            # to the paper and question number (to handle multiple pages for the same question)
+            if imgs_threshold_list.get((paper_num, question_num)) is None:
+                imgs_threshold_list[(paper_num, question_num)] = []
+            imgs_threshold_list[(paper_num, question_num)].append(np.sum(threshold_im))
+
+            # Uncomment to save images for debugging
+            # paper_list = []  # <-- put pages you want to look at here
             # if paper_num in paper_list:
             #     cv.imwrite(f"TEST_ORIG_{paper_num}.jpg", image)
-            #     cv.imwrite(f"TEST_THRESH_{paper_num}.jpg", th)
+            #     cv.imwrite(f"TEST_THRESH_{paper_num}.jpg", threshold_im)
 
-        imgs_by_th_sum = {}
+        pixel_avgs = {}
 
         min = -1
         max = 0
 
-        for (paper_number, question_num), list_of_th in imgs_by_th_list.items():
+        # get the average of the pixel sums for each paper and question number
+        for (paper_number, question_num), list_of_th in imgs_threshold_list.items():
+            # avereage of the pixel sums for all pages of the same question
             avg = np.average(list_of_th)
-            imgs_by_th_sum[(paper_number, question_num)] = avg
+            pixel_avgs[(paper_number, question_num)] = avg
 
+            # get the min and max of the averages for mapping to a priority value
             if avg > max:
                 max = avg
             if avg < min or min == -1:
@@ -138,9 +176,10 @@ class Command(BaseCommand):
             min_out, max_out = max_out, min_out
 
         mapped = {}
-        for (paper_number, question_num), th_sum in imgs_by_th_sum.items():
+        for (paper_number, question_num), pixel_sum in pixel_avgs.items():
+            # map the average pixel sum to a priority value
             mapped[(paper_number, question_num)] = np.interp(
-                th_sum, (min, max), (min_out, max_out)
+                pixel_sum, (min, max), (min_out, max_out)
             )
 
         sorted_imgs = dict(sorted(mapped.items(), key=lambda item: item[1]))
