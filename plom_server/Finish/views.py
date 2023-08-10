@@ -82,7 +82,7 @@ class MarkingInformationView(ManagerRequiredView):
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
-        spec = Specification.load().spec_dict
+        spec = Specification.load()
 
         # create csv file headers
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
@@ -100,7 +100,7 @@ class MarkingInformationView(ManagerRequiredView):
 
         filename = (
             "marks--"
-            + spec["name"]
+            + spec.name
             + "--"
             + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
             + "--UTC"

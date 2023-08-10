@@ -26,6 +26,11 @@ This command performs PCA on the question marks per student. It can also
 perform PCA on the students if the --of-students flag is used. The number of
 components to use is specified by the num_components argument.
 
+The data is read from media/marks.csv. This file must have the question marks
+labelled as q1_mark, q2_mark, etc. The data is allowed to have NaN values, but
+these rows will be dropped before performing PCA. The file's first column must
+be the identifier for the student/paper.
+
 The output is the explained variance ratio and the principal components.
 Where the explained variance ratio is the percentage of variance explained by
 each of the selected components. The principal components are the new variables
@@ -38,25 +43,20 @@ python3 manage.py PCA_analysis 2 --of-students
 
 
 class Command(BaseCommand):
-    def create_parser(self, *args, **kwargs):
-        parser = super(Command, self).create_parser(*args, **kwargs)
-        parser.formatter_class = RawTextHelpFormatter
-        return parser
-
     help = HELP_TEXT
 
     sms = StudentMarkService()
     spec = Specification.load()
 
-    student_dict = sms.get_all_students_download(
-        version_info=True, timing_info=False, warning_info=False
-    )
-    student_keys = sms.get_csv_header(
-        spec, version_info=True, timing_info=False, warning_info=False
-    )
-    student_df = pd.DataFrame(student_dict, columns=student_keys)
-    clean_student_df = student_df.dropna()
+    print("Loading data from media/marks.csv")
+    student_marks = pd.read_csv("media/marks.csv")
+    clean_student_df = student_marks.dropna()
     question_df = clean_student_df.filter(regex="q[0-9]*_mark")
+
+    def create_parser(self, *args, **kwargs):
+        parser = super(Command, self).create_parser(*args, **kwargs)
+        parser.formatter_class = RawTextHelpFormatter
+        return parser
 
     def add_arguments(self, parser):
         parser.add_argument(
