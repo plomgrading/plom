@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.test import TestCase
+from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
 
@@ -386,7 +387,9 @@ class MarkingTaskServiceTests(TestCase):
             paper=paper1,
             question_number=1,
         )
-        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
+        self.assertRaises(
+            MultipleObjectsReturned, mts.set_paper_marking_task_outdated, 1, 1
+        )
 
         task1c = baker.make(
             MarkingTask,
