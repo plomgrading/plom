@@ -91,7 +91,7 @@ Generating..."""
             histogram_of_grades_q.append(  # add to the list
                 # each base64-encoded image
                 mpls.histogram_of_grades_on_question_version(  # of the histogram
-                    question=question, versions=True
+                    question=question, versions=versions
                 )
             )
 
@@ -122,7 +122,7 @@ Generating..."""
                         question=question,
                         ta_name=marker,
                         ta_df=scores_for_user_for_question,
-                        versions=True,
+                        versions=versions,
                     )
                 )
 
@@ -140,7 +140,7 @@ Generating..."""
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
                     marking_times_df=marking_times_df,
-                    versions=True,
+                    versions=versions,
                     max_time=max_time,
                     bin_width=bin_width,
                 )
@@ -154,25 +154,33 @@ Generating..."""
             des._get_all_ta_data_by_question().items(),
             desc="Scatter plots of time spent marking vs mark given",
         ):
-            # list of lists of times spent marking each version of the question
-            times_for_question = []
-            marks_given_for_question = []
-            for version in marking_times_df["question_version"].unique():
-                version_df = marking_times_df[
-                    (marking_times_df["question_version"] == version)
-                ]
-                times_for_question.append(
-                    version_df["seconds_spent_marking"].div(60),
-                )
+            if versions:
+                # list of lists of times spent marking each version of the question
+                times_for_question = []
+                marks_given_for_question = []
+                for version in marking_times_df["question_version"].unique():
+                    version_df = marking_times_df[
+                        (marking_times_df["question_version"] == version)
+                    ]
+                    times_for_question.append(
+                        version_df["seconds_spent_marking"].div(60),
+                    )
 
-                marks_given_for_question.append(version_df["score_given"])
+                    marks_given_for_question.append(version_df["score_given"])
+            else:
+                times_for_question = (
+                    marking_times_df["seconds_spent_marking"].div(60).to_list()
+                )
+                marks_given_for_question = des.get_scores_for_question(
+                    question_number=question,
+                )
 
             scatter_of_time.append(
                 mpls.scatter_time_spent_vs_mark_given(
                     question_number=question,
                     times_spent_minutes=times_for_question,
                     marks_given=marks_given_for_question,
-                    versions=True,
+                    versions=versions,
                 )
             )
 
@@ -213,7 +221,7 @@ Generating..."""
 
         # line graph of average mark on each question
         print("Line graph of average mark by question.")
-        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=True)
+        line_graph = mpls.line_graph_of_avg_marks_by_question(versions=versions)
 
         print("\nGenerating HTML.")
 
@@ -335,9 +343,7 @@ Generating..."""
             with open(file_path, "wb") as f:
                 f.write(pdf_data)
 
-        date_filename = (
-            ""  # "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        )
+        date_filename = "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
         filename = "Report-" + name + date_filename + ".pdf"
 
         print("Writing to " + filename + ".")
