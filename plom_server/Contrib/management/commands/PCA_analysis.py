@@ -3,6 +3,7 @@
 
 import pandas as pd
 
+from argparse import RawTextHelpFormatter
 from django.core.management.base import BaseCommand
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -11,7 +12,38 @@ from Finish.services import StudentMarkService
 from Papers.models import Specification
 
 
+HELP_TEXT = """
+Perform PCA analysis on the per question marks.
+
+PCA stands for Principal Component Analysis. It is a method of dimensionality
+reduction. It is used to reduce the number of variables in a dataset while
+preserving as much information as possible. It does this by creating new
+variables that are a linear combination of the original variables. These new
+variables are called principal components.
+
+This command performs PCA on the question marks per student. It can also
+perform PCA on the students if the --of-students flag is used. The number of
+components to use is specified by the num_components argument.
+
+The output is the explained variance ratio and the principal components.
+Where the explained variance ratio is the percentage of variance explained by
+each of the selected components. The principal components are the new variables
+that are a linear combination of the original variables.
+
+Example usage:
+python3 manage.py PCA_analysis 2
+python3 manage.py PCA_analysis 2 --of-students
+"""
+
+
 class Command(BaseCommand):
+    def create_parser(self, *args, **kwargs):
+        parser = super(Command, self).create_parser(*args, **kwargs)
+        parser.formatter_class = RawTextHelpFormatter
+        return parser
+
+    help = HELP_TEXT
+
     sms = StudentMarkService()
     spec = Specification.load()
 
@@ -40,9 +72,15 @@ class Command(BaseCommand):
         num_components = options["num_components"]
 
         data = self.question_df.loc[:, :].values
-        if options["of_students"]:
-            # transpose the data to perform PCA on the students
+        if not options["of_students"]:
+            # transpose the data to perform PCA on the questions
             data = data.T
+
+        print(f"Performing PCA on {data.shape[0]} rows and {data.shape[1]} columns")
+        print("See python3 manage.py PCA_analysis --help for more information on PCA\n")
+        print("Raw data:")
+        print(data)
+        print("")
 
         try:
             norm_data = StandardScaler().fit_transform(data)
@@ -56,8 +94,14 @@ class Command(BaseCommand):
         pca = PCA(n_components=num_components)
         principalComponents = pca.fit_transform(df)
 
-        print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
+        print(
+            f"Explained variance ratio (Eigenvalues): {pca.explained_variance_ratio_}\n"
+        )
         principalDf = pd.DataFrame(
             principalComponents, columns=[f"PC{i}" for i in range(num_components)]
         )
+
+        # add a linear combination of the principal components to the dataframe as the last column
+        principalDf["PC_linear_comb"] = principalDf.dot(pca.explained_variance_ratio_)
+
         print(principalDf)
