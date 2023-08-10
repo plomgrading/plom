@@ -73,3 +73,19 @@ class ManageScanTests(TestCase):
         self.assertRaises(
             ValueError, mds.discard_pushed_fixed_page, self.user0, fp2.pk, dry_run=False
         )
+
+    def test_discard_mobile_page(self):
+        mds = ManageDiscardService()
+
+        img1 = baker.make(Image)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_number=1)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_number=2)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_number=1, image=img1)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_number=2, image=img1)
+
+        mds.discard_pushed_mobile_page(self.user0, mp1.pk, dry_run=True)
+        mds.discard_pushed_mobile_page(self.user0, mp1.pk, dry_run=False)
+
+        self.assertRaises(
+            ValueError, mds.discard_pushed_mobile_page, self.user0, 17, dry_run=False
+        )
