@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import Union
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -209,7 +211,7 @@ class ManageDiscardService:
             "flagged the associated marking task as 'out of date'"
         )
 
-    def discard_pushed_image_from_pk(self, user_obj, image_pk):
+    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int):
         """Discard a pushed image from its pk."""
         try:
             image_obj = Image.objects.get(pk=image_pk)
@@ -226,15 +228,16 @@ class ManageDiscardService:
                 user_obj, image_obj.mobilepage_set.first().pk, dry_run=False
             )
         else:
+            # is already a discard page, so nothing to do.
             pass
 
     def discard_pushed_page_cmd(
         self,
-        username,
+        username: str,
         *,
-        fixedpage_pk=None,
-        mobilepage_pk=None,
-        dry_run=True,
+        fixedpage_pk: Union[int, None] = None,
+        mobilepage_pk: Union[int, None] = None,
+        dry_run: bool = True,
     ) -> str:
         try:
             user_obj = User.objects.get(
@@ -260,7 +263,7 @@ class ManageDiscardService:
 
     @transaction.atomic
     def _assign_discard_to_fixed_page(
-        self, user_obj, discard_pk, paper_number, page_number
+        self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
     ):
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
@@ -305,7 +308,11 @@ class ManageDiscardService:
 
     @transaction.atomic
     def _assign_discard_to_mobile_page(
-        self, user_obj, discard_pk, paper_number, question_list
+        self,
+        user_obj: User,
+        discard_pk: int,
+        paper_number: int,
+        question_list: list[int],
     ):
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
@@ -338,39 +345,39 @@ class ManageDiscardService:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
     def assign_discard_image_to_fixed_page(
-        self, user_obj, image_pk, paper_number, page_number
+        self, user_obj: User, image_pk: int, paper_number: int, page_number: int
     ):
         try:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist:
             raise ValueError("Cannot find image with pk = {image_pk}")
-        if image_obj.discardpage:
+        try:
             self._assign_discard_to_fixed_page(
                 user_obj, image_obj.discardpage.pk, paper_number, page_number
             )
-        else:
+        except DiscardPage.DoesNotExist:
             raise ValueError(
-                "Cannot image with pk = {image_pk} is not attached to a discard page."
+                f"Cannot discard image with pk = {image_pk} is not attached to a discard page."
             )
 
     def assign_discard_image_to_mobile_page(
-        self, user_obj, image_pk, paper_number, question_list
+        self, user_obj: User, image_pk: int, paper_number: int, question_list: list[int]
     ):
         try:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist:
             raise ValueError("Cannot find image with pk = {image_pk}")
-        if image_obj.discardpage:
+        try:
             self._assign_discard_to_mobile_page(
                 user_obj, image_obj.discardpage.pk, paper_number, question_list
             )
-        else:
+        except DiscardPage.DoesNotExist:
             raise ValueError(
                 "Cannot image with pk = {image_pk} is not attached to a discard page."
             )
 
     def reassign_discard_page_to_fixed_page_cmd(
-        self, username, discard_pk, paper_number, page_number
+        self, username: str, discard_pk: int, paper_number: int, page_number: int
     ):
         try:
             user_obj = User.objects.get(
@@ -386,7 +393,11 @@ class ManageDiscardService:
         )
 
     def reassign_discard_page_to_mobile_page_cmd(
-        self, username, discard_pk, paper_number, question_list
+        self,
+        username: str,
+        discard_pk: int,
+        paper_number: int,
+        question_list: list[int],
     ):
         try:
             user_obj = User.objects.get(
