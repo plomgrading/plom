@@ -81,6 +81,12 @@ class Command(BaseCommand):
             index = self.question_df.columns
             columns = self.question_df.index
 
+        if num_components > min(data.shape[0], data.shape[1]):
+            print(
+                f"The number of components must be between 0 and min(n_samples, n_features)={min(data.shape[0], data.shape[1])}"
+            )
+            return
+
         print(f"Performing PCA on {data.shape[0]} rows and {data.shape[1]} columns")
         print("See python3 manage.py PCA_analysis --help for more information on PCA\n")
         print("Raw data:")
