@@ -9,9 +9,9 @@
 {% block page_heading %}
     Prepare assessment
     {% if is_test_prepared %}
-    <i class="bi bi-check-circle text-success"></i>
+        <i class="bi bi-check-circle text-success"></i>
     {% else %}
-    <i class="bi bi-pencil-square"></i>
+        <i class="bi bi-pencil-square"></i>
     {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
@@ -248,7 +248,7 @@
         <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
             <div class="d-flex align-items-center">
                 <div class="flex-fill">
-                    <p class="fs-4 mb-0">8. Set test preperation as finished</p>
+                    <p class="fs-4 mb-0">8. Set test preparation as finished</p>
                     <p class="fs-7">&emsp;&ensp; Once preparation is finished, the server will be ready to accept scanned exam bundles.</p>
                 </div>
                 {% if papers_staged %}
