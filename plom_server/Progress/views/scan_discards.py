@@ -2,12 +2,13 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRedirect
+from django.urls import reverse
 from django.http import HttpResponse
 
 
-from Papers.services import PaperInfoService, SpecificationService
-from Progress.services import ManageScanService
+from Papers.services import SpecificationService
+from Progress.services import ManageScanService, ManageDiscardService
 from Progress.views import BaseScanProgressPage
 
 
@@ -47,7 +48,7 @@ class ScanReassignView(BaseScanProgressPage):
 
     def post(self, request, img_pk):
         reassignment_data = request.POST
-        print(reassignment_data)
+        mds = ManageDiscardService()
 
         if reassignment_data.get("assignment_type", "fixed") == "fixed":
             try:
@@ -57,6 +58,14 @@ class ScanReassignView(BaseScanProgressPage):
             except ValueError:
                 return HttpResponse(
                     """<div class="alert alert-danger">Choose paper/page</div>"""
+                )
+            try:
+                mds.assign_discard_image_to_fixed_page(
+                    request.user, img_pk, paper_number, page_number
+                )
+            except ValueError as e:
+                return HttpResponse(
+                    f"""<span class="alert alert-danger">Some sort of error: {e}</span>"""
                 )
         else:
             paper_number = reassignment_data.get("usedPaper", None)
@@ -79,5 +88,13 @@ class ScanReassignView(BaseScanProgressPage):
                     return HttpResponse(
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
+            try:
+                mds.assign_discard_image_to_mobile_page(
+                    request.user, img_pk, paper_number, question_list
+                )
+            except ValueError as e:
+                return HttpResponse(
+                    f"""<span class="alert alert-danger">Some sort of error: {e}</span>"""
+                )
 
-        return HttpResponse("""<div class="alert alert-success">Got to here</div>""")
+        return HttpResponseClientRedirect(reverse("progress_scan_discard"))

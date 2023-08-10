@@ -317,6 +317,38 @@ class ManageDiscardService:
         for qn in question_list:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
+    def assign_discard_image_to_fixed_page(
+        self, user_obj, image_pk, paper_number, page_number
+    ):
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist:
+            raise ValueError("Cannot find image with pk = {image_pk}")
+        if image_obj.discardpage:
+            self._assign_discard_to_fixed_page(
+                user_obj, image_obj.discardpage.pk, paper_number, page_number
+            )
+        else:
+            raise ValueError(
+                "Cannot image with pk = {image_pk} is not attached to a discard page."
+            )
+
+    def assign_discard_image_to_mobile_page(
+        self, user_obj, image_pk, paper_number, question_list
+    ):
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist:
+            raise ValueError("Cannot find image with pk = {image_pk}")
+        if image_obj.discardpage:
+            self._assign_discard_to_mobile_page(
+                user_obj, image_obj.discardpage.pk, paper_number, question_list
+            )
+        else:
+            raise ValueError(
+                "Cannot image with pk = {image_pk} is not attached to a discard page."
+            )
+
     def reassign_discard_page_to_fixed_page_cmd(
         self, username, discard_pk, paper_number, page_number
     ):
