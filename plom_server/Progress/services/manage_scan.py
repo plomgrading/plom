@@ -354,7 +354,7 @@ class ManageScanService:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
-            return None
+            raise ValueError("Cannot find an image with pk {img_pk}.")
 
         if img.fixedpage_set.exists():  # linked by foreign key
             return "fixed"

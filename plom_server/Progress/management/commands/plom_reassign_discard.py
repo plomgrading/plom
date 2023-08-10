@@ -6,7 +6,7 @@ from typing import Union
 from django.core.management.base import BaseCommand, CommandError
 
 from Progress.services import ManageDiscardService
-from Papers.services.validated_spec_service import SpecificationService
+from Papers.services import SpecificationService
 from plom.scan.question_list_utils import check_question_list
 
 
