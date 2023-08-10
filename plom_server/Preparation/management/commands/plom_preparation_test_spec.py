@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -14,10 +14,12 @@ else:
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import transaction
 import fitz
 
 from plom import SpecVerifier
 from Papers.services import SpecificationService
+from Papers.serializers import SpecSerializer
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 
 from ...services import PQVMappingService
@@ -27,25 +29,22 @@ class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
 
     def show_status(self):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stdout.write("No valid test spec present")
             return
 
-        toml_text = speck.get_the_spec_as_toml()
+        toml_text = SpecificationService.get_the_spec_as_toml()
         self.stdout.write("A valid test spec is present:")
         self.stdout.write("#" * 40)
         self.stdout.write(f"{toml_text}")
         self.stdout.write("#" * 40)
 
     def download_spec(self, dest=None):
-        speck = SpecificationService()
-
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
-        spec_dict = speck.get_the_spec()
+        spec_dict = SpecificationService.get_the_spec()
         self.stdout.write(
             f"A valid test spec is present: shortname {spec_dict['name']}"
         )
@@ -60,9 +59,9 @@ class Command(BaseCommand):
         with open(fname, "w") as f:
             f.write(speck.get_the_spec_as_toml())
 
+    @transaction.atomic
     def upload_spec(self, spec_file, pdf_file):
-        speck = SpecificationService()
-        if speck.is_there_a_spec():
+        if SpecificationService.is_there_a_spec():
             self.stderr.write(
                 "There is already a spec present. Cannot proceed with upload."
             )
@@ -80,24 +79,6 @@ class Command(BaseCommand):
             return
         self.stdout.write(f"From {spec_path} read spec dict = {spec_dict}")
 
-        # plom wants numberToProduce to be set - so we set a dummy value here by hand
-        # also make sure it is not set to zero
-        # TODO - make a more elegant solution here.
-        if "numberToProduce" not in spec_dict:
-            spec_dict["numberToProduce"] = 1
-        elif spec_dict["numberToProduce"] == 0:
-            spec_dict["numberToProduce"] = 1
-
-        vlad = SpecVerifier(spec_dict)
-        try:
-            vlad.verifySpec()
-            validated_spec = vlad.spec
-        except ValueError as err:
-            self.stderr.write(f"There was an error validating the spec: {err}")
-            return
-
-        self.stdout.write("Test specification validated.")
-
         pdf_path = Path(pdf_file)
         if pdf_path.exists() is False:
             self.stderr.write(f"Cannot open {pdf_path}.")
@@ -111,18 +92,19 @@ class Command(BaseCommand):
             pdf_doc_file = SimpleUploadedFile("spec_reference.pdf", f.read())
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
-        # Load in the validated spec from vlad - not the original toml. This will be correctly populated
-        # with any optional keys etc. See issue #88
-        staging_spec = StagingSpecificationService()
-
         reference = ReferencePDFService()
         reference.new_pdf(
             staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
         )
 
-        staging_spec.create_from_dict(validated_spec)
+        try:
+            valid_spec = SpecificationService.load_spec_from_toml(spec_path, True)
+        except ValueError as err:
+            self.stderr.write(f"There was an error validating the spec: {err}")
+            return
 
-        speck.store_validated_spec(staging_spec.get_valid_spec_dict(verbose=False))
+        self.stdout.write("Test specification validated.")
+
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):
@@ -134,11 +116,10 @@ class Command(BaseCommand):
             )
             return
         staging_spec = StagingSpecificationService()
-        speck = SpecificationService()
         self.stdout.write("Removing the test specification.")
         staging_spec.reset_specification()
-        if speck.is_there_a_spec():
-            speck.remove_spec()
+        if SpecificationService.is_there_a_spec():
+            SpecificationService.remove_spec()
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(

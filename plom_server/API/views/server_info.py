@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
 from typing import Dict, Any
@@ -35,13 +35,12 @@ class GetSpecification(APIView):
     permission_classes = [AllowAnyReadOnly]
 
     def get(self, request):
-        spec = SpecificationService()
-        if not spec.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             return _error_response(
-                "Server does not have a spec", status=status.HTTP_400_BAD_REQUEST
+                "Server does not have a spec", status.HTTP_400_BAD_REQUEST
             )
 
-        the_spec = spec.get_the_spec()
+        the_spec = SpecificationService.get_the_spec()
         the_spec.pop("privateSeed", None)
 
         return Response(the_spec)

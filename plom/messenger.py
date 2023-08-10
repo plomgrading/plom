@@ -337,8 +337,9 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code == 406:
-                    # TODO: why is this one .text instead of .reason?
-                    return (False, response.text)
+                    r = response.json()
+                    assert r["error"]
+                    return (False, r["tex_output"])
                     # raise PlomLatexException(
                     #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
                     # ) from None

@@ -20,6 +20,7 @@ from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from model_bakery import baker
 
+from Papers.services import SpecificationService
 from Papers.models import Specification
 from ...views import PreparationLandingView
 
@@ -76,9 +77,8 @@ class PreparationLandingTests(TestCase):
 
         Tt should reveal source versions and QV map.
         """
-        with open(resources.files(useful_files) / "testing_test_spec.toml", "rb") as f:
-            demo_spec = tomllib.load(f)
-        baker.make(Specification, spec_dict=demo_spec)
+        spec_path = resources.files(useful_files) / "testing_test_spec.toml"
+        SpecificationService.load_spec_from_toml(spec_path)
 
         landing = PreparationLandingView()
         context = landing.build_context()

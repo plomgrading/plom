@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 # If you are working with VSC and wish to start up a
 # docker/django debugging server, copy + uncomment this text into
@@ -13,7 +14,7 @@
 #             "request": "attach",
 #             "pathMappings": [
 #                 {
-#                     "localRoot": "${workspaceFolder}/django",
+#                     "localRoot": "${workspaceFolder}/plom_server",
 #                     "remoteRoot": "/code"
 #                 }
 #             ],
@@ -23,6 +24,7 @@
 #     ]
 # }
 
+# can comment out the 3000:3000 below if not using the above
 services:
   nginx:
     build: ./nginx
@@ -42,8 +44,9 @@ services:
     command: ./docker_run.sh
     # TODO: careful here: there is already a /code inside the container
     # for some reason we're mounting our own there instead...
+    # TODO: those on Fedora, might need a :z at the end
     volumes:
-      - ./django:/code
+      - ./plom_server:/code
     depends_on:
       - postgres
   postgres:

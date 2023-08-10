@@ -263,7 +263,7 @@ class DemoCreationService:
                     staging_image__bundle__slug=bundle_slug,
                 ).order_by("staging_image__bundle_order")
 
-                n_questions = SpecificationService().get_n_questions()
+                n_questions = SpecificationService.get_n_questions()
 
                 for i, ex_paper in enumerate(extra_page_papers):
                     paper_extra_pages = extra_pages[i * 2 : i * 2 + 2]
