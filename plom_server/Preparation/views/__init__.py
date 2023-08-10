@@ -10,6 +10,7 @@ from .home import (
     LandingPrenameToggle,
     LandingResetClasslist,
     LandingResetQVmap,
+    LandingFinishedToggle,
 )
 from .test_source_manage import TestSourceManageView
 from .prenaming import PrenamingView

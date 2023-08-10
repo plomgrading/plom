@@ -8,6 +8,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
 from ..services import PQVMappingService
+from ..models import TestPreparedSetting
 
 
 class PaperCreationView(ManagerRequiredView):
@@ -24,6 +25,7 @@ class PaperCreationView(ManagerRequiredView):
                 "n_questions": SpecificationService.get_n_questions(),
                 "n_versions": SpecificationService.get_n_versions(),
                 "n_pages": SpecificationService.get_n_pages(),
+                "is_test_prepared": TestPreparedSetting.is_test_prepared(),
             }
         )
         return context

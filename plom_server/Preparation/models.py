@@ -23,6 +23,21 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
+class TestPreparedSetting(SingletonBaseModel):
+    finished = models.BooleanField(default=False, null=False)
+
+    @classmethod
+    def is_test_prepared(cls):
+        setting_obj = cls.load()
+        return setting_obj.finished
+
+    @classmethod
+    def set_test_prepared(cls, is_prepped: bool):
+        setting_obj = cls.load()
+        setting_obj.finished = is_prepped
+        setting_obj.save()
+
+
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
 

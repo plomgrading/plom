@@ -20,6 +20,9 @@ from django.conf import settings
 from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
+from Preparation.models import (
+    TestPreparedSetting,
+)  # TODO: write a management command for this
 
 
 class DemoCreationService:
@@ -139,6 +142,8 @@ class DemoCreationService:
                 print("Still waiting for pdf production tasks. Sleeping.")
                 sleep(1)
             else:
+                TestPreparedSetting.set_test_prepared(True)
+                print("Test preparation marked as finished.")
                 print(
                     "Extra page and papers all built - continuing to next step of demo."
                 )

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
@@ -11,6 +11,7 @@ from .views import (
     LandingPrenameToggle,
     LandingResetClasslist,
     LandingResetQVmap,
+    LandingFinishedToggle,
     TestSourceManageView,
     PrenamingView,
     ClasslistView,
@@ -77,4 +78,7 @@ urlpatterns = [
     path("test_papers/", PaperCreationView.as_view(), name="prep_test_papers"),
     path("misc/", MiscExtrasView.as_view(), name="misc_extras"),
     path("misc/extra_page", ExtraPageView.as_view(), name="extra_page"),
+    path(
+        "pref_finished/", LandingFinishedToggle.as_view(), name="prep_finished_toggle"
+    ),
 ]

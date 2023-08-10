@@ -12,6 +12,7 @@ from Papers.services import (
     PaperInfoService,
 )
 from SpecCreator.services import StagingSpecificationService
+from Progress.services import ManageScanService
 
 from ..services import (
     TestSourceService,
@@ -21,6 +22,7 @@ from ..services import (
     PQVMappingService,
     ExtraPageService,
 )
+from ..models import TestPreparedSetting
 
 
 class PreparationLandingView(ManagerRequiredView):
@@ -31,6 +33,7 @@ class PreparationLandingView(ManagerRequiredView):
         pqvs = PQVMappingService()
         bps = BuildPapersService()
         pinfo = PaperInfoService()
+        mss = ManageScanService()
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -43,6 +46,8 @@ class PreparationLandingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
+            "is_test_prepared": TestPreparedSetting.is_test_prepared(),
+            "are_bundles_pushed": mss.get_number_of_scanned_pages() > 0,
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -149,4 +154,14 @@ class LandingResetQVmap(ManagerRequiredView):
     def delete(self, request):
         qv_service = PQVMappingService()
         qv_service.remove_pqv_map()
+        return HttpResponseClientRefresh()
+
+
+class LandingFinishedToggle(ManagerRequiredView):
+    """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
+
+    def post(self, request):
+        current_setting = TestPreparedSetting.is_test_prepared()
+        print(current_setting)
+        TestPreparedSetting.set_test_prepared(not current_setting)
         return HttpResponseClientRefresh()

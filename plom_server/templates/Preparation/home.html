@@ -1,13 +1,18 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Andrew Rechnitzer
-    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block page_heading %}
     Prepare assessment
+    {% if is_test_prepared %}
+    <i class="bi bi-check-circle text-success"></i>
+    {% else %}
+    <i class="bi bi-pencil-square"></i>
+    {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
     <ul class="list-group ms-3">
@@ -238,6 +243,30 @@
                     Manage
                     <i class="bi bi-chevron-right"></i>
                 </a>
+            </div>
+        </li>
+        <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
+            <div class="d-flex align-items-center">
+                <div class="flex-fill">
+                    <p class="fs-4 mb-0">8. Set test preperation as finished</p>
+                    <p class="fs-7">&emsp;&ensp; Once preparation is finished, the server will be ready to accept scanned exam bundles.</p>
+                </div>
+                {% if papers_staged %}
+                    {% if is_test_prepared %}
+                        {% if are_bundles_pushed %}
+                            <a disabled>Scanning and marking in progress</a>
+                        {% else %}
+                            <a class="btn btn-danger" hx-post="{% url 'prep_finished_toggle' %}">Reset</a>
+                        {% endif %}
+                    {% else %}
+                        <a class="btn btn-success" hx-post="{% url 'prep_finished_toggle' %}">Set as finished</a>
+                    {% endif %}
+                {% else %}
+                    <a disabled>
+                        Needs database
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% endif %}
             </div>
         </li>
     </ul>
