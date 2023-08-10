@@ -52,7 +52,7 @@ class UserInfoServices:
         return annotation_count_dict
 
     @transaction.atomic
-    def get_annotations_based_on_user_and_question_number_version(
+    def get_annotations_based_on_user(
         self,
     ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
         """Retrieve annotations based on the combination of user, question number, and version.

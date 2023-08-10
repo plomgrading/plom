@@ -5,7 +5,7 @@ from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 
-from Progress.services import UserInfoServices
+from ..services import UserInfoServices
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
@@ -15,15 +15,13 @@ class ProgressUserInfoHome(ManagerRequiredView):
 
         annotations_exist = uis.annotation_exists()
         annotation_count_dict = uis.get_total_annotations_based_on_user()
-        grouped_annotations = (
-            uis.get_annotations_based_on_user_and_question_number_version()
-        )
+        annotations_grouped_by_user = uis.get_annotations_based_on_user()
 
         context.update(
             {
                 "annotations_exist": annotations_exist,
                 "annotation_count_dict": annotation_count_dict,
-                "grouped_annotations": grouped_annotations,
+                "annotations_grouped_by_user": annotations_grouped_by_user,
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)
