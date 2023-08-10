@@ -13,7 +13,7 @@ from Papers.models import Specification
 
 class Command(BaseCommand):
     sms = StudentMarkService()
-    spec = Specification.load().spec_dict
+    spec = Specification.load()
 
     student_dict = sms.get_all_students_download(
         version_info=True, timing_info=False, warning_info=False
@@ -29,11 +29,21 @@ class Command(BaseCommand):
         parser.add_argument(
             "num_components", type=int, help="Number of PCA components to use"
         )
+        parser.add_argument(
+            "--of-students",
+            action="store_true",
+            default=False,
+            help="Perform PCA of the student, default is to perform PCA of the questions",
+        )
 
     def handle(self, *args, **options):
         num_components = options["num_components"]
 
         data = self.question_df.loc[:, :].values
+        if options["of_students"]:
+            # transpose the data to perform PCA on the students
+            data = data.T
+
         try:
             norm_data = StandardScaler().fit_transform(data)
         except ValueError:
@@ -46,9 +56,8 @@ class Command(BaseCommand):
         pca = PCA(n_components=num_components)
         principalComponents = pca.fit_transform(df)
 
-        # principalDf = pd.DataFrame(principalComponents, columns=[f"PC{i}" for i in range(num_components)])
-        # principalDf.to_csv(f"PCA_components_{num_components}.csv")
-
         print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
-        print("Components:")
-        print(principalComponents)
+        principalDf = pd.DataFrame(
+            principalComponents, columns=[f"PC{i}" for i in range(num_components)]
+        )
+        print(principalDf)

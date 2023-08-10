@@ -244,11 +244,11 @@ class StudentMarkService:
             None expected
         """
         keys = ["student_id", "student_name", "paper_number"]
-        for q in range(1, spec["numberOfQuestions"] + 1):
+        for q in range(1, spec.numberOfQuestions + 1):
             keys.append("q" + str(q) + "_mark")
         keys.append("total_mark")
         if version_info:
-            for q in range(1, spec["numberOfQuestions"] + 1):
+            for q in range(1, spec.numberOfQuestions + 1):
                 keys.append("q" + str(q) + "_version")
         if timing_info:
             keys.extend(["last_update", "csv_write_time"])
