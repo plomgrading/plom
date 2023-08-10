@@ -14,7 +14,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
 from django.db import transaction
 
@@ -715,11 +715,22 @@ class MarkingTaskService:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
 
     @transaction.atomic
-    def recreate_marking_task(self, paper_number, question_number):
-        pass
+    def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):
+        """Set the marking task for the given paper/question as OUT_OF_DATE.
 
-    @transaction.atomic
-    def set_paper_marking_task_outdated(self, paper_number, question_number):
+        When a page-image is removed or added to a paper/question, any
+        existing annotations are now out of date (since the underlying
+        pages have changed). This function is called when such changes occur.
+
+        Args:
+            paper_number (int): the paper
+            question_number (int): the question
+        Raises:
+            ValueError: when there is no such paper.
+            MultipleObjectsReturned: when there are multiple valid marking tasks
+                for that paper/question. This should not happen unless something
+                has gone seriously wrong.
+        """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -734,7 +745,8 @@ class MarkingTaskService:
         valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
         # do a integrity check - there can only at most one valid task
         if valid_task_count > 1:
-            raise ValueError(
+            # TODO
+            raise MultipleObjectsReturned(
                 f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
             )
         # we know there is at most one valid task.

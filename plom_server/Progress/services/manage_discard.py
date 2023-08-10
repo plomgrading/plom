@@ -107,11 +107,14 @@ class ManageDiscardService:
         for qn in qn_to_outdate:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
-    def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True) -> str:
+    def discard_pushed_fixed_page(
+        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
+    ) -> str:
         """Discard a fixed page, such an ID page, DNM page or Question page.
 
         Args:
-            TODO
+            user_obj (User): the User who is discarding
+            fixedpage_pk (int): the pk of the fixed page to be discarded
 
         Keyword Args:
             dry_run: really do it or just pretend?
@@ -166,8 +169,25 @@ class ManageDiscardService:
             raise ValueError("Cannot determine what sort of fixed-page this is")
 
     def discard_pushed_mobile_page(
-        self, user_obj, mobilepage_pk, *, dry_run=True
+        self, user_obj: User, mobilepage_pk: int, *, dry_run: bool = True
     ) -> str:
+        """Discard a mobile page.
+
+        Args:
+            user_obj (User): the User who is discarding
+            mobilepage_pk (int): the pk of the mobile page to be discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
         try:
             mp_obj = MobilePage.objects.get(pk=mobilepage_pk)
         except ObjectDoesNotExist as e:

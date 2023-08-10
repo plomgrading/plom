@@ -406,7 +406,21 @@ class ImageBundleService:
         return IDPage.objects.filter(image__bundle=bundle)
 
     @transaction.atomic
-    def is_given_paper_question_ready(self, paper_obj, question_number):
+    def is_given_paper_ready_for_id_ing(self, paper_obj) -> bool:
+        """Check if the id page of the given paper has an image and so is ready for id-ing.
+
+        Args:
+            paper_obj (Paper): the database paper to check
+
+        Returns:
+            bool: true when paper is ready for id-ing (ie the IDpage has an image)
+        """
+        return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
+
+    @transaction.atomic
+    def is_given_paper_question_ready(
+        self, paper_obj: Paper, question_number: int
+    ) -> bool:
         """Check if a given paper/question is ready for marking.
 
         Args:
