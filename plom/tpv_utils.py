@@ -50,6 +50,21 @@ with the orientation code being similar to that used for the TPV
   * 3,7 SW
   * 4,8 SE
 
+Also handles plom scrap-paper codes. These are alphanumeric stored in micro-qr codes
+and are of the form
+
+  sssssO
+  012345
+
+where
+  * 01234 = "plomS"
+  * 5 = orientation
+with the orientation code being similar to that used for the TPV
+  * 1,5 NE
+  * 2,6 NW
+  * 3,7 SW
+  * 4,8 SE
+
 """
 
 import random
@@ -110,6 +125,24 @@ def parseExtraPageCode(expc):
     """Parse an extra page code string (typically from a QR-code)
 
     Args: expc (str): an extra page code string of the form "plomXO",
+       typically from a QR-code, possibly with the prefix "QR-Code:".
+
+    Returns:
+       o (str): the orientation code, TODO
+    """
+    # strip prefix is needed for pyzbar but not zxingcpp
+    expc = expc.lstrip("QR-Code:")  # todo = remove in future.
+    o = int(expc[5])
+    if o > 4:
+        return str(o - 4)  # todo - keep the 5-8 possibilities
+    else:
+        return str(o)
+
+
+def parseScrapPaperCode(scpc):
+    """Parse an scrap-paper code string (typically from a QR-code)
+
+    Args: scpc (str): a scrap-paper code string of the form "plomSO",
        typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
@@ -270,6 +303,26 @@ def isValidExtraPageCode(code):
     return False
 
 
+def isValidScrapPaperCode(code):
+    """Is this a valid plom-scrap-paper code?
+
+    Args:
+       code (str): a plom extra page code
+
+    Returns:
+       bool: the validity of the extra page code.
+
+    """
+    code = code.lstrip("plomS")
+    if len(code) != len("O"):
+        return False
+    # now check that remaining letter is a digit in 1,2,..,8.
+    if code.isnumeric():
+        if 1 <= int(code) <= 8:
+            return True
+    return False
+
+
 def encodeExtraPageCode(orientation):
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
     """
@@ -277,11 +330,30 @@ def encodeExtraPageCode(orientation):
     return f"plomX{orientation}"
 
 
+def encodeScrapPaperCode(orientation):
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
+    """
+    assert int(orientation) >= 1 and int(orientation) <= 8
+    return f"plomS{orientation}"
+
+
 def getExtraPageOrientation(code):
     """Extra the orientation digit from a valid plom extra page code
 
     Args:
        code (str): a plom extra page code
+
+    Returns:
+       int: the orientation
+    """
+    return int(code[5])
+
+
+def getScrapPaperOrientation(code):
+    """Extra the orientation digit from a valid plom scrap-paper code
+
+    Args:
+       code (str): a plom scrap-paper code
 
     Returns:
        int: the orientation
