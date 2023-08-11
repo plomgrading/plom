@@ -27,6 +27,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotations_exist": annotations_exist,
                 "annotation_count_dict": annotation_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
+                "annotations_grouped_by_question_num_ver": annotations_grouped_by_question_num_ver,
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)
