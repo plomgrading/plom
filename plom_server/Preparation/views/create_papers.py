@@ -7,8 +7,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
-from ..services import PQVMappingService
-from ..models import TestPreparedSetting
+from ..services import PQVMappingService, TestPreparedSetting
 
 
 class PaperCreationView(ManagerRequiredView):

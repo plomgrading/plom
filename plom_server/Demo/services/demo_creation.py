@@ -20,7 +20,7 @@ from django.conf import settings
 from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
-from Preparation.models import (
+from Preparation.services import (
     TestPreparedSetting,
 )  # TODO: write a management command for this
 

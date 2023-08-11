@@ -21,8 +21,8 @@ from ..services import (
     StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
+    TestPreparedSetting,
 )
-from ..models import TestPreparedSetting
 
 
 class PreparationLandingView(ManagerRequiredView):

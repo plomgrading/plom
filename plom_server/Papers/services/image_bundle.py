@@ -19,7 +19,7 @@ from Scan.models import (
     StagingImage,
 )
 
-from Preparation.models import TestPreparedSetting
+from Preparation.services import TestPreparedSetting
 
 from Papers.models import (
     Bundle,

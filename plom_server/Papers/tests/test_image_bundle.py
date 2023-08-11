@@ -20,7 +20,8 @@ from Papers.models import (
     QuestionPage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
-from Preparation.models import StagingPQVMapping, TestPreparedSetting
+from Preparation.services import TestPreparedSetting
+from Preparation.models import StagingPQVMapping
 
 
 class ImageBundleTests(TestCase):
