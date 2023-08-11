@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
-"""Utilities for dealing with TPV codes
+"""Utilities for dealing with TPV codes.
 
 A TPV code is a string of 17 digits of the form
 
@@ -99,7 +99,7 @@ def isValidExtraPage(tpv):
 
 
 def parseTPV(tpv):
-    """Parse a TPV string (typically from a QR-code)
+    """Parse a TPV string (typically from a QR-code).
 
     Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
        typically from a QR-code, possibly with the prefix "QR-Code:".
@@ -122,7 +122,7 @@ def parseTPV(tpv):
 
 
 def parseExtraPageCode(expc):
-    """Parse an extra page code string (typically from a QR-code)
+    """Parse an extra page code string (typically from a QR-code).
 
     Args: expc (str): an extra page code string of the form "plomXO",
        typically from a QR-code, possibly with the prefix "QR-Code:".
@@ -140,7 +140,7 @@ def parseExtraPageCode(expc):
 
 
 def parseScrapPaperCode(scpc):
-    """Parse an scrap-paper code string (typically from a QR-code)
+    """Parse an scrap-paper code string (typically from a QR-code).
 
     Args: scpc (str): a scrap-paper code string of the form "plomSO",
        typically from a QR-code, possibly with the prefix "QR-Code:".
@@ -158,7 +158,7 @@ def parseScrapPaperCode(scpc):
 
 
 def getPaperPageVersion(tpv):
-    """Return the paper, page, version substring of a TPV string
+    """Return the paper, page, version substring of a TPV string.
 
     Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
        typically from a QR-code
@@ -171,8 +171,8 @@ def getPaperPageVersion(tpv):
 
 
 def parse_paper_page_version(ppv_key):
-    """Parse the paper-page-version string "TTTTTPPPVVV" and return a triple of the
-    the paper-number, page-number and version.
+    """Parse the paper-page-version string "TTTTTPPPVVV" and return a
+    triple of the the paper-number, page-number and version.
 
     Args:  (str): a string of the form "TTTTTPPPVVV"
 
@@ -194,7 +194,7 @@ def getPosition(tpv):
 
 
 def getCode(tpv):
-    """return the magic code for tpv
+    """Return the magic code for tpv.
 
     Args: tpv (str): a TPV string.
     """
@@ -231,7 +231,7 @@ def encodePaperPageVersion(paper_number, p, v):
 
 
 def encodeTPV(test, p, v, o, code):
-    """Encode some values as a TPV code
+    """Encode some values as a TPV code.
 
     Args:
        test (int/str): the test number, 1 ≤ test ≤ 99999
@@ -268,7 +268,7 @@ def encodeTPV(test, p, v, o, code):
 
 
 def new_magic_code(seed=None):
-    """Generate a new random magic code"
+    """Generate a new random magic code.
 
     Args:
        seed: seed for the random number generator, or ``None`` for
@@ -324,21 +324,19 @@ def isValidScrapPaperCode(code):
 
 
 def encodeExtraPageCode(orientation):
-    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
-    """
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomX{orientation}"
 
 
 def encodeScrapPaperCode(orientation):
-    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
-    """
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomS{orientation}"
 
 
 def getExtraPageOrientation(code):
-    """Extra the orientation digit from a valid plom extra page code
+    """Extra the orientation digit from a valid plom extra page code.
 
     Args:
        code (str): a plom extra page code
@@ -350,7 +348,7 @@ def getExtraPageOrientation(code):
 
 
 def getScrapPaperOrientation(code):
-    """Extra the orientation digit from a valid plom scrap-paper code
+    """Extra the orientation digit from a valid plom scrap-paper code.
 
     Args:
        code (str): a plom scrap-paper code

@@ -62,8 +62,9 @@ class ScrapPaperService:
                     f"Task's huey id {task_obj.huey_id} does not match the id supplied by the huey worker {task.id}."
                 )
             scp_path = Path(tmpdirname) / "scrap_paper.pdf"
+
             with scp_path.open(mode="rb") as fh:
-                task_obj.scrap_paper_page_pdf = File(fh, name=scp_path.name)
+                task_obj.scrap_paper_pdf = File(fh, name=scp_path.name)
                 task_obj.save()
 
     @transaction.atomic()

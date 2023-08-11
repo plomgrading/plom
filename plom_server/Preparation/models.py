@@ -95,7 +95,7 @@ class ExtraPagePDFTask(HueyTask):
         obj, created = ExtraPagePDFTask.objects.get_or_create()
         return obj
 
-    
+
 class ScrapPaperPDFTask(HueyTask):
     """Table to store the scrap paper pdf huey task.
 
