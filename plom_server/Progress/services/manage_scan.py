@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import arrow
 
@@ -350,7 +350,7 @@ class ManageScanService:
             return None
 
     @transaction.atomic
-    def get_pushed_image_page_info(self, img_pk) -> str:
+    def get_pushed_image_page_info(self, img_pk) -> Dict[str, Any]:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
