@@ -423,6 +423,12 @@ class ImageBundleService:
     ) -> bool:
         """Check if a given paper/question is ready for marking.
 
+        Note that to be ready the question must either
+          * have all its fixed pages with images (and any
+            number of mobile pages), or
+          * have no fixed pages with images but some mobile pages
+
+
         Args:
             paper_obj (Paper): the database paper object to check
             question_number (int): the question number to check
@@ -432,9 +438,6 @@ class ImageBundleService:
             ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
 
         """
-        # to be ready the question must either
-        # * have all its fixed pages with images (and any number of mobile pages), or
-        # * have no fixed pages with images but some mobile pages
 
         q_pages = QuestionPage.objects.filter(
             paper=paper_obj, question_number=question_number
