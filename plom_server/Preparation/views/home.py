@@ -20,6 +20,7 @@ from ..services import (
     StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
+    ScrapPaperService,
 )
 
 
@@ -43,6 +44,7 @@ class PreparationLandingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
+            "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()

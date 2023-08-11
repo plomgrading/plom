@@ -53,18 +53,18 @@
                 </div>
                 <div class="card-text">
                     {% if scrap_paper_task_status == 'complete' %}
-                        <a class="btn btn-secondary" href="{% url 'extra_page' %}" target="_">View</a>
+                        <a class="btn btn-secondary" href="{% url 'scrap_paper' %}" target="_">View</a>
                         <a class="btn btn-success"
-                           href="{% url 'extra_page' %}"
-                           download="extra_page.pdf">Download</a>
+                           href="{% url 'scrap_paper' %}"
+                           download="scrap_paper.pdf">Download</a>
                         <button class="btn btn-danger"
-                                hx-delete="extra_page"
+                                hx-delete="scrap_paper"
                                 hx-confirm="Are you sure you want to delete the scrap-paper pdf?"
                                 hx-target="body"
                                 hx-swap="outerHTML">Delete</button>
                     {% elif scrap_paper_task_status == 'todo' %}
                         <button class="btn btn-primary"
-                                hx-put="extra_page"
+                                hx-put="scrap_paper"
                                 hx-target="body"
                                 hx-swap="outerHTML">Build</button>
                     {% else %}
