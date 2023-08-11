@@ -438,7 +438,6 @@ class ImageBundleService:
             ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
 
         """
-
         q_pages = QuestionPage.objects.filter(
             paper=paper_obj, question_number=question_number
         )
