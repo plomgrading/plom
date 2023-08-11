@@ -14,11 +14,7 @@
 hist
 # TE commonly used for QTextEdit
 te
-# unvalidate() function used in the django/SpecCreator directory
+# unvalidate() function used in the plom_server/SpecCreator directory
 unvalidate
-# valid words in django/static/js/frontend_utils.js
-crate
-discreet
-vise
-# Frobenius norm calculated in django/Scan/tests/test_image_process.py
+# Frobenius norm calculated in plom_server/Scan/tests/test_image_process.py
 fro

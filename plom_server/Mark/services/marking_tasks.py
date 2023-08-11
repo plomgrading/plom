@@ -745,7 +745,9 @@ class MarkingTaskService:
         valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
         # do a integrity check - there can only at most one valid task
         if valid_task_count > 1:
-            # TODO
+            # Note that we should not find ourselves here unless there is a serious error in the code
+            # Any given question should have **at most** one valid task.
+            # If we ever arrive here it indicates that there is a corruption of the database
             raise MultipleObjectsReturned(
                 f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
             )
