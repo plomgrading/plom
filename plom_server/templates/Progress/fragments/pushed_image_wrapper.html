@@ -12,17 +12,29 @@
 </img>
 </div>
 <div class="m-2">
-    {% if page_type == 'fixed' %}
-        <button class="btn btn-danger"
-                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
-    {% elif page_type == 'mobile' %}
-        <button class="btn btn-danger"
-                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
-    {% else %}
-        <a href="{% url 'progress_reassign_discard' image_pk %}">
-            <button class="btn btn-warning">reassign this discarded image</button>
-        </a>
-    {% endif %}
+  {% if page_info.page_type == 'fixed' %}
+  <ul>
+    <li>Paper: {{ page_info.paper_number }}</li>
+    <li>Page: {{ page_info.page_number }}</li>
+  </ul>
+  <button class="btn btn-danger"
+          hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+          hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
+  {% elif page_info.page_type == 'mobile' %}
+  <ul>
+    <li>Paper: {{ page_info.paper_number }}</li>
+    <li>Questions: {{ page_info.question_list }}</li>
+  </ul>
+  <button class="btn btn-danger"
+          hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+          hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
+  {% else %}
+  <ul>
+    <li>Discard</li>
+    <li>{{ page_info.reason }}</li>
+  </ul>
+  <a href="{% url 'progress_reassign_discard' image_pk %}">
+    <button class="btn btn-warning">reassign this discarded image</button>
+  </a>
+  {% endif %}
 </div>

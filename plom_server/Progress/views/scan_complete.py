@@ -54,13 +54,13 @@ class PushedImageWrapView(BaseScanProgressPage):
     def get(self, request, img_pk):
         mss = ManageScanService()
         pushed_img = mss.get_pushed_image(img_pk)
-        pushed_img_page_type = mss.get_pushed_image_page_type(img_pk)
+        pushed_img_page_info = mss.get_pushed_image_page_info(img_pk)
 
         # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
         context = {
             "image_pk": img_pk,
             "angle": -pushed_img.rotation,
-            "page_type": pushed_img_page_type,
+            "page_info": pushed_img_page_info,
         }
 
         return render(request, "Progress/fragments/pushed_image_wrapper.html", context)

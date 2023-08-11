@@ -350,18 +350,35 @@ class ManageScanService:
             return None
 
     @transaction.atomic
-    def get_pushed_image_page_type(self, img_pk) -> str:
+    def get_pushed_image_page_info(self, img_pk) -> str:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
             raise ValueError("Cannot find an image with pk {img_pk}.")
 
         if img.fixedpage_set.exists():  # linked by foreign key
-            return "fixed"
+            fp_obj = FixedPage.objects.get(image=img)
+            return {
+                "page_type": "fixed",
+                "paper_number": fp_obj.paper.paper_number,
+                "page_number": fp_obj.page_number,
+            }
         elif img.mobilepage_set.exists():  # linked by foreign key
-            return "mobile"
+            # check the first such mobile page to get the paper_number
+            paper_number = (
+                MobilePage.objects.filter(image=img).first().paper.paper_number
+            )
+            q_list = [
+                mp_obj.question_number
+                for mp_obj in MobilePage.objects.filter(image=img)
+            ]
+            return {
+                "page_type": "mobile",
+                "paper_number": paper_number,
+                "question_list": q_list,
+            }
         elif img.discardpage:  # linked by one-to-one
-            return "discard"
+            return {"page_type": "discard", "reason": img.discardpage.discard_reason}
         else:
             raise ValueError(
                 "Cannot determine what sort of page image {img_pk} is attached to."
