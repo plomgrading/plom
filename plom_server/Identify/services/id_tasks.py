@@ -4,7 +4,11 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.core.exceptions import (
+    PermissionDenied,
+    ObjectDoesNotExist,
+    MultipleObjectsReturned,
+)
 from django.db import transaction, IntegrityError
 
 from Identify.models import (
@@ -12,6 +16,7 @@ from Identify.models import (
     PaperIDAction,
 )
 from Papers.models import IDPage, Paper
+from Papers.services import ImageBundleService
 
 
 class IdentifyTaskService:
@@ -27,11 +32,16 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def create_task(self, paper):
-        """Create an identification task for a paper.
+        """Create an identification task for a paper. Set any older id-tasks for same paper as out of date.
 
         Args:
             paper: a Paper instance
         """
+        for old_task in PaperIDTask.objects.filter(paper=paper):
+            old_task.status = PaperIDTask.OUT_OF_DATE
+            old_task.assigned_user = None
+            old_task.save()
+
         task = PaperIDTask(paper=paper)
         task.save()
 
@@ -215,25 +225,27 @@ class IdentifyTaskService:
         except Paper.DoesNotExist:
             raise ValueError(f"Cannot find paper {paper_number}")
 
-        try:
-            task_obj = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
-                paper=paper_obj
-            )
-        except PaperIDTask.DoesNotExist:
-            raise ValueError(
-                f"Cannot find valid PaperIDTask associated with paper {paper_number}"
-            )
-        except PaperIDTask.MultipleObjectsReturned:
-            raise ValueError(
+        valid_tasks = PaperIDTask.objects.exclude(
+            status=PaperIDTask.OUT_OF_DATE
+        ).filter(paper=paper_obj)
+        valid_task_count = valid_tasks.count()
+
+        if valid_task_count > 1:
+            raise MultipleObjectsReturned(
                 f"Very serious error - have found multiple valid ID-tasks for paper {paper_number}"
             )
+        if valid_task_count == 1:
+            task_obj = valid_tasks.get()
+            # set the last id-action as invalid (if it exists)
+            if task_obj.latest_action:
+                latest_action = task_obj.latest_action
+                latest_action.is_valid = False
+                latest_action.save()
+            # now set status and make assigned user None
+            task_obj.assigned_user = None
+            task_obj.status = PaperIDTask.OUT_OF_DATE
+            task_obj.save()
 
-        # set the last id-action as invalid (if it exists)
-        if task_obj.latest_action:
-            latest_action = task_obj.latest_action
-            latest_action.is_valid = False
-            latest_action.save()
-        # now set status and make assigned user None
-        task_obj.assigned_user = None
-        task_obj.status = PaperIDTask.OUT_OF_DATE
-        task_obj.save()
+        # now all existing tasks are out of date, so if the id-page is ready then create a new id-task for it.
+        if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
+            self.create_task(paper_obj)

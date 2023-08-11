@@ -14,14 +14,14 @@ from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
 from django.db import transaction
 
 from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, ImageBundleService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -55,9 +55,11 @@ class MarkingTaskService:
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
         # mark other tasks with this code as 'out of date'
+        # and set the assigned user to None
         previous_tasks = MarkingTask.objects.filter(code=task_code)
         for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
             old_task.status = MarkingTask.OUT_OF_DATE
+            old_task.assigned_user = None
             old_task.save()
 
         the_task = MarkingTask(
@@ -711,3 +713,61 @@ class MarkingTaskService:
             tag.save()
         except MarkingTask.DoesNotExist:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
+
+    @transaction.atomic
+    def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):
+        """Set the marking task for the given paper/question as OUT_OF_DATE.
+
+        When a page-image is removed or added to a paper/question, any
+        existing annotations are now out of date (since the underlying
+        pages have changed). This function is called when such changes occur.
+
+        Args:
+            paper_number (int): the paper
+            question_number (int): the question
+        Raises:
+            ValueError: when there is no such paper.
+            MultipleObjectsReturned: when there are multiple valid marking tasks
+                for that paper/question. This should not happen unless something
+                has gone seriously wrong.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Cannot find paper {paper_number}")
+
+        ibs = ImageBundleService()
+
+        # now we know there is at least one task (either valid or out of date)
+        valid_tasks = MarkingTask.objects.exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).filter(paper=paper_obj, question_number=question_number)
+        valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
+        # do a integrity check - there can only at most one valid task
+        if valid_task_count > 1:
+            # Note that we should not find ourselves here unless there is a serious error in the code
+            # Any given question should have **at most** one valid task.
+            # If we ever arrive here it indicates that there is a corruption of the database
+            raise MultipleObjectsReturned(
+                f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
+            )
+        # we know there is at most one valid task.
+        if valid_task_count == 1:
+            # there is an "in date" task - get it and set it as out of date
+            task_obj = valid_tasks.get()
+            # set the last id-action as invalid (if it exists)
+            if task_obj.latest_annotation:
+                latest_annotation = task_obj.latest_annotation
+                latest_annotation.is_valid = False
+                latest_annotation.save()
+            # now set status and make assigned user None
+            task_obj.assigned_user = None
+            task_obj.status = MarkingTask.OUT_OF_DATE
+            task_obj.save()
+        else:
+            # there is no "in date" task, so we don't have to mark anything as out of date.
+            pass
+
+        # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
+        if ibs.is_given_paper_question_ready(paper_obj, question_number):
+            self.create_task(paper_obj, question_number)
