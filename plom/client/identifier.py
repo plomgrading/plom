@@ -67,7 +67,9 @@ class Paper:
     store the studentName and ID-number.
     """
 
-    def __init__(self, test, fname=None, *, stat="unidentified", id="", name=""):
+    def __init__(
+        self, test, fname=None, *, orientation=0, stat="unidentified", id="", name=""
+    ):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -78,6 +80,7 @@ class Paper:
         self.sname = name
         self.sid = id
         self.originalFile = fname
+        self.orientation = orientation
 
     def setStatus(self, st):
         self.status = st
@@ -363,7 +366,14 @@ class IDClient(QWidget):
         idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fname=None, stat="identified", id=x[1], name=x[2]),
+                Paper(
+                    x[0],
+                    fname=None,
+                    orientation=0,
+                    stat="identified",
+                    id=x[1],
+                    name=x[2],
+                ),
                 update=False,
             )
 
@@ -393,17 +403,27 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            id_pages.append(filename)
+            angle = row.get("orientation", 17)
+            id_pages.append([filename, angle])
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        (imageName,) = id_pages
+        (imageName, angle) = id_pages[0]
 
         self.exM.paperList[r].originalFile = imageName
+        self.exM.paperList[r].orientation = angle
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
+        self.testImg.updateImage(
+            [
+                {
+                    "filename": self.exM.paperList[r].originalFile,
+                    "orientation": self.exM.paperList[r].orientation,
+                }
+            ],
+            keep_zoom=True,
+        )
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
 
@@ -611,12 +631,13 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            id_pages.append(filename)
+            angle = row.get("orientation", 23)
+            id_pages.append([filename, angle])
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        (filename,) = id_pages
+        [filename, angle] = id_pages[0]
 
         # Add the paper [code, filename, etc] to the list
-        self.addPaperToList(Paper(test, filename))
+        self.addPaperToList(Paper(test, filename, orientation=angle))
 
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
