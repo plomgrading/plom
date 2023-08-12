@@ -55,15 +55,15 @@
                 </details>
                 {% if preparation_finished %}
                     <form enctype="multipart/form-data"
-                        method="post"
-                        action="{% url 'scan_home' %}">
+                          method="post"
+                          action="{% url 'scan_home' %}">
                         {% csrf_token %}
                         {{ form }}
                         <input type="submit"
-                            class="btn"
-                            value="Upload"
-                            style="background-color: #0F984F;
-                                    color: white">
+                               class="btn"
+                               value="Upload"
+                               style="background-color: #0F984F;
+                                      color: white">
                     </form>
                 {% else %}
                     <a disabled>No bundles to upload.</a>
