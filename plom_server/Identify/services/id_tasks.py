@@ -4,12 +4,16 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from typing import List, Union
+
+from django.contrib.auth.models import User
 from django.core.exceptions import (
     PermissionDenied,
     ObjectDoesNotExist,
     MultipleObjectsReturned,
 )
 from django.db import transaction, IntegrityError
+from django.db.models import QuerySet
 
 from Identify.models import (
     PaperIDTask,
@@ -23,7 +27,7 @@ class IdentifyTaskService:
     """Class to encapsulate methods for handing out paper identification tasks to the client."""
 
     @transaction.atomic
-    def are_there_id_tasks(self):
+    def are_there_id_tasks(self) -> bool:
         """Return True if there is at least one ID task in the database.
 
         Note that this *does* exclude out-of-date tasks.
@@ -31,7 +35,7 @@ class IdentifyTaskService:
         return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).exists()
 
     @transaction.atomic
-    def create_task(self, paper):
+    def create_task(self, paper: Paper) -> None:
         """Create an identification task for a paper. Set any older id-tasks for same paper as out of date.
 
         Args:
@@ -55,13 +59,13 @@ class IdentifyTaskService:
             raise ValueError(f"Task with paper number {paper.paper_number} does not exist.")
 
     @transaction.atomic
-    def id_task_exists(self, paper):
+    def id_task_exists(self, paper: Paper) -> bool:
         """Return true if an ID tasks exists for a particular paper."""
         # TO_DO - do we need to exclude "out of date" tasks here
         return PaperIDTask.objects.filter(paper=paper).exists()
 
     @transaction.atomic
-    def get_latest_id_results(self, task):
+    def get_latest_id_results(self, task: PaperIDTask) -> Union[PaperIDAction, None]:
         """Return the latest (valid) results from a PaperIDAction instance.
 
         Args:
@@ -75,7 +79,7 @@ class IdentifyTaskService:
         return None
 
     @transaction.atomic
-    def get_done_tasks(self, user):
+    def get_done_tasks(self, user: User) -> List:
         """Retrieve the results of previously completed (and valid) ID tasks for a user.
 
         Args:
@@ -97,7 +101,7 @@ class IdentifyTaskService:
         return id_list
 
     @transaction.atomic
-    def get_id_progress(self):
+    def get_id_progress(self) -> List:
         """Send back current ID progress counts to the client.
 
         Returns:
@@ -110,7 +114,7 @@ class IdentifyTaskService:
         return [n_completed, n_total]
 
     @transaction.atomic
-    def get_next_task(self):
+    def get_next_task(self) -> PaperIDTask:
         """Return the next available identification task, ordered by paper_number."""
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         todo_tasks = todo_tasks.order_by("paper__paper_number")
@@ -118,7 +122,7 @@ class IdentifyTaskService:
             return todo_tasks.first()
 
     @transaction.atomic
-    def claim_task(self, user, paper_number):
+    def claim_task(self, user: User, paper_number: int) -> None:
         """Claim an ID task for a user."""
         try:
             task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
@@ -137,14 +141,14 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def get_id_page(self, paper_number):
+    def get_id_page(self, paper_number: int) -> Image:
         """Return the ID page image of a certain test-paper."""
         id_page = IDPage.objects.get(paper__paper_number=paper_number)
         id_img = id_page.image
         return id_img
 
     @transaction.atomic
-    def identify_paper(self, user, paper_number, student_id, student_name):
+    def identify_paper(self, user: User, paper_number: int, student_id: str, student_name: str) -> None:
         """Identify a test-paper and close its associated task.
 
         Raises:
@@ -201,7 +205,7 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def surrender_task(self, user, task):
+    def surrender_task(self, user: User, task: PaperIDTask) -> None:
         """Remove a user from an id-ing task and set its status to 'todo'.
 
         Args:
@@ -215,7 +219,7 @@ class IdentifyTaskService:
             task.save()
 
     @transaction.atomic
-    def surrender_all_tasks(self, user):
+    def surrender_all_tasks(self, user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
@@ -228,7 +232,7 @@ class IdentifyTaskService:
             self.surrender_task(user, task)
 
     @transaction.atomic
-    def set_paper_idtask_outdated(self, paper_number):
+    def set_paper_idtask_outdated(self, paper_number: int) -> None:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
