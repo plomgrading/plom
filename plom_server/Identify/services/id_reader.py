@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
+from typing import Dict, List, Union
 from warnings import warn
 
 from django.conf import settings
@@ -20,7 +21,7 @@ class IDReaderService:
     """Functions for ID reading and related helper functions."""
 
     @transaction.atomic
-    def get_id_box_cmd(self, box, *, dur=None):
+    def get_id_box_cmd(self, box: Union[List, None], *, dur: Union[pathlib.Path, None] = None) -> Dict:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
@@ -64,7 +65,7 @@ class IDReaderService:
                 img_file_dict[id_img.paper.paper_number] = id_box_filename
         return img_file_dict
 
-    def get_already_matched_sids(self):
+    def get_already_matched_sids(self) -> List:
         """Return the list of all student IDs that have been matched with a paper."""
         sid_list = []
         id_task_service = IdentifyTaskService()
@@ -75,7 +76,7 @@ class IDReaderService:
                 sid_list.append(latest.student_id)
         return sid_list
 
-    def get_unidentified_papers(self):
+    def get_unidentified_papers(self) -> List:
         """Return a list of all unidentified papers."""
         paper_list = []
         not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
@@ -84,15 +85,15 @@ class IDReaderService:
         return paper_list
 
     @transaction.atomic
-    def get_ID_predictions(self, predictor=None):
+    def get_ID_predictions(self, predictor: str = None) -> Dict:
         """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
 
         Keyword Args:
-            predictor (str): predictor whose predictions are returned.
+            predictor: predictor whose predictions are returned.
                 If None, all predictions are returned.
 
         Returns:
-            dict: if returning all predictions, a dict of lists of dicts.
+            If returning all predictions, a dict of lists of dicts.
             If returning predictions for a specific predictor, a dict of dicts.
             Inner-most dicts contain prediction info (ie. SID, certainty, predictor).
             Outer-most dict is keyed by paper number.
@@ -122,8 +123,8 @@ class IDReaderService:
 
     @transaction.atomic
     def add_or_change_ID_prediction(
-        self, user, paper_num, student_id, certainty, predictor
-    ):
+        self, user: User, paper_num: int, student_id: str, certainty: float, predictor: str
+    ) -> None:
         """Add a new ID prediction or change an existing prediction in the DB."""
         paper = Paper.objects.get(paper_number=paper_num)
         try:
@@ -146,14 +147,18 @@ class IDReaderService:
         update_task_priority(self, paper, priority)
 
     def add_or_change_ID_prediction_cmd(
-        self, username, paper_num, student_id, certainty, predictor
-    ):
+        self, username: str, paper_num: int, student_id: str, certainty: float, predictor: str
+    ) -> None:
         """Wrapper around add_or_change_ID_prediction for use by the management command-line tool.
 
         Checks whether username is valid and fetches the corresponding User from the DB.
 
         Args:
-            username (str): the username to associate with the new prediction.
+            username: the username to associate with the new prediction.
+            paper_num: the paper number of the ID page whose ID prediction to add/change.
+            student_id: the student ID with which to update the predictions in the DB.
+            certainty: the confidence value associated with the prediction.
+            predictor: identifier defining the type of prediction that is being added/changed.
 
         Raises:
             ValueError: if the username provided is not valid, or is not part of the manager group.
@@ -169,14 +174,14 @@ class IDReaderService:
         )
 
     @transaction.atomic
-    def delete_ID_predictions(self, predictor=None):
+    def delete_ID_predictions(self, predictor: str = None) -> None:
         """Delete all ID predictions from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()
         else:
             IDPrediction.objects.all().delete()
 
-    def add_prename_ID_prediction(self, user, student_id, paper_number):
+    def add_prename_ID_prediction(self, user: User, student_id: str, paper_number: int) -> None:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
 
