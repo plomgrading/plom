@@ -17,6 +17,12 @@ def can_status_be_set_false() -> bool:
     return Bundle.objects.all().count() == 0
 
 
+# We've chosen to give the above helper functions to this module because
+# we want this to be the single source of truth w.r.t. the test preparation status.
+# It's currently still possible to work around the setting and the various guards
+# using manage.py shell and the like.
+
+
 @transaction.atomic
 def is_test_prepared() -> bool:
     """Return True if the preparation has been marked as 'finished'."""
