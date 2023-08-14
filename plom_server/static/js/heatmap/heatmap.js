@@ -60,9 +60,7 @@ function renderHeatMap(data, divId) {
         .attr("width", cellSize) // Set the desired cell width
         .attr("height", cellSize) // Set the desired cell height
         .attr("fill", (d, i) => {
-            const rowIndex = Math.floor(i / data.cols);
-            const colIndex = i % data.cols;
-            return rowIndex === colIndex ? "url(#diagonal-stripe)" : colorScale(d);
+            return d == 1 ? "url(#diagonal-stripe)" : colorScale(d);
         }) // Apply diagonal stripes to the cells on the diagonal
         .on("click", cellClicked); // Add click event listener
 
