@@ -2,7 +2,6 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
 -->
-
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Create papers
@@ -12,7 +11,6 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
-
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
@@ -23,22 +21,24 @@
                     <i class="bi bi-check-circle text-success"></i>
                 </h4>
                 {% for version, test_source in uploaded_test_sources.items %}
-                <div class ="row row-cols-auto mt-3">
-                    <div class="p1 col">
-                        <h5>Version {{ version }}:</h5> 
+                    <div class ="row row-cols-auto mt-3">
+                        <div class="p1 col">
+                            <h5>Version {{ version }}:</h5>
+                        </div>
+                        <div class="p-1 col">
+                            <a class="btn btn-success"
+                               target="_blank"
+                               href="{% url 'prep_source_upload' version %}">View</a>
+                        </div>
+                        <div class="p-1 col">
+                            <form action="{% url 'prep_mock' version %}" target="_blank" method="post">
+                                {% csrf_token %}
+                                <input class="btn btn-primary" type="submit" value="Mock">
+                            </form>
+                        </div>
                     </div>
-                    <div class="p-1 col">
-                        <a class="btn btn-success" target="_blank" href="{% url 'prep_source_upload' version %}">View</a>
-                    </div>
-                    <div class="p-1 col">
-                        <form action="{% url 'prep_mock' version %}" target="_blank" method="post">
-                            {% csrf_token %}
-                            <input class="btn btn-primary" type="submit" value="Mock">
-                        </form>
-                    </div>
-                </div>
                 {% endfor %}
-            </div>    
+            </div>
         </div>
     </div>
 {% endblock main_content %}
