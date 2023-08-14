@@ -28,4 +28,4 @@ from .pqv_mapping import (
 )
 from .mocker import MockExamView
 from .create_papers import PaperCreationView
-from .misc_extras import MiscExtrasView, ExtraPageView
+from .misc_extras import MiscExtrasView, ExtraPageView, ScrapPaperView
