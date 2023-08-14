@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Colin B. Macdonald
+
+import json
+from pathlib import Path
 
 import cv2
 import numpy as np
-import json
-from pathlib import Path
 from sklearn.cluster import KMeans
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
@@ -144,6 +146,8 @@ class Command(BaseCommand):
         self.stdout.write("Done tagging")
 
     def handle(self, *args, **options):
+        if not any((options["get_digits"], options["compute"], options["digit_index"])):
+            raise CommandError("You must specify one or more flags")
         if options["get_digits"]:
             self.get_digits(options["digit_index"])
         if options["compute"]:
