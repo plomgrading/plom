@@ -112,12 +112,16 @@ class DemoCreationService:
         )
 
         call_command("plom_preparation_extrapage", "build")
+        call_command("plom_preparation_scrap_paper", "build")
         call_command("plom_build_papers", "--start-all")
 
     def wait_for_papers_to_be_ready(self):
         py_man_ep = "python3 manage.py plom_preparation_extrapage"
+        py_man_sp = "python3 manage.py plom_preparation_scrap_paper"
         py_man_papers = "python3 manage.py plom_build_papers --status"
+
         ep_todo = True
+        sp_todo = True
         papers_todo = True
 
         sleep(1)
@@ -126,6 +130,12 @@ class DemoCreationService:
                 out_ep = subprocess.check_output(split(py_man_ep)).decode("utf-8")
                 if "complete" in out_ep:
                     print("Extra page is built")
+
+                    ep_todo = False
+            if sp_todo:
+                out_sp = subprocess.check_output(split(py_man_sp)).decode("utf-8")
+                if "complete" in out_sp:
+                    print("Scrap paper is built")
 
                     ep_todo = False
             if papers_todo:
@@ -142,7 +152,7 @@ class DemoCreationService:
                 call_command("plom_preparation_status", set=["finished"])
                 print("Test preparation marked as finished.")
                 print(
-                    "Extra page and papers all built - continuing to next step of demo."
+                    "Extra page, Scrap paper, and papers all built - continuing to next step of demo."
                 )
                 break
 

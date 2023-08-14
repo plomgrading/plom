@@ -20,6 +20,7 @@ from ..services import (
     StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
+    ScrapPaperService,
     TestPreparedSetting,
 )
 
@@ -44,6 +45,7 @@ class PreparationLandingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
+            "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
             "is_test_prepared": TestPreparedSetting.is_test_prepared(),
             "can_status_be_set_todo": TestPreparedSetting.can_status_be_set_false(),
         }

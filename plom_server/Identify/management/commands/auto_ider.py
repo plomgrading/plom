@@ -141,7 +141,7 @@ class Command(BaseCommand):
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
         for pred in lap_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            id_reader_service.add_or_change_ID_prediction_cmd(
                 username, pred[0], pred[1], pred[2], "MLLAP"
             )
 

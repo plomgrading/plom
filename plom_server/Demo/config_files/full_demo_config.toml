@@ -16,6 +16,7 @@ garbage_page_papers = [1, 2]
 duplicate_qr_papers = [3, 4]
 wrong_version_papers = [5, 6]
 duplicate_page_papers = [7, 8]
+scrap_page_papers = [7, 8]
 
 
 # bundle 2
@@ -23,13 +24,15 @@ duplicate_page_papers = [7, 8]
 first_paper = 11
 last_paper = 20
 extra_page_papers = [19, 20]
-discard_pages=[51, 54, 58, 62]
+scrap_page_papers = [19, 20]
+discard_pages=[51, 54, 60, 64]
 
 
 # bundle 3
 [[bundles]]
 first_paper = 21
 last_paper = 30
+scrap_page_papers = [21, 22]
 
 
 # bundle 4

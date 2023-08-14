@@ -252,6 +252,15 @@
                             <i class="bi bi-gear text-info"></i>
                         {% endif %}
                     </p>
+                    <p class="fs-7">
+                        &emsp;&ensp; Create scrap-paper pdf.
+                        {% if scrap_paper_status == "complete" %}
+                            <i class="bi bi-check-circle text-success"></i>
+                        {% elif scrap_paper_status == "todo" %}
+                        {% else %}
+                            <i class="bi bi-gear text-info"></i>
+                        {% endif %}
+                    </p>
                 </div>
                 <a class="btn btn-primary float-end" href="{% url 'misc_extras' %}">
                     Manage

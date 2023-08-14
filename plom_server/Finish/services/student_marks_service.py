@@ -5,7 +5,7 @@
 import arrow
 
 # Yuck, replace this below when we drop Python 3.8 support
-from typing import Dict, Any
+from typing import Any, Dict, Union
 
 from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
@@ -33,9 +33,9 @@ class StudentMarkService:
         marking_tasks = (
             paper_obj.markingtask_set.all()
             .select_related("latest_annotation")
-            .filter(status=MarkingTask.COMPLETE)
+            .exclude(status=MarkingTask.OUT_OF_DATE)
         )
-        questions = {}
+        questions: Dict[int, Union[Dict, str]] = {}
         for marking_task in marking_tasks.order_by("question_number"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
@@ -45,6 +45,9 @@ class StudentMarkService:
                     "out_of": current_annotation.annotation_data["maxMark"],
                     "student_mark": current_annotation.score,
                 }
+            else:
+                # String value so that it questions.get(i) doesn't return None
+                questions[marking_task.question_number] = "Not marked"
 
         return {paper_num: questions}
 

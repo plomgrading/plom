@@ -8,11 +8,15 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    MultipleObjectsReturned,
+)
 from django.db import IntegrityError
 from model_bakery import baker
 
-from Papers.models import Paper
+from Papers.models import Paper, Image, IDPage
 
 from Identify.services import IdentifyTaskService, IDService
 from Identify.models import (
@@ -271,16 +275,35 @@ class IdentifyTaskTests(TestCase):
 
         paper1 = baker.make(Paper, paper_number=1)
         baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
-        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 1)
 
         paper2 = baker.make(Paper, paper_number=2)
         baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
         baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
-        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 2)
+        self.assertRaises(MultipleObjectsReturned, its.set_paper_idtask_outdated, 2)
 
         paper3 = baker.make(Paper, paper_number=3)
+        baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.OUT_OF_DATE)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
         its.claim_task(self.marker0, 3)
         its.identify_paper(self.marker0, 3, "3", "ABC")
         its.identify_paper(self.marker0, 3, "4", "CBA")
         its.set_paper_idtask_outdated(3)
+
+    def test_idtask_recreate(self):
+        its = IdentifyTaskService()
+        # create a paper with at least one out-of-date tasks
+        paper1 = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
+        img1 = baker.make(Image)
+        idp1 = baker.make(IDPage, paper=paper1, image=img1)
+        # make a new task for it, claim it, and id it.
+        its.create_task(paper1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "3", "ABC")
+        # now give the idpage a new image and set task as out of date (will create a new task)
+        img2 = baker.make(Image)
+        idp1.image = img2
+        idp1.save()
+        its.set_paper_idtask_outdated(1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "4", "ABCD")
