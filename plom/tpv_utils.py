@@ -149,8 +149,8 @@ def parseScrapPaperCode(scpc):
        o (str): the orientation code, TODO
     """
     # strip prefix is needed for pyzbar but not zxingcpp
-    expc = expc.lstrip("QR-Code:")  # todo = remove in future.
-    o = int(expc[5])
+    scpc = scpc.lstrip("QR-Code:")  # todo = remove in future.
+    o = int(scpc[5])
     if o > 4:
         return str(o - 4)  # todo - keep the 5-8 possibilities
     else:
