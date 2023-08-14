@@ -3,22 +3,29 @@
 
 from django.urls import path
 
-from .views import MarkingInformationView, MarkingInformationPaperView
+from .views import (
+    MarkingInformationView,
+    MarkingInformationPaperView,
+    ReassemblePapersView,
+)
 
 
 urlpatterns = [
-    path("", MarkingInformationView.as_view(), name="marking_info"),
+    path("marking_info", MarkingInformationView.as_view(), name="marking_info"),
     path(
-        "<int:paper_num>/paper/",
+        "marking_info/<int:paper_num>/paper/",
         MarkingInformationPaperView.as_view(),
         name="paper_num",
     ),
     path(
-        "marks_download/", MarkingInformationView.marks_download, name="marks_download"
+        "marking_info/marks_download/",
+        MarkingInformationView.marks_download,
+        name="marks_download",
     ),
     path(
-        "ta_info_download/",
+        "marking_info/ta_info_download/",
         MarkingInformationView.ta_info_download,
         name="ta_info_download",
     ),
+    path("reassemble/", ReassemblePapersView.as_view(), name="reassemble_pdfs"),
 ]
