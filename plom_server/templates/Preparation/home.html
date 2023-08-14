@@ -50,7 +50,20 @@
         </li>
         <li class="list-group-item list-group-item-action {% if not can_upload_source_tests %}disabled{% endif %}">
             <div class="d-flex align-items-center gap-1">
-                {% if can_upload_source_tests %}
+                {% if is_test_prepared %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">
+                            2. Uploaded ({{ uploaded_test_versions }} of {{ test_versions }}) sources
+                            <i class="bi bi-check-circle text-success"></i>
+                        </p>
+                        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
+                    </div>
+                    <a class="btn btn-success float-end" href="{% url 'prep_sources_view' %}">View</a>
+                    <a>
+                        Preparation set as finished
+                        <i class="bi bi-chevron-down"></i>
+                    </a>
+                {% elif can_upload_source_tests %}
                     <div class="flex-fill">
                         <p class="fs-4 mb-0">
                             2. Upload sources ({{ uploaded_test_versions }} of {{ test_versions }})
