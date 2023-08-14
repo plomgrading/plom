@@ -297,6 +297,8 @@ class MarkingTaskService:
 
         Raises:
             AssertionError: invalid value for `order_by`.
+            ObjectDoesNotExist: if `order_by` is "custom" and `custom_order` is not a dictionary,
+                or if `order_by` is "custom" and a task in `custom_order` does not exist.
         """
         assert order_by in (
             "random",
