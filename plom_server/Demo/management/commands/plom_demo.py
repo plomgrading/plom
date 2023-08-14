@@ -21,7 +21,7 @@ from ...services import (
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
-    ServerConfigService,
+    ConfigFileService,
 )
 from ... import config_files as demo_config_files
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         config: dict,
         homework_bundles,
     ) -> None:
-        if ServerConfigService().contains_key(config, "bundles"):
+        if ConfigFileService.contains_key(config, "bundles"):
             dbs.scribble_on_exams(config)
 
         for bundle in homework_bundles:
@@ -103,15 +103,14 @@ class Command(BaseCommand):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        scs = ServerConfigService()
-        if scs.contains_key(config, "bundles"):
+        if ConfigFileService.contains_key(config, "bundles"):
             number_of_bundles = len(config["bundles"])
             bundle_service = DemoBundleService()
         else:
             bundle_service = None
             number_of_bundles = 0
 
-        if scs.contains_key(config, "hw_bundles"):
+        if ConfigFileService.contains_key(config, "hw_bundles"):
             homework_bundles = config["hw_bundles"]
             homework_service = DemoHWBundleService()
         else:
@@ -218,14 +217,13 @@ class Command(BaseCommand):
                 )
 
         config_path = options["config"]
-        config_service = ServerConfigService()
         if config_path is None:
-            config = config_service.read_server_config(
+            config = ConfigFileService.read_server_config(
                 resources.files(demo_config_files) / "full_demo_config.toml"
             )
         else:
             try:
-                config = config_service.read_server_config(config_path[0])
+                config = ConfigFileService.read_server_config(config_path[0])
             except Exception as e:
                 raise CommandError(e)
         print(config)
@@ -251,7 +249,7 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation" or not config_service.contains_key(
+        if stop_at == "preparation" or not ConfigFileService.contains_key(
             config, "num_to_produce"
         ):
             huey_worker_proc.terminate()

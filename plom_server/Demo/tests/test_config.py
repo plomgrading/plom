@@ -3,11 +3,11 @@
 
 from django.test import TestCase
 
-from Demo.services import ServerConfigService, PlomConfigError
+from Demo.services import ConfigFileService, PlomConfigError
 
 
 class ServerConfigTests(TestCase):
-    """Tests for Demo.ServerConfigService."""
+    """Tests for Demo.ConfigFileService."""
 
     def test_bad_keys(self):
         """Test the config validation function with unrecognized keys."""
@@ -15,7 +15,7 @@ class ServerConfigTests(TestCase):
             "num_to_produce": 8,
             "test_spec": "demo",
         }
-        ServerConfigService().validate_config(valid_config)
+        ConfigFileService.validate_config(valid_config)
 
         invalid_config = {
             "n_to_produce": 7,
@@ -23,7 +23,7 @@ class ServerConfigTests(TestCase):
         }
 
         with self.assertRaises(PlomConfigError):
-            ServerConfigService().validate_config(invalid_config)
+            ConfigFileService.validate_config(invalid_config)
 
     def test_bundle_bad_keys(self):
         """Test the config validation with unrecognized keys in bundles."""
@@ -36,9 +36,8 @@ class ServerConfigTests(TestCase):
             "pages": [[1], [2], [3]],
         }
 
-        scs = ServerConfigService()
-        scs.validate_bundle(valid_bundle)
-        scs.validate_hw_bundle(valid_hw_bundle)
+        ConfigFileService.validate_bundle(valid_bundle)
+        ConfigFileService.validate_hw_bundle(valid_hw_bundle)
 
         invalid_bundle = {
             "frist_paper": 1,
@@ -49,7 +48,7 @@ class ServerConfigTests(TestCase):
         }
 
         with self.assertRaises(PlomConfigError):
-            scs.validate_bundle(invalid_bundle)
+            ConfigFileService.validate_bundle(invalid_bundle)
 
         with self.assertRaises(PlomConfigError):
-            scs.validate_hw_bundle(invalid_hw_bundle)
+            ConfigFileService.validate_hw_bundle(invalid_hw_bundle)
