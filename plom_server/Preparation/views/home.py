@@ -12,7 +12,6 @@ from Papers.services import (
     PaperInfoService,
 )
 from SpecCreator.services import StagingSpecificationService
-from Progress.services import ManageScanService
 
 from ..services import (
     TestSourceService,
@@ -33,7 +32,6 @@ class PreparationLandingView(ManagerRequiredView):
         pqvs = PQVMappingService()
         bps = BuildPapersService()
         pinfo = PaperInfoService()
-        mss = ManageScanService()
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -47,7 +45,7 @@ class PreparationLandingView(ManagerRequiredView):
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
             "is_test_prepared": TestPreparedSetting.is_test_prepared(),
-            "are_bundles_pushed": mss.get_number_of_scanned_pages() > 0,
+            "can_status_be_set_todo": TestPreparedSetting.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -162,6 +160,5 @@ class LandingFinishedToggle(ManagerRequiredView):
 
     def post(self, request):
         current_setting = TestPreparedSetting.is_test_prepared()
-        print(current_setting)
         TestPreparedSetting.set_test_prepared(not current_setting)
         return HttpResponseClientRefresh()

@@ -253,7 +253,7 @@
                 </div>
                 {% if papers_staged %}
                     {% if is_test_prepared %}
-                        {% if are_bundles_pushed %}
+                        {% if not can_status_be_set_todo %}
                             <a disabled>Scanning and marking in progress</a>
                         {% else %}
                             <a class="btn btn-danger" hx-post="{% url 'prep_finished_toggle' %}">Reset</a>

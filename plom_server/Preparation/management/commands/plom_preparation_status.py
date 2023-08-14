@@ -32,12 +32,6 @@ class Command(BaseCommand):
             help="Set preparation status and enable/disable bundle uploading.",
         )
 
-    def can_status_be_set_true(self):
-        return PaperInfoService().is_paper_database_populated()
-
-    def can_status_be_set_false(self):
-        return ManageScanService().get_number_pushed_bundles() == 0
-
     def handle(self, *args, **options):
         if options["get"]:
             spec_status = SpecificationService.is_there_a_spec()
@@ -64,13 +58,13 @@ class Command(BaseCommand):
         else:
             status = options["set"][0]
             if status == "finished":
-                if not self.can_status_be_set_true():
+                if not TestPreparedSetting.can_status_be_set_true():
                     raise CommandError(
                         "Unable to mark status as finished - test-papers have not been saved to the database."
                     )
                 TestPreparedSetting.set_test_prepared(True)
             elif status == "todo":
-                if not self.can_status_be_set_false():
+                if not TestPreparedSetting.can_status_be_set_false():
                     raise CommandError(
                         "Unable to mark status as todo - bundles have been pushed to the database."
                     )
