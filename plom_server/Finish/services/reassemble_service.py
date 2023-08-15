@@ -406,7 +406,7 @@ class ReassembleService:
 
         for task in ReassembleTask.objects.all().prefetch_related("paper"):
             print("paper ", task.paper.paper_number, "task status", task.status)
-            if task.status == "complete":
+            if task.status == ReassembleTask.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
                     "reassembled_time_humanised"
@@ -432,7 +432,7 @@ class ReassembleService:
         """Create all the ReassembleTasks, and save to the database without sending them to Huey."""
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
-            ReassembleTask.objects.create(paper=paper_obj, huey_id=None, status="todo")
+            ReassembleTask.objects.create(paper=paper_obj, huey_id=None, status=ReassembleTask.TO_DO)
 
     @transaction.atomic
     def queue_single_paper_reassembly(self, paper_number):
@@ -444,7 +444,7 @@ class ReassembleService:
         task = paper_obj.reassembletask
         pdf_build = huey_reassemble_paper(paper_number)
         task.huey_id = pdf_build.id
-        task.status = "queued"
+        task.status = ReassembleTask.QUEUED
         task.save()
 
 

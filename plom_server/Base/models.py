@@ -30,8 +30,17 @@ class HueyTask(PolymorphicModel):
     signals sent from the huey consumer.
     """
 
+    StatusChoices = models.IntegerChoices("status", "TO_DO STARTED QUEUED COMPLETE ERROR")
+    TO_DO = StatusChoices.TO_DO
+    QUEUED = StatusChoices.QUEUED
+    STARTED = StatusChoices.STARTED
+    COMPLETE = StatusChoices.COMPLETE
+    ERROR = StatusChoices.ERROR
+
     huey_id = models.UUIDField(null=True)
-    status = models.CharField(max_length=20, default="todo")
+    status = models.IntegerField(
+        null=False, choices=StatusChoices.choices, default=TO_DO
+    )
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
@@ -179,7 +188,7 @@ def start_task(signal, task):
 
     try:
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "started"
+        task_obj.status = HueyTask.STARTED
         task_obj.save()
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
@@ -194,7 +203,7 @@ def end_task(signal, task):
         return
     try:
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "complete"
+        task_obj.status = HueyTask.COMPLETE
         task_obj.save()
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
@@ -211,7 +220,7 @@ def error_task(signal, task, exc):
         return
     try:
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "error"
+        task_obj.status = HueyTask.ERROR
         task_obj.message = exc
         task_obj.save()
     except HueyTask.DoesNotExist:

@@ -16,12 +16,12 @@ class BuildPaperPDFTests(TestCase):
     def make_tasks(self):
         with catch_warnings():  # Don't worry about timezone naivete
             simplefilter("ignore")
-            baker.make(PDFTask, status="todo")
-            baker.make(PDFTask, status="started")
-            baker.make(PDFTask, status="queued")
-            baker.make(PDFTask, status="complete")
-            baker.make(PDFTask, status="error")
-            baker.make(PDFTask, status="complete")
+            baker.make(PDFTask, status=PDFTask.TO_DO)
+            baker.make(PDFTask, status=PDFTask.STARTED)
+            baker.make(PDFTask, status=PDFTask.QUEUED)
+            baker.make(PDFTask, status=PDFTask.COMPLETE)
+            baker.make(PDFTask, status=PDFTask.ERROR)
+            baker.make(PDFTask, status=PDFTask.COMPLETE)
 
     def test_get_n_complete_tasks(self):
         """Test BuildPapersService.get_n_complete_tasks."""
