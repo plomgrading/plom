@@ -8,6 +8,7 @@ from .views import (
     MarkingInformationPaperView,
     ReassemblePapersView,
     StartOneReassembly,
+    StartAllReassembly,
 )
 
 
@@ -34,4 +35,5 @@ urlpatterns = [
         StartOneReassembly.as_view(),
         name="reassemble_one_paper",
     ),
+    path("reassemble/all", StartAllReassembly.as_view(), name="reassemble_all_pdfs"),
 ]

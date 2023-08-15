@@ -11,10 +11,11 @@ from plom.finish.examReassembler import reassemble
 
 
 from django.conf import settings
+from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 
-from django_huey import db_task
+from django_huey import db_task, get_queue
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Mark.models import MarkingTask, Annotation
@@ -366,6 +367,7 @@ class ReassembleService:
                 "student_id": "",
                 "last_update": None,
                 "last_update_humanised": None,
+                "reassembled_status": None,
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
@@ -405,7 +407,9 @@ class ReassembleService:
             )
 
         for task in ReassembleTask.objects.all().prefetch_related("paper"):
-            print("paper ", task.paper.paper_number, "task status", task.status)
+            status[task.paper.paper_number][
+                "reassembled_status"
+            ] = task.get_status_display()
             if task.status == ReassembleTask.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
@@ -421,10 +425,7 @@ class ReassembleService:
                     status[pn]["last_update"]
                 ).humanize()
             if status[pn]["reassembled_time"]:
-                if (
-                    status[pn]["reassembled_time"]
-                    < status[task.paper.paper_number]["last_update"]
-                ):
+                if status[pn]["reassembled_time"] < status[pn]["last_update"]:
                     status[pn]["outdated"] = True
         return status
 
@@ -449,6 +450,70 @@ class ReassembleService:
         task.status = ReassembleTask.QUEUED
         task.save()
 
+    @transaction.atomic
+    def get_single_reassembled_file(self, paper_number):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number")
+        task = paper_obj.reassembletask
+        return task.pdf_file
+
+    @transaction.atomic
+    def reset_single_paper_reassembly(self, paper_number):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number")
+
+        task = paper_obj.reassembletask
+        # if the task is queued then remove it from the queue
+        if task.status == ReassembleTask.QUEUED:
+            queue = get_queue("tasks")
+            queue.revoke_by_id(task.huey_id)
+        # if there is a file then remove it
+        if task.pdf_file:
+            task.pdf_file.delete()
+
+        task.huey_id = None
+        task.status = ReassembleTask.TO_DO
+        task.save()
+
+    @transaction.atomic
+    def reset_all_paper_reassembly(self):
+        queue = get_queue("tasks")
+        for task in ReassembleTask.objects.exclude(status=ReassembleTask.TO_DO).all():
+            # if the task is queued then remove it from the queue
+            if task.status == ReassembleTask.QUEUED:
+                queue.revoke_by_id(task.huey_id)
+            # if there is a file then delete it.
+            if task.pdf_file:
+                task.pdf_file.delete()
+            task.huey_id = None
+            task.status = ReassembleTask.TO_DO
+            task.save()
+
+    @transaction.atomic
+    def queue_all_paper_reassembly(self):
+        # first work out which papers are ready
+        for pn, data in self.alt_get_all_paper_status().items():
+            # check if both id'd and marked
+            if not data["identified"] or not data["marked"]:
+                continue
+            # check if already queued or complete
+            if data["reassembled_status"] == "Queued":
+                continue
+            if data["reassembled_status"] == "Complete" and not data["outdated"]:
+                # is complete and not outdated
+                continue
+            # otherwise build it!
+            task = ReassembleTask.objects.get(paper__paper_number=pn)
+            print("Queuing up task for ", pn)
+            pdf_build = huey_reassemble_paper(pn)
+            task.huey_id = pdf_build.id
+            task.status = ReassembleTask.QUEUED
+            task.save()
+
 
 @db_task(queue="tasks")
 def huey_reassemble_paper(paper_number):
@@ -456,6 +521,11 @@ def huey_reassemble_paper(paper_number):
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number")
+    task = paper_obj.reassembletask
 
     reas = ReassembleService()
-    reas.reassemble_paper(paper_obj, reas.reassemble_dir)
+    with tempfile.TemporaryDirectory() as tempdir:
+        save_path = reas.reassemble_paper(paper_obj, tempdir)
+        with save_path.open("rb") as f:
+            task.pdf_file = File(f, name=save_path.name)
+            task.save()

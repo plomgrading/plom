@@ -22,75 +22,125 @@
             Reassemble Papers
         {% endblock page_heading %}
         {% block main_content %}
-            <div class="d-grid gap-2" id="top">
-                <div id="pdf_table"></div>
-                <div class="card w-50">
-                    <div class="card-body">
-                        <table class="table table-striped">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Identified</th>
-                                <th scope="col">Marked</th>
-                                <th scope="col">Last updated</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Action</th>
-                            </tr>
-                            {% for paper, val in papers.items %}
-                                {% if val.scanned %}
-                                    <tr>
-                                        <td>{{ paper }}</td>
-                                        <td>
-                                            {% if val.identified %}
-                                                <i class="bi bi-check-circle text-success"></i> {{ val.student_id }}
+            <div class="card w-75">
+                <div class="card-title">
+                    <button hx-post="{% url 'reassemble_all_pdfs' %}"
+                            href=""
+                            class="btn btn-success m-2">Reassemble all (inc outdated)</button>
+                    <button hx-delete="{% url 'reassemble_all_pdfs' %}"
+                            class="btn btn-danger m-2">Delete all</button>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>{{ n_papers }} scanned papers</li>
+                        <li>{{ n_not_ready }} scanned papers not yet ready for reassembly</li>
+                        <li>{{ n_ready }} papers ready for reassembly (identified and marked)</li>
+                        <li>{{ n_complete }} papers already reassembled</li>
+                        <li>{{ n_outdated }} reassembled papers are out of date (paper modified since reassembly)</li>
+                        <li>{{ n_queued }} papers queued for reassembly</li>
+                        <li>{{ n_errors }} errors in reassembly</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card w-75">
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Identified</th>
+                            <th scope="col">Marked</th>
+                            <th scope="col">Last updated</th>
+                            <th scope="col">Reassembly Status</th>
+                            <th scope="col">When reassembled</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                        {% for paper, val in papers.items %}
+                            {% if val.scanned %}
+                                <tr>
+                                    <td>{{ paper }}</td>
+                                    <td>
+                                        {% if val.identified %}
+                                            <i class="bi bi-check-circle text-success"></i> {{ val.student_id }}
+                                        {% else %}
+                                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if val.marked %}
+                                            <i class="bi bi-check-circle text-success"></i> all
+                                        {% else %}
+                                            {% if val.number_marked == 0 %}
+                                                <i class="bi bi-exclamation-diamond-fill text-danger"></i> none
                                             {% else %}
-                                                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                                <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ val.number_marked }}
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if val.marked %}
-                                                <i class="bi bi-check-circle text-success"></i> all
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ val.last_update_humanised }}</td>
+                                    <td>
+                                        {% if val.identified and val.marked %}
+                                            {% if val.reassembled_status == "Queued" %}
+                                                <div class="spinner-grow spinner-grow-sm"></div>
+                                            {% elif val.reassembled_status == "Error" %}
+                                                <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                            {% elif val.reassembled_status == "Complete" %}
+                                                <i class="bi bi-check-circle text-success"></i>
+                                            {% endif %}
+                                            {{ val.reassembled_status }}
+                                        {% else %}
+                                            <i class="bi bi-exclamation-diamond-fill text-info"> not ready</i>
+                                        {% endif %}
+                                        <!-- {% if val.reassembled_time %} -->
+                                        <!-- {% if val.outdated %}<i class="bi bi-exclamation-diamond-fill text-danger">outdated</i>{% endif %} -->
+                                        <!-- {% else %} -->
+                                        <!-- {% if val.identified and val.marked %} -->
+                                        <!-- not yet -->
+                                        <!-- {% else %} -->
+                                        <!-- not ready -->
+                                        <!-- {% endif %} -->
+                                        <!-- {% endif %} -->
+                                    </td>
+                                    <td>
+                                        {% if val.reassembled_time %}
+                                            {{ val.reassembled_time_humanised }}
+                                        {% else %}
+                                            <!-- n/a -->
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if val.reassembled_time %}
+                                            {% if val.outdated %}
+                                                <a href="{% url 'reassemble_one_paper' paper %}"
+                                                   target="_blank"
+                                                   class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
+                                                <button hx-put="{% url 'reassemble_one_paper' paper %}"
+                                                        class="btn btn-warning">
+                                                    <i class="bi bi-exclamation-diamond-fill">
+                                                        re-reassemble
+                                                    </i>
+                                                </button>
+                                                <button hx-delete="{% url 'reassemble_one_paper' paper %}"
+                                                        class="btn btn-success">delete</button>
                                             {% else %}
-                                                {% if val.number_marked == 0 %}
-                                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i> none
-                                                {% else %}
-                                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ val.number_marked }}
-                                                {% endif %}
+                                                <a href="{% url 'reassemble_one_paper' paper %}"
+                                                   target="_blank"
+                                                   class="btn btn-success">view</a>
+                                                <button hx-delete="{% url 'reassemble_one_paper' paper %}"
+                                                        class="btn btn-warning">delete</button>
                                             {% endif %}
-                                        </td>
-                                        <td>{{ val.last_update_humanised }}</td>
-                                        <td>
-                                            {% if val.reassembled_time %}
-                                                {{ val.reassembled_time_humanised }}
-                                                {% if val.outdated %}<i class="bi bi-exclamation-diamond-fill text-danger"></i> outdated{% endif %}
+                                        {% else %}
+                                            {% if val.identified and val.marked %}
+                                                <button hx-post="{% url 'reassemble_one_paper' paper %}"
+                                                        class="btn btn-success">reassemble</button>
                                             {% else %}
-                                                {% if val.identified and val.marked %}
-                                                    not yet
-                                                {% else %}
-                                                    not ready
-                                                {% endif %}
+                                                <!-- n/a -->
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if val.reassembled_time %}
-                                                {% if val.outdated %}
-                                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i> outdated
-                                                    <button class="btn btn-info">re-reassemble</button>
-                                                {% endif %}
-                                                <button class="btn btn-warning">delete</button>
-                                            {% else %}
-                                                {% if val.identified and val.marked %}
-                                                    <button hx-post="{% url 'reassemble_one_paper' paper %}"
-                                                            class="btn btn-success">reassemble</button>
-                                                {% else %}
-                                                    <i class="bi bi-exclamation-diamond-fill text-info"></i>
-                                                {% endif %}
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            {% endfor %}
-                        </table>
-                    </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </table>
                 </div>
             </div>
         {% endblock main_content %}
