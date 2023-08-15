@@ -34,6 +34,7 @@ class HueyTask(PolymorphicModel):
     status = models.CharField(max_length=20, default="todo")
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
+    last_update = models.DateTimeField(auto_now=True)
 
 
 # ---------------------------------
@@ -81,6 +82,7 @@ class BaseTask(PolymorphicModel):
         it must have assigned_user set to none.
     time: the time the task was originally created.
         TODO: is this used for anything?
+    last_update: the time of the last update to the task (updated whenever model is saved)
     status: str, represents the status of the task: not started, sent to a client, completed, out of date.
 
     """
@@ -98,6 +100,7 @@ class BaseTask(PolymorphicModel):
     status = models.IntegerField(
         null=False, choices=StatusChoices.choices, default=TO_DO
     )
+    last_update = models.DateTimeField(auto_now=True)
 
 
 class BaseAction(PolymorphicModel):

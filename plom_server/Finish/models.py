@@ -17,7 +17,7 @@ from Papers.models import Paper
 
 class ReassembleTask(HueyTask):
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
-    pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
+    pdf_file = models.FileField(upload_to="reassemble/", null=True)
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""

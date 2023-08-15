@@ -4,10 +4,13 @@
 
 from pathlib import Path
 import tempfile
+import arrow
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
+
+from django.conf import settings
 from django.utils import timezone
 
 from Identify.models import PaperIDTask, PaperIDAction
@@ -17,9 +20,14 @@ from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
+from ..models import ReassembleTask
+
 
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
+
+    base_dir = settings.MEDIA_ROOT
+    reassemble_dir = base_dir / "reassemble"
 
     def is_paper_marked(self, paper):
         """Return True if all of the marking tasks are completed.
@@ -342,3 +350,85 @@ class ReassembleService:
                 dnm_pages,
             )
         return outname
+
+    def alt_get_all_paper_status(self):
+        status = {}
+        all_papers = Paper.objects.all()
+        for paper in all_papers:
+            status[paper.paper_number] = {
+                "scanned": False,
+                "identified": False,
+                "marked": False,
+                "number_marked": 0,
+                "student_id": "",
+                "last_update": None,
+                "last_update_humanised": None,
+                "reassembled_time": None,
+                "reassembled_time_humanised": None,
+                "outdated": False,
+            }
+        mss = ManageScanService()
+        number_of_questions = SpecificationService.get_n_questions()
+
+        for pn in mss.get_all_completed_test_papers():
+            status[pn]["scanned"] = True
+
+        def latest_update(time_a, time_b):
+            if time_a is None:
+                return time_b
+            elif time_a < time_b:
+                return time_b
+            else:
+                return time_a
+
+        for task in PaperIDTask.objects.filter(
+            status=PaperIDTask.COMPLETE
+        ).prefetch_related("paper", "latest_action"):
+            status[task.paper.paper_number]["identified"] = True
+            status[task.paper.paper_number][
+                "student_id"
+            ] = task.latest_action.student_id
+
+            status[task.paper.paper_number]["last_update"] = latest_update(
+                status[task.paper.paper_number]["last_update"], task.last_update
+            )
+
+        for task in MarkingTask.objects.filter(
+            status=PaperIDTask.COMPLETE
+        ).prefetch_related("paper"):
+            status[task.paper.paper_number]["number_marked"] += 1
+            status[task.paper.paper_number]["last_update"] = latest_update(
+                status[task.paper.paper_number]["last_update"], task.last_update
+            )
+
+        for task in ReassembleTask.objects.filter(status="complete").prefetch_related(
+            "paper"
+        ):
+            status[task.paper.paper_number]["reassembled_time"] = task.last_update
+            status[task.paper.paper_number]["reassembled_time_humanised"] = arrow.get(
+                task.last_update
+            ).humanize()
+
+        # do last round of updates
+        for pn in status:
+            if status[pn]["number_marked"] == number_of_questions:
+                print(f"Paper {pn} is marked")
+                status[pn]["marked"] = True
+            if status[pn]["last_update"]:
+                status[pn]["last_update_humanised"] = arrow.get(
+                    status[pn]["last_update"]
+                ).humanize()
+            if status[pn]["reassembled_time"]:
+                if (
+                    status[pn]["reassemble_time"]
+                    < status[task.paper.paper_number]["last_update"]
+                ):
+                    status[pn]["outdated"] = True
+        return status
+
+    def create_all_reassembly_tasks(self):
+        """Create all the ReassembleTasks, and save to the database without sending them to Huey."""
+
+        self.reassemble_dir.mkdir(exist_ok=True)
+        for paper_obj in Paper.objects.all():
+            ReassembleTask.objects.create(paper=paper_obj, huey_id=None, status="todo")
