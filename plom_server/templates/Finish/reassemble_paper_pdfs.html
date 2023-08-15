@@ -25,43 +25,42 @@
             <div class="d-grid gap-2" id="top">
                 <div id="pdf_table"></div>
                 <div class="card w-50">
-                  <div class="card-body">
-		    <table class="table table-striped">
-		      <tr>
-			<th scope="col">#</th>
-			<th scope="col">Identified</th>
-			<th scope="col">Marked</th>
-			<th scope="col">Last updated</th>
-		      </tr>
-		      {% for paper, val in papers.items %}
-		      {% if val.scanned %}
-		      <tr>
-			<td>{{ paper }}</td>
-			<td>
-			  {% if val.identified %}
-			  <i class="bi bi-check-circle text-success"></i> {{ val.student_id }}
-			  {% else %}
-			  <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-			  {% endif %}
-			</td>
-			<td>
-			  {% if val.marked %}
-			  <i class="bi bi-check-circle text-success"></i> all
-			  {% else %}
-			  {% if val.number_marked == 0 %}
-			  <i class="bi bi-exclamation-diamond-fill text-danger"></i> none
-			  {% else %}
-			  <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ val.number_marked }}
-			  {% endif %}
-			  {% endif %}
-			</td>
-			<td>{{ val.last_update_humanised }}</td>
-		      </tr>
-		      {% endif %}
-		      {% endfor %}
-		    </table>
-
-		  </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Identified</th>
+                                <th scope="col">Marked</th>
+                                <th scope="col">Last updated</th>
+                            </tr>
+                            {% for paper, val in papers.items %}
+                                {% if val.scanned %}
+                                    <tr>
+                                        <td>{{ paper }}</td>
+                                        <td>
+                                            {% if val.identified %}
+                                                <i class="bi bi-check-circle text-success"></i> {{ val.student_id }}
+                                            {% else %}
+                                                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if val.marked %}
+                                                <i class="bi bi-check-circle text-success"></i> all
+                                            {% else %}
+                                                {% if val.number_marked == 0 %}
+                                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i> none
+                                                {% else %}
+                                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ val.number_marked }}
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ val.last_update_humanised }}</td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                    </div>
                 </div>
             </div>
         {% endblock main_content %}

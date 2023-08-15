@@ -428,7 +428,6 @@ class ReassembleService:
 
     def create_all_reassembly_tasks(self):
         """Create all the ReassembleTasks, and save to the database without sending them to Huey."""
-
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             ReassembleTask.objects.create(paper=paper_obj, huey_id=None, status="todo")
