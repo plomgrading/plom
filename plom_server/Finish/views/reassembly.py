@@ -25,7 +25,13 @@ class ReassemblePapersView(ManagerRequiredView):
             ]
         )
         n_ready = sum(
-            [1 for n, x in all_paper_status.items() if x["identified"] and x["marked"]]
+            [
+                1
+                for n, x in all_paper_status.items()
+                if x["identified"]
+                and x["marked"]
+                and x["reassembled_status"] == "To Do"
+            ]
         )
         n_outdated = sum([1 for n, x in all_paper_status.items() if x["outdated"]])
         n_queued = sum(
