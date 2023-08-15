@@ -30,7 +30,9 @@ class HueyTask(PolymorphicModel):
     signals sent from the huey consumer.
     """
 
-    StatusChoices = models.IntegerChoices("status", "TO_DO STARTED QUEUED COMPLETE ERROR")
+    StatusChoices = models.IntegerChoices(
+        "status", "TO_DO STARTED QUEUED COMPLETE ERROR"
+    )
     TO_DO = StatusChoices.TO_DO
     QUEUED = StatusChoices.QUEUED
     STARTED = StatusChoices.STARTED

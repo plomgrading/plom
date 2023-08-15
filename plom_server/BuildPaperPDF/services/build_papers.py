@@ -44,7 +44,9 @@ class BuildPapersService:
     @transaction.atomic
     def get_n_running_tasks(self):
         """Get the number of PDFTasks with the status 'queued' or 'started'."""
-        return PDFTask.objects.filter(Q(status=PDFTask.QUEUED) | Q(status=PDFTask.STARTED)).count()
+        return PDFTask.objects.filter(
+            Q(status=PDFTask.QUEUED) | Q(status=PDFTask.STARTED)
+        ).count()
 
     @transaction.atomic
     def get_n_tasks(self):
@@ -134,7 +136,9 @@ class BuildPapersService:
 
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers."""
-        return [pdf.file_path() for pdf in PDFTask.objects.filter(status=PDFTask.COMPLETE)]
+        return [
+            pdf.file_path() for pdf in PDFTask.objects.filter(status=PDFTask.COMPLETE)
+        ]
 
     def stage_all_pdf_jobs(self, classdict=None):
         """Create all the PDFTasks, and save to the database without sending them to Huey.

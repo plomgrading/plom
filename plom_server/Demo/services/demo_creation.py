@@ -124,7 +124,7 @@ class DemoCreationService:
         while True:
             if ep_todo:
                 out_ep = subprocess.check_output(split(py_man_ep)).decode("utf-8")
-                if "complete" in out_ep:
+                if "Complete" in out_ep:
                     print("Extra page is built")
 
                     ep_todo = False
