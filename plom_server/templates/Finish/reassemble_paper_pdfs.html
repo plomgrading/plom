@@ -54,7 +54,7 @@
                                 {% endif %}
                                 {% if n_queued %}
                                     <li>
-                                        <i class="bi bi-exclamation-diamond-fill text-info"></i>{{ n_queued }} papers queued for reassembly (will reload page after 60s)
+                                        <i class="bi bi-exclamation-diamond-fill text-info"></i>{{ n_queued }} papers queued for reassembly
                                         <a href="{% url 'reassemble_pdfs' %}" class="btn btn-info m-4">reload page</a>
                                     </li>
                                 {% endif %}

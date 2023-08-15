@@ -548,5 +548,9 @@ def huey_reassemble_paper(paper_number):
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, tempdir)
         with save_path.open("rb") as f:
+            # delete any old file if it exists
+            if task.pdf_file:
+                task.pdf_file.delete()
+            # save the new one.
             task.pdf_file = File(f, name=save_path.name)
             task.save()
