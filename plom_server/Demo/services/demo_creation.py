@@ -273,10 +273,9 @@ class DemoCreationService:
 
         bundles = config.bundles
         for i, bundle in enumerate(bundles):
-            bundle_dict = asdict(bundle)
             bundle_slug = f"fake_bundle{i+1}"
-            if "extra_page_papers" in bundle_dict.keys():
-                extra_page_papers = bundle_dict["extra_page_papers"]
+            if "extra_page_papers" in bundle.keys():
+                extra_page_papers = bundle["extra_page_papers"]
                 extra_pages = ExtraStagingImage.objects.filter(
                     staging_image__bundle__slug=bundle_slug,
                 ).order_by("staging_image__bundle_order")
@@ -308,8 +307,8 @@ class DemoCreationService:
         bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
-            if "discard_pages" in asdict(bundle).keys():
-                for page in bundle.discard_pages:
+            if "discard_pages" in bundle.keys():
+                for page in bundle["discard_pages"]:
                     call_command(
                         "plom_staging_discard", "demoScanner1", bundle_slug, page
                     )
