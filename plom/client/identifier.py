@@ -403,10 +403,13 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            angle = row.get("orientation", 17)
+            angle = row["orientation"]
             id_pages.append([filename, angle])
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        (imageName, angle) = id_pages[0]
+        (
+            imageName,
+            angle,
+        ) = id_pages[0]
 
         self.exM.paperList[r].originalFile = imageName
         self.exM.paperList[r].orientation = angle
@@ -631,10 +634,13 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            angle = row.get("orientation", 23)
+            angle = row["orientation"]
             id_pages.append([filename, angle])
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        [filename, angle] = id_pages[0]
+        (
+            filename,
+            angle,
+        ) = id_pages[0]
 
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, filename, orientation=angle))
