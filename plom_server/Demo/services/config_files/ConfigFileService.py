@@ -23,12 +23,12 @@ class DemoBundleConfig:
 
     first_paper: int
     last_paper: int
-    extra_page_papers: List[int] = []
-    scrap_page_papers: List[int] = []
-    garbage_page_papers: List[int] = []
-    wrong_version_papers: List[int] = []
-    duplicate_page_papers: List[int] = []
-    discard_pages: List[int] = []
+    extra_page_papers: Optional[List[int]] = None
+    scrap_page_papers: Optional[List[int]] = None
+    garbage_page_papers: Optional[List[int]] = None
+    wrong_version_papers: Optional[List[int]] = None
+    duplicate_page_papers: Optional[List[int]] = None
+    discard_pages: Optional[List[int]] = None
 
 
 @dataclass()
