@@ -101,7 +101,7 @@ class Command(BaseCommand):
         )
 
     def post_server_init(
-        self, dcs: DemoCreationService, config: ConfigFileService, stop_at: str
+        self, dcs: DemoCreationService, config: PlomServerConfig, stop_at: str
     ):
         self.papers_and_db(dcs)
 
