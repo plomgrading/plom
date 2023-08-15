@@ -5,4 +5,4 @@ from .marking_info import (
     MarkingInformationPaperView,
     MarkingInformationView,
 )
-from .reassembly import ReassemblePapersView
+from .reassembly import ReassemblePapersView, StartOneReassembly

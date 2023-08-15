@@ -11,7 +11,10 @@ from plom.finish.examReassembler import reassemble
 
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
+
+from django_huey import db_task
 
 from Identify.models import PaperIDTask, PaperIDAction
 from Mark.models import MarkingTask, Annotation
@@ -401,18 +404,17 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassembleTask.objects.filter(status="complete").prefetch_related(
-            "paper"
-        ):
-            status[task.paper.paper_number]["reassembled_time"] = task.last_update
-            status[task.paper.paper_number]["reassembled_time_humanised"] = arrow.get(
-                task.last_update
-            ).humanize()
+        for task in ReassembleTask.objects.all().prefetch_related("paper"):
+            print("paper ", task.paper.paper_number, "task status", task.status)
+            if task.status == "complete":
+                status[task.paper.paper_number]["reassembled_time"] = task.last_update
+                status[task.paper.paper_number][
+                    "reassembled_time_humanised"
+                ] = arrow.get(task.last_update).humanize()
 
         # do last round of updates
         for pn in status:
             if status[pn]["number_marked"] == number_of_questions:
-                print(f"Paper {pn} is marked")
                 status[pn]["marked"] = True
             if status[pn]["last_update"]:
                 status[pn]["last_update_humanised"] = arrow.get(
@@ -420,7 +422,7 @@ class ReassembleService:
                 ).humanize()
             if status[pn]["reassembled_time"]:
                 if (
-                    status[pn]["reassemble_time"]
+                    status[pn]["reassembled_time"]
                     < status[task.paper.paper_number]["last_update"]
                 ):
                     status[pn]["outdated"] = True
@@ -431,3 +433,27 @@ class ReassembleService:
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             ReassembleTask.objects.create(paper=paper_obj, huey_id=None, status="todo")
+
+    @transaction.atomic
+    def queue_single_paper_reassembly(self, paper_number):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number")
+
+        task = paper_obj.reassembletask
+        pdf_build = huey_reassemble_paper(paper_number)
+        task.huey_id = pdf_build.id
+        task.status = "queued"
+        task.save()
+
+
+@db_task(queue="tasks")
+def huey_reassemble_paper(paper_number):
+    try:
+        paper_obj = Paper.objects.get(paper_number=paper_number)
+    except Paper.DoesNotExist:
+        raise ValueError("No paper with that number")
+
+    reas = ReassembleService()
+    reas.reassemble_paper(paper_obj, reas.reassemble_dir)

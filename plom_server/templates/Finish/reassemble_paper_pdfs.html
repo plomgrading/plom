@@ -32,6 +32,8 @@
                                 <th scope="col">Identified</th>
                                 <th scope="col">Marked</th>
                                 <th scope="col">Last updated</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Action</th>
                             </tr>
                             {% for paper, val in papers.items %}
                                 {% if val.scanned %}
@@ -56,6 +58,34 @@
                                             {% endif %}
                                         </td>
                                         <td>{{ val.last_update_humanised }}</td>
+                                        <td>
+                                            {% if val.reassembled_time %}
+                                                {{ val.reassembled_time_humanised }}
+                                                {% if val.outdated %}<i class="bi bi-exclamation-diamond-fill text-danger"></i> outdated{% endif %}
+                                            {% else %}
+                                                {% if val.identified and val.marked %}
+                                                    not yet
+                                                {% else %}
+                                                    not ready
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if val.reassembled_time %}
+                                                {% if val.outdated %}
+                                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i> outdated
+                                                    <button class="btn btn-info">re-reassemble</button>
+                                                {% endif %}
+                                                <button class="btn btn-warning">delete</button>
+                                            {% else %}
+                                                {% if val.identified and val.marked %}
+                                                    <button hx-post="{% url 'reassemble_one_paper' paper %}"
+                                                            class="btn btn-success">reassemble</button>
+                                                {% else %}
+                                                    <i class="bi bi-exclamation-diamond-fill text-info"></i>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% endif %}
                             {% endfor %}

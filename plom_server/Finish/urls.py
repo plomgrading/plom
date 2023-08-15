@@ -7,6 +7,7 @@ from .views import (
     MarkingInformationView,
     MarkingInformationPaperView,
     ReassemblePapersView,
+    StartOneReassembly,
 )
 
 
@@ -28,4 +29,9 @@ urlpatterns = [
         name="ta_info_download",
     ),
     path("reassemble/", ReassemblePapersView.as_view(), name="reassemble_pdfs"),
+    path(
+        "reassemble/<int:paper_number>",
+        StartOneReassembly.as_view(),
+        name="reassemble_one_paper",
+    ),
 ]
