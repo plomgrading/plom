@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+
+test_spec = "demo"
+test_sources = ["demo", "demo"]
+prenaming_enabled = true
+classlist = "demo"
+num_to_produce = 25
+
+# bundle 1
+[[bundles]]
+first_paper = 1
+last_paper = 20
+
+
+# HW bundle 1
+[[hw_bundles]]
+paper_number = 21
+pages = [[1], [2], [], [2, 3], [3]]
+
