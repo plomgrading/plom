@@ -21,7 +21,7 @@ class Command(BaseCommand):
         sub_dwn = sub.add_parser("download", help="Download the extra page pdf")
         sub_dwn.add_argument(
             "dest",
-            const="extra_page.pdf",
+            default="extra_page.pdf",
             nargs="?",
             type=str,
         )

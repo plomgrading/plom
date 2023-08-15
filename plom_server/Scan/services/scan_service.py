@@ -32,6 +32,7 @@ from plom.tpv_utils import (
     getPaperPageVersion,
     isValidTPV,
     isValidExtraPageCode,
+    isValidScrapPaperCode,
 )
 
 from Papers.services import ImageBundleService
@@ -354,6 +355,14 @@ class ScanService:
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
+            Similarly,, if the page is a scrap-paper page, then returns
+                    'SE': {
+                    'page_type': 'plom_scrap',
+                    'quadrant': '4',
+                    'tpv': 'plomS',
+                    'x_coord': 2203,
+                    'y_coord': 2906.5
+                }
 
         """
         # ++++++++++++++++++++++
@@ -406,6 +415,15 @@ class ScanService:
                             "page_type": "plom_extra",
                             "quadrant": corner,
                             "tpv": "plomX",
+                        }
+                    )
+                elif isValidScrapPaperCode(raw_qr_string):
+                    corner = parseExtraPageCode(raw_qr_string)
+                    qr_code_dict.update(
+                        {
+                            "page_type": "plom_scrap",
+                            "quadrant": corner,
+                            "tpv": "plomS",
                         }
                     )
                 groupings[quadrant] = qr_code_dict

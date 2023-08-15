@@ -21,6 +21,7 @@ from Papers.models import (
     MobilePage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from Preparation.services import TestPreparedSetting
 from Preparation.models import StagingPQVMapping
 
 
@@ -71,6 +72,9 @@ class ImageBundleTests(TestCase):
             page_number=2,
             version=3,
         )
+
+        # Set preparation as finished
+        TestPreparedSetting.set_test_prepared(True)
 
         return super().setUp()
 

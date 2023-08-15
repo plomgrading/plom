@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
@@ -11,7 +11,9 @@ from .views import (
     LandingPrenameToggle,
     LandingResetClasslist,
     LandingResetQVmap,
+    LandingFinishedToggle,
     TestSourceManageView,
+    TestSourceReadOnlyView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
@@ -26,6 +28,7 @@ from .views import (
     PaperCreationView,
     MiscExtrasView,
     ExtraPageView,
+    ScrapPaperView,
 )
 
 urlpatterns = [
@@ -46,6 +49,9 @@ urlpatterns = [
         name="prep_source_upload",
     ),
     path("test_source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
+    path(
+        "test_source/view/", TestSourceReadOnlyView.as_view(), name="prep_sources_view"
+    ),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(
@@ -77,4 +83,8 @@ urlpatterns = [
     path("test_papers/", PaperCreationView.as_view(), name="prep_test_papers"),
     path("misc/", MiscExtrasView.as_view(), name="misc_extras"),
     path("misc/extra_page", ExtraPageView.as_view(), name="extra_page"),
+    path("misc/scrap_paper", ScrapPaperView.as_view(), name="scrap_paper"),
+    path(
+        "pref_finished/", LandingFinishedToggle.as_view(), name="prep_finished_toggle"
+    ),
 ]

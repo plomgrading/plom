@@ -1,0 +1,52 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SPDX-License-Identifier: AGPL-3.0-or-later
+%% Copyright (C) 2023 Andrew Rechnitzer
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[letterpaper,left=29mm,right=29mm,top=10mm,bottom=4mm]{geometry}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{tikz}
+
+%%%%%%%%%%%%%
+
+\pagestyle{empty}
+
+\newcommand{\scrapscrap}[4]{
+  \begin{center}
+    \textbf{Nothing on this page will be marked. Scrap paper only.}
+  \end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+\begin{center}
+  \textbf{Scrap paper only. Nothing on this page will be marked.}
+\end{center}
+
+
+\begin{tikzpicture}[remember picture, overlay]
+  \node[anchor=north east, xshift=-8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] at (current page.north east) {\includegraphics[angle=90, origin=c, height=15mm]{#1}};
+  \node[anchor=north west, xshift=8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] at (current page.north west) {\includegraphics[angle=180, origin=c, height=15mm]{#2}};
+  \node[anchor=south west, xshift=8mm, yshift=8mm, line width=0.25pt, draw=black, inner sep=1pt] at (current page.south west) {\includegraphics[angle=-90, origin=c, height=15mm]{#3}};
+  \node[anchor=south east, xshift=-8mm, yshift=8mm, line width=0.5pt, draw=black, inner sep=1pt] at (current page.south east) {\includegraphics[angle=0, origin=c, height=15mm]{#4}};
+\end{tikzpicture}
+}
+
+
+
+\begin{document}
+
+\scrapscrap{qr_crn_1}{qr_crn_2}{qr_crn_3}{qr_crn_4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+% Now same again to help ensure people print it double-sided
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\scrapscrap{qr_crn_5}{qr_crn_6}{qr_crn_7}{qr_crn_8}
+
+\end{document}
