@@ -10,7 +10,7 @@ from ..models import TestPreparedSettingModel
 @transaction.atomic
 def can_status_be_set_true() -> bool:
     """Return true if the status can be changed from false to true.
-    
+
     Currently, only a check to see if test-papers have been created - more checks could be added.
     """
     return Paper.objects.all().exists()
