@@ -36,7 +36,7 @@ class DemoBundleConfig:
 
 @dataclass(kw_only=True)
 class DemoHWBundleConfig:
-    """A description of a demo homework bundle that can be generated using artifical data."""
+    """A description of a demo homework bundle that can be generated using artificial data."""
 
     paper_number: int
     pages: List[List[int]]
