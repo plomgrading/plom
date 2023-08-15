@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -77,3 +77,23 @@ class TestSourceManageView(ManagerRequiredView):
             tss = TestSourceService()
             tss.delete_test_source(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
+
+
+class TestSourceReadOnlyView(ManagerRequiredView):
+    def build_context(self):
+        context = super().build_context()
+        tss = TestSourceService()
+
+        return {
+            "test_versions": SpecificationService.get_n_versions(),
+            "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+            "number_of_pages": SpecificationService.get_n_pages(),
+            "uploaded_test_sources": tss.get_list_of_sources(),
+            "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
+        }
+
+    def get(self, request):
+        context = self.build_context()
+        return render(request, "Preparation/test_paper_view.html", context)

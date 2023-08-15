@@ -20,6 +20,8 @@ from ..services import (
     StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
+    ScrapPaperService,
+    TestPreparedSetting,
 )
 
 
@@ -43,6 +45,9 @@ class PreparationLandingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
+            "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
+            "is_test_prepared": TestPreparedSetting.is_test_prepared(),
+            "can_status_be_set_todo": TestPreparedSetting.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -149,4 +154,13 @@ class LandingResetQVmap(ManagerRequiredView):
     def delete(self, request):
         qv_service = PQVMappingService()
         qv_service.remove_pqv_map()
+        return HttpResponseClientRefresh()
+
+
+class LandingFinishedToggle(ManagerRequiredView):
+    """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
+
+    def post(self, request):
+        current_setting = TestPreparedSetting.is_test_prepared()
+        TestPreparedSetting.set_test_prepared(not current_setting)
         return HttpResponseClientRefresh()

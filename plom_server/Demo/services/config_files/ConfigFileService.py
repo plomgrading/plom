@@ -31,6 +31,7 @@ valid_bundle_keys = {
     "first_paper",
     "last_paper",
     "extra_page_papers",
+    "scrap_page_papers",
     "garbage_page_papers",
     "duplicate_page_papers",
     "wrong_version_papers",
