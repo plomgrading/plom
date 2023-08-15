@@ -19,6 +19,8 @@ from Scan.models import (
     StagingImage,
 )
 
+from Preparation.services import TestPreparedSetting
+
 from Papers.models import (
     Bundle,
     Image,
@@ -93,6 +95,7 @@ class ImageBundleService:
         paper number, and don't collide with any currently uploaded pages) upload all the pages
         using bulk ORM calls.
 
+        0. Check that preparation has been finished
         1. Check that all the staging images have page numbers and test numbers
         2. Check that no staging images collide with each other
         3. Check that no staging images collide with any uploaded images
@@ -102,6 +105,9 @@ class ImageBundleService:
             RuntimeError
             ValueError
         """
+        if not TestPreparedSetting.is_test_prepared():
+            raise RuntimeError("Test preparation has not been marked as finished.")
+
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(

@@ -149,6 +149,8 @@ class DemoCreationService:
                 print("Still waiting for pdf production tasks. Sleeping.")
                 sleep(1)
             else:
+                call_command("plom_preparation_status", set=["finished"])
+                print("Test preparation marked as finished.")
                 print(
                     "Extra page, Scrap paper, and papers all built - continuing to next step of demo."
                 )

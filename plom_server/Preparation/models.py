@@ -23,6 +23,10 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
+class TestPreparedSettingModel(SingletonBaseModel):
+    finished = models.BooleanField(default=False, null=False)
+
+
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
 
