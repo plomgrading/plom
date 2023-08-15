@@ -2,12 +2,15 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, FileResponse
+from django.http import HttpResponseRedirect, FileResponse, StreamingHttpResponse
 from django.urls import reverse
+from django.utils.text import slugify
+
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
 from ..services import ReassembleService
+from Papers.services import SpecificationService
 
 
 class ReassemblePapersView(ManagerRequiredView):
@@ -99,6 +102,13 @@ class StartAllReassembly(ManagerRequiredView):
         ReassembleService().reset_all_paper_reassembly()
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
-    # def get(self, request, paper_number):
-    # pdf_file = ReassembleService().get_single_reassembled_file(paper_number)
-    # return FileResponse(pdf_file)
+    def get(self, request):
+        # using zipfly python package.  see django example here
+        # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
+        short_name = slugify(SpecificationService.get_shortname())
+        zgen = ReassembleService().get_zipfly_generator(short_name)
+        response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename={short_name}_reassembled.zip"
+        return response

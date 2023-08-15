@@ -54,7 +54,8 @@
                                 {% endif %}
                                 {% if n_queued %}
                                     <li>
-                                        <i class="bi bi-exclamation-diamond-fill text-info"></i>{{ n_queued }} papers queued for reassembly
+                                        <i class="bi bi-exclamation-diamond-fill text-info"></i>{{ n_queued }} papers queued for reassembly (will reload page after 60s)
+                                        <a href="{% url 'reassemble_pdfs' %}" class="btn btn-info m-4">reload page</a>
                                     </li>
                                 {% endif %}
                                 {% if n_errors %}
@@ -63,6 +64,14 @@
                                     </li>
                                 {% endif %}
                             </ul>
+                            {% if n_outdated %}
+                                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers</a> some papers outdated
+                            {% elif n_complete == n_papers %}
+                                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers</a>
+                            {% elif n_complete %}
+                                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
+                                not all papers reassembled
+                            {% endif %}
                         </div>
                     </div>
                     <div class="card w-75">
@@ -152,7 +161,7 @@
                                                                 class="btn btn-warning">delete</button>
                                                     {% endif %}
                                                 {% else %}
-                                                    {% if val.identified and val.marked %}
+                                                    {% if val.identified and val.marked and val.reassembled_status != "Queued" %}
                                                         <button hx-post="{% url 'reassemble_one_paper' paper %}"
                                                                 class="btn btn-success">reassemble</button>
                                                     {% else %}

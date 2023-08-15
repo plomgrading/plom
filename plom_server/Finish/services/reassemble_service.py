@@ -2,9 +2,10 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+import arrow
 from pathlib import Path
 import tempfile
-import arrow
+import zipfly
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
@@ -513,6 +514,26 @@ class ReassembleService:
             task.huey_id = pdf_build.id
             task.status = ReassembleTask.QUEUED
             task.save()
+
+    @transaction.atomic
+    def get_completed_pdf_files(self):
+        """Get list of paths of pdf-files of completed (built) tests papers."""
+        return [
+            task.pdf_file
+            for task in ReassembleTask.objects.filter(status=ReassembleTask.COMPLETE)
+        ]
+
+    def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
+        paths = [
+            {
+                "fs": pdf_file.path,
+                "n": pdf_file.name,
+            }
+            for pdf_file in self.get_completed_pdf_files()
+        ]
+
+        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        return zfly.generator()
 
 
 @db_task(queue="tasks")
