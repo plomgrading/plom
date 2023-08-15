@@ -9,6 +9,7 @@ import csv
 from pathlib import Path
 import tempfile
 from typing import List, Dict
+from dataclasses import asdict
 
 import fitz
 
@@ -19,6 +20,8 @@ from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from Papers.services import SpecificationService
+
+from .config_files.ConfigFileService import PlomServerConfig
 
 
 class DemoBundleService:
@@ -45,14 +48,14 @@ class DemoBundleService:
         """Get the default number of pages in a paper from the specification."""
         return SpecificationService.get_n_pages()
 
-    def split_into_bundle_files(self, out_file, config):
+    def split_into_bundle_files(self, out_file, config: PlomServerConfig):
         """Split the single scribble PDF file into the designated number of bundles.
 
         Args:
             out_file (path.Path): path to the monolithic scribble PDF
-            config (dict): server config
+            config (PlomServerConfig): server config
         """
-        bundles = config["bundles"]
+        bundles = config.bundles
         default_n_pages = self.get_default_paper_length()
 
         with fitz.open(out_file) as scribble_pdf:
@@ -61,27 +64,21 @@ class DemoBundleService:
             curr_bundle_idx = 0
             bundle_doc = None
 
-            for paper in range(1, config["num_to_produce"] + 1):
+            for paper in range(1, config.num_to_produce + 1):
                 print("PAPER", paper)
 
-                curr_bundle = bundles[curr_bundle_idx]
+                curr_bundle = asdict(bundles[curr_bundle_idx])
                 for key in curr_bundle.keys():
                     if key in [
                         "garbage_page_papers",
                         "duplicate_page_papers",
                     ]:
                         if paper in curr_bundle[key]:
-                            print(
-                                f"to index incremented because paper {paper} is in {key}"
-                            )
                             to_page_idx += 1
                     elif key == "duplicates":
                         for inst in curr_bundle["duplicates"]:
                             if inst["paper"] == paper:
                                 to_page_idx += 1
-
-                print("From", from_page_idx)
-                print("to", to_page_idx)
 
                 if paper == curr_bundle["first_paper"]:
                     bundle_doc = fitz.open()
@@ -446,8 +443,8 @@ class DemoBundleService:
         filtered = filter(lambda bundle: key in bundle.keys(), bundles)
         return self._flatten([bundle[key] for bundle in filtered])
 
-    def scribble_on_exams(self, config):
-        bundles = config["bundles"]
+    def scribble_on_exams(self, config: PlomServerConfig):
+        bundles = config.bundles
         n_bundles = len(bundles)
 
         classlist = self.get_classlist_as_dict()

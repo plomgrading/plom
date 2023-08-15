@@ -22,6 +22,7 @@ from ...services import (
     DemoBundleService,
     DemoHWBundleService,
     ConfigFileService,
+    PlomServerConfig,
 )
 from ... import config_files as demo_config_files
 
@@ -48,10 +49,10 @@ class Command(BaseCommand):
         self,
         dbs: DemoBundleService,
         dhs: DemoHWBundleService,
-        config: dict,
+        config: PlomServerConfig,
         homework_bundles,
     ) -> None:
-        if ConfigFileService.contains_key(config, "bundles"):
+        if config.bundles:
             dbs.scribble_on_exams(config)
 
         for bundle in homework_bundles:
@@ -73,7 +74,7 @@ class Command(BaseCommand):
         self,
         dcs: DemoCreationService,
         dhs: DemoHWBundleService,
-        config: dict,
+        config: PlomServerConfig,
         number_of_bundles,
         homework_bundles,
     ):
@@ -99,19 +100,21 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
-    def post_server_init(self, dcs: DemoCreationService, config: dict, stop_at: str):
+    def post_server_init(
+        self, dcs: DemoCreationService, config: ConfigFileService, stop_at: str
+    ):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        if ConfigFileService.contains_key(config, "bundles"):
-            number_of_bundles = len(config["bundles"])
+        if config.bundles:
+            number_of_bundles = len(config.bundles)
             bundle_service = DemoBundleService()
         else:
             bundle_service = None
             number_of_bundles = 0
 
-        if ConfigFileService.contains_key(config, "hw_bundles"):
-            homework_bundles = config["hw_bundles"]
+        if config.hw_bundles:
+            homework_bundles = config.hw_bundles
             homework_service = DemoHWBundleService()
         else:
             homework_bundles = []
@@ -249,9 +252,7 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation" or not ConfigFileService.contains_key(
-            config, "num_to_produce"
-        ):
+        if stop_at == "preparation" or not config.num_to_produce:
             huey_worker_proc.terminate()
             return
 

@@ -21,6 +21,8 @@ from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
 
+from .config_files import PlomServerConfig
+
 
 class DemoCreationService:
     """Handle creating the demo exam and populating the database."""
@@ -30,12 +32,12 @@ class DemoCreationService:
         call_command("plom_create_groups")
         call_command("plom_create_demo_users")
 
-    def prepare_assessment(self, config):
+    def prepare_assessment(self, config: PlomServerConfig):
         print("Prepare assessment: ")
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
         )
-        spec_path = config["test_spec"]
+        spec_path = config.test_spec
         if spec_path == "demo":
             call_command("plom_demo_spec")
         else:
@@ -54,8 +56,8 @@ class DemoCreationService:
             f"-o{fixdir}/test_spec.json",
         )
 
-        if "test_sources" in config.keys():
-            sources = config["test_sources"]
+        if config.test_sources:
+            sources = config.test_sources
             for i, src in enumerate(sources):
                 if src == "demo":
                     src = resources.files(useful_files) / f"test_version{i+1}.pdf"
@@ -69,11 +71,11 @@ class DemoCreationService:
             print("No test sources specified. Stopping.")
             return
 
-        if "prenaming" in config.keys() and config["prenaming"]:
+        if config.prenaming_enabled:
             call_command("plom_preparation_prenaming", enable=True)
 
-        if "classlist" in config.keys():
-            f = config["classlist"]
+        if config.classlist:
+            f = config.classlist
             if f == "demo":
                 f = resources.files(useful_files) / "cl_for_demo.csv"
             call_command(
@@ -82,8 +84,10 @@ class DemoCreationService:
                 f,
             )
 
-        if "num_to_produce" in config.keys():
-            n_to_produce = config["num_to_produce"]
+        if (
+            config.num_to_produce is not None
+        ):  # TODO: users should be able to specify path to custom qvmap
+            n_to_produce = config.num_to_produce
             call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
         else:
             print("No papers to produce. Stopping.")
@@ -261,12 +265,12 @@ class DemoCreationService:
         call_command("plom_rubrics", "init", "manager")
         call_command("plom_rubrics", "push", "--demo", "manager")
 
-    def map_extra_pages(self, config):
+    def map_extra_pages(self, config: PlomServerConfig):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
-        if "bundles" not in config.keys():
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "extra_page_papers" in bundle.keys():
@@ -295,11 +299,11 @@ class DemoCreationService:
                             n_questions,  # default to last question
                         )
 
-    def map_pages_to_discards(self, config):
-        if "bundles" not in config.keys():
+    def map_pages_to_discards(self, config: PlomServerConfig):
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "discard_pages" in bundle.keys():

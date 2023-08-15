@@ -3,7 +3,13 @@
 
 from django.test import TestCase
 
-from Demo.services import ConfigFileService, PlomConfigError
+from Demo.services import (
+    ConfigFileService,
+    PlomConfigError,
+    PlomServerConfig,
+    DemoBundleConfig,
+    DemoHWBundleConfig,
+)
 
 
 class ServerConfigTests(TestCase):
@@ -15,15 +21,15 @@ class ServerConfigTests(TestCase):
             "num_to_produce": 8,
             "test_spec": "demo",
         }
-        ConfigFileService.validate_config(valid_config)
+        PlomServerConfig(**valid_config)
 
         invalid_config = {
             "n_to_produce": 7,
             "test_spec": "demo",
         }
 
-        with self.assertRaises(PlomConfigError):
-            ConfigFileService.validate_config(invalid_config)
+        with self.assertRaises(TypeError):
+            PlomServerConfig(**invalid_config)
 
     def test_bundle_bad_keys(self):
         """Test the config validation with unrecognized keys in bundles."""
@@ -36,8 +42,8 @@ class ServerConfigTests(TestCase):
             "pages": [[1], [2], [3]],
         }
 
-        ConfigFileService.validate_bundle(valid_bundle)
-        ConfigFileService.validate_hw_bundle(valid_hw_bundle)
+        DemoBundleConfig(**valid_bundle)
+        DemoHWBundleConfig(**valid_hw_bundle)
 
         invalid_bundle = {
             "frist_paper": 1,
@@ -47,8 +53,8 @@ class ServerConfigTests(TestCase):
             "papers": 1,
         }
 
-        with self.assertRaises(PlomConfigError):
-            ConfigFileService.validate_bundle(invalid_bundle)
+        with self.assertRaises(TypeError):
+            DemoBundleConfig(**invalid_bundle)
 
-        with self.assertRaises(PlomConfigError):
-            ConfigFileService.validate_hw_bundle(invalid_hw_bundle)
+        with self.assertRaises(TypeError):
+            DemoHWBundleConfig(**invalid_hw_bundle)
