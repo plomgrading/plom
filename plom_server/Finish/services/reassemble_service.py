@@ -18,7 +18,7 @@ from django.utils import timezone
 
 from django_huey import db_task, get_queue
 
-from Identify.models import PaperIDTask, PaperIDAction
+from Identify.models import PaperIDTask
 from Mark.models import MarkingTask, Annotation
 from Mark.services import MarkingTaskService
 from Papers.models import Paper, IDPage, DNMPage
@@ -81,15 +81,18 @@ class ReassembleService:
             paper: a reference to a Paper instance
         """
         if self.get_paper_id_or_none(paper):
-            paper_id_task = PaperIDTask.objects.get(paper=paper)
-            paper_id_actions = PaperIDAction.objects.filter(task=paper_id_task)
-            latest_action_instance = paper_id_actions.order_by("-time").first()
+            paper_id_task = PaperIDTask.objects.exclude(
+                status=PaperIDTask.OUT_OF_DATE
+            ).get(paper=paper)
+            latest_action_instance = paper_id_task.latest_action
             latest_action = latest_action_instance.time
         else:
             latest_action = None
 
         if self.is_paper_marked(paper):
-            paper_annotations = Annotation.objects.filter(task__paper=paper)
+            paper_annotations = Annotation.objects.exclude(
+                task__status=PaperIDTask.OUT_OF_DATE
+            ).filter(task__paper=paper)
             latest_annotation_instance = paper_annotations.order_by(
                 "-time_of_last_update"
             ).first()
@@ -116,13 +119,10 @@ class ReassembleService:
         Returns:
             a tuple (str, str) or None
         """
-        paper_task = PaperIDTask.objects.filter(paper=paper).order_by("-time")
-        if paper_task.count() == 0:
+        task = PaperIDTask.objects.filter(paper=paper, status=PaperIDTask.COMPLETE)
+        if not task:
             return None
-        latest_task = paper_task.first()
-        if latest_task.status != PaperIDTask.COMPLETE:
-            return None
-        action = PaperIDAction.objects.get(task=latest_task)
+        action = task.latest_action
         return action.student_id, action.student_name
 
     def get_question_data(self, paper, question_number):
