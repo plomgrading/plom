@@ -17,24 +17,21 @@ else:
 from . import PlomConfigError
 
 
-PagesList = NewType("PagesList", Optional[list[int]])
-
-
-@dataclass(kw_only=True)
+@dataclass()
 class DemoBundleConfig:
     """A description of a demo bundle that can be generated using artificial data."""
 
     first_paper: int
     last_paper: int
-    extra_page_papers: PagesList = None
-    scrap_page_papers: PagesList = None
-    garbage_page_papers: PagesList = None
-    wrong_version_papers: PagesList = None
-    duplicate_page_papers: PagesList = None
-    discard_pages: PagesList = None
+    extra_page_papers: List[int] = []
+    scrap_page_papers: List[int] = []
+    garbage_page_papers: List[int] = []
+    wrong_version_papers: List[int] = []
+    duplicate_page_papers: List[int] = []
+    discard_pages: List[int] = []
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class DemoHWBundleConfig:
     """A description of a demo homework bundle that can be generated using artificial data."""
 
@@ -42,7 +39,7 @@ class DemoHWBundleConfig:
     pages: List[List[int]]
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class PlomServerConfig:
     """A description of a Plom server's database.
 
