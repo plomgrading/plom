@@ -119,7 +119,9 @@ class ReassembleService:
         Returns:
             a tuple (str, str) or None
         """
-        task = PaperIDTask.objects.filter(paper=paper, status=PaperIDTask.COMPLETE)
+        task = PaperIDTask.objects.filter(
+            paper=paper, status=PaperIDTask.COMPLETE
+        ).get()
         if not task:
             return None
         action = task.latest_action
