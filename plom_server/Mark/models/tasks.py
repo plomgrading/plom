@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 import random
 
@@ -39,6 +40,9 @@ class MarkingTask(BaseTask):
         OUT_OF_DATE can still have a Latest Annotation.
     """
 
+    def _random_priority():
+        return random.random() * 1000
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
@@ -46,7 +50,7 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
-    marking_priority = models.FloatField(null=False, default=(random.random() * 1000))
+    marking_priority = models.FloatField(null=False, default=_random_priority)
 
     def __str__(self):
         """Return information about the paper and the question."""
