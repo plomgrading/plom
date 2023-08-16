@@ -40,7 +40,7 @@ class MarkingTask(BaseTask):
         OUT_OF_DATE can still have a Latest Annotation.
     """
 
-    def _random_priority():
+    def _random_priority():  # type: ignore
         return random.random() * 1000
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
