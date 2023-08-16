@@ -16,17 +16,22 @@ class PaperIDTask(BaseTask):
     paper: reference to Paper that needs to be IDed.
     latest_action: reference to PaperIDAction, the latest identification for the paper.
     priority: a float priority that provides the ordering for tasks presented for IDing,
-        which is equal to the inverse of the paper number by default.
+        which is set to the inverse of the paper number by default.
     """
+
+    def _determine_priority(self):
+        return 1 / self.paper.paper_number
+
+    def save(self, *args, **kwargs):
+        if self.iding_priority is None:
+            self.iding_priority = self._determine_priority()
+        super().save(*args, **kwargs)
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
     latest_action = models.OneToOneField(
         "PaperIDAction", unique=True, null=True, on_delete=models.SET_NULL
     )
-    iding_priority = models.FloatField(null=False, default=_determine_priority)
-
-    def _determine_priority(self) -> float:
-        return 1 / self.paper.paper_number
+    iding_priority = models.FloatField(null=True, default=None)
 
 
 class PaperIDAction(BaseAction):

@@ -18,8 +18,9 @@ from django.db.models import QuerySet
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
+    IDPrediction,
 )
-from Papers.models import IDPage, Paper
+from Papers.models import IDPage, Paper, Image
 from Papers.services import ImageBundleService
 
 
@@ -48,15 +49,6 @@ class IdentifyTaskService:
 
         task = PaperIDTask(paper=paper)
         task.save()
-
-    @transaction.atomic
-    def update_task_priority(self, paper: Paper, priority: float) -> None:
-        try:
-            task_to_update = PaperIDTask.objects.get(paper=paper)
-            task_to_update.iding_priorit = priority
-            task_to_update.save()
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Task with paper number {paper.paper_number} does not exist.")
 
     @transaction.atomic
     def id_task_exists(self, paper: Paper) -> bool:
@@ -114,12 +106,14 @@ class IdentifyTaskService:
         return [n_completed, n_total]
 
     @transaction.atomic
-    def get_next_task(self) -> PaperIDTask:
-        """Return the next available identification task, ordered by paper_number."""
+    def get_next_task(self) -> Union[PaperIDTask, None]:
+        """Return the next available identification task, ordered by iding_priority."""
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
-        todo_tasks = todo_tasks.order_by("paper__paper_number")
+        todo_tasks = todo_tasks.order_by("-iding_priority")
         if todo_tasks:
             return todo_tasks.first()
+        else:
+            return None
 
     @transaction.atomic
     def claim_task(self, user: User, paper_number: int) -> None:
@@ -262,3 +256,35 @@ class IdentifyTaskService:
         # now all existing tasks are out of date, so if the id-page is ready then create a new id-task for it.
         if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
             self.create_task(paper_obj)
+
+    @transaction.atomic
+    def update_task_priority(self, paper_obj: Paper, increasing_cert: bool = True) -> None:
+        """Update the iding_priority field for PaperIDTasks.
+
+        Args:
+            paper_obj: the paper whose priority to update.
+
+        Kwargs:
+            increasing_cert: determines whether the sorting order for the priorities
+                based on certainties is in increasing order. If false, it is in decreasing order.
+
+        Raises:
+            ValueError: The prediction or task does not exist for the given paper.
+        """
+        try:
+            pred_query = IDPrediction.objects.filter(paper=paper_obj)
+            cert_list = [pred.certainty for pred in pred_query]
+            # always choose the minimum certainty if more than one prediction is available
+            priority = min(cert_list)
+        except IDPrediction.DoesNotExist as e:
+            raise ValueError(f"No predictions exist for paper number {paper_obj.paper_number}.")
+
+        try:
+            task = PaperIDTask.objects.get(paper=paper_obj)
+            if increasing_cert:
+                task.iding_priority = -priority
+            else:
+                task.iding_priority = priority
+            task.save()
+        except PaperIDTask.DoesNotExist as e:
+            raise ValueError(f"Task with paper number {paper_obj.paper_number} does not exist.")
