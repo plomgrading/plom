@@ -96,7 +96,9 @@ class IDService:
         return identified_papers_count
 
     @transaction.atomic
-    def get_all_identified_papers(self, all_scanned_id_papers: QuerySet[IDPage]) -> Dict:
+    def get_all_identified_papers(
+        self, all_scanned_id_papers: QuerySet[IDPage]
+    ) -> Dict:
         """Get all the identified paper instances as a dictionary.
 
         This method is to help with getting all the correct instances to display

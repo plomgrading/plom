@@ -142,7 +142,9 @@ class IdentifyTaskService:
         return id_img
 
     @transaction.atomic
-    def identify_paper(self, user: User, paper_number: int, student_id: str, student_name: str) -> None:
+    def identify_paper(
+        self, user: User, paper_number: int, student_id: str, student_name: str
+    ) -> None:
         """Identify a test-paper and close its associated task.
 
         Raises:
@@ -258,7 +260,9 @@ class IdentifyTaskService:
             self.create_task(paper_obj)
 
     @transaction.atomic
-    def update_task_priority(self, paper_obj: Paper, increasing_cert: bool = True) -> None:
+    def update_task_priority(
+        self, paper_obj: Paper, increasing_cert: bool = True
+    ) -> None:
         """Update the iding_priority field for PaperIDTasks.
 
         Args:
@@ -277,7 +281,9 @@ class IdentifyTaskService:
             # always choose the minimum certainty if more than one prediction is available
             priority = min(cert_list)
         except IDPrediction.DoesNotExist as e:
-            raise ValueError(f"No predictions exist for paper number {paper_obj.paper_number}.")
+            raise ValueError(
+                f"No predictions exist for paper number {paper_obj.paper_number}."
+            )
 
         try:
             task = PaperIDTask.objects.get(paper=paper_obj)
@@ -287,4 +293,6 @@ class IdentifyTaskService:
                 task.iding_priority = priority
             task.save()
         except PaperIDTask.DoesNotExist as e:
-            raise ValueError(f"Task with paper number {paper_obj.paper_number} does not exist.")
+            raise ValueError(
+                f"Task with paper number {paper_obj.paper_number} does not exist."
+            )

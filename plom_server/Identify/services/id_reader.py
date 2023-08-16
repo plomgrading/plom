@@ -21,7 +21,12 @@ class IDReaderService:
     """Functions for ID reading and related helper functions."""
 
     @transaction.atomic
-    def get_id_box_cmd(self, box: tuple[float, float, float, float], *, dur: Union[pathlib.Path, None] = None) -> Dict:
+    def get_id_box_cmd(
+        self,
+        box: tuple[float, float, float, float],
+        *,
+        dur: Union[pathlib.Path, None] = None,
+    ) -> Dict:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
@@ -123,7 +128,12 @@ class IDReaderService:
 
     @transaction.atomic
     def add_or_change_ID_prediction(
-        self, user: User, paper_num: int, student_id: str, certainty: float, predictor: str
+        self,
+        user: User,
+        paper_num: int,
+        student_id: str,
+        certainty: float,
+        predictor: str,
     ) -> None:
         """Add a new ID prediction or change an existing prediction in the DB.
 
@@ -159,7 +169,12 @@ class IDReaderService:
         id_task_service.update_task_priority(paper)
 
     def add_or_change_ID_prediction_cmd(
-        self, username: str, paper_num: int, student_id: str, certainty: float, predictor: str
+        self,
+        username: str,
+        paper_num: int,
+        student_id: str,
+        certainty: float,
+        predictor: str,
     ) -> None:
         """Wrapper around add_or_change_ID_prediction for use by the management command-line tool.
 
@@ -193,6 +208,8 @@ class IDReaderService:
         else:
             IDPrediction.objects.all().delete()
 
-    def add_prename_ID_prediction(self, user: User, student_id: str, paper_number: int) -> None:
+    def add_prename_ID_prediction(
+        self, user: User, student_id: str, paper_number: int
+    ) -> None:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
