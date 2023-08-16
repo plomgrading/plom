@@ -12,6 +12,10 @@ from Base.models import BaseTask, Tag
 from Papers.models import Paper
 
 
+def random_priority():
+    return random.random() * 1000
+
+
 class MarkingTask(BaseTask):
     """Represents a single question that needs to be marked.
 
@@ -40,9 +44,6 @@ class MarkingTask(BaseTask):
         OUT_OF_DATE can still have a Latest Annotation.
     """
 
-    def _random_priority():  # type: ignore
-        return random.random() * 1000
-
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
@@ -50,7 +51,7 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
-    marking_priority = models.FloatField(null=False, default=_random_priority)
+    marking_priority = models.FloatField(null=False, default=random_priority)
 
     def __str__(self):
         """Return information about the paper and the question."""
