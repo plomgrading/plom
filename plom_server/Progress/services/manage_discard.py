@@ -15,6 +15,7 @@ from Papers.models import (
     DiscardPage,
 )
 from Identify.services import IdentifyTaskService
+from Mark.services import MarkingTaskService
 
 
 class ManageDiscardService:
@@ -49,11 +50,11 @@ class ManageDiscardService:
 
         # now set the associated id-task to out of date.
         IdentifyTaskService().set_paper_idtask_outdated(idpage_obj.paper.paper_number)
+        # notice that since there is only a single ID page we cannot
+        # automatically create a new id-task, we need a new page to be uploaded.
 
     @transaction.atomic
     def _discard_question_page(self, user_obj: User, qpage_obj: QuestionPage) -> None:
-        raise NotImplementedError("Need to set up Marking task invalidation")
-
         DiscardPage.objects.create(
             image=qpage_obj.image,
             discard_reason=(
@@ -62,17 +63,18 @@ class ManageDiscardService:
                 f"question {qpage_obj.question_number}."
             ),
         )
-        # set the associated IDing task to "OUT_OF_DATE"
-        # >>> TODO <<<
-
         # Set the original question page to have no image, but **DO NOT** delete the question page
         qpage_obj.image = None
         qpage_obj.save()
 
+        # set the associated Markinging task to "OUT_OF_DATE"
+        # this also tries to make a new task if possible
+        MarkingTaskService().set_paper_marking_task_outdated(
+            qpage_obj.paper.paper_number, qpage_obj.question_number
+        )
+
     @transaction.atomic
     def _discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage) -> None:
-        raise NotImplementedError("Need to set up Marking task invalidation")
-
         # note that a single mobile page is attached to an image that
         # might be associated with multiple questions. Accordingly
         # when we discard this mobile-page we also discard any other
@@ -80,26 +82,39 @@ class ManageDiscardService:
         # the marking tasks associated with those mobile pages as 'out
         # of date'
 
+        img_to_disc = mpage_obj.image
+        paper_number = mpage_obj.paper.paper_number
+
         DiscardPage.objects.create(
-            image=mpage_obj.image,
+            image=img_to_disc,
             discard_reason=(
                 f"User {user_obj.username} discarded mobile "
-                f"paper {mpage_obj.paper.paper_number} "
+                f"paper {paper_number} "
                 f"question {mpage_obj.question_number}."
             ),
         )
 
         # find all the mobile pages associated with this image
         # set the associated marking tasks to "OUT_OF_DATE"
-        # >>> TODO <<<
+        qn_to_outdate = [
+            mpg.question_number for mpg in img_to_disc.mobilepage_set.all()
+        ]
         # and now delete each of those mobile pages
-        mpage_obj.delete()
+        for mpg in img_to_disc.mobilepage_set.all():
+            mpg.delete()
+        # outdate the associated marking tasks
+        # this also makes new marking tasks if possible
+        for qn in qn_to_outdate:
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
-    def discard_pushed_fixed_page(self, user_obj, fixedpage_pk, *, dry_run=True) -> str:
+    def discard_pushed_fixed_page(
+        self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
+    ) -> str:
         """Discard a fixed page, such an ID page, DNM page or Question page.
 
         Args:
-            TODO
+            user_obj (User): the User who is discarding
+            fixedpage_pk (int): the pk of the fixed page to be discarded
 
         Keyword Args:
             dry_run: really do it or just pretend?
@@ -154,8 +169,25 @@ class ManageDiscardService:
             raise ValueError("Cannot determine what sort of fixed-page this is")
 
     def discard_pushed_mobile_page(
-        self, user_obj, mobilepage_pk, *, dry_run=True
+        self, user_obj: User, mobilepage_pk: int, *, dry_run: bool = True
     ) -> str:
+        """Discard a mobile page.
+
+        Args:
+            user_obj (User): the User who is discarding
+            mobilepage_pk (int): the pk of the mobile page to be discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
         try:
             mp_obj = MobilePage.objects.get(pk=mobilepage_pk)
         except ObjectDoesNotExist as e:

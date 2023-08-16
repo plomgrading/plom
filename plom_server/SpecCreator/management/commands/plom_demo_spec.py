@@ -11,17 +11,13 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 import fitz
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Papers.services import SpecificationService
+from Papers.serializers import SpecSerializer
 from Preparation import useful_files_for_testing as useful_files
 from ...services import StagingSpecificationService, ReferencePDFService
 
@@ -48,7 +44,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         staged_spec_service = StagingSpecificationService()
-        valid_spec_service = SpecificationService()
         ref_service = ReferencePDFService()
         if options["clear"]:
             if staged_spec_service.not_empty():
@@ -57,22 +52,21 @@ class Command(BaseCommand):
                 ref_service.delete_pdf()
                 staged_spec_service.reset_specification()
 
-                if valid_spec_service.is_there_a_spec():
-                    valid_spec_service.remove_spec()
+                if SpecificationService.is_there_a_spec():
+                    SpecificationService.remove_spec()
                 self.stdout.write("Test specification cleared.")
             else:
                 self.stdout.write("No specification uploaded.")
         else:
-            if valid_spec_service.is_there_a_spec() or staged_spec_service.not_empty():
+            if (
+                SpecificationService.is_there_a_spec()
+                or staged_spec_service.not_empty()
+            ):
                 self.stderr.write(
                     "Test specification data already present. Run manage.py plom_demo_spec --clear to clear the current specification."
                 )
             else:
                 self.stdout.write("Writing test specification...")
-                with open(
-                    resources.files(useful_files) / "testing_test_spec.toml", "rb"
-                ) as f:
-                    data = tomllib.load(f)
 
                 # extract page count and upload reference PDF
                 with fitz.open(
@@ -90,15 +84,22 @@ class Command(BaseCommand):
 
                 # verify spec, stage + save to DB
                 try:
-                    staged_spec_service.create_from_dict(data)
-                    valid_spec = staged_spec_service.get_valid_spec_dict()
+                    demo_toml_path = (
+                        resources.files(useful_files) / "testing_test_spec.toml"
+                    )
 
                     if options["publicCode"]:
                         code = options["publicCode"]
-                        valid_spec["publicCode"] = code
+                    else:
+                        code = None
 
-                    valid_spec_service.store_validated_spec(valid_spec)
+                    SpecificationService.load_spec_from_toml(
+                        pathname=demo_toml_path,
+                        update_staging=True,
+                        public_code=code,
+                    )
+
                     self.stdout.write("Demo test specification uploaded!")
-                    self.stdout.write(str(valid_spec_service.get_the_spec()))
+                    self.stdout.write(str(SpecificationService.get_the_spec()))
                 except ValueError as e:
                     raise CommandError(e)

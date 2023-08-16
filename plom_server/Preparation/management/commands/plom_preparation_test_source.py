@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
@@ -102,8 +102,7 @@ class Command(BaseCommand):
             )
 
     def upload_source(self, version=None, source_pdf=None):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
+        if not SpecificationService.is_there_a_spec():
             self.stderr.write(
                 f"There is not a valid test specification on the server. Cannot upload."
             )
@@ -133,7 +132,9 @@ class Command(BaseCommand):
         # TODO - fix 6 to get the required number of pages from the spec.
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
-            success, msg = tss.take_source_from_upload(version, speck.get_n_pages(), fh)
+            success, msg = tss.take_source_from_upload(
+                version, SpecificationService.get_n_pages(), fh
+            )
             if success:
                 self.stdout.write(
                     f"Upload of source pdf for version {version} succeeded."

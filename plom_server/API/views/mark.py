@@ -39,8 +39,8 @@ class QuestionMaxMark_how_to_get_data(APIView):
                 "question and version must be integers",
                 status.HTTP_400_BAD_REQUEST,
             )
-        spec = SpecificationService()
-        return Response(spec.get_question_mark(question))
+        max_mark = SpecificationService.get_question_mark(question)
+        return Response(max_mark)
 
 
 class QuestionMaxMark(APIView):
@@ -53,9 +53,9 @@ class QuestionMaxMark(APIView):
     """
 
     def get(self, request, *, question):
-        spec = SpecificationService()
         try:
-            return Response(spec.get_question_mark(question))
+            max_mark = SpecificationService.get_question_mark(question)
+            return Response(max_mark)
         except KeyError:
             return _error_response(
                 "question out of range",

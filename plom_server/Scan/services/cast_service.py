@@ -636,7 +636,7 @@ class ScanCastService:
                 f"User '{username}' does not exist or has wrong permissions!"
             )
 
-        if page_number < 0 or page_number > SpecificationService().get_n_pages():
+        if page_number < 0 or page_number > SpecificationService.get_n_pages():
             raise ValueError("Page number out of range - check the specification")
         if paper_number < 0:
             raise ValueError("Paper number cannot be negative.")

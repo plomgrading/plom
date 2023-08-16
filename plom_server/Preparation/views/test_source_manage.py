@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -27,13 +27,12 @@ class TestSourceUploadForm(forms.Form):
 class TestSourceManageView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
-        speck = SpecificationService()
 
         return {
             "form": TestSourceUploadForm(),
-            "test_versions": speck.get_n_versions(),
+            "test_versions": SpecificationService.get_n_versions(),
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
-            "number_of_pages": speck.get_n_pages(),
+            "number_of_pages": SpecificationService.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
             "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
@@ -66,9 +65,8 @@ class TestSourceManageView(ManagerRequiredView):
             )
         else:
             tss = TestSourceService()
-            speck = SpecificationService()
             success, message = tss.take_source_from_upload(
-                version, speck.get_n_pages(), request.FILES["source_pdf"]
+                version, SpecificationService.get_n_pages(), request.FILES["source_pdf"]
             )
             context.update({"version": version, "success": success, "message": message})
 
@@ -79,3 +77,23 @@ class TestSourceManageView(ManagerRequiredView):
             tss = TestSourceService()
             tss.delete_test_source(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
+
+
+class TestSourceReadOnlyView(ManagerRequiredView):
+    def build_context(self):
+        context = super().build_context()
+        tss = TestSourceService()
+
+        return {
+            "test_versions": SpecificationService.get_n_versions(),
+            "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+            "number_of_pages": SpecificationService.get_n_pages(),
+            "uploaded_test_sources": tss.get_list_of_sources(),
+            "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
+        }
+
+    def get(self, request):
+        context = self.build_context()
+        return render(request, "Preparation/test_paper_view.html", context)

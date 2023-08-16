@@ -59,9 +59,6 @@ class MarkingInformationView(ManagerRequiredView):
             std_times_spent,
         ) = self.tms.all_marking_times_for_web(n_questions)
 
-        days_estimate = [
-            self.tms.get_estimate_days_remaining(q) for q in range(1, n_questions + 1)
-        ]
         hours_estimate = [
             self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
         ]
@@ -95,7 +92,6 @@ class MarkingInformationView(ManagerRequiredView):
                 "all_marked": all_marked,
                 "student_marks_form": self.smff,
                 "hours_estimate": hours_estimate,
-                "days_estimate": days_estimate,
                 "grades_hist_data": grades_hist_data,
                 "corr_heatmap_data": corr_heatmap_data,
             }

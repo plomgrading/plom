@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
 from pathlib import Path
@@ -319,6 +319,7 @@ class _ExamView(QGraphicsView):
                         f"Cannot find 'filename' nor 'local_filename' in {data}"
                     )
                 filename = data.get("filename")
+
                 if not filename:
                     filename = data.get("local_filename")
                 if not filename:
@@ -328,7 +329,7 @@ class _ExamView(QGraphicsView):
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
                 if pix.isNull():
-                    raise ValueError(f"Could not read an image from {filename}")
+                    raise ValueError(f"Could not read an image from '{filename}'")
                 rot = QTransform()
                 # if more than one image, its not well-defined which one theta gets
                 self.theta = data["orientation"]

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 class DataExtractionService:
@@ -28,7 +28,7 @@ class DataExtractionService:
     def __init__(self):
         sms = StudentMarkService()
         tms = TaMarkingService()
-        self.spec = Specification.load().spec_dict
+        self.spec = SpecificationService.get_the_spec()
 
         student_dict = sms.get_all_students_download(
             version_info=True, timing_info=False, warning_info=False

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
@@ -16,6 +16,7 @@ from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
+from Preparation.services import TestPreparedSetting
 from Progress.services import ManageScanService
 from ..services import ScanService
 from ..forms import BundleUploadForm
@@ -42,6 +43,7 @@ class ScannerHomeView(ScannerRequiredView):
                 "total_papers": total_papers,
                 "form": BundleUploadForm(),
                 "bundle_splitting": False,
+                "preparation_finished": TestPreparedSetting.is_test_prepared(),
             }
         )
         user_bundles = scanner.get_user_bundles(user)

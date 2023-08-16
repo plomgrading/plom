@@ -32,6 +32,7 @@ from plom.tpv_utils import (
     getPaperPageVersion,
     isValidTPV,
     isValidExtraPageCode,
+    isValidScrapPaperCode,
 )
 
 from Papers.services import ImageBundleService
@@ -354,6 +355,14 @@ class ScanService:
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
+            Similarly,, if the page is a scrap-paper page, then returns
+                    'SE': {
+                    'page_type': 'plom_scrap',
+                    'quadrant': '4',
+                    'tpv': 'plomS',
+                    'x_coord': 2203,
+                    'y_coord': 2906.5
+                }
 
         """
         # ++++++++++++++++++++++
@@ -406,6 +415,15 @@ class ScanService:
                             "page_type": "plom_extra",
                             "quadrant": corner,
                             "tpv": "plomX",
+                        }
+                    )
+                elif isValidScrapPaperCode(raw_qr_string):
+                    corner = parseExtraPageCode(raw_qr_string)
+                    qr_code_dict.update(
+                        {
+                            "page_type": "plom_scrap",
+                            "quadrant": corner,
+                            "tpv": "plomS",
                         }
                     )
                 groupings[quadrant] = qr_code_dict
@@ -692,7 +710,7 @@ class ScanService:
 
         numpages = bundle_obj.number_of_pages
         print(f"DEBUG: numpages in bundle: {numpages}")
-        numquestions = SpecificationService().get_n_questions()
+        numquestions = SpecificationService.get_n_questions()
         print(f"DEBUG: pre-canonical question:  {questions}")
         questions = canonicalize_page_question_map(questions, numpages, numquestions)
         print(f"DEBUG: canonical question list: {questions}")
@@ -1044,7 +1062,7 @@ class ScanService:
         Returns:
             A list of pairs `(paper_number (int), [missing pages (int)])`.
         """
-        n_pages = SpecificationService().get_n_pages()
+        n_pages = SpecificationService.get_n_pages()
         papers_pages: Dict[int, list] = {}
         # get all known images in the bundle
         # put in dict as {paper_number: [list of known pages present] }
@@ -1080,7 +1098,7 @@ class ScanService:
         Returns:
             The number of incomplete papers in the bundle.
         """
-        n_pages = SpecificationService().get_n_pages()
+        n_pages = SpecificationService.get_n_pages()
         papers_pages: Dict[int, int] = {}
         # get all known images in the bundle
         # put in dict as {page_number: number of known pages present] }

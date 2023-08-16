@@ -23,6 +23,10 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
+class TestPreparedSettingModel(SingletonBaseModel):
+    finished = models.BooleanField(default=False, null=False)
+
+
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
 
@@ -93,4 +97,26 @@ class ExtraPagePDFTask(HueyTask):
     @classmethod
     def load(cls):
         obj, created = ExtraPagePDFTask.objects.get_or_create()
+        return obj
+
+
+class ScrapPaperPDFTask(HueyTask):
+    """Table to store the scrap paper pdf huey task.
+
+    Note that this inherits fields from the HueyTask table. We add
+    extra function to this to ensure there can only be one such task.
+    """
+
+    scrap_paper_pdf = models.FileField(upload_to="sourceVersions/")
+
+    def save(self, *args, **kwargs):
+        ScrapPaperPDFTask.objects.exclude(id=self.id).delete()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = ScrapPaperPDFTask.objects.get_or_create()
         return obj
