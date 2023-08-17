@@ -23,6 +23,7 @@ from ...services import (
     DemoHWBundleService,
     ConfigFileService,
     PlomServerConfig,
+    ConfigPreparationService,
 )
 from ... import config_files as demo_config_files
 
@@ -250,7 +251,10 @@ class Command(BaseCommand):
 
         # TODO: I get errors if I move this after launching the server...
         print("*" * 40)
-        creation_service.prepare_assessment(config)
+        if options["config"]:
+            ConfigPreparationService.create_test_preparation(config, verbose=True)
+        else:
+            creation_service.prepare_assessment(config)
 
         if stop_at == "preparation" or not config.num_to_produce:
             huey_worker_proc.terminate()

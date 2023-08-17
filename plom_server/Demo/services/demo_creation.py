@@ -59,9 +59,12 @@ class DemoCreationService:
 
         if config.test_sources:
             sources = config.test_sources
+            if sources == "demo":
+                sources = [
+                    resources.files(useful_files) / "test_version1.pdf",
+                    resources.files(useful_files) / "test_version2.pdf",
+                ]
             for i, src in enumerate(sources):
-                if src == "demo":
-                    src = resources.files(useful_files) / f"test_version{i+1}.pdf"
                 call_command(
                     "plom_preparation_test_source",
                     "upload",

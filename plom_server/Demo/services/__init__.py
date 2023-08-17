@@ -11,4 +11,5 @@ from .config_files import (
     PlomServerConfig,
     DemoBundleConfig,
     DemoHWBundleConfig,
+    ConfigPreparationService,
 )
