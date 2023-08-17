@@ -101,9 +101,7 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
-    def post_server_init(
-        self, dcs: DemoCreationService, config, stop_at: str
-    ):
+    def post_server_init(self, dcs: DemoCreationService, config, stop_at: str):
         self.papers_and_db(dcs)
 
         print("*" * 40)

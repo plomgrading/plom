@@ -22,6 +22,7 @@ from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
 
+
 class DemoCreationService:
     """Handle creating the demo exam and populating the database."""
 
