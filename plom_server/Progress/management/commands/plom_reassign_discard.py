@@ -16,9 +16,7 @@ class Command(BaseCommand):
     python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -q question_number.
     """
 
-    help = (
-        "Discard a pushed page. Note that at present this can only discard dnm pages."
-    )
+    help = "Reassign a (pushed) discarded page as a given fixed or mobile page."
 
     def reassign_discard_page(
         self,

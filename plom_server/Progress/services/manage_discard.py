@@ -212,7 +212,7 @@ class ManageDiscardService:
         )
 
     def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int):
-        """Discard a pushed image from its pk."""
+        """Given pk of a pushed image, discard it."""
         try:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist as e:
@@ -357,7 +357,7 @@ class ManageDiscardService:
             )
         except DiscardPage.DoesNotExist:
             raise ValueError(
-                f"Cannot discard image with pk = {image_pk} is not attached to a discard page."
+                f"Cannot discard image with pk {image_pk}. It is not attached to a discard page."
             )
 
     def assign_discard_image_to_mobile_page(
@@ -373,7 +373,7 @@ class ManageDiscardService:
             )
         except DiscardPage.DoesNotExist:
             raise ValueError(
-                "Cannot image with pk = {image_pk} is not attached to a discard page."
+                "Cannot reassign image with pk {image_pk}. It is not attached to a discard page."
             )
 
     def reassign_discard_page_to_fixed_page_cmd(
