@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 import imghdr
 import json
@@ -62,12 +63,18 @@ class MarkingTaskService:
             old_task.assigned_user = None
             old_task.save()
 
+        # Override default marking priority of 1.0, setting to a random float
+        from random import random
+
+        random_priority = random() * 1000
+
         the_task = MarkingTask(
             assigned_user=user,
             code=task_code,
             paper=paper,
             question_number=question_number,
             question_version=question_version,
+            marking_priority=random_priority,
         )
         the_task.save()
         return the_task

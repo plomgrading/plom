@@ -4,16 +4,10 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
-import random
-
 from django.db import models
 
 from Base.models import BaseTask, Tag
 from Papers.models import Paper
-
-
-def random_priority():
-    return random.random() * 1000
 
 
 class MarkingTask(BaseTask):
@@ -24,7 +18,9 @@ class MarkingTask(BaseTask):
     question_number: int, the question to mark
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
-    marking_priority: float, the priority of this task (default random float between 0 and 1000)
+    marking_priority: float, the priority of this task.
+        Default is 1.0, but upon initialization of the MarkingTask,
+        it is set to a random float between 0 and 1000.
 
     Status
     ~~~~~~
@@ -51,7 +47,7 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
-    marking_priority = models.FloatField(null=False, default=random_priority)
+    marking_priority = models.FloatField(null=False, default=1.0)
 
     def __str__(self):
         """Return information about the paper and the question."""
