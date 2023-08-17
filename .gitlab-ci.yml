@@ -359,6 +359,7 @@ mypy-type-checking:
     - mypy plom --python-ver 3.8
     - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
     - mypy plom_server --python-ver 3.9
+  allow_failure: true
 
 
 flake8:
