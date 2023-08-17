@@ -100,7 +100,9 @@ def create_qv_map(config: PlomServerConfig):
 
 def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
     """Instantiate models from the test specification to test-papers."""
-    echo = lambda x: print(x) if verbose else None
+
+    def echo(x):
+        return print(x) if verbose else None
 
     echo("Creating specification...")
     create_specification(config)
