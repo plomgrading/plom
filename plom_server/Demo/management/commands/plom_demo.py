@@ -22,8 +22,6 @@ from ...services import (
     DemoBundleService,
     DemoHWBundleService,
     ConfigFileService,
-    PlomServerConfig,
-    ConfigPreparationService,
 )
 from ... import config_files as demo_config_files
 
@@ -264,10 +262,7 @@ class Command(BaseCommand):
 
         # TODO: I get errors if I move this after launching the server...
         print("*" * 40)
-        if options["config"]:
-            ConfigPreparationService.create_test_preparation(config, verbose=True)
-        else:
-            creation_service.prepare_assessment(config)
+        creation_service.prepare_assessment(config)
 
         if stop_at == "preparation" or not config.num_to_produce:
             huey_worker_proc.terminate()
@@ -277,10 +272,7 @@ class Command(BaseCommand):
         server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
-            if options["config"]:
-                print("End of config demo (for now).")
-            else:
-                self.post_server_init(creation_service, config, stop_at)
+            self.post_server_init(creation_service, config, stop_at)
 
             if options["randomarker"]:
                 self.run_randomarker(port=options["port"])
