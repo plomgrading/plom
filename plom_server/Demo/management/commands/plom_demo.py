@@ -50,7 +50,7 @@ class Command(BaseCommand):
         self,
         dbs: DemoBundleService,
         dhs: DemoHWBundleService,
-        config: PlomServerConfig,
+        config,
         homework_bundles,
     ) -> None:
         if config.bundles:
@@ -75,7 +75,7 @@ class Command(BaseCommand):
         self,
         dcs: DemoCreationService,
         dhs: DemoHWBundleService,
-        config: PlomServerConfig,
+        config,
         number_of_bundles,
         homework_bundles,
     ):
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         )
 
     def post_server_init(
-        self, dcs: DemoCreationService, config: PlomServerConfig, stop_at: str
+        self, dcs: DemoCreationService, config, stop_at: str
     ):
         self.papers_and_db(dcs)
 

@@ -22,9 +22,6 @@ from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
 from Preparation import useful_files_for_testing as useful_files
 
-from .config_files import PlomServerConfig
-
-
 class DemoCreationService:
     """Handle creating the demo exam and populating the database."""
 
@@ -33,7 +30,7 @@ class DemoCreationService:
         call_command("plom_create_groups")
         call_command("plom_create_demo_users")
 
-    def prepare_assessment(self, config: PlomServerConfig):
+    def prepare_assessment(self, config):
         print("Prepare assessment: ")
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
@@ -269,7 +266,7 @@ class DemoCreationService:
         call_command("plom_rubrics", "init", "manager")
         call_command("plom_rubrics", "push", "--demo", "manager")
 
-    def map_extra_pages(self, config: PlomServerConfig):
+    def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
         if config.bundles is None:
             return
@@ -303,7 +300,7 @@ class DemoCreationService:
                             n_questions,  # default to last question
                         )
 
-    def map_pages_to_discards(self, config: PlomServerConfig):
+    def map_pages_to_discards(self, config):
         if config.bundles is None:
             return
 

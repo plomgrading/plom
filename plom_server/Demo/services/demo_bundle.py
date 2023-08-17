@@ -21,8 +21,6 @@ from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from Papers.services import SpecificationService
 
-from .config_files.ConfigFileService import PlomServerConfig
-
 
 class DemoBundleService:
     """Handle generating demo bundles."""
@@ -48,7 +46,7 @@ class DemoBundleService:
         """Get the default number of pages in a paper from the specification."""
         return SpecificationService.get_n_pages()
 
-    def split_into_bundle_files(self, out_file, config: PlomServerConfig):
+    def split_into_bundle_files(self, out_file, config):
         """Split the single scribble PDF file into the designated number of bundles.
 
         Args:
@@ -443,7 +441,7 @@ class DemoBundleService:
         filtered = filter(lambda bundle: key in bundle.keys(), bundles)
         return self._flatten([bundle[key] for bundle in filtered])
 
-    def scribble_on_exams(self, config: PlomServerConfig):
+    def scribble_on_exams(self, config):
         bundles = config.bundles
         n_bundles = len(bundles)
 
