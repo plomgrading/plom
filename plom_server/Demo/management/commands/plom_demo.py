@@ -127,7 +127,11 @@ class Command(BaseCommand):
 
         assert bundle_service is not None
         assert homework_service is not None
+
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
+
+        if stop_at == "bundles-created":
+            return
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
         if stop_at == "bundles-uploaded":
@@ -188,6 +192,7 @@ class Command(BaseCommand):
                 "migrations",
                 "users",
                 "preparation",
+                "bundles-created",
                 "bundles-uploaded",
                 "bundles-read",
                 "bundles-pushed",
@@ -207,6 +212,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Run the plom-client randomarker.",
         )
+        parser.add_argument(
+            "--quick",
+            action="store_true",
+            help="Run a quicker demo with fewer papers and bundles.",
+        )
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
@@ -222,9 +232,14 @@ class Command(BaseCommand):
 
         config_path = options["config"]
         if config_path is None:
-            config = ConfigFileService.read_server_config(
-                resources.files(demo_config_files) / "full_demo_config.toml"
-            )
+            if options["quick"]:
+                config = ConfigFileService.read_server_config(
+                    resources.files(demo_config_files) / "quick_demo_config.toml"
+                )
+            else:
+                config = ConfigFileService.read_server_config(
+                    resources.files(demo_config_files) / "full_demo_config.toml"
+                )
         else:
             try:
                 config = ConfigFileService.read_server_config(config_path[0])
