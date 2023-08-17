@@ -15,7 +15,10 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
-from Papers.services import SpecificationService
+from Papers.services import (
+    SpecificationService,
+    PaperCreatorService,
+)
 from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
     TestSourceService,
@@ -23,6 +26,7 @@ from Preparation.services import (
     StagingClasslistCSVService,
     StagingStudentService,
     PQVMappingService,
+    TestPreparedSetting,
 )
 
 from . import PlomServerConfig, PlomConfigCreationError
@@ -85,7 +89,6 @@ def create_qv_map(config: PlomServerConfig):
         PQVMappingService().generate_and_set_pqvmap(config.num_to_produce)
     else:
         # TODO: extra validation steps here?
-        # TODO: qvmap service should be ab
         try:
             with open(config.qvmap, newline="") as qvmap_file:
                 qvmap_rows = csv.DictReader(qvmap_file)
@@ -96,6 +99,17 @@ def create_qv_map(config: PlomServerConfig):
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e)
+
+
+def create_papers(config: PlomServerConfig):
+    """Create test paper instances."""
+    try:
+        qvmap = PQVMappingService().get_pqv_map_dict()
+        PaperCreatorService().add_all_papers_in_qv_map(
+            qvmap, "manager", background=False  # hard-coded username
+        )
+    except Exception as e:
+        raise PlomConfigCreationError(e)
 
 
 def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
@@ -116,3 +130,9 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
 
     echo("Creating question-version map...")
     create_qv_map(config)
+
+    echo("Creating test paper instances...")
+    create_papers(config)
+
+    TestPreparedSetting.set_test_prepared(True)
+    echo("Preparation complete.")

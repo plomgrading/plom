@@ -277,7 +277,10 @@ class Command(BaseCommand):
         server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
-            self.post_server_init(creation_service, config, stop_at)
+            if options["config"]:
+                print("End of config demo (for now).")
+            else:
+                self.post_server_init(creation_service, config, stop_at)
 
             if options["randomarker"]:
                 self.run_randomarker(port=options["port"])
