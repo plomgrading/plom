@@ -13,7 +13,7 @@ from ...services import DataExtractionService
 from ...services import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 RANGE_BIN_OFFSET = 2
 
@@ -56,7 +56,7 @@ Generating..."""
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         # info for report
         name = spec["name"]
