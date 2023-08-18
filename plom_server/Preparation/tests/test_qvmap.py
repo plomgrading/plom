@@ -8,18 +8,22 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
+from django.test import TestCase
 from django.conf import settings
 
-from Base.tests import ConfigTestCase
+from Base.tests import config_test
 from ..services import PQVMappingService
 from . import config_files
 
 
-class PQVMappingServiceTests(ConfigTestCase):
-    config_file = resources.files(config_files) / "test_qvmap.toml"
-
+class PQVMappingServiceTests(TestCase):
+    @config_test()
     def test_num_to_produce(self):
-        """Test that the created QV Map has the correct number of test-papers."""
+        """Test that the created QV Map has the correct number of test-papers.
+
+        Config:
+        test_spec = "config_files/tiny_spec.toml"
+        """
 
         pqvs = PQVMappingService()
         self.assertFalse(pqvs.is_there_a_pqv_map())
