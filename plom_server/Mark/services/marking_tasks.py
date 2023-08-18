@@ -63,10 +63,15 @@ class MarkingTaskService:
             old_task.assigned_user = None
             old_task.save()
 
-        # Override default marking priority of 1.0, setting to a random float
-        from random import random
+        # get priority of latest old task to assign to new task, but
+        # if no previous priority exists, set to a random float
+        latest_old_task = previous_tasks.order_by("-time").first()
+        if latest_old_task:
+            priority = latest_old_task.marking_priority
+        else:
+            from random import random
 
-        random_priority = random() * 1000
+            priority = random() * 1000
 
         the_task = MarkingTask(
             assigned_user=user,
@@ -74,7 +79,7 @@ class MarkingTaskService:
             paper=paper,
             question_number=question_number,
             question_version=question_version,
-            marking_priority=random_priority,
+            marking_priority=priority,
         )
         the_task.save()
         return the_task
