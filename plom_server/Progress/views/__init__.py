@@ -20,9 +20,7 @@ from .progress_identify import (
     IDImageWrapView,
 )
 
-from .progress_mark import (
-    ProgressMarkHome,
-)
+from .progress_mark import ProgressMarkHome, ProgressMarkStatsView
 
 from .progress_userinfo import (
     ProgressUserInfoHome,

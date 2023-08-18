@@ -1,0 +1,37 @@
+<div class="card m-2" id="stats_{{ question }}_{{ version }}">
+    {% if stats.all_task_count == 0 %}
+        <div class="card-header">Question {{ question }} Version {{ version }}: no tasks</div>
+    {% else %}
+        <div class="card-header">Question {{ question }} Version {{ version }}</div>
+        <div class="card-body">
+            <div class="card-text">
+                <div class="progress m-2"
+                     style="height: 2em"
+                     role="progressbar"
+                     aria-valuenow="{{ stats.number_of_completed_tasks }}"
+                     aria-valuemin="0"
+                     aria-valuemax="{{ stats.all_task_count }}">
+                    <div class="progress-bar"
+                         style="width: {{ stats.completed_percentage }}%">
+                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
+                    </div>
+                </div>
+                <p>
+                    <ul>
+                        <li>marked = {{ stats.number_of_completed_tasks }} of {{ stats.all_task_count }}</li>
+                        <li>avg time = {{ stats.avg_marking_time }} s</li>
+                        <li>min | max | full = {{ stats.mark_min }} | {{ stats.mark_max }} | {{ stats.mark_full }}</li>
+                        <li>mean | median | mode = {{ stats.mark_mean }} | {{ stats.mark_median }} | {{ stats.mark_mode }}</li>
+                    </ul>
+                </p>
+            </div>
+        </div>
+    {% endif %}
+    <div class="card-footer">
+        <button class="btn btn-info"
+                hx-swap="outerHTML"
+                hx-target="#stats_{{ question }}_{{ version }}"
+                hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
+        <button class="btn btn-success">show details</button>
+    </div>
+</div>

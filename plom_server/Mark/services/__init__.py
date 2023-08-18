@@ -3,3 +3,4 @@
 
 from .marking_tasks import MarkingTaskService
 from .page_data import PageDataService
+from .marking_stats import MarkingStatsService
