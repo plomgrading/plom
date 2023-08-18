@@ -60,7 +60,9 @@ class PaperCreatorTests(TestCase):
         qv_map = {1: 2, 2: 1}
 
         pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_username)
+        _create_paper_with_qvmapping.call_local(
+            pcs.spec_obj, 1, qv_map, self.test_username
+        )
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
@@ -86,11 +88,13 @@ class PaperCreatorTests(TestCase):
 
         qv_map = {1: 2, 2: 1}
         pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_username)
+        _create_paper_with_qvmapping.call_local(
+            pcs.spec_obj, 1, qv_map, self.test_username
+        )
 
         with self.assertRaises(IntegrityError):
             _create_paper_with_qvmapping.call_local(
-                pcs.spec, 1, qv_map, self.test_username
+                pcs.spec_obj, 1, qv_map, self.test_username
             )
 
     def test_clear_papers(self):
