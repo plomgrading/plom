@@ -35,9 +35,11 @@ from . import PlomServerConfig, PlomConfigCreationError
 def create_specification(config: PlomServerConfig):
     """Create a test specification from a config."""
     spec_path = config.test_spec
-    if spec_path == "demo":
-        spec_src = resources.files(useful_files) / "testing_test_spec.toml"
     try:
+        if spec_path == "demo":
+            spec_src = resources.files(useful_files) / "testing_test_spec.toml"
+        else:
+            spec_src = config.parent_dir / spec_path
         SpecificationService.load_spec_from_toml(spec_src, update_staging=True)
     except Exception as e:
         raise PlomConfigCreationError(e)
@@ -121,18 +123,24 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
     echo("Creating specification...")
     create_specification(config)
 
-    echo("Uploading test sources...")
-    upload_test_sources(config)
+    if config.test_sources:
+        echo("Uploading test sources...")
+        upload_test_sources(config)
 
     echo("Setting prenaming and uploading classlist...")
-    set_prenaming_setting(config)
-    upload_classlist(config)
+    if config.prenaming_enabled:
+        set_prenaming_setting(config)
+    if config.classlist:
+        upload_classlist(config)
 
-    echo("Creating question-version map...")
-    create_qv_map(config)
+    if config.num_to_produce or config.qvmap:
+        echo("Creating question-version map...")
+        create_qv_map(config)
 
-    echo("Creating test paper instances...")
-    create_papers(config)
+    if PQVMappingService().is_there_a_pqv_map():
+        echo("Creating test paper instances...")
+        create_papers(config)
 
-    TestPreparedSetting.set_test_prepared(True)
-    echo("Preparation complete.")
+    if TestPreparedSetting.can_status_be_set_true():
+        TestPreparedSetting.set_test_prepared(True)
+        echo("Preparation complete.")

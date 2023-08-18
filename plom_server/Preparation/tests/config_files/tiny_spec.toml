@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Edith Coates
+
+name = "tiny"
+longName = "tiny exam"
+
+numberOfVersions = 2
+numberOfPages = 3
+totalMarks = 2
+numberOfQuestions = 2
+idPage = 1
+doNotMarkPages = []
+
+[[question]]
+pages = [2]
+mark = 1
+select = "shuffle"
+
+[[question]]
+pages = [3]
+mark = 1
+select = "fix"
