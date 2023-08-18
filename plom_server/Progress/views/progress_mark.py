@@ -32,6 +32,8 @@ class ProgressMarkStatsView(ManagerRequiredView):
     def get(self, request, question, version):
         context = super().build_context()
         mss = MarkingStatsService()
+        histogram = mss.get_mark_histogram(question=question, version=version)
+        hist_keys, hist_values = zip(*histogram.items())
         context.update(
             {
                 "question": question,
@@ -39,6 +41,8 @@ class ProgressMarkStatsView(ManagerRequiredView):
                 "stats": mss.get_basic_marking_stats(
                     question=question, version=version
                 ),
+                "hist_keys": list(hist_keys),
+                "hist_values": list(hist_values),
             }
         )
 

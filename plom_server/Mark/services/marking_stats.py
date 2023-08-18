@@ -83,3 +83,22 @@ class MarkingStatsService:
         stats_dict["mark_mode"] = statistics.mode(mark_list)
 
         return stats_dict
+
+    @transaction.atomic
+    def get_mark_histogram(self, version, question, user_obj=None):
+        hist = {
+            qn: 0 for qn in range(SpecificationService.get_question_mark(question) + 1)
+        }
+        try:
+            completed_tasks = MarkingTask.objects.filter(
+                status=MarkingTask.COMPLETE,
+                question_number=question,
+                question_version=version,
+            ).prefetch_related("latest_annotation")
+            if user_obj:
+                completed_tasks.filter(assigned_user=user_obj)
+        except MarkingTask.DoesNotExist:
+            return hist
+        for X in completed_tasks:
+            hist[X.latest_annotation.score] += 1
+        return hist

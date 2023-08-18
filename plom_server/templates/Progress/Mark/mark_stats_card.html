@@ -24,6 +24,8 @@
                         <li>mean | median | mode = {{ stats.mark_mean }} | {{ stats.mark_median }} | {{ stats.mark_mode }}</li>
                     </ul>
                 </p>
+                <canvas id="hist_{{ question }}_{{ version }}">
+                </canvas>
             </div>
         </div>
     {% endif %}
@@ -35,3 +37,30 @@
         <button class="btn btn-success">show details</button>
     </div>
 </div>
+{% if stats.all_task_count %}
+    <script>
+  var ctx_{{question}}_{{version}} = document.getElementById('hist_{{question}}_{{version}}');
+
+  new Chart(ctx_{{question}}_{{version}}, {
+    type: 'bar',
+    data: {
+	labels: {{hist_keys}},
+	datasets: [{
+	    label: "counts",
+            data: {{hist_values}},
+            borderWidth: 1
+      }]
+    },
+      options: {
+	  plugins: {
+	      legend: { display: false },
+	  },
+	  scales: {
+              y: {
+		  beginAtZero: true
+              }
+	  }
+    }
+  });
+    </script>
+{% endif %}
