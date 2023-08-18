@@ -1,3 +1,4 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
 <div class="card m-2" id="stats_{{ question }}_{{ version }}">
     {% if stats.all_task_count == 0 %}
         <div class="card-header">Question {{ question }} Version {{ version }}: no tasks</div>
@@ -11,8 +12,7 @@
                      aria-valuenow="{{ stats.number_of_completed_tasks }}"
                      aria-valuemin="0"
                      aria-valuemax="{{ stats.all_task_count }}">
-                    <div class="progress-bar"
-                         style="width: {{ stats.completed_percentage }}%">
+                    <div class="progress-bar" style="width: {{ stats.completed_percentage }}%">
                         {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
                     </div>
                 </div>
