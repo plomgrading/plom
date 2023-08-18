@@ -51,7 +51,7 @@ def upload_test_sources(config: PlomServerConfig):
         version2 = resources.files(useful_files) / "test_version2.pdf"
         source_paths = [version1, version2]
     try:
-        for i, path in enumerate(source_paths):
+        for i, path in enumerate(source_paths):  # type: ignore
             TestSourceService().store_test_source(i + 1, path)
     except Exception as e:
         raise PlomConfigCreationError(e)
@@ -68,7 +68,7 @@ def upload_classlist(config: PlomServerConfig):
     if classlist_path == "demo":
         classlist_path = resources.files(useful_files) / "cl_for_demo.csv"
     try:
-        with open(classlist_path, "rb") as classlist_f:
+        with open(classlist_path, "rb") as classlist_f:  # type: ignore
             success, warnings = StagingClasslistCSVService().take_classlist_from_upload(
                 classlist_f
             )
@@ -90,7 +90,7 @@ def create_qv_map(config: PlomServerConfig):
     else:
         # TODO: extra validation steps here?
         try:
-            with open(config.qvmap, newline="") as qvmap_file:
+            with open(config.qvmap, newline="") as qvmap_file:  # type: ignore
                 qvmap_rows = csv.DictReader(qvmap_file)
                 qvmap = {}
                 for row in qvmap_rows:
