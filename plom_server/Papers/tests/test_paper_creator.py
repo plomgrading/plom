@@ -35,8 +35,6 @@ class PaperCreatorTests(TestCase):
             },
         }
         SpecificationService.store_validated_spec(spec_dict)
-        self.test_username = "user0"
-        self.test_user = baker.make(User, username=self.test_username)
         return super().setUp()
 
     def get_n_models(self):
@@ -60,7 +58,7 @@ class PaperCreatorTests(TestCase):
         qv_map = {1: 2, 2: 1}
 
         pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_username)
+        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
@@ -86,12 +84,10 @@ class PaperCreatorTests(TestCase):
 
         qv_map = {1: 2, 2: 1}
         pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map, self.test_username)
+        _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map)
 
         with self.assertRaises(IntegrityError):
-            _create_paper_with_qvmapping.call_local(
-                pcs.spec, 1, qv_map, self.test_username
-            )
+            _create_paper_with_qvmapping.call_local(pcs.spec, 1, qv_map)
 
     def test_clear_papers(self):
         """
