@@ -40,7 +40,7 @@ def config_test(config_path=None):
             if config_path is None:
                 docstring = method.__doc__
                 synopsis, config_description = pydoc.splitdoc(docstring)
-                config_description = re.split("\n\s*", config_description.strip())
+                config_description = re.split(r"\n\s*", config_description.strip())
 
                 if config_description[0] != "Config:":
                     raise RuntimeError(

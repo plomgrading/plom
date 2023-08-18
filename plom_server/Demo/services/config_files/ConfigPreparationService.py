@@ -35,6 +35,9 @@ from . import PlomServerConfig, PlomConfigCreationError
 def create_specification(config: PlomServerConfig):
     """Create a test specification from a config."""
     spec_path = config.test_spec
+    if spec_path is None:
+        return
+
     try:
         if spec_path == "demo":
             spec_src = resources.files(useful_files) / "testing_test_spec.toml"

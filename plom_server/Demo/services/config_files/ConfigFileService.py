@@ -46,7 +46,7 @@ class PlomServerConfig:
     Can be saved to a .toml file, or loaded from a toml to quickly spin up a server with a pre-defined state.
     """
 
-    parent_dir: Optional[Path] = None
+    parent_dir: Path
     test_spec: Optional[Union[str, Path]] = None
     test_sources: Optional[Union[str, List[Path]]] = None
     prenaming_enabled: bool = False
@@ -96,11 +96,11 @@ def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
 
 
 def read_server_config_from_string(
-    config: str, parent_dir: Path = None
+    config_str: str, parent_dir: Optional[Path] = None
 ) -> PlomServerConfig:
     """Create a server config from a TOML-formatted string."""
     try:
-        config = tomllib.loads(config)
+        config = tomllib.loads(config_str)
         config["parent_dir"] = parent_dir
         print(config)
         return PlomServerConfig(**config)
