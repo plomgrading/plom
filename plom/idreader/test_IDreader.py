@@ -63,7 +63,7 @@ def test_download_or_train_model(tmp_path):
 # Bit messy with so many subtests: refactor to a setup / teardown class?
 def test_get_digit_box(tmp_path):
     # for persistent debugging:
-    # tmp_path = "/home/cbm/src/plom/plom.git/tmp"
+    # tmp_path = "/home/cbm/src/plom/plom.git/tmp" 
 
     assert buildDemoSourceFiles(basedir=tmp_path)
 
