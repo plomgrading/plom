@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Sophia Vetrici
 
 from pathlib import Path
 
