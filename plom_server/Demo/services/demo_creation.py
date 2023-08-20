@@ -98,7 +98,7 @@ class DemoCreationService:
 
     def build_db_and_papers(self):
         print("Populating database in background")
-        call_command("plom_papers", "build_db", "manager")
+        call_command("plom_papers", "build_db")
 
         fixdir = settings.FIXTURE_DIRS[0]
         fixdir.mkdir(exist_ok=True)

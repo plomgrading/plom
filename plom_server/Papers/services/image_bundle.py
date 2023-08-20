@@ -20,7 +20,6 @@ from Scan.models import (
 )
 
 from Preparation.services import TestPreparedSetting
-
 from Papers.models import (
     Bundle,
     Image,
@@ -211,6 +210,8 @@ class ImageBundleService:
 
         from Mark.services import MarkingTaskService
         from Identify.services import IdentifyTaskService
+        from Identify.services import IDReaderService
+        from Preparation.services import StagingStudentService
 
         mts = MarkingTaskService()
         its = IdentifyTaskService()
@@ -223,6 +224,15 @@ class ImageBundleService:
             paper = id_page.paper
             if not its.id_task_exists(paper):
                 its.create_task(paper)
+
+                # instantiate prename predictions
+                student_service = StagingStudentService()
+                prename_sid = student_service.get_prename_for_paper(paper.paper_number)
+                if prename_sid:
+                    id_reader_service = IDReaderService()
+                    id_reader_service.add_prename_ID_prediction(
+                        user_obj, prename_sid, paper.paper_number
+                    )
 
     def get_staged_img_location(
         self, staged_image
