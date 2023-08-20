@@ -11,6 +11,7 @@ from Progress.views import (
     ScanCompleteView,
     ScanIncompleteView,
     ScanDiscardView,
+    ScanReassignView,
     PushedImageView,
     PushedImageWrapView,
     ProgressIdentifyHome,
@@ -35,6 +36,11 @@ urlpatterns = [
         "scan/discard/",
         ScanDiscardView.as_view(),
         name="progress_scan_discard",
+    ),
+    path(
+        "scan/reassign/<int:img_pk>",
+        ScanReassignView.as_view(),
+        name="progress_reassign_discard",
     ),
     path(
         "scan/pushed_img/<int:img_pk>",

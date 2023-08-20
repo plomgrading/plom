@@ -2,17 +2,21 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import Union
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Papers.models import (
+    Paper,
     FixedPage,
     MobilePage,
     IDPage,
     DNMPage,
     QuestionPage,
     DiscardPage,
+    Image,
 )
 from Identify.services import IdentifyTaskService
 from Mark.services import MarkingTaskService
@@ -207,13 +211,33 @@ class ManageDiscardService:
             "flagged the associated marking task as 'out of date'"
         )
 
+    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int):
+        """Given pk of a pushed image, discard it."""
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"An image with pk {image_pk} does not exist.") from e
+        # is either a fixed page, mobile page or discard page
+        if image_obj.fixedpage_set.exists():
+            self.discard_pushed_fixed_page(
+                user_obj, image_obj.fixedpage_set.first().pk, dry_run=False
+            )
+        elif image_obj.mobilepage_set.exists():
+            # notice that this will discard all mobile pages with that image.
+            self.discard_pushed_mobile_page(
+                user_obj, image_obj.mobilepage_set.first().pk, dry_run=False
+            )
+        else:
+            # is already a discard page, so nothing to do.
+            pass
+
     def discard_pushed_page_cmd(
         self,
-        username,
+        username: str,
         *,
-        fixedpage_pk=None,
-        mobilepage_pk=None,
-        dry_run=True,
+        fixedpage_pk: Union[int, None] = None,
+        mobilepage_pk: Union[int, None] = None,
+        dry_run: bool = True,
     ) -> str:
         try:
             user_obj = User.objects.get(
@@ -236,3 +260,154 @@ class ManageDiscardService:
             )
         else:
             raise ValueError("Command needs a pk for a fixedpage or mobilepage")
+
+    @transaction.atomic
+    def _assign_discard_to_fixed_page(
+        self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
+    ):
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+
+        try:
+            fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"Paper {paper_number} does not have a fixed page with page number {page_number}"
+            )
+
+        if fpage_obj.image:
+            raise ValueError(
+                f"Fixed page {page_number} of paper {paper_number} already has an image."
+            )
+
+        # assign the image to the fixed page
+        fpage_obj.image = discard_obj.image
+        fpage_obj.save()
+        # delete the discard page
+        discard_obj.delete()
+
+        if isinstance(fpage_obj, DNMPage):
+            pass
+        elif isinstance(fpage_obj, IDPage):
+            IdentifyTaskService().set_paper_idtask_outdated(paper_number)
+        elif isinstance(fpage_obj, QuestionPage):
+            MarkingTaskService().set_paper_marking_task_outdated(
+                paper_number, fpage_obj.question_number
+            )
+        else:
+            raise RuntimeError(
+                f"Cannot identify the type of the fixed page with pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
+            )
+
+    @transaction.atomic
+    def _assign_discard_to_mobile_page(
+        self,
+        user_obj: User,
+        discard_pk: int,
+        paper_number: int,
+        question_list: list[int],
+    ):
+        try:
+            discard_obj = DiscardPage.objects.get(pk=discard_pk)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+
+        for qn in question_list:
+            # get the version from an associated question-page
+            version = (
+                QuestionPage.objects.filter(paper=paper_obj, question_number=qn)
+                .first()
+                .version
+            )
+            MobilePage.objects.create(
+                paper=paper_obj,
+                question_number=qn,
+                image=discard_obj.image,
+                version=version,
+            )
+
+        # delete the discard page
+        discard_obj.delete()
+        # reset the associated marking tasks
+        for qn in question_list:
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+
+    def assign_discard_image_to_fixed_page(
+        self, user_obj: User, image_pk: int, paper_number: int, page_number: int
+    ):
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist:
+            raise ValueError("Cannot find image with pk = {image_pk}")
+        try:
+            self._assign_discard_to_fixed_page(
+                user_obj, image_obj.discardpage.pk, paper_number, page_number
+            )
+        except DiscardPage.DoesNotExist:
+            raise ValueError(
+                f"Cannot discard image with pk {image_pk}. It is not attached to a discard page."
+            )
+
+    def assign_discard_image_to_mobile_page(
+        self, user_obj: User, image_pk: int, paper_number: int, question_list: list[int]
+    ):
+        try:
+            image_obj = Image.objects.get(pk=image_pk)
+        except ObjectDoesNotExist:
+            raise ValueError("Cannot find image with pk = {image_pk}")
+        try:
+            self._assign_discard_to_mobile_page(
+                user_obj, image_obj.discardpage.pk, paper_number, question_list
+            )
+        except DiscardPage.DoesNotExist:
+            raise ValueError(
+                "Cannot reassign image with pk {image_pk}. It is not attached to a discard page."
+            )
+
+    def reassign_discard_page_to_fixed_page_cmd(
+        self, username: str, discard_pk: int, paper_number: int, page_number: int
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions."
+            ) from e
+
+        self._assign_discard_to_fixed_page(
+            user_obj, discard_pk, paper_number, page_number
+        )
+
+    def reassign_discard_page_to_mobile_page_cmd(
+        self,
+        username: str,
+        discard_pk: int,
+        paper_number: int,
+        question_list: list[int],
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="manager"
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions."
+            ) from e
+
+        self._assign_discard_to_mobile_page(
+            user_obj, discard_pk, paper_number, question_list
+        )

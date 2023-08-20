@@ -30,14 +30,14 @@ log = logging.getLogger("PaperCreatorService")
 @db_task(queue="tasks")
 @transaction.atomic
 def _create_paper_with_qvmapping(
-    spec: Specification, paper_number: int, qv_mapping: Dict
+    spec_obj: Specification, paper_number: int, qv_mapping: Dict
 ) -> None:
     """Creates a paper with the given paper number and the given question-version mapping.
 
     Also initializes prename ID predictions in DB, if applicable.
 
     Args:
-        spec: The test specification
+        spec_obj: The test specification
         paper_number: The number of the paper being created
         qv_mapping: Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
@@ -53,17 +53,17 @@ def _create_paper_with_qvmapping(
     # TODO - idpage and dnmpage versions might be not one in future.
     # For time being assume that IDpage and DNMPage are always version 1.
     id_page = IDPage(
-        paper=paper_obj, image=None, page_number=int(spec.idPage), version=1
+        paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
     )
     id_page.save()
 
-    for dnm_idx in spec.doNotMarkPages:
+    for dnm_idx in spec_obj.doNotMarkPages:
         dnm_page = DNMPage(
             paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
         )
         dnm_page.save()
 
-    for index, question in spec.question.items():
+    for index, question in spec_obj.question.items():
         index = int(index)
         version = qv_mapping[index]
         for q_page in question.pages:
@@ -85,7 +85,8 @@ class PaperCreatorService:
 
     def __init__(self):
         try:
-            self.spec = Specification.load()
+            self.spec_obj = Specification.load()
+            # want the db object not the spec as a dict
         except Specification.DoesNotExist as e:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
@@ -93,7 +94,9 @@ class PaperCreatorService:
 
     @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
-        paper_task = _create_paper_with_qvmapping(self.spec, paper_number, qv_mapping)
+        paper_task = _create_paper_with_qvmapping(
+            self.spec_obj, paper_number, qv_mapping
+        )
         paper_task_obj = CreatePaperTask(
             huey_id=paper_task.id, paper_number=paper_number
         )
@@ -125,7 +128,7 @@ class PaperCreatorService:
                     self.create_paper_with_qvmapping(paper_number, qv_mapping)
                 else:
                     _create_paper_with_qvmapping.call_local(
-                        self.spec, paper_number, qv_mapping
+                        self.spec_obj, paper_number, qv_mapping
                     )
             except ValueError as err:
                 errors.append((paper_number, err))
