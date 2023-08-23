@@ -2,11 +2,13 @@
 # Copyright (C) 2023 Brennen Chiu
 
 import arrow
+from datetime import datetime, timedelta
 from typing import Dict, Tuple, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Sum
+from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
 from Mark.services import MarkingTaskService
@@ -26,7 +28,7 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @transaction.atomic
-    def get_total_annotations_based_on_user(self) -> Dict[str, int]:
+    def get_total_annotations_count_based_on_user(self) -> Dict[str, int]:
         """Retrieve annotations based on user.
 
         Returns:
@@ -53,7 +55,7 @@ class UserInfoServices:
 
     @transaction.atomic
     def get_annotations_based_on_user(
-        self,
+        self, annotations
     ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
         """Retrieve annotations based on the combination of user, question number, and version.
 
@@ -66,9 +68,6 @@ class UserInfoServices:
                 as keys, and nested dictionaries as values containing the count of annotations
                 and average marking time for each (question_number, question_version) combination.
         """
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
         count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
         total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
 
@@ -203,3 +202,19 @@ class UserInfoServices:
         return MarkingTask.objects.filter(
             question_number=question, question_version=version
         ).count()
+
+    @transaction.atomic
+    def filter_annotations_by_time(self, days=0, hours=0, minutes=0, seconds=0):
+        
+        all_times_zero = all(time == 0 for time in [days, hours, minutes, seconds])
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+
+        if all_times_zero:
+            return annotations
+        else:
+            return annotations.filter(
+                time_of_last_update__gte=timezone.now() - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds))
+    
+

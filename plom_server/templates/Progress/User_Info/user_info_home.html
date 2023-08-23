@@ -22,6 +22,12 @@
                 {% endfor %}
             </table>
             <div>
+                <form method="get" action="">
+                    <div>{{ annotation_filter_form }}</div>
+                    <button type="submit" class="btn btn-success">Filter</button>
+                </form>
+            </div>
+            <div>
                 <ul class="nav nav-tabs" id="annotationTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active"
