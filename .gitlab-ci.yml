@@ -418,6 +418,29 @@ pydocstyle-server:
 
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - export PYTHONPATH=$PWD
+    - python3 -m pip install coverage~=7.2.7
+    - pushd plom_server
+    - export PLOM_USING_DOCKER=1
+    - export PLOM_DATABASE_BACKEND=sqlite
+    - coverage run --source="." manage.py test
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
+    - coverage xml -i -o django_coverage.xml
+    - popd
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: plom_server/django_coverage.xml
+
+
+webplom_demo:
   services:
     - postgres:12.2-alpine
   variables:
@@ -431,23 +454,12 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - python3 -m pip install coverage~=7.2.7
     - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
-    - coverage run --source='.' manage.py test
-    # -i ignores an error caused by openCV's config-3.py file
-    - coverage report -i --precision=2
-    - coverage xml -i -o django_coverage.xml
     - popd
-  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: plom_server/django_coverage.xml
 
-
+  
 # a legacy-only job
 demoserver:
   stage: test
