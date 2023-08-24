@@ -10,7 +10,7 @@ import pydoc
 import re
 from inspect import getfile
 
-from Demo.services import ConfigFileService, ConfigPreparationService
+from Demo.services import ConfigFileService, ConfigPreparationService, ConfigTaskService
 
 
 class ConfigTestCase(TestCase):
@@ -23,9 +23,8 @@ class ConfigTestCase(TestCase):
             return
 
         config = ConfigFileService.read_server_config(self.config_file)
-        ConfigPreparationService.create_test_preparation(
-            config
-        )  # TODO: only up to test-papers
+        ConfigPreparationService.create_test_preparation(config)
+        ConfigTaskService.init_all_tasks(config)
 
 
 def config_test(config_path=None):
@@ -56,6 +55,7 @@ def config_test(config_path=None):
                 config = ConfigFileService.read_server_config(config_path)
 
             ConfigPreparationService.create_test_preparation(config)
+            ConfigTaskService.init_all_tasks(config)
             method(self, *args, **kwargs)
 
         return wrapper_config_test

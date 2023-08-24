@@ -55,6 +55,7 @@ class PlomServerConfig:
     qvmap: Optional[Union[str, Path]] = None
     bundles: Optional[List[DemoBundleConfig]] = None
     hw_bundles: Optional[List[DemoHWBundleConfig]] = None
+    auto_init_tasks: bool = False
 
     def __post__init(self):
         """Validate the config beyond type checking."""
@@ -74,6 +75,10 @@ class PlomServerConfig:
             if self.num_to_produce is None and self.qvmap is None:
                 raise PlomConfigError(
                     "Bundles are specified but the config lacks a qvmap or num_to_produce field."
+                )
+            if self.auto_init_tasks:
+                raise PlomConfigError(
+                    "Bundles are specified but auto_init_tasks is set true: unspecified behavior."
                 )
 
 
@@ -102,7 +107,6 @@ def read_server_config_from_string(
     try:
         config = tomllib.loads(config_str)
         config["parent_dir"] = parent_dir
-        print(config)
         return PlomServerConfig(**config)
     except tomllib.TOMLDecodeError as e:
         raise ValueError(e)

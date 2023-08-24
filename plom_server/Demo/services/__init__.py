@@ -12,4 +12,5 @@ from .config_files import (
     DemoBundleConfig,
     DemoHWBundleConfig,
     ConfigPreparationService,
+    ConfigTaskService,
 )
