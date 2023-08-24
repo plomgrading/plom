@@ -95,12 +95,16 @@ def create_qv_map(config: PlomServerConfig):
     else:
         # TODO: extra validation steps here?
         try:
-            with open(config.qvmap, newline="") as qvmap_file:  # type: ignore
+            qvmap_path = config.parent_dir / config.qvmap
+            with open(qvmap_path, newline="") as qvmap_file:  # type: ignore
                 qvmap_rows = csv.DictReader(qvmap_file)
                 qvmap = {}
                 for row in qvmap_rows:
                     paper_number = row.pop("p", None)
-                    qvmap[paper_number] = row
+                    if paper_number in qvmap:
+                        qvmap[paper_number][row["q"]] = row["v"]
+                    else:
+                        qvmap[paper_number] = {row["q"]: row["v"]}
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e)

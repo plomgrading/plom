@@ -64,16 +64,17 @@ class MarkingTaskTestsWithConfig(TestCase):
 
         Config:
         test_spec = "config_files/tiny_spec.toml"
-        num_to_produce = 2
+        qvmap = "config_files/tiny_qvmap.csv"
         auto_init_tasks = true
         """
-        task1 = MarkingTask.objects.get(question_number=1, question_version=1)
+        task1 = MarkingTask.objects.get(
+            question_number=1, question_version=1
+        )
         task2 = MarkingTask.objects.get(question_number=1, question_version=2)
         task3 = MarkingTask.objects.get(question_number=2, question_version=1)
         task4 = MarkingTask.objects.get(question_number=2, question_version=2)
 
         mts = MarkingTaskService()
-        mts.set_task_priorities("papernum")
 
         self.assertEqual(mts.get_first_available_task(), task1)
         self.assertEqual(mts.get_first_available_task(1, 2), task2)
