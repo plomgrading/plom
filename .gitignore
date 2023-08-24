@@ -153,8 +153,8 @@ model_cache/
 
 # misc
 *.json
-*.csv
 *.db
+marks.csv
 
 # API secrets
 **/api_secrets*
