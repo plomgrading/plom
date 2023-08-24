@@ -427,6 +427,8 @@ webplom_test:
     - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - export PLOM_DATABASE_BACKEND=sqlite
+    - python3 manage.py makemigrations
+    - python3 manage.py migrate
     - coverage run --source="." manage.py test
     # -i ignores an error caused by openCV's config-3.py file
     - coverage report -i --precision=2
