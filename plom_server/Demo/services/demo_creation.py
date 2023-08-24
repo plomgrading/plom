@@ -46,15 +46,6 @@ class DemoCreationService:
                 f"{spec_path}",
             )
 
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Specification",
-            f"-o{fixdir}/test_spec.json",
-        )
-
         if config.test_sources:
             sources = config.test_sources
             if sources == "demo":
@@ -95,27 +86,9 @@ class DemoCreationService:
             print("No papers to produce. Stopping.")
             return
 
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Preparation",
-            f"-o{fixdir}/preparation.json",
-        )
-
     def build_db_and_papers(self):
         print("Populating database in background")
         call_command("plom_papers", "build_db", "manager")
-
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Paper",
-            "--exclude=Papers.FixedPage",
-            "--exclude=Papers.IDPage",
-            f"-o{fixdir}/papers.json",
-        )
 
         call_command("plom_preparation_extrapage", "build")
         call_command("plom_preparation_scrap_paper", "build")

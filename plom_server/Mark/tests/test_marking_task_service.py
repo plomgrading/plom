@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
+from Base.tests import config_test
 
 from Preparation.models import StagingPQVMapping
 from Papers.models import Paper, QuestionPage, Image
@@ -422,11 +423,15 @@ class MarkingTaskServiceTests(TestCase):
         mts.set_paper_marking_task_outdated(2, 1)
 
 
-class TestMarkingTasksWithFixtures(TestCase):
-    fixtures = ["test_spec.json", "preparation.json", "papers.json"]
-
+class TestMarkingTasksWithConfig(TestCase):
+    @config_test
     def test_create_task(self):
-        """Test MarkingTaskService.create_task()"""
+        """Test MarkingTaskService.create_task()
+
+        Config:
+        test_spec = "demo"
+        num_to_produce = 2
+        """
         paper1 = Paper.objects.get(paper_number=1)
         paper2 = Paper.objects.get(paper_number=2)
 
@@ -446,12 +451,14 @@ class TestMarkingTasksWithFixtures(TestCase):
         self.assertEqual(task2.question_version, question_version2)
         self.assertEqual(task2.code, "q0002g1")
 
+    @config_test
     def test_marking_task_before_pqvmap(self):
-        """Test that .create_task() fails if there is no QV map."""
-        paper1 = Paper.objects.get(paper_number=1)
+        """Test that .create_task() fails if there is no QV map.
 
-        # Remove QV map for testing purposes
-        StagingPQVMapping.objects.all().delete()
+        Config:
+        test_spec = "demo"
+        """
+        paper1 = baker.make(Paper, paper_number=1)
 
         with self.assertRaises(RuntimeError):
             mts = MarkingTaskService()
