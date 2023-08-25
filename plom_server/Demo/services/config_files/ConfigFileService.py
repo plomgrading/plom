@@ -52,7 +52,7 @@ class PlomServerConfig:
     prenaming_enabled: bool = False
     classlist: Optional[Union[str, Path]] = None
     num_to_produce: Optional[int] = None
-    qvmap: Optional[Union[str, Path]] = None
+    qvmap: Optional[Path] = None
     bundles: Optional[List[DemoBundleConfig]] = None
     hw_bundles: Optional[List[DemoHWBundleConfig]] = None
     auto_init_tasks: bool = False

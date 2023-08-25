@@ -9,6 +9,8 @@ server will be created in order from test specification to building test-papers.
 
 import sys
 import csv
+from typing import List, Dict
+from pathlib import Path
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -55,13 +57,16 @@ def create_specification(config: PlomServerConfig):
 
 def upload_test_sources(config: PlomServerConfig):
     """Upload test sources specified in a config."""
-    source_paths = config.test_sources
-    if source_paths == "demo":
+    sources = config.test_sources
+    if sources == "demo":
         version1 = resources.files(useful_files) / "test_version1.pdf"
         version2 = resources.files(useful_files) / "test_version2.pdf"
         source_paths = [version1, version2]
+    else:
+        source_paths: List[str] = sources
+
     try:
-        for i, path in enumerate(source_paths):  # type: ignore
+        for i, path in enumerate(source_paths):
             TestSourceService().store_test_source(i + 1, path)
     except Exception as e:
         raise PlomConfigCreationError(e)
@@ -74,11 +79,14 @@ def set_prenaming_setting(config: PlomServerConfig):
 
 def upload_classlist(config: PlomServerConfig):
     """Upload classlist specified in a config."""
-    classlist_path = config.classlist
-    if classlist_path == "demo":
+    classlist = config.classlist
+    if classlist == "demo":
         classlist_path = resources.files(useful_files) / "cl_for_demo.csv"
+    else:
+        classlist_path: Path = classlist
+
     try:
-        with open(classlist_path, "rb") as classlist_f:  # type: ignore
+        with open(classlist_path, "rb") as classlist_f:
             success, warnings = StagingClasslistCSVService().take_classlist_from_upload(
                 classlist_f
             )
@@ -100,10 +108,16 @@ def create_qv_map(config: PlomServerConfig):
     else:
         # TODO: extra validation steps here?
         try:
-            qvmap_path = config.parent_dir / config.qvmap  # type: ignore
-            with open(qvmap_path, "rb") as qvmap_file:  # type: ignore
+            qvmap = config.qvmap
+            if qvmap is None:
+                raise RuntimeError(
+                    "Number to produce and qvmap path missing from config."
+                )
+
+            qvmap_path = config.parent_dir / qvmap
+            with open(qvmap_path, "rb") as qvmap_file:
                 qvmap_rows = tomllib.load(qvmap_file)
-                qvmap = {}  # type: ignore
+                qvmap: Dict[str, Dict[int, int]] = {}
                 for i in range(len(qvmap_rows)):
                     paper_number = str(i + 1)
                     row = qvmap_rows[paper_number]
