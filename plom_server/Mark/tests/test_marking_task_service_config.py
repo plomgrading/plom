@@ -67,9 +67,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         qvmap = "config_files/tiny_qvmap.toml"
         auto_init_tasks = true
         """
-        task1 = MarkingTask.objects.get(
-            question_number=1, question_version=1
-        )
+        task1 = MarkingTask.objects.get(question_number=1, question_version=1)
         task2 = MarkingTask.objects.get(question_number=1, question_version=2)
         task3 = MarkingTask.objects.get(question_number=2, question_version=1)
         task4 = MarkingTask.objects.get(question_number=2, question_version=2)

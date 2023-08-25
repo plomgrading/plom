@@ -14,7 +14,7 @@ if sys.version_info >= (3, 10):
     from importlib import resources
 else:
     import importlib_resources as resources
-    
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
@@ -100,15 +100,17 @@ def create_qv_map(config: PlomServerConfig):
     else:
         # TODO: extra validation steps here?
         try:
-            qvmap_path = config.parent_dir / config.qvmap # type: ignore
+            qvmap_path = config.parent_dir / config.qvmap  # type: ignore
             with open(qvmap_path, "rb") as qvmap_file:  # type: ignore
                 qvmap_rows = tomllib.load(qvmap_file)
                 qvmap = {}  # type: ignore
                 print("TOML:", qvmap_rows)
                 for i in range(len(qvmap_rows)):
-                    paper_number = str(i+1)
+                    paper_number = str(i + 1)
                     row = qvmap_rows[paper_number]
-                    qvmap[paper_number] = {j: row[j-1] for j in range(1, len(row)+1)} 
+                    qvmap[paper_number] = {
+                        j: row[j - 1] for j in range(1, len(row) + 1)
+                    }
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e)
