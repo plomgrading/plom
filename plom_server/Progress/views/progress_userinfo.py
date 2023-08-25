@@ -19,24 +19,31 @@ class ProgressUserInfoHome(ManagerRequiredView):
         annotation_count_dict = uis.get_total_annotations_count_based_on_user()
 
         if filter_form.is_valid():
-            day_filter = filter_form.cleaned_data['day_filter']
+            day_filter = filter_form.cleaned_data["day_filter"]
             hour_filter = filter_form.cleaned_data["hour_filter"]
+            minute_filter = filter_form.cleaned_data["minute_filter"]
 
             if not day_filter:
                 day_filter = 0
-            
+
             if not hour_filter:
                 hour_filter = 0
 
-            filtered_annotations = uis.filter_annotations_by_time(days=int(day_filter), hours=int(hour_filter))
+            if not minute_filter:
+                minute_filter = 0
 
-        annotations_grouped_by_user = uis.get_annotations_based_on_user(filtered_annotations)
+            filtered_annotations = uis.filter_annotations_by_time(
+                days=int(day_filter), hours=int(hour_filter), minutes=int(minute_filter)
+            )
+
+        annotations_grouped_by_user = uis.get_annotations_based_on_user(
+            filtered_annotations
+        )
         annotations_grouped_by_question_num_ver = (
             uis.get_annotations_based_on_question_number_version(
                 annotations_grouped_by_user
             )
         )
-        
 
         context.update(
             {

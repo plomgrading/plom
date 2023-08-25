@@ -205,7 +205,6 @@ class UserInfoServices:
 
     @transaction.atomic
     def filter_annotations_by_time(self, days=0, hours=0, minutes=0, seconds=0):
-        
         all_times_zero = all(time == 0 for time in [days, hours, minutes, seconds])
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
@@ -215,6 +214,6 @@ class UserInfoServices:
             return annotations
         else:
             return annotations.filter(
-                time_of_last_update__gte=timezone.now() - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds))
-    
-
+                time_of_last_update__gte=timezone.now()
+                - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+            )
