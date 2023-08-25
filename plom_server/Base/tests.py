@@ -56,7 +56,7 @@ def config_test(config_input: Optional[Union[str, dict]] = None):
                 config = ConfigFileService.read_server_config_from_string(
                     config_str, parent_dir=parent_dir
                 )
-            elif type(config_input) == str:
+            elif type(config_input) is str:
                 config = ConfigFileService.read_server_config(config_input)
             else:
                 config_input["parent_dir"] = Path(getfile(method)).parent
