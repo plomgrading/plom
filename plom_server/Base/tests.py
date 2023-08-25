@@ -3,14 +3,19 @@
 
 from django.test import TestCase
 
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 from functools import wraps
 from pathlib import Path
 import pydoc
 import re
 from inspect import getfile
 
-from Demo.services import ConfigFileService, ConfigPreparationService, ConfigTaskService
+from Demo.services import (
+    ConfigFileService,
+    ConfigPreparationService,
+    ConfigTaskService,
+    PlomServerConfig,
+)
 
 
 class ConfigTestCase(TestCase):
@@ -27,7 +32,7 @@ class ConfigTestCase(TestCase):
         ConfigTaskService.init_all_tasks(config)
 
 
-def config_test(config_path=None):
+def config_test(config_input: Optional[Union[str, dict]] = None):
     def config_test_decorator(method):
         @wraps(method)
         def wrapper_config_test(self, *args, **kwargs):
@@ -36,7 +41,7 @@ def config_test(config_path=None):
                     "Using a class-level config in combination with method-level configs is currently not supported."
                 )
 
-            if config_path is None:
+            if config_input is None:
                 docstring = method.__doc__
                 synopsis, config_description = pydoc.splitdoc(docstring)
                 config_description = re.split(r"\n\s*", config_description.strip())
@@ -51,8 +56,11 @@ def config_test(config_path=None):
                 config = ConfigFileService.read_server_config_from_string(
                     config_str, parent_dir=parent_dir
                 )
+            elif type(config_input) == str:
+                config = ConfigFileService.read_server_config(config_input)
             else:
-                config = ConfigFileService.read_server_config(config_path)
+                config_input["parent_dir"] = Path(getfile(method)).parent
+                config = PlomServerConfig(**config_input)
 
             ConfigPreparationService.create_test_preparation(config)
             ConfigTaskService.init_all_tasks(config)

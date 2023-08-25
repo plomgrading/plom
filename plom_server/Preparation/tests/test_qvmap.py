@@ -17,13 +17,9 @@ from . import config_files
 
 
 class PQVMappingServiceTests(TestCase):
-    @config_test()
+    @config_test({"test_spec": "config_files/tiny_spec.toml"})
     def test_num_to_produce(self):
-        """Test that the created QV Map has the correct number of test-papers.
-
-        Config:
-        test_spec = "config_files/tiny_spec.toml"
-        """
+        """Test that the created QV Map has the correct number of test-papers."""
 
         pqvs = PQVMappingService()
         self.assertFalse(pqvs.is_there_a_pqv_map())

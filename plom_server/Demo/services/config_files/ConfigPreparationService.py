@@ -104,7 +104,6 @@ def create_qv_map(config: PlomServerConfig):
             with open(qvmap_path, "rb") as qvmap_file:  # type: ignore
                 qvmap_rows = tomllib.load(qvmap_file)
                 qvmap = {}  # type: ignore
-                print("TOML:", qvmap_rows)
                 for i in range(len(qvmap_rows)):
                     paper_number = str(i + 1)
                     row = qvmap_rows[paper_number]
