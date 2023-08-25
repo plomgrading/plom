@@ -64,7 +64,7 @@ class MarkingTaskTestsWithConfig(TestCase):
 
         Config:
         test_spec = "config_files/tiny_spec.toml"
-        qvmap = "config_files/tiny_qvmap.csv"
+        qvmap = "config_files/tiny_qvmap.toml"
         auto_init_tasks = true
         """
         task1 = MarkingTask.objects.get(
