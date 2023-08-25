@@ -3,28 +3,21 @@
 
 import sys
 
-if sys.version_info < (3, 11):
-    import tomli as tomllib
+if sys.version_info >= (3, 10):
+    from importlib import resources
 else:
-    import tomllib
+    import importlib_resources as resources
 
 from django.test import TestCase
 from django.conf import settings
 
-from Papers.services import SpecificationService
+from Base.tests import config_test
 from ..services import PQVMappingService
+from . import config_files
 
 
 class PQVMappingServiceTests(TestCase):
-    def setUp(self):
-        toml_path = (
-            settings.BASE_DIR
-            / "Preparation"
-            / "useful_files_for_testing"
-            / "testing_test_spec.toml"
-        )
-        SpecificationService.load_spec_from_toml(toml_path)
-
+    @config_test({"test_spec": "config_files/tiny_spec.toml"})
     def test_num_to_produce(self):
         """Test that the created QV Map has the correct number of test-papers."""
 
@@ -33,4 +26,4 @@ class PQVMappingServiceTests(TestCase):
 
         qvmap = pqvs.make_version_map(1)
         self.assertEqual(len(qvmap), 1)
-        self.assertEqual(len(qvmap[1]), 3)
+        self.assertEqual(len(qvmap[1]), 2)

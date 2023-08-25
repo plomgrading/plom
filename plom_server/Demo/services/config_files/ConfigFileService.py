@@ -46,6 +46,7 @@ class PlomServerConfig:
     Can be saved to a .toml file, or loaded from a toml to quickly spin up a server with a pre-defined state.
     """
 
+    parent_dir: Path
     test_spec: Optional[Union[str, Path]] = None
     test_sources: Optional[Union[str, List[Path]]] = None
     prenaming_enabled: bool = False
@@ -54,6 +55,7 @@ class PlomServerConfig:
     qvmap: Optional[Union[str, Path]] = None
     bundles: Optional[List[DemoBundleConfig]] = None
     hw_bundles: Optional[List[DemoHWBundleConfig]] = None
+    auto_init_tasks: bool = False
 
     def __post__init(self):
         """Validate the config beyond type checking."""
@@ -74,6 +76,10 @@ class PlomServerConfig:
                 raise PlomConfigError(
                     "Bundles are specified but the config lacks a qvmap or num_to_produce field."
                 )
+            if self.auto_init_tasks:
+                raise PlomConfigError(
+                    "Bundles are specified but auto_init_tasks is set true: unspecified behavior."
+                )
 
 
 def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
@@ -88,6 +94,19 @@ def read_server_config(path: Union[str, Path]) -> PlomServerConfig:
     with open(path, "rb") as config_file:
         try:
             config = tomllib.load(config_file)
+            config["parent_dir"] = Path(path).parent
             return PlomServerConfig(**config)
         except tomllib.TOMLDecodeError as e:
             raise ValueError(e)
+
+
+def read_server_config_from_string(
+    config_str: str, parent_dir: Optional[Path] = None
+) -> PlomServerConfig:
+    """Create a server config from a TOML-formatted string."""
+    try:
+        config = tomllib.loads(config_str)
+        config["parent_dir"] = parent_dir
+        return PlomServerConfig(**config)
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(e)

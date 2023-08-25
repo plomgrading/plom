@@ -15,6 +15,11 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 from Papers.services import (
     SpecificationService,
     PaperCreatorService,
@@ -35,9 +40,14 @@ from . import PlomServerConfig, PlomConfigCreationError
 def create_specification(config: PlomServerConfig):
     """Create a test specification from a config."""
     spec_path = config.test_spec
-    if spec_path == "demo":
-        spec_src = resources.files(useful_files) / "testing_test_spec.toml"
+    if spec_path is None:
+        return
+
     try:
+        if spec_path == "demo":
+            spec_src = resources.files(useful_files) / "testing_test_spec.toml"
+        else:
+            spec_src = config.parent_dir / spec_path
         SpecificationService.load_spec_from_toml(spec_src, update_staging=True)
     except Exception as e:
         raise PlomConfigCreationError(e)
@@ -90,12 +100,16 @@ def create_qv_map(config: PlomServerConfig):
     else:
         # TODO: extra validation steps here?
         try:
-            with open(config.qvmap, newline="") as qvmap_file:  # type: ignore
-                qvmap_rows = csv.DictReader(qvmap_file)
-                qvmap = {}
-                for row in qvmap_rows:
-                    paper_number = row.pop("p", None)
-                    qvmap[paper_number] = row
+            qvmap_path = config.parent_dir / config.qvmap  # type: ignore
+            with open(qvmap_path, "rb") as qvmap_file:  # type: ignore
+                qvmap_rows = tomllib.load(qvmap_file)
+                qvmap = {}  # type: ignore
+                for i in range(len(qvmap_rows)):
+                    paper_number = str(i + 1)
+                    row = qvmap_rows[paper_number]
+                    qvmap[paper_number] = {
+                        j: row[j - 1] for j in range(1, len(row) + 1)
+                    }
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e)
@@ -121,18 +135,24 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
     echo("Creating specification...")
     create_specification(config)
 
-    echo("Uploading test sources...")
-    upload_test_sources(config)
+    if config.test_sources:
+        echo("Uploading test sources...")
+        upload_test_sources(config)
 
     echo("Setting prenaming and uploading classlist...")
-    set_prenaming_setting(config)
-    upload_classlist(config)
+    if config.prenaming_enabled:
+        set_prenaming_setting(config)
+    if config.classlist:
+        upload_classlist(config)
 
-    echo("Creating question-version map...")
-    create_qv_map(config)
+    if config.num_to_produce or config.qvmap:
+        echo("Creating question-version map...")
+        create_qv_map(config)
 
-    echo("Creating test paper instances...")
-    create_papers(config)
+    if PQVMappingService().is_there_a_pqv_map():
+        echo("Creating test paper instances...")
+        create_papers(config)
 
-    TestPreparedSetting.set_test_prepared(True)
-    echo("Preparation complete.")
+    if TestPreparedSetting.can_status_be_set_true():
+        TestPreparedSetting.set_test_prepared(True)
+        echo("Preparation complete.")

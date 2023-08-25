@@ -20,13 +20,11 @@ class ServerConfigTests(TestCase):
         valid_config = {
             "num_to_produce": 8,
             "test_spec": "demo",
+            "parent_dir": ".",
         }
         PlomServerConfig(**valid_config)
 
-        invalid_config = {
-            "n_to_produce": 7,
-            "test_spec": "demo",
-        }
+        invalid_config = {"n_to_produce": 7, "test_spec": "demo", "parent_dir": "."}
 
         with self.assertRaises(TypeError):
             PlomServerConfig(**invalid_config)
