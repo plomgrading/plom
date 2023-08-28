@@ -69,9 +69,7 @@ class MarkingTaskService:
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            from random import random
-
-            priority = random() * 1000
+            priority = random.randint(0, 1000)
 
         the_task = MarkingTask(
             assigned_user=user,
@@ -309,7 +307,7 @@ class MarkingTaskService:
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
             with transaction.atomic():
                 for task in tasks:
-                    task.marking_priority = random.random() * 1000
+                    task.marking_priority = random.randint(0, 1000)
                     task.save()
 
         elif order_by == "papernum":

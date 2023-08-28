@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Edith Coates
 
 import csv
 from io import StringIO
@@ -16,7 +17,7 @@ class TaskOrderService:
         self,
         order: str,
         *,
-        custom_order: Union[Dict[tuple[int, int], float], None] = None,
+        custom_order: Union[Dict[tuple[int, int], int], None] = None,
     ):
         """Update the priority ordering of tasks."""
         mts = MarkingTaskService()
@@ -60,7 +61,7 @@ class TaskOrderService:
             for (paper_number, question_number), priority in task_priorities.items()
         ]
 
-    def handle_file_upload(self, csv_data) -> Dict[tuple[int, int], float]:
+    def handle_file_upload(self, csv_data) -> Dict[tuple[int, int], int]:
         """Handle uploaded file data of task priorities.
 
         Args:
@@ -73,6 +74,6 @@ class TaskOrderService:
         custom_priorities = {}
         for row in csv_data:
             key = (int(row[0]), int(row[1]))
-            custom_priorities[key] = float(row[2])
+            custom_priorities[key] = int(row[2])
 
         return custom_priorities

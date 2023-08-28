@@ -192,7 +192,7 @@ class MarkingTaskServiceTests(TestCase):
 
         mts = MarkingTaskService()
         mts.set_task_priorities(
-            order_by="custom", custom_order={(1, 1): 8.9, (2, 1): 359.2, (3, 2): -16.3}
+            order_by="custom", custom_order={(1, 1): 9, (2, 1): 356, (3, 2): 0}
         )
 
         task = mts.get_first_available_task()
@@ -200,10 +200,8 @@ class MarkingTaskServiceTests(TestCase):
         task.status = MarkingTask.COMPLETE
         task.save()
 
-        self.assertAlmostEqual(MarkingTask.objects.get(code="1").marking_priority, 8.9)
-        self.assertAlmostEqual(
-            MarkingTask.objects.get(code="3").marking_priority, -16.3
-        )
+        self.assertEqual(MarkingTask.objects.get(code="1").marking_priority, 9)
+        self.assertEqual(MarkingTask.objects.get(code="3").marking_priority, 0)
 
         task = mts.get_first_available_task()
         task.status = MarkingTask.COMPLETE
