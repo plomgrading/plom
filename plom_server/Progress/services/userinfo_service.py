@@ -244,5 +244,5 @@ class UserInfoServices:
         latest_annotation_humanize = arrow.get(
             latest_annotation.time_of_last_update
         ).humanize()
-        
+
         return latest_annotation_humanize
