@@ -16,7 +16,7 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Max
 from django.db import transaction
 
 from plom import is_valid_tag_text
@@ -83,22 +83,6 @@ class MarkingTaskService:
         )
         the_task.save()
         return the_task
-
-    def init_all_tasks(self):
-        """Initialize all of the marking tasks for an entire exam, with null users."""
-        if not SpecificationService.is_there_a_spec():
-            raise RuntimeError("The server does not have a spec.")
-
-        spec = SpecificationService.get_the_spec()
-        n_questions = spec["numberOfQuestions"]
-
-        all_papers = Paper.objects.all()
-        all_papers = all_papers.order_by("paper_number")[
-            :10
-        ]  # TODO: just the first ten!
-        for p in all_papers:
-            for i in range(1, n_questions + 1):
-                self.create_task(p, i)
 
     def get_marking_progress(self, version, question):
         """Send back current marking progress counts to the client.
@@ -261,6 +245,8 @@ class MarkingTaskService:
     ) -> Union[QuerySet[MarkingTask], None]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If the priority is the same, defer to paper number and then question number.
+
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
@@ -280,7 +266,19 @@ class MarkingTaskService:
         if not available.exists():
             return None
 
-        return available.order_by("-marking_priority").first()
+        # max_priority_query = MarkingTask.objects.agreggate(Max("marking_priority"))
+        # max_priority = max_priority_query["marking_priority__max"]
+
+        ordering = available.order_by(
+            "-marking_priority", "paper__paper_number", "question_number"
+        )
+
+        print()
+        elems = [{"priority": t.marking_priority, "papernum": t.paper.paper_number, "question": t.question_number} for t in ordering]
+        print(elems)
+        print()
+
+        return ordering.first()
 
     def set_task_priorities(
         self,
