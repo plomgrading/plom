@@ -266,19 +266,9 @@ class MarkingTaskService:
         if not available.exists():
             return None
 
-        # max_priority_query = MarkingTask.objects.agreggate(Max("marking_priority"))
-        # max_priority = max_priority_query["marking_priority__max"]
-
-        ordering = available.order_by(
+        return available.order_by(
             "-marking_priority", "paper__paper_number", "question_number"
-        )
-
-        print()
-        elems = [{"priority": t.marking_priority, "papernum": t.paper.paper_number, "question": t.question_number} for t in ordering]
-        print(elems)
-        print()
-
-        return ordering.first()
+        ).first()
 
     def set_task_priorities(
         self,
