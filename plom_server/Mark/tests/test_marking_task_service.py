@@ -14,7 +14,7 @@ from Preparation.models import StagingPQVMapping
 from Papers.models import Paper, QuestionPage, Image
 
 from ..services import MarkingTaskService
-from ..models import MarkingTask, AnnotationImage
+from ..models import MarkingTask, AnnotationImage, MarkingTaskPriority
 from Papers.services import ImageBundleService
 
 
@@ -154,7 +154,7 @@ class MarkingTaskServiceTests(TestCase):
         )
 
         mts = MarkingTaskService()
-        mts.set_task_priorities("papernum")
+        mts.set_task_priorities(MarkingTaskPriority.PAPER_NUMBER)
 
         task = mts.get_first_available_task()
         self.assertEqual(task, task1)
@@ -192,7 +192,8 @@ class MarkingTaskServiceTests(TestCase):
 
         mts = MarkingTaskService()
         mts.set_task_priorities(
-            order_by="custom", custom_order={(1, 1): 9, (2, 1): 356, (3, 2): 0}
+            order_by=MarkingTaskPriority.CUSTOM,
+            custom_order={(1, 1): 9, (2, 1): 356, (3, 2): 0},
         )
 
         task = mts.get_first_available_task()
@@ -226,7 +227,7 @@ class MarkingTaskServiceTests(TestCase):
                 p += 1
 
         mts = MarkingTaskService()
-        mts.set_task_priorities(order_by="random")
+        mts.set_task_priorities(order_by=MarkingTaskPriority.RANDOM)
 
         for task in MarkingTask.objects.all():
             self.assertNotEqual(task.marking_priority, -1)

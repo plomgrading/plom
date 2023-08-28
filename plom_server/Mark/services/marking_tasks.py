@@ -9,7 +9,7 @@ import imghdr
 import json
 import pathlib
 import random
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 
 from rest_framework.exceptions import ValidationError
 
@@ -29,6 +29,7 @@ from Rubrics.models import Rubric
 from ..models import (
     MarkingTask,
     MarkingTaskTag,
+    MarkingTaskPriority,
     Annotation,
     AnnotationImage,
 )
@@ -64,12 +65,19 @@ class MarkingTaskService:
             old_task.save()
 
         # get priority of latest old task to assign to new task, but
-        # if no previous priority exists, set to a random float
+        # if no previous priority exists, set a new value based on the current strategy
         latest_old_task = previous_tasks.order_by("-time").first()
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
-            priority = random.randint(0, 1000)
+            strategy = MarkingTaskPriority.load().strategy
+            if strategy == MarkingTaskPriority.PAPER_NUMBER:
+                priority = Paper.objects.count() - paper.paper_number
+            elif strategy == MarkingTaskPriority.RANDOM:
+                priority = random.randint(0, 1000)
+            else:
+                custom = MarkingTaskPriority.load().custom_priority
+                priority = custom[f"{paper.paper_number},{question_number}"]
 
         the_task = MarkingTask(
             assigned_user=user,
@@ -268,11 +276,12 @@ class MarkingTaskService:
             "-marking_priority", "paper__paper_number", "question_number"
         ).first()
 
+    @transaction.atomic
     def set_task_priorities(
         self,
-        order_by: str = "random",
+        order_by: MarkingTaskPriority.StrategyChoices = MarkingTaskPriority.RANDOM,
         *,
-        custom_order: Union[Dict[tuple[int, int], float], None] = None,
+        custom_order: Optional[Dict[tuple[int, int], int]] = None,
     ):
         """Set the marking task priorities.
 
@@ -290,7 +299,8 @@ class MarkingTaskService:
         dictionary, then it is ignored.
 
         Args:
-            order_by: (str) the method to use for ordering the tasks. Options are "random", "papernum", and "custom".
+            order_by: (MarkingTaskPriority.StrategyChoices) the method to use for ordering the tasks.
+                One of RANDOM, PAPER_NUMBER, or CUSTOM.
             custom_order: (dict) a dictionary keyed by tuple (paper_number, question) containing the corresponding task's priority.
 
         Raises:
@@ -298,37 +308,35 @@ class MarkingTaskService:
             ObjectDoesNotExist: if `order_by` is "custom" and `custom_order` is not a dictionary,
                 or if `order_by` is "custom" and a task in `custom_order` does not exist.
         """
-        assert order_by in (
-            "random",
-            "papernum",
-            "custom",
+        assert (
+            order_by in MarkingTaskPriority.StrategyChoices
         ), "Invalid value for order_by"
-        if order_by == "random":
-            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
-            with transaction.atomic():
-                for task in tasks:
-                    task.marking_priority = random.randint(0, 1000)
-                    task.save()
 
-        elif order_by == "papernum":
+        if order_by == MarkingTaskPriority.RANDOM:
+            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+            for task in tasks:
+                task.marking_priority = random.randint(0, 1000)
+            MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
+
+        elif order_by == MarkingTaskPriority.PAPER_NUMBER:
             n_papers = Paper.objects.count()
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related(
                 "paper"
             )
-            with transaction.atomic():
-                for task in tasks:
-                    task.marking_priority = n_papers - task.paper.paper_number
-                    task.save()
+            for task in tasks:
+                task.marking_priority = n_papers - task.paper.paper_number
+            MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
 
-        elif order_by == "custom":
+        elif order_by == MarkingTaskPriority.CUSTOM:
             assert isinstance(
                 custom_order, dict
             ), "`custom_order` must be of type Dict[tuple[int, int], float]."
-            with transaction.atomic():
-                for k, v in custom_order.items():
-                    task = self.get_latest_task(k[0], k[1])
-                    task.marking_priority = v
-                    task.save()
+            tasks = []
+            for k, v in custom_order.items():
+                task = self.get_latest_task(k[0], k[1])
+                task.marking_priority = v
+                tasks.append(task)
+            MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
