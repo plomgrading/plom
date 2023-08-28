@@ -221,7 +221,7 @@ class MarkingTaskServiceTests(TestCase):
                     question_version=v,
                     paper__paper_number=p,
                     code="1",
-                    marking_priority=-1,
+                    marking_priority=0,
                 )
                 p += 1
 
