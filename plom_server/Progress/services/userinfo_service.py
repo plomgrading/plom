@@ -167,7 +167,6 @@ class UserInfoServices:
 
         Returns:
             str: A human-readable time string.
-
         """
         present = arrow.utcnow()
 
@@ -230,3 +229,20 @@ class UserInfoServices:
                 time_of_last_update__gte=timezone.now()
                 - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
             )
+
+    @transaction.atomic
+    def get_latest_updated_annotation(self) -> str:
+        """Get the human readable time of the latest updated annotation.
+
+        Returns:
+            str: Human-readable time of the latest updated annotation.
+        """
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        latest_annotation = annotations.latest("time_of_last_update")
+        latest_annotation_humanize = arrow.get(
+            latest_annotation.time_of_last_update
+        ).humanize()
+        
+        return latest_annotation_humanize

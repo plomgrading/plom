@@ -24,11 +24,14 @@
             <div class="mb-3">
                 <form method="get" action="">
                     <div>
-                        <h6>Filter annotations by time:</h6>
+                        <h6><b>Filter annotations by time:</b></h6>
                         {{ annotation_filter_form }}
                     </div>
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </form>
+            </div>
+            <div class="mb-3">
+                <p><b>Latest Updated Annotation: {{ latest_updated_annotation }}</b></p>
             </div>
             <div>
                 <ul class="nav nav-tabs" id="annotationTab" role="tablist">
