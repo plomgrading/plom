@@ -7,7 +7,7 @@ from typing import Dict, Tuple, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
@@ -204,7 +204,20 @@ class UserInfoServices:
         ).count()
 
     @transaction.atomic
-    def filter_annotations_by_time(self, days=0, hours=0, minutes=0, seconds=0):
+    def filter_annotations_by_time(
+        self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0
+    ) -> QuerySet[Annotation]:
+        """Filter annotations by time.
+
+        Args:
+            days: (int) Number of days.
+            hours: (int) Number of hours.
+            minutes: (int) Number of minutes.
+            seconds: (int) Number of seconds.
+
+        Returns:
+            QuerySet: Filtered queryset of annotations.
+        """
         all_times_zero = all(time == 0 for time in [days, hours, minutes, seconds])
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
