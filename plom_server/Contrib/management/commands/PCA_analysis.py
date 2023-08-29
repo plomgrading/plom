@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Colin B. Macdonald
 
 import pandas as pd
 
 from argparse import RawTextHelpFormatter
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -45,13 +46,9 @@ python3 manage.py PCA_analysis 2 --of-students
 class Command(BaseCommand):
     help = HELP_TEXT
 
-    sms = StudentMarkService()
-    spec = Specification.load()
-
-    print("Loading data from media/marks.csv")
-    student_marks = pd.read_csv("media/marks.csv")
-    clean_student_df = student_marks.dropna()
-    question_df = clean_student_df.filter(regex="q[0-9]*_mark")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.question_df = None
 
     def create_parser(self, *args, **kwargs):
         parser = super(Command, self).create_parser(*args, **kwargs)
@@ -70,6 +67,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # sms = StudentMarkService()
+        # spec = Specification.get_the_spec()
+        print("Loading data from media/marks.csv")
+        try:
+            _student_marks = pd.read_csv("media/marks.csv")
+        except OSError as e:
+            raise CommandError(e) from None
+        _clean_student_df = _student_marks.dropna()
+        self.question_df = _clean_student_df.filter(regex="q[0-9]*_mark")
+
         num_components = options["num_components"]
 
         data = self.question_df.loc[:, :].values
