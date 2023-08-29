@@ -6,7 +6,7 @@ import csv
 from io import StringIO
 from typing import Dict, Union
 
-from Mark.models import MarkingTask
+from Mark.models import MarkingTask, MarkingTaskPriority
 from Mark.services import MarkingTaskService
 
 
@@ -21,7 +21,12 @@ class TaskOrderService:
     ):
         """Update the priority ordering of tasks."""
         mts = MarkingTaskService()
-        mts.set_task_priorities(order_by=order, custom_order=custom_order)
+        order_by = MarkingTaskPriority.PAPER_NUMBER
+        if order == "random":
+            order_by = MarkingTaskPriority.RANDOM
+        elif order == "custom":
+            order_by = MarkingTaskPriority.CUSTOM
+        mts.set_task_priorities(order_by=order_by, custom_order=custom_order)
 
     def get_task_priorities(self) -> dict:
         """Get the task priorities.
