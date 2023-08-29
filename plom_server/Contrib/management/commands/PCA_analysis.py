@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 # from Finish.services import StudentMarkService
 # from Papers.models import Specification
@@ -28,7 +29,8 @@ This command performs PCA on the question marks per student. It can also
 perform PCA on the students if the --of-students flag is used. The number of
 components to use is specified by the num_components argument.
 
-The data is read from media/marks.csv. This file must have the question marks
+The data is read from MEDIA_ROOT / marks.csv (usually "media/marks.csv").
+This file must be created by the finishing process and have the question marks
 labelled as q1_mark, q2_mark, etc. The data is allowed to have NaN values, but
 these rows will be dropped before performing PCA. The file's first column must
 be the identifier for the student/paper.
@@ -70,11 +72,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # sms = StudentMarkService()
         # spec = Specification.get_the_spec()
-        print("Loading data from media/marks.csv")
+        csv = settings.MEDIA_ROOT / "marks.csv"
+        print(f"Loading data from {csv}")
         try:
-            _student_marks = pd.read_csv("media/marks.csv")
+            settings.MEDIA_ROOT
+            _student_marks = pd.read_csv(csv)
         except OSError as e:
-            raise CommandError(e) from None
+            raise CommandError(e)
         _clean_student_df = _student_marks.dropna()
         self.question_df = _clean_student_df.filter(regex="q[0-9]*_mark")
 
@@ -139,5 +143,6 @@ class Command(BaseCommand):
             plt.scatter(principalDf["PC0"], principalDf["PC1"])
             plt.xlabel("PC0")
             plt.ylabel("PC1")
-            plt.savefig("media/PCA_plot.png")
-            print("PCA plot saved to media/PCA_plot.png")
+            f = settings.MEDIA_ROOT / "PCA_plot.png"
+            plt.savefig(f)
+            print(f"PCA plot saved to {f}")
