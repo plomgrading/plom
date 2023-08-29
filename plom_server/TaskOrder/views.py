@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.models import Specification
+from Papers.services import SpecificationService
 from .forms import TaskOrderForm, UploadFileForm
 from .services.task_ordering_service import TaskOrderService
 
@@ -67,7 +67,7 @@ class TaskOrderPageView(ManagerRequiredView):
     def download_priorities(request):
         """Download the task priorities."""
         tos = TaskOrderService()
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
         keys = tos.get_csv_header()
         priorities = tos.get_task_priorities_download()
 

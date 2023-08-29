@@ -8,6 +8,7 @@ import subprocess
 from time import sleep
 from shlex import split
 import sys
+from dataclasses import asdict
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -35,7 +36,7 @@ class DemoCreationService:
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
         )
-        spec_path = config["test_spec"]
+        spec_path = config.test_spec
         if spec_path == "demo":
             call_command("plom_demo_spec")
         else:
@@ -45,20 +46,14 @@ class DemoCreationService:
                 f"{spec_path}",
             )
 
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Specification",
-            f"-o{fixdir}/test_spec.json",
-        )
-
-        if "test_sources" in config.keys():
-            sources = config["test_sources"]
+        if config.test_sources:
+            sources = config.test_sources
+            if sources == "demo":
+                sources = [
+                    resources.files(useful_files) / "test_version1.pdf",
+                    resources.files(useful_files) / "test_version2.pdf",
+                ]
             for i, src in enumerate(sources):
-                if src == "demo":
-                    src = resources.files(useful_files) / f"test_version{i+1}.pdf"
                 call_command(
                     "plom_preparation_test_source",
                     "upload",
@@ -69,11 +64,11 @@ class DemoCreationService:
             print("No test sources specified. Stopping.")
             return
 
-        if "prenaming" in config.keys() and config["prenaming"]:
+        if config.prenaming_enabled:
             call_command("plom_preparation_prenaming", enable=True)
 
-        if "classlist" in config.keys():
-            f = config["classlist"]
+        if config.classlist:
+            f = config.classlist
             if f == "demo":
                 f = resources.files(useful_files) / "cl_for_demo.csv"
             call_command(
@@ -82,34 +77,18 @@ class DemoCreationService:
                 f,
             )
 
-        if "num_to_produce" in config.keys():
-            n_to_produce = config["num_to_produce"]
+        if (
+            config.num_to_produce is not None
+        ):  # TODO: users should be able to specify path to custom qvmap
+            n_to_produce = config.num_to_produce
             call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
         else:
             print("No papers to produce. Stopping.")
             return
 
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Preparation",
-            f"-o{fixdir}/preparation.json",
-        )
-
     def build_db_and_papers(self):
         print("Populating database in background")
         call_command("plom_papers", "build_db", "manager")
-
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Paper",
-            "--exclude=Papers.FixedPage",
-            "--exclude=Papers.IDPage",
-            f"-o{fixdir}/papers.json",
-        )
 
         call_command("plom_preparation_extrapage", "build")
         call_command("plom_preparation_scrap_paper", "build")
@@ -263,10 +242,10 @@ class DemoCreationService:
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
-        if "bundles" not in config.keys():
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "extra_page_papers" in bundle.keys():
@@ -296,10 +275,10 @@ class DemoCreationService:
                         )
 
     def map_pages_to_discards(self, config):
-        if "bundles" not in config.keys():
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "discard_pages" in bundle.keys():
