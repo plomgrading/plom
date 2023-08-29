@@ -19,6 +19,8 @@ from Scan.models import (
     StagingImage,
 )
 
+from Preparation.services import TestPreparedSetting
+
 from Papers.models import (
     Bundle,
     Image,
@@ -93,6 +95,7 @@ class ImageBundleService:
         paper number, and don't collide with any currently uploaded pages) upload all the pages
         using bulk ORM calls.
 
+        0. Check that preparation has been finished
         1. Check that all the staging images have page numbers and test numbers
         2. Check that no staging images collide with each other
         3. Check that no staging images collide with any uploaded images
@@ -102,6 +105,9 @@ class ImageBundleService:
             RuntimeError
             ValueError
         """
+        if not TestPreparedSetting.is_test_prepared():
+            raise RuntimeError("Test preparation has not been marked as finished.")
+
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(
@@ -404,3 +410,69 @@ class ImageBundleService:
             A query of only the ID pages in the input bundle
         """
         return IDPage.objects.filter(image__bundle=bundle)
+
+    @transaction.atomic
+    def is_given_paper_ready_for_id_ing(self, paper_obj) -> bool:
+        """Check if the id page of the given paper has an image and so is ready for id-ing.
+
+        Args:
+            paper_obj (Paper): the database paper to check
+
+        Returns:
+            bool: true when paper is ready for id-ing (ie the IDpage has an image)
+        """
+        return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
+
+    @transaction.atomic
+    def is_given_paper_question_ready(
+        self, paper_obj: Paper, question_number: int
+    ) -> bool:
+        """Check if a given paper/question is ready for marking.
+
+        Note that to be ready the question must either
+          * have all its fixed pages with images (and any
+            number of mobile pages), or
+          * have no fixed pages with images but some mobile pages
+
+
+        Args:
+            paper_obj (Paper): the database paper object to check
+            question_number (int): the question number to check
+        Returns:
+            bool: true when the question of the given paper is ready for marking, false otherwise
+        Raises:
+            ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
+
+        """
+        q_pages = QuestionPage.objects.filter(
+            paper=paper_obj, question_number=question_number
+        )
+        # todo - this should likely be replaced with a spec check
+        if not q_pages.exists():
+            raise ValueError(
+                f"There are no question_pages at all for paper {paper_obj.paper_number} question {question_number}"
+            )
+
+        qp_no_img = q_pages.filter(image__isnull=True).exists()
+        qp_with_img = q_pages.filter(image__isnull=False).exists()
+        # note that (qp_no_img or qp_with_img == True)
+        mp_present = MobilePage.objects.filter(
+            paper=paper_obj, question_number=question_number
+        ).exists()
+
+        if qp_with_img:
+            # there are some fixed pages with images
+            if qp_no_img:
+                # there are some fixed pages without images, so partially scanned. not ready.
+                return False
+            else:
+                # all fixed question pages have images, so it is ready
+                return True
+        else:
+            # all fixed pages have no images.
+            if mp_present:
+                # the question has no fixed pages scanned, but does have a mobile page, so ready.
+                return True
+            else:
+                # no images present at all, so not ready
+                return False

@@ -5,4 +5,12 @@ from .demo_processes import DemoProcessesService
 from .demo_creation import DemoCreationService
 from .demo_bundle import DemoBundleService
 from .demo_hw_bundles import DemoHWBundleService
-from .config_files import ServerConfigService, PlomConfigError
+from .config_files import (
+    ConfigFileService,
+    PlomConfigError,
+    PlomServerConfig,
+    DemoBundleConfig,
+    DemoHWBundleConfig,
+    ConfigPreparationService,
+    ConfigTaskService,
+)

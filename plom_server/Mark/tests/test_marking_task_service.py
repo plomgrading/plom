@@ -2,16 +2,20 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.test import TestCase
+from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
+from Base.tests import config_test
 
 from Preparation.models import StagingPQVMapping
-from Papers.models import Paper
+from Papers.models import Paper, QuestionPage, Image
 
 from ..services import MarkingTaskService
-from ..models import MarkingTask
+from ..models import MarkingTask, AnnotationImage
+from Papers.services import ImageBundleService
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -122,43 +126,6 @@ class MarkingTaskServiceTests(TestCase):
 
         next_task = mts.get_first_available_task()
         self.assertEqual(next_task, task5)
-
-    def test_get_first_filter(self):
-        """
-        Test MarkingTaskService.get_first_available_task() with a specified question and version
-        """
-
-        baker.make(
-            MarkingTask,
-            status=MarkingTask.TO_DO,
-            question_number=1,
-            question_version=1,
-            paper__paper_number=1,
-            code="1",
-            marking_priority=1,
-        )
-        task2 = baker.make(
-            MarkingTask,
-            status=MarkingTask.TO_DO,
-            question_number=1,
-            question_version=2,
-            paper__paper_number=2,
-            code="2",
-            marking_priority=2,
-        )
-        baker.make(
-            MarkingTask,
-            status=MarkingTask.TO_DO,
-            question_number=2,
-            question_version=2,
-            paper__paper_number=3,
-            code="3",
-            marking_priority=3,
-        )
-
-        mts = MarkingTaskService()
-        task = mts.get_first_available_task(1, 2)
-        self.assertEqual(task, task2)
 
     def test_set_task_priorities(self):
         task1 = baker.make(
@@ -300,99 +267,59 @@ class MarkingTaskServiceTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task.status, MarkingTask.TO_DO)
 
-    def test_user_can_update_task(self):
-        """
-        Test MarkingTaskService.user_can_update_task()
-        """
-
-        user = baker.make(User)
-        other_user = baker.make(User)
+    def test_marking_outdated(self):
+        mts = MarkingTaskService()
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
         paper1 = baker.make(Paper, paper_number=1)
-        paper2 = baker.make(Paper, paper_number=2)
-        paper3 = baker.make(Paper, paper_number=3)
-        paper4 = baker.make(Paper, paper_number=4)
-        paper5 = baker.make(Paper, paper_number=5)
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
 
-        baker.make(
+        user0 = baker.make(User)
+        task1a = baker.make(
             MarkingTask,
             code="q0001g1",
-            status=MarkingTask.OUT,
-            assigned_user=user,
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
             paper=paper1,
             question_number=1,
         )
-        baker.make(
+        task1b = baker.make(
+            MarkingTask,
+            code="q0001g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper1,
+            question_number=1,
+        )
+        self.assertRaises(
+            MultipleObjectsReturned, mts.set_paper_marking_task_outdated, 1, 1
+        )
+
+        task1c = baker.make(
+            MarkingTask,
+            code="q0001g2",
+            status=MarkingTask.OUT_OF_DATE,
+            assigned_user=user0,
+            paper=paper1,
+            question_number=2,
+        )
+        self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
+
+        paper2 = baker.make(Paper, paper_number=2)
+        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
+        # todo - this should likely be replaced with a spec check
+        qp2 = baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
+
+        task2a = baker.make(
             MarkingTask,
             code="q0002g1",
             status=MarkingTask.TO_DO,
-            assigned_user=None,
+            assigned_user=user0,
             paper=paper2,
             question_number=1,
         )
-        baker.make(
-            MarkingTask,
-            code="q0003g1",
-            status=MarkingTask.OUT,
-            assigned_user=other_user,
-            paper=paper3,
-            question_number=1,
-        )
-        baker.make(
-            MarkingTask,
-            code="q0004g1",
-            status=MarkingTask.COMPLETE,
-            assigned_user=user,
-            paper=paper4,
-            question_number=1,
-        )
-        baker.make(
-            MarkingTask,
-            code="q0005g1",
-            status=MarkingTask.COMPLETE,
-            assigned_user=other_user,
-            paper=paper5,
-            question_number=1,
-        )
-
-        mts = MarkingTaskService()
-        self.assertTrue(mts.user_can_update_task(user, "q0001g1"))
-        self.assertFalse(mts.user_can_update_task(user, "q0002g1"))
-        self.assertFalse(mts.user_can_update_task(user, "q0003g1"))
-        self.assertTrue(mts.user_can_update_task(user, "q0004g1"))
-        self.assertFalse(mts.user_can_update_task(user, "q0005g1"))
-
-
-class TestMarkingTasksWithFixtures(TestCase):
-    fixtures = ["test_spec.json", "preparation.json", "papers.json"]
-
-    def test_create_task(self):
-        """Test MarkingTaskService.create_task()"""
-        paper1 = Paper.objects.get(paper_number=1)
-        paper2 = Paper.objects.get(paper_number=2)
-
-        mts = MarkingTaskService()
-        task1 = mts.create_task(paper1, 1)
-        task2 = mts.create_task(paper2, 1)
-
-        question_version1 = StagingPQVMapping.objects.get(
-            paper_number=1, question=1
-        ).version
-        question_version2 = StagingPQVMapping.objects.get(
-            paper_number=2, question=1
-        ).version
-
-        self.assertEqual(task1.question_version, question_version1)
-        self.assertAlmostEqual(task1.code, "q0001g1")
-        self.assertEqual(task2.question_version, question_version2)
-        self.assertEqual(task2.code, "q0002g1")
-
-    def test_marking_task_before_pqvmap(self):
-        """Test that .create_task() fails if there is no QV map."""
-        paper1 = Paper.objects.get(paper_number=1)
-
-        # Remove QV map for testing purposes
-        StagingPQVMapping.objects.all().delete()
-
-        with self.assertRaises(RuntimeError):
-            mts = MarkingTaskService()
-            mts.create_task(paper1, 1)
+        mts.assign_task_to_user(user0, task2a)
+        an_img1 = baker.make(AnnotationImage)
+        mts.mark_task(user0, "q0002g1", 3, 17, an_img1, {"sceneItems": []})
+        an_img2 = baker.make(AnnotationImage)
+        mts.mark_task(user0, "q0002g1", 2, 21, an_img2, {"sceneItems": []})
+        mts.set_paper_marking_task_outdated(2, 1)

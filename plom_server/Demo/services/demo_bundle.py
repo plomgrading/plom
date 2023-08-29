@@ -9,6 +9,7 @@ import csv
 from pathlib import Path
 import tempfile
 from typing import List, Dict
+from dataclasses import asdict
 
 import fitz
 
@@ -50,9 +51,9 @@ class DemoBundleService:
 
         Args:
             out_file (path.Path): path to the monolithic scribble PDF
-            config (dict): server config
+            config (PlomServerConfig): server config
         """
-        bundles = config["bundles"]
+        bundles = config.bundles
         default_n_pages = self.get_default_paper_length()
 
         with fitz.open(out_file) as scribble_pdf:
@@ -61,27 +62,21 @@ class DemoBundleService:
             curr_bundle_idx = 0
             bundle_doc = None
 
-            for paper in range(1, config["num_to_produce"] + 1):
+            for paper in range(1, config.num_to_produce + 1):
                 print("PAPER", paper)
 
-                curr_bundle = bundles[curr_bundle_idx]
+                curr_bundle = asdict(bundles[curr_bundle_idx])
                 for key in curr_bundle.keys():
                     if key in [
                         "garbage_page_papers",
                         "duplicate_page_papers",
                     ]:
                         if paper in curr_bundle[key]:
-                            print(
-                                f"to index incremented because paper {paper} is in {key}"
-                            )
                             to_page_idx += 1
                     elif key == "duplicates":
                         for inst in curr_bundle["duplicates"]:
                             if inst["paper"] == paper:
                                 to_page_idx += 1
-
-                print("From", from_page_idx)
-                print("to", to_page_idx)
 
                 if paper == curr_bundle["first_paper"]:
                     bundle_doc = fitz.open()
@@ -103,6 +98,14 @@ class DemoBundleService:
             "plom_preparation_extrapage",
             "download",
             settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
+        )
+
+    def get_scrap_paper(self) -> None:
+        # Assumes that the scrap paper has been generated
+        call_command(
+            "plom_preparation_scrap_paper",
+            "download",
+            settings.MEDIA_ROOT / "papersToPrint/scrap_paper.pdf",
         )
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
@@ -208,6 +211,31 @@ class DemoBundleService:
                 font=fitz.Font("helv"),
             )
             assert not excess, "Text didn't fit: is extra-page text too long?"
+            tw.write_text(pdf_doc[-1])
+            tw.write_text(pdf_doc[-2])
+
+    def append_scrap_page(self, pdf_doc, paper_number, student_id, scrap_paper_path):
+        with fitz.open(scrap_paper_path) as scrap_paper_pdf:
+            pdf_doc.insert_pdf(
+                scrap_paper_pdf,
+                from_page=0,
+                to_page=1,
+                start_at=-1,
+            )
+            page_rect = pdf_doc[-1].rect
+            # stamp some info on it - TODO - make this look better.
+            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+            # TODO - make these numbers less magical
+            maxbox = fitz.Rect(25, 400, 500, 600)
+            # page.draw_rect(maxbox, color=(1, 0, 0))
+            excess = tw.fill_textbox(
+                maxbox,
+                f"SCRAP PAPER DNM - t{paper_number} - {student_id}",
+                align=fitz.TEXT_ALIGN_LEFT,
+                fontsize=18,
+                font=fitz.Font("helv"),
+            )
+            assert not excess, "Text didn't fit: is scrap-paper text too long?"
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
@@ -338,15 +366,18 @@ class DemoBundleService:
         self,
         assigned_papers_ids,
         extra_page_path,
+        scrap_paper_path,
         out_file,
         *,
         extra_page_papers=[],
+        scrap_page_papers=[],
         garbage_page_papers=[],
         duplicate_pages=[],
         duplicate_qr=[],
         wrong_version=[],
     ):
         # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
+        # scrap_page_papers = list of paper_numbers to which we append a couple of scrap-paper pages
         # garbage_page_papers = list of paper_numbers to which we append a garbage page
         # duplicate_pages = a list of papers to have their final page duplicated.
         # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
@@ -371,6 +402,13 @@ class DemoBundleService:
                             paper["paper_number"],
                             paper["id"],
                             extra_page_path,
+                        )
+                    if paper_number in scrap_page_papers:
+                        self.append_scrap_page(
+                            pdf_document,
+                            paper["paper_number"],
+                            paper["id"],
+                            scrap_paper_path,
                         )
                     if paper_number in duplicate_pages:
                         self.append_duplicate_page(pdf_document, duplicate_pages)
@@ -404,7 +442,7 @@ class DemoBundleService:
         return self._flatten([bundle[key] for bundle in filtered])
 
     def scribble_on_exams(self, config):
-        bundles = config["bundles"]
+        bundles = config.bundles
         n_bundles = len(bundles)
 
         classlist = self.get_classlist_as_dict()
@@ -413,6 +451,8 @@ class DemoBundleService:
         paper_list = [paper for paper in papers_to_print.glob("exam*.pdf")]
         self.get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
         extra_page_path = papers_to_print / "extra_page.pdf"
+        self.get_scrap_paper()  # download copy of the scrap_paper pdf to papersToPrint subdirectory
+        scrap_paper_path = papers_to_print / "scrap_paper.pdf"
 
         number_papers_to_use = classlist_length
         papers_to_use = sorted(paper_list)[:number_papers_to_use]
@@ -437,8 +477,10 @@ class DemoBundleService:
             self.scribble_bundle(
                 papers_in_bundle,
                 extra_page_path,
+                scrap_paper_path,
                 bundle_path,
                 extra_page_papers=bundle["extra_page_papers"],
+                scrap_page_papers=bundle["scrap_page_papers"],
                 garbage_page_papers=bundle["garbage_page_papers"],
                 duplicate_pages=bundle["duplicate_pages"],
                 duplicate_qr=bundle["duplicate_qr"],

@@ -13,6 +13,7 @@
                                 <th>Order</th>
                                 <th>Reason</th>
                                 <th>Discarded image</th>
+                                <th>Discard pk</th>
                             </tr>
                             {% for disc in discards %}
                                 <tr>
@@ -24,21 +25,23 @@
                                                 hx-target="#discardImageHere"
                                                 hx-replace="innerHTML"
                                                 class="btn btn-outline-primary">view</button>
-                                    </tr>
-                                {% endfor %}
-                            </table>
-                        </div>
+                                    </td>
+                                    <td>{{ disc.discard_pk }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>
-            <div class="col p-2 border" id="pushedDiscardFragment">
-                <h6>Discarded image</h6>
-                <div style="height: 30vw;
-                            width: 30vw;
-                            justify-content: center;
-                            display:flex;
-                            align-items:center"
-                     id="discardImageHere"></div>
-            </div>
         </div>
-    {% endblock main_card_content %}
+        <div class="col p-2 border" id="pushedDiscardFragment">
+            <h6>Discarded image</h6>
+            <div style="height: 30vw;
+                        width: 40vw;
+                        justify-content: center;
+                        display:flex;
+                        align-items:center"
+                 id="discardImageHere"></div>
+        </div>
+    </div>
+{% endblock main_card_content %}
