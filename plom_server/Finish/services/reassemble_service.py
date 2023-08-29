@@ -445,7 +445,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassembletask
         pdf_build = huey_reassemble_paper(paper_number)
@@ -458,7 +458,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
         task = paper_obj.reassembletask
         return task.pdf_file
 
@@ -467,7 +467,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassembletask
         # if the task is queued then remove it from the queue
@@ -518,7 +518,7 @@ class ReassembleService:
             task.save()
 
     @transaction.atomic
-    def get_completed_pdf_files(self):
+    def get_completed_pdf_files(self) -> list:
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
             task.pdf_file
@@ -543,7 +543,7 @@ def huey_reassemble_paper(paper_number: int) -> None:
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
-        raise ValueError("No paper with that number")
+        raise ValueError("No paper with that number") from None
     task = paper_obj.reassembletask
 
     reas = ReassembleService()
