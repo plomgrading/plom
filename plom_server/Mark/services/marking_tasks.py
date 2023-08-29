@@ -321,6 +321,8 @@ class MarkingTaskService:
                 paper_number, question_number = key
                 custom_order_reformatted[f"{paper_number},{question_number}"] = priority
             priority_setting.custom_priority = custom_order_reformatted
+        else:
+            priority_setting.custom_priority = {}
         priority_setting.save()
 
         if order_by == MarkingTaskPriority.RANDOM:
