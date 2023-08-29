@@ -3,21 +3,20 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import arrow
 from pathlib import Path
 import tempfile
+
+import arrow
 import zipfly
-
-from plom.finish.coverPageBuilder import makeCover
-from plom.finish.examReassembler import reassemble
-
 
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
-
 from django_huey import db_task, get_queue
+
+from plom.finish.coverPageBuilder import makeCover
+from plom.finish.examReassembler import reassemble
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask, Annotation
