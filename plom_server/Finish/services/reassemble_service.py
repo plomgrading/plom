@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import arrow
 from pathlib import Path
@@ -441,7 +442,7 @@ class ReassembleService:
             )
 
     @transaction.atomic
-    def queue_single_paper_reassembly(self, paper_number):
+    def queue_single_paper_reassembly(self, paper_number: int) -> None:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -454,7 +455,7 @@ class ReassembleService:
         task.save()
 
     @transaction.atomic
-    def get_single_reassembled_file(self, paper_number):
+    def get_single_reassembled_file(self, paper_number: int):
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -463,7 +464,7 @@ class ReassembleService:
         return task.pdf_file
 
     @transaction.atomic
-    def reset_single_paper_reassembly(self, paper_number):
+    def reset_single_paper_reassembly(self, paper_number: int) -> None:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -483,7 +484,7 @@ class ReassembleService:
         task.save()
 
     @transaction.atomic
-    def reset_all_paper_reassembly(self):
+    def reset_all_paper_reassembly(self) -> None:
         queue = get_queue("tasks")
         for task in ReassembleTask.objects.exclude(status=ReassembleTask.TO_DO).all():
             # if the task is queued then remove it from the queue
@@ -497,7 +498,7 @@ class ReassembleService:
             task.save()
 
     @transaction.atomic
-    def queue_all_paper_reassembly(self):
+    def queue_all_paper_reassembly(self) -> None:
         # first work out which papers are ready
         for pn, data in self.alt_get_all_paper_status().items():
             # check if both id'd and marked
@@ -539,7 +540,7 @@ class ReassembleService:
 
 
 @db_task(queue="tasks")
-def huey_reassemble_paper(paper_number):
+def huey_reassemble_paper(paper_number: int) -> None:
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:

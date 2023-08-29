@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 test_spec = "demo"
-test_sources = ["demo", "demo"]
+test_sources = "demo"
 prenaming_enabled = true
 classlist = "demo"
 num_to_produce = 25

@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
 import imghdr
 import json
@@ -15,7 +16,7 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Max
 from django.db import transaction
 
 from plom import is_valid_tag_text
@@ -62,31 +63,26 @@ class MarkingTaskService:
             old_task.assigned_user = None
             old_task.save()
 
+        # get priority of latest old task to assign to new task, but
+        # if no previous priority exists, set to a random float
+        latest_old_task = previous_tasks.order_by("-time").first()
+        if latest_old_task:
+            priority = latest_old_task.marking_priority
+        else:
+            from random import random
+
+            priority = random() * 1000
+
         the_task = MarkingTask(
             assigned_user=user,
             code=task_code,
             paper=paper,
             question_number=question_number,
             question_version=question_version,
+            marking_priority=priority,
         )
         the_task.save()
         return the_task
-
-    def init_all_tasks(self):
-        """Initialize all of the marking tasks for an entire exam, with null users."""
-        if not SpecificationService.is_there_a_spec():
-            raise RuntimeError("The server does not have a spec.")
-
-        spec = SpecificationService.get_the_spec()
-        n_questions = spec["numberOfQuestions"]
-
-        all_papers = Paper.objects.all()
-        all_papers = all_papers.order_by("paper_number")[
-            :10
-        ]  # TODO: just the first ten!
-        for p in all_papers:
-            for i in range(1, n_questions + 1):
-                self.create_task(p, i)
 
     def get_marking_progress(self, version, question):
         """Send back current marking progress counts to the client.
@@ -249,6 +245,8 @@ class MarkingTaskService:
     ) -> Union[QuerySet[MarkingTask], None]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If the priority is the same, defer to paper number and then question number.
+
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
@@ -268,7 +266,9 @@ class MarkingTaskService:
         if not available.exists():
             return None
 
-        return available.order_by("-marking_priority").first()
+        return available.order_by(
+            "-marking_priority", "paper__paper_number", "question_number"
+        ).first()
 
     def set_task_priorities(
         self,

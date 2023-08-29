@@ -11,7 +11,7 @@ from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
 from ..services import StudentMarkService, TaMarkingService, ReassembleService
 from ..forms import StudentMarksFilterForm
@@ -78,7 +78,7 @@ class MarkingInformationView(ManagerRequiredView):
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         # create csv file headers
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
@@ -114,7 +114,7 @@ class MarkingInformationView(ManagerRequiredView):
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         ta_info = tms.build_csv_data()
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         keys = tms.get_csv_header()
         response = None
