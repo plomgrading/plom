@@ -2,16 +2,17 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Colin B. Macdonald
 
-import pandas as pd
-
 from argparse import RawTextHelpFormatter
-from django.core.management.base import BaseCommand, CommandError
+
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-from Finish.services import StudentMarkService
-from Papers.models import Specification
+from django.core.management.base import BaseCommand, CommandError
+
+# from Finish.services import StudentMarkService
+# from Papers.models import Specification
 
 
 HELP_TEXT = """
