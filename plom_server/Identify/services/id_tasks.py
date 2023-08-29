@@ -296,3 +296,17 @@ class IdentifyTaskService:
             raise ValueError(
                 f"Task with paper number {paper_obj.paper_number} does not exist."
             )
+
+    def update_task_priority_cmd(self, increasing_cert: bool = True) -> None:
+        """A wrapper around update_task_priority() for toggling between ID sorting order.
+
+        Modifies the priority of all tasks marked as TODO.
+
+        Args:
+            increasing_cert: a boolean flag that indicates whether the ID tasks
+                are presented in order of increasing certainty.
+                If false, they are presented in order of decreasing certainty.
+        """
+        todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
+        for task in todo_tasks:
+            self.update_task_priority(task.paper, increasing_cert=increasing_cert)
