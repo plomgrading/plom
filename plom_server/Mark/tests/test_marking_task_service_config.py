@@ -73,7 +73,6 @@ class MarkingTaskTestsWithConfig(TestCase):
         task4 = MarkingTask.objects.get(question_number=2, question_version=2)
 
         mts = MarkingTaskService()
-        mts.set_task_priorities(order_by=MarkingTaskPriority.PAPER_NUMBER)
 
         self.assertEqual(mts.get_first_available_task(), task1)
         self.assertEqual(mts.get_first_available_task(1, 2), task2)
@@ -140,8 +139,6 @@ class MarkingTaskTestsWithConfig(TestCase):
         task1 = MarkingTask.objects.get(code="q0001g1")
         task2 = MarkingTask.objects.get(code="q0001g2")
         task3 = MarkingTask.objects.get(code="q0002g1")
-
-        mts.set_task_priorities(order_by=MarkingTaskPriority.PAPER_NUMBER)
 
         self.assertEqual(mts.get_first_available_task(), task1)
 

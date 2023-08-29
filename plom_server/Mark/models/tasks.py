@@ -69,7 +69,7 @@ class MarkingTaskPriority(SingletonBaseModel):
     CUSTOM = StrategyChoices.CUSTOM
 
     strategy = models.IntegerField(
-        null=False, choices=StrategyChoices.choices, default=RANDOM
+        null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
     )
     custom_priority = models.JSONField(default=dict)
 

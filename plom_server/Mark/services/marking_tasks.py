@@ -279,7 +279,7 @@ class MarkingTaskService:
     @transaction.atomic
     def set_task_priorities(
         self,
-        order_by: MarkingTaskPriority.StrategyChoices = MarkingTaskPriority.RANDOM,
+        order_by: MarkingTaskPriority.StrategyChoices = MarkingTaskPriority.PAPER_NUMBER,
         *,
         custom_order: Optional[Dict[tuple[int, int], int]] = None,
     ):
@@ -311,6 +311,17 @@ class MarkingTaskService:
         assert (
             order_by in MarkingTaskPriority.StrategyChoices
         ), "Invalid value for order_by"
+
+        priority_setting = MarkingTaskPriority.load()
+        priority_setting.strategy = order_by
+        if custom_order:
+            custom_order_reformatted = {}  # TODO: re-format to store in JSON field
+            for key in custom_order:
+                priority = custom_order[key]
+                paper_number, question_number = key
+                custom_order_reformatted[f"{paper_number},{question_number}"] = priority
+            priority_setting.custom_priority = custom_order_reformatted
+        priority_setting.save()
 
         if order_by == MarkingTaskPriority.RANDOM:
             tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)

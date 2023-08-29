@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Edith Coates
 
 import csv
 from io import StringIO
@@ -23,8 +24,8 @@ class TaskOrderForm(forms.Form):
 
     order_tasks_by = forms.ChoiceField(
         choices=(
-            ("random", "Random order (default)"),
-            ("papernum", "by Paper number"),
+            ("papernum", "by Paper number (default)"),
+            ("random", "Random order"),
             ("custom", "Custom order (requires CSV upload)"),
         ),
         widget=forms.RadioSelect,
