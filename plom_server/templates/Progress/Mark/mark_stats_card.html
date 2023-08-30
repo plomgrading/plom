@@ -3,7 +3,12 @@
     {% if stats.all_task_count == 0 %}
         <div class="card-header">Question {{ question }} Version {{ version }}: no tasks</div>
     {% else %}
-        <div class="card-header">Question {{ question }} Version {{ version }}</div>
+        <div class="card-header">
+            Question {{ question }} Version {{ version }}
+            {% if stats.all_task_count == stats.number_of_completed_tasks %}
+                <i class="bi bi-check-circle text-success"></i>
+            {% endif %}
+        </div>
         <div class="card-body">
             <div class="card-text">
                 <div class="progress m-2"
@@ -12,20 +17,50 @@
                      aria-valuenow="{{ stats.number_of_completed_tasks }}"
                      aria-valuemin="0"
                      aria-valuemax="{{ stats.all_task_count }}">
-                    <div class="progress-bar" style="width: {{ stats.completed_percentage }}%">
-                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                    </div>
+                    {% if stats.all_task_count == stats.number_of_completed_tasks %}
+                        <div class="progress-bar bg-success fs-6"
+                             style="width: {{ stats.completed_percentage }}%">
+                            {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
+                        </div>
+                    {% else %}
+                        <div class="progress-bar fs-6"
+                             style="width: {{ stats.completed_percentage }}%">
+                            {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
+                        </div>
+                    {% endif %}
                 </div>
-                <p>
-                    <ul>
-                        <li>marked = {{ stats.number_of_completed_tasks }} of {{ stats.all_task_count }}</li>
-                        <li>avg time = {{ stats.avg_marking_time }} s</li>
-                        <li>min | max | full = {{ stats.mark_min }} | {{ stats.mark_max }} | {{ stats.mark_full }}</li>
-                        <li>mean | median | mode = {{ stats.mark_mean }} | {{ stats.mark_median }} | {{ stats.mark_mode }}</li>
-                    </ul>
-                </p>
-                <canvas id="hist_{{ question }}_{{ version }}">
+                <table class="table table-sm table-bordered text-center">
+                    <thead>
+                        <tr>
+                            <th>avg time</th>
+                            <th>approx remaining time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ stats.avg_marking_time }} s</td>
+                            <td>{{ stats.approx_remaining_hours }} h</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <canvas id="hist_{{ question }}_{{ version }}" style="max-height:20vh;">
                 </canvas>
+                <table class="table table-sm table-bordered text-center">
+                    <thead>
+                        <tr>
+                            <th>mean</th>
+                            <th>median</th>
+                            <th>mode</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ stats.mark_mean }}</td>
+                            <td>{{ stats.mark_median }}</td>
+                            <td>{{ stats.mark_mode }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     {% endif %}
@@ -48,7 +83,7 @@
 	datasets: [{
 	    label: "counts",
             data: {{hist_values}},
-            borderWidth: 1
+            borderWidth: 3
       }]
     },
       options: {

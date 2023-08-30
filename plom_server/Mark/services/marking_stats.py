@@ -65,6 +65,9 @@ class MarkingStatsService:
 
         stats_dict["number_of_completed_tasks"] = completed_tasks.count()
         stats_dict["all_task_count"] = all_task_count
+        stats_dict["remaining_task_count"] = (
+            stats_dict["all_task_count"] - stats_dict["number_of_completed_tasks"]
+        )
         stats_dict["completed_percentage"] = round(
             stats_dict["number_of_completed_tasks"] / stats_dict["all_task_count"] * 100
         )
@@ -73,6 +76,12 @@ class MarkingStatsService:
             stats_dict["avg_marking_time"] = round(
                 sum([X.latest_annotation.marking_time for X in completed_tasks])
                 / stats_dict["number_of_completed_tasks"]
+            )
+            stats_dict["approx_remaining_hours"] = round(
+                stats_dict["avg_marking_time"]
+                * stats_dict["remaining_task_count"]
+                / 3600,
+                2,
             )
 
         mark_list = [X.latest_annotation.score for X in completed_tasks]
