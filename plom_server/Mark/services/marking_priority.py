@@ -99,9 +99,8 @@ def set_marking_priority_custom(custom_order: Dict[tuple[int, int], int]):
 def modify_task_priority(task: MarkingTask, new_priority: int):
     """Modify the priority of a single marking task.
 
-    If successful, set MarkingTaskPriority.modified to true
+    If successful, set MarkingTaskPriority.modified to true.
     """
-
     task.marking_priority = new_priority
     task.save()
     priority_setting = MarkingTaskPriority.load()
