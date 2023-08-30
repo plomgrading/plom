@@ -84,7 +84,7 @@ class MarkingTaskService:
         the_task.save()
         return the_task
 
-    def get_marking_progress(self, version: int, question: int) -> Tuple[int, int]:
+    def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -92,7 +92,7 @@ class MarkingTaskService:
             version (int)
 
         Returns:
-            tuple: two integers, first the number of marked papers for
+            two integers, first the number of marked papers for
             this question/version and the total number of papers for
             this question/version.
         """
