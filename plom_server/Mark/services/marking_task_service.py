@@ -208,9 +208,9 @@ class MarkingTaskService:
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
-        tag = "suspicious"
-        if tag:
-            print(True)
+        # tag = "suspicious"
+        # if tag:
+        #     print(True)
 
         if question:
             available = available.filter(question_number=question)
@@ -218,21 +218,21 @@ class MarkingTaskService:
         if version:
             available = available.filter(question_version=version)
 
-        print("before")
-        for task in available:
-            # print the tag text for each task
-            print(task.paper.paper_number, task.markingtasktag_set.all())
+        # print("before")
+        # for task in available:
+        #     # print the tag text for each task
+        #     print(task.paper.paper_number, task.markingtasktag_set.all())
 
         if above:
             available = available.filter(paper__paper_number__gte=above)
 
-        if tag:
+        if tag:  # check that this works
             available = available.filter(markingtasktag__text__in=[tag])
 
-        print("after")
-        for task in available:
-            # print the tag text for each task
-            print(task.paper.paper_number, task.markingtasktag_set.all())
+        # print("after")
+        # for task in available:
+        #     # print the tag text for each task
+        #     print(task.paper.paper_number, task.markingtasktag_set.all())
 
         if not available.exists():
             return None
