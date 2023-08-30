@@ -348,6 +348,9 @@ pylint:
 # needs full dependencies, cannot easily run with other early static analysis
 # If exceptions are needed, see "tool.mypy" sections in pyproject.toml
 # Issue #2880: temporarily using 3.9 although our minimum python is 3.8
+# Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
+#       Will make not allowed to fail in the future, once types are more widely adopted in the project
+#       and 3.10 becomes our minimum supported Python version.
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
@@ -359,6 +362,7 @@ mypy-type-checking:
     - mypy plom --python-ver 3.8
     - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
     - mypy plom_server --python-ver 3.9
+  allow_failure: true
 
 
 flake8:
@@ -417,6 +421,31 @@ pydocstyle-server:
 
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - export PYTHONPATH=$PWD
+    - python3 -m pip install coverage~=7.2.7
+    - pushd plom_server
+    - export PLOM_USING_DOCKER=1
+    - export PLOM_DATABASE_BACKEND=sqlite
+    - python3 manage.py makemigrations
+    - python3 manage.py migrate
+    - coverage run --source="." manage.py test
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
+    - coverage xml -i -o django_coverage.xml
+    - popd
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: plom_server/django_coverage.xml
+
+
+webplom_demo:
   services:
     - postgres:12.2-alpine
   variables:
@@ -430,23 +459,12 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - python3 -m pip install coverage~=7.2.7
     - pushd plom_server
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
-    - coverage run --source='.' manage.py test
-    # -i ignores an error caused by openCV's config-3.py file
-    - coverage report -i --precision=2
-    - coverage xml -i -o django_coverage.xml
     - popd
-  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: plom_server/django_coverage.xml
 
-
+  
 # a legacy-only job
 demoserver:
   stage: test
