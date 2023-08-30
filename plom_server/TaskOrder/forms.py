@@ -25,7 +25,7 @@ class TaskOrderForm(forms.Form):
     order_tasks_by = forms.ChoiceField(
         choices=(
             ("papernum", "by Paper number (default)"),
-            ("random", "Random order"),
+            ("shuffle", "Shuffle task order"),
             ("custom", "Custom order (requires CSV upload)"),
         ),
         widget=forms.RadioSelect,

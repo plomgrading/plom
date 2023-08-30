@@ -57,21 +57,21 @@ class MarkingTask(BaseTask):
 class MarkingTaskPriority(SingletonBaseModel):
     """Represents the current strategy for ordering tasks.
 
-    Strategy is an enum of PAPER_NUMBER, RANDOM, or CUSTOM. The state of
+    Strategy is an enum of PAPER_NUMBER, SHUFFLE, or CUSTOM. The state of
     MarkingTaskPriority.load().strategy determines if the marking task
     priority is random, based on paper number, or custom. If custom,
     the priority will be based on the dict stored in the custom_priority field.
     """
 
-    StrategyChoices = models.IntegerChoices("Strategy", "PAPER_NUMBER RANDOM CUSTOM")
+    StrategyChoices = models.IntegerChoices("Strategy", "PAPER_NUMBER SHUFFLE CUSTOM")
     PAPER_NUMBER = StrategyChoices.PAPER_NUMBER
-    RANDOM = StrategyChoices.RANDOM
+    SHUFFLE = StrategyChoices.SHUFFLE
     CUSTOM = StrategyChoices.CUSTOM
 
     strategy = models.IntegerField(
         null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
     )
-    custom_priority = models.JSONField(default=dict)
+    modified = models.BooleanField(default=False, null=False)
 
 
 class MarkingTaskTag(Tag):
