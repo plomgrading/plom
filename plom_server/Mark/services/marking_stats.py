@@ -83,13 +83,13 @@ class MarkingStatsService:
                 / 3600,
                 2,
             )
-
-        mark_list = [X.latest_annotation.score for X in completed_tasks]
-        stats_dict["mark_max"] = max(mark_list)
-        stats_dict["mark_min"] = min(mark_list)
-        stats_dict["mark_median"] = round(statistics.median(mark_list), 1)
-        stats_dict["mark_mean"] = round(statistics.mean(mark_list), 1)
-        stats_dict["mark_mode"] = statistics.mode(mark_list)
+            # the following don't make sense until something is marked
+            mark_list = [X.latest_annotation.score for X in completed_tasks]
+            stats_dict["mark_max"] = max(mark_list)
+            stats_dict["mark_min"] = min(mark_list)
+            stats_dict["mark_median"] = round(statistics.median(mark_list), 1)
+            stats_dict["mark_mean"] = round(statistics.mean(mark_list), 1)
+            stats_dict["mark_mode"] = statistics.mode(mark_list)
 
         return stats_dict
 

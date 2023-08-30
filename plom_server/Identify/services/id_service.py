@@ -122,6 +122,8 @@ class IDService:
                 completed_id_task_list[scanned_id_paper] = None
 
         for id_paper, id_task in completed_id_task_list.items():
+            if not id_task:
+                continue
             latest_id_result = IdentifyTaskService().get_latest_id_results(task=id_task)
             completed_id_task_list.update({id_paper: latest_id_result})
 
