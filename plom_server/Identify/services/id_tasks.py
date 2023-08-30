@@ -109,7 +109,8 @@ class IdentifyTaskService:
     def get_next_task(self) -> Union[PaperIDTask, None]:
         """Return the next available identification task.
 
-        Ordered by iding_priority then by paper number."""
+        Ordered by iding_priority then by paper number.
+        """
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         todo_tasks = todo_tasks.order_by("-iding_priority", "paper__paper_number")
         if todo_tasks:
