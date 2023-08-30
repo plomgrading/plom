@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -15,23 +16,15 @@ class PaperIDTask(BaseTask):
 
     paper: reference to Paper that needs to be IDed.
     latest_action: reference to PaperIDAction, the latest identification for the paper.
-    priority: a float priority that provides the ordering for tasks presented for IDing,
-        which is set to the inverse of the paper number by default.
+    priority: a float priority that provides the ordering for tasks
+        presented for IDing, zero by default.
     """
-
-    def _determine_priority(self):
-        return 1 / self.paper.paper_number
-
-    def save(self, *args, **kwargs):
-        if self.iding_priority is None:
-            self.iding_priority = self._determine_priority()
-        super().save(*args, **kwargs)
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
     latest_action = models.OneToOneField(
         "PaperIDAction", unique=True, null=True, on_delete=models.SET_NULL
     )
-    iding_priority = models.FloatField(null=True, default=None)
+    iding_priority = models.FloatField(null=True, default=0.0)
 
 
 class PaperIDAction(BaseAction):
