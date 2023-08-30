@@ -204,7 +204,7 @@ class UserInfoServices:
 
     @transaction.atomic
     def filter_annotations_by_time(
-        self, days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0
+        self, time: int
     ) -> QuerySet[Annotation]:
         """Filter annotations by time.
 
@@ -217,17 +217,16 @@ class UserInfoServices:
         Returns:
             QuerySet: Filtered queryset of annotations.
         """
-        all_times_zero = all(time == 0 for time in [days, hours, minutes, seconds])
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
 
-        if all_times_zero:
+        if time == 0:
             return annotations
         else:
             return annotations.filter(
                 time_of_last_update__gte=timezone.now()
-                - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+                - timedelta(seconds=int(time))
             )
 
     @transaction.atomic

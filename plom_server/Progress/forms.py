@@ -3,51 +3,26 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django import forms
-
-
-class UploadErrorImageForm(forms.Form):
-    pass
-
+from django.utils import timezone
 
 class AnnotationFilterForm(forms.Form):
-    DAY_CHOICES = [
-        ("0", ""),
-        ("1", "a day ago"),
-        ("2", "2 days ago"),
-        ("3", "3 days ago"),
+    TIME_CHOICES = [
+        ("", ""),
+        ("60", "a minute ago"),
+        ("120", "2 minutes ago"),
+        ("300", "5 minutes ago"),
+        ("600", "10 minutes ago"),
+        ("1200", "20 minutes ago"),
+        ("1800", "30 minutes ago"),
+        ("2400", "40 minutes ago"),
+        ("3000", "50 minutes ago"),
+        ("3600", "an hour ago"),
+        ("5400", "an hour and a half ago"),
+        ("7200", "2 hours ago"),
+        ("10800", "3 hours ago"),
+        ("86400", "a day ago")
     ]
 
-    HOUR_CHOICES = [
-        ("0", ""),
-        ("1", "an hour ago"),
-        ("2", "2 hours ago"),
-        ("3", "3 hours ago"),
-    ]
-
-    MINUTE_CHOICES = [
-        ("0", ""),
-        ("1", "a minute ago"),
-        ("2", "2 minutes ago"),
-        ("5", "5 minutes ago"),
-        ("10", "10 minutes ago"),
-        ("15", "15 minutes ago"),
-        ("30", "30 minutes ago"),
-        ("40", "40 minutes ago"),
-        ("50", "50 minutes ago"),
-    ]
-
-    # SECONDS_CHOICES = [
-    #     ("", 0),
-    #     ("1", "1"),
-    # ]
-
-    day_filter = forms.TypedChoiceField(
-        choices=DAY_CHOICES, required=False, label="Days "
+    time_filter = forms.TypedChoiceField(
+        choices=TIME_CHOICES, required=False, label="Select a time to filter"
     )
-    hour_filter = forms.TypedChoiceField(
-        choices=HOUR_CHOICES, required=False, label="Hours "
-    )
-    minute_filter = forms.TypedChoiceField(
-        choices=MINUTE_CHOICES, required=False, label="Minutes "
-    )
-    # second_filter = forms.TypedChoiceField(choices=SECONDS_CHOICES, required=False)
