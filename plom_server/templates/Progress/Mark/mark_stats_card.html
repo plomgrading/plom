@@ -42,38 +42,38 @@
                             <td>{{ stats.approx_remaining_hours }} h</td>
                         </tr>
                     </tbody>
-                <!-- </table> -->
-                <!-- <table class="table table-sm table-bordered text-center"> -->
-                <!--     <thead> -->
-                <!--         <tr> -->
-                <!--             <th>mean</th> -->
-                <!--             <th>median</th> -->
-                <!--             <th>mode</th> -->
-                <!--         </tr> -->
-                <!--     </thead> -->
-                <!--     <tbody> -->
-                <!--         <tr> -->
-                <!--             <td>{{ stats.mark_mean }}</td> -->
-                <!--             <td>{{ stats.mark_median }}</td> -->
-                <!--             <td>{{ stats.mark_mode }}</td> -->
-                <!--         </tr> -->
-                <!--     </tbody> -->
-                <!-- </table> -->
-                <!-- <canvas id="hist_{{ question }}_{{ version }}" style="max-height:20vh;"> -->
-                <!-- </canvas> -->
+                    <!-- </table> -->
+                    <!-- <table class="table table-sm table-bordered text-center"> -->
+                    <!--     <thead> -->
+                    <!--         <tr> -->
+                    <!--             <th>mean</th> -->
+                    <!--             <th>median</th> -->
+                    <!--             <th>mode</th> -->
+                    <!--         </tr> -->
+                    <!--     </thead> -->
+                    <!--     <tbody> -->
+                    <!--         <tr> -->
+                    <!--             <td>{{ stats.mark_mean }}</td> -->
+                    <!--             <td>{{ stats.mark_median }}</td> -->
+                    <!--             <td>{{ stats.mark_mode }}</td> -->
+                    <!--         </tr> -->
+                    <!--     </tbody> -->
+                    <!-- </table> -->
+                    <!-- <canvas id="hist_{{ question }}_{{ version }}" style="max-height:20vh;"> -->
+                    <!-- </canvas> -->
+                </div>
             </div>
+        {% endif %}
+        <div class="card-footer">
+            <button class="btn btn-info"
+                    hx-swap="outerHTML"
+                    hx-target="#stats_{{ question }}_{{ version }}"
+                    hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
+            <button class="btn btn-success">show details</button>
         </div>
-    {% endif %}
-    <div class="card-footer">
-        <button class="btn btn-info"
-                hx-swap="outerHTML"
-                hx-target="#stats_{{ question }}_{{ version }}"
-                hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
-        <button class="btn btn-success">show details</button>
     </div>
-</div>
-{% if stats.all_task_count %}
-    <script>
+    {% if stats.all_task_count %}
+        <script>
   var ctx_{{question}}_{{version}} = document.getElementById('hist_{{question}}_{{version}}');
 
   new Chart(ctx_{{question}}_{{version}}, {
@@ -97,5 +97,5 @@
 	  }
     }
   });
-    </script>
-{% endif %}
+        </script>
+    {% endif %}
