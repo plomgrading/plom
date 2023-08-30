@@ -185,7 +185,7 @@ class MarkingTaskService:
         ).filter(markingtask__latest_annotation__isnull=False)
 
     def get_first_available_task(
-        self, question=None, version=None
+        self, question=None, version=None, *, above: int = 0, tag: str = None
     ) -> Union[QuerySet[MarkingTask], None]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
@@ -194,6 +194,8 @@ class MarkingTaskService:
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
+            above (optional): int, the minimum paper number of the task
+            tag (optional): str, the tag that the task must have
 
         Returns:
             The queryset of available tasks, or
@@ -201,11 +203,27 @@ class MarkingTaskService:
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
+        tag = "creative"
+        if tag:
+            print(True)
+        print("tag", tag)
+
         if question:
             available = available.filter(question_number=question)
 
         if version:
             available = available.filter(question_version=version)
+
+        for task in available:
+            # print the tag text for each task
+            print(task.markingtasktag_set.all())
+            print(task.paper.paper_number)
+
+        if above:
+            available = available.filter(paper__paper_number__gte=above)
+
+        if tag:
+            available = available.filter(markingtasktag__text=tag)
 
         if not available.exists():
             return None
