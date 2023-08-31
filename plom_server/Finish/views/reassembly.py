@@ -17,7 +17,7 @@ class ReassemblePapersView(ManagerRequiredView):
     def get(self, request):
         reas = ReassembleService()
         context = self.build_context()
-        all_paper_status = reas.alt_get_all_paper_status()
+        all_paper_status = reas.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
         n_papers = sum([1 for n, x in all_paper_status.items() if x["scanned"]])
         n_not_ready = sum(

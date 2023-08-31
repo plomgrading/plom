@@ -249,6 +249,7 @@ class ReassembleService:
         Args:
             paper: a reference to a Paper instance
             solution (optional): bool, leave out the max possible mark.
+
         Returns:
             list: If solution then list of tuples [question_label, version, max_mark]
                 for each question and if not solution, then tuples [question_label, version, mark, max_mark]
@@ -317,8 +318,16 @@ class ReassembleService:
             "rotation": id_page_image.rotation,
         }
 
-    def get_dnm_page_images(self, paper):
-        """Get the path and rotation for a paper's do-not-mark pages."""
+    def get_dnm_page_images(self, paper: Paper) -> List[Dict[str, Any]]:
+        """Get the path and rotation for a paper's do-not-mark pages.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            List of Dict: Each dict has with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
+
+        """
         dnm_pages = DNMPage.objects.filter(paper=paper)
         dnm_images = [dnmpage.image for dnmpage in dnm_pages]
         return [
@@ -326,8 +335,15 @@ class ReassembleService:
             for img in dnm_images
         ]
 
-    def get_annotation_images(self, paper):
-        """Get the paths for a paper's annotation images."""
+    def get_annotation_images(self, paper: Paper) -> List[Dict[str, Any]]:
+        """Get the paths for a paper's annotation images.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            List of Dict: Each dict has with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
+        """
         n_questions = SpecificationService.get_n_questions()
         marked_pages = []
 
@@ -338,7 +354,7 @@ class ReassembleService:
 
         return marked_pages
 
-    def reassemble_paper(self, paper, outdir):
+    def reassemble_paper(self, paper: Paper, outdir: Optional[Path]) -> Path:
         """Reassemble a single test paper.
 
         Args:
@@ -349,8 +365,9 @@ class ReassembleService:
             pathlib.Path: the full path of the reassembled test PDF.
         """
         if outdir is None:
-            outdir = "reassembled"
+            outdir = Path("reassembled")
 
+        # Do we actually need this given the type-hints... I guess is safer.
         outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
 
@@ -384,8 +401,13 @@ class ReassembleService:
             )
         return outname
 
-    def alt_get_all_paper_status(self) -> Dict[str, Any]:
-        status = {}
+    def get_all_paper_status_for_reassembly(self) -> Dict[str, Any]:
+        """Get the status information for all papers for reassembly.
+
+        Returns:
+           Dict: paper_number
+        """
+        status: Dict[str, Any] = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
@@ -407,7 +429,7 @@ class ReassembleService:
         for pn in mss.get_all_completed_test_papers():
             status[pn]["scanned"] = True
 
-        def latest_update(time_a, time_b):
+        def latest_update(time_a: Optional[datetime], time_b: datetime) -> datetime:
             if time_a is None:
                 return time_b
             elif time_a < time_b:
@@ -468,6 +490,11 @@ class ReassembleService:
 
     @transaction.atomic
     def queue_single_paper_reassembly(self, paper_number: int) -> None:
+        """Create and queue a huey task to reassemble the given paper.
+
+        Args:
+            paper_number (int): The paper number to re-assemble.
+        """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -480,7 +507,15 @@ class ReassembleService:
         task.save()
 
     @transaction.atomic
-    def get_single_reassembled_file(self, paper_number: int):
+    def get_single_reassembled_file(self, paper_number: int) -> File:
+        """Get the django-file of the reassembled pdf of the given paper.
+
+        Args:
+            paper_number (int): The paper number to re-assemble.
+
+        Returns:
+            File: the django-File of the reassembled pdf.
+        """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -490,6 +525,11 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_single_paper_reassembly(self, paper_number: int) -> None:
+        """Reset to TODO the reassembly task of the given paper and remove pdf if it exists.
+
+        Args:
+            paper_number (int): The paper number of the reassembly task to reset.
+        """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -510,6 +550,7 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
+        """Reset to TODO all reassembly tasks and remove any associated pdfs."""
         queue = get_queue("tasks")
         for task in ReassembleTask.objects.exclude(status=ReassembleTask.TO_DO).all():
             # if the task is queued then remove it from the queue
@@ -524,8 +565,9 @@ class ReassembleService:
 
     @transaction.atomic
     def queue_all_paper_reassembly(self) -> None:
+        """Queue the reassembly of all papers that are ready (id'd and marked)."""
         # first work out which papers are ready
-        for pn, data in self.alt_get_all_paper_status().items():
+        for pn, data in self.get_all_paper_status_for_reassembly().items():
             # check if both id'd and marked
             if not data["identified"] or not data["marked"]:
                 continue
@@ -543,15 +585,19 @@ class ReassembleService:
             task.save()
 
     @transaction.atomic
-    def get_completed_pdf_files(self):
-        """Get list of paths of pdf-files of completed (built) tests papers."""
+    def get_completed_pdf_files(self) -> List[File]:
+        """Get list of paths of pdf-files of completed (built) tests papers.
+
+        Returns:
+            list(File): a list of django-Files of the reassembled pdf.
+        """
         return [
             task.pdf_file
             for task in ReassembleTask.objects.filter(status=ReassembleTask.COMPLETE)
         ]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
+    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
         paths = [
             {
                 "fs": pdf_file.path,
@@ -574,7 +620,7 @@ def huey_reassemble_paper(paper_number: int) -> None:
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
-        save_path = reas.reassemble_paper(paper_obj, tempdir)
+        save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
         with save_path.open("rb") as f:
             # delete any old file if it exists
             if task.pdf_file:
