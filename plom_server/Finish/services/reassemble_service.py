@@ -10,16 +10,14 @@ import tempfile
 from typing import Any, Dict, List, Optional
 import zipfly
 
-from plom.finish.coverPageBuilder import makeCover
-from plom.finish.examReassembler import reassemble
-
-
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
-
 from django_huey import db_task, get_queue
+
+from plom.finish.coverPageBuilder import makeCover
+from plom.finish.examReassembler import reassemble
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask, Annotation
@@ -498,7 +496,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassembletask
         pdf_build = huey_reassemble_paper(paper_number)
@@ -519,7 +517,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
         task = paper_obj.reassembletask
         return task.pdf_file
 
@@ -533,7 +531,7 @@ class ReassembleService:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
-            raise ValueError("No paper with that number")
+            raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassembletask
         # if the task is queued then remove it from the queue
@@ -615,7 +613,7 @@ def huey_reassemble_paper(paper_number: int) -> None:
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
-        raise ValueError("No paper with that number")
+        raise ValueError("No paper with that number") from None
     task = paper_obj.reassembletask
 
     reas = ReassembleService()
