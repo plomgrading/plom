@@ -4,8 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import arrow
+from datetime import datetime
 from pathlib import Path
 import tempfile
+from typing import Any, Dict, List, Optional
 import zipfly
 
 from plom.finish.coverPageBuilder import makeCover
@@ -35,19 +37,22 @@ class ReassembleService:
     base_dir = settings.MEDIA_ROOT
     reassemble_dir = base_dir / "reassemble"
 
-    def is_paper_marked(self, paper):
+    def is_paper_marked(self, paper: Paper) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
             paper: a reference to a Paper instance
+
+        Returns:
+            bool: True when all questions in the given paper are marked.
         """
         paper_tasks = MarkingTask.objects.filter(paper=paper)
-        completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE)
-        ood_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE)
+        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
+        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
+        n_all_tasks = paper_tasks.count()
         n_questions = SpecificationService.get_n_questions()
-        return (
-            completed_tasks.count() == n_questions
-            and completed_tasks.count() + ood_tasks.count() == paper_tasks.count()
+        return (n_completed_tasks == n_questions) and (
+            n_completed_tasks + n_out_of_date_tasks == n_all_tasks
         )
 
     def are_all_papers_marked(self) -> bool:
@@ -59,7 +64,7 @@ class ReassembleService:
                 return False
         return True
 
-    def get_n_questions_marked(self, paper):
+    def get_n_questions_marked(self, paper: Paper) -> int:
         """Return the number of questions that are marked in a paper.
 
         Args:
@@ -75,43 +80,46 @@ class ReassembleService:
                 n_marked += 1
         return n_marked
 
-    def get_last_updated_timestamp(self, paper):
+    def get_last_updated_timestamp(self, paper: Paper) -> datetime:
         """Return the latest update timestamp from the IDActions or Annotations.
 
         Args:
             paper: a reference to a Paper instance
+        Returns:
+            datetime: the time of the latest update to any task in the paper.
+            WARNING: If paper is not id'd and not marked then returns the current
+            time.
         """
-        if self.get_paper_id_or_none(paper):
+        try:
             paper_id_task = PaperIDTask.objects.exclude(
                 status=PaperIDTask.OUT_OF_DATE
             ).get(paper=paper)
-            latest_action_instance = paper_id_task.latest_action
-            latest_action = latest_action_instance.time
-        else:
-            latest_action = None
+            last_id_time = paper_id_task.latest_action.time
+        except PaperIDTask.DoesNotExist:
+            last_id_time = None
 
         if self.is_paper_marked(paper):
-            paper_annotations = Annotation.objects.exclude(
-                task__status=PaperIDTask.OUT_OF_DATE
-            ).filter(task__paper=paper)
-            latest_annotation_instance = paper_annotations.order_by(
-                "-time_of_last_update"
-            ).first()
-            latest_annotation = latest_annotation_instance.time_of_last_update
+            last_annotation_time = (
+                Annotation.objects.exclude(task__status=PaperIDTask.OUT_OF_DATE)
+                .filter(task__paper=paper)
+                .order_by("-time_of_last_update")
+                .first()
+                .time_of_last_update
+            )
         else:
-            latest_annotation = None
+            last_annotation_time = None
 
-        if latest_action and latest_annotation:
-            return max(latest_annotation, latest_action)
-        elif latest_action:
-            return latest_action
-        elif latest_annotation:
-            return latest_annotation
+        if last_id_time and last_annotation_time:
+            return max(last_id_time, last_annotation_time)
+        elif last_id_time:
+            return last_id_time
+        elif last_annotation_time:
+            return last_annotation_time
         else:
             # TODO: default to the current date for the time being
             return timezone.now()
 
-    def get_paper_id_or_none(self, paper):
+    def get_paper_id_or_none(self, paper: Paper) -> Optional[tuple[str, str]]:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
@@ -120,15 +128,18 @@ class ReassembleService:
         Returns:
             a tuple (str, str) or None
         """
-        task = PaperIDTask.objects.filter(
-            paper=paper, status=PaperIDTask.COMPLETE
-        ).get()
-        if not task:
+        try:
+            task = PaperIDTask.objects.filter(
+                paper=paper, status=PaperIDTask.COMPLETE
+            ).get()
+        except PaperIDTask.DoesNotExist:
             return None
         action = task.latest_action
         return action.student_id, action.student_name
 
-    def get_question_data(self, paper, question_number):
+    def get_question_data(
+        self, paper: Paper, question_number: int
+    ) -> tuple[int, Optional[int]]:
         """For a given question, return the test's question version and score.
 
         Args:
@@ -154,13 +165,13 @@ class ReassembleService:
             mark = None
         return version, mark
 
-    def paper_spreadsheet_dict(self, paper):
+    def paper_spreadsheet_dict(self, paper: Paper) -> Dict[str, Any]:
         """Return a dictionary representing a paper for the reassembly spreadsheet.
 
         Args:
             paper: a reference to a Paper instance
         """
-        paper_dict = {}
+        paper_dict: Dict[str, Any] = {}
 
         paper_id_info = self.get_paper_id_or_none(paper)
         if paper_id_info:
@@ -183,14 +194,14 @@ class ReassembleService:
         paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
         return paper_dict
 
-    def get_paper_status(self, paper):
+    def get_paper_status(self, paper: Paper) -> tuple[bool, bool, int, datetime]:
         """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
 
         Args:
             paper: reference to a Paper object
 
         Returns:
-            list of [bool, bool, int, datetime]
+            tuple of [bool, bool, int, datetime]
         """
         paper_id_info = self.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
@@ -199,9 +210,9 @@ class ReassembleService:
         n_marked = self.get_n_questions_marked(paper)
         last_modified = self.get_last_updated_timestamp(paper)
 
-        return [is_scanned, is_id, n_marked, is_scanned, last_modified]
+        return (is_scanned, is_id, n_marked, last_modified)
 
-    def get_spreadsheet_data(self):
+    def get_spreadsheet_data(self) -> Dict[str, Any]:
         """Return a dictionary with all of the required data for a reassembly spreadsheet."""
         spreadsheet_data = {}
         papers = Paper.objects.all()
@@ -209,7 +220,7 @@ class ReassembleService:
             spreadsheet_data[paper.paper_number] = self.paper_spreadsheet_dict(paper)
         return spreadsheet_data
 
-    def get_identified_papers(self):
+    def get_identified_papers(self) -> Dict[str, List[str]]:
         """Return a dictionary with all of the identified papers and their names and IDs.
 
         Returns:
@@ -224,7 +235,7 @@ class ReassembleService:
                 spreadsheet_data[paper.paper_number] = [student_id, student_name]
         return spreadsheet_data
 
-    def get_completion_status(self):
+    def get_completion_status(self) -> Dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall test completion progress."""
         spreadsheet_data = {}
         papers = Paper.objects.all()
@@ -232,12 +243,15 @@ class ReassembleService:
             spreadsheet_data[paper.paper_number] = self.get_paper_status(paper)
         return spreadsheet_data
 
-    def get_cover_page_info(self, paper, solution=False):
+    def get_cover_page_info(self, paper: Paper, solution: bool = False) -> List[Any]:
         """Return information needed to build a cover page for a reassembled test.
 
         Args:
             paper: a reference to a Paper instance
             solution (optional): bool, leave out the max possible mark.
+        Returns:
+            list: If solution then list of tuples [question_label, version, max_mark]
+                for each question and if not solution, then tuples [question_label, version, mark, max_mark]
         """
         cover_page_info = []
 
@@ -255,7 +269,9 @@ class ReassembleService:
 
         return cover_page_info
 
-    def build_paper_cover_page(self, tmpdir, paper, solution=False):
+    def build_paper_cover_page(
+        self, tmpdir, paper: Paper, solution: bool = False
+    ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
         Args:
@@ -266,7 +282,10 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
-        paper_id = self.get_paper_id_or_none(paper)
+        # some annoying work here to handle casting None to (None, None) while keeping mypy happy
+        paper_id: Optional[
+            tuple[Optional[str], Optional[str]]
+        ] = self.get_paper_id_or_none(paper)
         if not paper_id:
             paper_id = (None, None)
 
@@ -282,15 +301,21 @@ class ReassembleService:
         )
         return cover_name
 
-    def get_id_page_image(self, paper):
-        """Get the path and rotation for a paper's ID page."""
+    def get_id_page_image(self, paper: Paper) -> Dict[str, Any]:
+        """Get the path and rotation for a paper's ID page.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            Dict: with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
+
+        """
         id_page_image = IDPage.objects.get(paper=paper).image
-        return [
-            {
-                "filename": id_page_image.image_file.path,
-                "rotation": id_page_image.rotation,
-            }
-        ]
+        return {
+            "filename": id_page_image.image_file.path,
+            "rotation": id_page_image.rotation,
+        }
 
     def get_dnm_page_images(self, paper):
         """Get the path and rotation for a paper's do-not-mark pages."""
@@ -345,7 +370,7 @@ class ReassembleService:
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)
             cover_file = self.build_paper_cover_page(tmpdir, paper)
-            id_pages = self.get_id_page_image(paper)
+            id_pages = [self.get_id_page_image(paper)]  # cast to a list.
             dnm_pages = self.get_dnm_page_images(paper)
             marked_pages = self.get_annotation_images(paper)
             reassemble(
@@ -359,7 +384,7 @@ class ReassembleService:
             )
         return outname
 
-    def alt_get_all_paper_status(self):
+    def alt_get_all_paper_status(self) -> Dict[str, Any]:
         status = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
@@ -512,7 +537,6 @@ class ReassembleService:
                 continue
             # otherwise build it!
             task = ReassembleTask.objects.get(paper__paper_number=pn)
-            print("Queuing up task for ", pn)
             pdf_build = huey_reassemble_paper(pn)
             task.huey_id = pdf_build.id
             task.status = ReassembleTask.QUEUED
@@ -526,6 +550,7 @@ class ReassembleService:
             for task in ReassembleTask.objects.filter(status=ReassembleTask.COMPLETE)
         ]
 
+    @transaction.atomic
     def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
         paths = [
             {

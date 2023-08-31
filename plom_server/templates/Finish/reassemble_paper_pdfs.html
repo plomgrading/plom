@@ -54,7 +54,7 @@
                                 {% endif %}
                                 {% if n_queued %}
                                     <li>
-                                        <i class="bi bi-exclamation-diamond-fill text-info"></i>{{ n_queued }} papers queued for reassembly
+                                        <i class="bi bi-clock-history text-info"></i>{{ n_queued }} papers queued for reassembly
                                         <a href="{% url 'reassemble_pdfs' %}" class="btn btn-info m-4">reload page</a>
                                     </li>
                                 {% endif %}
@@ -70,7 +70,7 @@
                                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers</a>
                             {% elif n_complete %}
                                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
-                                not all papers reassembled
+                                warning - not all papers reassembled
                             {% endif %}
                         </div>
                     </div>
@@ -111,8 +111,8 @@
                                             <td>{{ val.last_update_humanised }}</td>
                                             <td>
                                                 {% if val.identified and val.marked %}
-                                                    {% if val.reassembled_status == "Queued" %}
-                                                        <div class="spinner-grow spinner-grow-sm"></div>
+                                                    {% if val.reassembled_status == "Started" or val.reassembled_status == "Queued" %}
+                                                <i class="bi bi-clock-history text-info"></i>
                                                     {% elif val.reassembled_status == "Error" %}
                                                         <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                                     {% elif val.reassembled_status == "Complete" %}
@@ -120,24 +120,19 @@
                                                     {% endif %}
                                                     {{ val.reassembled_status }}
                                                 {% else %}
-                                                    <i class="bi bi-exclamation-diamond-fill text-info"> not ready</i>
+                                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> not ready
                                                 {% endif %}
-                                                <!-- {% if val.reassembled_time %} -->
-                                                <!-- {% if val.outdated %}<i class="bi bi-exclamation-diamond-fill text-danger">outdated</i>{% endif %} -->
-                                                <!-- {% else %} -->
-                                                <!-- {% if val.identified and val.marked %} -->
-                                                <!-- not yet -->
-                                                <!-- {% else %} -->
-                                                <!-- not ready -->
-                                                <!-- {% endif %} -->
-                                                <!-- {% endif %} -->
                                             </td>
                                             <td>
-                                                {% if val.reassembled_time %}
-                                                    {{ val.reassembled_time_humanised }}
-                                                {% else %}
-                                                    <!-- n/a -->
-                                                {% endif %}
+                                              {% if val.reassembled_time %}
+					      {% if val.outdated %}
+					      <i class="bi bi-exclamation-diamond-fill text-danger"> outdated </i>
+					      {% else %}
+                                              {{ val.reassembled_time_humanised }}
+					      {% endif %}
+                                              {% else %}
+                                              <!-- n/a -->
+                                              {% endif %}
                                             </td>
                                             <td>
                                                 {% if val.reassembled_time %}
@@ -147,7 +142,7 @@
                                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
                                                         <button hx-put="{% url 'reassemble_one_paper' paper %}"
                                                                 class="btn btn-warning">
-                                                            <i class="bi bi-exclamation-diamond-fill">
+                                                          <i class="bi bi-exclamation-diamond-fill">
                                                                 re-reassemble
                                                             </i>
                                                         </button>
@@ -161,7 +156,7 @@
                                                                 class="btn btn-warning">delete</button>
                                                     {% endif %}
                                                 {% else %}
-                                                    {% if val.identified and val.marked and val.reassembled_status != "Queued" %}
+                                                    {% if val.identified and val.marked and val.reassembled_status != "Queued"  and val.reassembled_status != "Started" %}
                                                         <button hx-post="{% url 'reassemble_one_paper' paper %}"
                                                                 class="btn btn-success">reassemble</button>
                                                     {% else %}

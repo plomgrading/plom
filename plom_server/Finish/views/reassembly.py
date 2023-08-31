@@ -18,7 +18,7 @@ class ReassemblePapersView(ManagerRequiredView):
         reas = ReassembleService()
         context = self.build_context()
         all_paper_status = reas.alt_get_all_paper_status()
-        # compute some numbers
+        # Compute some counts required for the page
         n_papers = sum([1 for n, x in all_paper_status.items() if x["scanned"]])
         n_not_ready = sum(
             [
@@ -41,9 +41,9 @@ class ReassemblePapersView(ManagerRequiredView):
             [
                 1
                 for n, x in all_paper_status.items()
-                if x["reassembled_status"] == "Queued"
+                if x["reassembled_status"] in ["Queued", "Started"]
             ]
-        )
+        )  # for display purposes started === queued
         n_errors = sum(
             [
                 1
