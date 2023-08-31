@@ -26,6 +26,7 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
+from typing import Union
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -1118,33 +1119,70 @@ class MarkerClient(QWidget):
         m.addAction("Get paper number...", self.requestInteractive)
         m.addSection("Options")
 
-        a = QAction("Prefer tasks tagged for me", self)
-        a.setCheckable(True)
+        from PyQt6.QtWidgets import (
+            QPushButton,
+            QCheckBox,
+            QComboBox,
+            QFrame,
+            QHBoxLayout,
+            QVBoxLayout,
+            QLineEdit,
+            QRadioButton,
+            QWidgetAction,
+        )
+
+        q = QComboBox()
+        q.setEditable(True)
+        # q.addItems([])
+        self._prefer_tags_combobox = q
+        a = QWidgetAction(self)
+        frame = QFrame()
+        vlay = QVBoxLayout(frame)
+        b = QRadioButton("Prefer tasks tagged for me")
         # TODO: would like on-by-default: Issue #2253
-        a.setChecked(False)
-        a.triggered.connect(self.toggle_prefer_tagged)
-        self._prefer_tags_action = a
+        # b.setChecked(True)
+        self._prefer_tags_radiobuttons = [b]
+        vlay.addWidget(b)
+        b = QRadioButton("Prefer tasks tagged")
+        self._prefer_tags_radiobuttons.append(b)
+        lay = QHBoxLayout()
+        lay.addWidget(b)
+        lay.addWidget(q)
+        vlay.addLayout(lay)
+        b = QRadioButton("No preference for tagged papers")
+        b.setChecked(True)
+        self._prefer_tags_radiobuttons.append(b)
+        vlay.addWidget(b)
+        a.setDefaultWidget(frame)
         m.addAction(a)
 
-        a = QAction("placeholder", self)
-        a.setCheckable(True)
-        a.setChecked(False)
-        a.triggered.connect(self.toggle_prefer_tagged_specific)
-        # TODO: probably we should write a subclass, or a use an embedded lineEdit
-        a.stored_value = ""
-        a.setText("Prefer tasks with specified tag...")
-        self._prefer_tagged_specific_action = a
-        m.addAction(a)
-
-        a = QAction("placeholder", self)
-        a.setCheckable(True)
-        a.setChecked(False)
-        a.triggered.connect(self.toggle_prefer_above)
-        # TODO: probably we should write a subclass, or a use an embedded lineEdit
-        a.stored_value = 0
-        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+        a = QWidgetAction(self)
+        frame = QFrame()
+        lay = QHBoxLayout(frame)
+        q = QCheckBox("Prefer paper number \N{Greater-than Or Equal To}")
+        q.setCheckable(True)
+        q.setChecked(False)
+        lay.addWidget(q)
+        t = QLineEdit()
+        t.setText("0")
+        lay.addWidget(t)
+        a._lineedit = t
+        a._checkbox = q
+        a.setDefaultWidget(frame)
         self._prefer_above_action = a
         m.addAction(a)
+
+        a = QWidgetAction(self)
+        frame = QFrame()
+        lay = QHBoxLayout(frame)
+        lay.addStretch()
+        b = QPushButton("Ok")
+        b.clicked.connect(m.close)
+        lay.addWidget(b)
+        a.setDefaultWidget(frame)
+        m.addAction(a)
+
+        m.aboutToShow.connect(self.updateTagMenu)
 
         self.ui.getNextButton.setMenu(m)
         # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
@@ -1159,64 +1197,27 @@ class MarkerClient(QWidget):
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
-    def toggle_prefer_tagged(self):
-        pass
-        # m = self.ui.getNextButton.menu()
-        # print(self._prefer_tags_action.isChecked())
-
-    def toggle_prefer_tagged_specific(self):
-        a = self._prefer_tagged_specific_action
-        if not a.isChecked():
-            return
+    def updateTagMenu(self):
+        q = self._prefer_tags_combobox
+        q.clear()
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        try:
-            idx = all_tags.index(a.stored_value)
-        except ValueError:
-            idx = -1
-        n, ok = QInputDialog.getItem(
-            self,
-            "Prefer papers tags...",
-            "<p>Perhaps you want to start marking at a particular paper number.</p>"
-            "<p>Preference for paper numbers at or above this value.</p>",
-            all_tags,
-            idx,
-            True,
-        )
-        if not ok:
-            a.setChecked(False)
-            return
-        a.stored_value = n
-        a.setText(f"Prefer tasks tagged '{a.stored_value}'")
+        q.addItems(all_tags)
+
+    def get_preferred_tag(self) -> Union[None, str]:
+        if self._prefer_tags_radiobuttons[0].isChecked():
+            tag = "@" + self.msgr.username
+        elif self._prefer_tags_radiobuttons[1].isChecked():
+            tag = self._prefer_tags_combobox.currentText()
+        else:
+            tag = None
+        return tag
 
     @property
-    def prefer_tagged(self):
-        return self._prefer_tags_action.isChecked()
-
-    def toggle_prefer_above(self):
-        a = self._prefer_above_action
-        if not a.isChecked():
-            return
-        n, ok = QInputDialog.getInt(
-            self,
-            "Prefer paper numbers above...",
-            "<p>Perhaps you want to start marking at a particular paper number.</p>"
-            "<p>Preference for paper numbers at or above this value.</p>",
-            0,
-            a.stored_value,
-            self.max_papernum,
-        )
-        if not ok:
-            a.setChecked(False)
-            return
-        a.stored_value = n
-        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
-
-    @property
-    def prefer_above(self):
+    def prefer_above(self) -> Union[None, int]:
         """User prefers to mark papers above this value, or None if no preference."""
-        if not self._prefer_above_action.isChecked():
+        if not self._prefer_above_action._checkbox.isChecked():
             return None
-        return self._prefer_above_action.stored_value
+        return int(self._prefer_above_action._lineedit.text())
 
     def loadMarkedList(self):
         """Loads the list of previously marked papers into self.examModel.
@@ -1457,9 +1458,7 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
-        tag = None
-        if self.prefer_tagged:
-            tag = "@" + self.msgr.username
+        tag = self.get_preferred_tag()
         above = self.prefer_above
         if tag and above:
             log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)

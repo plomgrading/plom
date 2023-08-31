@@ -148,3 +148,7 @@ class AddRemoveTagDialog(QDialog):
             return
         self.return_values = ("remove", tag)
         self.accept()
+
+
+def build_menu():
+    pass
