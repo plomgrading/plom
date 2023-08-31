@@ -203,13 +203,13 @@ class UserInfoServices:
         ).count()
 
     @transaction.atomic
-    def filter_annotations_by_time(
-        self, time: int
+    def filter_annotations_by_time_delta_seconds(
+        self, time_delta_seconds: int
     ) -> QuerySet[Annotation]:
-        """Filter annotations by time.
+        """Filter annotations by time in seconds.
 
         Args:
-            time: (int) Number of seconds.
+            time_delta_seconds: (int) Number of seconds.
 
         Returns:
             QuerySet: Filtered queryset of annotations.
@@ -218,12 +218,11 @@ class UserInfoServices:
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
 
-        if time == 0:
+        if time_delta_seconds == 0:
             return annotations
         else:
-            return annotations.filter(
-                time_of_last_update__range=((timezone.now() - timedelta(seconds=int(time))), timezone.now())
-            )
+            time_interval_start = timezone.now() - timedelta(seconds=time_delta_seconds)
+            return annotations.filter(time_of_last_update__gte=time_interval_start)
 
     @transaction.atomic
     def get_latest_updated_annotation(self) -> str:

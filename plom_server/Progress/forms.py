@@ -5,6 +5,7 @@
 from django import forms
 from django.utils import timezone
 
+
 class AnnotationFilterForm(forms.Form):
     TIME_CHOICES = [
         ("", ""),
