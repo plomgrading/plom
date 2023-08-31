@@ -11,6 +11,7 @@ import random
 from typing import Optional, Dict, List
 
 from django.db import transaction
+from django.db.models import QuerySet
 
 from Papers.models import Paper
 from Papers.services import SpecificationService
@@ -30,6 +31,18 @@ def is_priority_modified() -> bool:
 
 
 @transaction.atomic
+def get_tasks_to_update_priority() -> QuerySet[MarkingTask]:
+    """Get all the relevant marking tasks for updating priority.
+
+    When the priority strategy is changed, all tasks that have
+    TO_DO status are updated, and all tasks with other statuses -
+    OUT_OF_DATE, OUT, COMPLETE - keep their old priority values.
+    """
+    tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+    return tasks.select_related("paper")
+
+
+@transaction.atomic
 def set_marking_priority_strategy(strategy: MarkingTaskPriority.StrategyChoices):
     """Set the current priority strategy; as a side-effect, set the modified status to False."""
     assert strategy in MarkingTaskPriority.StrategyChoices, "Invalid priority value."
@@ -43,7 +56,7 @@ def set_marking_priority_strategy(strategy: MarkingTaskPriority.StrategyChoices)
 @transaction.atomic
 def set_marking_piority_shuffle():
     """Set the priority to shuffle: every marking task gets a random priority value."""
-    tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+    tasks = get_tasks_to_update_priority()
     for task in tasks:
         task.marking_priority = random.randint(0, 1000)
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
@@ -54,7 +67,7 @@ def set_marking_piority_shuffle():
 def set_marking_priority_paper_number():
     """Set the priority to paper number: every marking task gets a priority value of n_papers - paper_number."""
     n_papers = Paper.objects.count()
-    tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related("paper")
+    tasks = get_tasks_to_update_priority()
     for task in tasks:
         task.marking_priority = n_papers - task.paper.paper_number
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
@@ -78,7 +91,7 @@ def set_marking_priority_custom(custom_order: Dict[tuple[int, int], int]):
         custom_order, dict
     ), "`custom_order` must be of type Dict[tuple[int, int], int]."
 
-    tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related("paper")
+    tasks = get_tasks_to_update_priority()
     tasks_to_update = []
     for k, v in custom_order.items():
         paper_number, question_number = k
