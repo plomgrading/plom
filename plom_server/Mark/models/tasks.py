@@ -19,8 +19,9 @@ class MarkingTask(BaseTask):
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
     marking_priority: int, the priority of this task.
-        Default is 0, but upon initialization of the MarkingTask,
-        it is set to a random int between 0 and 1000.
+        Default is 0, but when MarkingTask instances are created with
+        MarkingTaskService.create_task(), the default is replaced with
+        a value determined by the MarkingTaskPriority strategy enum.
 
     Status
     ~~~~~~
