@@ -47,12 +47,11 @@ from PyQt6.QtCore import (
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt6.QtGui import QAction, QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QDialog,
     QInputDialog,
     QMessageBox,
-    QMenu,
     QProgressDialog,
     QWidget,
 )
@@ -82,6 +81,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
+from .tagging_build_menu import build_tagging_menu
 
 
 if platform.system() == "Darwin":
@@ -1115,76 +1115,10 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
-        m = QMenu()
-        m.addAction("Get paper number...", self.requestInteractive)
-        m.addSection("Options")
-
-        from PyQt6.QtWidgets import (
-            QPushButton,
-            QCheckBox,
-            QComboBox,
-            QFrame,
-            QHBoxLayout,
-            QVBoxLayout,
-            QLineEdit,
-            QRadioButton,
-            QWidgetAction,
-        )
-
-        q = QComboBox()
-        q.setEditable(True)
-        # q.addItems([])
-        self._prefer_tags_combobox = q
-        a = QWidgetAction(self)
-        frame = QFrame()
-        vlay = QVBoxLayout(frame)
-        b = QRadioButton("Prefer tasks tagged for me")
-        # TODO: would like on-by-default: Issue #2253
-        # b.setChecked(True)
-        self._prefer_tags_radiobuttons = [b]
-        vlay.addWidget(b)
-        b = QRadioButton("Prefer tasks tagged")
-        self._prefer_tags_radiobuttons.append(b)
-        lay = QHBoxLayout()
-        lay.addWidget(b)
-        lay.addWidget(q)
-        vlay.addLayout(lay)
-        b = QRadioButton("No preference for tagged papers")
-        b.setChecked(True)
-        self._prefer_tags_radiobuttons.append(b)
-        vlay.addWidget(b)
-        a.setDefaultWidget(frame)
-        m.addAction(a)
-
-        a = QWidgetAction(self)
-        frame = QFrame()
-        lay = QHBoxLayout(frame)
-        q = QCheckBox("Prefer paper number \N{Greater-than Or Equal To}")
-        q.setCheckable(True)
-        q.setChecked(False)
-        lay.addWidget(q)
-        t = QLineEdit()
-        t.setText("0")
-        lay.addWidget(t)
-        a._lineedit = t
-        a._checkbox = q
-        a.setDefaultWidget(frame)
-        self._prefer_above_action = a
-        m.addAction(a)
-
-        a = QWidgetAction(self)
-        frame = QFrame()
-        lay = QHBoxLayout(frame)
-        lay.addStretch()
-        b = QPushButton("Ok")
-        b.clicked.connect(m.close)
-        lay.addWidget(b)
-        a.setDefaultWidget(frame)
-        m.addAction(a)
-
+        m = build_tagging_menu(self)
         m.aboutToShow.connect(self.updateTagMenu)
-
         self.ui.getNextButton.setMenu(m)
+        self._tagging_menu = m
         # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
@@ -1198,16 +1132,17 @@ class MarkerClient(QWidget):
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
     def updateTagMenu(self):
-        q = self._prefer_tags_combobox
+        q = self._tagging_menu._prefer_tags_combobox
         q.clear()
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         q.addItems(all_tags)
 
     def get_preferred_tag(self) -> Union[None, str]:
-        if self._prefer_tags_radiobuttons[0].isChecked():
+        m = self._tagging_menu
+        if m._prefer_tags_radiobuttons[0].isChecked():
             tag = "@" + self.msgr.username
-        elif self._prefer_tags_radiobuttons[1].isChecked():
-            tag = self._prefer_tags_combobox.currentText()
+        elif m._prefer_tags_radiobuttons[1].isChecked():
+            tag = m._prefer_tags_combobox.currentText()
         else:
             tag = None
         return tag
@@ -1215,9 +1150,10 @@ class MarkerClient(QWidget):
     @property
     def prefer_above(self) -> Union[None, int]:
         """User prefers to mark papers above this value, or None if no preference."""
-        if not self._prefer_above_action._checkbox.isChecked():
+        m = self._tagging_menu
+        if not m._prefer_above_action._checkbox.isChecked():
             return None
-        return int(self._prefer_above_action._lineedit.text())
+        return int(m._prefer_above_action._lineedit.text())
 
     def loadMarkedList(self):
         """Loads the list of previously marked papers into self.examModel.
