@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 
 import arrow
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, Tuple, Union
 
 from django.contrib.auth.models import User
@@ -209,10 +209,7 @@ class UserInfoServices:
         """Filter annotations by time.
 
         Args:
-            days: (int) Number of days.
-            hours: (int) Number of hours.
-            minutes: (int) Number of minutes.
-            seconds: (int) Number of seconds.
+            time: (int) Number of seconds.
 
         Returns:
             QuerySet: Filtered queryset of annotations.
@@ -225,8 +222,7 @@ class UserInfoServices:
             return annotations
         else:
             return annotations.filter(
-                time_of_last_update__gte=timezone.now()
-                - timedelta(seconds=int(time))
+                time_of_last_update__range=((timezone.now() - timedelta(seconds=int(time))), timezone.now())
             )
 
     @transaction.atomic
