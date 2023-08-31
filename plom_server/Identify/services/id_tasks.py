@@ -301,10 +301,7 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def reset_task_priority(self) -> None:
-        """A wrapper around reset_task_priority().
-
-        Modifies the priority of all tasks marked as TODO.
-        """
+        """Reset the priority of all TODO tasks to zero."""
         tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         for task in tasks:
             task.iding_priority = 0
