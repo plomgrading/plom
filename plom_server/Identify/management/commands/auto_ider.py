@@ -319,7 +319,8 @@ class Command(BaseCommand):
             "id_sort_order",
             help="Set the sorting order for ID predictions based on certainties.",
         )
-        sp_order.add_argument(
+        grp = sp_order.add_mutually_exclusive_group()
+        grp.add_argument(
             "--increasing",
             action="store_true",
             help="""
@@ -327,7 +328,7 @@ class Command(BaseCommand):
                 If omitted, sort in order of decreasing certainty values.
             """,
         )
-        sp_order.add_argument(
+        grp.add_argument(
             "--decreasing",
             action="store_false",
             dest="increasing",
