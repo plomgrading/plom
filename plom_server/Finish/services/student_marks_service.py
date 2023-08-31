@@ -229,7 +229,7 @@ class StudentMarkService:
         return csv_data
 
     def get_csv_header(
-        self, spec, version_info: bool, timing_info: bool, warning_info: bool
+        self, spec: Dict, version_info: bool, timing_info: bool, warning_info: bool
     ) -> list:
         """Get the header for the csv file.
 
@@ -247,11 +247,12 @@ class StudentMarkService:
             None expected
         """
         keys = ["student_id", "student_name", "paper_number"]
-        for q in range(1, spec["numberOfQuestions"] + 1):
+        numberOfQuestions = spec["numberOfQuestions"]
+        for q in range(1, numberOfQuestions + 1):
             keys.append("q" + str(q) + "_mark")
         keys.append("total_mark")
         if version_info:
-            for q in range(1, spec["numberOfQuestions"] + 1):
+            for q in range(1, numberOfQuestions + 1):
                 keys.append("q" + str(q) + "_version")
         if timing_info:
             keys.extend(["last_update", "csv_write_time"])
