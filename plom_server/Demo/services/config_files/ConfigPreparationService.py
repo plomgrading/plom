@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 """Handle creating pre-bundle server state from a config file.
 
@@ -8,8 +9,7 @@ server will be created in order from test specification to building test-papers.
 """
 
 import sys
-import csv
-from typing import List, Dict
+from typing import Dict
 from pathlib import Path
 
 if sys.version_info >= (3, 10):
