@@ -1115,7 +1115,7 @@ class MarkerClient(QWidget):
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu()
-        m.addAction("Get nth...", self.requestInteractive)
+        m.addAction("Get paper number...", self.requestInteractive)
         m.addSection("Options")
         a = QAction("Prefer tasks tagged for me", self)
         a.setCheckable(True)
