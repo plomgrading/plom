@@ -6,7 +6,7 @@
 
 from django.db import models
 
-from Base.models import BaseTask, Tag
+from Base.models import BaseTask, Tag, SingletonBaseModel
 from Papers.models import Paper
 
 
@@ -18,9 +18,10 @@ class MarkingTask(BaseTask):
     question_number: int, the question to mark
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
-    marking_priority: float, the priority of this task.
-        Default is 1.0, but upon initialization of the MarkingTask,
-        it is set to a random float between 0 and 1000.
+    marking_priority: int, the priority of this task.
+        Default is 0, but when MarkingTask instances are created with
+        MarkingTaskService.create_task(), the default is replaced with
+        a value determined by the MarkingTaskPriority strategy enum.
 
     Status
     ~~~~~~
@@ -47,11 +48,31 @@ class MarkingTask(BaseTask):
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
     )
-    marking_priority = models.FloatField(null=False, default=1.0)
+    marking_priority = models.PositiveIntegerField(null=False, default=0)
 
     def __str__(self):
         """Return information about the paper and the question."""
         return f"MarkingTask (paper={self.paper.paper_number}, question={self.question_number})"
+
+
+class MarkingTaskPriority(SingletonBaseModel):
+    """Represents the current strategy for ordering tasks.
+
+    Strategy is an enum of PAPER_NUMBER, SHUFFLE, or CUSTOM. The state of
+    MarkingTaskPriority.load().strategy determines if the marking task
+    priority is random, based on paper number, or custom. If custom,
+    the priority will be based on the dict stored in the custom_priority field.
+    """
+
+    StrategyChoices = models.IntegerChoices("Strategy", "PAPER_NUMBER SHUFFLE CUSTOM")
+    PAPER_NUMBER = StrategyChoices.PAPER_NUMBER
+    SHUFFLE = StrategyChoices.SHUFFLE
+    CUSTOM = StrategyChoices.CUSTOM
+
+    strategy = models.IntegerField(
+        null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
+    )
+    modified = models.BooleanField(default=False, null=False)
 
 
 class MarkingTaskTag(Tag):

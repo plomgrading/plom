@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Edith Coates
 
 import csv
 from io import StringIO
 from typing import Dict, Union
 
 from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
+from Mark.services import marking_priority
 
 
 class TaskOrderService:
@@ -16,11 +17,15 @@ class TaskOrderService:
         self,
         order: str,
         *,
-        custom_order: Union[Dict[tuple[int, int], float], None] = None,
+        custom_order: Union[Dict[tuple[int, int], int], None] = None,
     ):
         """Update the priority ordering of tasks."""
-        mts = MarkingTaskService()
-        mts.set_task_priorities(order_by=order, custom_order=custom_order)
+        if order == "shuffle":
+            marking_priority.set_marking_piority_shuffle()
+        elif order == "custom":
+            marking_priority.set_marking_priority_custom(custom_order=custom_order)
+        else:
+            marking_priority.set_marking_priority_paper_number()
 
     def get_task_priorities(self) -> dict:
         """Get the task priorities.
@@ -60,7 +65,7 @@ class TaskOrderService:
             for (paper_number, question_number), priority in task_priorities.items()
         ]
 
-    def handle_file_upload(self, csv_data) -> Dict[tuple[int, int], float]:
+    def handle_file_upload(self, csv_data) -> Dict[tuple[int, int], int]:
         """Handle uploaded file data of task priorities.
 
         Args:
@@ -73,6 +78,6 @@ class TaskOrderService:
         custom_priorities = {}
         for row in csv_data:
             key = (int(row[0]), int(row[1]))
-            custom_priorities[key] = float(row[2])
+            custom_priorities[key] = int(row[2])
 
         return custom_priorities
