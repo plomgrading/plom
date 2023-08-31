@@ -9,20 +9,20 @@ import imghdr
 import json
 import pathlib
 import random
-from typing import Union, Dict
+from typing import Tuple, Union, Dict
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import QuerySet, Max
+from django.db.models import QuerySet
 from django.db import transaction
 
 from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
-from Papers.services import SpecificationService, ImageBundleService
+from Papers.services import ImageBundleService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -84,7 +84,7 @@ class MarkingTaskService:
         the_task.save()
         return the_task
 
-    def get_marking_progress(self, version, question):
+    def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -92,7 +92,7 @@ class MarkingTaskService:
             version (int)
 
         Returns:
-            tuple: two integers, first the number of marked papers for
+            two integers, first the number of marked papers for
             this question/version and the total number of papers for
             this question/version.
         """
