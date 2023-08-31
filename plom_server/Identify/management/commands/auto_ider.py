@@ -71,6 +71,17 @@ class Command(BaseCommand):
                 "Successfully updated ID Tasks to be sorted in order of decreasing certainty."
             )
 
+    def reset_id_sort_order(self):
+        """Update sort order of ID tasks back to zero defaults."""
+        id_task_service = IdentifyTaskService()
+        try:
+            id_task_service.reset_task_priority()
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(
+            "Successfully reset ID Tasks sorting to default (paper_number order)"
+        )
+
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
         self.stdout.write("Getting the classlist")
@@ -337,6 +348,14 @@ class Command(BaseCommand):
                 This is the default if omitted.
             """,
         )
+        grp.add_argument(
+            "--reset",
+            action="store_true",
+            help="""
+                Reset the priorities back to their default values of zero.
+                This returns the IDing tasks to paper_number order.
+            """,
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "run":
@@ -344,6 +363,9 @@ class Command(BaseCommand):
         elif options["command"] == "delete":
             self.delete_predictions(options["predictor"])
         elif options["command"] == "id_sort_order":
-            self.update_id_sort_order(options["increasing"])
+            if options["reset"]:
+                self.reset_id_sort_order()
+            else:
+                self.update_id_sort_order(options["increasing"])
         else:
             self.print_help("manage.py", "auto_ider")
