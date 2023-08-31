@@ -1117,6 +1117,7 @@ class MarkerClient(QWidget):
         m = QMenu()
         m.addAction("Get paper number...", self.requestInteractive)
         m.addSection("Options")
+
         a = QAction("Prefer tasks tagged for me", self)
         a.setCheckable(True)
         # TODO: would like on-by-default: Issue #2253
@@ -1124,6 +1125,17 @@ class MarkerClient(QWidget):
         a.triggered.connect(self.toggle_prefer_tagged)
         self._prefer_tags_action = a
         m.addAction(a)
+
+        a = QAction("placeholder", self)
+        a.setCheckable(True)
+        a.setChecked(False)
+        a.triggered.connect(self.toggle_prefer_tagged_specific)
+        # TODO: probably we should write a subclass, or a use an embedded lineEdit
+        a.stored_value = ""
+        a.setText("Prefer tasks with specified tag...")
+        self._prefer_tagged_specific_action = a
+        m.addAction(a)
+
         a = QAction("placeholder", self)
         a.setCheckable(True)
         a.setChecked(False)
@@ -1133,6 +1145,7 @@ class MarkerClient(QWidget):
         a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
         self._prefer_above_action = a
         m.addAction(a)
+
         self.ui.getNextButton.setMenu(m)
         # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -1150,6 +1163,30 @@ class MarkerClient(QWidget):
         pass
         # m = self.ui.getNextButton.menu()
         # print(self._prefer_tags_action.isChecked())
+
+    def toggle_prefer_tagged_specific(self):
+        a = self._prefer_tagged_specific_action
+        if not a.isChecked():
+            return
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        try:
+            idx = all_tags.index(a.stored_value)
+        except ValueError:
+            idx = -1
+        n, ok = QInputDialog.getItem(
+            self,
+            "Prefer papers tags...",
+            "<p>Perhaps you want to start marking at a particular paper number.</p>"
+            "<p>Preference for paper numbers at or above this value.</p>",
+            all_tags,
+            idx,
+            True,
+        )
+        if not ok:
+            a.setChecked(False)
+            return
+        a.stored_value = n
+        a.setText(f"Prefer tasks tagged '{a.stored_value}'")
 
     @property
     def prefer_tagged(self):
