@@ -148,7 +148,7 @@
                                                         class="btn btn-warning">delete</button>
                                             {% endif %}
                                         {% else %}
-                                            {% if val.identified and val.marked and val.reassembled_status != "Queued"  and val.reassembled_status != "Started" %}
+                                            {% if val.identified and val.marked and val.reassembled_status != "Queued" and val.reassembled_status != "Started" %}
                                                 <button hx-post="{% url 'reassemble_one_paper' paper %}"
                                                         class="btn btn-success">reassemble</button>
                                             {% else %}
