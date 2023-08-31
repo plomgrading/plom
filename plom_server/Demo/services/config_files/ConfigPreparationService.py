@@ -131,9 +131,7 @@ def create_papers(config: PlomServerConfig):
     """Create test paper instances."""
     try:
         qvmap = PQVMappingService().get_pqv_map_dict()
-        PaperCreatorService().add_all_papers_in_qv_map(
-            qvmap, "manager", background=False  # hard-coded username
-        )
+        PaperCreatorService().add_all_papers_in_qv_map(qvmap, background=False)
     except Exception as e:
         raise PlomConfigCreationError(e)
 

@@ -104,7 +104,7 @@ class PaperCreatorService:
         paper_task_obj.save()
 
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict, background: bool = True
+        self, qv_map: Dict, *, background: bool = True
     ) -> Tuple[bool, List]:
         """Build all the papers given by the qv-map.
 
