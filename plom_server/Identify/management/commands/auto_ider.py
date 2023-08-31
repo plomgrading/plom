@@ -327,6 +327,15 @@ class Command(BaseCommand):
                 If omitted, sort in order of decreasing certainty values.
             """,
         )
+        sp_order.add_argument(
+            "--decreasing",
+            action="store_false",
+            dest="increasing",
+            help="""
+                Sort in order of decreasing certainty values.
+                This is the default if omitted.
+            """,
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "run":
