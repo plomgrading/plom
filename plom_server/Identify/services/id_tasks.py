@@ -13,7 +13,6 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.db import transaction, IntegrityError
-from django.db.models import QuerySet
 
 from Identify.models import (
     PaperIDTask,
@@ -286,7 +285,7 @@ class IdentifyTaskService:
         except IDPrediction.DoesNotExist as e:
             raise ValueError(
                 f"No predictions exist for paper number {paper_obj.paper_number}."
-            )
+            ) from e
 
         try:
             task = PaperIDTask.objects.get(paper=paper_obj)
@@ -298,7 +297,15 @@ class IdentifyTaskService:
         except PaperIDTask.DoesNotExist as e:
             raise ValueError(
                 f"Task with paper number {paper_obj.paper_number} does not exist."
-            )
+            ) from e
+
+    @transaction.atomic
+    def reset_task_priority(self) -> None:
+        """Reset the priority of all TODO tasks to zero."""
+        tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
+        for task in tasks:
+            task.iding_priority = 0
+        PaperIDTask.objects.bulk_update(tasks, ["iding_priority"])
 
     def update_task_priority_cmd(self, increasing_cert: bool = True) -> None:
         """A wrapper around update_task_priority() for toggling between ID sorting order.
