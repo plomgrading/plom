@@ -68,7 +68,7 @@ class BaseMessenger:
         scheme: Union[str, None] = None,
         verify_ssl: Union[bool, str] = True,
         webplom: Union[bool, None] = None,
-    ):
+    ) -> None:
         """Initialize a new BaseMessenger.
 
         Args:
@@ -127,7 +127,7 @@ class BaseMessenger:
         self._raw_init(server, verify_ssl=verify_ssl)
 
     def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
-        self.session = None
+        self.session: Union[requests.Session, None] = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
@@ -299,6 +299,7 @@ class BaseMessenger:
         else:
             log.debug("starting a new requests-session")
             self.session = requests.Session()
+            assert self.session
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount(
