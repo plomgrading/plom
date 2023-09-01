@@ -197,6 +197,10 @@ class BaseMessenger:
             return None
         return not self.webplom
 
+    @property
+    def server(self) -> str:
+        return self.base
+
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
