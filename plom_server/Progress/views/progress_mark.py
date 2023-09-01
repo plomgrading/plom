@@ -32,8 +32,6 @@ class ProgressMarkStatsView(ManagerRequiredView):
     def get(self, request, question, version):
         context = super().build_context()
         mss = MarkingStatsService()
-        histogram = mss.get_mark_histogram(question=question, version=version)
-        hist_keys, hist_values = zip(*histogram.items())
         context.update(
             {
                 "question": question,
@@ -41,9 +39,48 @@ class ProgressMarkStatsView(ManagerRequiredView):
                 "stats": mss.get_basic_marking_stats(
                     question=question, version=version
                 ),
-                "hist_keys": list(hist_keys),
-                "hist_values": list(hist_values),
             }
         )
 
         return render(request, "Progress/Mark/mark_stats_card.html", context)
+
+
+class ProgressMarkDetailsView(ManagerRequiredView):
+    def get(self, request, question, version):
+        context = super().build_context()
+        mss = MarkingStatsService()
+        stats = mss.get_basic_marking_stats(question=question, version=version)
+        histogram = mss.get_mark_histogram(question=question, version=version)
+        hist_keys, hist_values = zip(*histogram.items())
+        # user_list = mss.get_list_of_users_who_marked(question=question, version=version)
+        user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
+            question=question, version=version
+        )
+        # for the charts we need a list of histogram values for each user, hence the following
+        # we also want to show it against scaled histogram of all users
+        for upk in user_hists_and_stats:
+            user_hists_and_stats[upk]["hist_values"] = [
+                v for k, v in user_hists_and_stats[upk]["histogram"].items()
+            ]
+            scale = (
+                user_hists_and_stats[upk]["number"] / stats["number_of_completed_tasks"]
+            )
+            user_hists_and_stats[upk]["hist_everyone_values"] = [
+                v * scale for v in hist_values
+            ]
+        # to show incomplete pie-chart need this value
+        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
+
+        context.update(
+            {
+                "question": question,
+                "version": version,
+                "stats": stats,
+                "hist_keys": list(hist_keys),
+                "hist_values": list(hist_values),
+                "user_hists": user_hists_and_stats,
+                "pie_angle": pie_angle,
+            }
+        )
+
+        return render(request, "Progress/Mark/mark_details.html", context)

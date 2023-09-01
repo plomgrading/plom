@@ -17,6 +17,7 @@ from Progress.views import (
     ProgressIdentifyHome,
     ProgressMarkHome,
     ProgressMarkStatsView,
+    ProgressMarkDetailsView,
     ProgressUserInfoHome,
     IDImageView,
     ClearID,
@@ -62,6 +63,11 @@ urlpatterns = [
         "mark/stats/<int:question>/<int:version>",
         ProgressMarkStatsView.as_view(),
         name="progress_mark_stats",
+    ),
+    path(
+        "mark/details/<int:question>/<int:version>",
+        ProgressMarkDetailsView.as_view(),
+        name="progress_mark_details",
     ),
     path(
         "identify/overview/",
