@@ -400,21 +400,7 @@ class MarkingTaskService:
             )
         annot_img.seek(0)
 
-        imgs_folder = settings.MEDIA_ROOT / "annotation_images"
-        imgs_folder.mkdir(exist_ok=True)
-        img = AnnotationImage(hash=md5sum)
-        img.save()
-
-        img_path = imgs_folder / f"annotation_{img.pk}.png"
-        img.path = img_path
-        if img_path.exists():
-            raise FileExistsError(
-                f"Annotation image with public key {img.pk} already exists."
-            )
-
-        with open(img_path, "wb") as saved_annot_image:
-            for chunk in annot_img.chunks():
-                saved_annot_image.write(chunk)
+        img = AnnotationImage(hash=md5sum, image=annot_img)
         img.save()
 
         return img

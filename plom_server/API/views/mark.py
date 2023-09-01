@@ -415,7 +415,7 @@ class MgetAnnotationImage(APIView):
             )
 
         return FileResponse(
-            open(annotation_image.path, "rb"), status=status.HTTP_200_OK
+            open(annotation_image.image, "rb"), status=status.HTTP_200_OK
         )
 
 

@@ -348,7 +348,7 @@ class ReassembleService:
         mts = MarkingTaskService()
         for i in range(1, n_questions + 1):
             annotation = mts.get_latest_annotation(paper.paper_number, i)
-            marked_pages.append(annotation.image.path)
+            marked_pages.append(annotation.image.image.path)
 
         return marked_pages
 
