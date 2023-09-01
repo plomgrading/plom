@@ -37,10 +37,11 @@ def status(*, msgr):
     print("-------------\n")
     srv_ver = msgr.get_server_version()
     if "Plom" in srv_ver:
-        print(check_mark + f" online: https://{msgr.server}")
+        print(check_mark + f" online: {msgr.server}")
         print(check_mark + f" {srv_ver}")
     else:
-        print(question_mark + f" cannot find a Plom server at https://{msgr.server}")
+        print(question_mark + f" cannot find a Plom server at {msgr.server}")
+
     if msgr.verify_ssl:
         print(check_mark + " secure connection verified with SSL")
     else:
