@@ -1115,7 +1115,7 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
-        m = build_tagging_menu(self)
+        m = build_tagging_menu(self, self.requestInteractive)
         m.aboutToShow.connect(self.updateTagMenu)
         self.ui.getNextButton.setMenu(m)
         self._tagging_menu = m

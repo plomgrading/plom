@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import Any
+
 from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
@@ -16,18 +18,21 @@ from PyQt6.QtWidgets import (
 )
 
 
-def build_tagging_menu(parent: QWidget) -> QMenu:
+def build_tagging_menu(parent: QWidget, get_paper_fcn) -> Any:
     """Build a pop-up menu/dialog thing for get-next preferences.
 
     Args:
         parent: the window that will popup this menu.
+        get_paper_fcn: a function to call for the get particular
+            paper number feature.
 
-    The result has some messy underscore instance variables for
-    manipulating the menu.
+    Return:
+        A QMenu with some monkey patched hackery: instance variables
+        for manipulating the menu.  Probably it should be a subclass.
     """
     m = QMenu()
     # TODO: rather yuck
-    m.addAction("Get paper number...", parent.requestInteractive)
+    m.addAction("Get paper number...", get_paper_fcn)
     m.addSection("Options")
 
     q = QComboBox()
