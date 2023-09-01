@@ -42,7 +42,9 @@ def status(*, msgr):
     else:
         print(question_mark + f" cannot find a Plom server at {msgr.server}")
 
-    if msgr.verify_ssl:
+    if msgr.scheme != "https":
+        print(warn_mark + " insecure connection (http instead of https)")
+    elif msgr.is_ssl_verified():
         print(check_mark + " secure connection verified with SSL")
     else:
         print(warn_mark + " insecure connection (self-signed or invalid SSL cert)")
