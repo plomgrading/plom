@@ -31,10 +31,10 @@ class Command(BaseCommand):
     def build_scrap_paper(self):
         sp_service = ScrapPaperService()
         current_state = sp_service.get_scrap_paper_task_status()
-        if current_state == "todo":
+        if current_state == "To Do":
             sp_service.build_scrap_paper_pdf()
             self.stdout.write("Enqueued scrap-paper pdf build")
-        elif current_state == "complete":
+        elif current_state == "Complete":
             self.stdout.write("Scrap-paper pdf has already been built")
         else:
             self.stdout.write(
@@ -44,7 +44,7 @@ class Command(BaseCommand):
     def delete_scrap_paper(self):
         sp_service = ScrapPaperService()
         current_state = sp_service.get_scrap_paper_task_status()
-        if current_state in ["error", "complete"]:
+        if current_state in ["Error", "Complete"]:
             sp_service.delete_scrap_paper_pdf()
             self.stdout.write("Deleting scrap-paper pdf")
         else:
@@ -53,7 +53,7 @@ class Command(BaseCommand):
     def download_scrap_paper(self, destination):
         sp_service = ScrapPaperService()
         current_state = sp_service.get_scrap_paper_task_status()
-        if current_state == "complete":
+        if current_state == "Complete":
             self.stdout.write(f"Downloading scrap-paper pdf to {destination}")
             with Path(destination).open("wb") as fh:
                 fh.write(sp_service.get_scrap_paper_pdf_as_bytes())

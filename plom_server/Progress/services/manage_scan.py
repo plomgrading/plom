@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import arrow
 
@@ -285,6 +285,23 @@ class ManageScanService:
         return sorted([paper.paper_number for paper in no_images_at_all])
 
     @transaction.atomic
+    def get_all_used_test_papers(self):
+        """Return a list of paper-numbers of all used test-papers. Is sorted into paper-number order.
+
+        A paper is used when it has at least one fixed page image or any mobile page.
+        """
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        has_mobile_page = MobilePage.objects.filter(paper=OuterRef("pk"))
+        has_some_image = Paper.objects.filter(
+            Exists(fixed_with_scan)
+        ) | Paper.objects.filter(Exists(has_mobile_page))
+
+        return sorted([paper.paper_number for paper in has_some_image])
+
+    @transaction.atomic
     def get_page_image(self, test_paper, index):
         """Return a page-image.
 
@@ -333,6 +350,41 @@ class ManageScanService:
             return None
 
     @transaction.atomic
+    def get_pushed_image_page_info(self, img_pk) -> Dict[str, Any]:
+        try:
+            img = Image.objects.get(pk=img_pk)
+        except Image.DoesNotExist:
+            raise ValueError("Cannot find an image with pk {img_pk}.")
+
+        if img.fixedpage_set.exists():  # linked by foreign key
+            fp_obj = FixedPage.objects.get(image=img)
+            return {
+                "page_type": "fixed",
+                "paper_number": fp_obj.paper.paper_number,
+                "page_number": fp_obj.page_number,
+            }
+        elif img.mobilepage_set.exists():  # linked by foreign key
+            # check the first such mobile page to get the paper_number
+            paper_number = (
+                MobilePage.objects.filter(image=img).first().paper.paper_number
+            )
+            q_list = [
+                mp_obj.question_number
+                for mp_obj in MobilePage.objects.filter(image=img)
+            ]
+            return {
+                "page_type": "mobile",
+                "paper_number": paper_number,
+                "question_list": q_list,
+            }
+        elif img.discardpage:  # linked by one-to-one
+            return {"page_type": "discard", "reason": img.discardpage.discard_reason}
+        else:
+            raise ValueError(
+                "Cannot determine what sort of page image {img_pk} is attached to."
+            )
+
+    @transaction.atomic
     def get_discarded_images(self):
         discards = []
 
@@ -348,6 +400,7 @@ class ManageScanService:
                     "bundle_pk": img.bundle.pk,
                     "bundle_name": img.bundle.staging_bundle.slug,
                     "order": img.bundle_order,
+                    "discard_pk": img.discardpage.pk,
                 }
             )
 
@@ -399,3 +452,38 @@ class ManageScanService:
             page_images.append(dat)
 
         return page_images
+
+    @transaction.atomic
+    def get_papers_missing_fixed_pages(self):
+        """Return a list of the missing fixed pages in papers.
+
+        Returns:
+            A list of pairs `(paper_number (int), [missing fixed pages (int)])`.
+        """
+        # Get fixed pages with no image - ie not scanned.
+        fixed_with_no_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=True
+        )
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+
+        # Get papers with some but not all scanned fixed pages
+        some_but_not_all_fixed_present = Paper.objects.filter(
+            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
+        ).prefetch_related(
+            Prefetch(
+                "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
+            ),
+            "fixedpage_set__image",
+        )
+        missing_paper_fixed_pages = []
+        for paper in some_but_not_all_fixed_present:
+            dat = []
+            for fp in paper.fixedpage_set.all():
+                if not fp.image:
+                    dat.append(fp.page_number)
+            missing_paper_fixed_pages.append((paper.paper_number, dat))
+
+        return missing_paper_fixed_pages

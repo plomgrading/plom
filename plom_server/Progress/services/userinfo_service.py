@@ -84,12 +84,12 @@ class UserInfoServices:
                 key
             ] += annotation.marking_time
 
-        grouped_annotations: Dict[
+        grouped_by_user: Dict[
             str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
         ] = dict()
 
         for user in count_data:
-            grouped_annotations[user] = dict()
+            grouped_by_user[user] = dict()
             for key in count_data[user]:
                 count = count_data[user][key]
                 total_marking_time = total_marking_time_data[user][key]
@@ -101,7 +101,7 @@ class UserInfoServices:
                     total_marking_time / count if count > 0 else 0
                 )
 
-                grouped_annotations[user][key] = {
+                grouped_by_user[user][key] = {
                     "annotations_count": count,
                     "average_marking_time": self.seconds_to_humanize_time(
                         average_marking_time
@@ -120,7 +120,45 @@ class UserInfoServices:
                     .format("YYYYMMDDHHmmss"),
                 }
 
-        return grouped_annotations
+        return grouped_by_user
+
+    def get_annotations_based_on_question_number_version(
+        self,
+        grouped_by_user_annotations: Dict[
+            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
+        ],
+    ) -> Dict[Tuple[int, int], Dict[str, list]]:
+        """Group annotations by question number and version.
+
+        Args:
+            grouped_by_user_annotations: (Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]])
+                A dictionary with users as keys, and nested dictionaries as values containing the count
+                of annotations and average marking time for each (question_number, question_version)
+                combination.
+
+        Returns:
+            Dict[Tuple[int, int], Dict[str, list]]: A dictionary containing annotations grouped by
+                question numbers and versions, with marker information and other data.
+        """
+        grouped_by_question: Dict[Tuple[int, int], Dict[str, list]] = dict()
+
+        for marker, annotation_data in grouped_by_user_annotations.items():
+            for question, question_data in annotation_data.items():
+                if question not in grouped_by_question:
+                    grouped_by_question[question] = {
+                        "annotations": [],
+                    }
+                grouped_by_question[question]["annotations"].append(
+                    {
+                        "marker": marker,
+                        "annotations_count": question_data["annotations_count"],
+                        "average_marking_time": question_data["average_marking_time"],
+                        "percentage_marked": question_data["percentage_marked"],
+                        "date_format": question_data["date_format"],
+                    }
+                )
+
+        return grouped_by_question
 
     def seconds_to_humanize_time(self, seconds: float) -> str:
         """Convert the given number of seconds to a human-readable time string.

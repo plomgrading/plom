@@ -1,0 +1,97 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+{% extends "Progress/scan_base.html" %}
+{% block main_card_content %}
+    <div class="row">
+        <h5>Reassign discarded image</h5>
+        <div class="col">
+            <div style="height: 30vw;
+                        width: 30vw;
+                        justify-content: center;
+                        display:flex;
+                        align-items:center">
+                <img class="shadow-sm"
+                     src="{% url 'progress_pushed_img' image_pk %}"
+                     style="max-height: 100%;
+                            max-width: 100%;
+                            transform: rotate({{ angle }}deg)">
+            </img>
+        </div>
+    </div>
+    <div class="col p-2 border">
+        <h5>Reassign the image</h5>
+        <div class="py-4" id="invalidmessage"></div>
+        <div>
+            <form hx-post="{% url 'progress_reassign_discard' image_pk %}"
+                  hx-target="#invalidmessage"
+                  hx-swap="innerHTML">
+                <div x-data={"assignment_type":"fixed"}>
+                    <div class="form-radio">
+                        <p>
+                            <input class="form-check-input"
+                                   type="radio"
+                                   id="fixed"
+                                   value="fixed"
+                                   x-model="assignment_type">
+                            <label class="form-check-label" for="fixed">missing fixed page from an incomplete paper</label>
+                        </p>
+                        <p>
+                            <input class="form-check-input"
+                                   type="radio"
+                                   id="mobile"
+                                   value="mobile"
+                                   x-model="assignment_type">
+                            <label class="form-check-label" for="mobile">mobile page in an existing paper</label>
+                        </p>
+                    </div>
+                    <div class="container shadow-sm p-2">
+                        <div x-show="assignment_type=='fixed'">
+                            Select a missing fixed page from an incomplete paper:
+                            <select name="missingPaperPage" class="form-select">
+                                <option selected>Missing paper/page</option>
+                                {% for pn, pg_list in papers_missing_fixed_pages %}
+                                    {% for pg in pg_list %}<option value="{{ pn }},{{ pg }}">paper {{ pn }} page {{ pg }}</option>{% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div x-show="assignment_type=='mobile'">
+                            Select a used paper:
+                            <select name="usedPaper" class="form-select">
+                                <option>---</option>
+                                {% for pn in used_papers %}<option value="{{ pn }}">paper {{ pn }}</option>{% endfor %}
+                            </select>
+                            Select questions:
+                            <div x-data="{allq: false}">
+                                <div class="form-check">
+                                    <input name="questionAll"
+                                           value="all"
+                                           class="form-check-input"
+                                           type="checkbox"
+                                           id="questionall"
+                                           x-model="allq">
+                                    <label class="form-check-label" for="questionall">all questions</label>
+                                </div>
+                                <div x-show="!allq" x-transition>
+                                    {% for ql in question_labels %}
+                                        <div class="form-check">
+                                            <input name="questions"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   value="{{ forloop.counter }}"
+                                                   id="{{ ql }}">
+                                            <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary m-2" type="submit">Set data</button>
+            </form>
+            <a href="{% url 'progress_scan_discard' %}">
+                <button class="btn btn-warning m-2">Go back</button>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock main_card_content %}
