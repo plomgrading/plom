@@ -67,7 +67,7 @@ class BaseMessenger:
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
         verify_ssl: Union[bool, str] = True,
-        webplom: bool = False,
+        webplom: Union[bool, None] = None,
     ):
         """Initialize a new BaseMessenger.
 
@@ -84,8 +84,10 @@ class BaseMessenger:
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
-            webplom (True/False): default False, whether to connect to
-                Django-based servers.  Experimental!
+            webplom (True/False/None): whether to connect to a newer
+                Django-based server.  If False, force connection to a
+                legacy server.  If True, force connect to a new server.
+                The default (recommended!) is None, to autodetect.
 
         Returns:
             None
@@ -94,9 +96,6 @@ class BaseMessenger:
             PlomConnectionError
         """
         self.webplom = webplom
-        if os.environ.get("WEBPLOM"):
-            log.warning("Enabling experimental WebPlom support via environment var")
-            self.webplom = True
 
         if not server:
             server = "127.0.0.1"
@@ -194,6 +193,7 @@ class BaseMessenger:
         self.webplom = True
 
     def is_legacy_server(self) -> bool:
+        # TODO: if its None (for autodetect) this will say True?
         return not self.webplom
 
     def get(self, url, *args, **kwargs):
@@ -287,11 +287,11 @@ class BaseMessenger:
 
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def start(self):
-        """Start the messenger session.
+    def _start(self) -> str:
+        """Start the messenger session, low-level.
 
         Returns:
-            str: the version string of the server,
+            the version string of the server.
         """
         if self.session:
             log.debug("already have an requests-session")
@@ -328,7 +328,22 @@ class BaseMessenger:
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
 
-    def stop(self):
+    def start(self) -> str:
+        """Start the messenger session, including detecting legacy servers.
+
+        Returns:
+            The version string of the server.
+        """
+        s = self._start()
+        if self.webplom is not None:
+            return s
+        info = self.get_server_info()
+        if "Legacy" in info["product_string"]:
+            self.enable_legacy_server_support()
+            log.warn("Using legacy messenger to talk to legacy server")
+        return s
+
+    def stop(self) -> None:
         """Stop the messenger."""
         if self.session:
             log.debug("stopping requests-session")

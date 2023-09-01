@@ -357,7 +357,7 @@ class Chooser(QDialog):
         _ssl_excused = False
         try:
             try:
-                server_ver_str = msgr.start()
+                server_ver_str = msgr._start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     self,
@@ -370,7 +370,7 @@ class Chooser(QDialog):
                     return False
                 _ssl_excused = True
                 msgr.force_ssl_unverified()
-                server_ver_str = msgr.start()
+                server_ver_str = msgr._start()
         except PlomBenignException as e:
             WarnMsg(
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
@@ -398,8 +398,6 @@ class Chooser(QDialog):
 
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
-        # TODO: should be the default and/or needs an accessor method?
-        msgr.disable_legacy_server_support()
         if "Legacy" in info["product_string"]:
             msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
