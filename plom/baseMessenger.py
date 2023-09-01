@@ -192,8 +192,9 @@ class BaseMessenger:
             raise RuntimeError('cannot change "legacy" status after login')
         self.webplom = True
 
-    def is_legacy_server(self) -> bool:
-        # TODO: if its None (for autodetect) this will say True?
+    def is_legacy_server(self) -> Union[bool, None]:
+        if self.webplom is None:
+            return None
         return not self.webplom
 
     def get(self, url, *args, **kwargs):
