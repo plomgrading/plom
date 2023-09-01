@@ -10,7 +10,7 @@ from . import MarkingTask
 class AnnotationImage(models.Model):
     """A raster representation of an annotated question."""
 
-    path = models.TextField(null=False, default="")
+    image = models.FileField(upload_to="annotation_images/", null=False)
     hash = models.TextField(null=False, default="")
 
 
