@@ -67,8 +67,8 @@ class BaseMessenger:
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
         verify_ssl: Union[bool, str] = True,
-        webplom: bool = False,
-    ):
+        webplom: Union[bool, None] = None,
+    ) -> None:
         """Initialize a new BaseMessenger.
 
         Args:
@@ -84,8 +84,10 @@ class BaseMessenger:
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
-            webplom (True/False): default False, whether to connect to
-                Django-based servers.  Experimental!
+            webplom (True/False/None): whether to connect to a newer
+                Django-based server.  If False, force connection to a
+                legacy server.  If True, force connect to a new server.
+                The default (recommended!) is None, to autodetect.
 
         Returns:
             None
@@ -94,9 +96,6 @@ class BaseMessenger:
             PlomConnectionError
         """
         self.webplom = webplom
-        if os.environ.get("WEBPLOM"):
-            log.warning("Enabling experimental WebPlom support via environment var")
-            self.webplom = True
 
         if not server:
             server = "127.0.0.1"
@@ -128,7 +127,7 @@ class BaseMessenger:
         self._raw_init(server, verify_ssl=verify_ssl)
 
     def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
-        self.session = None
+        self.session: Union[requests.Session, None] = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
@@ -193,7 +192,9 @@ class BaseMessenger:
             raise RuntimeError('cannot change "legacy" status after login')
         self.webplom = True
 
-    def is_legacy_server(self) -> bool:
+    def is_legacy_server(self) -> Union[bool, None]:
+        if self.webplom is None:
+            return None
         return not self.webplom
 
     def get(self, url, *args, **kwargs):
@@ -287,17 +288,18 @@ class BaseMessenger:
 
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def start(self):
-        """Start the messenger session.
+    def _start(self) -> str:
+        """Start the messenger session, low-level.
 
         Returns:
-            str: the version string of the server,
+            the version string of the server.
         """
         if self.session:
             log.debug("already have an requests-session")
         else:
             log.debug("starting a new requests-session")
             self.session = requests.Session()
+            assert self.session
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount(
@@ -328,7 +330,24 @@ class BaseMessenger:
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
 
-    def stop(self):
+    def start(self) -> str:
+        """Start the messenger session, including detecting legacy servers.
+
+        Returns:
+            The version string of the server.
+        """
+        s = self._start()
+        if self.webplom is not None:
+            return s
+        info = self.get_server_info()
+        if "Legacy" in info["product_string"]:
+            self.enable_legacy_server_support()
+            log.warn("Using legacy messenger to talk to legacy server")
+        else:
+            self.disable_legacy_server_support()
+        return s
+
+    def stop(self) -> None:
         """Stop the messenger."""
         if self.session:
             log.debug("stopping requests-session")
