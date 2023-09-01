@@ -237,6 +237,6 @@ class UserInfoServices:
         latest_annotation = annotations.latest("time_of_last_update")
         latest_annotation_humanize = arrow.get(
             latest_annotation.time_of_last_update
-        ).humanize()
+        ).humanize(granularity=["day", "hour", "minute"])
 
         return latest_annotation_humanize

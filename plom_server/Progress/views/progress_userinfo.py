@@ -18,14 +18,10 @@ class ProgressUserInfoHome(ManagerRequiredView):
         annotations_exist = uis.annotation_exists()
         annotation_count_dict = uis.get_total_annotations_count_based_on_user()
         latest_updated_annotation = uis.get_latest_updated_annotation()
-        
+
         if not request.GET.get("time_filter"):
             filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
                 time_delta_seconds=0
-            )
-        else:
-            filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
-                time_delta_seconds=int(request.GET.get("time_filter"))
             )
 
         if filter_form.is_valid():
@@ -36,6 +32,11 @@ class ProgressUserInfoHome(ManagerRequiredView):
 
             filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
                 time_delta_seconds=int(time_filter)
+            )
+        # this is for error handling
+        else:
+            filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
+                time_delta_seconds=0
             )
 
         annotations_grouped_by_user = uis.get_annotations_based_on_user(

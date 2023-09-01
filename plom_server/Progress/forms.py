@@ -19,5 +19,5 @@ class AnnotationFilterForm(forms.Form):
     ]
 
     time_filter = forms.TypedChoiceField(
-        choices=TIME_CHOICES, required=False, label="Select a time to filter"
+        choices=TIME_CHOICES, coerce=int, required=False, label="Select a time to filter"
     )
