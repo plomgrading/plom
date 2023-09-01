@@ -1,6 +1,8 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -164,7 +166,36 @@
                         {% endif %}
                     </tr>
                 {% endfor %}
+                {% for p_key, p_val in papers.items %}
+                    <tr>
+                        <td>{{ p_key }}</td>
+                        {% if not p_val %}
+                            {% for i in n_questions %}<td>None</td>{% endfor %}
+                        {% elif p_val|length == n_questions|length %}
+                            {% comment %}Fully graded{% endcomment %}
+                            {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
+                        {% else %}
+                            {% comment %}Partially graded{% endcomment %}
+                            {% for i in n_questions %}
+                                <td>
+                                    {% with p_val|get_item:i as dict %}
+                                        {% if dict %}
+                                            {{ dict.student_mark }}
+                                        {% else %}
+                                            None
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            {% endfor %}
+                        {% endif %}
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+    <div>
+        <div id="grades_hist">{% include "Visualization/histogram.html" with data=grades_hist_data %}</div>
+        <div id="corr_heatmap">{% include "Visualization/heat_map.html" with data=corr_heatmap_data %}</div>
+    </div>
+</div>
 {% endblock main_content %}
