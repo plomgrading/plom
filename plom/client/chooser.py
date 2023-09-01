@@ -402,6 +402,8 @@ class Chooser(QDialog):
             msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
+        else:
+            msgr.disable_legacy_server_support()
 
         if Version(__version__) < Version(srv_ver):
             s = "\nWARNING: old client!"
