@@ -153,10 +153,26 @@ class MgetNextTask(APIView):
 
 class MclaimThisTask(APIView):
     def patch(self, request, code, *args):
-        """Attach a user to a marking task and return the task's metadata."""
+        """Attach a user to a marking task and return the task's metadata.
+
+        Reply with status 200, or 409 if someone else has claimed this
+        task, or a 404 if there it not yet such a task (not scanned yet)
+        or 410 if there will never be such a task.
+
+        Notes: legacy would use 417 when the version requested does not
+        match the version of the task.  But I think we ignore the version.
+        """
         mss = MarkingTaskService()
-        the_task = mss.get_task_from_code(code)
-        mss.assign_task_to_user(request.user, the_task)
+        try:
+            the_task = mss.get_task_from_code(code)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_410_GONE)
+        except RuntimeError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        try:
+            mss.assign_task_to_user(request.user, the_task)
+        except RuntimeError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
         pds = PageDataService()
         paper, question = mss.unpack_code(code)
