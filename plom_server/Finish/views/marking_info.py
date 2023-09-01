@@ -14,8 +14,8 @@ from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
-from .services import StudentMarkService, TaMarkingService, ReassembleService
-from .forms import StudentMarksFilterForm
+from ..services import StudentMarkService, TaMarkingService, ReassembleService
+from ..forms import StudentMarksFilterForm
 
 
 class MarkingInformationView(ManagerRequiredView):

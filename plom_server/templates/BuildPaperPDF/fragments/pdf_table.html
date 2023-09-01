@@ -41,13 +41,13 @@
     {% for task in tasks %}
         <tr>
             <td>{{ task.paper_number }}</td>
-            {% if task.status == 'complete' %}
+            {% if task.status == 'Complete' %}
                 <td>
                     <a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ task.pdf_filename }}</a>
                 </td>
                 <td>{{ task.status }}</td>
                 <td></td>
-            {% elif task.status == 'error' %}
+            {% elif task.status == 'Error' %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     <p class="text-danger">{{ task.message }}</p>
@@ -57,7 +57,7 @@
                        hx-post="{% url 'start_one_PDF' task.paper_number %}"
                        hx-target="#pdf_table">Retry</a>
                 </td>
-            {% elif task.status == 'queued' %}
+            {% elif task.status == 'Queued' %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}
@@ -68,7 +68,7 @@
                        hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
                        hx-target="#pdf_table">Cancel</a>
                 </td>
-            {% elif task.status == 'started' %}
+            {% elif task.status == 'Started' %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}

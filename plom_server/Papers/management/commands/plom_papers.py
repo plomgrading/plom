@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from Papers.services import PaperCreatorService, PaperInfoService
 from Preparation.services import PQVMappingService, StagingStudentService
 from BuildPaperPDF.services import BuildPapersService
+from Finish.services import ReassembleService
 
 
 class Command(BaseCommand):
@@ -75,9 +76,11 @@ class Command(BaseCommand):
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
-        self.stdout.write("Creating associated pdf-build tasks.")
-        bp_service = BuildPapersService()
-        bp_service.stage_all_pdf_jobs(classdict=StagingStudentService().get_classdict())
+        self.stdout.write("Creating associated pdf-build and reassembly tasks.")
+        BuildPapersService().stage_all_pdf_jobs(
+            classdict=StagingStudentService().get_classdict()
+        )
+        ReassembleService().create_all_reassembly_tasks()
 
     def clear_papers(self):
         """Remove all test-papers from the database."""
