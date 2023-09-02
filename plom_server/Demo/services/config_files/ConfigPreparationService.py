@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 """Handle creating pre-bundle server state from a config file.
 
@@ -8,8 +9,7 @@ server will be created in order from test specification to building test-papers.
 """
 
 import sys
-import csv
-from typing import List, Dict
+from typing import Dict
 from pathlib import Path
 
 if sys.version_info >= (3, 10):
@@ -52,7 +52,7 @@ def create_specification(config: PlomServerConfig):
             spec_src = config.parent_dir / spec_path
         SpecificationService.load_spec_from_toml(spec_src, update_staging=True)
     except Exception as e:
-        raise PlomConfigCreationError(e)
+        raise PlomConfigCreationError(e) from e
 
 
 def upload_test_sources(config: PlomServerConfig):
@@ -68,7 +68,7 @@ def upload_test_sources(config: PlomServerConfig):
         for i, path in enumerate(source_paths):
             TestSourceService().store_test_source(i + 1, path)
     except Exception as e:
-        raise PlomConfigCreationError(e)
+        raise PlomConfigCreationError(e) from e
 
 
 def set_prenaming_setting(config: PlomServerConfig):
@@ -93,7 +93,7 @@ def upload_classlist(config: PlomServerConfig):
         else:
             raise PlomConfigCreationError("Unable to upload classlist.")
     except Exception as e:
-        raise PlomConfigCreationError(e)
+        raise PlomConfigCreationError(e) from e
 
 
 def create_qv_map(config: PlomServerConfig):
@@ -124,18 +124,16 @@ def create_qv_map(config: PlomServerConfig):
                     }
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
-            raise PlomConfigCreationError(e)
+            raise PlomConfigCreationError(e) from e
 
 
 def create_papers(config: PlomServerConfig):
     """Create test paper instances."""
     try:
         qvmap = PQVMappingService().get_pqv_map_dict()
-        PaperCreatorService().add_all_papers_in_qv_map(
-            qvmap, "manager", background=False  # hard-coded username
-        )
+        PaperCreatorService().add_all_papers_in_qv_map(qvmap, background=False)
     except Exception as e:
-        raise PlomConfigCreationError(e)
+        raise PlomConfigCreationError(e) from e
 
 
 def create_test_preparation(config: PlomServerConfig, verbose: bool = False):

@@ -32,9 +32,8 @@ class CreateTestPapers(ManagerRequiredView):
         qvs = PQVMappingService()
 
         qvmap = qvs.get_pqv_map_dict()
-        username = request.user.username
         # by default we do not create the papers in background
-        status, err = pcs.add_all_papers_in_qv_map(qvmap, username, background=False)
+        status, err = pcs.add_all_papers_in_qv_map(qvmap, background=False)
         # TODO - if we want to do this in the background, then we
         # cannot build pdf tasks at the same time, since they need the
         # classlist...  else we have to pass required classlist info

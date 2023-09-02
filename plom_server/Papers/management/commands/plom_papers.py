@@ -23,18 +23,13 @@ class Command(BaseCommand):
             "status", help="Show the current state of test-papers in the database."
         )
 
-        sp_build = sp.add_parser(
+        sp.add_parser(
             "build_db",
             help="""
                 Populate the database with test-papers using information
                 provided in the spec and QV-map.
                 Also constructs the associate pdf-build tasks.
             """,
-        )
-        sp_build.add_argument(
-            "username",
-            type=str,
-            help="Name of user who is building papers.",
         )
 
         sp.add_parser("clear", help="Clear the database of test-papers.")
@@ -55,7 +50,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
-    def build_papers(self, username):
+    def build_papers(self):
         """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
         pqvs = PQVMappingService()
         if not pqvs.is_there_a_pqv_map():
@@ -71,7 +66,7 @@ class Command(BaseCommand):
         pcs = PaperCreatorService()
         qv_map = pqvs.get_pqv_map_dict()
         try:
-            pcs.add_all_papers_in_qv_map(qv_map, username, background=False)
+            pcs.add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
@@ -98,7 +93,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.papers_status()
         elif options["command"] == "build_db":
-            self.build_papers(options["username"])
+            self.build_papers()
         elif options["command"] == "clear":
             self.clear_papers()
         else:
