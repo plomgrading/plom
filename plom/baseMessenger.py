@@ -1160,7 +1160,7 @@ class BaseMessenger:
                 response = self.get(url, json={"user": self.user, "token": self.token})
                 response.raise_for_status()
                 info: Dict[str, Any] = {}
-                info["Content-Type"] = response.headers.get('Content-Type', None)
+                info["Content-Type"] = response.headers.get("Content-Type", None)
                 if info["Content-Type"] == "image/png":
                     info["extension"] = "png"
                 elif info["Content-Type"] == "image/jpeg":
