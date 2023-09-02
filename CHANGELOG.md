@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.14.0] - 2023-09-01
+## [0.14.1] - 2023-09-01
 
 ### Added
 * The next-gen web-based Plom Server is ready for wider testing.  Production use should probably remain on the "Legacy Plom Server" for the time being.
@@ -999,7 +999,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[0.14.0]: https://gitlab.com/plom/plom/-/compare/v0.13.3...v0.14.0
+[0.14.1]: https://gitlab.com/plom/plom/-/compare/v0.13.3...v0.14.1
 [0.13.3]: https://gitlab.com/plom/plom/-/compare/v0.13.2...v0.13.3
 [0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1
