@@ -10,7 +10,6 @@
 
 from collections import defaultdict
 import html
-import imghdr
 import logging
 import os
 from pathlib import Path
@@ -1779,12 +1778,10 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i, img_bytes in enumerate(imageList):
-                img_ext = imghdr.what(None, h=img_bytes)
+                img_ext = "unknown_ext"
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
-                if not img_ext:
-                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec() == QDialog.DialogCode.Accepted:
