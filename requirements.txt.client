@@ -13,8 +13,8 @@ PyQt6-sip==13.5.2
 appdirs==1.4.4
 arrow==1.2.3
 exif==1.6.0
-fonttools==4.41.1
-importlib-resources==5.13.0
+fonttools==4.42.1
+importlib-resources==6.0.1
 packaging==23.1
 pandas==1.5.3
 passlib==1.7.4
