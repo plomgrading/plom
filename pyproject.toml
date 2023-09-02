@@ -104,7 +104,7 @@ dependencies = [
 
 [project.readme]
 file = 'README.md'
-content-type = 'text/x-markdown'
+content-type = 'text/markdown'
 [project.urls]
 Homepage = 'https://plomgrading.org/'
 'Source Code' = 'https://gitlab.com/plom/plom'

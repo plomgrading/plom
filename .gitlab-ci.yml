@@ -202,7 +202,7 @@ pypi:
     - pip install --upgrade twine wheel setuptools build
     - python3 -m build
     - python3 -m twine check dist/*
-    - python3 -m twine upload dist/*
+    - python3 -m twine upload --verbose dist/*
 
 
 release_job:
@@ -464,7 +464,7 @@ webplom_demo:
     - python3 manage.py plom_demo --no-waiting --randomarker
     - popd
 
-  
+
 # a legacy-only job
 demoserver:
   stage: test
