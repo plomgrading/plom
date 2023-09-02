@@ -73,5 +73,9 @@
             <a href="{% url 'progress_mark_details' question version %}"
                class="btn btn-success">show details</a>
         {% endif %}
+        {% if version == 1 %}
+            <a href="{% url 'progress_mark_version_compare' question %}"
+               class="btn btn-success">compare all Q{{ question }} versions</a>
+        {% endif %}
     </div>
 </div>

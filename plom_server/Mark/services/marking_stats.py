@@ -16,13 +16,12 @@ class MarkingStatsService:
     """Functions for getting marking stats."""
 
     @transaction.atomic
-    def get_basic_marking_stats(self, version, question, user_obj=None):
+    def get_basic_marking_stats(self, question, version=None):
         """Send back current marking progress counts to the client.
 
         Args:
             question (int)
             version (int)
-            user_obj (User)
 
         Returns:
             Dict
@@ -42,26 +41,21 @@ class MarkingStatsService:
         }
 
         try:
-            all_task_count = (
-                MarkingTask.objects.filter(
-                    question_number=question, question_version=version
-                )
-                .exclude(status=MarkingTask.OUT_OF_DATE)
-                .count()
+            all_tasks = MarkingTask.objects.filter(question_number=question).exclude(
+                status=MarkingTask.OUT_OF_DATE
             )
-
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
                 question_number=question,
-                question_version=version,
             ).prefetch_related("latest_annotation")
-
-            if user_obj:
-                completed_tasks.filter(assigned_user=user_obj)
+            if version:
+                all_tasks = all_tasks.filter(question_version=version)
+                completed_tasks = completed_tasks.filter(question_version=version)
 
         except MarkingTask.DoesNotExist:
             return stats_dict
 
+        all_task_count = all_tasks.count()
         if all_task_count == 0:
             return stats_dict
 
@@ -97,7 +91,7 @@ class MarkingStatsService:
         return stats_dict
 
     @transaction.atomic
-    def get_mark_histogram(self, version, question):
+    def get_mark_histogram(self, question, version=None):
         hist = {
             qm: 0 for qm in range(SpecificationService.get_question_mark(question) + 1)
         }
@@ -105,8 +99,9 @@ class MarkingStatsService:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
                 question_number=question,
-                question_version=version,
             ).prefetch_related("latest_annotation")
+            if version:
+                completed_tasks.filter(question_version=version)
         except MarkingTask.DoesNotExist:
             return hist
         for X in completed_tasks:
@@ -127,7 +122,7 @@ class MarkingStatsService:
         ]
 
     @transaction.atomic
-    def get_mark_histogram_and_stats_by_users(self, version, question):
+    def get_mark_histogram_and_stats_by_users(self, question, version):
         data = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
@@ -166,5 +161,45 @@ class MarkingStatsService:
             data[upk]["mark_mean"] = round(statistics.mean(mark_list), 1)
             data[upk]["mark_mode"] = statistics.mode(mark_list)
             data[upk]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+
+        return data
+
+    @transaction.atomic
+    def get_mark_histogram_and_stats_by_versions(self, question):
+        data = {}
+        try:
+            completed_tasks = MarkingTask.objects.filter(
+                status=MarkingTask.COMPLETE,
+                question_number=question,
+            ).prefetch_related(
+                "latest_annotation",
+            )
+        except MarkingTask.DoesNotExist:
+            return data
+        for X in completed_tasks:
+            if X.question_version not in data:
+                data[X.question_version] = {
+                    "histogram": {
+                        qm: 0
+                        for qm in range(
+                            SpecificationService.get_question_mark(question) + 1
+                        )
+                    },
+                }
+            data[X.question_version]["histogram"][X.latest_annotation.score] += 1
+
+        for ver in data:
+            mark_list = [
+                key
+                for key, value in data[ver]["histogram"].items()
+                for _ in range(value)
+            ]
+            data[ver]["number"] = len(mark_list)
+            data[ver]["mark_max"] = max(mark_list)
+            data[ver]["mark_min"] = min(mark_list)
+            data[ver]["mark_median"] = round(statistics.median(mark_list), 1)
+            data[ver]["mark_mean"] = round(statistics.mean(mark_list), 1)
+            data[ver]["mark_mode"] = statistics.mode(mark_list)
+            data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
 
         return data

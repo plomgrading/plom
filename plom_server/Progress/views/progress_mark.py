@@ -84,3 +84,45 @@ class ProgressMarkDetailsView(ManagerRequiredView):
         )
 
         return render(request, "Progress/Mark/mark_details.html", context)
+
+
+class ProgressMarkVersionCompareView(ManagerRequiredView):
+    def get(self, request, question):
+        version = 1
+        context = super().build_context()
+        mss = MarkingStatsService()
+        stats = mss.get_basic_marking_stats(question=question, version=None)
+        histogram = mss.get_mark_histogram(question=question, version=None)
+        hist_keys, hist_values = zip(*histogram.items())
+        version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(
+            question=question
+        )
+        # for the charts we need a list of histogram values for each version, hence the following
+        # we also want to show it against scaled histogram of all versions
+        for ver in version_hists_and_stats:
+            version_hists_and_stats[ver]["hist_values"] = [
+                val for k, val in version_hists_and_stats[ver]["histogram"].items()
+            ]
+            scale = (
+                version_hists_and_stats[ver]["number"]
+                / stats["number_of_completed_tasks"]
+            )
+            version_hists_and_stats[ver]["hist_all_version_values"] = [
+                v * scale for v in hist_values
+            ]
+        # to show incomplete pie-chart need this value
+        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
+
+        context.update(
+            {
+                "question": question,
+                "version": version,
+                "stats": stats,
+                "hist_keys": list(hist_keys),
+                "hist_values": list(hist_values),
+                "version_hists": version_hists_and_stats,
+                "pie_angle": pie_angle,
+            }
+        )
+
+        return render(request, "Progress/Mark/mark_compare_versions.html", context)
