@@ -65,7 +65,7 @@ import plom.scan
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.1.0"
+__script_version__ = "0.2.0"
 
 
 def get_short_name(long_name):
@@ -90,11 +90,11 @@ def get_short_name(long_name):
     return short_name
 
 
-def make_toml(assignment, marks, *, server_dir="."):
+def make_toml(assignment, marks, *, dur="."):
     """
     (assignment): a canvasapi assignment object
     """
-    server_dir = Path(server_dir)
+    dur = Path(dur)
     longName = assignment.name
 
     name = get_short_name(longName)
@@ -128,7 +128,7 @@ def make_toml(assignment, marks, *, server_dir="."):
             select = "fix"
             """
         ).lstrip()
-    with open(server_dir / "canvasSpec.toml", "w") as f:
+    with open(dur / "canvasSpec.toml", "w") as f:
         f.write(toml)
 
 
@@ -141,23 +141,22 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     server_dir.mkdir(exist_ok=True)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, section=section, server_dir=server_dir)
+    download_classlist(course, section=section)
 
     print("Generating `canvasSpec.toml`...")
-    make_toml(assignment, marks, server_dir=server_dir)
+    make_toml(assignment, marks)
 
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        subprocess.check_call(["plom-create", "parse", "canvasSpec.toml"])
-        print("Running `plom-server init`...")
-        subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
         subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
+        print("Running `plom-server init`...")
+        subprocess.check_call(["plom-server", "init"])
 
     print("Temporarily exporting manager password...")
     pwds = {}
@@ -173,14 +172,14 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 
+    subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
+    subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
-    build_class = subprocess.check_call(
-        ["plom-create", "class", server_dir / "classlist.csv"]
-    )
+    build_class = subprocess.check_call(["plom-create", "class", "classlist.csv"])
     print("Building the database...")
-    with working_directory(server_dir):
-        build_class = subprocess.check_call(["plom-create", "make", "--no-pdf"])
+    build_class = subprocess.check_call(["plom-create", "make-db"])
 
     return plom_server
 
@@ -198,7 +197,7 @@ def get_submissions(
 
     if name_by_info:
         print("Fetching conversion table...")
-        conversion = get_conversion_table(server_dir=server_dir)
+        conversion = get_conversion_table()
 
     tmp_downloads = server_dir / "upload" / "tmp_downloads"
     for_plom = server_dir / "upload" / "submittedHWByQ"
