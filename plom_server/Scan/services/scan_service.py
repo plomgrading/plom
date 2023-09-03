@@ -173,7 +173,7 @@ class ScanService:
             ManagePageToImage.objects.create(
                 bundle=bundle_obj,
                 huey_id=task.id,
-                status="queued",
+                status=ManagePageToImage.QUEUED,
                 created=timezone.now(),
             )
 
@@ -191,7 +191,7 @@ class ScanService:
         query = ManagePageToImage.objects.filter(bundle=bundle_obj)
         if query.exists():  # have run a bundle-split task previously
             if query.exclude(
-                status="completed"
+                status=ManagePageToImage.COMPLETE
             ).exists():  # one of these is not completed, so must be mid-run
                 return True
             else:  # all have finished previously
@@ -460,7 +460,7 @@ class ScanService:
             ManageParseQR.objects.create(
                 bundle=bundle_obj,
                 huey_id=task.id,
-                status="queued",
+                status=ManageParseQR.QUEUED,
                 created=timezone.now(),
             )
 
@@ -524,7 +524,7 @@ class ScanService:
         query = ManageParseQR.objects.filter(bundle=bundle_obj)
         if query.exists():  # have run a qr-read task previously
             if query.exclude(
-                status="completed"
+                status=ManageParseQR.COMPLETE
             ).exists():  # one of these is not completed, so must be mid-run
                 return True
             else:  # all have finished previously

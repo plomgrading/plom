@@ -67,6 +67,7 @@
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2023-09-01" version="0.14.1"/>
     <release date="2023-04-25" version="0.13.3"/>
     <release date="2023-04-03" version="0.13.2"/>
     <release date="2023-02-24" version="0.13.1"/>

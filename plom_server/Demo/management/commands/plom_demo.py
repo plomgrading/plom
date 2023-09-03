@@ -154,14 +154,13 @@ class Command(BaseCommand):
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker3 -w demoMarker3 --partial 50",
         )
-        env = dict(os.environ, WEBPLOM="1")
         for cmd in cmds:
             print(f"RandoMarking!  calling: {cmd}")
-            subprocess.check_call(split(cmd), env=env)
+            subprocess.check_call(split(cmd))
 
         cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
         print(f"RandoIDing!  calling: {cmd}")
-        subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
+        subprocess.check_call(split(cmd))
 
     def wait_for_exit(self):
         while True:

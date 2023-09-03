@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+
+
+## [0.14.1] - 2023-09-01
+
+### Added
+* The next-gen web-based Plom Server is ready for wider testing.  Production use should probably remain on the "Legacy Plom Server" for the time being.
+* Plom Client can connect to both the next-gen server and the legacy server.
+* Plom Client supports `http://` URLs, if specified explicitly, e.g., for development.  The default remains `https://`
+
+### Changed
+* On the next-gen server, papers can be graded in a random but predetermined order.
+* On the next-gen server, the priority for papers to be graded can be changed.
 * Plom now requires at least Python 3.8.
 
 ### Fixed
@@ -994,7 +1009,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.3...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.1...main
+[0.14.1]: https://gitlab.com/plom/plom/-/compare/v0.13.3...v0.14.1
 [0.13.3]: https://gitlab.com/plom/plom/-/compare/v0.13.2...v0.13.3
 [0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1

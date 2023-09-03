@@ -22,10 +22,10 @@ class ScrapPaperService:
         """Status of the build scrap paper task, creating a "todo" task if it does not exist.
 
         Return:
-            The status as string: "todo", "queued", "started", "error" or "complete".
+            The status as string: "To Do", "Queued", "Started", "Error" or "Complete".
 
         """
-        return ScrapPaperPDFTask.load().status
+        return ScrapPaperPDFTask.load().get_status_display()
 
     @transaction.atomic()
     def get_scrap_paper_pdf_filepath(self):
@@ -36,7 +36,7 @@ class ScrapPaperService:
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ScrapPaperPDFTask.load()
         Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
-        task_obj.status = "todo"
+        task_obj.status = ScrapPaperPDFTask.TO_DO
         task_obj.huey_id = None
         task_obj.save()
 
@@ -71,17 +71,17 @@ class ScrapPaperService:
     def build_scrap_paper_pdf(self):
         """Enqueue the huey task of building the scrap paper pdf."""
         task_obj = ScrapPaperPDFTask.load()
-        if task_obj.status == "complete":
+        if task_obj.status == ScrapPaperPDFTask.COMPLETE:
             return
         pdf_build = self._build_the_scrap_paper_pdf()
         task_obj.huey_id = pdf_build.id
-        task_obj.status = "queued"
+        task_obj.status = ScrapPaperPDFTask.QUEUED
         task_obj.save()
 
     @transaction.atomic
     def get_scrap_paper_pdf_as_bytes(self):
         scp_obj = ScrapPaperPDFTask.load()
-        if scp_obj.status == "complete":
+        if scp_obj.status == ScrapPaperPDFTask.COMPLETE:
             with scp_obj.scrap_paper_pdf.open("rb") as fh:
                 return fh.read()
         else:
