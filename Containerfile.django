@@ -18,8 +18,8 @@ ENV PLOM_USING_DOCKER 1
 
 # base OS dependencies
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y \
-        install cmake gcc build-essential git \
+    apt-get --no-install-recommends -y install \
+        cmake gcc build-essential git \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended texlive-pictures \
         && \
     apt-get -yq autoclean
