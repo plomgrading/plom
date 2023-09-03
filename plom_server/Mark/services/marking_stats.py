@@ -2,9 +2,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import statistics
-
+from typing import Any, Dict, List, Optional
 from django.db import transaction
-from django.contrib.auth.models import User
 
 from Papers.services import SpecificationService
 from ..models import (
@@ -16,15 +15,19 @@ class MarkingStatsService:
     """Functions for getting marking stats."""
 
     @transaction.atomic
-    def get_basic_marking_stats(self, question, version=None):
-        """Send back current marking progress counts to the client.
+    def get_basic_marking_stats(
+        self, question: int, version: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Send back current marking statistics for the given question + version.
 
         Args:
             question (int)
-            version (int)
+            version (int or None): if none then compute stats for all versions
 
         Returns:
-            Dict
+            Dict: Dictionary containing the following, 'number_of_completed_tasks',
+                'all_task_count', 'completed_percentage', 'mark_max', 'mark_min',
+                'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'mark_full'
         """
         stats_dict = {
             "number_of_completed_tasks": 0,
@@ -35,7 +38,7 @@ class MarkingStatsService:
             "mark_median": 0,
             "mode_mean": 0,
             "mode_mode": 0,
-            "mark_stddev": 0,
+            "mark_stdev": "n/a",
             "avg_marking_time": 0,
             "mark_full": SpecificationService.get_question_mark(question),
         }
@@ -86,12 +89,27 @@ class MarkingStatsService:
             stats_dict["mark_median"] = round(statistics.median(mark_list), 1)
             stats_dict["mark_mean"] = round(statistics.mean(mark_list), 1)
             stats_dict["mark_mode"] = statistics.mode(mark_list)
-            stats_dict["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            if len(mark_list) >= 2:
+                stats_dict["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            else:
+                stats_dict["mark_stdev"] = "n/a"
 
         return stats_dict
 
     @transaction.atomic
-    def get_mark_histogram(self, question, version=None):
+    def get_mark_histogram(
+        self, question: int, version: Optional[int] = None
+    ) -> Dict[int, int]:
+        """Get the histogram of marks for the given question, version.
+
+        Args:
+            question (int)
+            version (int or None): if none then compute histogram for all versions
+
+        Returns:
+            Dict(int,int)
+
+        """
         hist = {
             qm: 0 for qm in range(SpecificationService.get_question_mark(question) + 1)
         }
@@ -109,21 +127,46 @@ class MarkingStatsService:
         return hist
 
     @transaction.atomic
-    def get_list_of_users_who_marked(self, question, version):
+    def get_list_of_users_who_marked(
+        self, question: int, version: Optional[int] = None
+    ) -> List[str]:
+        """Return a list of the usernames that marked the given question/version.
+
+        Args:
+            question (int): the question to compute for.
+            version (int or None): if none then get markers of all versions of the question
+
+        Returns:
+            list(str): the usernames of the markers of the given question/version.
+        """
+        tasks = MarkingTask.objects.filter(
+            status=MarkingTask.COMPLETE,
+            question_number=question,
+        )
+        if version:
+            tasks = tasks.filter(question_version=version)
+
         return [
             X.assigned_user.username
-            for X in MarkingTask.objects.filter(
-                status=MarkingTask.COMPLETE,
-                question_number=question,
-                question_version=version,
-            )
-            .prefetch_related("assigned_user")
-            .distinct("assigned_user")
+            for X in tasks.prefetch_related("assigned_user").distinct("assigned_user")
         ]
 
     @transaction.atomic
-    def get_mark_histogram_and_stats_by_users(self, question, version):
-        data = {}
+    def get_mark_histogram_and_stats_by_users(
+        self, question: int, version: int
+    ) -> Dict[int, Dict[str, Any]]:
+        """Get marking histogram and stats for the given question/version separated by user.
+
+        Args:
+            question (int): The question
+            version (int): THe version
+
+        Returns:
+            dict (int, dict[str,any]): for each user-pk give a dict that
+            contains 'username', 'histogram', 'number', 'mark_max, 'mark_min',
+            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev'.
+        """
+        data: Dict[int, Dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
@@ -160,13 +203,28 @@ class MarkingStatsService:
             data[upk]["mark_median"] = round(statistics.median(mark_list), 1)
             data[upk]["mark_mean"] = round(statistics.mean(mark_list), 1)
             data[upk]["mark_mode"] = statistics.mode(mark_list)
-            data[upk]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            if len(mark_list) >= 2:
+                data[upk]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            else:
+                data[upk]["mark_stdev"] = "n/a"
 
         return data
 
     @transaction.atomic
-    def get_mark_histogram_and_stats_by_versions(self, question):
-        data = {}
+    def get_mark_histogram_and_stats_by_versions(
+        self, question: int
+    ) -> Dict[int, Dict[str, Any]]:
+        """Get marking histogram and stats for the given question separated by version.
+
+        Args:
+            question (int): The question
+
+        Returns:
+            dict (int, dict[str,any]): for each version give a dict that
+            contains 'histogram', 'number', 'mark_max, 'mark_min',
+            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev'.
+        """
+        data: Dict[int, Dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
@@ -200,6 +258,9 @@ class MarkingStatsService:
             data[ver]["mark_median"] = round(statistics.median(mark_list), 1)
             data[ver]["mark_mean"] = round(statistics.mean(mark_list), 1)
             data[ver]["mark_mode"] = statistics.mode(mark_list)
-            data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            if len(mark_list) >= 2:
+                data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
+            else:
+                data[ver]["mark_stdev"] = "n/a"
 
         return data
