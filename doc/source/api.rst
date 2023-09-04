@@ -7,18 +7,8 @@ Plom API
 
 The Plom API is not yet properly documented and is in a state of flux.
 
-
 .. caution:: Subject to change!
 
-
-<!--
-# .. automodule:: Web_Plom.Scan.views
-#   :members:
-#   :undoc-members:
--->
-
-.. automodule:: API
-    :members:
 
 
 Plom "Legacy" API
