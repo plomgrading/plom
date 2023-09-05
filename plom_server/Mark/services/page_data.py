@@ -3,6 +3,9 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from dataclasses import dataclass
+from typing import List
+
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -16,6 +19,73 @@ from Papers.models import (
     Image,
     MobilePage,
 )
+
+
+@dataclass()
+class PageDataForTask:
+    """Represents data for a single page related to a task.
+
+    This data is sent to the marking client in order to create
+    annotation images.
+    """
+
+    id: int
+    md5: str
+    orientation: int
+    server_path: str
+    included: bool
+    order: int
+
+
+@transaction.atomic
+def get_question_pages_list(paper: int, question: int) -> List[PageDataForTask]:
+    """Return a list of objects containing an image public key and its hash.
+
+    Args:
+        paper (int): test-paper number
+        question (int): question number
+    """
+    test_paper = Paper.objects.get(paper_number=paper)
+    question_pages = QuestionPage.objects.filter(
+        paper=test_paper, question_number=question
+    ).prefetch_related("image")
+    mobile_pages = MobilePage.objects.filter(
+        paper=test_paper, question_number=question
+    ).prefetch_related("image")
+
+    page_list = []
+    for page in question_pages.order_by("page_number"):
+        image = page.image
+        if image:  # fixed pages might not have image if yet to be scanned.
+            page_list.append(
+                PageDataForTask(
+                    id=image.pk,
+                    md5=image.hash,
+                    orientation=image.rotation,
+                    server_path=image.image_file.path,
+                    included=True,
+                    order=page.page_number,
+                )
+            )
+    # TODO - decide better order (see hackery coments below).
+    # Also - do not repeat mobile pages if can avoid it.
+    for page in mobile_pages:
+        image = page.image
+        assert image is not None  # mobile pages will always have images
+        page_list.append(
+            PageDataForTask(
+                id=image.pk,
+                md5=image.hash,
+                orientation=image.rotation,
+                server_path=image.image_file.path,
+                included=True,
+                # BEGIN HACKERY
+                order=len(page_list) + 1,
+                # END HACKERY
+            )
+        )
+
+    return page_list
 
 
 class PageDataService:

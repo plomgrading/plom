@@ -10,8 +10,9 @@ from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
+from django.db import transaction
 
-from Mark.services import MarkingTaskService, PageDataService
+from Mark.services import MarkingTaskService, PageDataService, QuestionMarkingService
 from Papers.services import SpecificationService
 from Papers.models import Image
 
@@ -142,9 +143,12 @@ class MgetNextTask(APIView):
         question = data["q"]
         version = data["v"]
 
-        mts = MarkingTaskService()
+        service = QuestionMarkingService(
+            question=question,
+            version=version,
+        )
 
-        task = mts.get_first_available_task(question=question, version=version)
+        task = service.get_first_available_task()
         if task:
             return Response(task.code, status=status.HTTP_200_OK)
         else:
@@ -162,23 +166,18 @@ class MclaimThisTask(APIView):
         Notes: legacy would use 417 when the version requested does not
         match the version of the task.  But I think we ignore the version.
         """
-        mss = MarkingTaskService()
+        service = QuestionMarkingService(code=code)
         try:
-            the_task = mss.get_task_from_code(code)
+            with transaction.atomic():
+                service.assign_task_to_user()
+                question_data = service.get_page_data()
+                tags = service.get_tags()
+
+            return Response([question_data, tags, service.task_pk])
         except ValueError as e:
-            return _error_response(e, status.HTTP_410_GONE)
-        except RuntimeError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        try:
-            mss.assign_task_to_user(request.user, the_task)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
-
-        pds = PageDataService()
-        paper, question = mss.unpack_code(code)
-        question_data = pds.get_question_pages_list(paper, question)
-
-        return Response([question_data, mss.get_tags_for_task(code), the_task.pk])
 
     def post(self, request, code, *args):
         """Accept a marker's grade and annotation for a task."""
