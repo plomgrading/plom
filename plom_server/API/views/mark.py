@@ -414,9 +414,7 @@ class MgetAnnotationImage(APIView):
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        return FileResponse(
-            open(annotation_image.image, "rb"), status=status.HTTP_200_OK
-        )
+        return FileResponse(annotation_image.image, status=status.HTTP_200_OK)
 
 
 class TagsFromCodeView(APIView):
