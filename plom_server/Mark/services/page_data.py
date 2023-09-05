@@ -67,7 +67,7 @@ def get_question_pages_list(paper: int, question: int) -> List[PageDataForTask]:
                     order=page.page_number,
                 )
             )
-    # TODO - decide better order (see hackery coments below).
+    # TODO - decide better order (see hackery comments below).
     # Also - do not repeat mobile pages if can avoid it.
     for page in mobile_pages:
         image = page.image

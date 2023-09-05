@@ -23,7 +23,7 @@ class QuestionMarkingService:
         4. Server double-checks if the task is available:
             - the status must be TO_DO
             - there must not be a user already assigned to the task
-            and if so, assignes the user to the task.
+            and if so, assigns the user to the task.
         5. Marker annotates page-images and sends the annotations and
             mark to the server
         6. Server double-checks that the marker is still allowed to
