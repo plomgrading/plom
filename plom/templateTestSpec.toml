@@ -24,6 +24,9 @@ numberOfQuestions = 3
 
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
+# Note: Literal test numbers will be 1,2,...,numberToProduce,
+# so make sure any test numbers specified on class list are no
+# larger than the number specified here.
 numberToProduce = 20
 
 # the id-page - always taken from Version1

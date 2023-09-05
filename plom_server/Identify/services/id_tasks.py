@@ -4,6 +4,9 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from typing import List, Union
+
+from django.contrib.auth.models import User
 from django.core.exceptions import (
     PermissionDenied,
     ObjectDoesNotExist,
@@ -14,8 +17,9 @@ from django.db import transaction, IntegrityError
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
+    IDPrediction,
 )
-from Papers.models import IDPage, Paper
+from Papers.models import IDPage, Paper, Image
 from Papers.services import ImageBundleService
 
 
@@ -23,7 +27,7 @@ class IdentifyTaskService:
     """Class to encapsulate methods for handing out paper identification tasks to the client."""
 
     @transaction.atomic
-    def are_there_id_tasks(self):
+    def are_there_id_tasks(self) -> bool:
         """Return True if there is at least one ID task in the database.
 
         Note that this *does* exclude out-of-date tasks.
@@ -31,7 +35,7 @@ class IdentifyTaskService:
         return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).exists()
 
     @transaction.atomic
-    def create_task(self, paper):
+    def create_task(self, paper: Paper) -> None:
         """Create an identification task for a paper. Set any older id-tasks for same paper as out of date.
 
         Args:
@@ -46,13 +50,13 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def id_task_exists(self, paper):
+    def id_task_exists(self, paper: Paper) -> bool:
         """Return true if an ID tasks exists for a particular paper."""
         # TO_DO - do we need to exclude "out of date" tasks here
         return PaperIDTask.objects.filter(paper=paper).exists()
 
     @transaction.atomic
-    def get_latest_id_results(self, task):
+    def get_latest_id_results(self, task: PaperIDTask) -> Union[PaperIDAction, None]:
         """Return the latest (valid) results from a PaperIDAction instance.
 
         Args:
@@ -66,7 +70,7 @@ class IdentifyTaskService:
         return None
 
     @transaction.atomic
-    def get_done_tasks(self, user):
+    def get_done_tasks(self, user: User) -> List:
         """Retrieve the results of previously completed (and valid) ID tasks for a user.
 
         Args:
@@ -88,7 +92,7 @@ class IdentifyTaskService:
         return id_list
 
     @transaction.atomic
-    def get_id_progress(self):
+    def get_id_progress(self) -> List:
         """Send back current ID progress counts to the client.
 
         Returns:
@@ -101,15 +105,20 @@ class IdentifyTaskService:
         return [n_completed, n_total]
 
     @transaction.atomic
-    def get_next_task(self):
-        """Return the next available identification task, ordered by paper_number."""
+    def get_next_task(self) -> Union[PaperIDTask, None]:
+        """Return the next available identification task.
+
+        Ordered by iding_priority then by paper number.
+        """
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
-        todo_tasks = todo_tasks.order_by("paper__paper_number")
+        todo_tasks = todo_tasks.order_by("-iding_priority", "paper__paper_number")
         if todo_tasks:
             return todo_tasks.first()
+        else:
+            return None
 
     @transaction.atomic
-    def claim_task(self, user, paper_number):
+    def claim_task(self, user: User, paper_number: int) -> None:
         """Claim an ID task for a user."""
         try:
             task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
@@ -128,14 +137,16 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def get_id_page(self, paper_number):
+    def get_id_page(self, paper_number: int) -> Image:
         """Return the ID page image of a certain test-paper."""
         id_page = IDPage.objects.get(paper__paper_number=paper_number)
         id_img = id_page.image
         return id_img
 
     @transaction.atomic
-    def identify_paper(self, user, paper_number, student_id, student_name):
+    def identify_paper(
+        self, user: User, paper_number: int, student_id: str, student_name: str
+    ) -> None:
         """Identify a test-paper and close its associated task.
 
         Raises:
@@ -192,7 +203,7 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def surrender_task(self, user, task):
+    def surrender_task(self, user: User, task: PaperIDTask) -> None:
         """Remove a user from an id-ing task and set its status to 'todo'.
 
         Args:
@@ -206,7 +217,7 @@ class IdentifyTaskService:
             task.save()
 
     @transaction.atomic
-    def surrender_all_tasks(self, user):
+    def surrender_all_tasks(self, user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
@@ -219,7 +230,7 @@ class IdentifyTaskService:
             self.surrender_task(user, task)
 
     @transaction.atomic
-    def set_paper_idtask_outdated(self, paper_number):
+    def set_paper_idtask_outdated(self, paper_number: int) -> None:
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -249,3 +260,63 @@ class IdentifyTaskService:
         # now all existing tasks are out of date, so if the id-page is ready then create a new id-task for it.
         if ImageBundleService().is_given_paper_ready_for_id_ing(paper_obj):
             self.create_task(paper_obj)
+
+    @transaction.atomic
+    def update_task_priority(
+        self, paper_obj: Paper, increasing_cert: bool = True
+    ) -> None:
+        """Update the iding_priority field for PaperIDTasks.
+
+        Args:
+            paper_obj: the paper whose priority to update.
+
+        Kwargs:
+            increasing_cert: determines whether the sorting order for the priorities
+                based on certainties is in increasing order. If false, it is in decreasing order.
+
+        Raises:
+            ValueError: The prediction or task does not exist for the given paper.
+        """
+        try:
+            pred_query = IDPrediction.objects.filter(paper=paper_obj)
+            cert_list = [pred.certainty for pred in pred_query]
+            # always choose the minimum certainty if more than one prediction is available
+            priority = min(cert_list)
+        except IDPrediction.DoesNotExist as e:
+            raise ValueError(
+                f"No predictions exist for paper number {paper_obj.paper_number}."
+            ) from e
+
+        try:
+            task = PaperIDTask.objects.get(paper=paper_obj)
+            if increasing_cert:
+                task.iding_priority = -priority
+            else:
+                task.iding_priority = priority
+            task.save()
+        except PaperIDTask.DoesNotExist as e:
+            raise ValueError(
+                f"Task with paper number {paper_obj.paper_number} does not exist."
+            ) from e
+
+    @transaction.atomic
+    def reset_task_priority(self) -> None:
+        """Reset the priority of all TODO tasks to zero."""
+        tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
+        for task in tasks:
+            task.iding_priority = 0
+        PaperIDTask.objects.bulk_update(tasks, ["iding_priority"])
+
+    def update_task_priority_cmd(self, increasing_cert: bool = True) -> None:
+        """A wrapper around update_task_priority() for toggling between ID sorting order.
+
+        Modifies the priority of all tasks marked as TODO.
+
+        Args:
+            increasing_cert: a boolean flag that indicates whether the ID tasks
+                are presented in order of increasing certainty.
+                If false, they are presented in order of decreasing certainty.
+        """
+        todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
+        for task in todo_tasks:
+            self.update_task_priority(task.paper, increasing_cert=increasing_cert)

@@ -88,7 +88,7 @@ class DemoCreationService:
 
     def build_db_and_papers(self):
         print("Populating database in background")
-        call_command("plom_papers", "build_db", "manager")
+        call_command("plom_papers", "build_db")
 
         call_command("plom_preparation_extrapage", "build")
         call_command("plom_preparation_scrap_paper", "build")
