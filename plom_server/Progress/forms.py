@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Brennen Chiu
 
 from django import forms
-from django.utils import timezone
 
 
 class AnnotationFilterForm(forms.Form):
@@ -18,6 +18,9 @@ class AnnotationFilterForm(forms.Form):
         ("86400", "a day ago"),
     ]
 
-    time_filter = forms.TypedChoiceField(
-        choices=TIME_CHOICES, coerce=int, required=False, label="Select a time to filter"
+    time_filter_seconds = forms.TypedChoiceField(
+        choices=TIME_CHOICES,
+        coerce=int,
+        required=False,
+        label="Select a time to filter",
     )

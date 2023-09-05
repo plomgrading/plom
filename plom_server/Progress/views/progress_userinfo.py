@@ -18,26 +18,28 @@ class ProgressUserInfoHome(ManagerRequiredView):
         annotations_exist = uis.annotation_exists()
         annotation_count_dict = uis.get_total_annotations_count_based_on_user()
         latest_updated_annotation = uis.get_latest_updated_annotation()
-
-        if not request.GET.get("time_filter"):
-            filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
-                time_delta_seconds=0
-            )
+        request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
         if filter_form.is_valid():
-            time_filter = filter_form.cleaned_data["time_filter"]
+            time_filter_seconds = filter_form.cleaned_data["time_filter_seconds"]
 
-            if not time_filter:
-                time_filter = 0
+            if not time_filter_seconds:
+                time_filter_seconds = 0
 
             filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
-                time_delta_seconds=int(time_filter)
+                time_delta_seconds=int(time_filter_seconds)
             )
-        # this is for error handling
+        # not one of the available choices then
         else:
-            filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
-                time_delta_seconds=0
-            )
+            if request_time_filter_seconds.isnumeric():
+                filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
+                    time_delta_seconds=int(request_time_filter_seconds)
+                )
+            else:
+                filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
+                    time_delta_seconds=0
+                )
+                context.update({"error": "Invalid input."})
 
         annotations_grouped_by_user = uis.get_annotations_based_on_user(
             filtered_annotations

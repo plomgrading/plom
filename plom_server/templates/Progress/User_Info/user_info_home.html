@@ -27,7 +27,8 @@
                         <h6>
                             <b>Filter annotations by time:</b>
                         </h6>
-                        {{ annotation_filter_form }}
+                        <p>{{ annotation_filter_form.time_filter_seconds.label }} {{ annotation_filter_form.time_filter_seconds }}</p>
+                        <p class="text-danger">{{ error }}</p>
                     </div>
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </form>
