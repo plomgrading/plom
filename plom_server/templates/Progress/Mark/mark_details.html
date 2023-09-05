@@ -11,7 +11,7 @@
     <a class="btn btn-success"
        href="{% url 'progress_mark_details' question version %}">refresh page</a>
     <a class="btn btn-info"
-       href="{% url 'progress_task_annotation' question version %}">tasks & annotations</a>
+       href="{% url 'progress_task_annotation_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
     <div class="container">
         <div class="card">
             <div class="card-header">

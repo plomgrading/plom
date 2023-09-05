@@ -28,6 +28,7 @@ from .progress_mark import (
 )
 
 from .progress_task_annot import (
+    ProgressTaskAnnotationFilterView,
     ProgressTaskAnnotationView,
     AnnotationImageWrapView,
     AnnotationImageView,

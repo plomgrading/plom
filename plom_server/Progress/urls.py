@@ -19,6 +19,7 @@ from Progress.views import (
     ProgressMarkStatsView,
     ProgressMarkDetailsView,
     ProgressMarkVersionCompareView,
+    ProgressTaskAnnotationFilterView,
     ProgressTaskAnnotationView,
     AnnotationImageWrapView,
     AnnotationImageView,
@@ -28,7 +29,6 @@ from Progress.views import (
     ClearID,
     IDImageWrapView,
 )
-
 
 urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
@@ -73,6 +73,11 @@ urlpatterns = [
         "mark/details/<int:question>/<int:version>",
         ProgressMarkDetailsView.as_view(),
         name="progress_mark_details",
+    ),
+    path(
+        "mark/task_annotation/",
+        ProgressTaskAnnotationFilterView.as_view(),
+        name="progress_task_annotation_filter",
     ),
     path(
         "mark/task_annotation/<int:question>/<int:version>",
