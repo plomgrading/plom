@@ -321,9 +321,11 @@ class MarkingStatsService:
                 dat.update(
                     {
                         "username": task.assigned_user.username,
-                        "last_update": arrow.get(task.latest_annotation.time_of_last_update).humanize(),
+                        "last_update": arrow.get(
+                            task.latest_annotation.time_of_last_update
+                        ).humanize(),
                         "score": task.latest_annotation.score,
-                        "annotation_image": task.latest_annotation.image.pk,
+                        "annotation_pk": task.latest_annotation.pk,
                     }
                 )
 

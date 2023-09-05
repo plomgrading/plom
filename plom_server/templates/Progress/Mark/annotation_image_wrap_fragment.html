@@ -1,6 +1,16 @@
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
-<p>Annotation image: paper {{ paper }} question {{ question }}</p>
-<img src="{% url 'progress_annotation_img' paper question %}"
-     style="max-height: 100%;
-            max-width: 100%">
+<div>
+    <div class="row m-2">
+        <div class="col">
+            <h5>Annotations for paper {{ paper }} question {{ question }}</h5>
+        </div>
+        <div class="col">
+            <a href="{% url 'annotation_item' annotation_pk %}"
+               class="btn btn-warning">modify</a>
+        </div>
+    </div>
+    <img src="{% url 'progress_annotation_img' paper question %}"
+         style="max-height: 100%;
+                max-width: 100%">
 </img>
+</div>

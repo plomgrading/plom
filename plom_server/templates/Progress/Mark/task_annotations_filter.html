@@ -33,6 +33,13 @@
                             {% for qn in question_list %}<option>{{ qn }}</option>{% endfor %}
                         </select>
                     </div>
+                    <label class="col-sm-1 col-form-label" for="username">User:</label>
+                    <div class="col-sm-4">
+                        <select name="username" class="form-select">
+                            <option>*</option>
+                            {% for un in username_list %}<option>{{ un }}</option>{% endfor %}
+                        </select>
+                    </div>
                 </div>
                 <div class="row">
                     <label class="col-sm-1 col-form-label" for="version">Version:</label>
@@ -40,15 +47,6 @@
                         <select name="version" class="form-select">
                             <option>*</option>
                             {% for v in version_list %}<option>{{ v }}</option>{% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <label class="col-sm-1 col-form-label" for="username">User:</label>
-                    <div class="col-sm-4">
-                        <select name="username" class="form-select">
-                            <option>*</option>
-                            {% for un in username_list %}<option>{{ un }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="col-sm-1">
@@ -73,7 +71,7 @@
                                         <th>Last update</th>
                                         <th>Username</th>
                                         <th>Score</th>
-                                        <th>Action</th>
+                                        <th>View</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -94,7 +92,7 @@
                                             <td>{{ task_data.last_update }}</td>
                                             <td>{{ task_data.username }}</td>
                                             <td>{{ task_data.score }}</td>
-                                            <td>
+                                            <td class="text-start">
                                                 {% if task_data.status %}
                                                     <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
                                                             hx-target="#imageHere"

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 from django.shortcuts import render
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingStatsService, MarkingTaskService, PageDataService
@@ -65,7 +65,8 @@ class ProgressTaskAnnotationView(ManagerRequiredView):
 
 class AnnotationImageWrapView(ManagerRequiredView):
     def get(self, request, paper, question):
-        context = {"paper": paper, "question": question}
+        annot = MarkingTaskService().get_latest_annotation(paper, question)
+        context = {"paper": paper, "question": question, "annotation_pk": annot.pk}
         return render(
             request, "Progress/Mark/annotation_image_wrap_fragment.html", context
         )
