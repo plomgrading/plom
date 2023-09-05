@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
+import arrow
 import statistics
 from typing import Any, Dict, List, Optional
 from django.db import transaction
@@ -320,6 +321,7 @@ class MarkingStatsService:
                 dat.update(
                     {
                         "username": task.assigned_user.username,
+                        "last_update": arrow.get(task.latest_annotation.time_of_last_update).humanize(),
                         "score": task.latest_annotation.score,
                         "annotation_image": task.latest_annotation.image.pk,
                     }

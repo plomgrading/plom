@@ -70,6 +70,7 @@
                                         <th>Question</th>
                                         <th>Version</th>
                                         <th>Status</th>
+                                        <th>Last update</th>
                                         <th>Username</th>
                                         <th>Score</th>
                                         <th>Action</th>
@@ -90,6 +91,7 @@
                                             {% else %}
                                                 <td>{{ task_data.status }}</td>
                                             {% endif %}
+                                            <td>{{ task_data.last_update }}</td>
                                             <td>{{ task_data.username }}</td>
                                             <td>{{ task_data.score }}</td>
                                             <td>
