@@ -6,9 +6,8 @@ from typing import Any, Dict, List, Optional
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from ..models import (
-    MarkingTask,
-)
+from Papers.models import Paper
+from ..models import MarkingTask, AnnotationImage
 
 
 class MarkingStatsService:
@@ -264,3 +263,28 @@ class MarkingStatsService:
                 data[ver]["mark_stdev"] = "n/a"
 
         return data
+
+    @transaction.atomic
+    def get_marking_task_annotation_info(self, question, version):
+        task_info = {}
+        for task in (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .filter(question_number=question, question_version=version)
+            .prefetch_related("latest_annotation", "paper", "assigned_user")
+            .order_by("paper__paper_number")
+        ):
+            dat = {
+                "status": task.get_status_display(),
+            }
+            if task.status == MarkingTask.COMPLETE:
+                dat.update(
+                    {
+                        "username": task.assigned_user.username,
+                        "score": task.latest_annotation.score,
+                        "annotation_image": task.latest_annotation.image.pk,
+                    }
+                )
+
+            task_info[task.paper.paper_number] = dat
+
+        return task_info

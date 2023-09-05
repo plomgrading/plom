@@ -19,6 +19,10 @@ from Progress.views import (
     ProgressMarkStatsView,
     ProgressMarkDetailsView,
     ProgressMarkVersionCompareView,
+    ProgressTaskAnnotationView,
+    AnnotationImageWrapView,
+    AnnotationImageView,
+    OriginalImageWrapView,
     ProgressUserInfoHome,
     IDImageView,
     ClearID,
@@ -69,6 +73,26 @@ urlpatterns = [
         "mark/details/<int:question>/<int:version>",
         ProgressMarkDetailsView.as_view(),
         name="progress_mark_details",
+    ),
+    path(
+        "mark/task_annotation/<int:question>/<int:version>",
+        ProgressTaskAnnotationView.as_view(),
+        name="progress_task_annotation",
+    ),
+    path(
+        "mark/task_annotation/annotation_img_wrap/<int:paper>/<int:question>",
+        AnnotationImageWrapView.as_view(),
+        name="progress_annotation_img_wrap",
+    ),
+    path(
+        "mark/task_annotation/annotation_img/<int:paper>/<int:question>",
+        AnnotationImageView.as_view(),
+        name="progress_annotation_img",
+    ),
+    path(
+        "mark/task_annotation/original_img_wrap/<int:paper>/<int:question>",
+        OriginalImageWrapView.as_view(),
+        name="progress_original_img_wrap",
     ),
     path(
         "mark/compare/<int:question>",
