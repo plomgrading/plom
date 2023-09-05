@@ -28,7 +28,6 @@ class QuestionMarkingViewSet(ViewSet):
             200: An available task exists, returns the task code as a string.
             204: There are no available tasks.
         """
-
         data = request.query_params
         question: Optional[int] = data.get("q")
         version: Optional[int] = data.get("v")
