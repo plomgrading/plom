@@ -146,6 +146,7 @@ class MgetNextTask(APIView):
         service = QuestionMarkingService(
             question=question,
             version=version,
+            user=request.user,
         )
 
         task = service.get_first_available_task()
@@ -166,7 +167,7 @@ class MclaimThisTask(APIView):
         Notes: legacy would use 417 when the version requested does not
         match the version of the task.  But I think we ignore the version.
         """
-        service = QuestionMarkingService(code=code)
+        service = QuestionMarkingService(code=code, user=request.user)
         try:
             with transaction.atomic():
                 service.assign_task_to_user()
