@@ -253,17 +253,26 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.get(
-                "/MK/tasks/available",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "q": q,
-                    "v": v,
-                    "above": above,
-                    "tag": tag,
-                },
-            )
+            if self.webplom:
+                response = self.get(
+                    f"/MK/tasks/available?q={q}&v={v}&above={above}&tag={tag}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+            else:
+                response = self.get(
+                    "/MK/tasks/available",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "q": q,
+                        "v": v,
+                        "above": above,
+                        "tag": tag,
+                    },
+                )
             # throw errors when response code != 200.
             if response.status_code == 204:
                 return None
