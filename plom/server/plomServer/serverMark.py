@@ -188,7 +188,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in annotated_filename:
+    for filename in (annotated_filename,):
         if os.path.isfile(filename):
             # start with suffix 0 and keep incrementing until get a safe suffix.
             suffix = 0

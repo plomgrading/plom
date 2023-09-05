@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Fix regrading on next-gen servers.
+* Legacy server was not creating backup files on regrade since sometime in 2022.
 
 
 ## [0.14.1] - 2023-09-01
