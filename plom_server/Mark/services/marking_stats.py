@@ -16,16 +16,18 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_basic_marking_stats(
-        self, question: int, version: Optional[int] = None
+        self, question: int, *, version: Optional[int] = None
     ) -> Dict[str, Any]:
         """Send back current marking statistics for the given question + version.
 
         Args:
-            question (int)
-            version (int or None): if none then compute stats for all versions
+            question: the question to compute for
+
+        Keyword Args:
+            version: optionally, a specific version, or get for all versions if omitted.
 
         Returns:
-            Dict: Dictionary containing the following, 'number_of_completed_tasks',
+            Dictionary containing the following, 'number_of_completed_tasks',
                 'all_task_count', 'completed_percentage', 'mark_max', 'mark_min',
                 'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'mark_full'
         """
@@ -98,16 +100,19 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_mark_histogram(
-        self, question: int, version: Optional[int] = None
+        self, question: int, *, version: Optional[int] = None
     ) -> Dict[int, int]:
         """Get the histogram of marks for the given question, version.
 
         Args:
-            question (int)
-            version (int or None): if none then compute histogram for all versions
+            question: the question to compute for
+
+        Keyword Args:
+            version: optionally, a specific version, or get for all versions if omitted.
+
 
         Returns:
-            Dict(int,int)
+            The histogram as a dict of mark vs count.
 
         """
         hist = {
@@ -128,16 +133,18 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_list_of_users_who_marked(
-        self, question: int, version: Optional[int] = None
+        self, question: int, *, version: Optional[int] = None
     ) -> List[str]:
         """Return a list of the usernames that marked the given question/version.
 
         Args:
-            question (int): the question to compute for.
-            version (int or None): if none then get markers of all versions of the question
+            question: the question to compute for.
+
+        Keyword Args:
+            version: optionally, a specific version, or get for all versions if omitted.
 
         Returns:
-            list(str): the usernames of the markers of the given question/version.
+            The usernames of the markers of the given question/version.
         """
         tasks = MarkingTask.objects.filter(
             status=MarkingTask.COMPLETE,
