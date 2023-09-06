@@ -33,22 +33,20 @@ services:
     depends_on:
       - web
   web:
-    build:
-      context: .
-      dockerfile: Containerfile.django
+    image: "plomgrading/server"
     ports:
-      - 8000:8000
-      - 3000:3000
+      - ${PORT}:8000
+      # 3000:3000
     expose:
-      - 8000
-    command: ./docker_run.sh
-    # TODO: careful here: there is already a /code inside the container
-    # for some reason we're mounting our own there instead...
+      - ${PORT}
+    command: bash -c "cd /src/plom_server; ./docker_run.sh"
     # TODO: those on Fedora, might need a :z at the end
     volumes:
-      - ./plom_server:/code
+      - ./my_exam:/exam:z
     depends_on:
       - postgres
+    environment:
+      - "PLOM_MEDIA_ROOT=/exam/media_root"
   postgres:
     image: postgres:13
     volumes:
