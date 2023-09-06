@@ -67,6 +67,10 @@ import plom.scan
 # bump this a bit if you change this script
 __script_version__ = "0.2.0"
 
+if "PDLPATCH" in os.environ:
+    print("*** PDLPATCH: Turn off SSL.")
+    os.environ["PLOM_NO_SSL_VERIFY"] = "Please no!"
+
 
 def get_short_name(long_name):
     """
@@ -142,6 +146,15 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
     download_classlist(course, section=section)
+
+    #   if 'PDLPATCH' in os.environ:
+    if False:
+        print("\n*** PDLPATCH: Fix the class list. This is a super crude hack.")
+        subprocess.run(["/usr/bin/pwd"])
+        subprocess.run(
+            ["/usr/bin/tree", "/home/loew/PLOM/2023-experiments-PDL/HW05scripty/"]
+        )
+        subprocess.run(["/home/loew/PLOM/2023-experiments-PDL/fixclasslist.py"])
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks)
@@ -234,26 +247,56 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            assert isinstance(obj, dict), "Perhaps attachments are not always dicts?"
-            assert "content-type" in obj.keys()
-            assert "url" in obj.keys()
-            assert obj["upload_status"] == "success"  # TODO, or just "continue"
-            if obj["content-type"] == "null":
-                # TODO: in what cases does this occur?
-                continue
-            elif obj["content-type"] == "application/pdf":
-                suffix = "pdf"
-            elif obj["content-type"] == "image/png":
-                suffix = ".png"
-            elif obj["content-type"] == "image/jpg":
-                suffix = ".jpg"
-            elif obj["content-type"] == "image/jpeg":
-                suffix = ".jpeg"
+            if "PDLPATCH" in os.environ:
+                print("\n*** PDLPATCH: Skipping some asserts concerning resource type")
             else:
-                print(
-                    f"unexpected content-type {obj['content-type']}: for now, appending to error list"
-                )
-                errors.append(sub)
+                # original code masked by patch
+                assert isinstance(
+                    obj, dict
+                ), "Perhaps attachments are not always dicts?"
+                assert "content-type" in obj.keys()
+                assert "url" in obj.keys()
+                assert obj["upload_status"] == "success"  # TODO, or just "continue"
+
+            if "PDLPATCH" in os.environ:
+                print(f"*** PDLPATCH: Handling attachment number {i}")
+                ctype = getattr(obj, "content-type")
+                print(f"*** Content type is {ctype}")
+                if ctype == "null":
+                    # TODO: in what cases does this occur?
+                    continue
+                elif ctype == "application/pdf":
+                    suffix = "pdf"
+                elif ctype == "image/png":
+                    suffix = ".png"
+                elif ctype == "image/jpg":
+                    suffix = ".jpg"
+                elif ctype == "image/jpeg":
+                    suffix = ".jpeg"
+                else:
+                    print(
+                        f"unexpected content-type {ctype}: for now, appending to error list"
+                    )
+                    errors.append(sub)
+            else:
+                # Original script said this
+                if obj["content-type"] == "null":
+                    # TODO: in what cases does this occur?
+                    continue
+                elif obj["content-type"] == "application/pdf":
+                    suffix = "pdf"
+                elif obj["content-type"] == "image/png":
+                    suffix = ".png"
+                elif obj["content-type"] == "image/jpg":
+                    suffix = ".jpg"
+                elif obj["content-type"] == "image/jpeg":
+                    suffix = ".jpeg"
+                else:
+                    print(
+                        f"unexpected content-type {obj['content-type']}: for now, appending to error list"
+                    )
+                    errors.append(sub)
+
             filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
             if dry_run:
@@ -263,9 +306,21 @@ def get_submissions(
 
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
-            r = requests.get(obj["url"])
-            with open(filename, "wb") as f:
-                f.write(r.content)
+
+            if "PDLPATCH" in os.environ:
+                print("*** PDLPATCH: Investigate URL property of object more carefully")
+                if hasattr(obj, "url"):
+                    r = requests.get(obj.url)
+                    with open(filename, "wb") as f:
+                        f.write(r.content)
+                else:
+                    print("*** object has no 'url' property. Skipping it.")
+            else:
+                # This is the original block. It's defended by an assert
+                # statement that is missing in the patched version.
+                r = requests.get(obj["url"])
+                with open(filename, "wb") as f:
+                    f.write(r.content)
 
             if suffix != "pdf":
                 # TODO: fitz can do this too
@@ -346,6 +401,15 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
+
+        if "PDLPATCH" in os.environ:
+            print(
+                "*** PDLPATCH: Calling plom.scan.processHWScans with arguments below."
+            )  # PDL
+            print(f"pdf:   {pdf}")
+            print(f"sid:   {sid}")
+            print(f"q:     {sid}")
+
         plom.scan.processHWScans(
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
         )
