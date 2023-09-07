@@ -49,7 +49,7 @@ class QuestionMarkingViewSet(ViewSet):
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):
         """Attach a user to a marking task or accept a marker's grade.
-        
+
         Methods:
             PATCH: see self.claim_task()
             POST: see self.mark_task()
