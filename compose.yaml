@@ -2,29 +2,6 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-# If you are working with VSC and wish to start up a
-# docker/django debugging server, copy + uncomment this text into
-# plom/.vscode/launch.json
-# {
-#     "version": "0.2.0",
-#     "configurations": [
-#         {
-#             "name": "Python: Django",
-#             "type": "python",
-#             "request": "attach",
-#             "pathMappings": [
-#                 {
-#                     "localRoot": "${workspaceFolder}/plom_server",
-#                     "remoteRoot": "/code"
-#                 }
-#             ],
-#             "port": 3000,
-#             "host": "127.0.0.1"
-#         },
-#     ]
-# }
-
-# can comment out the 3000:3000 below if not using the above
 services:
   nginx:
     build: ./nginx
@@ -36,7 +13,6 @@ services:
     image: "plomgrading/server"
     ports:
       - ${PORT}:8000
-      # 3000:3000
     expose:
       - ${PORT}
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
