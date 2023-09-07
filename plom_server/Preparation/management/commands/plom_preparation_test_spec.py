@@ -17,9 +17,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 import fitz
 
-from plom import SpecVerifier
 from Papers.services import SpecificationService
-from Papers.serializers import SpecSerializer
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 
 from ...services import PQVMappingService
@@ -57,7 +55,7 @@ class Command(BaseCommand):
             self.stderr.write(f"File {fname} already present - not overwriting.")
             return
         with open(fname, "w") as f:
-            f.write(speck.get_the_spec_as_toml())
+            f.write(SpecificationService.get_the_spec_as_toml())
 
     @transaction.atomic
     def upload_spec(self, spec_file, pdf_file):
@@ -126,7 +124,7 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to uploading/downloading/deleting of a classlist.",
         )
-        sp_S = sub.add_parser("status", help="Show details of current test spec")
+        sub.add_parser("status", help="Show details of current test spec")
         sp_U = sub.add_parser("upload", help="Upload a test spec")
         sp_D = sub.add_parser(
             "download", help="Download the current test spec (if is valid)"
@@ -134,7 +132,7 @@ class Command(BaseCommand):
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download the test spec toml"
         )
-        sp_R = sub.add_parser("remove", help="Remove the current test spec the server")
+        sub.add_parser("remove", help="Remove the current test spec the server")
 
         sp_U.add_argument(
             "test_spec_toml", type=str, help="The test spec toml to upload"

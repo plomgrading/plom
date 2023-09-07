@@ -3,7 +3,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
-import os
 import subprocess
 from time import sleep
 from shlex import split
