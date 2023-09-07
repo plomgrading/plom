@@ -1,4 +1,5 @@
 <!-- Copyright (C) 2023 Brennen Chiu -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Mark Progress
@@ -7,5 +8,15 @@
     Marking progress
 {% endblock page_heading %}
 {% block main_content %}
-    <div></div>
+    <div class="container">
+        {% for qn in questions %}
+            <div class="row">
+                {% for vn in versions %}
+                    <div class="col"
+                         hx-trigger="load"
+                         hx-get="{% url 'progress_mark_stats' qn vn %}"></div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
 {% endblock main_content %}
