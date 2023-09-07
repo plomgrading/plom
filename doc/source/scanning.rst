@@ -7,6 +7,12 @@
 Scanning and uploading
 ======================
 
+.. note::
+   These instructions are for scanning and uploading to legacy servers.
+   Much of the process is similar for the django-server, however the
+   command line tools are not needed.  TODO: update these docs.
+
+
 At this point we assume that you have printed that papers, fed them to
 your students (or the other way around), and collected the completed
 tests.
