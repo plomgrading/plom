@@ -113,12 +113,7 @@ WSGI_APPLICATION = "Web_Plom.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-# set postgres hostname to "postgres" if running on docker
-in_docker = os.environ.get("PLOM_USING_DOCKER")
-if in_docker:
-    postgres_hostname = "postgres"
-else:
-    postgres_hostname = "127.0.0.1"
+plom_db_host = os.environ.get("PLOM_DATABASE_HOSTNAME") or "127.0.0.1"
 
 plom_db_name = os.environ.get("PLOM_DB_NAME") or "plom_db"
 
@@ -128,7 +123,7 @@ DATABASES = {
         "NAME": plom_db_name,
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": postgres_hostname,
+        "HOST": plom_db_host,
         "PORT": "5432",
     },
     "sqlite": {
