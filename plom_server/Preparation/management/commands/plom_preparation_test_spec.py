@@ -131,7 +131,7 @@ class Command(BaseCommand):
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download the test spec toml"
         )
-        sub.add_parser("remove", help="Remove the current test spec the server")
+        sub.add_parser("remove", help="Remove the current test spec from the server")
 
         sp_U.add_argument(
             "test_spec_toml", type=str, help="The test spec toml to upload"
