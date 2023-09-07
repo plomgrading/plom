@@ -11,10 +11,14 @@ services:
       - web
   web:
     image: "plomgrading/server"
+    # ports:
+    #   - ${PORT}:8000
+    # expose:
+    #   - ${PORT}
     ports:
-      - ${PORT}:8000
+      - 8000:8000
     expose:
-      - ${PORT}
+      - 8000
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
     # TODO: those on Fedora, might need a :z at the end
     volumes:
