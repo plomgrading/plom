@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def show_status(self):
         if not SpecificationService.is_there_a_spec():
-            self.stdout.write("There no valid test specification. Stopping.")
+            self.stdout.write("There is no valid test specification. Stopping.")
 
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
@@ -26,7 +26,7 @@ class Command(BaseCommand):
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
         else:
-            self.stdout.write("There no is a question-version mapping.")
+            self.stdout.write("There is no question-version mapping.")
             self.stdout.write(
                 f"Recommended minimum number of papers to produce is {pqvms.get_minimum_number_to_produce()}"
             )
