@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from plom.solutions import with_manager_messenger
 
@@ -20,7 +20,8 @@ def getSolutionImage(question, version, *, msgr):
     Return:
         bytes: the bitmap of the solution or None if there was no
         solution.  If you wish to know what sort of image it is,
-        consider using :py:mod:`imghdr` in the Python standard library.
+        see recent changes to `get_annotations_image` which could
+        expose this.
 
     Raises:
         PlomNoSolutionException: the question/version asked for does

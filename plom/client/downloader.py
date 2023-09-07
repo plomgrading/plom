@@ -446,7 +446,6 @@ class Downloader(QObject):
         im_bytes = self.msgr.get_image(row["id"], md5)
         if self.simulate_failures:
             sleep(wait2)
-        # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
         row["filename"] = str(f)
