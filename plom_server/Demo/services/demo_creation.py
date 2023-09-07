@@ -8,7 +8,6 @@ import subprocess
 from time import sleep
 from shlex import split
 import sys
-from dataclasses import asdict
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -16,7 +15,6 @@ else:
     import importlib_resources as resources
 
 from django.core.management import call_command
-from django.conf import settings
 
 from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService

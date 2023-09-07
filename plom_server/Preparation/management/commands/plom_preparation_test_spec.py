@@ -11,15 +11,13 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 import fitz
 
-from plom import SpecVerifier
 from Papers.services import SpecificationService
-from Papers.serializers import SpecSerializer
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 
 from ...services import PQVMappingService
@@ -57,15 +55,14 @@ class Command(BaseCommand):
             self.stderr.write(f"File {fname} already present - not overwriting.")
             return
         with open(fname, "w") as f:
-            f.write(speck.get_the_spec_as_toml())
+            f.write(SpecificationService.get_the_spec_as_toml())
 
     @transaction.atomic
     def upload_spec(self, spec_file, pdf_file):
         if SpecificationService.is_there_a_spec():
-            self.stderr.write(
+            raise CommandError(
                 "There is already a spec present. Cannot proceed with upload."
             )
-            return
 
         spec_path = Path(spec_file)
         if spec_path.exists() is False:
@@ -93,12 +90,14 @@ class Command(BaseCommand):
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
         reference = ReferencePDFService()
+        # TODO: Issue #3001: staging_spec was undefined: here I define it, not sure it works...
+        staging_spec = StagingSpecificationService()
         reference.new_pdf(
             staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
         )
 
         try:
-            valid_spec = SpecificationService.load_spec_from_toml(spec_path, True)
+            SpecificationService.load_spec_from_toml(spec_path, True)
         except ValueError as err:
             self.stderr.write(f"There was an error validating the spec: {err}")
             return
@@ -126,7 +125,7 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to uploading/downloading/deleting of a classlist.",
         )
-        sp_S = sub.add_parser("status", help="Show details of current test spec")
+        sub.add_parser("status", help="Show details of current test spec")
         sp_U = sub.add_parser("upload", help="Upload a test spec")
         sp_D = sub.add_parser(
             "download", help="Download the current test spec (if is valid)"
@@ -134,7 +133,7 @@ class Command(BaseCommand):
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download the test spec toml"
         )
-        sp_R = sub.add_parser("remove", help="Remove the current test spec the server")
+        sub.add_parser("remove", help="Remove the current test spec from the server")
 
         sp_U.add_argument(
             "test_spec_toml", type=str, help="The test spec toml to upload"
