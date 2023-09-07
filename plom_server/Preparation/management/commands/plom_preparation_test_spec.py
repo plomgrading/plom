@@ -90,6 +90,8 @@ class Command(BaseCommand):
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
         reference = ReferencePDFService()
+        # TODO: Issue #3001: staging_spec was undefined: here I define it, not sure it works...
+        staging_spec = StagingSpecificationService()
         reference.new_pdf(
             staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
         )
