@@ -20,9 +20,10 @@ services:
     expose:
       - 8000
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
+    # mount a local dir for storage
     # TODO: those on Fedora, might need a :z at the end
-    volumes:
-      - ./my_exam:/exam:z
+    # volumes:
+    #   - ./my_exam:/exam:z
     depends_on:
       - postgres
     environment:
