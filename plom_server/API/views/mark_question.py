@@ -48,12 +48,18 @@ class QuestionMarkingViewSet(ViewSet):
     # POST MK/tasks/<str:code>
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):
+        """Attach a user to a marking task or accept a marker's grade.
+        
+        Methods:
+            PATCH: see self.claim_task()
+            POST: see self.mark_task()
+        """
         if request.method == "PATCH":
-            return self._claim_task(request, code)
+            return self.claim_task(request, code)
         elif request.method == "POST":
-            return self._mark_task(request, code)
+            return self.mark_task(request, code)
 
-    def _claim_task(self, request, code):
+    def claim_task(self, request, code):
         """Attach a user to a marking task and return the task's metadata.
 
         Reply with status 200, or 409 if someone else has claimed this
@@ -76,7 +82,7 @@ class QuestionMarkingViewSet(ViewSet):
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-    def _mark_task(self, request, code):
+    def mark_task(self, request, code):
         """Accept a marker's grade and annotation for a task."""
         mts = MarkingTaskService()
         data = request.POST
