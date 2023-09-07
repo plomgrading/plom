@@ -24,6 +24,6 @@ python3 manage.py runserver 0.0.0.0:8000
 # python3 manage.py shell -c "from django.contrib.auth.models import User, Group; manager_group = Group.objects.get(name='manager'); User.objects.create_user(username='manager', password='1234').groups.add(manager_group)"
 #
 # # one can also do this in a separate terminal connected with `podman exec -it ...`
-# python3 manage.py shell -c "import Demo.servers DemoProcessesService; proc_service = DemoProcessesService(); huey_worker_proc = proc_service.launch_huey_workers()"
+# python3 manage.py shell -c "from Demo.services import DemoProcessesService; proc_service = DemoProcessesService(); huey_worker_proc = proc_service.launch_huey_workers()"
 #
 # python3 manage.py runserver 0.0.0.0:8000
