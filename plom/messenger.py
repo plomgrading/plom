@@ -506,6 +506,7 @@ class Messenger(BaseMessenger):
 
                     annot_img_file.seek(0)
 
+                    # automatically puts the filename in
                     files = {
                         "annotation_image": annot_img_file,
                         "plomfile": plom_data_file,

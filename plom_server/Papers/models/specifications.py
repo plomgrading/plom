@@ -44,7 +44,7 @@ class SpecQuestion(models.Model):
     mark = models.PositiveIntegerField(null=False)
     select = models.CharField(
         choices=[("fix", "fix"), ("shuffle", "shuffle")],
-        default="fix",
+        default="shuffle",
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)

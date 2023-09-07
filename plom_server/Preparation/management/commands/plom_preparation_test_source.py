@@ -19,9 +19,7 @@ class Command(BaseCommand):
         tss = TestSourceService()
         duplicates = tss.check_pdf_duplication()
         if duplicates:
-            self.stderr.write(
-                f"There appear to be duplicate source pdfs on the server:"
-            )
+            self.stderr.write("There appear to be duplicate source pdfs on the server:")
             for sha, versions in duplicates.items():
                 self.stderr.write(f"\tVersions {versions} have sha256 {sha}")
 
@@ -50,7 +48,7 @@ class Command(BaseCommand):
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()
             if choice != "y":
-                self.stdout.write(f"Skipping this file.")
+                self.stdout.write("Skipping this file.")
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
@@ -62,11 +60,11 @@ class Command(BaseCommand):
         tss = TestSourceService()
         up_list = tss.get_list_of_uploaded_sources()
         if len(up_list) == 0:
-            self.stdout.write(f"There are no test sources on the server.")
+            self.stdout.write("There are no test sources on the server.")
             return
 
         if all:
-            self.stdout.write(f"Downloading all versions on the server.")
+            self.stdout.write("Downloading all versions on the server.")
             for v, source in up_list.items():
                 self.copy_source_into_place(v, tss.get_source_as_bytes(v))
             return
@@ -82,7 +80,7 @@ class Command(BaseCommand):
         tss = TestSourceService()
         up_list = tss.get_list_of_uploaded_sources()
         if len(up_list) == 0:
-            self.stdout.write(f"There are no test sources on the server.")
+            self.stdout.write("There are no test sources on the server.")
             return
 
         if all:
@@ -103,30 +101,27 @@ class Command(BaseCommand):
 
     def upload_source(self, version=None, source_pdf=None):
         if not SpecificationService.is_there_a_spec():
-            self.stderr.write(
-                f"There is not a valid test specification on the server. Cannot upload."
+            raise CommandError(
+                "There is not a valid test specification on the server. Cannot upload."
             )
-            return
 
         tss = TestSourceService()
         src_list = tss.get_list_of_sources()
         if version not in src_list:
             version_list = sorted(list(src_list.keys()))
-            self.stderr.write(
+            raise CommandError(
                 f"Version {version} is invalid - must be one of {version_list}"
             )
-            return
 
         existing_src = src_list[version]
         if existing_src is not None:
-            self.stderr.write(
+            raise CommandError(
                 f"Version {version} already on server with sha256 = {existing_src[1]}. Delete or upload to a different version."
             )
-            return
 
         source_path = Path(source_pdf)
         if not source_path.exists():
-            self.stderr.write(f"Cannot open file {source_path}.")
+            raise CommandError(f"Cannot open file {source_path}.")
 
         # send the PDF
         # TODO - fix 6 to get the required number of pages from the spec.
@@ -153,7 +148,7 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to uploading/downloading/deleting test source pdfs.",
         )
-        sp_S = sub.add_parser("status", help="Show which sources have been uploaded")
+        sub.add_parser("status", help="Show which sources have been uploaded")
         sp_U = sub.add_parser("upload", help="Upload a test source pdf")
         sp_D = sub.add_parser("download", help="Download a test source pdf")
         sp_R = sub.add_parser("remove", help="Remove a test source pdf")

@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Union, Dict, Any
+from typing import Any, Dict, Tuple, Union
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -1130,7 +1130,7 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_annotations_image(self, num, question, edition=None) -> bytes:
+    def get_annotations_image(self, num, question, edition=None) -> Tuple[Dict, bytes]:
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
@@ -1139,7 +1139,10 @@ class BaseMessenger:
             edition (int/None): which annotation set or None for latest.
 
         Returns:
-            contents of a bitmap file.
+            2-tuple, the first being a dictionary with info about the download and
+            the second being the raw bytes of a bitmap file.  The dictionary contains
+            at least the keys ``extension``and ``Content-Type`` and possibly others.
+            For now, ``extension`` will be either ``"png"`` or ``"jpg"``.
 
         Raises:
             PlomAuthenticationException
@@ -1156,7 +1159,17 @@ class BaseMessenger:
             try:
                 response = self.get(url, json={"user": self.user, "token": self.token})
                 response.raise_for_status()
-                return BytesIO(response.content).getvalue()
+                info: Dict[str, Any] = {}
+                info["Content-Type"] = response.headers.get("Content-Type", None)
+                if info["Content-Type"] == "image/png":
+                    info["extension"] = "png"
+                elif info["Content-Type"] == "image/jpeg":
+                    info["extension"] = "jpg"
+                else:
+                    raise PlomSeriousException(
+                        "Failed to identify extension of image data for previous annotations"
+                    )
+                return info, BytesIO(response.content).getvalue()
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomRangeException(response.reason) from None

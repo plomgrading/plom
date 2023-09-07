@@ -428,7 +428,6 @@ webplom_test:
     - export PYTHONPATH=$PWD
     - python3 -m pip install coverage~=7.2.7
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
     - python3 manage.py migrate
@@ -453,6 +452,7 @@ webplom_demo:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: test
   needs: ["docker-image"]
   image: $IM
@@ -460,7 +460,6 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - popd
 
@@ -796,6 +795,7 @@ fedora_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: fedora:38
@@ -827,7 +827,6 @@ fedora_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
     - popd
@@ -912,6 +911,7 @@ newOS_newdeps_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: ubuntu:22.04
@@ -934,7 +934,6 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
     - popd
@@ -1040,6 +1039,7 @@ minpy_mindeps_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: python:3.9
@@ -1056,7 +1056,6 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - python3 manage.py test
     - popd

@@ -18,7 +18,7 @@ class SpecQuestionSerializer(serializers.ModelSerializer):
 
     pages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     mark = serializers.IntegerField(min_value=0)
-    select = serializers.ChoiceField(choices=["fix", "shuffle"], default="fix")
+    select = serializers.ChoiceField(choices=["fix", "shuffle"], default="shuffle")
     label = serializers.CharField(required=False)
 
     class Meta:
