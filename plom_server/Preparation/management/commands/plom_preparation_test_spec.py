@@ -11,7 +11,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
@@ -60,10 +60,9 @@ class Command(BaseCommand):
     @transaction.atomic
     def upload_spec(self, spec_file, pdf_file):
         if SpecificationService.is_there_a_spec():
-            self.stderr.write(
+            raise CommandError(
                 "There is already a spec present. Cannot proceed with upload."
             )
-            return
 
         spec_path = Path(spec_file)
         if spec_path.exists() is False:
@@ -96,7 +95,7 @@ class Command(BaseCommand):
         )
 
         try:
-            valid_spec = SpecificationService.load_spec_from_toml(spec_path, True)
+            SpecificationService.load_spec_from_toml(spec_path, True)
         except ValueError as err:
             self.stderr.write(f"There was an error validating the spec: {err}")
             return
