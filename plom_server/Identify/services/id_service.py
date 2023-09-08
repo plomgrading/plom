@@ -78,7 +78,6 @@ class IDService:
     def get_identified_papers_count(self) -> int:
         return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
 
-
     @transaction.atomic
     def get_all_identified_papers(
         self, all_scanned_id_papers: QuerySet[IDPage]
@@ -171,6 +170,44 @@ class IDService:
 
         PaperIDAction.objects.all().delete()
 
-    # @transaction.atomic:
-    # def get_all_paper_id_info(self) -> Dict:
-        # for paper_obj in Paper.objects.all():
+    @transaction.atomic
+    def get_all_id_task_info(self) -> Dict:
+        id_info = {}
+        # first get all the task info, then get the id page image pk if they exist
+        for task in (
+            PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
+            .prefetch_related("latest_action", "paper")
+            .order_by("paper__paper_number")
+        ):
+            dat = {"status": task.get_status_display(), "idpageimage_pk": None}
+
+            if task.status == PaperIDTask.COMPLETE:
+                dat.update(
+                    {
+                        "student_id": task.latest_action.student_id,
+                        "student_name": task.latest_action.student_name,
+                    }
+                )
+            id_info[task.paper.paper_number] = dat
+        # now the id pages
+        for idp_obj in IDPage.objects.all().prefetch_related("paper"):
+            if idp_obj.image and idp_obj.paper.paper_number in id_info:
+                id_info[idp_obj.paper.paper_number]["idpageimage_pk"] = idp_obj.image.pk
+
+        return id_info
+
+    @transaction.atomic
+    def get_all_id_task_count(self) -> int:
+        return PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).count()
+
+    @transaction.atomic
+    def get_completed_id_task_count(self) -> int:
+        return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
+
+    @transaction.atomic
+    def clear_id_from_paper(self, paper_number: int):
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Cannot find paper {paper_number}")
+        IdentifyTaskService().create_task(paper_obj)

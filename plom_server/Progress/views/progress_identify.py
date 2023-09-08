@@ -23,8 +23,13 @@ class ProgressIdentifyHome(ManagerRequiredView):
         identified_papers = ids.get_all_identified_papers(id_papers)
         identified_papers_count = ids.get_identified_papers_count()
 
-        # print(ids.get_all_identified_papers_meh())
-        
+        n_all_id_task = ids.get_all_id_task_count()
+        n_complete_task = ids.get_completed_id_task_count()
+        if n_all_id_task:
+            percent_complete = round(n_complete_task / n_all_id_task * 100)
+        else:
+            percent_complete = 0
+
         context.update(
             {
                 "all_id_papers": all_id_papers,
@@ -34,8 +39,13 @@ class ProgressIdentifyHome(ManagerRequiredView):
                 "no_id_papers_count": len(no_id_papers),
                 "identified_papers": identified_papers,
                 "identified_papers_count": identified_papers_count,
+                "id_task_info": ids.get_all_id_task_info(),
+                "all_task_count": n_all_id_task,
+                "completed_task_count": n_complete_task,
+                "percent_complete": percent_complete,
             }
         )
+
         return render(request, "Progress/Identify/identify_home.html", context)
 
 
@@ -54,6 +64,6 @@ class IDImageView(ManagerRequiredView):
 
 
 class ClearID(ManagerRequiredView):
-    def post(self, request, paper_pk):
-        IDService().set_id_task_todo_and_clear_specific_id(paper_pk)
+    def delete(self, request, paper_number):
+        IDService().clear_id_from_paper(paper_number)
         return HttpResponseClientRefresh()
