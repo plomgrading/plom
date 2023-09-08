@@ -38,6 +38,7 @@ class IDService:
         Raises:
             Not expected to raise any exceptions.
         """
+
         return IDPage.objects.exclude(image=None).order_by("paper")
 
     @transaction.atomic
@@ -74,26 +75,9 @@ class IDService:
             return None
 
     @transaction.atomic
-    def get_identified_papers_count(self, identified_papers: Dict) -> int:
-        """Get the number of papers identified.
+    def get_identified_papers_count(self) -> int:
+        return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
 
-        Args:
-            identified_papers (dict): A dictionary of all the
-                PaperIDAction(Value) corresponding with IDPage(key).
-
-        Returns:
-            int: Number of papers identified.
-
-        Raises:
-            Not expected to raise any exceptions.
-        """
-        identified_papers_count = 0
-        for id_paper in identified_papers.values():
-            if id_paper is not None:
-                identified_papers_count += 1
-            else:
-                identified_papers_count = identified_papers_count
-        return identified_papers_count
 
     @transaction.atomic
     def get_all_identified_papers(
@@ -186,3 +170,7 @@ class IDService:
             paper_id_task.save()
 
         PaperIDAction.objects.all().delete()
+
+    # @transaction.atomic:
+    # def get_all_paper_id_info(self) -> Dict:
+        # for paper_obj in Paper.objects.all():
