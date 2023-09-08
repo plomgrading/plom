@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
-import arrow
 from datetime import timedelta
 from typing import Dict, Tuple, Union
+
+import arrow
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -163,27 +165,13 @@ class UserInfoServices:
         """Convert the given number of seconds to a human-readable time string.
 
         Args:
-            seconds: (float) The number of seconds.
+            seconds: the number of seconds, unsigned so no distinction
+                is made between past and future.
 
         Returns:
-            str: A human-readable time string.
+            A human-readable time string.
         """
-        present = arrow.utcnow()
-
-        if seconds < 60:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["second"]
-            )
-        elif seconds > 3599:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["hour", "minute", "second"]
-            )
-        else:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["minute", "second"]
-            )
-
-        return time
+        return arrow.utcnow().shift(seconds=seconds).humanize(only_distance=True)
 
     @transaction.atomic
     def get_marking_task_count_based_on_question_number_and_version(
