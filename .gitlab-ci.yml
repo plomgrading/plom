@@ -828,6 +828,7 @@ fedora_webplom:
     - echo $PYTHONPATH
     - pushd plom_server
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 
@@ -935,6 +936,7 @@ newOS_newdeps_webplom:
     - echo $PYTHONPATH
     - pushd plom_server
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 
@@ -1057,6 +1059,7 @@ minpy_mindeps_webplom:
     - echo $PYTHONPATH
     - pushd plom_server
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 

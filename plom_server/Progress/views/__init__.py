@@ -22,6 +22,9 @@ from .progress_identify import (
 
 from .progress_mark import (
     ProgressMarkHome,
+    ProgressMarkStatsView,
+    ProgressMarkDetailsView,
+    ProgressMarkVersionCompareView,
 )
 
 from .progress_userinfo import (
