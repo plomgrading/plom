@@ -9,18 +9,18 @@ from django import forms
 class AnnotationFilterForm(forms.Form):
     TIME_CHOICES = [
         ("", ""),
-        ("300", "5 minutes ago"),
-        ("1800", "30 minutes ago"),
-        ("3600", "an hour ago"),
-        ("7200", "2 hours ago"),
-        ("10800", "3 hours ago"),
-        ("21600", "6 hours ago"),
-        ("86400", "a day ago"),
+        ("300", "the last 5 minutes"),
+        ("1800", "the last 30 minutes"),
+        ("3600", "the last hour"),
+        ("7200", "the last 2 hours"),
+        ("10800", "the last 3 hours"),
+        ("21600", "the last 6 hours"),
+        ("86400", "the last day"),
     ]
 
     time_filter_seconds = forms.TypedChoiceField(
         choices=TIME_CHOICES,
         coerce=int,
         required=False,
-        label="Select a time to filter",
+        label="Filter for annotations created in",
     )
