@@ -235,10 +235,10 @@ class UserInfoServices:
             Human-readable time of the latest updated annotation or
             the string ``"never"`` if there have not been any annotations.
         """
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
         try:
+            annotations = (
+                MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+            )
             latest_annotation = annotations.latest("time_of_last_update")
         except ObjectDoesNotExist:
             return "never"
