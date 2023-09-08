@@ -73,3 +73,21 @@ def unpack_code(code: str) -> tuple[int, int]:
     question_number = int(code[split_index + 1 :])
 
     return paper_number, question_number
+
+
+@transaction.atomic
+def update_task_status(
+    task: MarkingTask, status: MarkingTask.StatusChoices
+) -> MarkingTask:
+    """Set the status of a marking task.
+
+    Args:
+        task: reference to a marking task
+        status: one of the MarkingTask.StatusChoices enum options
+
+    Returns:
+        Updated task instance
+    """
+    task.status = status
+    task.save()
+    return task

@@ -104,28 +104,20 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         annotation_image = files["annotation_image"]
-        try:
-            img_md5sum = data["md5sum"]
-            img = mts.save_annotation_image(img_md5sum, annotation_image)
-        except FileExistsError:
-            return _error_response(
-                "Annotation image already exists.", status.HTTP_409_CONFLICT
-            )
-        except ValidationError:
-            return _error_response(
-                "Unsupported media type for annotation image",
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            )
-
-        mts.mark_task(
-            request.user,
-            code,
-            mark_data["score"],
-            mark_data["marking_time"],
-            img,
-            annot_data,
+        img_md5sum = data["md5sum"]
+        service = QuestionMarkingService(
+            code=code,
+            plomfile_data=annot_data,
+            marking_data=mark_data,
+            user=request.user,
+            annotation_image=annotation_image,
+            annotation_image_md5sum=img_md5sum,
         )
-        mts.mark_task_as_complete(code)
+
+        try:
+            service.mark_task()
+        except ValueError as e:
+            return _error_response(str(e), status.HTTP_400_BAD_REQUEST)
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],

@@ -13,63 +13,69 @@ from Base.tests import config_test
 from Preparation.models import StagingPQVMapping
 from Papers.models import Paper, QuestionPage, Image
 
-from ..services import MarkingTaskService
+from ..services import MarkingTaskService, mark_task
 from ..models import MarkingTask, AnnotationImage
 from Papers.services import ImageBundleService
 
 
 class MarkingTaskServiceTests(TestCase):
     """
-    Unit tests for Mark.services.MarkingTaskService
+    Unit tests for Mark.services.MarkingTaskService.
+
+    Also tests some of the function-based services in mark_task.
     """
 
     def test_unpack_code(self):
-        """
-        Test MarkingTaskService.unpack_code
-        """
+        """Test mark_task.unpack_code()."""
 
         mts = MarkingTaskService()
         with self.assertRaises(AssertionError):
-            mts.unpack_code("")
+            mark_task.unpack_code("")
 
         with self.assertRaises(AssertionError):
-            mts.unpack_code("astringthatdoesn'tstartwithq")
+            mark_task.unpack_code("astringthatdoesn'tstartwithq")
 
         with self.assertRaises(AssertionError):
-            mts.unpack_code("qastrinGthatdoesn'tcontainalowercaseG")
+            mark_task.unpack_code("qastrinGthatdoesn'tcontainalowercaseG")
 
         with self.assertRaises(ValueError):
-            mts.unpack_code("q000qge")
+            mark_task.unpack_code("q000qge")
 
-        paper_number, question_number = mts.unpack_code("q0001g2")
+        paper_number, question_number = mark_task.unpack_code("q0001g2")
         self.assertEqual(paper_number, 1)
         self.assertEqual(question_number, 2)
 
     def test_unpack_code_additional_tests(self):
         mts = MarkingTaskService()
         with self.assertRaises(AssertionError):
-            mts.unpack_code("g0001q2")
+            mark_task.unpack_code("g0001q2")
 
-        _, q1 = mts.unpack_code("q0001g2")
-        _, q2 = mts.unpack_code("q0001g02")
+        _, q1 = mark_task.unpack_code("q0001g2")
+        _, q2 = mark_task.unpack_code("q0001g02")
 
         self.assertEqual(q1, q2)
 
-        _, q1 = mts.unpack_code("q0001g2")
-        _, q2 = mts.unpack_code("q0001g22")
+        _, q1 = mark_task.unpack_code("q0001g2")
+        _, q2 = mark_task.unpack_code("q0001g22")
 
         self.assertNotEqual(q1, q2)
 
-        p1, q1 = mts.unpack_code("q1234567890987654321g8888888855555555123412341324")
-        p2, q2 = mts.unpack_code("q1234567890987654321g9090909090909090909090909090")
-        p3, q3 = mts.unpack_code("q9876543100123456789g9090909090909090909090909090")
+        p1, q1 = mark_task.unpack_code(
+            "q1234567890987654321g8888888855555555123412341324"
+        )
+        p2, q2 = mark_task.unpack_code(
+            "q1234567890987654321g9090909090909090909090909090"
+        )
+        p3, q3 = mark_task.unpack_code(
+            "q9876543100123456789g9090909090909090909090909090"
+        )
 
         self.assertEqual(p1, p2)
         self.assertNotEqual(p1, p3)
         self.assertEqual(q2, q3)
         self.assertNotEqual(q1, q3)
 
-        p1, q1 = mts.unpack_code("q8g9")
+        p1, q1 = mark_task.unpack_code("q8g9")
         self.assertEqual(p1, 8)
         self.assertEqual(q1, 9)
 
