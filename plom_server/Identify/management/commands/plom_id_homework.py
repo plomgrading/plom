@@ -7,7 +7,7 @@ from Identify.services import IDHomeworkService
 
 
 class Command(BaseCommand):
-    """python3 manage.py plom_id_homework username paper_number sid sname"""
+    """python3 manage.py plom_id_homework username paper_number sid sname ."""
 
     def identify_homework(
         self,

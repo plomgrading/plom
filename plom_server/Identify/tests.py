@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from datetime import timedelta
 
@@ -173,37 +174,20 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(action.student_name, "A")
         self.assertEqual(action.student_id, "1")
 
-    def test_set_id_task_todo_and_clear_specific_id(self):
-        """Test ``IDService().set_id_task_todo_and_clear_specific_id()``."""
+    def test_clear_id_from_paper(self):
+        """Test ``IDService().clear_id_from_paper()``."""
         ids = IDService()
-        paper = baker.make(Paper)
+        paper = baker.make(Paper, paper_number=1)
         task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        action = baker.make(PaperIDAction, task=task)
+        ids.clear_id_from_paper(1)
 
-        with self.assertRaises(ObjectDoesNotExist):
-            ids.set_id_task_todo_and_clear_specific_id(paper.pk)
-            task.refresh_from_db()
-            action.refresh_from_db()
+        with self.assertRaises(ValueError):
+            ids.clear_id_from_paper(2)
 
-        self.assertEqual(task.status, PaperIDTask.TO_DO)
-        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
+        new_task = PaperIDTask.objects.get(paper=paper, status=PaperIDTask.TO_DO)
+        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=new_task), [])
 
-    def test_set_id_task_todo_and_clear_specific_id_cmd(self):
-        """Test ``IDService().id_task_todo_and_clear_specific_id_cmd()``."""
-        ids = IDService()
-        paper = baker.make(Paper)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        action = baker.make(PaperIDAction, task=task)
-
-        with self.assertRaises(ObjectDoesNotExist):
-            ids.set_id_task_todo_and_clear_specific_id_cmd(paper.paper_number)
-            task.refresh_from_db()
-            action.refresh_from_db()
-
-        self.assertEqual(task.status, PaperIDTask.TO_DO)
-        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
-
-    def test_set_all_id_task_todo_and_clear_all_id_cmd(self):
+    def test_clear_id_from_all_identified_papers(self):
         """Test ``IDService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
         ids = IDService()
         for paper_number in range(1, 11):
@@ -211,7 +195,7 @@ class IdentifyTaskTests(TestCase):
             task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
             baker.make(PaperIDAction, task=task)
 
-        ids.set_all_id_task_todo_and_clear_all_id_cmd()
+        ids.clear_id_from_all_identified_papers()
 
         for id_task in PaperIDTask.objects.all():
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)

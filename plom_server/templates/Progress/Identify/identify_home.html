@@ -1,4 +1,6 @@
 <!-- Copyright (C) 2023 Brennen Chiu -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Identify Progress
@@ -67,76 +69,6 @@
                     </tr>
                 {% endfor %}
             </table>
-        </div>
-        <div class="col">
-            <div style="height: 45vw;
-                        width: 45vw;
-                        justify-content: center;
-                        display:flex;
-                        align-items:center;
-                        position:sticky;
-                        top: 0"
-                 id="imageHere"></div>
-        </div>
-    </div>
-    <div class="row" x-data="{idimage: ''}">
-        <div class="col">
-            <div class="card">
-                <table class="table table-hover sticky-header" style="margin-bottom: 0px;">
-                    <thead>
-                        <tr class="text-center align-middle"
-                            style="position: sticky;
-                                   top: 0;
-                                   z-index: 1;
-                                   background-color: #373737;
-                                   color: white">
-                            <th scope="col">Paper</th>
-                            <th scope="col">ID Page</th>
-                            <th scope="col">Student ID</th>
-                            <th scope="col">Student Name</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if id_papers %}
-                            {% for id_paper, identified_paper in identified_papers.items %}
-                                <tr class="text-center align-middle">
-                                    <td scope="row">{{ id_paper.paper.paper_number }}</td>
-                                    {% if id_paper.image %}
-                                        <td scope="row">
-                                            <button hx-get="id_img_wrap/{{ id_paper.image.pk }}"
-                                                    hx-target="#imageHere"
-                                                    hx-replace="innerHTML"
-                                                    class="btn btn-outline-success">View ID page</button>
-                                        </td>
-                                    {% else %}
-                                        <td scope="row">Not scan yet.</td>
-                                    {% endif %}
-                                    {% if identified_paper %}
-                                        <td scope="row">{{ identified_paper.student_id }}</td>
-                                        <td scope="row">{{ identified_paper.student_name }}</td>
-                                        <td scope="row">
-                                            <a class="btn btn-outline-danger"
-                                               hx-post="{% url 'clear_ID' id_paper.paper.pk %}"
-                                               hx-confirm="Are you sure you wish to clear the ID for paper number {{ id_paper.paper.paper_number }}?">
-                                            Clear ID</a>
-                                        </td>
-                                    {% else %}
-                                        <td scope="row" colspan="2">Not ID yet</td>
-                                        <td scope="row">
-                                            <button class="btn btn-outline-danger disabled">Clear ID</button>
-                                        </td>
-                                    {% endif %}
-                                </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr class="text-center align-middle">
-                                <td scope="row" colspan="5">No papers scanned yet.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
         </div>
         <div class="col">
             <div style="height: 45vw;

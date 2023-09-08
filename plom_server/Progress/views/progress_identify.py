@@ -16,12 +16,6 @@ class ProgressIdentifyHome(ManagerRequiredView):
         context = super().build_context()
 
         ids = IDService()
-        all_id_papers = ids.get_all_id_papers()
-        id_papers = ids.get_id_papers()
-        no_id_papers = ids.get_no_id_papers()
-
-        identified_papers = ids.get_all_identified_papers(id_papers)
-        identified_papers_count = ids.get_identified_papers_count()
 
         n_all_id_task = ids.get_all_id_task_count()
         n_complete_task = ids.get_completed_id_task_count()
@@ -32,13 +26,6 @@ class ProgressIdentifyHome(ManagerRequiredView):
 
         context.update(
             {
-                "all_id_papers": all_id_papers,
-                "all_id_papers_count": len(all_id_papers),
-                "id_papers": id_papers,
-                "id_papers_count": len(id_papers),
-                "no_id_papers_count": len(no_id_papers),
-                "identified_papers": identified_papers,
-                "identified_papers_count": identified_papers_count,
                 "id_task_info": ids.get_all_id_task_info(),
                 "all_task_count": n_all_id_task,
                 "completed_task_count": n_complete_task,
