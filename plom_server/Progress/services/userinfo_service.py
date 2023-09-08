@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
-import arrow
 from datetime import timedelta
 from typing import Dict, Tuple, Union
 
+import arrow
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -229,10 +232,14 @@ class UserInfoServices:
         """Get the human readable time of the latest updated annotation.
 
         Returns:
-            str: Human-readable time of the latest updated annotation.
+            Human-readable time of the latest updated annotation or
+            the string ``"never"`` if there have not been any annotations.
         """
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
-        latest_annotation = annotations.latest("time_of_last_update")
+        try:
+            latest_annotation = annotations.latest("time_of_last_update")
+        except ObjectDoesNotExist:
+            return "never"
         return arrow.get(latest_annotation.time_of_last_update).humanize()
