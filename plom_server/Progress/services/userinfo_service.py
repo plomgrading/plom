@@ -235,8 +235,4 @@ class UserInfoServices:
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
         latest_annotation = annotations.latest("time_of_last_update")
-        latest_annotation_humanize = arrow.get(
-            latest_annotation.time_of_last_update
-        ).humanize(granularity=["day", "hour", "minute"])
-
-        return latest_annotation_humanize
+        return arrow.get(latest_annotation.time_of_last_update).humanize()
