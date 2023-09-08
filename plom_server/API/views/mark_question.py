@@ -105,9 +105,10 @@ class QuestionMarkingViewSet(ViewSet):
 
         annotation_image = files["annotation_image"]
         img_md5sum = data["md5sum"]
+
         service = QuestionMarkingService(
             code=code,
-            plomfile_data=annot_data,
+            annotation_data=annot_data,
             marking_data=mark_data,
             user=request.user,
             annotation_image=annotation_image,

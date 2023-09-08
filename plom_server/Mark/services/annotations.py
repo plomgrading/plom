@@ -58,13 +58,13 @@ def save_annotation(
 @transaction.atomic
 def add_annotation_to_rubrics(annotation: Annotation):
     """Add a relation to this annotation for every rubric that this annotation uses."""
+    print(annotation.annotation_data)
     scene_items = annotation.annotation_data["sceneItems"]
-    rubric_items = [item for item in scene_items if item[0] == "GroupDeltaText"]
-    rubric_keys = [rubric_item[3] for rubric_item in rubric_items]
+    rubric_keys = [item[3] for item in scene_items if item[0] == "GroupDeltaText"]
     rubrics = Rubric.objects.filter(key__in=rubric_keys)
     for rubric in rubrics:
         rubric.annotations.add(annotation)
-    Rubric.objects.bulk_update(rubrics, ["annotations"])
+        rubric.save()
 
 
 @transaction.atomic

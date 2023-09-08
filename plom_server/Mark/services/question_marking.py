@@ -45,7 +45,7 @@ class QuestionMarkingService:
         version: Optional[int] = None,
         user: Optional[User] = None,
         marking_data: Optional[dict] = None,
-        plomfile_data: Optional[str] = None,
+        annotation_data: Optional[dict] = None,
         annotation_image: Optional[InMemoryUploadedFile] = None,
         annotation_image_md5sum: Optional[str] = None,
     ):
@@ -58,7 +58,7 @@ class QuestionMarkingService:
             version: question version of task
             user: reference to a user instance
             marking_data: dict representing a mark, rubrics used, etc
-            plomfile_data: a stringified JSON blob representing an annotation SVG
+            annotation_data: a dictionary representing an annotation SVG
             annotation_image: an in-memory raster representation of an annotation
             annotation_image_md5sum: the hash for annotation_image
         """
@@ -68,7 +68,7 @@ class QuestionMarkingService:
         self.version = version
         self.user = user
         self.marking_data = marking_data
-        self.plomfile_data = plomfile_data
+        self.annotation_data = annotation_data
         self.annotation_image = annotation_image
         self.annotation_image_md5sum = annotation_image_md5sum
 
@@ -170,8 +170,8 @@ class QuestionMarkingService:
         )
 
         # save annotation
-        if self.marking_data is None:
-            raise ValueError("Cannot find marking data.")
+        if self.annotation_data is None:
+            raise ValueError("Cannot find annotation data.")
         if self.user is None:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
@@ -181,7 +181,7 @@ class QuestionMarkingService:
             self.marking_data["score"],
             self.marking_data["marking_time"],
             annotation_image,
-            self.marking_data,
+            self.annotation_data,
         )
 
-        mark_task.update_task_status(MarkingTask.COMPLETE)
+        mark_task.update_task_status(task, MarkingTask.COMPLETE)
