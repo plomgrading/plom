@@ -1205,8 +1205,7 @@ class RubricWidget(QWidget):
                     continue
                 if not group_tab_data.get(g):
                     group_tab_data[g] = []
-                # TODO: why are ids strings in the wranglerState?
-                if str(rubric["id"]) in wranglerState["hidden"]:
+                if rubric["id"] in wranglerState["hidden"]:
                     log.debug(
                         f"filtering rubric id {rubric['id']} from group {g} b/c hidden"
                     )
@@ -1265,8 +1264,7 @@ class RubricWidget(QWidget):
             else:
                 idlist = wranglerState["user_tabs"][n]["ids"]
             # Issue #2474, filter anything in the hidden list
-            # TODO: why are ids strings in the wranglerState?
-            idlist = [x for x in idlist if str(x) not in wranglerState["hidden"]]
+            idlist = [x for x in idlist if x not in wranglerState["hidden"]]
             tab.setRubricsByKeys(self.rubrics, idlist)
         # all rubrics should appear here unless hidden: "shown" is just helping with ordering
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
