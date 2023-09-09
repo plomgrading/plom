@@ -352,8 +352,6 @@ class RubricTable(QTableWidget):
             return
         key = self.item(row, 0).text()
         self._parent.hideRubricByKey(key)
-        # TODO: Issue #2474: maybe parent should do this?
-        self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
@@ -363,7 +361,6 @@ class RubricTable(QTableWidget):
             return
         key = self.item(row, 0).text()
         self._parent.unhideRubricByKey(key)
-        self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
@@ -1504,12 +1501,25 @@ class RubricWidget(QWidget):
         return sorted(list(set(groups)))
 
     def unhideRubricByKey(self, key):
-        index = [x["id"] for x in self.rubrics].index(key)
-        self.tabS.appendNewRubric(self.rubrics[index])
+        wranglerState = self.get_tab_rubric_lists()
+        # TODO: there is some confusion about keys being ints or strings
+        # key is an int (always/usually?) but "hidden" is always (?) strs
+        key = str(key)
+        try:
+            wranglerState["hidden"].remove(key)
+        except ValueError:
+            # TODO is this sufficient if we unexpected did not find it?
+            log.warn(f"Tried to unhide {key} but was already gone?  Or type mixup?")
+            pass
+        self.setRubricTabsFromState(wranglerState)
 
     def hideRubricByKey(self, key):
-        index = [x["id"] for x in self.rubrics].index(key)
-        self.tabHide.appendNewRubric(self.rubrics[index])
+        wranglerState = self.get_tab_rubric_lists()
+        # TODO: there is some confusion about keys being ints or strings
+        # key is an int (always/usually?) but "hidden" is always (?) strs
+        key = str(key)
+        wranglerState["hidden"].append(key)
+        self.setRubricTabsFromState(wranglerState)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
