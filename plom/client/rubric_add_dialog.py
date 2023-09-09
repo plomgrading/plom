@@ -268,13 +268,6 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.abs_out_of_SB = _
-        # TODO: remove this notice
-        hlay.addWidget(QLabel("  (experimental!)"))
-        if not self.use_experimental_features:
-            for i in range(hlay.count()):
-                w = hlay.itemAt(i).widget()
-                if w:
-                    w.setEnabled(False)
         hlay.addItem(
             QSpacerItem(
                 48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -366,14 +359,15 @@ class AddRubricBox(QDialog):
               &ldquo;(b)&rdquo; and &ldquo;(c)&rdquo;.
               Some tips:</p>
             <ul>
-            <li><b>This is an experimental feature:</b> please discuss
-              with your team.</li>
+            <li><b>This is a new feature:</b> you may want to discuss
+              with your team before using groups.</li>
             <li>Groups create automatic tabs, shared with other users.
               <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
             </li>
             <li>Making a rubric <em>exclusive</em> means it cannot be used alongside
               others from the same exclusion group.</li>
-            <li>Groups will disappear if no rubrics are in them.</li>
+            <li>Groups will disappear automatically if there are no
+              rubrics in them.</li>
             <ul>
         """
         b.clicked.connect(lambda: InfoMsg(self, msg).exec())
