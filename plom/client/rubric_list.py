@@ -1497,7 +1497,7 @@ class RubricWidget(QWidget):
             tt = tt.split()
             for t in tt:
                 if t.startswith("group:"):
-                    # TODO: Python >= 3.9
+                    # TODO: Python >= 3.9, Issue #2887
                     # g = t.removeprefix("group:")
                     g = t[len("group:") :]
                     groups.append(g)
