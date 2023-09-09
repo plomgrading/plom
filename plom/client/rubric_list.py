@@ -1159,6 +1159,9 @@ class RubricWidget(QWidget):
                 Any of these lists could be empty.  The order in
                 `user_tabs` is not significant.
 
+        A note about "shown": this is not intended to be the complement of
+        "hidden": its used to save the ordering of the "all" tab.
+
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
@@ -1265,6 +1268,7 @@ class RubricWidget(QWidget):
             # TODO: why are ids strings in the wranglerState?
             idlist = [x for x in idlist if str(x) not in wranglerState["hidden"]]
             tab.setRubricsByKeys(self.rubrics, idlist)
+        # all rubrics should appear here unless hidden: "shown" is just helping with ordering
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
