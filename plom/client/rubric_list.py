@@ -1202,7 +1202,15 @@ class RubricWidget(QWidget):
                     continue
                 if not group_tab_data.get(g):
                     group_tab_data[g] = []
+                # TODO: why are ids strings in the wranglerState?
+                if str(rubric["id"]) in wranglerState["hidden"]:
+                    log.debug(
+                        f"filtering rubric id {rubric['id']} from group {g} b/c hidden"
+                    )
+                    continue
                 group_tab_data[g].append(rubric["id"])
+        # Issue #3006: delete groups with empty lists due to hiding
+        group_tab_data = {k: v for k, v in group_tab_data.items() if v}
 
         current_group_tabs = self.get_group_tabs_dict()
         _group_tabs = wranglerState.get("group_tabs", {})
