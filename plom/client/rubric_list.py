@@ -352,6 +352,7 @@ class RubricTable(QTableWidget):
             return
         key = self.item(row, 0).text()
         self._parent.hideRubricByKey(key)
+        # TODO: Issue #2474: maybe parent should do this?
         self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
