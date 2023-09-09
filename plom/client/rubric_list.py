@@ -1261,6 +1261,9 @@ class RubricWidget(QWidget):
                 idlist = []
             else:
                 idlist = wranglerState["user_tabs"][n]["ids"]
+            # Issue #2474, filter anything in the hidden list
+            # TODO: why are ids strings in the wranglerState?
+            idlist = [x for x in idlist if str(x) not in wranglerState["hidden"]]
             tab.setRubricsByKeys(self.rubrics, idlist)
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
