@@ -798,13 +798,12 @@ class AddRubricBox(QDialog):
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
 
+        vers: List[int] = []
         if self.version_specific_cb.isChecked():
-            vers = self.version_specific_le.text()
-            vers = vers.strip("[]")
-            if vers:
-                vers = [int(x) for x in vers.split(",")]
-        else:
-            vers = []
+            _vers = self.version_specific_le.text()
+            _vers = _vers.strip("[]")
+            if _vers:
+                vers = [int(x) for x in _vers.split(",")]
 
         params = self.get_parameters()
 
