@@ -8,6 +8,7 @@
 
 from datetime import datetime
 import logging
+from typing import Any, Dict, List, Tuple, Union
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
@@ -531,33 +532,31 @@ class RubricTable(QTableWidget):
             return None
         return self.item(self.selectedIndexes()[0].row(), 0).text()
 
-    def reselectCurrentRubric(self):
+    def reselectCurrentRubric(self) -> None:
         # If no selected row, then select row 0.
         # else select current row - triggers a signal.
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() == 0:
                 return
-            else:
-                r = 0
+            r = 0
         self.selectRubricByVisibleRow(r)
 
-    def selectRubricByRow(self, r):
+    def selectRubricByRow(self, r: Union[int, None]):
         """Select the r'th rubric in the list.
 
         Args:
-            r (int): The row-number in the rubric-table.
+            r: The row-number in the rubric-table.
                 If r is None, do nothing.
         """
         if r is not None:
             self.selectRow(r)
 
-    def selectRubricByVisibleRow(self, r):
+    def selectRubricByVisibleRow(self, r: int) -> None:
         """Select the r'th **visible** row.
 
         Args:
-            r (int): The row-number in the rubric-table.
-                If r is None, do nothing.
+            r: The row-number in the rubric-table.
         """
         rc = -1  # start here, so that correctly test after-increment
         for s in range(self.rowCount()):
@@ -566,7 +565,6 @@ class RubricTable(QTableWidget):
             if rc == r:
                 self.selectRow(s)
                 return
-        return
 
     def selectRubricByKey(self, key):
         """Select row with given key, returning True if works, else False."""
@@ -1376,24 +1374,23 @@ class RubricWidget(QWidget):
             self.RTW.currentIndex(),
         ]
 
-    def setCurrentRubricKeyAndTab(self, key, tab):
+    def setCurrentRubricKeyAndTab(self, key: Union[str, None], tab: int) -> bool:
         """Set the current rubric key and the current tab.
 
         Args
-            key (int/None): which rubric to highlight.  If None, no action.
-            tab (int): which tab to choose.
+            key: which rubric to highlight.  If None, no action.
+            tab: index of which tab to choose.
 
         Returns:
-            bool: True if we set a row, False if we could not find an
+            True if we set a row, False if we could not find an
             appropriate row b/c for example key or tab are invalid or
             not found.
         """
         if key is None:
             return False
-        if tab in range(0, self.RTW.count()):
-            self.RTW.setCurrentIndex(tab)
-        else:
+        if tab not in range(0, self.RTW.count()):
             return False
+        self.RTW.setCurrentIndex(tab)
         return self.RTW.currentWidget().selectRubricByKey(key)
 
     def setQuestion(self, num, label):
@@ -1513,13 +1510,8 @@ class RubricWidget(QWidget):
                     groups.append(g)
         return sorted(list(set(groups)))
 
-    def unhideRubricByKey(self, key):
+    def unhideRubricByKey(self, key: str) -> None:
         wranglerState = self.get_tab_rubric_lists()
-        if isinstance(key, int):
-            # TODO: there is some confusion about keys being ints or strings
-            # key is an int (always/usually?) but "hidden" is always (?) strs
-            log.warn("converted int rubric key to str: Issue #3009")
-            key = str(key)
         try:
             wranglerState["hidden"].remove(key)
         except ValueError:
@@ -1528,13 +1520,8 @@ class RubricWidget(QWidget):
             pass
         self.setRubricTabsFromState(wranglerState)
 
-    def hideRubricByKey(self, key):
+    def hideRubricByKey(self, key: str) -> None:
         wranglerState = self.get_tab_rubric_lists()
-        if isinstance(key, int):
-            # TODO: there is some confusion about keys being ints or strings
-            # key is an int (always/usually?) but "hidden" is always (?) strs
-            log.warn("converted int rubric key to str: Issue #3009")
-            key = str(key)
         wranglerState["hidden"].append(key)
         self.setRubricTabsFromState(wranglerState)
 
@@ -1546,7 +1533,7 @@ class RubricWidget(QWidget):
         else:
             self._new_or_edit_rubric(None)
 
-    def edit_rubric(self, key):
+    def edit_rubric(self, key: str):
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
         # first grab the rubric from that key
         try:
@@ -1642,7 +1629,7 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
 
-    def get_tab_rubric_lists(self):
+    def get_tab_rubric_lists(self) -> Dict[str, List[Any]]:
         """Returns a dict of lists of the current rubrics."""
         return {
             "shown": self.tabS.getKeyList(),
