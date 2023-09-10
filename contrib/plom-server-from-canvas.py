@@ -264,20 +264,13 @@ def get_submissions(
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
 
-            if "PDLPATCH" in os.environ:
-                print("*** PDLPATCH: Investigate URL property of object more carefully")
-                if hasattr(obj, "url"):
-                    r = requests.get(obj.url)
-                    with open(filename, "wb") as f:
-                        f.write(r.content)
-                else:
-                    print("*** object has no 'url' property. Skipping it.")
-            else:
-                # This is the original block. It's defended by an assert
-                # statement that is missing in the patched version.
-                r = requests.get(obj["url"])
-                with open(filename, "wb") as f:
-                    f.write(r.content)
+            print("*** PDLPATCH: Investigate URL property of object more carefully")
+            if not hasattr(obj, "url"):
+                print("*** object has no 'url' property. Skipping it.")
+                continue
+            r = requests.get(obj.url)
+            with open(filename, "wb") as f:
+                f.write(r.content)
 
             if suffix != "pdf":
                 # TODO: fitz can do this too
