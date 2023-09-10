@@ -266,7 +266,9 @@ def get_submissions(
 
             print("*** PDLPATCH: Investigate URL property of object more carefully")
             if not hasattr(obj, "url"):
-                print("*** object has no 'url' property. Skipping it.")
+                print("*** object has no 'url' property. Skipping it (?!)")
+                # TODO: does this belong in the error list or not?  Under what
+                # circumstances does it not have a url property?
                 continue
             r = requests.get(obj.url)
             with open(filename, "wb") as f:
