@@ -1515,9 +1515,11 @@ class RubricWidget(QWidget):
 
     def unhideRubricByKey(self, key):
         wranglerState = self.get_tab_rubric_lists()
-        # TODO: there is some confusion about keys being ints or strings
-        # key is an int (always/usually?) but "hidden" is always (?) strs
-        key = str(key)
+        if isinstance(key, int):
+            # TODO: there is some confusion about keys being ints or strings
+            # key is an int (always/usually?) but "hidden" is always (?) strs
+            log.warn("converted int rubric key to str: Issue #3009")
+            key = str(key)
         try:
             wranglerState["hidden"].remove(key)
         except ValueError:
@@ -1528,9 +1530,11 @@ class RubricWidget(QWidget):
 
     def hideRubricByKey(self, key):
         wranglerState = self.get_tab_rubric_lists()
-        # TODO: there is some confusion about keys being ints or strings
-        # key is an int (always/usually?) but "hidden" is always (?) strs
-        key = str(key)
+        if isinstance(key, int):
+            # TODO: there is some confusion about keys being ints or strings
+            # key is an int (always/usually?) but "hidden" is always (?) strs
+            log.warn("converted int rubric key to str: Issue #3009")
+            key = str(key)
         wranglerState["hidden"].append(key)
         self.setRubricTabsFromState(wranglerState)
 
