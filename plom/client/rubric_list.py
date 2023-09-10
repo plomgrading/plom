@@ -8,7 +8,7 @@
 
 from datetime import datetime
 import logging
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
@@ -41,13 +41,13 @@ from plom.plom_exceptions import PlomInconsistentRubric
 log = logging.getLogger("annotr")
 
 
-def rubric_is_naked_delta(r):
+def rubric_is_naked_delta(r: Dict[str, Any]) -> bool:
     if r["kind"] == "relative" and r["text"] == ".":
         return True
     return False
 
 
-def isLegalRubric(rubric, *, scene, version, maxMark):
+def isLegalRubric(rubric: Dict[str, Any], *, scene, version: int, maxMark: int) -> int:
     """Checks the 'legality' of a particular rubric - returning one of several possible indicators.
 
     Those states are:
@@ -89,7 +89,11 @@ def isLegalRubric(rubric, *, scene, version, maxMark):
         return 0
 
 
-def render_params(template, params, ver):
+def render_params(
+    template: str,
+    params: Sequence[Tuple[str, Sequence[str]]],
+    ver: int,
+) -> str:
     """Perform version-dependent substitutions on a template text."""
     s = template
     for param, values in params:
@@ -584,7 +588,7 @@ class RubricTable(QTableWidget):
                 return True
         return False
 
-    def nextRubric(self):
+    def nextRubric(self) -> None:
         """Move selection to the next row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
@@ -1533,7 +1537,7 @@ class RubricWidget(QWidget):
         wranglerState["hidden"].append(key)
         self.setRubricTabsFromState(wranglerState)
 
-    def add_new_rubric(self):
+    def add_new_rubric(self) -> None:
         """Open a dialog to create a new comment."""
         w = self.RTW.currentWidget()
         if w.is_group_tab():
@@ -1541,7 +1545,7 @@ class RubricWidget(QWidget):
         else:
             self._new_or_edit_rubric(None)
 
-    def edit_rubric(self, key: str):
+    def edit_rubric(self, key: str) -> None:
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
         # first grab the rubric from that key
         try:
@@ -1574,7 +1578,14 @@ class RubricWidget(QWidget):
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
 
-    def _new_or_edit_rubric(self, com, *, edit=False, index=None, add_to_group=None):
+    def _new_or_edit_rubric(
+        self,
+        com: Union[Dict[str, Any], None],
+        *,
+        edit: bool = False,
+        index: Optional[int] = None,
+        add_to_group: Optional[str] = None,
+    ) -> None:
         """Open a dialog to edit a comment or make a new one.
 
         Args:
@@ -1583,17 +1594,17 @@ class RubricWidget(QWidget):
                 means create new.
 
         Keyword args:
-            edit (bool): are we modifying the comment?  if False, use
+            edit: True if we are modifying the comment.  If False, use
                 `com` as a template for a new duplicated comment.
-            index (int): the index of the comment inside the current rubric list
+            index: the index of the comment inside the current rubric list
                 used for updating the data in the rubric list after edit (only)
-            add_to_group (str/None): if set, the user might be trying to add
+            add_to_group: if set to a string, the user might be trying to add
                 to a group with this name.  For example, a UI could pre-select
                 that option.  Mutually exclusive with `edit`, `index`, or
                 at least ill-defined what happens if you pass those as well.
 
         Returns:
-            None: does its work through side effects on the comment list.
+            None, does its work through side effects on the comment list.
         """
         if self.question_number is None:
             log.error("Not allowed to create rubric while question number undefined.")

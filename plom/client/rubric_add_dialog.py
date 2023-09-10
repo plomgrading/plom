@@ -8,7 +8,7 @@
 
 import re
 import sys
-
+from typing import Any, Dict, List, Tuple
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -618,7 +618,7 @@ class AddRubricBox(QDialog):
         self.scope_frame.layout().insertLayout(idx, grid)
         self._param_grid = grid
 
-    def get_parameters(self):
+    def get_parameters(self) -> List[Tuple[str, List[str]]]:
         """Extract the current parametric values from the UI."""
         idx = self.scope_frame.layout().indexOf(self._param_grid)
         # print(f"extracting parameters from grid at layout index {idx}")
@@ -630,7 +630,7 @@ class AddRubricBox(QDialog):
             values = []
             for c in range(1, self.maxver + 1):
                 values.append(layout.itemAtPosition(r, c).widget().text())
-            params.append([param, values])
+            params.append((param, values))
         return params
 
     def add_new_group(self):
@@ -772,7 +772,7 @@ class AddRubricBox(QDialog):
                 tags = tag
         return tags
 
-    def gimme_rubric_data(self):
+    def gimme_rubric_data(self) -> Dict[str, Any]:
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tags = self._gimme_rubric_tags()
 
