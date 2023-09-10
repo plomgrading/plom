@@ -61,7 +61,7 @@ def is_z_padded_integer(n):
 
 
 def censorStudentNumber(n):
-    """Replace some parts of student number with astericks.
+    """Replace some parts of student number with asterisks.
 
     If it doesn't look like a student number, we don't censor it.
     """
@@ -74,7 +74,7 @@ def censorStudentNumber(n):
 
 
 def censorStudentName(s):
-    """Replace most of a student student name with astericks."""
+    """Replace most of a student name with asterisks."""
     if len(s) <= 3:
         r = s[0] + "*" * 7
     else:
