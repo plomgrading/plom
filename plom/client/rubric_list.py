@@ -174,7 +174,7 @@ class RubricTable(QTableWidget):
         # self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
 
-    def set_name(self, newname):
+    def set_name(self, newname: str) -> None:
         if self.shortname != newname:
             log.debug("tab %s changing name to %s", self.shortname, newname)
         self.shortname = newname
@@ -182,20 +182,20 @@ class RubricTable(QTableWidget):
         # More like "If anybody cares, I just changed my name!"
         self._parent.update_tab_names()
 
-    def is_user_tab(self):
+    def is_user_tab(self) -> bool:
         return self.tabType is None
 
-    def is_group_tab(self):
+    def is_group_tab(self) -> bool:
         return self.tabType == "group"
 
-    def is_delta_tab(self):
+    def is_delta_tab(self) -> bool:
         return self.tabType == "delta"
 
-    def is_hidden_tab(self):
+    def is_hidden_tab(self) -> bool:
         # TODO: naming here is confusing
         return self.tabType == "hide"
 
-    def is_shared_tab(self):
+    def is_shared_tab(self) -> bool:
         return self.tabType == "show"
 
     def contextMenuEvent(self, event):
@@ -335,7 +335,7 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
         event.accept()
 
-    def removeCurrentRubric(self):
+    def removeCurrentRubric(self) -> None:
         row = self.getCurrentRubricRow()
         if row is None:
             return
@@ -343,7 +343,7 @@ class RubricTable(QTableWidget):
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
-    def removeRubricByKey(self, key):
+    def removeRubricByKey(self, key) -> None:
         row = self.getRowFromKey(key)
         if row is None:
             return
@@ -351,20 +351,28 @@ class RubricTable(QTableWidget):
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
-    def hideCurrentRubric(self):
+    def hideCurrentRubric(self) -> None:
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        key = self.item(row, 0).text()
+        # TODO: mypy is concerned self.item() could return None
+        # I don't think it can from the above logic, but...
+        item = self.item(row, 0)
+        assert item
+        key = item.text()
         self._parent.hideRubricByKey(key)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
-    def unhideCurrentRubric(self):
+    def unhideCurrentRubric(self) -> None:
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        key = self.item(row, 0).text()
+        # TODO: mypy is concerned self.item() could return None
+        # I don't think it can from the above logic, but...
+        item = self.item(row, 0)
+        assert item
+        key = item.text()
         self._parent.unhideRubricByKey(key)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
@@ -394,13 +402,13 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(_sorting_enabled)
             event.accept()
 
-    def appendByKey(self, key):
+    def appendByKey(self, key: str) -> None:
         """Append the rubric associated with a key to the end of the list.
 
         If its a dupe, don't add.
 
         Args
-            key (str/int?): the key associated with a rubric.
+            key: the key associated with a rubric.
 
         Raises
             what happens on invalid key?
@@ -409,11 +417,15 @@ class RubricTable(QTableWidget):
         (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
         self.appendNewRubric(rubric)
 
-    def appendNewRubric(self, rubric):
+    def appendNewRubric(self, rubric: Dict[str, Any]) -> None:
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
-            if rubric["id"] == self.item(r, 0).text():
+            # TODO: mypy is concerned self.item() could return None
+            # perhaps there is a better way to iterate over items?
+            item = self.item(r, 0)
+            assert item
+            if rubric["id"] == item.text():
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
@@ -433,17 +445,27 @@ class RubricTable(QTableWidget):
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         self.colourLegalRubric(rc)
         # set a tooltip over delta that tells user the type of rubric
-        self.item(rc, 2).setToolTip("{}-rubric".format(rubric["kind"]))
+        item = self.item(rc, 2)
+        assert item
+        item.setToolTip("{}-rubric".format(rubric["kind"]))
         # set a tooltip that contains tags and meta info when someone hovers over text
         hoverText = ""
         if rubric["tags"] != "":
             hoverText += "Tagged as {}\n".format(rubric["tags"])
         if rubric["meta"] != "":
             hoverText += "{}\n".format(rubric["meta"])
-        self.item(rc, 3).setToolTip(hoverText.strip())
+        item = self.item(rc, 3)
+        assert item
+        item.setToolTip(hoverText.strip())
         self.setSortingEnabled(_sorting_enabled)
 
-    def setRubricsByKeys(self, rubric_list, id_list, *, alt_order=None):
+    def setRubricsByKeys(
+        self,
+        rubric_list: List[Dict[str, Any]],
+        id_list: List[str],
+        *,
+        alt_order: Optional[List[str]] = None,
+    ) -> None:
         """Clear table and re-populate rubrics.
 
         Args:
@@ -476,7 +498,7 @@ class RubricTable(QTableWidget):
             id_list = new_list
         self._setRubricsByKeys(rubric_list, id_list)
 
-    def _setRubricsByKeys(self, rubric_list, id_list):
+    def _setRubricsByKeys(self, rubric_list, id_list) -> None:
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -513,8 +535,10 @@ class RubricTable(QTableWidget):
             if rb["username"] == "manager" and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
 
-    def getKeyFromRow(self, row):
-        return self.item(row, 0).text()
+    def getKeyFromRow(self, row: int) -> str:
+        item = self.item(row, 0)
+        assert item
+        return item.text()
 
     def getKeyList(self):
         return [self.item(r, 0).text() for r in range(self.rowCount())]
@@ -530,15 +554,17 @@ class RubricTable(QTableWidget):
         else:
             return None
 
-    def getCurrentRubricRow(self):
+    def getCurrentRubricRow(self) -> Union[int, None]:
         if not self.selectedIndexes():
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self):
+    def getCurrentRubricKey(self) -> Union[str, None]:
         if not self.selectedIndexes():
             return None
-        return self.item(self.selectedIndexes()[0].row(), 0).text()
+        item = self.item(self.selectedIndexes()[0].row(), 0)
+        assert item
+        return item.text()
 
     def reselectCurrentRubric(self) -> None:
         # If no selected row, then select row 0.
@@ -550,7 +576,7 @@ class RubricTable(QTableWidget):
             r = 0
         self.selectRubricByVisibleRow(r)
 
-    def selectRubricByRow(self, r: Union[int, None]):
+    def selectRubricByRow(self, r: Union[int, None]) -> None:
         """Select the r'th rubric in the list.
 
         Args:
@@ -604,7 +630,7 @@ class RubricTable(QTableWidget):
         self.selectRubricByRow(r)  # we know that row is not hidden
         self.handleClick()
 
-    def previousRubric(self):
+    def previousRubric(self) -> None:
         """Move selection to the previous row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
@@ -619,7 +645,7 @@ class RubricTable(QTableWidget):
         self.selectRubricByRow(r)
         self.handleClick()
 
-    def handleClick(self):
+    def handleClick(self) -> None:
         # When an item is clicked, grab the details and emit rubric signal
         r = self.getCurrentRubricRow()
         if r is None:
@@ -642,13 +668,13 @@ class RubricTable(QTableWidget):
             if r["id"] == id:
                 return r
 
-    def firstUnhiddenRow(self):
+    def firstUnhiddenRow(self) -> Union[int, None]:
         for r in range(self.rowCount()):
             if not self.isRowHidden(r):
                 return r
         return None
 
-    def lastUnhiddenRow(self):
+    def lastUnhiddenRow(self) -> Union[int, None]:
         for r in reversed(range(self.rowCount())):
             if not self.isRowHidden(r):
                 return r
@@ -682,7 +708,7 @@ class RubricTable(QTableWidget):
             # self.item(r, 2).setForeground(colour_hide)
             # self.item(r, 3).setForeground(colour_hide)
 
-    def updateLegality(self):
+    def updateLegality(self) -> None:
         """Style items according to their legality."""
         for r in range(self.rowCount()):
             self.colourLegalRubric(r)
