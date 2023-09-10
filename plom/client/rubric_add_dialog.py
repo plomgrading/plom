@@ -15,8 +15,15 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtCore import Qt, QRegularExpression
+from PyQt6.QtGui import (
+    QColor,
+    QPixmap,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QRegularExpressionValidator,
+)
+
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -306,6 +313,15 @@ class AddRubricBox(QDialog):
         lay.addWidget(cb)
         self.version_specific_cb = cb
         le = QLineEdit()
+        re = r"^\s*(\d+\s*,\s*)*(\d+)\s*$"
+        #       │  ╰──┬───────╯│╰─┬─╯└ trailing whitespace
+        #       │     │        │  └ final number
+        #       │     │        └ can repeat
+        #       │     └ number and comma
+        #       └ leading whitespace
+
+        # "1, 2,3" acceptable; "1,2, " intermediate; ",2" unacceptable
+        le.setValidator(QRegularExpressionValidator(QRegularExpression(re), self))
         lay.addWidget(le)
         self.version_specific_le = le
         space = QSpacerItem(
@@ -704,6 +720,12 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
+        if not self.version_specific_le.hasAcceptableInput():
+            WarnMsg(
+                self, '"Versions" must be a comma-separated list of positive integers.'
+            ).exec()
+            return
+
         txt = self.TE.toPlainText().strip()
         if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(
