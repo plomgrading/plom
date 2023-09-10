@@ -661,12 +661,14 @@ class RubricTable(QTableWidget):
         )
         self._parent.rubricSignal.emit(rubric)
 
-    def selected_row_as_rubric(self, r):
-        id = self.item(r, 0).text()
-        # TODO: we want a dict lookup
-        for r in self._parent.rubrics:
-            if r["id"] == id:
-                return r
+    def selected_row_as_rubric(self, r: int) -> Dict[str, Any]:
+        item = self.item(r, 0)
+        assert item
+        rid = item.text()
+        for rubric in self._parent.rubrics:
+            if rubric["id"] == rid:
+                return rubric
+        raise RuntimeError(f"Cannot find rubric {rid}. Currupted rubric lists?")
 
     def firstUnhiddenRow(self) -> Union[int, None]:
         for r in range(self.rowCount()):
