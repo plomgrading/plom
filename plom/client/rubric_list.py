@@ -1211,16 +1211,16 @@ class RubricWidget(QWidget):
             if rid not in wranglerState["hidden"]:
                 continue
             if rid in wranglerState["shown"]:
-                log.debug(f"filtering rubric id {rid} from 'all' b/c hidden")
+                log.debug(f'filtering hidden rubric id {rid} from "all"')
                 wranglerState["shown"].remove(rid)
             for n, user_tab in enumerate(wranglerState["user_tabs"]):
                 if rid in user_tab["ids"]:
-                    log.debug(f"filtering rubric id {rid} from user tab {n} b/c hidden")
+                    log.debug(f"filtering hidden rubric id {rid} from user tab {n}")
                     # Issue #2474, filter anything in the hidden list
                     user_tab["ids"].remove(rid)
             for g, lst in group_tab_data.items():
                 if rid in lst:
-                    log.debug(f"filtering rubric id {rid} from group {g} b/c hidden")
+                    log.debug(f"filtering hidden rubric id {rid} from group {g}")
                     lst.remove(rid)
 
         # Issue #3006: delete groups with empty lists due to hiding
