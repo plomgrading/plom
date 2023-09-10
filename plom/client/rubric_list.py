@@ -668,7 +668,7 @@ class RubricTable(QTableWidget):
         for rubric in self._parent.rubrics:
             if rubric["id"] == rid:
                 return rubric
-        raise RuntimeError(f"Cannot find rubric {rid}. Currupted rubric lists?")
+        raise RuntimeError(f"Cannot find rubric {rid}. Corrupted rubric lists?")
 
     def firstUnhiddenRow(self) -> Union[int, None]:
         for r in range(self.rowCount()):
