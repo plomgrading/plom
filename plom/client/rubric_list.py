@@ -1157,7 +1157,8 @@ class RubricWidget(QWidget):
                 `user_tabs` is not significant.
 
         A note about "shown": this is not intended to be the complement of
-        "hidden": its used to save the ordering of the "all" tab.
+        "hidden": its used to save the ordering of the "all" tab.  We will
+        filter out the contents of "hidden" from "shown" and the other tabs.
 
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
@@ -1202,12 +1203,21 @@ class RubricWidget(QWidget):
                     continue
                 if not group_tab_data.get(g):
                     group_tab_data[g] = []
-                if rubric["id"] in wranglerState["hidden"]:
-                    log.debug(
-                        f"filtering rubric id {rubric['id']} from group {g} b/c hidden"
-                    )
-                    continue
                 group_tab_data[g].append(rubric["id"])
+
+        # Filter any "hidden" rubrics out of "shown" and the group tabs
+        for rubric in self.rubrics:
+            rid = rubric["id"]
+            if rid not in wranglerState["hidden"]:
+                continue
+            if rid in wranglerState["shown"]:
+                log.debug(f"filtering rubric id {rid} from 'all' b/c hidden")
+                wranglerState["shown"].remove(rid)
+            for g, lst in group_tab_data.items():
+                if rid in lst:
+                    log.debug(f"filtering rubric id {rid} from group {g} b/c hidden")
+                    lst.remove(rid)
+
         # Issue #3006: delete groups with empty lists due to hiding
         group_tab_data = {k: v for k, v in group_tab_data.items() if v}
 
