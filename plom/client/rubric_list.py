@@ -1205,7 +1205,7 @@ class RubricWidget(QWidget):
                     group_tab_data[g] = []
                 group_tab_data[g].append(rubric["id"])
 
-        # Filter any "hidden" rubrics out of "shown" and the group tabs
+        # Filter any "hidden" rubrics out of "shown", group and user tabs
         for rubric in self.rubrics:
             rid = rubric["id"]
             if rid not in wranglerState["hidden"]:
@@ -1213,6 +1213,11 @@ class RubricWidget(QWidget):
             if rid in wranglerState["shown"]:
                 log.debug(f"filtering rubric id {rid} from 'all' b/c hidden")
                 wranglerState["shown"].remove(rid)
+            for n, user_tab in enumerate(wranglerState["user_tabs"]):
+                if rid in user_tab["ids"]:
+                    log.debug(f"filtering rubric id {rid} from user tab {n} b/c hidden")
+                    # Issue #2474, filter anything in the hidden list
+                    user_tab["ids"].remove(rid)
             for g, lst in group_tab_data.items():
                 if rid in lst:
                     log.debug(f"filtering rubric id {rid} from group {g} b/c hidden")
@@ -1270,8 +1275,6 @@ class RubricWidget(QWidget):
                 idlist = []
             else:
                 idlist = wranglerState["user_tabs"][n]["ids"]
-            # Issue #2474, filter anything in the hidden list
-            idlist = [x for x in idlist if x not in wranglerState["hidden"]]
             tab.setRubricsByKeys(self.rubrics, idlist)
         # all rubrics should appear here unless hidden: "shown" is just helping with ordering
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
