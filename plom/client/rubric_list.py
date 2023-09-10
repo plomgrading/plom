@@ -515,9 +515,13 @@ class RubricTable(QTableWidget):
     def getKeyList(self):
         return [self.item(r, 0).text() for r in range(self.rowCount())]
 
-    def getRowFromKey(self, key):
+    def getRowFromKey(self, key: str) -> Union[int, None]:
         for r in range(self.rowCount()):
-            if int(self.item(r, 0).text()) == int(key):
+            # TODO: mypy is concerned self.item() could return None
+            # perhaps there is a better way to iterate over items?
+            item = self.item(r, 0)
+            assert item
+            if int(item.text()) == int(key):
                 return r
         else:
             return None
@@ -566,12 +570,16 @@ class RubricTable(QTableWidget):
                 self.selectRow(s)
                 return
 
-    def selectRubricByKey(self, key):
+    def selectRubricByKey(self, key: str) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
         for r in range(self.rowCount()):
-            if int(self.item(r, 0).text()) == int(key):
+            # TODO: mypy is concerned self.item() could return None
+            # perhaps there is a better way to iterate over items?
+            item = self.item(r, 0)
+            assert item
+            if int(item.text()) == int(key):
                 self.selectRow(r)
                 return True
         return False
