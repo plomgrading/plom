@@ -352,13 +352,10 @@ def scan_submissions(num_questions, *, server_dir="."):
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
-        if "PDLPATCH" in os.environ:
-            print(
-                "*** PDLPATCH: Calling plom.scan.processHWScans with arguments below."
-            )  # PDL
-            print(f"pdf:   {pdf}")
-            print(f"sid:   {sid}")
-            print(f"q:     {sid}")
+        print("*** About to call plom.scan.processHWScans with arguments below.")
+        print(f"pdf:   {pdf}")
+        print(f"sid:   {sid}")
+        print(f"q:     {sid}")
 
         plom.scan.processHWScans(
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
