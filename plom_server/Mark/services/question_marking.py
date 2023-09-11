@@ -146,8 +146,7 @@ class QuestionMarkingService:
         else:
             raise ValueError("Cannot find task to read from.")
 
-        pages = page_data.get_question_pages_list(paper_number, question_number)
-        return [asdict(pd) for pd in pages]
+        return page_data.get_question_pages_list(paper_number, question_number)
 
     @transaction.atomic
     def get_tags(self) -> List[str]:

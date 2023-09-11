@@ -3,7 +3,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from dataclasses import dataclass
 from typing import List
 
 from django.db import transaction
@@ -21,24 +20,8 @@ from Papers.models import (
 )
 
 
-@dataclass()
-class PageDataForTask:
-    """Represents data for a single page related to a task.
-
-    This data is sent to the marking client in order to create
-    annotation images.
-    """
-
-    id: int
-    md5: str
-    orientation: int
-    server_path: str
-    included: bool
-    order: int
-
-
 @transaction.atomic
-def get_question_pages_list(paper: int, question: int) -> List[PageDataForTask]:
+def get_question_pages_list(paper: int, question: int) -> List[dict]:
     """Return a list of objects containing an image public key and its hash.
 
     Args:
