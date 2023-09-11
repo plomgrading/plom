@@ -18,7 +18,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
 
         annotations_exist = uis.annotation_exists()
         annotation_count_dict = uis.get_total_annotations_count_based_on_user()
-        latest_annotation_human_time = uis.get_latest_updated_annotation()
+        latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
         if filter_form.is_valid():
@@ -58,7 +58,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotations_grouped_by_user": annotations_grouped_by_user,
                 "annotations_grouped_by_question_num_ver": annotations_grouped_by_question_num_ver,
                 "annotation_filter_form": filter_form,
-                "latest_updated_annotation": latest_annotation_human_time,
+                "latest_updated_annotation_human_time": latest_annotation_human_time,
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)

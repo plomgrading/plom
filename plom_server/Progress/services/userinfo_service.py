@@ -228,7 +228,7 @@ class UserInfoServices:
             return annotations.filter(time_of_last_update__gte=time_interval_start)
 
     @transaction.atomic
-    def get_latest_updated_annotation(self) -> str:
+    def get_time_of_latest_updated_annotation(self) -> str:
         """Get the human readable time of the latest updated annotation.
 
         Returns:
