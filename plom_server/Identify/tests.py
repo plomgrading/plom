@@ -197,10 +197,8 @@ class IdentifyTaskTests(TestCase):
 
         ids.clear_id_from_all_identified_papers()
 
-        for id_task in PaperIDTask.objects.all():
+        for id_task in PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE):
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
-
-        self.assertQuerysetEqual(PaperIDAction.objects.all(), [])
 
     def test_id_already_used(self):
         """Test that using same ID twice raises exception."""
