@@ -720,7 +720,11 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
-        if not self.version_specific_le.hasAcceptableInput():
+        if (
+            self.version_specific_le.text()
+            and not self.version_specific_le.hasAcceptableInput()
+        ):
+            # TODO: maybe empty string should be acceptable too, avoid special case?
             WarnMsg(
                 self, '"Versions" must be a comma-separated list of positive integers.'
             ).exec()
