@@ -19,7 +19,7 @@ from model_bakery import baker
 
 from Papers.models import Paper, Image, IDPage
 
-from Identify.services import IdentifyTaskService, IDService
+from Identify.services import IdentifyTaskService, IDService, IDHomeworkService
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
@@ -289,3 +289,65 @@ class IdentifyTaskTests(TestCase):
         its.set_paper_idtask_outdated(1)
         its.claim_task(self.marker0, 1)
         its.identify_paper(self.marker0, 1, "4", "ABCD")
+
+    def test_get_all_id_task_count(self):
+        ids = IDService()
+        for n in range(1, 4):
+            paper = baker.make(Paper, paper_number=n)
+            baker.make(PaperIDTask, paper=paper, status=PaperIDTask.TO_DO)
+        for n in range(4, 8):
+            paper = baker.make(Paper, paper_number=n)
+            baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        self.assertEqual(7, ids.get_all_id_task_count())
+        self.assertEqual(4, ids.get_completed_id_task_count())
+
+    def test_get_all_id_task_info(self):
+        its = IdentifyTaskService()
+        ids = IDService()
+
+        for n in range(1, 3):
+            paper = baker.make(Paper, paper_number=n)
+            its.create_task(paper)
+
+        for n in range(1, 2):
+            its.claim_task(self.marker0, n)
+            its.identify_paper(self.marker0, n, f"99{n}", f"AB{n}")
+
+        info_dict = {
+            1: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "991",
+                "student_name": "AB1",
+            },
+            2: {"idpageimage_pk": None, "status": "To Do"},
+        }
+
+        self.assertEqual(info_dict, ids.get_all_id_task_info())
+
+    def test_id_hw(self):
+        its = IdentifyTaskService()
+        ids = IDService()
+        idhws = IDHomeworkService()
+
+        for n in range(1, 3):
+            paper = baker.make(Paper, paper_number=n)
+            its.create_task(paper)
+        for n in range(1, 3):
+            idhws.identify_homework(self.marker0, n, f"99{n}", f"AB{n}")
+        info_dict = {
+            1: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "991",
+                "student_name": "AB1",
+            },
+            2: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "992",
+                "student_name": "AB2",
+            },
+        }
+
+        self.assertEqual(info_dict, ids.get_all_id_task_info())

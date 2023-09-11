@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from Identify.services import IDHomeworkService
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "paper",
             type=int,
-            help="The paper number in which to insert the homework id page.",
+            help="The paper number to which the homework has been uploaded and to which we assign the ID.",
         )
         parser.add_argument(
             "student_id",
