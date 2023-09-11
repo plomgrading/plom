@@ -21,7 +21,8 @@ class QuestionMarkingViewSet(ViewSet):
 
     @action(detail=False, methods=["get"], url_path="available")
     def available(self, request, *args):
-        """
+        """Get the next marking task.
+
         get:
         Responds with a code for the next available marking task.
 
@@ -47,7 +48,8 @@ class QuestionMarkingViewSet(ViewSet):
 
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):
-        """
+        """Attach a user to a marking task, or accept a grade and annotation.
+
         patch:
         Attach a user to a marking task.
 
