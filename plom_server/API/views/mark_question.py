@@ -19,10 +19,11 @@ from .utils import _error_response
 class QuestionMarkingViewSet(ViewSet):
     """Controller for the question marking workflow."""
 
-    # GET MK/tasks/available
     @action(detail=False, methods=["get"], url_path="available")
     def available(self, request, *args):
-        """Responds with a code for the next available marking task.
+        """
+        get:
+        Responds with a code for the next available marking task.
 
         Returns:
             200: An available task exists, returns the task code as a string.
@@ -44,11 +45,14 @@ class QuestionMarkingViewSet(ViewSet):
         else:
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # PATCH MK/tasks/<str:code>
-    # POST MK/tasks/<str:code>
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):
-        """Attach a user to a marking task or accept a marker's grade.
+        """
+        patch:
+        Attach a user to a marking task.
+
+        post:
+        Accept a marker's grade and annotation.
 
         Methods:
             PATCH: see self.claim_task()

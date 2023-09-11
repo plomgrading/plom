@@ -4,14 +4,17 @@
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter, SimpleRouter
+from rest_framework.documentation import include_docs_urls
 
-from API.views.experimental import (
+from .permissions import AllowAnyReadOnly
+
+from .views.experimental import (
     RubricViewSet,
     AnnotationViewSet,
     MarkingTaskViewSet,
 )
 
-from API.routes import (
+from .routes import (
     MarkURLPatterns,
     IdURLPatterns,
     PagedataPatterns,
@@ -21,7 +24,7 @@ from API.routes import (
     TagsURLPatterns,
 )
 
-from API.views import (
+from .views import (
     QuestionMarkingViewSet,
     # TODO: these are possibly temporary
     REPspreadsheet,
@@ -70,6 +73,15 @@ urlpatterns = [
         REPcoverPageInfo.as_view(),
         name="api_REP_cover_page_info",
     ),
+]
+
+urlpatterns += [
+    path(
+        "docs/",
+        include_docs_urls(
+            title="Plom Server API", permission_classes=[AllowAnyReadOnly]
+        ),
+    )
 ]
 
 experimental_router = DefaultRouter(trailing_slash=True)
