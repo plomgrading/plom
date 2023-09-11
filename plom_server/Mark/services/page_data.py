@@ -73,16 +73,16 @@ def get_question_pages_list(paper: int, question: int) -> List[PageDataForTask]:
         image = page.image
         assert image is not None  # mobile pages will always have images
         page_list.append(
-            PageDataForTask(
-                id=image.pk,
-                md5=image.hash,
-                orientation=image.rotation,
-                server_path=image.image_file.path,
-                included=True,
+            {
+                "id": image.pk,
+                "md5": image.hash,
+                "orientation": image.rotation,
+                "server_path": image.image_file.path,
+                "included": True,
                 # BEGIN HACKERY
-                order=len(page_list) + 1,
+                "order": len(page_list) + 1,
                 # END HACKERY
-            )
+            }
         )
 
     return page_list
