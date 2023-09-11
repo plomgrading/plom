@@ -352,7 +352,6 @@ class RubricTable(QTableWidget):
             return
         key = self.item(row, 0).text()
         self._parent.hideRubricByKey(key)
-        self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
@@ -362,7 +361,6 @@ class RubricTable(QTableWidget):
             return
         key = self.item(row, 0).text()
         self._parent.unhideRubricByKey(key)
-        self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
 
@@ -1158,6 +1156,10 @@ class RubricWidget(QWidget):
                 Any of these lists could be empty.  The order in
                 `user_tabs` is not significant.
 
+        A note about "shown": this is not intended to be the complement of
+        "hidden": its used to save the ordering of the "all" tab.  We will
+        filter out the contents of "hidden" from "shown" and the other tabs.
+
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
@@ -1202,6 +1204,27 @@ class RubricWidget(QWidget):
                 if not group_tab_data.get(g):
                     group_tab_data[g] = []
                 group_tab_data[g].append(rubric["id"])
+
+        # Filter any "hidden" rubrics out of "shown", group and user tabs
+        for rubric in self.rubrics:
+            rid = rubric["id"]
+            if rid not in wranglerState["hidden"]:
+                continue
+            if rid in wranglerState["shown"]:
+                log.debug(f'filtering hidden rubric id {rid} from "all"')
+                wranglerState["shown"].remove(rid)
+            for n, user_tab in enumerate(wranglerState["user_tabs"]):
+                if rid in user_tab["ids"]:
+                    log.debug(f"filtering hidden rubric id {rid} from user tab {n}")
+                    # Issue #2474, filter anything in the hidden list
+                    user_tab["ids"].remove(rid)
+            for g, lst in group_tab_data.items():
+                if rid in lst:
+                    log.debug(f"filtering hidden rubric id {rid} from group {g}")
+                    lst.remove(rid)
+
+        # Issue #3006: delete groups with empty lists due to hiding
+        group_tab_data = {k: v for k, v in group_tab_data.items() if v}
 
         current_group_tabs = self.get_group_tabs_dict()
         _group_tabs = wranglerState.get("group_tabs", {})
@@ -1253,6 +1276,7 @@ class RubricWidget(QWidget):
             else:
                 idlist = wranglerState["user_tabs"][n]["ids"]
             tab.setRubricsByKeys(self.rubrics, idlist)
+        # all rubrics should appear here unless hidden: "shown" is just helping with ordering
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
@@ -1483,19 +1507,36 @@ class RubricWidget(QWidget):
             tt = tt.split()
             for t in tt:
                 if t.startswith("group:"):
-                    # TODO: Python >= 3.9
+                    # TODO: Python >= 3.9, Issue #2887
                     # g = t.removeprefix("group:")
                     g = t[len("group:") :]
                     groups.append(g)
         return sorted(list(set(groups)))
 
     def unhideRubricByKey(self, key):
-        index = [x["id"] for x in self.rubrics].index(key)
-        self.tabS.appendNewRubric(self.rubrics[index])
+        wranglerState = self.get_tab_rubric_lists()
+        if isinstance(key, int):
+            # TODO: there is some confusion about keys being ints or strings
+            # key is an int (always/usually?) but "hidden" is always (?) strs
+            log.warn("converted int rubric key to str: Issue #3009")
+            key = str(key)
+        try:
+            wranglerState["hidden"].remove(key)
+        except ValueError:
+            # TODO is this sufficient if we unexpected did not find it?
+            log.warn(f"Tried to unhide {key} but was already gone?  Or type mixup?")
+            pass
+        self.setRubricTabsFromState(wranglerState)
 
     def hideRubricByKey(self, key):
-        index = [x["id"] for x in self.rubrics].index(key)
-        self.tabHide.appendNewRubric(self.rubrics[index])
+        wranglerState = self.get_tab_rubric_lists()
+        if isinstance(key, int):
+            # TODO: there is some confusion about keys being ints or strings
+            # key is an int (always/usually?) but "hidden" is always (?) strs
+            log.warn("converted int rubric key to str: Issue #3009")
+            key = str(key)
+        wranglerState["hidden"].append(key)
+        self.setRubricTabsFromState(wranglerState)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
