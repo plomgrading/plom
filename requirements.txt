@@ -27,6 +27,7 @@ peewee==3.16.3
 arrow==1.2.3
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
+coreapi==2.3.3
 debugpy==1.6.7.post1
 django==4.2.4
 django-braces==1.15.0

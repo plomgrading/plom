@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Edith Coates
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -25,6 +26,7 @@ appdirs==1.4.3
 arrow==1.1.1
 beautifulsoup4==4.12.2
 canvasapi==2.0.0
+coreapi==2.3.3
 debugpy==1.6.7
 django==4.0.10
 django-braces==1.15.0
