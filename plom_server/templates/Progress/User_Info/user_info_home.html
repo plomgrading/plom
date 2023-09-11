@@ -21,6 +21,23 @@
                     </tr>
                 {% endfor %}
             </table>
+            <div class="mb-3">
+                <form method="get" action="">
+                    <div>
+                        <h6>
+                            <b>Filter annotations by time:</b>
+                        </h6>
+                        <p>{{ annotation_filter_form.time_filter_seconds.label }} {{ annotation_filter_form.time_filter_seconds }}</p>
+                        <p class="text-danger">{{ error }}</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+            <div class="mb-3">
+                <p>
+                    <b>Latest Updated Annotation: {{ latest_updated_annotation_human_time }}</b>
+                </p>
+            </div>
             <div>
                 <ul class="nav nav-tabs" id="annotationTab" role="tablist">
                     <li class="nav-item" role="presentation">
