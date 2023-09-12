@@ -346,7 +346,7 @@ class BaseMessenger:
         info = self.get_server_info()
         if "Legacy" in info["product_string"]:
             self.enable_legacy_server_support()
-            log.warn("Using legacy messenger to talk to legacy server")
+            log.warning("Using legacy messenger to talk to legacy server")
         else:
             self.disable_legacy_server_support()
         return s

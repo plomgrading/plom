@@ -751,7 +751,7 @@ class IDClient(QWidget):
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomConflict as err:
-            log.warn("Conflict when returning paper %s: %s", code, err)
+            log.warning("Conflict when returning paper %s: %s", code, err)
             hints = """
                 <p>If you are unable to resolve this conflict, you may need
                 to use the Manager tool to "Un-ID" the other paper.</p>
