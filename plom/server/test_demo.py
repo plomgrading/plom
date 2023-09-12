@@ -108,6 +108,12 @@ class Test:
             assert "2" in predictions
             assert predictions["2"]["student_id"] == sid
 
+            # sid to paper is queryable
+            ok, what, how = msgr.sid_to_paper_number(sid)
+            assert ok
+            assert what == 2
+            assert how == "prenamed"
+
             # now we can assign ANYTHING else to paper 2's prediction
             msgr.pre_id_paper(2, "eleventyfour")
             predictions = msgr.IDgetPredictionsFromPredictor("prename")
@@ -123,6 +129,43 @@ class Test:
             assert predictions["1"]["student_id"] == sid
             assert predictions["1"]["certainty"] == cert
             assert predictions["1"]["predictor"] == pred
+
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    def test_query_id_and_or_predictions(self):
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
+            for k, v in predictions.items():
+                ok, what, how = msgr.sid_to_paper_number(v["student_id"])
+                assert ok
+                assert what == int(k)
+                assert how == "prenamed"
+
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    def test_query_id_non_existent(self):
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            # a sid not in the ID list
+            ok, what, how = msgr.sid_to_paper_number(88884444)
+            assert not ok
+            assert "Cannot find" in what
+            assert not how
 
         finally:
             msgr.closeUser()
@@ -149,6 +192,12 @@ class Test:
 
             iDict = msgr.getIdentified()
             assert len(iDict) == 1
+
+            # sid to paper is queryable
+            ok, what, how = msgr.sid_to_paper_number(person["id"])
+            assert ok
+            assert what == 1
+            assert how == "ided"
 
             # need not be 2, any unID'd paper
             assert "2" not in iDict

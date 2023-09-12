@@ -732,7 +732,7 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def sidToTest(self, student_id) -> Tuple[bool, Union[int, str], str]:
+    def sid_to_paper_number(self, student_id) -> Tuple[bool, Union[int, str], str]:
         """Ask server to match given student_id to a test-number.
 
         The test number could be b/c the paper is IDed.  Or it could be a
