@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Tuple, Union
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -732,7 +732,7 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def sidToTest(self, student_id) -> List:
+    def sidToTest(self, student_id) -> Tuple[bool, Union[int, str], str]:
         """Ask server to match given student_id to a test-number.
 
         The test number could be b/c the paper is IDed.  Or it could be a
@@ -741,8 +741,11 @@ class BaseMessenger:
         a third arg.
 
         Returns:
-            Either ``[True, test_number]`` or
-            ``[False, 'Cannot find test with that student id']``.
+            If we found a paper then ``(True, test_number, how)`` where
+            ``how`` is a string "ided" or "prenamed" (or on older servers
+            <= 0.14.1 we'll get an apology that we don't know.).
+            If no paper then, we get
+            ``(False, 'Cannot find test with that student id', '')``.
 
         Raises:
             PlomAuthenticationException: wrong user, wrong token etc.
@@ -758,7 +761,14 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                return response.json()
+                r = response.json()
+                # TODO: could remove workaround when we stop supported 0.14.1
+                if len(r) <= 2:
+                    if r[0]:
+                        r.append("[Older server; cannot tell if ided or prenamed]")
+                    else:
+                        r.append("")
+                return tuple(r)
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None

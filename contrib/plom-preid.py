@@ -84,10 +84,7 @@ def main():
         else:
             testnum = r[1]
             print(f"  We found a test number {testnum} associated with {args.sid}")
-            if len(r) >= 3:
-                print(f"  (The paper is: {r[3]})")
-            else:
-                print("  (This is an older server, cannot tell if id or prename)")
+            print(f"  (The paper is: {r[2]})")
             # print("Are you sure you want to continue?  Pass --force if so")
             # sys.exit(1)
 
@@ -103,10 +100,7 @@ def main():
             raise RuntimeError(r[1])
         testnum = r[1]
         print(f"  We found a test number {testnum} associated with {args.sid}")
-        if len(r) >= 3:
-            print(f"  (The paper is: {r[3]})")
-        else:
-            print("  (This is an older server, cannot tell if id or prename)")
+        print(f"  (The paper is: {r[2]})")
 
     finally:
         msgr.closeUser()
