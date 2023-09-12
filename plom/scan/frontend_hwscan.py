@@ -93,8 +93,8 @@ def processHWScans(
             other methods.
 
     Ask server to map `student_id` to a test-number; these should have been
-    pre-populated on test-generation so if `student_id` not known there is
-    an error.
+    pre-populated on test-generation or just-in-time before calling this
+    so if `student_id` not known there is an error.
 
     Turn `pdf_fname` into a bundle name and check with server if that
     bundle_name / md5sum known.
