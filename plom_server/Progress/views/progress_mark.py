@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
@@ -36,9 +38,7 @@ class ProgressMarkStatsView(ManagerRequiredView):
             {
                 "question": question,
                 "version": version,
-                "stats": mss.get_basic_marking_stats(
-                    question=question, version=version
-                ),
+                "stats": mss.get_basic_marking_stats(question, version=version),
             }
         )
 
@@ -49,12 +49,12 @@ class ProgressMarkDetailsView(ManagerRequiredView):
     def get(self, request, question, version):
         context = super().build_context()
         mss = MarkingStatsService()
-        stats = mss.get_basic_marking_stats(question=question, version=version)
-        histogram = mss.get_mark_histogram(question=question, version=version)
+        stats = mss.get_basic_marking_stats(question, version=version)
+        histogram = mss.get_mark_histogram(question, version=version)
         hist_keys, hist_values = zip(*histogram.items())
-        # user_list = mss.get_list_of_users_who_marked(question=question, version=version)
+        # user_list = mss.get_list_of_users_who_marked(question, version=version)
         user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
-            question=question, version=version
+            question, version=version
         )
         # for the charts we need a list of histogram values for each user, hence the following
         # we also want to show it against scaled histogram of all users
@@ -91,12 +91,10 @@ class ProgressMarkVersionCompareView(ManagerRequiredView):
         version = 1
         context = super().build_context()
         mss = MarkingStatsService()
-        stats = mss.get_basic_marking_stats(question=question, version=None)
-        histogram = mss.get_mark_histogram(question=question, version=None)
+        stats = mss.get_basic_marking_stats(question, version=None)
+        histogram = mss.get_mark_histogram(question, version=None)
         hist_keys, hist_values = zip(*histogram.items())
-        version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(
-            question=question
-        )
+        version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(question)
         # for the charts we need a list of histogram values for each version, hence the following
         # we also want to show it against scaled histogram of all versions
         for ver in version_hists_and_stats:

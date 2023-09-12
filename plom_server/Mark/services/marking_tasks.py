@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
-import imghdr
 import json
 import pathlib
 import random
@@ -386,23 +385,24 @@ class MarkingTaskService:
         task.save()
 
     @transaction.atomic
-    def save_annotation_image(self, md5sum, annot_img):
+    def save_annotation_image(self, md5sum: str, annot_img) -> AnnotationImage:
         """Save an annotation image to disk and the database.
 
         Args:
-            md5sum: (str) the annotation image's hash.
-            annot_img: (InMemoryUploadedFlie) the annotation image file.
-        """
-        imgtype = imghdr.what(None, h=annot_img.read())
-        if imgtype not in ["png", "jpg", "jpeg"]:
-            raise ValidationError(
-                f"Unsupported image type: expected png or jpg, got {imgtype}"
-            )
-        annot_img.seek(0)
+            md5sum: the annotation image's hash.
+            annot_img: (InMemoryUploadedFile) the annotation image file.
+                The filename including extension is taken from this.
 
+        Return:
+            Reference to the database object.
+        """
+        imgtype = pathlib.Path(annot_img.name).suffix.casefold()
+        if imgtype not in (".png", ".jpg", ".jpeg"):
+            raise ValidationError(
+                f"Unsupported image type: expected png or jpeg, got '{imgtype}'"
+            )
         img = AnnotationImage(hash=md5sum, image=annot_img)
         img.save()
-
         return img
 
     def validate_and_clean_marking_data(self, user, code, data, plomfile):

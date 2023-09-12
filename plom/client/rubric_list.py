@@ -1232,7 +1232,7 @@ class RubricWidget(QWidget):
         s = set()
         for i, name in enumerate(newnames):
             while name in group_tab_data.keys() or name in s:
-                log.warn("renaming user tab %s to %s for conflict", name, name + "'")
+                log.warning("renaming user tab %s to %s for conflict", name, name + "'")
                 name += "'"
                 newnames[i] = name
             s.add(name)

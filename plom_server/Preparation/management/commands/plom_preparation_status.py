@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperInfoService, SpecificationService
-from Progress.services import ManageScanService
 from ...services import (
     TestSourceService,
     PrenameSettingService,
-    StagingStudentService,
     PQVMappingService,
     TestPreparedSetting,
 )

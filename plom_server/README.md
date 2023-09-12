@@ -1,31 +1,6 @@
-# WebPlom
-
-
-# How to run the server
-
-(WIP instructions)
-
-## Install requirements and download the repo
-
-We need to install any required python packages and get the actual webplom repo...
-
-1. Clone the WebPlom repo
-2. [Set up a virtual environment](https://docs.python.org/3/library/venv.html)
-3. `source env/bin/activate`
-4. Install all necessary libraries using the command below:<br>
-`pip install -r requirements.txt`
-
-
-## Clean up any old migrations
-In case they cause you any headaches, you can clean up any old migrations using the
-pip package 'django-reset-migrations'.
-1. Run `python3 manage.py reset_migrations Authentication Preparation SpecCreator`
-
-**Note** The above needs to be run on any django app that has any db-models in it. Make sure the above
-command is updated when more apps are added.
+# How to run the "new" Plom Server
 
 ## Initialise the database
-Django needs you to set up all the database tables.
 
 1. Run `python3 manage.py migrate` to setup the database
 
@@ -53,11 +28,21 @@ Take note of the address that it tells you the website is running at.
 2. Log in using the "super-user" name and password you generated above.
 3. You should be bounced to a **very** simple landing page with options in the left-hand column.
 
-## Make a manager instructions
-In order to create a manager, you need to log in as a super user.
-- url: `http://localhost:8000/signup/manager/` or `http://127.0.0.1:8000/signup/manager/`
+## Make a manager instructions (command line)
+
+In order to create a manager, you can log in as a super user (see below) but its also possible
+to use the command line:
+```
+from django.contrib.auth.models import User, Group
+manager_group = Group.objects.get(name='manager')
+User.objects.create_user(username='manager', password='1234').groups.add(manager_group)"
+```
+
+## Make a manager instructions (web UI)
+
+Go to url: `http://localhost:8000/signup/manager/`
 1. Log in as a super user
-2. Click on "Sign Up Manager" in the left-hand column of the landing page.
+2. Click on "Sign Up Manager".
 3. Fill out the form and then click submit
 4. Click on "Copy" to copy the generated link
 5. Click on "Log out" to sign out from the admin account
@@ -73,7 +58,7 @@ to find the manager username.
 
 ## Clear existing data from database
 This is the command for wiping the existing data from DB:
-`python manage.py flush`
+`python3 manage.py flush`
 
 # For testing (much to do here)
 

@@ -256,7 +256,16 @@ class MarkHandler:
         part = await reader.next()
         if not part:
             raise web.HTTPBadRequest(reason="should have sent 3 parts")
-        annotated_image = await part.read()
+        _content_type = part.headers["Content-Type"]
+        if _content_type == "image/jpeg":
+            annot_img_type = "jpg"
+        elif _content_type == "image/png":
+            annot_img_type = "png"
+        else:
+            errstr = f'Malformed annotated image file: expected png/jpg got "{_content_type}"'
+            log.error(errstr)
+            raise web.HTTPBadRequest(reason=errstr)
+        annot_img_bytes = await part.read()
 
         # Dealing with the plom_file.
         part = await reader.next()
@@ -270,7 +279,8 @@ class MarkHandler:
             int(task_metadata["pg"]),
             int(task_metadata["ver"]),
             int(task_metadata["score"]),
-            annotated_image,
+            annot_img_bytes,
+            annot_img_type,
             plomfile,
             rubrics,
             int(task_metadata["mtime"]),

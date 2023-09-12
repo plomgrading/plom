@@ -186,7 +186,7 @@ class MclaimThisTask(APIView):
         data = request.POST
         files = request.FILES
 
-        plomfile = request.FILES["plomfile"]
+        plomfile = files["plomfile"]
         plomfile_data = plomfile.read().decode("utf-8")
 
         try:
@@ -209,11 +209,8 @@ class MclaimThisTask(APIView):
             return _error_response(
                 "Annotation image already exists.", status.HTTP_409_CONFLICT
             )
-        except ValidationError:
-            return _error_response(
-                "Unsupported media type for annotation image",
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            )
+        except ValidationError as e:
+            return _error_response(e, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
         mts.mark_task(
             request.user,

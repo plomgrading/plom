@@ -405,6 +405,13 @@ class IDClient(QWidget):
                 fh.write(img_bytes)
             angle = row["orientation"]
             id_pages.append([filename, angle])
+        if not id_pages:
+            InfoMsg(
+                self,
+                "Unexpectedly no ID page: see Issue #2722 and related.  "
+                "Could happen if someone is mucking around in the management tool.",
+            ).exec()
+            return
         assert len(id_pages) == 1, "Expected exactly one ID page"
         (
             imageName,
@@ -636,6 +643,13 @@ class IDClient(QWidget):
                 fh.write(img_bytes)
             angle = row["orientation"]
             id_pages.append([filename, angle])
+        if not id_pages:
+            InfoMsg(
+                self,
+                "Unexpectedly no ID page: see Issue #2722 and related.  "
+                "Could happen if someone is mucking around in the management tool.",
+            ).exec()
+            return False
         assert len(id_pages) == 1, "Expected exactly one ID page"
         (
             filename,
@@ -737,7 +751,7 @@ class IDClient(QWidget):
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomConflict as err:
-            log.warn("Conflict when returning paper %s: %s", code, err)
+            log.warning("Conflict when returning paper %s: %s", code, err)
             hints = """
                 <p>If you are unable to resolve this conflict, you may need
                 to use the Manager tool to "Un-ID" the other paper.</p>

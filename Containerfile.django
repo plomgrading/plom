@@ -14,7 +14,7 @@ FROM python:3.10.2-slim-bullseye
 # Set environment variables
 ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 ENV PYTHONUNBUFFERED 1
-ENV PLOM_USING_DOCKER 1
+ENV PLOM_DATABASE_HOSTNAME postgres
 
 # base OS dependencies
 RUN apt-get -y update && \

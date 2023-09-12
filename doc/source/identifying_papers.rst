@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright 2020 Andrew Rechnitzer
-   Copyright 2022 Colin B. Macdonald
+   Copyright 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -9,10 +9,8 @@ Identifying papers
 
 At some point the Plom system needs to know which paper belongs to which student and this can be done in several ways:
 
-1. Papers named from the start — Plom can produce papers with student
-   names already printed on them.
-   In this case Plom already knows which paper should belong to who and
-   typically very little extra work is needed.
+1. Prenamed papers: Plom can produce papers with student names and IDs
+   already printed on them.
 2. Automated ID reading — When tests are producing using Plom’s ID
    Template, the system can use `machine learning <https://xkcd.com/1838>`_
    to read the digits from the student-ID boxes and match against the
@@ -22,11 +20,20 @@ At some point the Plom system needs to know which paper belongs to which student
 3. Manual association — The simplest method is for a human to just read
    the ID from the page and enter it into the system.
 
-These last two cases require human-intervention, which is where “identifier” comes in.
+All these eventually require verification by a human.
 
 
 Running the auto-identifier
 ---------------------------
+
+Currently, the django-server requires command line access to run
+the autoidentifier.  TODO: xref here once those tools are in the docs
+Tracking issue for running this via the web
+UI: `Issue #2990 <https://gitlab.com/plom/plom/-/issues/2990>`_.
+
+
+Running the auto-identifier (legacy server)
+-------------------------------------------
 
 1. Open the :doc:`Manager tool <manage>`, then "Progress" → "ID progress".
 2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
