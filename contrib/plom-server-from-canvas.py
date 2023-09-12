@@ -169,6 +169,11 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
             pwds[row[0]] = row[1]
     os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
     os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
+    print("")
+    print("Secret stuff, probably don't just print it...")
+    print(pwds["manager"])
+    print(pwds["scanner"])
+    print("")
     del pwds
 
     print("Launching plom server.")
