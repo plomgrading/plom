@@ -65,7 +65,7 @@ import plom.scan
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.2.0"
+__script_version__ = "0.3.0"
 
 
 def get_short_name(long_name):
@@ -234,26 +234,26 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            assert isinstance(obj, dict), "Perhaps attachments are not always dicts?"
-            assert "content-type" in obj.keys()
-            assert "url" in obj.keys()
-            assert obj["upload_status"] == "success"  # TODO, or just "continue"
-            if obj["content-type"] == "null":
+            print(f"*** PDLPATCH: Handling attachment number {i}")
+            ctype = getattr(obj, "content-type")
+            print(f"*** Content type is {ctype}")
+            if ctype == "null":
                 # TODO: in what cases does this occur?
                 continue
-            elif obj["content-type"] == "application/pdf":
+            elif ctype == "application/pdf":
                 suffix = "pdf"
-            elif obj["content-type"] == "image/png":
+            elif ctype == "image/png":
                 suffix = ".png"
-            elif obj["content-type"] == "image/jpg":
+            elif ctype == "image/jpg":
                 suffix = ".jpg"
-            elif obj["content-type"] == "image/jpeg":
+            elif ctype == "image/jpeg":
                 suffix = ".jpeg"
             else:
                 print(
-                    f"unexpected content-type {obj['content-type']}: for now, appending to error list"
+                    f"unexpected content-type {ctype}: for now, appending to error list"
                 )
                 errors.append(sub)
+
             filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
             if dry_run:
@@ -263,7 +263,14 @@ def get_submissions(
 
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
-            r = requests.get(obj["url"])
+
+            print("*** PDLPATCH: Investigate URL property of object more carefully")
+            if not hasattr(obj, "url"):
+                print("*** object has no 'url' property. Skipping it (?!)")
+                # TODO: does this belong in the error list or not?  Under what
+                # circumstances does it not have a url property?
+                continue
+            r = requests.get(obj.url)
             with open(filename, "wb") as f:
                 f.write(r.content)
 
@@ -346,6 +353,12 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
+
+        print("*** About to call plom.scan.processHWScans with arguments below.")
+        print(f"pdf:   {pdf}")
+        print(f"sid:   {sid}")
+        print(f"q:     {sid}")
+
         plom.scan.processHWScans(
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
         )
