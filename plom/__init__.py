@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2023 Edith Coates
 
 """Plom is Paperless Open Marking.
 
@@ -22,7 +23,7 @@ if sys.version_info[0] == 2:
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
 
-Plom_API_Version = "100"
+Plom_API_Version = "101"
 Plom_Legacy_Server_API_Version = "60"
 Default_Port = 41984
 

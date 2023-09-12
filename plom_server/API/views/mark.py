@@ -10,8 +10,9 @@ from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
+from django.db import transaction
 
-from Mark.services import MarkingTaskService, PageDataService
+from Mark.services import MarkingTaskService, PageDataService, QuestionMarkingService
 from Papers.services import SpecificationService
 from Papers.models import Image
 
@@ -127,105 +128,6 @@ class MgetDoneTasks(APIView):
             marks,
         )
         return Response(rows, status=status.HTTP_200_OK)
-
-
-class MgetNextTask(APIView):
-    """Responds with a code for the next available marking task.
-
-    Returns:
-        200: An available task exists, returns the task code as a string.
-        204: There are no available tasks.
-    """
-
-    def get(self, request, *args):
-        data = request.data
-        question = data["q"]
-        version = data["v"]
-
-        mts = MarkingTaskService()
-
-        task = mts.get_first_available_task(question=question, version=version)
-        if task:
-            return Response(task.code, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class MclaimThisTask(APIView):
-    def patch(self, request, code, *args):
-        """Attach a user to a marking task and return the task's metadata.
-
-        Reply with status 200, or 409 if someone else has claimed this
-        task, or a 404 if there it not yet such a task (not scanned yet)
-        or 410 if there will never be such a task.
-
-        Notes: legacy would use 417 when the version requested does not
-        match the version of the task.  But I think we ignore the version.
-        """
-        mss = MarkingTaskService()
-        try:
-            the_task = mss.get_task_from_code(code)
-        except ValueError as e:
-            return _error_response(e, status.HTTP_410_GONE)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
-        try:
-            mss.assign_task_to_user(request.user, the_task)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
-
-        pds = PageDataService()
-        paper, question = mss.unpack_code(code)
-        question_data = pds.get_question_pages_list(paper, question)
-
-        return Response([question_data, mss.get_tags_for_task(code), the_task.pk])
-
-    def post(self, request, code, *args):
-        """Accept a marker's grade and annotation for a task."""
-        mts = MarkingTaskService()
-        data = request.POST
-        files = request.FILES
-
-        plomfile = files["plomfile"]
-        plomfile_data = plomfile.read().decode("utf-8")
-
-        try:
-            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
-                request.user, code, data, plomfile_data
-            )
-        except ObjectDoesNotExist as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
-        except ValidationError as e:
-            # TODO: explicitly throwing server 500 is ok?  Better to just remove this block?
-            return _error_response(e, status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        annotation_image = files["annotation_image"]
-        try:
-            img_md5sum = data["md5sum"]
-            img = mts.save_annotation_image(img_md5sum, annotation_image)
-        except FileExistsError:
-            return _error_response(
-                "Annotation image already exists.", status.HTTP_409_CONFLICT
-            )
-        except ValidationError as e:
-            return _error_response(e, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-
-        mts.mark_task(
-            request.user,
-            code,
-            mark_data["score"],
-            mark_data["marking_time"],
-            img,
-            annot_data,
-        )
-        mts.mark_task_as_complete(code)
-
-        return Response(
-            [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
-            status=status.HTTP_200_OK,
-        )
 
 
 class MgetPageDataQuestionInContext(APIView):

@@ -3,15 +3,15 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from API.views.experimental import (
+from .views.experimental import (
     RubricViewSet,
     AnnotationViewSet,
     MarkingTaskViewSet,
 )
 
-from API.routes import (
+from .routes import (
     MarkURLPatterns,
     IdURLPatterns,
     PagedataPatterns,
@@ -21,8 +21,9 @@ from API.routes import (
     TagsURLPatterns,
 )
 
-# TODO: these are possibly temporary
-from API.views import (
+from .views import (
+    QuestionMarkingViewSet,
+    # TODO: these are possibly temporary
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -78,4 +79,10 @@ experimental_router.register(
     "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
 )
 
-urlpatterns += [path("experimental/", include(experimental_router.urls))]
+marking_router = SimpleRouter(trailing_slash=False)
+marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
+
+urlpatterns += [
+    path("experimental/", include(experimental_router.urls)),
+    path("MK/", include(marking_router.urls)),
+]
