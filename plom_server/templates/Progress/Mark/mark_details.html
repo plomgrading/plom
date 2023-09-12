@@ -150,6 +150,10 @@
         options: {
 	  plugins: {
 	      legend: { display: false },
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by all users',
+	      },
 	  },
 	  scales: {
                 y: {
@@ -162,7 +166,15 @@
   var ctx_pies = document.getElementById('pies');
   new Chart(ctx_pies, {
       type: 'doughnut',
-      options: {circumference: {{pie_angle}} },
+      options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Number marked by user',
+	      }
+	  },
+	  circumference: {{pie_angle}},
+      },
       data: {
 	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %}],
 	  datasets: [{
@@ -192,6 +204,12 @@
 	labels: {{hist_keys}},	  
       },
         options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by {{data.username}}',
+	      }
+	  },
 	  scales: {
                 y: {
 		  beginAtZero: true

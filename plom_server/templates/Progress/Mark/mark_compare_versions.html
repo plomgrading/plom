@@ -149,6 +149,10 @@
         options: {
 	  plugins: {
 	      legend: { display: false },
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores for all versions',
+	      },
 	  },
 	  scales: {
                 y: {
@@ -161,7 +165,15 @@
   var ctx_pies = document.getElementById('pies');
   new Chart(ctx_pies, {
       type: 'doughnut',
-      options: {circumference: {{pie_angle}} },
+      options: {
+	  circumference: {{pie_angle}},
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Number marked in each version',
+	      },
+	  },
+      },
       data: {
 	  labels: [ {% for ver, data in version_hists.items %}'v {{ver}}',{% endfor %}],
 	  datasets: [{
@@ -191,6 +203,12 @@
 	labels: {{hist_keys}},	  
       },
         options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores for version {{ver}}',
+	      }
+	  },
 	  scales: {
                 y: {
 		  beginAtZero: true
