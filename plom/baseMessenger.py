@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Union, Dict, Any
+from typing import Any, Dict, List, Union
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -732,6 +732,38 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def sidToTest(self, student_id) -> List:
+        """Ask server to match given student_id to a test-number.
+
+        The test number could be b/c the paper is IDed.  Or it could be a
+        prediction (a confident one, currently "prename").  Currently this
+        call does not distinguish between the two: TODO: consider adding
+        a third arg.
+
+        Returns:
+            Either ``[True, test_number]`` or
+            ``[False, 'Cannot find test with that student id']``.
+
+        Raises:
+            PlomAuthenticationException: wrong user, wrong token etc.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/plom/admin/sidToTest",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": student_id,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_all_tags(self):
         """All the tags currently in use and their frequencies.
 
@@ -748,7 +780,7 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_tags(self, code):

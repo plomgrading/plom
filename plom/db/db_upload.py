@@ -362,18 +362,19 @@ def sidToTest(self, student_id):
         student_id (int):
 
     Returns:
-        tuple: ``(True, int)`` on success with an integer test number.
-        Or ``(False, str)`` with an error message.
+        tuple: on success either ``(True, int, "ided")`` or
+        ``(True, int, "prenamed")`` with an integer test number.
+        Or ``(False, str, "")`` with an error message.
     """
     iref = IDGroup.get_or_none(student_id=student_id)
     if iref is not None:
-        return (True, iref.test.test_number)
+        return (True, iref.test.test_number, "ided")
     # TODO: Issue #2248, could be more than one response here
     preidref = IDPrediction.get_or_none(student_id=student_id, predictor="prename")
     if preidref is not None:
-        return (True, preidref.test.test_number)
+        return (True, preidref.test.test_number, "prenamed")
     # Consider refactoring to throw exception
-    return (False, "Cannot find test with sid {}".format(student_id))
+    return (False, f"Cannot find test with sid {student_id}", "")
 
 
 def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):

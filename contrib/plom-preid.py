@@ -23,7 +23,7 @@ which should assign paper number 17 to Colston, Jennifer.
 
 import argparse
 import os
-from pathlib import Path
+import sys
 
 from plom import __version__ as __plom_version__
 from plom.plom_exceptions import PlomServerNotReady
@@ -74,21 +74,39 @@ def main():
 
     server = os.environ.get("PLOM_SERVER")
     pwd = os.environ.get("PLOM_MANAGER_PASSWORD")
-    # pwd = os.environ.get("PLOM_SCAN_PASSWORD")
-    # pwd = os.environ.get("PLOM_PASSWORD")
-    # user = os.environ.get("PLOM_USER")
-
     msgr = start_messenger(server, pwd)
 
     try:
-        # Debugging: this one lives in ScanMessenger: need to swap some stuff above
-        # N = msgr.sidToTest(sid)
-        # print(N)
-        # print(type(N))
+        print(f"Checking if any tests already associated with {args.sid}")
+        r = msgr.sidToTest(args.sid)
+        if not r[0]:
+            print(f"  {r[1]}")
+        else:
+            testnum = r[1]
+            print(f"  We found a test number {testnum} associated with {args.sid}")
+            if len(r) >= 3:
+                print(f"  (The paper is: {r[3]})")
+            else:
+                print("  (This is an older server, cannot tell if id or prename)")
+            # print("Are you sure you want to continue?  Pass --force if so")
+            # sys.exit(1)
 
-        # push the student ID to the prediction-table in the database
+        print(
+            f"Pushing {args.sid} to the prediction table for paper {args.papernum}..."
+        )
         msgr.pre_id_paper(args.papernum, args.sid, predictor="prename")
-        # can check if it worked in Manager -> Progress -> ID Progress -> table on right
+
+        # can also confirm it worked in Manager -> Progress -> ID Progress -> table on right
+        print("Confirming change...")
+        r = msgr.sidToTest(args.sid)
+        if not r[0]:
+            raise RuntimeError(r[1])
+        testnum = r[1]
+        print(f"  We found a test number {testnum} associated with {args.sid}")
+        if len(r) >= 3:
+            print(f"  (The paper is: {r[3]})")
+        else:
+            print("  (This is an older server, cannot tell if id or prename)")
 
     finally:
         msgr.closeUser()
