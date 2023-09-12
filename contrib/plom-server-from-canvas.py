@@ -69,7 +69,7 @@ from plom.create import start_messenger
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.3.1"
+__script_version__ = "0.4.0"
 
 
 def get_short_name(long_name):
@@ -185,9 +185,8 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
     subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
 
-    if True:  # "PDLPATCH" in os.environ:
-        print("\n*** PDLPATCH: Here is the class list.")
-        subprocess.check_call(["cat", "classlist.csv"])
+    # print("\n*** Here is the class list.")
+    # subprocess.check_call(["cat", "classlist.csv"])
 
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
@@ -248,9 +247,9 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            print(f"*** PDLPATCH: Handling attachment number {i}")
+            print(f"*** Handling attachment number {i}")
             ctype = getattr(obj, "content-type")
-            print(f"*** Content type is {ctype}")
+            print(f"    Content type is {ctype}")
             if ctype == "null":
                 # TODO: in what cases does this occur?
                 continue
@@ -278,7 +277,7 @@ def get_submissions(
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
 
-            print("*** PDLPATCH: Investigate URL property of object more carefully")
+            print("*** TODO: Investigate URL property of object more carefully")
             if not hasattr(obj, "url"):
                 print("*** object has no 'url' property. Skipping it (?!)")
                 # TODO: does this belong in the error list or not?  Under what
@@ -412,13 +411,13 @@ def scan_submissions(
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
         if True:  # "PDLPATCH" in os.environ:
-            print("*** PDLPATCH: Found what looks like a legit PDF, as follows ...")
+            print("*** Found what looks like a legit PDF, as follows ...")
             print(f"    pdf:         {pdf}")
             print(f"    sid:         {sid}")
             print(f"    q:           {q}")
 
             studentname = sid2name[sid]
-            print("*** PDLPATCH: Homebrew lookup suggests")  # PDL
+            print("*** PDLPATCH: Homebrew lookup suggests")
             print(f"    studentname: {studentname}")
 
             # Just-In-Time ID starts here.
@@ -452,21 +451,20 @@ def scan_submissions(
             mm.closeUser()
             mm.stop()
 
-        if True:
-            # This broke until now
-            plom.scan.processHWScans(
-                pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
-            )
-            # Now we could really name it (untested)
-            mm = start_messenger(server, manager_pwd)
-            try:
-                mm.id_paper(testnumber, sid, studentname)
-            finally:
-                mm.closeUser()
-                mm.stop()
+        # This broke until now
+        plom.scan.processHWScans(
+            pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
+        )
+        # Now we can "lock-in" the IDing of it (optional, client can do later)
+        try:
+            mm.id_paper(testnumber, sid, studentname)
+        finally:
+            mm.closeUser()
+            mm.stop()
 
     else:
         print(f"There was nothing in {upload_dir} for me to iterate over")
+
     for sid, err in errors:
         print(f"Error processing user_id {sid}: {str(err)}")
 
@@ -579,6 +577,10 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
+    print("************************************************************")
+    print("WARNING: this script in a work-in-progress, largely progress")
+    print('and precious little "work"')
+    print("************************************************************")
     args = parser.parse_args()
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")

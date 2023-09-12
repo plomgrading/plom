@@ -30,10 +30,8 @@ from plom.plom_exceptions import PlomServerNotReady
 
 from plom.create import start_messenger
 
-# from plom.scan import start_messenger
 
-
-__script_version__ = "0.0.1"
+__script_version__ = "0.1.0"
 
 
 def get_parser():
