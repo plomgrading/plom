@@ -166,27 +166,20 @@ class UserInfoServices:
         """Convert the given number of seconds to a human-readable time string.
 
         Args:
-            seconds: (float) The number of seconds.
+            seconds: the number of seconds, unsigned so no distinction
+                is made between past and future.
 
         Returns:
-            str: A human-readable time string.
+            A human-readable time string.
         """
-        present = arrow.utcnow()
-
-        if seconds < 60:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["second"]
-            )
-        elif seconds > 3599:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["hour", "minute", "second"]
-            )
+        if seconds > 9:
+            return arrow.utcnow().shift(seconds=seconds).humanize(only_distance=True)
         else:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["minute", "second"]
+            return (
+                arrow.utcnow()
+                .shift(seconds=seconds)
+                .humanize(only_distance=True, granularity=["second"])
             )
-
-        return time
 
     @transaction.atomic
     def get_marking_task_count_based_on_question_number_and_version(
