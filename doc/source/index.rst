@@ -22,6 +22,8 @@ Welcome to Plom's documentation!
 
    identifying_papers.rst
 
+   hw_processing.md
+
    rubrics.rst
 
    solutions.rst
@@ -38,8 +40,6 @@ Welcome to Plom's documentation!
 
    install.rst
 
-   hw_processing.md
-   
    faq.md
 
    changelog.md

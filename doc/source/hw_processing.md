@@ -1,7 +1,7 @@
 # Processing homework
 
-This document outlines how we might use WebPlom (not legacy) to mark
-homework. The main issue here is that homework (say uploaded by
+This document outlines how we might Plom to mark homework.
+The main issue here is that homework (say uploaded by
 students to an LMS like Canvas) are **not** structured. A typical
 homework pdf will not contain an ID-page nor will it have questions
 neatly arranged so that we know (with certainty) what precisely is on
@@ -17,22 +17,22 @@ So let us make a few assumptions about the homework submission:
 * we know (or can make a reasonable guess) as to which questions appear on which pages of the HW pdf - ie a question-mapping.
 
 and also a few assumptions about the server
-* we have a running webplom server
+* we have a running server
 * with manager + scanner users
 * a test-specification - notice that we need this so that we know how many questions, how many marks etc
 * enough "built" test-papers so that the database has at least one paper per student. The corresponding pdfs do not need to be built, but we need the database rows (again - this can perhaps be loosened in the future)
 
 ## Processing a single homework pdf
-Let's upload, process and push a single homework PDF to WebPlom.
+Let's upload, process and push a single homework PDF.
 * It will be uploaded as paper-number 61.
-* Homework pdf = "fake_hw_bundle_61.pdf" contains 5 pages
-* We will map 
+* Homework pdf `"fake_hw_bundle_61.pdf"` containing 5 pages
+* We will map
    * p1 = q1
    * p2 = q2
    * p3 = garbage (ie no questions)
    * p4 = q2 and q3
    * p5 = q3
-* We write this page-to-question mapping as a list of lists: [ [1], [2], [], [2,3], [3] ]
+* We write this page-to-question mapping as a list of lists: `[ [1], [2], [], [2, 3], [3] ]`
 * The homework was submitted by student with id "88776655" and name "Kenson, Ken".
 * We will upload the homework as user "demoScanner1"
 * We will process the homework as user "demoManager1"
@@ -69,7 +69,7 @@ python manage.py plom_staging_bundles push fake_hw_bundle_61 demoScanner1
 ```
 The system then responds with
 ```
-Bundle fake_hw_bundle_61 - pushed from staging.
+> Bundle fake_hw_bundle_61 - pushed from staging.
 ```
 At this point the homework is in the system and marking can begin. The server knows which pages contain which questions etc. However the system does not yet know which student to associate with the paper. Accordingly we now ID the paper using `plom_id_direct`
 ```
@@ -80,12 +80,10 @@ Now the homework is in the system, and the system knows it belongs to Ken Kenson
 ## Summary of process
 * make sure server all set up.
 * `python manage.py plom_staging_bundles upload <scannerName> <hwpdf>`
-  * async processing - so we have to wait until it is done 
+  * async processing - so we have to wait until it is done
 * `python manage.py plom_paper_scan list_bundles map <hwpdf> -t <papernumber> -q  <question_map>`
   * no waiting required
 * `python manage.py plom_staging_bundles push <hwpdf> <scannerName>`
   * no waiting required
 * `python manage.py plom_id_direct <managerName> <paper_number> <student_id> <student_name>`
   * no waiting required
-  
-
