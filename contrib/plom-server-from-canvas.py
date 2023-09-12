@@ -64,6 +64,9 @@ from plom.canvas import (
 )
 import plom.scan
 
+# maybe temporary?
+from plom.create import start_messenger
+
 
 # bump this a bit if you change this script
 __script_version__ = "0.3.1"
@@ -165,6 +168,7 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
         for row in csv.reader(csvfile):
             pwds[row[0]] = row[1]
     os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
+    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
     del pwds
 
     print("Launching plom server.")
@@ -316,21 +320,29 @@ def get_submissions(
         print(f"Error getting submission from user_id {sub.user_id}")
 
 
-def scan_submissions(num_questions, *, server_dir="."):
+def scan_submissions(
+    num_questions,
+    *,
+    server_dir=None,
+    server=None,
+    dur=".",
+    scan_pwd=None,
+    manager_pwd=None,
+):
     """
     Apply `plom-scan` to all the pdfs we've just pulled from canvas
+
+    TODO: delete server_dir: it should not know that, see below about API to get classlist.
     """
-    server_dir = Path(server_dir)
-
-    pwds = {}
-    with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        for row in csv.reader(csvfile):
-            pwds[row[0]] = row[1]
-    scan_pwd = pwds["scanner"]
-    del pwds
-
-    upload_dir = server_dir / "upload"
+    upload_dir = Path("dur") / "upload"
     errors = []
+
+    if not scan_pwd:
+        scan_pwd = os.environ["PLOM_SCAN_PASSWORD"]
+    if not manager_pwd:
+        manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
+    if not server:
+        server = os.environ["PLOM_SERVER"]
 
     if True:  # "PDLPATCH" in os.environ:
         # It seems like the student ID's from the classlist
@@ -339,12 +351,6 @@ def scan_submissions(num_questions, *, server_dir="."):
         # such attachments just-in-time, and keep track of
         # which test papers we use with a list of Booleans.
         print("*** PDLPATCH: Creating a list of Booleans for test papers.")
-        pwds = {}
-        with open(server_dir / "userListRaw.csv", "r") as csvfile:
-            for row in csv.reader(csvfile):
-                pwds[row[0]] = row[1]
-        mgr_pwd = pwds["manager"]
-        del pwds
 
         # We are also going to need a mapping from SID's to student names
         # and test numbers.
@@ -352,6 +358,7 @@ def scan_submissions(num_questions, *, server_dir="."):
         # read the class list.
         sid2name = {}
         sid2test = {}
+        # TODO: hardcoded, use API instead
         with open(server_dir / "specAndDatabase/classlist.csv", "r") as csvfile:
             reader = csv.DictReader(csvfile)
             classlist = list(reader)
@@ -363,7 +370,9 @@ def scan_submissions(num_questions, *, server_dir="."):
         # Ask the server for the largest paper number we might see.
         # Inferring this from len(sid2name) might work, but doing
         # the extra work might make this robust against incorrect assumptions.
-        mm = start_messenger(server, mgr_pwd)
+        mm = start_messenger(server, manager_pwd)
+        # TODO: later
+        # mm.IDgetClasslist()
         infodict = mm.get_exam_info()
         mm.closeUser()
         mm.stop()
@@ -408,7 +417,7 @@ def scan_submissions(num_questions, *, server_dir="."):
             print(f"    studentname: {studentname}")
 
             # Just-In-Time ID starts here.
-            mm = start_messenger(server, mgr_pwd)
+            mm = start_messenger(server, manager_pwd)
 
             # Check if this SID is already associated with a test paper.
             # Here we are our own notes, not the database.
@@ -423,14 +432,14 @@ def scan_submissions(num_questions, *, server_dir="."):
                 PaperUsed[testnumber] = True
                 print(f"*** PDLPATCH: Reserving test {testnumber} for {studentname}.")
                 sid2test[sid] = testnumber
-                mm.id_paper(testnumber, sid, studentname)
+                mm.pre_id_paper(testnumber, sid, studentname)
             else:
                 if not PaperUsed[testnumber]:
                     print(
                         f"*** PDLPATCH: Classlist prescribes testnumber {testnumber}."
                     )
                     PaperUsed[testnumber] = True
-                    mm.id_paper(testnumber, sid, studentname)
+                    mm.pre_id_paper(testnumber, sid, studentname)
                 else:
                     print("*** PDLPATCH: EEK - not our first upload for this student.")
                     print("    MANUAL INVESTIGATION REQUIRED")
@@ -441,14 +450,14 @@ def scan_submissions(num_questions, *, server_dir="."):
         if True:
             # This broke until now
             plom.scan.processHWScans(
-                pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
+                pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
             )
 
     for sid, err in errors:
         print(f"Error processing user_id {sid}: {str(err)}")
 
     # Clean up any missing submissions
-    plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
+    plom.scan.processMissing(msgr=(server, scan_pwd), yes_flag=True)
 
 
 parser = argparse.ArgumentParser(
@@ -556,16 +565,6 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-    if False:  # if "PDLPATCH" in os.environ:
-        print("*** PDLPATCH: Starting __main__...")
-        print("    Setting environment variable to disable SSL.")
-        os.environ["PLOM_NO_SSL_VERIFY"] = "Please no!"
-        print("    Importing Manager Messenger capability from plom.create.")
-        from plom.create import start_messenger
-
-        server = "localhost:41984"
-        print(f"    Defining hard-coded variable server='{server}'\n\n")
-
     args = parser.parse_args()
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -645,7 +644,10 @@ if __name__ == "__main__":
         get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
 
         print("scanning submissions...")
-        scan_submissions(len(args.marks), server_dir=basedir)
+        print(plom_server)
+        print(type(plom_server))
+        # TODO: hardcoded server hostname here, and remove server_dir
+        scan_submissions(len(args.marks), server="localhost:41984", server_dir=basedir)
 
     input("Press enter when you want to stop the server...")
     plom_server.stop()
