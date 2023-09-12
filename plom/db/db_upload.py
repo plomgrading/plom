@@ -358,6 +358,12 @@ def getSIDFromTest(self, test_number):
 def sidToTest(self, student_id):
     """Find the test number associated with a student ID.
 
+    Note: we check ID'd first so if the paper is ID'd you'll
+    get that (even if ``student_id`` is also used in a prename.
+    If its not ID'd but its prenamed, there can be more than one
+    prename pointing to the same paper.  In this case, you'll
+    get one of them; its not well-defined which.
+
     Args:
         student_id (int):
 

@@ -736,9 +736,15 @@ class BaseMessenger:
         """Ask server to match given student_id to a test-number.
 
         The test number could be b/c the paper is IDed.  Or it could be a
-        prediction (a confident one, currently "prename").  Currently this
-        call does not distinguish between the two: TODO: consider adding
-        a third arg.
+        prediction (a confident one, currently "prename").  The third
+        argument can be used to distinguish which case (if the server is
+        new enough: needs > 0.14.1).
+
+        Note: we check ID'd first so if the paper is ID'd you'll
+        get that (even if ``student_id`` is also used in a prename.
+        If its not ID'd but its prenamed, there can be more than one
+        prename pointing to the same paper.  In this case, you'll
+        get one of them; its not well-defined which.
 
         Returns:
             If we found a paper then ``(True, test_number, how)`` where
