@@ -768,7 +768,8 @@ class BaseMessenger:
                         r.append("[Older server; cannot tell if ided or prenamed]")
                     else:
                         r.append("")
-                return tuple(r)
+                r = tuple(r)
+                return r
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
