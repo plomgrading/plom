@@ -199,7 +199,7 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
 
 
 def get_submissions(
-    assignment, server_dir=".", name_by_info=True, dry_run=False, replace_existing=False
+    assignment, work_dir=".", name_by_info=True, dry_run=False, replace_existing=False
 ):
     """
     get the submission pdfs out of Canvas
@@ -207,14 +207,14 @@ def get_submissions(
     (name_by_info): Whether to make the filenames of the form ID_Last_First.pdf
 
     """
-    server_dir = Path(server_dir)
+    work_dir = Path(work_dir)
 
     if name_by_info:
         print("Fetching conversion table...")
         conversion = get_conversion_table()
 
-    tmp_downloads = server_dir / "upload" / "tmp_downloads"
-    for_plom = server_dir / "upload" / "submittedHWByQ"
+    tmp_downloads = work_dir / "upload" / "tmp_downloads"
+    for_plom = work_dir / "upload" / "submittedHWByQ"
 
     tmp_downloads.mkdir(exist_ok=True, parents=True)
     for_plom.mkdir(exist_ok=True, parents=True)
@@ -328,9 +328,9 @@ def get_submissions(
 def scan_submissions(
     num_questions,
     *,
+    upload_dir,
     server_dir=None,
     server=None,
-    dur=".",
     scan_pwd=None,
     manager_pwd=None,
 ):
@@ -339,7 +339,7 @@ def scan_submissions(
 
     TODO: delete server_dir: it should not know that, see below about API to get classlist.
     """
-    upload_dir = Path("dur") / "upload"
+    upload_dir = Path(upload_dir)
     errors = []
 
     if not scan_pwd:
@@ -458,6 +458,8 @@ def scan_submissions(
                 pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
             )
 
+    else:
+        print(f"There was nothing in {upload_dir} for me to iterate over")
     for sid, err in errors:
         print(f"Error processing user_id {sid}: {str(err)}")
 
@@ -638,7 +640,7 @@ if __name__ == "__main__":
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")
         plom_server = initialize(
-            course, section, assignment, args.marks, server_dir=basedir
+            course, section, assignment, args.marks, server_dir=(basedir / "srv")
         )
     else:
         print(f"Using an already-initialize plom server in {basedir}")
@@ -646,13 +648,18 @@ if __name__ == "__main__":
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
-        get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
+        get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
 
         print("scanning submissions...")
         print(plom_server)
         print(type(plom_server))
         # TODO: hardcoded server hostname here, and remove server_dir
-        scan_submissions(len(args.marks), server="localhost:41984", server_dir=basedir)
+        scan_submissions(
+            len(args.marks),
+            server="localhost:41984",
+            server_dir=(basedir / "srv"),
+            upload_dir=(basedir / "upload"),
+        )
 
     input("Press enter when you want to stop the server...")
     plom_server.stop()
