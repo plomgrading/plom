@@ -171,7 +171,14 @@ class UserInfoServices:
         Returns:
             A human-readable time string.
         """
-        return arrow.utcnow().shift(seconds=seconds).humanize(only_distance=True)
+        if seconds > 9:
+            return arrow.utcnow().shift(seconds=seconds).humanize(only_distance=True)
+        else:
+            return (
+                arrow.utcnow()
+                .shift(seconds=seconds)
+                .humanize(only_distance=True, granularity=["second"])
+            )
 
     @transaction.atomic
     def get_marking_task_count_based_on_question_number_and_version(
