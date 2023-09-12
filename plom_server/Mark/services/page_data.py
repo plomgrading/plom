@@ -41,14 +41,14 @@ def get_question_pages_list(paper: int, question: int) -> List[dict]:
         image = page.image
         if image:  # fixed pages might not have image if yet to be scanned.
             page_list.append(
-                PageDataForTask(
-                    id=image.pk,
-                    md5=image.hash,
-                    orientation=image.rotation,
-                    server_path=image.image_file.path,
-                    included=True,
-                    order=page.page_number,
-                )
+                {
+                    "id": image.pk,
+                    "md5": image.hash,
+                    "orientation": image.rotation,
+                    "server_path": image.image_file.path,
+                    "included": True,
+                    "order": page.page_number,
+                }
             )
     # TODO - decide better order (see hackery comments below).
     # Also - do not repeat mobile pages if can avoid it.

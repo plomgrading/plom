@@ -22,7 +22,6 @@
 arrow==1.2.3
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
-==2.3.3
 debugpy==1.6.7.post1
 django==4.2.4
 django-braces==1.15.0
