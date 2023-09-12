@@ -437,14 +437,14 @@ def scan_submissions(
                 PaperUsed[testnumber] = True
                 print(f"*** PDLPATCH: Reserving test {testnumber} for {studentname}.")
                 sid2test[sid] = testnumber
-                mm.pre_id_paper(testnumber, sid, studentname)
+                mm.pre_id_paper(testnumber, sid)
             else:
                 if not PaperUsed[testnumber]:
                     print(
                         f"*** PDLPATCH: Classlist prescribes testnumber {testnumber}."
                     )
                     PaperUsed[testnumber] = True
-                    mm.pre_id_paper(testnumber, sid, studentname)
+                    mm.pre_id_paper(testnumber, sid)
                 else:
                     print("*** PDLPATCH: EEK - not our first upload for this student.")
                     print("    MANUAL INVESTIGATION REQUIRED")
@@ -457,6 +457,13 @@ def scan_submissions(
             plom.scan.processHWScans(
                 pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
             )
+            # Now we could really name it (untested)
+            mm = start_messenger(server, manager_pwd)
+            try:
+                mm.pre_id_paper(testnumber, sid, studentname)
+            finally:
+                mm.closeUser()
+                mm.stop()
 
     else:
         print(f"There was nothing in {upload_dir} for me to iterate over")
