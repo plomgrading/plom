@@ -6,5 +6,5 @@
 
 from .id_tasks import IdentifyTaskService
 from .id_reader import IDReaderService
-from .id_service import IDService
-from .id_homeworks import IDHomeworkService
+from .id_progress import IDProgressService
+from .id_direct import IDDirectService

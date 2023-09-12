@@ -8,14 +8,14 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDService
+from Identify.services import IDProgressService
 
 
 class ProgressIdentifyHome(ManagerRequiredView):
     def get(self, request):
         context = super().build_context()
 
-        ids = IDService()
+        ids = IDProgressService()
 
         n_all_id_task = ids.get_all_id_task_count()
         n_complete_task = ids.get_completed_id_task_count()
@@ -38,7 +38,7 @@ class ProgressIdentifyHome(ManagerRequiredView):
 
 class IDImageWrapView(ManagerRequiredView):
     def get(self, request, image_pk):
-        id_img = IDService().get_id_image_object(image_pk=image_pk)
+        id_img = IDProgressService().get_id_image_object(image_pk=image_pk)
         # pass -angle to template since css uses clockwise not anti-clockwise.
         context = {"image_pk": image_pk, "angle": -id_img.rotation}
         return render(request, "Progress/Identify/id_image_wrap_fragment.html", context)
@@ -46,11 +46,11 @@ class IDImageWrapView(ManagerRequiredView):
 
 class IDImageView(ManagerRequiredView):
     def get(self, request, image_pk):
-        id_img = IDService().get_id_image_object(image_pk=image_pk)
+        id_img = IDProgressService().get_id_image_object(image_pk=image_pk)
         return FileResponse(id_img.image_file)
 
 
 class ClearID(ManagerRequiredView):
     def delete(self, request, paper_number):
-        IDService().clear_id_from_paper(paper_number)
+        IDProgressService().clear_id_from_paper(paper_number)
         return HttpResponseClientRefresh()

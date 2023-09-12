@@ -1,9 +1,10 @@
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
-from Identify.services import IDService
+from Identify.services import IDProgressService
 
 
 class Command(BaseCommand):
@@ -17,14 +18,14 @@ class Command(BaseCommand):
 
     def specific_id(self, paper_num):
         try:
-            IDService().clear_id_from_paper(paper_num)
+            IDProgressService().clear_id_from_paper(paper_num)
             self.stdout.write(f"Cleared ID for paper number #{paper_num}")
         except ObjectDoesNotExist as err:
             raise CommandError(err)
 
     def clear_all_ids(self):
         try:
-            IDService().clear_id_from_all_identified_papers()
+            IDProgressService().clear_id_from_all_identified_papers()
             self.stdout.write("All IDs cleared.")
         except ObjectDoesNotExist as err:
             raise CommandError(err)

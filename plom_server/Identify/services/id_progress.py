@@ -13,8 +13,8 @@ from Identify.services import IdentifyTaskService
 from Papers.models import IDPage, Image
 
 
-class IDService:
-    """Functions for Identify HTML page."""
+class IDProgressService:
+    """Functions for Identify Progress HTML page."""
 
     @transaction.atomic
     def get_id_image_object(self, image_pk: int) -> Union[Image, None]:

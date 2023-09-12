@@ -19,7 +19,7 @@ from model_bakery import baker
 
 from Papers.models import Paper, Image, IDPage
 
-from Identify.services import IdentifyTaskService, IDService, IDHomeworkService
+from Identify.services import IdentifyTaskService, IDProgressService, IDDirectService
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
@@ -27,7 +27,7 @@ from Identify.models import (
 
 
 class IdentifyTaskTests(TestCase):
-    """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDService`` functions."""
+    """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDProgressService`` functions."""
 
     def setUp(self):
         self.marker0 = baker.make(User, username="marker0")
@@ -175,10 +175,10 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(action.student_id, "1")
 
     def test_clear_id_from_paper(self):
-        """Test ``IDService().clear_id_from_paper()``."""
-        ids = IDService()
+        """Test ``IDProgressService().clear_id_from_paper()``."""
+        ids = IDProgressService()
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
         ids.clear_id_from_paper(1)
 
         with self.assertRaises(ValueError):
@@ -188,8 +188,8 @@ class IdentifyTaskTests(TestCase):
         self.assertQuerysetEqual(PaperIDAction.objects.filter(task=new_task), [])
 
     def test_clear_id_from_all_identified_papers(self):
-        """Test ``IDService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
-        ids = IDService()
+        """Test ``IDProgressService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
+        ids = IDProgressService()
         for paper_number in range(1, 11):
             paper = baker.make(Paper, paper_number=paper_number)
             task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
@@ -291,7 +291,7 @@ class IdentifyTaskTests(TestCase):
         its.identify_paper(self.marker0, 1, "4", "ABCD")
 
     def test_get_all_id_task_count(self):
-        ids = IDService()
+        ids = IDProgressService()
         for n in range(1, 4):
             paper = baker.make(Paper, paper_number=n)
             baker.make(PaperIDTask, paper=paper, status=PaperIDTask.TO_DO)
@@ -303,7 +303,7 @@ class IdentifyTaskTests(TestCase):
 
     def test_get_all_id_task_info(self):
         its = IdentifyTaskService()
-        ids = IDService()
+        ids = IDProgressService()
 
         for n in range(1, 3):
             paper = baker.make(Paper, paper_number=n)
@@ -327,14 +327,14 @@ class IdentifyTaskTests(TestCase):
 
     def test_id_hw(self):
         its = IdentifyTaskService()
-        ids = IDService()
-        idhws = IDHomeworkService()
+        ids = IDProgressService()
+        idirs = IDDirectService()
 
         for n in range(1, 3):
             paper = baker.make(Paper, paper_number=n)
             its.create_task(paper)
         for n in range(1, 3):
-            idhws.identify_homework(self.marker0, n, f"99{n}", f"AB{n}")
+            idirs.identify_direct(self.marker0, n, f"99{n}", f"AB{n}")
         info_dict = {
             1: {
                 "idpageimage_pk": None,
