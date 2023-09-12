@@ -190,7 +190,7 @@ def test_AddRubricBox_parameterize(qtbot):
         assert out["text"] == "tex: foo <param1> $<param2>$"
         # the current version is replaced with the highlighted text
         exp = ["x", ""] if v == 1 else ["", "x"]
-        assert out["parameters"] == [["<param1>", ["", ""]], ["<param2>", exp]]
+        assert out["parameters"] == [("<param1>", ["", ""]), ("<param2>", exp)]
 
 
 def test_AddRubricBox_modify_parameterized(qtbot):
@@ -198,7 +198,7 @@ def test_AddRubricBox_modify_parameterized(qtbot):
         "id": 1234,
         "kind": "neutral",
         "text": "some text",
-        "parameters": [["{param1}", ["x", "y"]], ["{param2}", ["a", "b"]]],
+        "parameters": [("{param1}", ["x", "y"]), ("{param2}", ["a", "b"])],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
     qtbot.addWidget(d)
@@ -207,7 +207,7 @@ def test_AddRubricBox_modify_parameterized(qtbot):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == rub["text"] + "{param3}"
-    assert out["parameters"] == rub["parameters"] + [["{param3}", ["", ""]]]
+    assert out["parameters"] == rub["parameters"] + [("{param3}", ["", ""])]
 
 
 def test_AddRubricBox_modify_parameterized_remove(qtbot):
@@ -216,9 +216,9 @@ def test_AddRubricBox_modify_parameterized_remove(qtbot):
         "kind": "neutral",
         "text": "some text",
         "parameters": [
-            ["{param1}", ["x", "y"]],
-            ["{param2}", ["a", "b"]],
-            ["{param9}", ["c", "d"]],
+            ("{param1}", ["x", "y"]),
+            ("{param2}", ["a", "b"]),
+            ("{param9}", ["c", "d"]),
         ],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
@@ -232,7 +232,7 @@ def test_AddRubricBox_modify_parameterized_remove(qtbot):
     out = d.gimme_rubric_data()
     assert out["text"] == rub["text"]
     # only param1 remains
-    assert out["parameters"] == [["{param1}", ["x", "y"]]]
+    assert out["parameters"] == [("{param1}", ["x", "y"])]
 
 
 def test_AddRubricBox_specific_to_version(qtbot):

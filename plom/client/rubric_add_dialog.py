@@ -8,7 +8,7 @@
 
 import re
 import sys
-
+from typing import Any, Dict, List, Tuple
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -268,13 +268,6 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.abs_out_of_SB = _
-        # TODO: remove this notice
-        hlay.addWidget(QLabel("  (experimental!)"))
-        if not self.use_experimental_features:
-            for i in range(hlay.count()):
-                w = hlay.itemAt(i).widget()
-                if w:
-                    w.setEnabled(False)
         hlay.addItem(
             QSpacerItem(
                 48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -366,14 +359,15 @@ class AddRubricBox(QDialog):
               &ldquo;(b)&rdquo; and &ldquo;(c)&rdquo;.
               Some tips:</p>
             <ul>
-            <li><b>This is an experimental feature:</b> please discuss
-              with your team.</li>
+            <li><b>This is a new feature:</b> you may want to discuss
+              with your team before using groups.</li>
             <li>Groups create automatic tabs, shared with other users.
               <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
             </li>
             <li>Making a rubric <em>exclusive</em> means it cannot be used alongside
               others from the same exclusion group.</li>
-            <li>Groups will disappear if no rubrics are in them.</li>
+            <li>Groups will disappear automatically if there are no
+              rubrics in them.</li>
             <ul>
         """
         b.clicked.connect(lambda: InfoMsg(self, msg).exec())
@@ -624,7 +618,7 @@ class AddRubricBox(QDialog):
         self.scope_frame.layout().insertLayout(idx, grid)
         self._param_grid = grid
 
-    def get_parameters(self):
+    def get_parameters(self) -> List[Tuple[str, List[str]]]:
         """Extract the current parametric values from the UI."""
         idx = self.scope_frame.layout().indexOf(self._param_grid)
         # print(f"extracting parameters from grid at layout index {idx}")
@@ -636,7 +630,7 @@ class AddRubricBox(QDialog):
             values = []
             for c in range(1, self.maxver + 1):
                 values.append(layout.itemAtPosition(r, c).widget().text())
-            params.append([param, values])
+            params.append((param, values))
         return params
 
     def add_new_group(self):
@@ -778,7 +772,7 @@ class AddRubricBox(QDialog):
                 tags = tag
         return tags
 
-    def gimme_rubric_data(self):
+    def gimme_rubric_data(self) -> Dict[str, Any]:
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tags = self._gimme_rubric_tags()
 
