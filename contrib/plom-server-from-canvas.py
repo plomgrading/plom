@@ -460,7 +460,7 @@ def scan_submissions(
             # Now we could really name it (untested)
             mm = start_messenger(server, manager_pwd)
             try:
-                mm.pre_id_paper(testnumber, sid, studentname)
+                mm.id_paper(testnumber, sid, studentname)
             finally:
                 mm.closeUser()
                 mm.stop()
