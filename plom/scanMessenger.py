@@ -110,33 +110,6 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sidToTest(self, student_id):
-        """Ask server to match given student_id to a test-number.
-
-        Returns:
-            list: either ``[True, test_number]`` or
-            ``[False, 'Cannot find test with that student id']``.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/plom/admin/sidToTest",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "sid": student_id,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
     def uploadTestPage(
         self, code, test, page, version, f, md5sum, bundle, bundle_order
     ):
