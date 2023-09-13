@@ -9,12 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Absolute rubrics are no longer considered experimental and can be created in the Add
+  Rubric dialog by default.
 
 ### Changed
+* The legacy `sidToTest` API call (rarely used) now reports whether the paper is IDed
+  or prenamed.  This is documented in `msgr.sid_to_paper_number()`.
+* Many next-gen server changes.
 
 ### Fixed
-* Fix regrading on next-gen servers.
+* Client: crash from invalid version restrictions specified in the Add Rubric dialog.
 * Legacy server was not creating backup files on regrade since sometime in 2022.
+* Fix regrading on next-gen servers.
+* Client: rubric tabs now hide properly when all rubrics inside them are hidden.
 
 
 ## [0.14.1] - 2023-09-01
