@@ -663,7 +663,7 @@ class AddRubricBox(QDialog):
         Maintenance note: see also the RegExp validator of the
         LineEdit which must be kept in sync with this.  If they
         do not match, we risk getting ValueError from the int
-        converstion here.
+        conversion here.
         """
         if not self.version_specific_cb.isChecked():
             return []
