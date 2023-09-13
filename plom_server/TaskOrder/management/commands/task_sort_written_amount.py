@@ -152,37 +152,16 @@ class Command(BaseCommand):
             #     cv.imwrite(f"TEST_ORIG_{paper_num}.jpg", image)
             #     cv.imwrite(f"TEST_THRESH_{paper_num}.jpg", threshold_im)
 
-        pixel_avgs = {}
-
-        min = -1
-        max = 0
-
         # get the average of the pixel sums for each paper and question number
+        pixel_avgs = {}
         for (paper_number, question_num), list_of_th in imgs_threshold_list.items():
             # avereage of the pixel sums for all pages of the same question
             avg = np.average(list_of_th)
             pixel_avgs[(paper_number, question_num)] = avg
 
-            # get the min and max of the averages for mapping to a priority value
-            if avg > max:
-                max = avg
-            if avg < min or min == -1:
-                min = avg
-            if min == -1:
-                min = avg
-
-        min_out, max_out = 1000, 0
-        if reverse:
-            min_out, max_out = max_out, min_out
-
-        mapped = {}
-        for (paper_number, question_num), pixel_sum in pixel_avgs.items():
-            # map the average pixel sum to a priority value
-            mapped[(paper_number, question_num)] = np.interp(
-                pixel_sum, (min, max), (min_out, max_out)
-            )
-
-        sorted_imgs = dict(sorted(mapped.items(), key=lambda item: item[1]))
+        sorted_imgs = dict(
+            sorted(pixel_avgs.items(), key=lambda item: item[1], reverse=reverse),
+        )
 
         filename = f"q{question_number}_"
         if question_version != 0:
@@ -194,7 +173,9 @@ class Command(BaseCommand):
         with open(filename, "w") as f:
             writer = csv.writer(f)
             writer.writerow(["Paper Number", "Question Number", "Priority Value"])
-            for (paper_number, question_number), th_sum in sorted_imgs.items():
-                writer.writerow([paper_number, question_number, th_sum])
+            for i, (k, th_sum) in enumerate(sorted_imgs.items()):
+                paper_number, question_number = k  # unpack key
+                # TODO: could save grey value th_sum in new column...
+                writer.writerow((paper_number, question_number, i))
 
         print(f"Saved to {filename}")
