@@ -1,3 +1,9 @@
+<!--
+__copyright__ = "Copyright (C) 2023 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2023 Colin B. Macdonald"
+__license__ = "AGPL-3.0-or-later"
+-->
+
 # Processing homework
 
 This document outlines how we might Plom to mark homework.
