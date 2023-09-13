@@ -313,13 +313,18 @@ class AddRubricBox(QDialog):
         lay.addWidget(cb)
         self.version_specific_cb = cb
         le = QLineEdit()
-        re = r"^\s*(\d+\s*,\s*)*(\d+)\s*$"
-        #       │  ╰──┬───────╯│╰─┬─╯└ trailing whitespace
-        #       │     │        │  └ final number
-        #       │     │        └ can repeat
-        #       │     └ number and comma
-        #       └ leading whitespace
 
+        # Regular expression: to be kept in-sync with get_versions_list()
+        #
+        #   whitespace only or...
+        #       ╭─┴─╮
+        re = r"(^\s*$|^\s*(\d+\s*,\s*)*(\d+)\s*$)"
+        #             │   ╰──┬───────╯│╰─┬─╯└ trailing whitespace
+        #             │      │        │  └ final number
+        #             │      │        └ can repeat
+        #             │      └ number and comma
+        #             └ leading whitespace
+        #
         # "1, 2,3" acceptable; "1,2, " intermediate; ",2" unacceptable
         le.setValidator(QRegularExpressionValidator(QRegularExpression(re), self))
         lay.addWidget(le)
@@ -649,6 +654,28 @@ class AddRubricBox(QDialog):
             params.append((param, values))
         return params
 
+    def get_versions_list(self) -> List[int]:
+        """Extract the version-specific list as a list of ints.
+
+        If the input of the textbox is empty, or not acceptable
+        just return an empty list (meaning no version restriction).
+
+        Maintenance note: see also the RegExp validator of the
+        LineEdit which must be kept in sync with this.  If they
+        do not match, we risk getting ValueError from the int
+        converstion here.
+        """
+        if not self.version_specific_cb.isChecked():
+            return []
+        if not self.version_specific_le.hasAcceptableInput():
+            return []
+        _vers = self.version_specific_le.text()
+        _vers = _vers.strip("[]")
+        _vers = _vers.strip()
+        if _vers:
+            return [int(x) for x in _vers.split(",")]
+        return []
+
     def add_new_group(self):
         groups = []
         for n in range(self.group_combobox.count()):
@@ -720,11 +747,7 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
-        if (
-            self.version_specific_le.text()
-            and not self.version_specific_le.hasAcceptableInput()
-        ):
-            # TODO: maybe empty string should be acceptable too, avoid special case?
+        if not self.version_specific_le.hasAcceptableInput():
             WarnMsg(
                 self, '"Versions" must be a comma-separated list of positive integers.'
             ).exec()
@@ -824,12 +847,7 @@ class AddRubricBox(QDialog):
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
 
-        vers: List[int] = []
-        if self.version_specific_cb.isChecked():
-            _vers = self.version_specific_le.text()
-            _vers = _vers.strip("[]")
-            if _vers:
-                vers = [int(x) for x in _vers.split(",")]
+        vers = self.get_versions_list()
 
         params = self.get_parameters()
 
