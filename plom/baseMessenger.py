@@ -735,6 +735,9 @@ class BaseMessenger:
     def sid_to_paper_number(self, student_id) -> Tuple[bool, Union[int, str], str]:
         """Ask server to match given student_id to a test-number.
 
+        This is callable only by "manager" and "scanner" users and currently
+        only implemented on legacy servers.
+
         The test number could be b/c the paper is IDed.  Or it could be a
         prediction (a confident one, currently "prename").  The third
         argument can be used to distinguish which case (if the server is
