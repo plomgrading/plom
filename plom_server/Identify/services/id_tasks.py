@@ -45,6 +45,11 @@ class IdentifyTaskService:
             old_task.status = PaperIDTask.OUT_OF_DATE
             old_task.assigned_user = None
             old_task.save()
+            # make sure that any now outdated actions are marked as invalid.
+            if old_task.latest_action:
+                prev_action = old_task.latest_action
+                prev_action.is_valid = False
+                prev_action.save()
 
         task = PaperIDTask(paper=paper)
         task.save()
