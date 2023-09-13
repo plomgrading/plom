@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import csv
+
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.models import QuestionPage, Specification
+# TODO: why model here?  Maybe there is some service to talk to instead?
+from Papers.models import QuestionPage
+from Papers.services import SpecificationService
 
 
 class Command(BaseCommand):
@@ -42,7 +46,7 @@ class Command(BaseCommand):
         question_number = options["q_n"]
         question_version = options["q_v"]
         reverse = options["reverse"]
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         if question_number is None:
             raise CommandError("Please provide one question number.")
