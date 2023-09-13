@@ -191,16 +191,16 @@
 	      type: 'bar',
 	      label: 'v {{ver}}',
               data: {{data.hist_values}},
-              borderWidth: 3  
+              borderWidth: 3
 	  },{
 	      type: 'line',
 	      label: 'All',
               data: {{data.hist_all_version_values}},
               borderWidth: 3,
 	      tension: 0.075,
-	      
+
 	  }],
-	labels: {{hist_keys}},	  
+	labels: {{hist_keys}},
       },
         options: {
 	  plugins: {
@@ -215,9 +215,9 @@
                 }
 	  }
       }
-      
+
     });
-	    
+
             </script>
         {% endfor %}
     {% endblock main_content %}

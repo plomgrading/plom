@@ -192,16 +192,16 @@
 	      type: 'bar',
 	      label: '{{data.username}}',
               data: {{data.hist_values}},
-              borderWidth: 3  
+              borderWidth: 3
 	  },{
 	      type: 'line',
 	      label: 'Everyone',
               data: {{data.hist_everyone_values}},
               borderWidth: 3,
 	      tension: 0.075,
-	      
+
 	  }],
-	labels: {{hist_keys}},	  
+	labels: {{hist_keys}},
       },
         options: {
 	  plugins: {
@@ -216,9 +216,9 @@
                 }
 	  }
       }
-      
+
     });
-	    
+
                 </script>
             {% endfor %}
         {% endblock main_content %}
