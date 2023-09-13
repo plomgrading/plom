@@ -235,7 +235,6 @@ class Annotator(QWidget):
         #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
         # )
         features = (
-            "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
             "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
             "Viewing cat pics.",

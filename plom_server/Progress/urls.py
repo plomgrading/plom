@@ -11,10 +11,14 @@ from Progress.views import (
     ScanCompleteView,
     ScanIncompleteView,
     ScanDiscardView,
+    ScanReassignView,
     PushedImageView,
     PushedImageWrapView,
     ProgressIdentifyHome,
     ProgressMarkHome,
+    ProgressMarkStatsView,
+    ProgressMarkDetailsView,
+    ProgressMarkVersionCompareView,
     ProgressUserInfoHome,
     IDImageView,
     ClearID,
@@ -37,6 +41,11 @@ urlpatterns = [
         name="progress_scan_discard",
     ),
     path(
+        "scan/reassign/<int:img_pk>",
+        ScanReassignView.as_view(),
+        name="progress_reassign_discard",
+    ),
+    path(
         "scan/pushed_img/<int:img_pk>",
         PushedImageView.as_view(),
         name="progress_pushed_img",
@@ -50,6 +59,21 @@ urlpatterns = [
         "mark/overview/",
         ProgressMarkHome.as_view(),
         name="progress_mark_home",
+    ),
+    path(
+        "mark/stats/<int:question>/<int:version>",
+        ProgressMarkStatsView.as_view(),
+        name="progress_mark_stats",
+    ),
+    path(
+        "mark/details/<int:question>/<int:version>",
+        ProgressMarkDetailsView.as_view(),
+        name="progress_mark_details",
+    ),
+    path(
+        "mark/compare/<int:question>",
+        ProgressMarkVersionCompareView.as_view(),
+        name="progress_mark_version_compare",
     ),
     path(
         "identify/overview/",

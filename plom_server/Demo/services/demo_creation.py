@@ -15,7 +15,6 @@ else:
     import importlib_resources as resources
 
 from django.core.management import call_command
-from django.conf import settings
 
 from Scan.models import ExtraStagingImage
 from Papers.services import SpecificationService
@@ -35,7 +34,7 @@ class DemoCreationService:
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
         )
-        spec_path = config["test_spec"]
+        spec_path = config.test_spec
         if spec_path == "demo":
             call_command("plom_demo_spec")
         else:
@@ -45,20 +44,14 @@ class DemoCreationService:
                 f"{spec_path}",
             )
 
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Specification",
-            f"-o{fixdir}/test_spec.json",
-        )
-
-        if "test_sources" in config.keys():
-            sources = config["test_sources"]
+        if config.test_sources:
+            sources = config.test_sources
+            if sources == "demo":
+                sources = [
+                    resources.files(useful_files) / "test_version1.pdf",
+                    resources.files(useful_files) / "test_version2.pdf",
+                ]
             for i, src in enumerate(sources):
-                if src == "demo":
-                    src = resources.files(useful_files) / f"test_version{i+1}.pdf"
                 call_command(
                     "plom_preparation_test_source",
                     "upload",
@@ -69,11 +62,11 @@ class DemoCreationService:
             print("No test sources specified. Stopping.")
             return
 
-        if "prenaming" in config.keys() and config["prenaming"]:
+        if config.prenaming_enabled:
             call_command("plom_preparation_prenaming", enable=True)
 
-        if "classlist" in config.keys():
-            f = config["classlist"]
+        if config.classlist:
+            f = config.classlist
             if f == "demo":
                 f = resources.files(useful_files) / "cl_for_demo.csv"
             call_command(
@@ -82,50 +75,44 @@ class DemoCreationService:
                 f,
             )
 
-        if "num_to_produce" in config.keys():
-            n_to_produce = config["num_to_produce"]
+        if (
+            config.num_to_produce is not None
+        ):  # TODO: users should be able to specify path to custom qvmap
+            n_to_produce = config.num_to_produce
             call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
         else:
             print("No papers to produce. Stopping.")
             return
 
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Preparation",
-            f"-o{fixdir}/preparation.json",
-        )
-
     def build_db_and_papers(self):
         print("Populating database in background")
-        call_command("plom_papers", "build_db", "manager")
-
-        fixdir = settings.FIXTURE_DIRS[0]
-        fixdir.mkdir(exist_ok=True)
-        call_command(
-            "dumpdata",
-            "--natural-foreign",
-            "Papers.Paper",
-            "--exclude=Papers.FixedPage",
-            "--exclude=Papers.IDPage",
-            f"-o{fixdir}/papers.json",
-        )
+        call_command("plom_papers", "build_db")
 
         call_command("plom_preparation_extrapage", "build")
+        call_command("plom_preparation_scrap_paper", "build")
         call_command("plom_build_papers", "--start-all")
 
     def wait_for_papers_to_be_ready(self):
         py_man_ep = "python3 manage.py plom_preparation_extrapage"
+        py_man_sp = "python3 manage.py plom_preparation_scrap_paper"
         py_man_papers = "python3 manage.py plom_build_papers --status"
+
         ep_todo = True
+        sp_todo = True
         papers_todo = True
 
         sleep(1)
         while True:
             if ep_todo:
                 out_ep = subprocess.check_output(split(py_man_ep)).decode("utf-8")
-                if "complete" in out_ep:
+                if "Complete" in out_ep:
                     print("Extra page is built")
+
+                    ep_todo = False
+            if sp_todo:
+                out_sp = subprocess.check_output(split(py_man_sp)).decode("utf-8")
+                if "complete" in out_sp:
+                    print("Scrap paper is built")
 
                     ep_todo = False
             if papers_todo:
@@ -139,8 +126,10 @@ class DemoCreationService:
                 print("Still waiting for pdf production tasks. Sleeping.")
                 sleep(1)
             else:
+                call_command("plom_preparation_status", set=["finished"])
+                print("Test preparation marked as finished.")
                 print(
-                    "Extra page and papers all built - continuing to next step of demo."
+                    "Extra page, Scrap paper, and papers all built - continuing to next step of demo."
                 )
                 break
 
@@ -251,10 +240,10 @@ class DemoCreationService:
 
     def map_extra_pages(self, config):
         """Map extra pages that are in otherwise fully fixed-page bundles."""
-        if "bundles" not in config.keys():
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "extra_page_papers" in bundle.keys():
@@ -263,7 +252,7 @@ class DemoCreationService:
                     staging_image__bundle__slug=bundle_slug,
                 ).order_by("staging_image__bundle_order")
 
-                n_questions = SpecificationService().get_n_questions()
+                n_questions = SpecificationService.get_n_questions()
 
                 for i, ex_paper in enumerate(extra_page_papers):
                     paper_extra_pages = extra_pages[i * 2 : i * 2 + 2]
@@ -284,10 +273,10 @@ class DemoCreationService:
                         )
 
     def map_pages_to_discards(self, config):
-        if "bundles" not in config.keys():
+        if config.bundles is None:
             return
 
-        bundles = config["bundles"]
+        bundles = config.bundles
         for i, bundle in enumerate(bundles):
             bundle_slug = f"fake_bundle{i+1}"
             if "discard_pages" in bundle.keys():

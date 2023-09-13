@@ -3,7 +3,6 @@
 # Copyright (C) 2018-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-import imghdr
 from pathlib import Path
 import tempfile
 
@@ -100,15 +99,12 @@ def _download_annotation_images(msgr, tmpdir, num_questions, t) -> list:
     """
     marked_pages = []
     for q in range(1, num_questions + 1):
-        obj = msgr.get_annotations_image(t, q)
-        # TODO: imghdr is deprecated
-        im_type = imghdr.what(None, h=obj)
+        annot_img_info, annot_img_bytes = msgr.get_annotations_image(t, q)
+        im_type = annot_img_info["extension"]
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
-        if not im_type:
-            raise PlomSeriousException(f"Could not identify image type: {filename}")
         marked_pages.append(filename)
         with open(filename, "wb") as f:
-            f.write(obj)
+            f.write(annot_img_bytes)
 
     return marked_pages
 

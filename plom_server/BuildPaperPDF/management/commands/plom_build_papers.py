@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
 
@@ -65,7 +66,7 @@ class Command(BaseCommand):
             )
             return
 
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
 
@@ -74,7 +75,7 @@ class Command(BaseCommand):
 
     def start_specific_task(self, paper_number):
         bp_service = BuildPapersService()
-        spec = SpecificationService().get_the_spec()
+        spec = SpecificationService.get_the_spec()
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
 
@@ -97,7 +98,7 @@ class Command(BaseCommand):
                 rev_stat.setdefault(state, []).append(n)
             for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
-            if len(rev_stat.get("complete", [])) == len(stats):
+            if len(rev_stat.get("Complete", [])) == len(stats):
                 self.stdout.write("All papers are now built")
         else:
             self.stdout.write("No queued tasks.")

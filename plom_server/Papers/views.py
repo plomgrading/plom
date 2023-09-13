@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -17,6 +17,7 @@ from Papers.services import (
 from Papers.models import CreatePaperTask
 from Preparation.services import PQVMappingService, StagingStudentService
 from BuildPaperPDF.services import BuildPapersService
+from Finish.services import ReassembleService
 
 
 class CreateTestPapers(ManagerRequiredView):
@@ -31,9 +32,8 @@ class CreateTestPapers(ManagerRequiredView):
         qvs = PQVMappingService()
 
         qvmap = qvs.get_pqv_map_dict()
-        username = request.user.username
         # by default we do not create the papers in background
-        status, err = pcs.add_all_papers_in_qv_map(qvmap, username, background=False)
+        status, err = pcs.add_all_papers_in_qv_map(qvmap, background=False)
         # TODO - if we want to do this in the background, then we
         # cannot build pdf tasks at the same time, since they need the
         # classlist...  else we have to pass required classlist info
@@ -45,6 +45,8 @@ class CreateTestPapers(ManagerRequiredView):
         # for that we need the classlist, hence the following.
         classdict = StagingStudentService().get_classdict()
         BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
+        # also create all the reassemble tasks
+        ReassembleService().create_all_reassembly_tasks()
 
         progress_url = reverse("papers_progress")
         return HttpResponse(

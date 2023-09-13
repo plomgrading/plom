@@ -7,7 +7,6 @@ from Visualization.views import *
 
 
 urlpatterns = [
-    path("", VisualizationLandingView.as_view(), name="visualization_landing"),
     path("histogram/", HistogramView.as_view(), name="histogram"),
     path("heat_map/", HeatMapView.as_view(), name="heat_map"),
 ]

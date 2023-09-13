@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
@@ -20,6 +20,8 @@ from ..services import (
     StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
+    ScrapPaperService,
+    TestPreparedSetting,
 )
 
 
@@ -43,6 +45,9 @@ class PreparationLandingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
+            "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
+            "is_test_prepared": TestPreparedSetting.is_test_prepared(),
+            "can_status_be_set_todo": TestPreparedSetting.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -66,8 +71,7 @@ class PreparationLandingView(ManagerRequiredView):
             )
 
         spec = StagingSpecificationService()
-        valid_spec = SpecificationService()
-        if valid_spec.is_there_a_spec():
+        if SpecificationService.is_there_a_spec():
             context.update(
                 {
                     "valid_spec": True,
@@ -77,7 +81,9 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_shortname": spec.get_short_name(),
                     "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
-                    "is_spec_the_same": spec.compare_spec(valid_spec.get_the_spec()),
+                    "is_spec_the_same": spec.compare_spec(
+                        SpecificationService.get_the_spec()
+                    ),
                 }
             )
         else:
@@ -106,8 +112,7 @@ class PreparationLandingView(ManagerRequiredView):
 
 class LandingResetSpec(ManagerRequiredView):
     def delete(self, request):
-        spec_service = SpecificationService()
-        spec_service.remove_spec()
+        SpecificationService.remove_spec()
 
         staging_spec = StagingSpecificationService()
         staging_spec.reset_specification()
@@ -149,4 +154,13 @@ class LandingResetQVmap(ManagerRequiredView):
     def delete(self, request):
         qv_service = PQVMappingService()
         qv_service.remove_pqv_map()
+        return HttpResponseClientRefresh()
+
+
+class LandingFinishedToggle(ManagerRequiredView):
+    """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
+
+    def post(self, request):
+        current_setting = TestPreparedSetting.is_test_prepared()
+        TestPreparedSetting.set_test_prepared(not current_setting)
         return HttpResponseClientRefresh()

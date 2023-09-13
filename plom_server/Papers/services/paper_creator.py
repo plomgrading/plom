@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -30,27 +30,18 @@ log = logging.getLogger("PaperCreatorService")
 @db_task(queue="tasks")
 @transaction.atomic
 def _create_paper_with_qvmapping(
-    spec: Dict, paper_number: int, qv_mapping: Dict, username: str
+    spec_obj: Specification, paper_number: int, qv_mapping: Dict
 ) -> None:
     """Creates a paper with the given paper number and the given question-version mapping.
 
     Also initializes prename ID predictions in DB, if applicable.
 
     Args:
-        spec: The test specification
+        spec_obj: The test specification
         paper_number: The number of the paper being created
         qv_mapping: Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
-        username: Name of user to be associated with prename predictions
-            created during paper creation.
-
-    Raises:
-        ValueError: if provided username does not have a valid User object in DB.
     """
-    # private to prevent circular imports
-    from Preparation.services import StagingStudentService
-    from Identify.services import IDReaderService
-
     paper_obj = Paper(paper_number=paper_number)
     try:
         paper_obj.save()
@@ -62,30 +53,20 @@ def _create_paper_with_qvmapping(
     # TODO - idpage and dnmpage versions might be not one in future.
     # For time being assume that IDpage and DNMPage are always version 1.
     id_page = IDPage(
-        paper=paper_obj, image=None, page_number=int(spec["idPage"]), version=1
+        paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
     )
     id_page.save()
 
-    for dnm_idx in spec["doNotMarkPages"]:
+    for dnm_idx in spec_obj.doNotMarkPages:
         dnm_page = DNMPage(
             paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
         )
         dnm_page.save()
 
-    student_service = StagingStudentService()
-    prename_sid = student_service.get_prename_for_paper(paper_number)
-    if prename_sid:
-        try:
-            user = User.objects.get(username__iexact=username)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"User '{username}' does not exist") from e
-        id_reader_service = IDReaderService()
-        id_reader_service.add_prename_ID_prediction(user, prename_sid, paper_number)
-
-    for q_id, question in spec["question"].items():
-        index = int(q_id)
+    for index, question in spec_obj.question.items():
+        index = int(index)
         version = qv_mapping[index]
-        for q_page in question["pages"]:
+        for q_page in question.pages:
             question_page = QuestionPage(
                 paper=paper_obj,
                 image=None,
@@ -104,18 +85,17 @@ class PaperCreatorService:
 
     def __init__(self):
         try:
-            self.spec = Specification.load().spec_dict
+            self.spec_obj = Specification.load()
+            # want the db object not the spec as a dict
         except Specification.DoesNotExist as e:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             ) from e
 
     @transaction.atomic
-    def create_paper_with_qvmapping(
-        self, paper_number: int, qv_mapping: Dict, username: str
-    ) -> None:
+    def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
         paper_task = _create_paper_with_qvmapping(
-            self.spec, paper_number, qv_mapping, username
+            self.spec_obj, paper_number, qv_mapping
         )
         paper_task_obj = CreatePaperTask(
             huey_id=paper_task.id, paper_number=paper_number
@@ -124,15 +104,13 @@ class PaperCreatorService:
         paper_task_obj.save()
 
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict, username: str, background: bool = True
+        self, qv_map: Dict, *, background: bool = True
     ) -> Tuple[bool, List]:
         """Build all the papers given by the qv-map.
 
         Args:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
-            username: Name of user to be associated with prename predictions
-                created during paper creation.
 
         Keyword Args:
             background (optional, bool): Run in the background. If false,
@@ -147,10 +125,10 @@ class PaperCreatorService:
         for paper_number, qv_mapping in qv_map.items():
             try:
                 if background:
-                    self.create_paper_with_qvmapping(paper_number, qv_mapping, username)
+                    self.create_paper_with_qvmapping(paper_number, qv_mapping)
                 else:
                     _create_paper_with_qvmapping.call_local(
-                        self.spec, paper_number, qv_mapping, username
+                        self.spec_obj, paper_number, qv_mapping
                     )
             except ValueError as err:
                 errors.append((paper_number, err))

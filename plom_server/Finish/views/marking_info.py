@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Colin B. Macdonald
 
 import csv
+import json
 from io import StringIO
 
 import arrow
@@ -11,21 +14,25 @@ from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
-from .services import StudentMarkService, TaMarkingService, ReassembleService
-from .forms import StudentMarksFilterForm
+from ..services import StudentMarkService, TaMarkingService, ReassembleService
+from ..services import DataExtractionService, D3Service
+from ..forms import StudentMarksFilterForm
 
 
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
-    ras = ReassembleService()
-    mts = MarkingTaskService()
-    sms = StudentMarkService()
-    smff = StudentMarksFilterForm()
-    scs = StagingSpecificationService()
-    tms = TaMarkingService()
+    def __init__(self):
+        self.ras = ReassembleService()
+        self.mts = MarkingTaskService()
+        self.sms = StudentMarkService()
+        self.smff = StudentMarksFilterForm()
+        self.scs = StagingSpecificationService()
+        self.tms = TaMarkingService()
+        self.des = DataExtractionService()
+        self.d3s = D3Service()
 
     template = "Finish/marking_landing.html"
 
@@ -48,15 +55,26 @@ class MarkingInformationView(ManagerRequiredView):
             std_times_spent,
         ) = self.tms.all_marking_times_for_web(n_questions)
 
-        days_estimate = [
-            self.tms.get_estimate_days_remaining(q) for q in range(1, n_questions + 1)
-        ]
         hours_estimate = [
             self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
         ]
 
         total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
         all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
+
+        # histogram of grades per question
+        question_avgs = self.des.get_average_grade_on_all_questions()
+        grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
+            question_avgs, "Question number", "Grade", "Quesion vs Grade"
+        )
+        grades_hist_data = json.dumps(grades_hist_data)
+
+        # heatmap of correlation between questions
+        corr = self.des._get_question_correlation_heatmap_data().values
+        corr_heatmap_data = self.d3s.convert_correlation_to_d3_heatmap_format(
+            corr, "Question correlation", "Question", "Question"
+        )
+        corr_heatmap_data = json.dumps(corr_heatmap_data)
 
         context.update(
             {
@@ -70,7 +88,8 @@ class MarkingInformationView(ManagerRequiredView):
                 "all_marked": all_marked,
                 "student_marks_form": self.smff,
                 "hours_estimate": hours_estimate,
-                "days_estimate": days_estimate,
+                "grades_hist_data": grades_hist_data,
+                "corr_heatmap_data": corr_heatmap_data,
             }
         )
 
@@ -82,7 +101,7 @@ class MarkingInformationView(ManagerRequiredView):
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         # create csv file headers
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
@@ -118,7 +137,7 @@ class MarkingInformationView(ManagerRequiredView):
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         ta_info = tms.build_csv_data()
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         keys = tms.get_csv_header()
         response = None

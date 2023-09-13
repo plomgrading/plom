@@ -5,7 +5,6 @@
 # Copyright (C) 2022 Chris Jin
 
 import hashlib
-import imghdr
 import json
 import os
 import logging
@@ -99,7 +98,8 @@ def MreturnMarkedTask(
     question_number,
     version_number,
     mark,
-    annotated_image,
+    annot_img_bytes,
+    annot_img_type,
     plomdat,
     rubrics,
     time_spent_marking,
@@ -115,8 +115,9 @@ def MreturnMarkedTask(
         question_number (int): Marked queston number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
-        annotated_image (bytearray): Marked image of question.  Currently
+        annot_img_bytes (bytearray): Marked image of question.  Currently
             accepts jpeg or png.
+        annot_img_type (str): extension "jpg" or "png".
         plomdat (bytearray): Plom data file used for saving marking information in
             editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
@@ -132,21 +133,13 @@ def MreturnMarkedTask(
         `[True, number of graded tasks, total number of tasks]`.
     """
     # do sanity checks on incoming annotation image file
-    # first the image header to determine the filetype and check if admissible
-    imgtype = imghdr.what(None, h=annotated_image)
-    if imgtype not in ("png", "jpg", "jpeg"):
-        errstr = f'Malformed annotated image file: expected png/jpg got "{imgtype}"'
-        log.error(errstr)
-        return [False, errstr]
-
-    # Also check the md5sum matches
-    md5 = hashlib.md5(annotated_image).hexdigest()
+    md5 = hashlib.md5(annot_img_bytes).hexdigest()
     if md5 != annotated_image_md5:
         errstr = f"Checksum mismatch: annotated image data has {md5} but client said {annotated_image_md5}"
         log.error(errstr)
         return [False, errstr]
 
-    annotated_filename = f"markedQuestions/G{task_code[1:]}.{imgtype}"
+    annot_img_filename = f"markedQuestions/G{task_code[1:]}.{annot_img_type}"
 
     # Sanity check the plomfile
     # currently it comes as bytes, although we should refactor this
@@ -174,7 +167,7 @@ def MreturnMarkedTask(
         task_code,
         username,
         mark,
-        annotated_filename,
+        annot_img_filename,
         plomdat,
         rubrics,
         time_spent_marking,
@@ -188,7 +181,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in annotated_filename:
+    for filename in (annot_img_filename,):
         if os.path.isfile(filename):
             # start with suffix 0 and keep incrementing until get a safe suffix.
             suffix = 0
@@ -201,8 +194,8 @@ def MreturnMarkedTask(
             os.rename(filename, newname)
 
     # now write in the files
-    with open(annotated_filename, "wb") as file_header:
-        file_header.write(annotated_image)
+    with open(annot_img_filename, "wb") as file_header:
+        file_header.write(annot_img_bytes)
 
     # return ack with current counts.
     return [

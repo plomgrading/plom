@@ -3,31 +3,33 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
-import imghdr
 import json
 import pathlib
 import random
-from typing import Union, Dict
+from typing import Tuple, Union, Dict, Optional
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
 from django.db import transaction
 
 from plom import is_valid_tag_text
 
 from Preparation.services import PQVMappingService
-from Papers.services import SpecificationService
+from Papers.services import ImageBundleService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
+from . import marking_priority, mark_task
 from ..models import (
     MarkingTask,
     MarkingTaskTag,
+    MarkingTaskPriority,
     Annotation,
     AnnotationImage,
 )
@@ -55,10 +57,24 @@ class MarkingTaskService:
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
         # mark other tasks with this code as 'out of date'
+        # and set the assigned user to None
         previous_tasks = MarkingTask.objects.filter(code=task_code)
         for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
             old_task.status = MarkingTask.OUT_OF_DATE
+            old_task.assigned_user = None
             old_task.save()
+
+        # get priority of latest old task to assign to new task, but
+        # if no previous priority exists, set a new value based on the current strategy
+        latest_old_task = previous_tasks.order_by("-time").first()
+        if latest_old_task:
+            priority = latest_old_task.marking_priority
+        else:
+            strategy = marking_priority.get_mark_priority_strategy()
+            if strategy == MarkingTaskPriority.PAPER_NUMBER:
+                priority = Paper.objects.count() - paper.paper_number
+            else:
+                priority = random.randint(0, 1000)
 
         the_task = MarkingTask(
             assigned_user=user,
@@ -66,28 +82,12 @@ class MarkingTaskService:
             paper=paper,
             question_number=question_number,
             question_version=question_version,
+            marking_priority=priority,
         )
         the_task.save()
         return the_task
 
-    def init_all_tasks(self):
-        """Initialize all of the marking tasks for an entire exam, with null users."""
-        spec_service = SpecificationService()
-        if not spec_service.is_there_a_spec():
-            raise RuntimeError("The server does not have a spec.")
-
-        spec = spec_service.get_the_spec()
-        n_questions = spec["numberOfQuestions"]
-
-        all_papers = Paper.objects.all()
-        all_papers = all_papers.order_by("paper_number")[
-            :10
-        ]  # TODO: just the first ten!
-        for p in all_papers:
-            for i in range(1, n_questions + 1):
-                self.create_task(p, i)
-
-    def get_marking_progress(self, version, question):
+    def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -95,7 +95,7 @@ class MarkingTaskService:
             version (int)
 
         Returns:
-            tuple: two integers, first the number of marked papers for
+            two integers, first the number of marked papers for
             this question/version and the total number of papers for
             this question/version.
         """
@@ -113,63 +113,6 @@ class MarkingTaskService:
 
         return (completed.count(), total.count())
 
-    def get_latest_task(self, paper_number, question_number) -> MarkingTask:
-        """Get a marking task from its paper number and question number.
-
-        Args:
-            paper_number: int
-            question_number: int
-
-        Returns:
-            The MarkingTask.
-
-        Raises:
-            ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
-        """
-        try:
-            paper = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist as e:
-            # reraise with a more detailed error message
-            raise ObjectDoesNotExist(
-                f"Task for paper {paper_number} question {question_number} does not exist"
-            ) from e
-        r = (
-            MarkingTask.objects.filter(paper=paper, question_number=question_number)
-            .order_by("-time")
-            .first()
-        )
-        # Issue #2851, special handling of the None return
-        if r is None:
-            raise ObjectDoesNotExist(
-                f"Task does not exist: we have paper {paper_number} but "
-                f"not question index {question_number}"
-            )
-        return r
-
-    def unpack_code(self, code):
-        """Return a tuple of (paper_number, question_number) from a task code string.
-
-        Args:
-            code (str): a task code, e.g. q0001g1. Requires code to be at least 4 characters
-            long. Requires code to start with "q" and contain a "g" somewhere after the second
-            character, but not be the last character and the rest of the characters to be numeric.
-        """
-        assert len(code) >= len("q0g0")
-        assert code[0] == "q"
-
-        split_index = code.find("g", 2)
-
-        # g must be present
-        assert split_index != -1
-        # g cannot be the last character
-        assert split_index != len(code) - 1
-
-        paper_number = int(code[1:split_index])
-        question_number = int(code[split_index + 1 :])
-
-        return paper_number, question_number
-
     def get_task_from_code(self, code: str) -> MarkingTask:
         """Get a marking task from its code.
 
@@ -184,11 +127,11 @@ class MarkingTaskService:
             RuntimeError: code valid but task does not exist.
         """
         try:
-            paper_number, question_number = self.unpack_code(code)
+            paper_number, question_number = mark_task.unpack_code(code)
         except AssertionError as e:
             raise ValueError(f"{code} is not a valid task code.") from e
         try:
-            return self.get_latest_task(paper_number, question_number)
+            return mark_task.get_latest_task(paper_number, question_number)
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
@@ -248,6 +191,8 @@ class MarkingTaskService:
     ) -> Union[QuerySet[MarkingTask], None]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If the priority is the same, defer to paper number and then question number.
+
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
@@ -267,67 +212,9 @@ class MarkingTaskService:
         if not available.exists():
             return None
 
-        return available.order_by("-marking_priority").first()
-
-    def set_task_priorities(
-        self,
-        order_by: str = "random",
-        *,
-        custom_order: Union[Dict[tuple[int, int], float], None] = None,
-    ):
-        """Set the marking task priorities.
-
-        Updates the marking task priorities of all remaining TO_DO tasks in the
-        database. If `order_by` is "random", then the tasks are assigned a random
-        priority between 0 and 1000. If `order_by` is "papernum", then the tasks are
-        assigned a priority based on their paper number and question number. If
-        `order_by` is "custom", then the tasks are assigned a priority based on
-        the values in `custom_order`.
-
-        If `order_by` is "custom", then `custom_order` must be provided. It must
-        be a dictionary keyed by tuple (paper_number: int, question: int)
-        containing the corresponding task's priority. If a task is not included in
-        `custom_order`, then it remains the same. If `custom_order` is not a
-        dictionary, then it is ignored.
-
-        Args:
-            order_by: (str) the method to use for ordering the tasks. Options are "random", "papernum", and "custom".
-            custom_order: (dict) a dictionary keyed by tuple (paper_number, question) containing the corresponding task's priority.
-
-        Raises:
-            AssertionError: invalid value for `order_by`.
-        """
-        assert order_by in (
-            "random",
-            "papernum",
-            "custom",
-        ), "Invalid value for order_by"
-        if order_by == "random":
-            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
-            with transaction.atomic():
-                for task in tasks:
-                    task.marking_priority = random.random() * 1000
-                    task.save()
-
-        elif order_by == "papernum":
-            n_papers = Paper.objects.count()
-            tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).select_related(
-                "paper"
-            )
-            with transaction.atomic():
-                for task in tasks:
-                    task.marking_priority = n_papers - task.paper.paper_number
-                    task.save()
-
-        elif order_by == "custom":
-            assert isinstance(
-                custom_order, dict
-            ), "`custom_order` must be of type Dict[tuple[int, int], float]."
-            with transaction.atomic():
-                for k, v in custom_order.items():
-                    task = self.get_latest_task(k[0], k[1])
-                    task.marking_priority = v
-                    task.save()
+        return available.order_by(
+            "-marking_priority", "paper__paper_number", "question_number"
+        ).first()
 
     def are_there_tasks(self):
         """Return True if there is at least one marking task in the database."""
@@ -440,40 +327,6 @@ class MarkingTaskService:
         task.status = MarkingTask.COMPLETE
         task.save()
 
-    @transaction.atomic
-    def save_annotation_image(self, md5sum, annot_img):
-        """Save an annotation image to disk and the database.
-
-        Args:
-            md5sum: (str) the annotation image's hash.
-            annot_img: (InMemoryUploadedFlie) the annotation image file.
-        """
-        imgtype = imghdr.what(None, h=annot_img.read())
-        if imgtype not in ["png", "jpg", "jpeg"]:
-            raise ValidationError(
-                f"Unsupported image type: expected png or jpg, got {imgtype}"
-            )
-        annot_img.seek(0)
-
-        imgs_folder = settings.MEDIA_ROOT / "annotation_images"
-        imgs_folder.mkdir(exist_ok=True)
-        img = AnnotationImage(hash=md5sum)
-        img.save()
-
-        img_path = imgs_folder / f"annotation_{img.pk}.png"
-        img.path = img_path
-        if img_path.exists():
-            raise FileExistsError(
-                f"Annotation image with public key {img.pk} already exists."
-            )
-
-        with open(img_path, "wb") as saved_annot_image:
-            for chunk in annot_img.chunks():
-                saved_annot_image.write(chunk)
-        img.save()
-
-        return img
-
     def validate_and_clean_marking_data(self, user, code, data, plomfile):
         """Validate the incoming marking data.
 
@@ -572,7 +425,7 @@ class MarkingTaskService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
-        task = self.get_latest_task(paper, question)
+        task = mark_task.get_latest_task(paper, question)
         return task.latest_annotation
 
     def get_all_tags(self):
@@ -712,3 +565,61 @@ class MarkingTaskService:
             tag.save()
         except MarkingTask.DoesNotExist:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
+
+    @transaction.atomic
+    def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):
+        """Set the marking task for the given paper/question as OUT_OF_DATE.
+
+        When a page-image is removed or added to a paper/question, any
+        existing annotations are now out of date (since the underlying
+        pages have changed). This function is called when such changes occur.
+
+        Args:
+            paper_number (int): the paper
+            question_number (int): the question
+        Raises:
+            ValueError: when there is no such paper.
+            MultipleObjectsReturned: when there are multiple valid marking tasks
+                for that paper/question. This should not happen unless something
+                has gone seriously wrong.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Cannot find paper {paper_number}")
+
+        ibs = ImageBundleService()
+
+        # now we know there is at least one task (either valid or out of date)
+        valid_tasks = MarkingTask.objects.exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).filter(paper=paper_obj, question_number=question_number)
+        valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
+        # do a integrity check - there can only at most one valid task
+        if valid_task_count > 1:
+            # Note that we should not find ourselves here unless there is a serious error in the code
+            # Any given question should have **at most** one valid task.
+            # If we ever arrive here it indicates that there is a corruption of the database
+            raise MultipleObjectsReturned(
+                f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
+            )
+        # we know there is at most one valid task.
+        if valid_task_count == 1:
+            # there is an "in date" task - get it and set it as out of date
+            task_obj = valid_tasks.get()
+            # set the last id-action as invalid (if it exists)
+            if task_obj.latest_annotation:
+                latest_annotation = task_obj.latest_annotation
+                latest_annotation.is_valid = False
+                latest_annotation.save()
+            # now set status and make assigned user None
+            task_obj.assigned_user = None
+            task_obj.status = MarkingTask.OUT_OF_DATE
+            task_obj.save()
+        else:
+            # there is no "in date" task, so we don't have to mark anything as out of date.
+            pass
+
+        # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
+        if ibs.is_given_paper_question_ready(paper_obj, question_number):
+            self.create_task(paper_obj, question_number)

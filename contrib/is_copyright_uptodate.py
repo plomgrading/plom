@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 """Output the names of files given as args that are not copyright in a given year.
 
@@ -32,7 +33,7 @@ ok_no_copyright = [
     ".mailmap",
     "*/cl_*.csv",
     "*papers_to_rooms.csv",
-    "django/static/*.svg",
+    "plom_server/static/*.svg",
     "testTemplates/idBox*.eps",
     "testTemplates/idBox*.svg",
 ]

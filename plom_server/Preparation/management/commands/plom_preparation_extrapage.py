@@ -21,7 +21,7 @@ class Command(BaseCommand):
         sub_dwn = sub.add_parser("download", help="Download the extra page pdf")
         sub_dwn.add_argument(
             "dest",
-            const="extra_page.pdf",
+            default="extra_page.pdf",
             nargs="?",
             type=str,
         )
@@ -29,10 +29,10 @@ class Command(BaseCommand):
     def build_extra_page(self):
         ep_service = ExtraPageService()
         current_state = ep_service.get_extra_page_task_status()
-        if current_state == "todo":
+        if current_state == "To Do":
             ep_service.build_extra_page_pdf()
             self.stdout.write("Enqueued extra page pdf build")
-        elif current_state == "complete":
+        elif current_state == "Complete":
             self.stdout.write("Extra page pdf has already been built")
         else:
             self.stdout.write(
@@ -42,7 +42,7 @@ class Command(BaseCommand):
     def delete_extra_page(self):
         ep_service = ExtraPageService()
         current_state = ep_service.get_extra_page_task_status()
-        if current_state == "complete":
+        if current_state == "Complete":
             ep_service.delete_extra_page_pdf()
             self.stdout.write("Deleting extra page pdf")
         else:
@@ -51,7 +51,7 @@ class Command(BaseCommand):
     def download_extra_page(self, destination):
         ep_service = ExtraPageService()
         current_state = ep_service.get_extra_page_task_status()
-        if current_state == "complete":
+        if current_state == "Complete":
             self.stdout.write(f"Downloading extra page pdf to {destination}")
             with Path(destination).open("wb") as fh:
                 fh.write(ep_service.get_extra_page_pdf_as_bytes())

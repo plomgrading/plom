@@ -202,7 +202,7 @@ pypi:
     - pip install --upgrade twine wheel setuptools build
     - python3 -m build
     - python3 -m twine check dist/*
-    - python3 -m twine upload dist/*
+    - python3 -m twine upload --verbose dist/*
 
 
 release_job:
@@ -348,17 +348,21 @@ pylint:
 # needs full dependencies, cannot easily run with other early static analysis
 # If exceptions are needed, see "tool.mypy" sections in pyproject.toml
 # Issue #2880: temporarily using 3.9 although our minimum python is 3.8
+# Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
+#       Will make not allowed to fail in the future, once types are more widely adopted in the project
+#       and 3.10 becomes our minimum supported Python version.
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.4.1
+    - python3 -m pip install mypy~=1.5.1
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
     - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
     - mypy plom_server --python-ver 3.9
+  allow_failure: true
 
 
 flake8:
@@ -417,24 +421,17 @@ pydocstyle-server:
 
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
-  services:
-    - postgres:12.2-alpine
-  variables:
-    POSTGRES_DB: "plom_db"
-    POSTGRES_USER: "postgres"
-    POSTGRES_PASSWORD: "postgres"
-    POSTGRES_HOST_AUTH_METHOD: trust
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
     - python3 -m pip install coverage~=7.2.7
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
-    - python3 manage.py plom_demo --no-waiting --randomarker
-    - coverage run --source='.' manage.py test
+    - export PLOM_DATABASE_BACKEND=sqlite
+    - python3 manage.py makemigrations
+    - python3 manage.py migrate
+    - coverage run --source="." manage.py test
     # -i ignores an error caused by openCV's config-3.py file
     - coverage report -i --precision=2
     - coverage xml -i -o django_coverage.xml
@@ -445,6 +442,26 @@ webplom_test:
       coverage_report:
         coverage_format: cobertura
         path: plom_server/django_coverage.xml
+
+
+webplom_demo:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
+    - pushd plom_server
+    - python3 manage.py plom_demo --no-waiting --randomarker
+    - popd
 
 
 # a legacy-only job
@@ -673,7 +690,7 @@ docs_sphinx:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
+    - pip install -r doc/requirements.txt
   script:
     - pushd doc
     - ls
@@ -778,6 +795,7 @@ fedora_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: fedora:38
@@ -809,8 +827,8 @@ fedora_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 
@@ -894,6 +912,7 @@ newOS_newdeps_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: ubuntu:22.04
@@ -916,8 +935,8 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 
@@ -1022,6 +1041,7 @@ minpy_mindeps_webplom:
     POSTGRES_USER: "postgres"
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
   image: python:3.9
@@ -1038,8 +1058,8 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
 

@@ -7,3 +7,4 @@ from .ta_marking_service import TaMarkingService
 from .reassemble_service import ReassembleService
 from .data_extraction_service import DataExtractionService
 from .matplotlib_service import MatplotlibService
+from .d3_service import D3Service

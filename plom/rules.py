@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021-2022 Andrew Rechnitzer
+# Copyright (C) 2023 Philip Loewen
 
 """Utils concerning rules about data, like valid student numbers."""
 
@@ -61,7 +62,7 @@ def is_z_padded_integer(n):
 
 
 def censorStudentNumber(n):
-    """Replace some parts of student number with astericks.
+    """Replace some parts of student number with asterisks.
 
     If it doesn't look like a student number, we don't censor it.
     """
@@ -74,7 +75,7 @@ def censorStudentNumber(n):
 
 
 def censorStudentName(s):
-    """Replace most of a student student name with astericks."""
+    """Replace most of a student name with asterisks."""
     if len(s) <= 3:
         r = s[0] + "*" * 7
     else:

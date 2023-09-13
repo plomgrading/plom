@@ -569,8 +569,6 @@ def get_parser():
             help=f"""
                 Which server to contact, port defaults to {Default_Port}.
                 Also checks the environment variable PLOM_SERVER if omitted.
-                If the WEBPLOM environment variable is set, talk to a Django
-                server instead (EXPERIMENTAL!)
             """,
         )
         sp.add_argument(

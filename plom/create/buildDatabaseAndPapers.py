@@ -88,7 +88,8 @@ def build_papers(
     for n in papernums:
         if int(n) > spec["numberToProduce"]:
             raise ValueError(
-                "Not enough papers to prename everything in the filtered classlist"
+                "Not enough papers to prename everything in the filtered classlist."
+                "  All paper numbers must be less than numberToProduce."
             )
     # make sure there is an equal number of pages in all the source PDFs
     if not check_equal_page_count("sourceVersions"):

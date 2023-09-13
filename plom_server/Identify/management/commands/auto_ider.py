@@ -13,7 +13,7 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from Identify.services import IDReaderService
+from Identify.services import IDReaderService, IdentifyTaskService
 from Preparation.services import StagingStudentService
 
 
@@ -22,6 +22,7 @@ class Command(BaseCommand):
 
     python3 manage.py auto_ider run
     python3 manage.py auto_ider delete --predictor P
+    python3 manage.py auto_ider id_sort_order --increasing (or omitted for decreasing)
     """
 
     help = """
@@ -53,6 +54,33 @@ class Command(BaseCommand):
             self.stdout.write(f"Deleted {num_predictions} predictions by {predictor}.")
         except ValueError as err:
             raise CommandError(err)
+
+    def update_id_sort_order(self, increasing):
+        """Update sort order of ID tasks based on prediction certainties."""
+        id_task_service = IdentifyTaskService()
+        try:
+            id_task_service.update_task_priority_cmd(increasing_cert=increasing)
+        except ValueError as err:
+            raise CommandError(err)
+        if increasing:
+            self.stdout.write(
+                "Successfully updated ID Tasks to be sorted in order of increasing certainty."
+            )
+        else:
+            self.stdout.write(
+                "Successfully updated ID Tasks to be sorted in order of decreasing certainty."
+            )
+
+    def reset_id_sort_order(self):
+        """Update sort order of ID tasks back to zero defaults."""
+        id_task_service = IdentifyTaskService()
+        try:
+            id_task_service.reset_task_priority()
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(
+            "Successfully reset ID Tasks sorting to default (paper_number order)"
+        )
 
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
@@ -141,7 +169,7 @@ class Command(BaseCommand):
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
         for pred in lap_predictions:
-            id_reader_service.add_or_change_ID_prediction(
+            id_reader_service.add_or_change_ID_prediction_cmd(
                 username, pred[0], pred[1], pred[2], "MLLAP"
             )
 
@@ -298,10 +326,46 @@ class Command(BaseCommand):
             """,
         )
 
+        sp_order = sp.add_parser(
+            "id_sort_order",
+            help="Set the sorting order for ID predictions based on certainties.",
+        )
+        grp = sp_order.add_mutually_exclusive_group()
+        grp.add_argument(
+            "--increasing",
+            action="store_true",
+            help="""
+                Sort in order of increasing certainty values.
+                If omitted, sort in order of decreasing certainty values.
+            """,
+        )
+        grp.add_argument(
+            "--decreasing",
+            action="store_false",
+            dest="increasing",
+            help="""
+                Sort in order of decreasing certainty values.
+                This is the default if omitted.
+            """,
+        )
+        grp.add_argument(
+            "--reset",
+            action="store_true",
+            help="""
+                Reset the priorities back to their default values of zero.
+                This returns the IDing tasks to paper_number order.
+            """,
+        )
+
     def handle(self, *args, **options):
         if options["command"] == "run":
             self.run_auto_iding(options["username"])
         elif options["command"] == "delete":
             self.delete_predictions(options["predictor"])
+        elif options["command"] == "id_sort_order":
+            if options["reset"]:
+                self.reset_id_sort_order()
+            else:
+                self.update_id_sort_order(options["increasing"])
         else:
             self.print_help("manage.py", "auto_ider")

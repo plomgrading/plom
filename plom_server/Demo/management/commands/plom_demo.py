@@ -3,7 +3,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
-import os
 import subprocess
 from time import sleep
 from shlex import split
@@ -21,7 +20,7 @@ from ...services import (
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
-    ServerConfigService,
+    ConfigFileService,
 )
 from ... import config_files as demo_config_files
 
@@ -48,10 +47,10 @@ class Command(BaseCommand):
         self,
         dbs: DemoBundleService,
         dhs: DemoHWBundleService,
-        config: dict,
+        config,
         homework_bundles,
     ) -> None:
-        if ServerConfigService().contains_key(config, "bundles"):
+        if config.bundles:
             dbs.scribble_on_exams(config)
 
         for bundle in homework_bundles:
@@ -73,7 +72,7 @@ class Command(BaseCommand):
         self,
         dcs: DemoCreationService,
         dhs: DemoHWBundleService,
-        config: dict,
+        config,
         number_of_bundles,
         homework_bundles,
     ):
@@ -99,20 +98,19 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
-    def post_server_init(self, dcs: DemoCreationService, config: dict, stop_at: str):
+    def post_server_init(self, dcs: DemoCreationService, config, stop_at: str):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        scs = ServerConfigService()
-        if scs.contains_key(config, "bundles"):
-            number_of_bundles = len(config["bundles"])
+        if config.bundles:
+            number_of_bundles = len(config.bundles)
             bundle_service = DemoBundleService()
         else:
             bundle_service = None
             number_of_bundles = 0
 
-        if scs.contains_key(config, "hw_bundles"):
-            homework_bundles = config["hw_bundles"]
+        if config.hw_bundles:
+            homework_bundles = config.hw_bundles
             homework_service = DemoHWBundleService()
         else:
             homework_bundles = []
@@ -124,7 +122,11 @@ class Command(BaseCommand):
 
         assert bundle_service is not None
         assert homework_service is not None
+
         self.create_bundles(bundle_service, homework_service, config, homework_bundles)
+
+        if stop_at == "bundles-created":
+            return
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
         if stop_at == "bundles-uploaded":
@@ -151,14 +153,13 @@ class Command(BaseCommand):
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker3 -w demoMarker3 --partial 50",
         )
-        env = dict(os.environ, WEBPLOM="1")
         for cmd in cmds:
             print(f"RandoMarking!  calling: {cmd}")
-            subprocess.check_call(split(cmd), env=env)
+            subprocess.check_call(split(cmd))
 
         cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
         print(f"RandoIDing!  calling: {cmd}")
-        subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
+        subprocess.check_call(split(cmd))
 
     def wait_for_exit(self):
         while True:
@@ -185,6 +186,7 @@ class Command(BaseCommand):
                 "migrations",
                 "users",
                 "preparation",
+                "bundles-created",
                 "bundles-uploaded",
                 "bundles-read",
                 "bundles-pushed",
@@ -204,6 +206,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Run the plom-client randomarker.",
         )
+        parser.add_argument(
+            "--quick",
+            action="store_true",
+            help="Run a quicker demo with fewer papers and bundles.",
+        )
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
@@ -218,14 +225,18 @@ class Command(BaseCommand):
                 )
 
         config_path = options["config"]
-        config_service = ServerConfigService()
         if config_path is None:
-            config = config_service.read_server_config(
-                resources.files(demo_config_files) / "full_demo_config.toml"
-            )
+            if options["quick"]:
+                config = ConfigFileService.read_server_config(
+                    resources.files(demo_config_files) / "quick_demo_config.toml"
+                )
+            else:
+                config = ConfigFileService.read_server_config(
+                    resources.files(demo_config_files) / "full_demo_config.toml"
+                )
         else:
             try:
-                config = config_service.read_server_config(config_path[0])
+                config = ConfigFileService.read_server_config(config_path[0])
             except Exception as e:
                 raise CommandError(e)
         print(config)
@@ -251,9 +262,7 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation" or not config_service.contains_key(
-            config, "num_to_produce"
-        ):
+        if stop_at == "preparation" or not config.num_to_produce:
             huey_worker_proc.terminate()
             return
 

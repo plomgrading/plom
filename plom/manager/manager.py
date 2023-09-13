@@ -10,7 +10,6 @@
 
 from collections import defaultdict
 import html
-import imghdr
 import logging
 import os
 from pathlib import Path
@@ -1779,12 +1778,10 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i, img_bytes in enumerate(imageList):
-                img_ext = imghdr.what(None, h=img_bytes)
+                img_ext = "unknown_ext"
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
-                if not img_ext:
-                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec() == QDialog.DialogCode.Accepted:
@@ -2367,7 +2364,7 @@ class Manager(QWidget):
         t2 = time()
         log.debug("filterReview: %.3gs waiting for API call", t1 - t0)
         if t2 - t1 > 0.5:
-            log.warn("filterReview: slow UI table build: %.3gs", t2 - t1)
+            log.warning("filterReview: slow UI table build: %.3gs", t2 - t1)
 
     def reviewAnnotated(self):
         ri = self.ui.reviewTW.selectedIndexes()

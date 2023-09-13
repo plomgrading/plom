@@ -9,7 +9,7 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, SpecificationService
 from Papers.models import (
     Bundle,
     Image,
@@ -18,8 +18,10 @@ from Papers.models import (
     DNMPage,
     FixedPage,
     QuestionPage,
+    MobilePage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from Preparation.services import TestPreparedSetting
 from Preparation.models import StagingPQVMapping
 
 
@@ -30,9 +32,21 @@ class ImageBundleTests(TestCase):
 
     def setUp(self):
         # make a spec and a paper
-        self.spec = baker.make(
-            Specification, spec_dict={"question": {"1": {"pages": [1]}}}
-        )
+        spec_dict = {
+            "idPage": 1,
+            "numberOfVersions": 2,
+            "numberOfPages": 5,
+            "totalMarks": 10,
+            "numberOfQuestions": 2,
+            "name": "papers_demo",
+            "longName": "Papers Test",
+            "doNotMarkPages": [2, 5],
+            "question": {
+                "1": {"pages": [3], "mark": 5},
+                "2": {"pages": [4], "mark": 5},
+            },
+        }
+        SpecificationService.store_validated_spec(spec_dict)
         self.user = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
@@ -58,6 +72,9 @@ class ImageBundleTests(TestCase):
             page_number=2,
             version=3,
         )
+
+        # Set preparation as finished
+        TestPreparedSetting.set_test_prepared(True)
 
         return super().setUp()
 
@@ -347,3 +364,42 @@ class ImageBundleTests(TestCase):
             Image.objects.get(fixedpage__page_number=1, fixedpage__paper=paper2).hash,
             img1.image_hash,
         )
+
+    def test_paper_question_ready(self):
+        ibs = ImageBundleService()
+        paper2 = baker.make(Paper, paper_number=2)
+
+        fp_img_1 = baker.make(Image)
+        fp_img_2 = baker.make(Image)
+        mp_img_1 = baker.make(Image)
+        q21a = baker.make(
+            QuestionPage,
+            paper=paper2,
+            page_number=2,
+            question_number=1,
+            version=1,
+            image=fp_img_1,
+        )
+        q22a = baker.make(
+            QuestionPage,
+            paper=paper2,
+            page_number=3,
+            question_number=2,
+            version=1,
+            image=fp_img_2,
+        )
+        q22b = baker.make(
+            QuestionPage, paper=paper2, page_number=4, question_number=2, version=1
+        )
+        q23a = baker.make(
+            QuestionPage, paper=paper2, page_number=5, question_number=3, version=1
+        )
+        q23a = baker.make(
+            QuestionPage, paper=paper2, page_number=6, question_number=4, version=1
+        )
+        mp3 = baker.make(MobilePage, paper=paper2, question_number=4, image=mp_img_1)
+
+        self.assertTrue(ibs.is_given_paper_question_ready(paper2, 1))
+        self.assertFalse(ibs.is_given_paper_question_ready(paper2, 2))
+        self.assertFalse(ibs.is_given_paper_question_ready(paper2, 3))
+        self.assertTrue(ibs.is_given_paper_question_ready(paper2, 4))

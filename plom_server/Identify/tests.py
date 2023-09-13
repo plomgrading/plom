@@ -8,10 +8,15 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    MultipleObjectsReturned,
+)
+from django.db import IntegrityError
 from model_bakery import baker
 
-from Papers.models import Paper
+from Papers.models import Paper, Image, IDPage
 
 from Identify.services import IdentifyTaskService, IDService
 from Identify.models import (
@@ -42,14 +47,22 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
 
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        baker.make(
+        task = baker.make(
+            PaperIDTask,
+            paper=paper,
+            status=PaperIDTask.COMPLETE,
+            assigned_user=self.marker0,
+        )
+        id_act = baker.make(
             PaperIDAction,
             user=self.marker0,
             task=task,
             student_name="A",
             student_id="1",
+            is_valid=True,
         )
+        task.latest_action = id_act
+        task.save()
 
         result = its.get_done_tasks(user=self.marker0)
         self.assertEqual(result, [[1, "1", "A"]])
@@ -58,7 +71,7 @@ class IdentifyTaskTests(TestCase):
         """Test ``IdentifyTaskService.get_latest_id_results()``."""
         its = IdentifyTaskService()
         paper = baker.make(Paper, paper_number=1)
-        task1 = baker.make(PaperIDTask, paper=paper)
+        task1 = baker.make(PaperIDTask, paper=paper, assigned_user=self.marker0)
         self.assertIsNone(its.get_latest_id_results(task=task1))
 
         start_time = timezone.now()
@@ -66,13 +79,21 @@ class IdentifyTaskTests(TestCase):
             PaperIDAction,
             time=start_time,
             task=task1,
+            user=self.marker0,
+            is_valid=True,
         )
+        task1.latest_action = first
+        task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), first)
 
+        first.is_valid = False
+        first.save()
         second = baker.make(
             PaperIDAction, time=start_time + timedelta(seconds=1), task=task1
         )
+        task1.latest_action = second
+        task1.save()
 
         self.assertEqual(its.get_latest_id_results(task1), second)
 
@@ -131,10 +152,11 @@ class IdentifyTaskTests(TestCase):
     def test_identify_paper(self):
         """Test a simple case for ``IdentifyTaskService.identify_paper()``."""
         its = IdentifyTaskService()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ObjectDoesNotExist):
             its.identify_paper(self.marker1, 1, "1", "A")
 
         p1 = baker.make(Paper, paper_number=1)
+
         task = baker.make(
             PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.marker0
         )
@@ -195,3 +217,93 @@ class IdentifyTaskTests(TestCase):
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
 
         self.assertQuerysetEqual(PaperIDAction.objects.all(), [])
+
+    def test_id_already_used(self):
+        """Test that using same ID twice raises exception."""
+        its = IdentifyTaskService()
+        for k in range(1, 3):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+            its.claim_task(self.marker0, k)
+
+        its.identify_paper(self.marker0, 1, "1", "ABC")
+        self.assertRaises(
+            IntegrityError, its.identify_paper, self.marker0, 2, "1", "ABC"
+        )
+
+    def test_claim_and_surrender(self):
+        its = IdentifyTaskService()
+        for k in range(1, 5):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+        for k in range(1, 3):
+            its.claim_task(self.marker0, k)
+        its.surrender_all_tasks(self.marker0)
+
+    def test_id_task_misc(self):
+        """Test the number of id'd papers."""
+        its = IdentifyTaskService()
+        for k in range(1, 5):
+            paper = baker.make(Paper, paper_number=k)
+            its.create_task(paper)
+
+        for k in range(1, 3):
+            its.claim_task(self.marker0, k)
+            its.identify_paper(self.marker0, k, f"{k}", f"A{k}")
+
+        # test reclaiming a completed task
+        self.assertRaises(RuntimeError, its.claim_task, self.marker1, 1)
+
+        # test user ID'ing a task that does not belong to them
+        self.assertRaises(
+            PermissionDenied, its.identify_paper, self.marker1, 1, "1", "A1"
+        )
+
+        # test re-id'ing a task
+        for k in range(1, 3):
+            its.identify_paper(self.marker0, k, f"{k+2}", f"A{k+2}")
+
+        # test task existence
+        paper = baker.make(Paper, paper_number=10)
+        self.assertFalse(its.id_task_exists(paper))
+        its.create_task(paper)
+        self.assertTrue(its.id_task_exists(paper))
+
+    def test_idtask_outdated(self):
+        its = IdentifyTaskService()
+        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 7)
+
+        paper1 = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
+
+        paper2 = baker.make(Paper, paper_number=2)
+        baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
+        baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
+        self.assertRaises(MultipleObjectsReturned, its.set_paper_idtask_outdated, 2)
+
+        paper3 = baker.make(Paper, paper_number=3)
+        baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.OUT_OF_DATE)
+        baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
+        its.claim_task(self.marker0, 3)
+        its.identify_paper(self.marker0, 3, "3", "ABC")
+        its.identify_paper(self.marker0, 3, "4", "CBA")
+        its.set_paper_idtask_outdated(3)
+
+    def test_idtask_recreate(self):
+        its = IdentifyTaskService()
+        # create a paper with at least one out-of-date tasks
+        paper1 = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
+        img1 = baker.make(Image)
+        idp1 = baker.make(IDPage, paper=paper1, image=img1)
+        # make a new task for it, claim it, and id it.
+        its.create_task(paper1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "3", "ABC")
+        # now give the idpage a new image and set task as out of date (will create a new task)
+        img2 = baker.make(Image)
+        idp1.image = img2
+        idp1.save()
+        its.set_paper_idtask_outdated(1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "4", "ABCD")

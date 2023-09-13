@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Natalie Balashov
 
-from django.core.exceptions import ObjectDoesNotExist
+from typing import Dict, Union
+
 from django.db import transaction
 from django.db.models import QuerySet
 
@@ -51,14 +53,14 @@ class IDService:
         return IDPage.objects.exclude(image__isnull=False)
 
     @transaction.atomic
-    def get_id_image_object(self, image_pk):
+    def get_id_image_object(self, image_pk: int) -> Union[Image, None]:
         """Get the ID page image based on the image's pk value.
 
         Args:
-            image_pk (int): The primary key of an image.
+            image_pk: The primary key of an image.
 
         Returns:
-            Image or None: The Image object if it exists,
+            The Image object if it exists,
             or None if the Image does not exist.
 
         Note:
@@ -72,7 +74,7 @@ class IDService:
             return None
 
     @transaction.atomic
-    def get_identified_papers_count(self, identified_papers):
+    def get_identified_papers_count(self, identified_papers: Dict) -> int:
         """Get the number of papers identified.
 
         Args:
@@ -94,7 +96,9 @@ class IDService:
         return identified_papers_count
 
     @transaction.atomic
-    def get_all_identified_papers(self, all_scanned_id_papers):
+    def get_all_identified_papers(
+        self, all_scanned_id_papers: QuerySet[IDPage]
+    ) -> Dict:
         """Get all the identified paper instances as a dictionary.
 
         This method is to help with getting all the correct instances to display
@@ -123,6 +127,8 @@ class IDService:
                 completed_id_task_list[scanned_id_paper] = None
 
         for id_paper, id_task in completed_id_task_list.items():
+            if not id_task:
+                continue
             latest_id_result = IdentifyTaskService().get_latest_id_results(task=id_task)
             completed_id_task_list.update({id_paper: latest_id_result})
 
