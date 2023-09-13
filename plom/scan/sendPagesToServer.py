@@ -8,6 +8,7 @@ import json
 import shutil
 import logging
 from pathlib import Path
+from typing import Union
 
 from tqdm import tqdm
 
@@ -243,7 +244,7 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, *, msgr):
 
 
 @with_scanner_messenger
-def checkTestHasThatSID(student_id, *, msgr):
+def checkTestHasThatSID(student_id, *, msgr) -> Union[int, None]:
     """Get test-number corresponding to given student id.
 
     For HW tests should be pre-IDd, so this function is used
@@ -254,8 +255,8 @@ def checkTestHasThatSID(student_id, *, msgr):
     else returns None.
     """
     # get test_number from SID.
-    # response is [true, test_number] or [false, reason]
-    test_success = msgr.sidToTest(student_id)
+    # response is [true, test_number, how] or [false, reason, ""]
+    test_success = msgr.sid_to_paper_number(student_id)
 
     if test_success[0]:  # found it
         return test_success[1]  # return the number
