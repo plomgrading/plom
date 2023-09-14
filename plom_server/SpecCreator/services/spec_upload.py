@@ -104,6 +104,12 @@ class SpecificationUploadService:
     def can_spec_be_modified(self, raise_exception: bool = False) -> bool:
         """Return true if the spec can be modified, false otherwise.
 
+        To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
+            - Test preparation must be set as "in progress"
+            - There must be no existing test-papers
+            - There must be no existing QV-map
+            - There must not be an existing spec
+
         kwargs:
             raise_exception: if true, raise exceptions on assertion failure.
         """
@@ -129,7 +135,7 @@ class SpecificationUploadService:
             if spec_exists:
                 raise SpecExistsException("Specification already exists.")
 
-        return test_prepared and papers_created and qvmap_created and spec_exists
+        return not (test_prepared and papers_created and qvmap_created and spec_exists)
 
     @transaction.atomic
     def save_reference_pdf(self):
