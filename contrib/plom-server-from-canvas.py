@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
+# Copyright (C) 2023 Philip Loewen
 
 """Build and populate a Plom server from a Canvas Assignment.
 
@@ -63,9 +64,12 @@ from plom.canvas import (
 )
 import plom.scan
 
+# maybe temporary?
+from plom.create import start_messenger
+
 
 # bump this a bit if you change this script
-__script_version__ = "0.1.0"
+__script_version__ = "0.4.0"
 
 
 def get_short_name(long_name):
@@ -90,11 +94,11 @@ def get_short_name(long_name):
     return short_name
 
 
-def make_toml(assignment, marks, *, server_dir="."):
+def make_toml(assignment, marks, *, dur="."):
     """
     (assignment): a canvasapi assignment object
     """
-    server_dir = Path(server_dir)
+    dur = Path(dur)
     longName = assignment.name
 
     name = get_short_name(longName)
@@ -128,7 +132,7 @@ def make_toml(assignment, marks, *, server_dir="."):
             select = "fix"
             """
         ).lstrip()
-    with open(server_dir / "canvasSpec.toml", "w") as f:
+    with open(dur / "canvasSpec.toml", "w") as f:
         f.write(toml)
 
 
@@ -141,23 +145,22 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     server_dir.mkdir(exist_ok=True)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, section=section, server_dir=server_dir)
+    download_classlist(course, section=section)
 
     print("Generating `canvasSpec.toml`...")
-    make_toml(assignment, marks, server_dir=server_dir)
+    make_toml(assignment, marks)
 
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        subprocess.check_call(["plom-create", "parse", "canvasSpec.toml"])
-        print("Running `plom-server init`...")
-        subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
         subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
+        print("Running `plom-server init`...")
+        subprocess.check_call(["plom-server", "init"])
 
     print("Temporarily exporting manager password...")
     pwds = {}
@@ -165,6 +168,12 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
         for row in csv.reader(csvfile):
             pwds[row[0]] = row[1]
     os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
+    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
+    print("")
+    print("Secret stuff, probably don't just print it...")
+    print(pwds["manager"])
+    print(pwds["scanner"])
+    print("")
     del pwds
 
     print("Launching plom server.")
@@ -173,20 +182,23 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 
+    subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
+    subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+
+    # print("\n*** Here is the class list.")
+    # subprocess.check_call(["cat", "classlist.csv"])
+
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
-    build_class = subprocess.check_call(
-        ["plom-create", "class", server_dir / "classlist.csv"]
-    )
+    build_class = subprocess.check_call(["plom-create", "class", "classlist.csv"])
     print("Building the database...")
-    with working_directory(server_dir):
-        build_class = subprocess.check_call(["plom-create", "make", "--no-pdf"])
+    build_class = subprocess.check_call(["plom-create", "make-db"])
 
     return plom_server
 
 
 def get_submissions(
-    assignment, server_dir=".", name_by_info=True, dry_run=False, replace_existing=False
+    assignment, work_dir=".", name_by_info=True, dry_run=False, replace_existing=False
 ):
     """
     get the submission pdfs out of Canvas
@@ -194,14 +206,14 @@ def get_submissions(
     (name_by_info): Whether to make the filenames of the form ID_Last_First.pdf
 
     """
-    server_dir = Path(server_dir)
+    work_dir = Path(work_dir)
 
     if name_by_info:
         print("Fetching conversion table...")
-        conversion = get_conversion_table(server_dir=server_dir)
+        conversion = get_conversion_table()
 
-    tmp_downloads = server_dir / "upload" / "tmp_downloads"
-    for_plom = server_dir / "upload" / "submittedHWByQ"
+    tmp_downloads = work_dir / "upload" / "tmp_downloads"
+    for_plom = work_dir / "upload" / "submittedHWByQ"
 
     tmp_downloads.mkdir(exist_ok=True, parents=True)
     for_plom.mkdir(exist_ok=True, parents=True)
@@ -235,26 +247,26 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            assert isinstance(obj, dict), "Perhaps attachments are not always dicts?"
-            assert "content-type" in obj.keys()
-            assert "url" in obj.keys()
-            assert obj["upload_status"] == "success"  # TODO, or just "continue"
-            if obj["content-type"] == "null":
+            print(f"*** Handling attachment number {i}")
+            ctype = getattr(obj, "content-type")
+            print(f"    Content type is {ctype}")
+            if ctype == "null":
                 # TODO: in what cases does this occur?
                 continue
-            elif obj["content-type"] == "application/pdf":
+            elif ctype == "application/pdf":
                 suffix = "pdf"
-            elif obj["content-type"] == "image/png":
+            elif ctype == "image/png":
                 suffix = ".png"
-            elif obj["content-type"] == "image/jpg":
+            elif ctype == "image/jpg":
                 suffix = ".jpg"
-            elif obj["content-type"] == "image/jpeg":
+            elif ctype == "image/jpeg":
                 suffix = ".jpeg"
             else:
                 print(
-                    f"unexpected content-type {obj['content-type']}: for now, appending to error list"
+                    f"unexpected content-type {ctype}: for now, appending to error list"
                 )
                 errors.append(sub)
+
             filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
             if dry_run:
@@ -264,7 +276,14 @@ def get_submissions(
 
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
-            r = requests.get(obj["url"])
+
+            print("*** TODO: Investigate URL property of object more carefully")
+            if not hasattr(obj, "url"):
+                print("*** object has no 'url' property. Skipping it (?!)")
+                # TODO: does this belong in the error list or not?  Under what
+                # circumstances does it not have a url property?
+                continue
+            r = requests.get(obj.url)
             with open(filename, "wb") as f:
                 f.write(r.content)
 
@@ -305,21 +324,64 @@ def get_submissions(
         print(f"Error getting submission from user_id {sub.user_id}")
 
 
-def scan_submissions(num_questions, *, server_dir="."):
+def scan_submissions(
+    num_questions,
+    *,
+    upload_dir,
+    server_dir=None,
+    server=None,
+    scan_pwd=None,
+    manager_pwd=None,
+):
     """
     Apply `plom-scan` to all the pdfs we've just pulled from canvas
+
+    TODO: delete server_dir: it should not know that, see below about API to get classlist.
     """
-    server_dir = Path(server_dir)
-
-    pwds = {}
-    with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        for row in csv.reader(csvfile):
-            pwds[row[0]] = row[1]
-    scan_pwd = pwds["scanner"]
-    del pwds
-
-    upload_dir = server_dir / "upload"
+    upload_dir = Path(upload_dir)
     errors = []
+
+    if not scan_pwd:
+        scan_pwd = os.environ["PLOM_SCAN_PASSWORD"]
+    if not manager_pwd:
+        manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
+    if not server:
+        server = os.environ["PLOM_SERVER"]
+
+    if True:  # "PDLPATCH" in os.environ:
+        # It seems like the student ID's from the classlist
+        # have not yet been attached to numbered test papers
+        # when we arrive at this point. Let's plan to make
+        # such attachments just-in-time, and keep track of
+        # which test papers we use with a list of Booleans.
+        print("*** PDLPATCH: Creating a list of Booleans for test papers.")
+
+        # We are also going to need a mapping from SID's to student names
+        # and test numbers.
+        # These don't seem to be in the database yet, either, so just
+        # read the class list.
+        sid2name = {}
+        sid2test = {}
+        # TODO: hardcoded, use API instead
+        with open(server_dir / "specAndDatabase/classlist.csv", "r") as csvfile:
+            reader = csv.DictReader(csvfile)
+            classlist = list(reader)
+
+        for k in range(len(classlist)):
+            sid2name[classlist[k]["id"]] = classlist[k]["name"]
+            sid2test[classlist[k]["id"]] = int(classlist[k]["paper_number"])
+
+        # Ask the server for the largest paper number we might see.
+        # Inferring this from len(sid2name) might work, but doing
+        # the extra work might make this robust against incorrect assumptions.
+        mm = start_messenger(server, manager_pwd)
+        # TODO: later
+        # mm.IDgetClasslist()
+        infodict = mm.get_exam_info()
+        mm.closeUser()
+        mm.stop()
+        PaperUsed = [False for _ in range(1, infodict["current_largest_paper_num"] + 1)]
+        print(f"*** PDLPATCH: List PaperUsed has length {len(PaperUsed)}.")
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
@@ -347,15 +409,68 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
+
+        if True:  # "PDLPATCH" in os.environ:
+            print("*** Found what looks like a legit PDF, as follows ...")
+            print(f"    pdf:         {pdf}")
+            print(f"    sid:         {sid}")
+            print(f"    q:           {q}")
+
+            studentname = sid2name[sid]
+            print("*** PDLPATCH: Homebrew lookup suggests")
+            print(f"    studentname: {studentname}")
+
+            # Just-In-Time ID starts here.
+            mm = start_messenger(server, manager_pwd)
+
+            # Check if this SID is already associated with a test paper.
+            # Here we are our own notes, not the database.
+            # That's dubious.
+            testnumber = sid2test[sid]
+            if testnumber < 0:
+                # Expected case - new SID, no prename
+                testnumber = 1
+                while PaperUsed[testnumber]:
+                    testnumber += 1
+                print(f"*** PDLPATCH: First unused test is number {testnumber}.")
+                PaperUsed[testnumber] = True
+                print(f"*** PDLPATCH: Reserving test {testnumber} for {studentname}.")
+                sid2test[sid] = testnumber
+                mm.pre_id_paper(testnumber, sid)
+            else:
+                if not PaperUsed[testnumber]:
+                    print(
+                        f"*** PDLPATCH: Classlist prescribes testnumber {testnumber}."
+                    )
+                    PaperUsed[testnumber] = True
+                    mm.pre_id_paper(testnumber, sid)
+                else:
+                    print("*** PDLPATCH: EEK - not our first upload for this student.")
+                    print("    MANUAL INVESTIGATION REQUIRED")
+
+            mm.closeUser()
+            mm.stop()
+
+        # This broke until now
         plom.scan.processHWScans(
-            pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
+            pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
         )
+        # Now we can "lock-in" the IDing of it (optional, client can do later)
+        mm = start_messenger(server, manager_pwd)
+        try:
+            mm.id_paper(testnumber, sid, studentname)
+        finally:
+            mm.closeUser()
+            mm.stop()
+
+    else:
+        print(f"There was nothing in {upload_dir} for me to iterate over")
 
     for sid, err in errors:
         print(f"Error processing user_id {sid}: {str(err)}")
 
     # Clean up any missing submissions
-    plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
+    plom.scan.processMissing(msgr=(server, scan_pwd), yes_flag=True)
 
 
 parser = argparse.ArgumentParser(
@@ -463,6 +578,10 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
+    print("************************************************************")
+    print("WARNING: this script in a work-in-progress, largely progress")
+    print('and precious little "work"')
+    print("************************************************************")
     args = parser.parse_args()
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -531,7 +650,7 @@ if __name__ == "__main__":
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")
         plom_server = initialize(
-            course, section, assignment, args.marks, server_dir=basedir
+            course, section, assignment, args.marks, server_dir=(basedir / "srv")
         )
     else:
         print(f"Using an already-initialize plom server in {basedir}")
@@ -539,10 +658,18 @@ if __name__ == "__main__":
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
-        get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
+        get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
 
         print("scanning submissions...")
-        scan_submissions(len(args.marks), server_dir=basedir)
+        print(plom_server)
+        print(type(plom_server))
+        # TODO: hardcoded server hostname here, and remove server_dir
+        scan_submissions(
+            len(args.marks),
+            server="localhost:41984",
+            server_dir=(basedir / "srv"),
+            upload_dir=(basedir / "upload"),
+        )
 
     input("Press enter when you want to stop the server...")
     plom_server.stop()

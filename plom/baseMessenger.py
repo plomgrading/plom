@@ -732,6 +732,58 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def sid_to_paper_number(self, student_id) -> Tuple[bool, Union[int, str], str]:
+        """Ask server to match given student_id to a test-number.
+
+        This is callable only by "manager" and "scanner" users and currently
+        only implemented on legacy servers.
+
+        The test number could be b/c the paper is IDed.  Or it could be a
+        prediction (a confident one, currently "prename").  The third
+        argument can be used to distinguish which case (if the server is
+        new enough: needs > 0.14.1).
+
+        Note: we check ID'd first so if the paper is ID'd you'll
+        get that (even if ``student_id`` is also used in a prename.
+        If its not ID'd but its prenamed, there can be more than one
+        prename pointing to the same paper.  In this case, you'll
+        get one of them; its not well-defined which.
+
+        Returns:
+            If we found a paper then ``(True, test_number, how)`` where
+            ``how`` is a string "ided" or "prenamed" (or on older servers
+            <= 0.14.1 we'll get an apology that we don't know.).
+            If no paper then, we get
+            ``(False, 'Cannot find test with that student id', '')``.
+
+        Raises:
+            PlomAuthenticationException: wrong user, wrong token etc.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/plom/admin/sidToTest",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": student_id,
+                    },
+                )
+                response.raise_for_status()
+                r = response.json()
+                # TODO: could remove workaround when we stop supported 0.14.1
+                if len(r) <= 2:
+                    if r[0]:
+                        r.append("[Older server; cannot tell if ided or prenamed]")
+                    else:
+                        r.append("")
+                r = tuple(r)
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_all_tags(self):
         """All the tags currently in use and their frequencies.
 
@@ -748,7 +800,7 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_tags(self, code):

@@ -8,15 +8,22 @@
 
 import re
 import sys
-
+from typing import Any, Dict, List, Tuple
 
 if sys.version_info >= (3, 9):
     from importlib import resources
 else:
     import importlib_resources as resources
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtCore import Qt, QRegularExpression
+from PyQt6.QtGui import (
+    QColor,
+    QPixmap,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QRegularExpressionValidator,
+)
+
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -268,13 +275,6 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.abs_out_of_SB = _
-        # TODO: remove this notice
-        hlay.addWidget(QLabel("  (experimental!)"))
-        if not self.use_experimental_features:
-            for i in range(hlay.count()):
-                w = hlay.itemAt(i).widget()
-                if w:
-                    w.setEnabled(False)
         hlay.addItem(
             QSpacerItem(
                 48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
@@ -313,6 +313,20 @@ class AddRubricBox(QDialog):
         lay.addWidget(cb)
         self.version_specific_cb = cb
         le = QLineEdit()
+
+        # Regular expression: to be kept in-sync with get_versions_list()
+        #
+        #   whitespace only or...
+        #       ╭─┴─╮
+        re = r"(^\s*$|^\s*(\d+\s*,\s*)*(\d+)\s*$)"
+        #             │   ╰──┬───────╯│╰─┬─╯└ trailing whitespace
+        #             │      │        │  └ final number
+        #             │      │        └ can repeat
+        #             │      └ number and comma
+        #             └ leading whitespace
+        #
+        # "1, 2,3" acceptable; "1,2, " intermediate; ",2" unacceptable
+        le.setValidator(QRegularExpressionValidator(QRegularExpression(re), self))
         lay.addWidget(le)
         self.version_specific_le = le
         space = QSpacerItem(
@@ -366,14 +380,15 @@ class AddRubricBox(QDialog):
               &ldquo;(b)&rdquo; and &ldquo;(c)&rdquo;.
               Some tips:</p>
             <ul>
-            <li><b>This is an experimental feature:</b> please discuss
-              with your team.</li>
+            <li><b>This is a new feature:</b> you may want to discuss
+              with your team before using groups.</li>
             <li>Groups create automatic tabs, shared with other users.
               <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
             </li>
             <li>Making a rubric <em>exclusive</em> means it cannot be used alongside
               others from the same exclusion group.</li>
-            <li>Groups will disappear if no rubrics are in them.</li>
+            <li>Groups will disappear automatically if there are no
+              rubrics in them.</li>
             <ul>
         """
         b.clicked.connect(lambda: InfoMsg(self, msg).exec())
@@ -624,7 +639,7 @@ class AddRubricBox(QDialog):
         self.scope_frame.layout().insertLayout(idx, grid)
         self._param_grid = grid
 
-    def get_parameters(self):
+    def get_parameters(self) -> List[Tuple[str, List[str]]]:
         """Extract the current parametric values from the UI."""
         idx = self.scope_frame.layout().indexOf(self._param_grid)
         # print(f"extracting parameters from grid at layout index {idx}")
@@ -636,8 +651,30 @@ class AddRubricBox(QDialog):
             values = []
             for c in range(1, self.maxver + 1):
                 values.append(layout.itemAtPosition(r, c).widget().text())
-            params.append([param, values])
+            params.append((param, values))
         return params
+
+    def get_versions_list(self) -> List[int]:
+        """Extract the version-specific list as a list of ints.
+
+        If the input of the textbox is empty, or not acceptable
+        just return an empty list (meaning no version restriction).
+
+        Maintenance note: see also the RegExp validator of the
+        LineEdit which must be kept in sync with this.  If they
+        do not match, we risk getting ValueError from the int
+        conversion here.
+        """
+        if not self.version_specific_cb.isChecked():
+            return []
+        if not self.version_specific_le.hasAcceptableInput():
+            return []
+        _vers = self.version_specific_le.text()
+        _vers = _vers.strip("[]")
+        _vers = _vers.strip()
+        if _vers:
+            return [int(x) for x in _vers.split(",")]
+        return []
 
     def add_new_group(self):
         groups = []
@@ -710,6 +747,12 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
+        if not self.version_specific_le.hasAcceptableInput():
+            WarnMsg(
+                self, '"Versions" must be a comma-separated list of positive integers.'
+            ).exec()
+            return
+
         txt = self.TE.toPlainText().strip()
         if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(
@@ -778,7 +821,7 @@ class AddRubricBox(QDialog):
                 tags = tag
         return tags
 
-    def gimme_rubric_data(self):
+    def gimme_rubric_data(self) -> Dict[str, Any]:
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tags = self._gimme_rubric_tags()
 
@@ -804,13 +847,7 @@ class AddRubricBox(QDialog):
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
 
-        if self.version_specific_cb.isChecked():
-            vers = self.version_specific_le.text()
-            vers = vers.strip("[]")
-            if vers:
-                vers = [int(x) for x in vers.split(",")]
-        else:
-            vers = []
+        vers = self.get_versions_list()
 
         params = self.get_parameters()
 
