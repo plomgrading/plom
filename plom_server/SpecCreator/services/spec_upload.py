@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, Any
 from fitz import Document
 
 from django.db import transaction
