@@ -328,7 +328,6 @@ def scan_submissions(
     num_questions,
     *,
     upload_dir,
-    server_dir=None,
     server=None,
     scan_pwd=None,
     manager_pwd=None,
@@ -348,7 +347,9 @@ def scan_submissions(
     if not server:
         server = os.environ["PLOM_SERVER"]
 
-    if True:  # "PDLPATCH" in os.environ:
+    try:
+        mm = start_messenger(server, manager_pwd)
+
         # It seems like the student ID's from the classlist
         # have not yet been attached to numbered test papers
         # when we arrive at this point. Let's plan to make
@@ -359,14 +360,10 @@ def scan_submissions(
         # We are also going to need a mapping from SID's to student names
         # and test numbers.
         # These don't seem to be in the database yet, either, so just
-        # read the class list.
+        # read the class list directly.
+        classlist = mm.IDrequestClasslist()
         sid2name = {}
         sid2test = {}
-        # TODO: hardcoded, use API instead
-        with open(server_dir / "specAndDatabase/classlist.csv", "r") as csvfile:
-            reader = csv.DictReader(csvfile)
-            classlist = list(reader)
-
         for k in range(len(classlist)):
             sid2name[classlist[k]["id"]] = classlist[k]["name"]
             sid2test[classlist[k]["id"]] = int(classlist[k]["paper_number"])
@@ -374,14 +371,12 @@ def scan_submissions(
         # Ask the server for the largest paper number we might see.
         # Inferring this from len(sid2name) might work, but doing
         # the extra work might make this robust against incorrect assumptions.
-        mm = start_messenger(server, manager_pwd)
-        # TODO: later
-        # mm.IDgetClasslist()
         infodict = mm.get_exam_info()
-        mm.closeUser()
-        mm.stop()
         PaperUsed = [False for _ in range(1, infodict["current_largest_paper_num"] + 1)]
         print(f"*** PDLPATCH: List PaperUsed has length {len(PaperUsed)}.")
+    finally:
+        mm.closeUser()
+        mm.stop()
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
@@ -667,7 +662,6 @@ if __name__ == "__main__":
         scan_submissions(
             len(args.marks),
             server="localhost:41984",
-            server_dir=(basedir / "srv"),
             upload_dir=(basedir / "upload"),
         )
 
