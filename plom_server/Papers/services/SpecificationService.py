@@ -5,7 +5,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned

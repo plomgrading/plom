@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Union, Dict
 from fitz import Document
 
 from django.db import transaction
@@ -52,8 +52,8 @@ class SpecificationUploadService:
     def __init__(
         self,
         *,
-        toml_file_path: Optional[str, Path] = None,
-        reference_pdf_path: Optional[str, Path] = None,
+        toml_file_path: Union[str, Path, None] = None,
+        reference_pdf_path: Union[str, Path, None] = None,
     ):
         """Construct service with paths and/or model instances.
 
