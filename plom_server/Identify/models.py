@@ -15,9 +15,16 @@ class PaperIDTask(BaseTask):
     """Represents a test-paper that needs to be identified.
 
     paper: reference to Paper that needs to be IDed.
-    latest_action: reference to PaperIDAction, the latest identification for the paper.
+    latest_action: reference to `PaperIDAction`, the latest identification
+        for the paper.  "Latest" need not refer to time, it can be
+        moved around to different `PaperIDAction`s if you wish.
     priority: a float priority that provides the ordering for tasks
         presented for IDing, zero by default.
+
+    These also have a ``status`` that they inherit from their parent
+    ``BaseTask``.  There is *currently* some complexity about updating
+    this b/c there are changes that MUST be made (but are not automatically
+    made) in the Actions which are attaced to this Task.
     """
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
@@ -33,7 +40,11 @@ class PaperIDAction(BaseAction):
     is_valid: this Action is valid or not.  There is some... complexity
         about this.  There can be multiple Actions attached to a single
         Task.  In theory only one of them (at most one of them) can be
-        valid.
+        valid.  Currently this IS NOT ENFORCED, so callers MUST maintain
+        this logic themselves.
+        There are states that are possible but we don't want to get into
+        them: for example (but not exhaustive), you should not have an
+        ``status=OutOfDate`` with a valid IDAction attached to that Task.
     student_name:
     student_id:
     """
