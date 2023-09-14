@@ -28,7 +28,15 @@ class PaperIDTask(BaseTask):
 
 
 class PaperIDAction(BaseAction):
-    """Represents an identification of a test-paper."""
+    """Represents an identification of a test-paper.
+
+    is_valid: this Action is valid or not.  There is some... complexity
+        about this.  There can be multiple Actions attached to a single
+        Task.  In theory only one of them (at most one of them) can be
+        valid.
+    student_name:
+    student_id:
+    """
 
     is_valid = models.BooleanField(default=True)
     student_name = models.TextField(default="")
