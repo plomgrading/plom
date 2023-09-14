@@ -456,6 +456,7 @@ def scan_submissions(
             pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
         )
         # Now we can "lock-in" the IDing of it (optional, client can do later)
+        mm = start_messenger(server, manager_pwd)
         try:
             mm.id_paper(testnumber, sid, studentname)
         finally:
