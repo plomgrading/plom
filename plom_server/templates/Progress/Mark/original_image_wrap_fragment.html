@@ -1,0 +1,18 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<p>Original images: paper {{ paper }} question {{ question }}</p>
+<div class="row overflow-x-scroll overflow-y-scroll">
+    {% for img in img_list %}
+        <div class="col"
+             style="height: 30vw;
+                    width: 30vw;
+                    justify-content: center;
+                    display:flex;
+                    align-items:center">
+            <img class="shadow-sm"
+                 src="{% url 'progress_pushed_img' img.id %}"
+                 style="max-height: 100%;
+                        max-width: 100%;
+                        transform: rotate({{ img.angle }}deg)">
+        </div>
+    {% endfor %}
+</div>

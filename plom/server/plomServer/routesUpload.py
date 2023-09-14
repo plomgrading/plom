@@ -91,7 +91,8 @@ class UploadHandler:
         rval = self.server.listBundles()
         return web.json_response(rval, status=200)  # all fine
 
-    async def sidToTest(self, request):
+    @authenticate_by_token_required_fields(["user", "sid"])
+    def sidToTest(self, data, request):
         """Match given student_id to a test-number.
 
         Returns:
@@ -103,15 +104,10 @@ class UploadHandler:
         The test number could be b/c the paper is IDed.  Or it could be a
         prediction (a confident one, currently "prename").
         """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "sid"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] in ["scanner", "manager"]:
-            return web.Response(status=401)
+        if not data["user"] in ("scanner", "manager"):
+            return web.HTTPUnauthorized(reason='must be "scanner" or "manager"')
         rval = self.server.sidToTest(data["sid"])
-        return web.json_response(rval, status=200)
+        return web.json_response(rval)
 
     async def uploadTestPage(self, request):
         """A test page has known page, known paper number, usually QR-coded.

@@ -1,0 +1,73 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+{% extends "base/base.html" %}
+{% block title %}
+    Web Plom - Tasks and Annotations
+{% endblock title %}
+{% block page_heading %}
+    Tasks and annotations of Question {{ question }} Version {{ version }}
+{% endblock page_heading %}
+{% block main_content %}
+    <a class="btn btn-primary"
+       href="{% url 'progress_mark_details' question version %}">Back to details</a>
+    <a class="btn btn-success"
+       href="{% url 'progress_task_annotation' question version %}">refresh page</a>
+    <div class="w-100">
+        <div class="row">
+            <div class="card col">
+                <div class="card-header">
+                    <h5>Tasks list</h5>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-bordered text-center sortable">
+                            <thead>
+                                <tr>
+                                    <th>Paper</th>
+                                    <th>Status</th>
+                                    <th>Username</th>
+                                    <th>Score</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pn, task_data in task_info.items %}
+                                    <tr>
+                                        <td>{{ pn }}</td>
+                                        {% if task_data.status == "Complete" %}
+                                            <td class="bg-success">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "To Do" %}
+                                            <td class="bg-warning">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "Out" %}
+                                            <td class="bg-info">{{ task_data.status }}</td>
+                                        {% else %}
+                                            <td>{{ task_data.status }}</td>
+                                        {% endif %}
+                                        <td>{{ task_data.username }}</td>
+                                        <td>{{ task_data.score }}</td>
+                                        <td>
+                                            {% if task_data.status %}
+                                                <button hx-get="{% url 'progress_original_img_wrap' pn question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-info">original</button>
+                                            {% endif %}
+                                            {% if task_data.status == "Complete" %}
+                                                <button hx-get="{% url 'progress_annotation_img_wrap' pn question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-success">annotation</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card col" style="height: 30vw; width: 40vw;">
+                <div id="imageHere"></div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

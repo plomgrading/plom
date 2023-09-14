@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import List
+
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -16,6 +18,57 @@ from Papers.models import (
     Image,
     MobilePage,
 )
+
+
+@transaction.atomic
+def get_question_pages_list(paper: int, question: int) -> List[dict]:
+    """Return a list of objects describing pages in a paper related to a question.
+
+    Args:
+        paper: exam paper number
+        question: question number
+    """
+    test_paper = Paper.objects.get(paper_number=paper)
+    question_pages = QuestionPage.objects.filter(
+        paper=test_paper, question_number=question
+    ).prefetch_related("image")
+    mobile_pages = MobilePage.objects.filter(
+        paper=test_paper, question_number=question
+    ).prefetch_related("image")
+
+    page_list = []
+    for page in question_pages.order_by("page_number"):
+        image = page.image
+        if image:  # fixed pages might not have image if yet to be scanned.
+            page_list.append(
+                {
+                    "id": image.pk,
+                    "md5": image.hash,
+                    "orientation": image.rotation,
+                    "server_path": image.image_file.path,
+                    "included": True,
+                    "order": page.page_number,
+                }
+            )
+    # TODO - decide better order (see hackery comments below).
+    # Also - do not repeat mobile pages if can avoid it.
+    for page in mobile_pages:
+        image = page.image
+        assert image is not None  # mobile pages will always have images
+        page_list.append(
+            {
+                "id": image.pk,
+                "md5": image.hash,
+                "orientation": image.rotation,
+                "server_path": image.image_file.path,
+                "included": True,
+                # BEGIN HACKERY
+                "order": len(page_list) + 1,
+                # END HACKERY
+            }
+        )
+
+    return page_list
 
 
 class PageDataService:
@@ -34,56 +87,6 @@ class PageDataService:
         all_page_numbers = question_pages.values_list("page_number", flat=True)
         offset = min(all_page_numbers) - 1
         return page_number - offset
-
-    @transaction.atomic
-    def get_question_pages_list(self, paper, question):
-        """Return a list of lists containing an image public key and its hash.
-
-        Args:
-            paper (int): test-paper number
-            question (int): question number
-        """
-        test_paper = Paper.objects.get(paper_number=paper)
-        question_pages = QuestionPage.objects.filter(
-            paper=test_paper, question_number=question
-        ).prefetch_related("image")
-        mobile_pages = MobilePage.objects.filter(
-            paper=test_paper, question_number=question
-        ).prefetch_related("image")
-
-        page_list = []
-        for page in question_pages.order_by("page_number"):
-            image = page.image
-            if image:  # fixed pages might not have image if yet to be scanned.
-                page_list.append(
-                    {
-                        "id": image.pk,
-                        "md5": image.hash,
-                        "orientation": image.rotation,
-                        "server_path": image.image_file.path,
-                        "included": True,
-                        "order": page.page_number,
-                    }
-                )
-        # TODO - decide better order.
-        # Also - do not repeat mobile pages if can avoid it.
-        for page in mobile_pages:
-            image = page.image
-            assert image is not None  # mobile pages will always have images
-            page_list.append(
-                {
-                    "id": image.pk,
-                    "md5": image.hash,
-                    "orientation": image.rotation,
-                    "server_path": image.image_file.path,
-                    "included": True,
-                    # WARNING - HACKERY HERE
-                    "order": len(page_list) + 1,
-                    # WARNING HACKERY HERE
-                }
-            )
-
-        return page_list
 
     @transaction.atomic
     def get_question_pages_metadata(

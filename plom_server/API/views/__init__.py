@@ -23,8 +23,6 @@ from .mark import (
     QuestionMaxMark_how_to_get_data,
     QuestionMaxMark,
     MarkingProgressCount,
-    MgetNextTask,
-    MclaimThisTask,
     MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,
@@ -51,3 +49,5 @@ from .rubrics import (
 from .latex import (
     MlatexFragment,
 )
+
+from .mark_question import QuestionMarkingViewSet

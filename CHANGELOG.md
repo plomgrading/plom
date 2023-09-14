@@ -13,8 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-* Fix regrading on next-gen servers.
+
+
+
+## [0.14.2] - 2023-09-13
+
+### Added
+* Absolute rubrics are no longer considered experimental and can be created in the Add
+  Rubric dialog by default.
+
+### Changed
+* The legacy `sidToTest` API call (rarely used) now reports whether the paper is IDed
+  or prenamed.  This is documented in `msgr.sid_to_paper_number()`.
+* Many next-gen server changes.
+
+### Fixed
+* Client: crash from invalid version restrictions specified in the Add Rubric dialog.
 * Legacy server was not creating backup files on regrade since sometime in 2022.
+* Fix regrading on next-gen servers.
+* Client: rubric tabs now hide properly when all rubrics inside them are hidden.
 
 
 ## [0.14.1] - 2023-09-01
@@ -1010,7 +1027,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.1...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.2...main
+[0.14.2]: https://gitlab.com/plom/plom/-/compare/v0.14.1...v0.14.2
 [0.14.1]: https://gitlab.com/plom/plom/-/compare/v0.13.3...v0.14.1
 [0.13.3]: https://gitlab.com/plom/plom/-/compare/v0.13.2...v0.13.3
 [0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2

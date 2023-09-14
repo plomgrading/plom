@@ -1,12 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
-import arrow
+from datetime import timedelta
 from typing import Dict, Tuple, Union
 
+import arrow
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models.query import QuerySet
+from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
 from Mark.services import MarkingTaskService
@@ -26,7 +31,7 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @transaction.atomic
-    def get_total_annotations_based_on_user(self) -> Dict[str, int]:
+    def get_total_annotations_count_based_on_user(self) -> Dict[str, int]:
         """Retrieve annotations based on user.
 
         Returns:
@@ -53,7 +58,7 @@ class UserInfoServices:
 
     @transaction.atomic
     def get_annotations_based_on_user(
-        self,
+        self, annotations
     ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
         """Retrieve annotations based on the combination of user, question number, and version.
 
@@ -66,9 +71,6 @@ class UserInfoServices:
                 as keys, and nested dictionaries as values containing the count of annotations
                 and average marking time for each (question_number, question_version) combination.
         """
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
         count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
         total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
 
@@ -164,28 +166,20 @@ class UserInfoServices:
         """Convert the given number of seconds to a human-readable time string.
 
         Args:
-            seconds: (float) The number of seconds.
+            seconds: the number of seconds, unsigned so no distinction
+                is made between past and future.
 
         Returns:
-            str: A human-readable time string.
-
+            A human-readable time string.
         """
-        present = arrow.utcnow()
-
-        if seconds < 60:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["second"]
-            )
-        elif seconds > 3599:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["hour", "minute", "second"]
-            )
+        if seconds > 9:
+            return arrow.utcnow().shift(seconds=seconds).humanize(only_distance=True)
         else:
-            time = present.shift(seconds=seconds).humanize(
-                present, only_distance=True, granularity=["minute", "second"]
+            return (
+                arrow.utcnow()
+                .shift(seconds=seconds)
+                .humanize(only_distance=True, granularity=["second"])
             )
-
-        return time
 
     @transaction.atomic
     def get_marking_task_count_based_on_question_number_and_version(
@@ -203,3 +197,42 @@ class UserInfoServices:
         return MarkingTask.objects.filter(
             question_number=question, question_version=version
         ).count()
+
+    @transaction.atomic
+    def filter_annotations_by_time_delta_seconds(
+        self, time_delta_seconds: int
+    ) -> QuerySet[Annotation]:
+        """Filter annotations by time in seconds.
+
+        Args:
+            time_delta_seconds: (int) Number of seconds.
+
+        Returns:
+            QuerySet: Filtered queryset of annotations.
+        """
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+
+        if time_delta_seconds == 0:
+            return annotations
+        else:
+            time_interval_start = timezone.now() - timedelta(seconds=time_delta_seconds)
+            return annotations.filter(time_of_last_update__gte=time_interval_start)
+
+    @transaction.atomic
+    def get_time_of_latest_updated_annotation(self) -> str:
+        """Get the human readable time of the latest updated annotation.
+
+        Returns:
+            Human-readable time of the latest updated annotation or
+            the string ``"never"`` if there have not been any annotations.
+        """
+        try:
+            annotations = (
+                MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+            )
+            latest_annotation = annotations.latest("time_of_last_update")
+        except ObjectDoesNotExist:
+            return "never"
+        return arrow.get(latest_annotation.time_of_last_update).humanize()
