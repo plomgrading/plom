@@ -13,11 +13,7 @@ from django.db import transaction
 import fitz
 
 from Papers.services import SpecificationService
-from SpecCreator.services import (
-    StagingSpecificationService,
-    ReferencePDFService,
-    SpecificationUploadService,
-)
+from SpecCreator.services import SpecificationUploadService
 from SpecCreator.services.spec_upload import SpecExistsException
 
 from ...services import PQVMappingService
