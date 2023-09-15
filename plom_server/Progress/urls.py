@@ -115,7 +115,7 @@ urlpatterns = [
         name="ID_img",
     ),
     path(
-        "identify/overview/id_img/clear/<int:paper_pk>",
+        "identify/overview/id_img/clear/<int:paper_number>",
         ClearID.as_view(),
         name="clear_ID",
     ),
