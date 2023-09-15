@@ -117,3 +117,30 @@ Summary of process
 * ``python manage.py plom_paper_scan list_bundles map <hwpdf> -t <papernumber> -q <question_map>``
 * ``python manage.py plom_staging_bundles push <hwpdf> <scannerName>``
 * ``python manage.py plom_id_direct <managerName> <paper_number> <student_id> <student_name>``
+
+
+Processing homework with the legacy Plom server
+-----------------------------------------------
+
+A script can be used, roughly:
+
+* prename a paper to an available paper number.  A script to do this is
+  ``contrib/plom-preid.py``.
+  This will associate a particular Student ID to a paper number
+* Use ``plom-hwscan`` to upload a PDF file to that student number.
+* Optionally, use ``msgr.id_paper`` to "finalize" the identity of that paper.
+  Alternatively, you can do this manually in the Plom Client identifier app.
+
+An work-in-progress script that does these steps while pulling from
+Canvas is ``contrib/plom-server-from-canvas.py``.
+
+.. caution::
+
+   Do not prename the same student number to more than one paper in this process.
+   Its not well-defined what happens.
+
+.. note::
+
+   Do not use ``id_paper`` to identify the paper before you upload do it.  This
+   will create a situation where the paper is not seen as scanned.  We're unlikely
+   to fix this, instead focusing on workflows for the nextgen server instead.
