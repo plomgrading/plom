@@ -15,6 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import os
 from pathlib import Path
 
 from plom import __version__
@@ -179,7 +180,8 @@ def get_parser():
         metavar="STR",
         help="""
             An initial password for the manager account.  You can also
-            use the "users" command or even omit altogether and the
+            use the "users" command or set the PLOM_MANAGER_PASSWORD
+            environment variable.  If none of these things are done the
             server will autogenerate a password.
         """,
     )
@@ -277,12 +279,13 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
+        manager_pw = args.manager_pw or os.environ.get("PLOM_MANAGER_PASSWORD")
         initialise_server(
             args.dir,
             port=args.port,
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
-            manager_pw=args.manager_pw,
+            manager_pw=manager_pw,
             db_name=args.db_name,
         )
 
