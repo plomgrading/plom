@@ -24,7 +24,7 @@ class PaperIDTask(BaseTask):
     These also have a ``status`` that they inherit from their parent
     ``BaseTask``.  There is *currently* some complexity about updating
     this b/c there are changes that MUST be made (but are not automatically
-    made) in the Actions which are attaced to this Task.
+    made) in the Actions which are attached to this Task.
     """
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
