@@ -180,9 +180,11 @@ def get_parser():
         metavar="STR",
         help="""
             An initial password for the manager account.  You can also
-            use the "users" command or set the PLOM_MANAGER_PASSWORD
-            environment variable.  If none of these things are done the
-            server will autogenerate a password.
+            set the PLOM_MANAGER_PASSWORD environment variable.
+            The command line takes precedence.
+            You can also use the "users" command.
+            If none of these things are done the server will
+            autogenerate a password.
         """,
     )
     spI.add_argument(
