@@ -16,8 +16,12 @@ class ProgressTaskAnnotationFilterView(ManagerRequiredView):
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
 
-        question_list = [q + 1 for q in range(SpecificationService.get_n_questions())]
-        version_list = [v + 1 for v in range(SpecificationService.get_n_versions())]
+        question_list = [
+            str(q + 1) for q in range(SpecificationService.get_n_questions())
+        ]
+        version_list = [
+            str(v + 1) for v in range(SpecificationService.get_n_versions())
+        ]
 
         def optional_arg(val):
             if val == "*":

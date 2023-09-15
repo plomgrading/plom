@@ -30,14 +30,18 @@
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option>*</option>
-                            {% for qn in question_list %}<option>{{ qn }}</option>{% endfor %}
+                            {% for qn in question_list %}
+                                <option {% if question == qn %}selected{% endif %}>{{ qn }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <label class="col-sm-1 col-form-label" for="username">User:</label>
                     <div class="col-sm-4">
                         <select name="username" class="form-select">
                             <option>*</option>
-                            {% for un in username_list %}<option>{{ un }}</option>{% endfor %}
+                            {% for un in username_list %}
+                                <option {% if username == un %}selected{% endif %}>{{ un }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
@@ -46,7 +50,9 @@
                     <div class="col-sm-4">
                         <select name="version" class="form-select">
                             <option>*</option>
-                            {% for v in version_list %}<option>{{ v }}</option>{% endfor %}
+                            {% for v in version_list %}
+                                <option {% if version == v %}selected{% endif %}>{{ v }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="col-sm-1">
