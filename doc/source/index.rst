@@ -22,7 +22,7 @@ Welcome to Plom's documentation!
 
    identifying_papers.rst
 
-   hw_processing.md
+   hw_processing.rst
 
    rubrics.rst
 
