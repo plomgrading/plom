@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from typing import Dict, Any
 
+from django.contrib.auth.models import update_last_login
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
+
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -121,3 +126,20 @@ class CloseUser(APIView):
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
+    """Overrides the DRF auth-token creator so that it updates the user last_login field."""
+
+    # Idea from
+    # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
+    # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+        update_last_login(None, token.user)
+        return Response({"token": token.key})

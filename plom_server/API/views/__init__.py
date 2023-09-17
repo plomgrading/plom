@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from .server_info import (
     ExamInfo,
@@ -8,6 +9,7 @@ from .server_info import (
     ServerVersion,
     ServerInfo,
     CloseUser,
+    ObtainAuthTokenUpdateLastLogin,
 )
 
 from .identify import (

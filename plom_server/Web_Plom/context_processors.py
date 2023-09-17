@@ -8,7 +8,7 @@ def user_group_information(request):
     #     "manager": "warning",
     #     "scanner": "info",
     #     "marker": "primary",   # use marker as the default color
-    #     "lead_marker": "secondary",
+    #     "lead_marker": "dark",
     # }
     group_list = list(request.user.groups.values_list("name", flat=True))
     context = {
@@ -26,5 +26,5 @@ def user_group_information(request):
     elif "scanner" in group_list:
         context["navbar_color"] = "info"
     elif "lead_marker" in group_list:
-        context["navbar_color"] = "secondary"
+        context["navbar_color"] = "dark"
     return context
