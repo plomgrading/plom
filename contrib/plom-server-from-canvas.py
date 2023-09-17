@@ -178,7 +178,7 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
         subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
-        if args.port == None:
+        if args.port is None:
             print(f"Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
