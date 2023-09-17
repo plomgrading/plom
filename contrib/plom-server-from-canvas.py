@@ -241,6 +241,7 @@ def get_submissions(
 
     if name_by_info:
         print("Fetching conversion table...")
+        # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
         conversion = get_conversion_table(server_dir=work_dir)
 
     tmp_downloads = work_dir / "upload" / "tmp_downloads"
