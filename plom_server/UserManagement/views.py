@@ -16,8 +16,7 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request):
         users = User.objects.all()
-        context = self.build_context()
-        context.update({"users": users})
+        context = {"users": users}
         return render(request, self.user_page, context)
 
     def post(self, request, username):
@@ -67,8 +66,7 @@ class ProgressPage(ManagerRequiredView):
     progress_page = "UserManagement/progress.html"
 
     def get(self, request, username):
-        context = self.build_context()
-        context.update({"username": username})
+        context = {"username": username}
         return render(request, self.progress_page, context)
 
     def post(self, request, username):
