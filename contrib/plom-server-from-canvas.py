@@ -39,10 +39,10 @@ from pathlib import Path
 import random
 import string
 import subprocess
+import sys
 from textwrap import dedent
 import time
 
-import sys
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
