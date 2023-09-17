@@ -169,29 +169,21 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks)
 
+    # Server respects this env var (on legacy >= v0.14.3)
+    if not os.environ.get("PLOM_MANAGER_PASSWORD"):
+        # TODO do something smarter if script user does not specify
+        # TODO: for example, autogen one
+        os.environ["PLOM_MANAGER_PASSWORD"] = "lalala"
+
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
-        print("Parsing `canvasSpec.toml`...")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        print("Autogenerating users...")
-        subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
-        print("Processing userlist...")
-        subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
         if args.port is None:
             print("Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
             subprocess.check_call(["plom-server", "init", "--port", f"{args.port}"])
-
-    print("Temporarily exporting manager password...")
-    pwds = {}
-    with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        for row in csv.reader(csvfile):
-            pwds[row[0]] = row[1]
-    os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
-    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
-    del pwds
 
     # Read server config data from the official config file
     servernamewithport = get_server_name(server_dir)
@@ -206,6 +198,22 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
     print("Trying plom-create uploadspec ...")
     subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+
+    subprocess.check_call(["plom-create", "users"])
+    print("Autogenerating users...")
+    subprocess.check_call(
+        ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
+    )
+    print("Processing userlist...")
+    subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
+
+    print("Temporarily exporting scanner password...")
+    pwds = {}
+    with open("userListRaw.csv", "r") as csvfile:
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
+    del pwds
 
     # print("\n*** Here is the class list.")
     # subprocess.check_call(["cat", "classlist.csv"])
@@ -687,8 +695,6 @@ if __name__ == "__main__":
         get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
 
         print("scanning submissions...")
-        print(plom_server)
-        print(type(plom_server))
         scan_submissions(
             len(args.marks),
             server=servernamewithport,
