@@ -350,16 +350,11 @@ def scan_submissions(
     num_questions,
     *,
     upload_dir,
-    server_dir=None,
     server=None,
     scan_pwd=None,
     manager_pwd=None,
 ):
-    """
-    Apply `plom-scan` to all the pdfs we've just pulled from canvas
-
-    TODO: delete server_dir: it should not know that, see below about API to get classlist.
-    """
+    """Apply `plom-scan` to all the pdfs we've just pulled from canvas."""
     upload_dir = Path(upload_dir)
     errors = []
 
@@ -374,6 +369,7 @@ def scan_submissions(
 
     try:
         mm = start_messenger(server, manager_pwd)
+
         # It seems like the student ID's from the classlist
         # have not yet been attached to numbered test papers
         # when we arrive at this point. Let's plan to make
@@ -696,7 +692,6 @@ if __name__ == "__main__":
         scan_submissions(
             len(args.marks),
             server=servernamewithport,
-            server_dir=(basedir / "srv"),
             upload_dir=(basedir / "upload"),
         )
 
