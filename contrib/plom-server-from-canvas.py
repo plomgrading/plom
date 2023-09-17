@@ -41,7 +41,7 @@ import string
 import subprocess
 from textwrap import dedent
 import time
-import tomli as tomllib   # tomllib will join the standard library in Python 3.11
+import tomli as tomllib  # tomllib will join the standard library in Python 3.11
 
 import fitz
 import PIL.Image
@@ -100,12 +100,12 @@ def get_server_name(server_dir):
     Return string like 'servername:port' and store it in PLOM_SERVER env. var.
     Get these facts by reading the serverDetails.toml file.
     """
-    with open(server_dir / "serverConfiguration/serverDetails.toml","rb") as f:
+    with open(server_dir / "serverConfiguration/serverDetails.toml", "rb") as f:
         configdata = tomllib.load(f)
     servernamewithport = f"{configdata['server']}:{configdata['port']}"
     print("DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
     os.environ["PLOM_SERVER"] = servernamewithport
-    return(servernamewithport)
+    return servernamewithport
 
 
 def make_toml(assignment, marks, *, dur="."):
@@ -174,7 +174,7 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
         if args.port == None:
-            print(f"Running `plom-server init --port {args.port}`...")
+            print(f"Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
             subprocess.check_call(["plom-server", "init", "--port", f"{args.port}"])
@@ -264,7 +264,7 @@ def get_submissions(
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            print(f"*** Handling attachment number {i}")
+            print(f"\n*** Handling attachment number {i}")
             ctype = getattr(obj, "content-type")
             print(f"    Content type is {ctype}")
             if ctype == "null":
@@ -294,7 +294,7 @@ def get_submissions(
             time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
 
-            print("*** TODO: Investigate URL property of object more carefully")
+            # print("*** TODO: Investigate URL property of object more carefully")
             if not hasattr(obj, "url"):
                 print("*** object has no 'url' property. Skipping it (?!)")
                 # TODO: does this belong in the error list or not?  Under what
@@ -363,7 +363,7 @@ def scan_submissions(
     if not manager_pwd:
         manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
     if not server:
-        server = os.environ["PLOM_SERVER"] #PDL - Bad idea! Read from config file instead!
+        server = os.environ["PLOM_SERVER"]  # Remember, we set this env var earlier.
 
     if True:  # "PDLPATCH" in os.environ:
         # It seems like the student ID's from the classlist
@@ -371,7 +371,7 @@ def scan_submissions(
         # when we arrive at this point. Let's plan to make
         # such attachments just-in-time, and keep track of
         # which test papers we use with a list of Booleans.
-        print("*** PDLPATCH: Creating a list of Booleans for test papers.")
+        # print("*** PDLPATCH: Creating a list of Booleans for test papers.")
 
         # We are also going to need a mapping from SID's to student names
         # and test numbers.
@@ -398,7 +398,7 @@ def scan_submissions(
         mm.closeUser()
         mm.stop()
         PaperUsed = [False for _ in range(1, infodict["current_largest_paper_num"] + 1)]
-        print(f"*** PDLPATCH: List PaperUsed has length {len(PaperUsed)}.")
+        print(f"*** INFO: List PaperUsed has length {len(PaperUsed)}.")
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
@@ -428,14 +428,14 @@ def scan_submissions(
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
         if True:  # "PDLPATCH" in os.environ:
-            print("*** Found what looks like a legit PDF, as follows ...")
+            print("\n*** Found what looks like a legit PDF, as follows ...")
             print(f"    pdf:         {pdf}")
             print(f"    sid:         {sid}")
             print(f"    q:           {q}")
 
             studentname = sid2name[sid]
-            print("*** PDLPATCH: Homebrew lookup suggests")
-            print(f"    studentname: {studentname}")
+            print(f"    studentname: {studentname}", end="")
+            print("   ... (from homebrew lookup in script)")
 
             # Just-In-Time ID starts here.
             mm = start_messenger(server, manager_pwd)
@@ -449,20 +449,18 @@ def scan_submissions(
                 testnumber = 1
                 while PaperUsed[testnumber]:
                     testnumber += 1
-                print(f"*** PDLPATCH: First unused test is number {testnumber}.")
+                print(f"    INFO: First unused test is number {testnumber}.")
                 PaperUsed[testnumber] = True
-                print(f"*** PDLPATCH: Reserving test {testnumber} for {studentname}.")
+                print(f"    INFO: Reserving test {testnumber} for {studentname}.")
                 sid2test[sid] = testnumber
                 mm.pre_id_paper(testnumber, sid)
             else:
                 if not PaperUsed[testnumber]:
-                    print(
-                        f"*** PDLPATCH: Classlist prescribes testnumber {testnumber}."
-                    )
+                    print(f"    INFO: Taking test number {testnumber} from classlist.")
                     PaperUsed[testnumber] = True
                     mm.pre_id_paper(testnumber, sid)
                 else:
-                    print("*** PDLPATCH: EEK - not our first upload for this student.")
+                    print("*** PDLPATCH: EEK - not our first upload for this student!")
                     print("    MANUAL INVESTIGATION REQUIRED")
 
             mm.closeUser()
@@ -481,7 +479,7 @@ def scan_submissions(
             mm.stop()
 
     else:
-        print(f"There was nothing in {upload_dir} for me to iterate over")
+        print(f"There was nothing in {upload_dir} to iterate over")
 
     for sid, err in errors:
         print(f"Error processing user_id {sid}: {str(err)}")
@@ -684,7 +682,7 @@ if __name__ == "__main__":
         plom_server = PlomServer(basedir=basedir)
 
     # Read server config data from the official config file
-    servernamewithport = get_server_name( basedir / "srv" )
+    servernamewithport = get_server_name(basedir / "srv")
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
@@ -695,7 +693,7 @@ if __name__ == "__main__":
         print(type(plom_server))
         scan_submissions(
             len(args.marks),
-            server = servernamewithport,
+            server=servernamewithport,
             server_dir=(basedir / "srv"),
             upload_dir=(basedir / "upload"),
         )
@@ -706,7 +704,7 @@ if __name__ == "__main__":
     print(f"  manager: {tmp1}")
     print(f"  scanner: {tmp2}")
 
-    print("\nAll ready after {:6.1f} seconds.\n".format(time.time()-starttime))
+    print("\nAll ready after {:6.1f} seconds.\n".format(time.time() - starttime))
 
     input("Press enter when you want to stop the server...")
     print("\nShutting down server. To restart, just say")
