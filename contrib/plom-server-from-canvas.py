@@ -105,12 +105,12 @@ def get_server_name(server_dir):
     Return string like 'servername:port' and store it in PLOM_SERVER env. var.
     Get these facts by reading the serverDetails.toml file.
     """
-    with open(server_dir / "serverConfiguration/serverDetails.toml","rb") as f:
+    with open(server_dir / "serverConfiguration/serverDetails.toml", "rb") as f:
         configdata = tomllib.load(f)
     servernamewithport = f"{configdata['server']}:{configdata['port']}"
     print("DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
     os.environ["PLOM_SERVER"] = servernamewithport
-    return(servernamewithport)
+    return servernamewithport
 
 
 def make_toml(assignment, marks, *, dur="."):
@@ -689,7 +689,7 @@ if __name__ == "__main__":
         plom_server = PlomServer(basedir=basedir)
 
     # Read server config data from the official config file
-    servernamewithport = get_server_name( basedir / "srv" )
+    servernamewithport = get_server_name(basedir / "srv")
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
@@ -700,7 +700,7 @@ if __name__ == "__main__":
         print(type(plom_server))
         scan_submissions(
             len(args.marks),
-            server = servernamewithport,
+            server=servernamewithport,
             server_dir=(basedir / "srv"),
             upload_dir=(basedir / "upload"),
         )
@@ -711,7 +711,7 @@ if __name__ == "__main__":
     print(f"  manager: {tmp1}")
     print(f"  scanner: {tmp2}")
 
-    print("\nAll ready after {:6.1f} seconds.\n".format(time.time()-starttime))
+    print("\nAll ready after {:6.1f} seconds.\n".format(time.time() - starttime))
 
     input("Press enter when you want to stop the server...")
     print("\nShutting down server. To restart, just say")
