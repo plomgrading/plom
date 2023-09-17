@@ -367,8 +367,10 @@ def scan_submissions(
         scan_pwd = os.environ["PLOM_SCAN_PASSWORD"]
     if not manager_pwd:
         manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
+    # PDL - Bad idea! Read from config file instead!
+    # CBM: maybe, but we also want to support remote servers (see TODO in docstring)
     if not server:
-        server = os.environ["PLOM_SERVER"] #PDL - Bad idea! Read from config file instead!
+        server = os.environ["PLOM_SERVER"]
 
     if True:  # "PDLPATCH" in os.environ:
         # It seems like the student ID's from the classlist
