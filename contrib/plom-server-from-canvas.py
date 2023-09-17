@@ -155,19 +155,21 @@ def make_toml(assignment, marks, *, dur="."):
         f.write(toml)
 
 
-def initialize(course, section, assignment, marks, *, server_dir="."):
+def initialize(course, section, assignment, marks, *, server_dir=".", work_dir="."):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
     """
     server_dir = Path(server_dir)
     server_dir.mkdir(exist_ok=True)
+    work_dir = Path(work_dir)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, section=section)
+    # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
+    download_classlist(course, section=section, server_dir=work_dir)
 
     print("Generating `canvasSpec.toml`...")
-    make_toml(assignment, marks)
+    make_toml(assignment, marks, dur=work_dir)
 
     # Server respects this env var (on legacy >= v0.14.3)
     if not os.environ.get("PLOM_MANAGER_PASSWORD"):
@@ -194,33 +196,32 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 
-    print("Trying plom-create validatespec ...")
-    subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
-    print("Trying plom-create uploadspec ...")
-    subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
-
-    subprocess.check_call(["plom-create", "users"])
-    print("Autogenerating users...")
-    subprocess.check_call(
-        ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
-    )
-    print("Processing userlist...")
-    subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
+    with working_directory(work_dir):
+        print("Trying plom-create validatespec ...")
+        subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
+        print("Trying plom-create uploadspec ...")
+        subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+        subprocess.check_call(["plom-create", "users"])
+        print("Autogenerating users...")
+        subprocess.check_call(
+            ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
+        )
+        print("Processing userlist...")
+        subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
 
     print("Temporarily exporting scanner password...")
     pwds = {}
-    with open("userListRaw.csv", "r") as csvfile:
+    with open(work_dir / "userListRaw.csv", "r") as csvfile:
         for row in csv.reader(csvfile):
             pwds[row[0]] = row[1]
     os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
     del pwds
 
-    # print("\n*** Here is the class list.")
-    # subprocess.check_call(["cat", "classlist.csv"])
-
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
-    build_class = subprocess.check_call(["plom-create", "class", "classlist.csv"])
+    build_class = subprocess.check_call(
+        ["plom-create", "class", work_dir / "classlist.csv"]
+    )
     print("Building the database...")
     build_class = subprocess.check_call(["plom-create", "make-db"])
 
@@ -240,7 +241,7 @@ def get_submissions(
 
     if name_by_info:
         print("Fetching conversion table...")
-        conversion = get_conversion_table()
+        conversion = get_conversion_table(server_dir=work_dir)
 
     tmp_downloads = work_dir / "upload" / "tmp_downloads"
     for_plom = work_dir / "upload" / "submittedHWByQ"
@@ -681,7 +682,12 @@ if __name__ == "__main__":
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")
         plom_server = initialize(
-            course, section, assignment, args.marks, server_dir=(basedir / "srv")
+            course,
+            section,
+            assignment,
+            args.marks,
+            server_dir=(basedir / "srv"),
+            work_dir=basedir,
         )
     else:
         print(f"Using an already-initialize plom server in {basedir}")
