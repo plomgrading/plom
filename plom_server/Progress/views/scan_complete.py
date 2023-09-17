@@ -38,6 +38,9 @@ class ScanCompleteView(BaseScanProgressPage):
 class PushedImageView(BaseScanProgressPage):
     """Return a pushed image given by its pk."""
 
+    # add lead_marker to the access list - used by mark-progress views
+    group_required = ["lead_marker", "manager"]
+
     def get(self, request, img_pk):
         img = ManageScanService().get_pushed_image(img_pk)
         return FileResponse(img.image_file)
@@ -50,6 +53,9 @@ class PushedImageView(BaseScanProgressPage):
 
 class PushedImageWrapView(BaseScanProgressPage):
     """Return the simple html wrapper around the pushed image with correct rotation."""
+
+    # add lead_marker to the access list - used by mark-progress views
+    group_required = ["lead_marker", "manager"]
 
     def get(self, request, img_pk):
         mss = ManageScanService()

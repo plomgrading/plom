@@ -137,6 +137,10 @@
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
                                     </li>
+                                {% elif user_is_marker %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'progress_mark_home' %}">Marking progress</a>
+                                    </li>
                                 {% endif %}
                             </ul>
                         </div>

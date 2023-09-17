@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 from django.shortcuts import render
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 
-from Base.base_group_views import ManagerRequiredView
-from Mark.services import MarkingStatsService, MarkingTaskService, PageDataService
+from Base.base_group_views import ManagerRequiredView, LeadMarkerOrHigherView
+from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
 
 
-class ProgressTaskAnnotationFilterView(ManagerRequiredView):
+class ProgressTaskAnnotationFilterView(LeadMarkerOrHigherView):
     def get(self, request):
         mss = MarkingStatsService()
 
@@ -51,7 +51,7 @@ class ProgressTaskAnnotationFilterView(ManagerRequiredView):
         return render(request, "Progress/Mark/task_annotations_filter.html", context)
 
 
-class ProgressTaskAnnotationView(ManagerRequiredView):
+class ProgressTaskAnnotationView(LeadMarkerOrHigherView):
     def get(self, request, question, version):
         context = super().build_context()
         context.update(
@@ -67,7 +67,7 @@ class ProgressTaskAnnotationView(ManagerRequiredView):
         return render(request, "Progress/Mark/task_annotations.html", context)
 
 
-class AnnotationImageWrapView(ManagerRequiredView):
+class AnnotationImageWrapView(LeadMarkerOrHigherView):
     def get(self, request, paper, question):
         annot = MarkingTaskService().get_latest_annotation(paper, question)
         context = {"paper": paper, "question": question, "annotation_pk": annot.pk}
@@ -76,15 +76,15 @@ class AnnotationImageWrapView(ManagerRequiredView):
         )
 
 
-class AnnotationImageView(ManagerRequiredView):
+class AnnotationImageView(LeadMarkerOrHigherView):
     def get(self, request, paper, question):
         annot = MarkingTaskService().get_latest_annotation(paper, question)
         return FileResponse(annot.image.image)
 
 
-class OriginalImageWrapView(ManagerRequiredView):
+class OriginalImageWrapView(LeadMarkerOrHigherView):
     def get(self, request, paper, question):
-        img_list = PageDataService().get_question_pages_list(paper, question)
+        img_list = page_data.get_question_pages_list(paper, question)
         # update this to include an angle which is (-1)*orientation - for css transforms
         for X in img_list:
             X.update({"angle": -X["orientation"]})

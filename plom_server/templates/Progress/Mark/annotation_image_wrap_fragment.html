@@ -4,10 +4,13 @@
         <div class="col">
             <h5>Annotations for paper {{ paper }} question {{ question }}</h5>
         </div>
-        <div class="col">
-            <a href="{% url 'annotation_item' annotation_pk %}"
-               class="btn btn-warning">modify</a>
-        </div>
+        <!-- lead-marker can view but not modify -->
+        {% if user_is_manager %}
+            <div class="col">
+                <a href="{% url 'annotation_item' annotation_pk %}"
+                   class="btn btn-warning">modify</a>
+            </div>
+        {% endif %}
     </div>
     <img src="{% url 'progress_annotation_img' paper question %}"
          style="max-height: 100%;
