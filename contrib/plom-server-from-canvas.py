@@ -41,6 +41,7 @@ import string
 import subprocess
 from textwrap import dedent
 import time
+import tomli as tomllib   # tomllib will join the standard library in Python 3.11
 
 import fitz
 import PIL.Image
@@ -69,7 +70,7 @@ from plom.create import start_messenger
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.4.0"
+__script_version__ = "0.4.5"
 
 
 def get_short_name(long_name):
@@ -92,6 +93,19 @@ def get_short_name(long_name):
             continue
 
     return short_name
+
+
+def get_server_name(server_dir):
+    """
+    Return string like 'servername:port' and store it in PLOM_SERVER env. var.
+    Get these facts by reading the serverDetails.toml file.
+    """
+    with open(server_dir / "serverConfiguration/serverDetails.toml","rb") as f:
+        configdata = tomllib.load(f)
+    servernamewithport = f"{configdata['server']}:{configdata['port']}"
+    print("DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
+    os.environ["PLOM_SERVER"] = servernamewithport
+    return(servernamewithport)
 
 
 def make_toml(assignment, marks, *, dur="."):
@@ -159,8 +173,11 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
         subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
-        print("Running `plom-server init`...")
-        subprocess.check_call(["plom-server", "init"])
+        if args.port == None:
+            print(f"Running `plom-server init --port {args.port}`...")
+            subprocess.check_call(["plom-server", "init"])
+        else:
+            subprocess.check_call(["plom-server", "init", "--port", f"{args.port}"])
 
     print("Temporarily exporting manager password...")
     pwds = {}
@@ -169,12 +186,10 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
             pwds[row[0]] = row[1]
     os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
     os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
-    print("")
-    print("Secret stuff, probably don't just print it...")
-    print(pwds["manager"])
-    print(pwds["scanner"])
-    print("")
     del pwds
+
+    # Read server config data from the official config file
+    servernamewithport = get_server_name(server_dir)
 
     print("Launching plom server.")
     plom_server = PlomServer(basedir=server_dir)
@@ -182,7 +197,9 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 
+    print("Trying plom-create validatespec ...")
     subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
+    print("Trying plom-create uploadspec ...")
     subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
 
     # print("\n*** Here is the class list.")
@@ -328,6 +345,7 @@ def scan_submissions(
     num_questions,
     *,
     upload_dir,
+    server_dir=None,
     server=None,
     scan_pwd=None,
     manager_pwd=None,
@@ -345,11 +363,9 @@ def scan_submissions(
     if not manager_pwd:
         manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
     if not server:
-        server = os.environ["PLOM_SERVER"]
+        server = os.environ["PLOM_SERVER"] #PDL - Bad idea! Read from config file instead!
 
-    try:
-        mm = start_messenger(server, manager_pwd)
-
+    if True:  # "PDLPATCH" in os.environ:
         # It seems like the student ID's from the classlist
         # have not yet been attached to numbered test papers
         # when we arrive at this point. Let's plan to make
@@ -360,10 +376,14 @@ def scan_submissions(
         # We are also going to need a mapping from SID's to student names
         # and test numbers.
         # These don't seem to be in the database yet, either, so just
-        # read the class list directly.
-        classlist = mm.IDrequestClasslist()
+        # read the class list.
         sid2name = {}
         sid2test = {}
+        # TODO: hardcoded, use API instead
+        with open(server_dir / "specAndDatabase/classlist.csv", "r") as csvfile:
+            reader = csv.DictReader(csvfile)
+            classlist = list(reader)
+
         for k in range(len(classlist)):
             sid2name[classlist[k]["id"]] = classlist[k]["name"]
             sid2test[classlist[k]["id"]] = int(classlist[k]["paper_number"])
@@ -371,12 +391,14 @@ def scan_submissions(
         # Ask the server for the largest paper number we might see.
         # Inferring this from len(sid2name) might work, but doing
         # the extra work might make this robust against incorrect assumptions.
+        mm = start_messenger(server, manager_pwd)
+        # TODO: later
+        # mm.IDgetClasslist()
         infodict = mm.get_exam_info()
-        PaperUsed = [False for _ in range(1, infodict["current_largest_paper_num"] + 1)]
-        print(f"*** PDLPATCH: List PaperUsed has length {len(PaperUsed)}.")
-    finally:
         mm.closeUser()
         mm.stop()
+        PaperUsed = [False for _ in range(1, infodict["current_largest_paper_num"] + 1)]
+        print(f"*** PDLPATCH: List PaperUsed has length {len(PaperUsed)}.")
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
@@ -571,13 +593,23 @@ parser.add_argument(
     dest="upload",
     help="Do not run submission-grabbing from Canvas and uploading to plom server",
 )
+parser.add_argument(  # After parsing, args.port will be None or an integer
+    "--port",
+    type=int,
+    metavar="PORT",
+    action="store",
+    help="Port number for server",
+)
 
 if __name__ == "__main__":
     print("************************************************************")
     print("WARNING: this script in a work-in-progress, largely progress")
     print('and precious little "work"')
     print("************************************************************")
+    starttime = time.time()
+
     args = parser.parse_args()
+
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
         if not args.api_key:
@@ -651,6 +683,9 @@ if __name__ == "__main__":
         print(f"Using an already-initialize plom server in {basedir}")
         plom_server = PlomServer(basedir=basedir)
 
+    # Read server config data from the official config file
+    servernamewithport = get_server_name( basedir / "srv" )
+
     if args.upload:
         print("\n\ngetting submissions from canvas...")
         get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
@@ -658,13 +693,23 @@ if __name__ == "__main__":
         print("scanning submissions...")
         print(plom_server)
         print(type(plom_server))
-        # TODO: hardcoded server hostname here, and remove server_dir
         scan_submissions(
             len(args.marks),
-            server="localhost:41984",
+            server = servernamewithport,
+            server_dir=(basedir / "srv"),
             upload_dir=(basedir / "upload"),
         )
 
+    print("\nPasswords for quick reference (gulp):")
+    tmp1 = os.environ["PLOM_MANAGER_PASSWORD"]
+    tmp2 = os.environ["PLOM_SCAN_PASSWORD"]
+    print(f"  manager: {tmp1}")
+    print(f"  scanner: {tmp2}")
+
+    print("\nAll ready after {:6.1f} seconds.\n".format(time.time()-starttime))
+
     input("Press enter when you want to stop the server...")
+    print("\nShutting down server. To restart, just say")
+    print(f"  plom-server launch {basedir}/srv\n")
     plom_server.stop()
-    print("Server stopped, goodbye!")
+    print("Server stopped. Goodbye!")
