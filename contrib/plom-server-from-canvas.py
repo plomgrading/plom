@@ -41,7 +41,12 @@ import string
 import subprocess
 from textwrap import dedent
 import time
-import tomli as tomllib   # tomllib will join the standard library in Python 3.11
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 import fitz
 import PIL.Image
