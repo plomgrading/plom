@@ -41,7 +41,12 @@ import string
 import subprocess
 from textwrap import dedent
 import time
-import tomli as tomllib  # tomllib will join the standard library in Python 3.11
+
+import sys
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 import fitz
 import PIL.Image
@@ -362,6 +367,8 @@ def scan_submissions(
         scan_pwd = os.environ["PLOM_SCAN_PASSWORD"]
     if not manager_pwd:
         manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
+    # PDL - Bad idea! Read from config file instead!
+    # CBM: maybe, but we also want to support remote servers (see TODO in docstring)
     if not server:
         server = os.environ["PLOM_SERVER"]  # Remember, we set this env var earlier.
 
