@@ -42,6 +42,7 @@ import subprocess
 import sys
 from textwrap import dedent
 import time
+from typing import List, Union
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -113,7 +114,7 @@ def get_server_name(server_dir):
     return servernamewithport
 
 
-def make_toml(assignment, marks, *, dur="."):
+def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> None:
     """
     (assignment): a canvasapi assignment object
     """
@@ -191,7 +192,9 @@ def initialize(*, server_dir="."):
     return plom_server
 
 
-def configure_running_server(course, section, assignment, marks, *, work_dir="."):
+def configure_running_server(
+    course, section, assignment, marks: List[int], *, work_dir="."
+) -> None:
     """Configure a fresh Plom server based on Canvas info.
 
     Args:
@@ -673,10 +676,9 @@ if __name__ == "__main__":
     o_dir = os.getcwd()
 
     if args.dir is None:
-        basedir = input("Name of dir to use for this assignment: ")
+        basedir = Path(input("Name of dir to use for this assignment: "))
     else:
-        basedir = args.dir
-    basedir = Path(basedir)
+        basedir = Path(args.dir)
 
     if basedir.is_dir():
         print(f'Using existing dir "{basedir}"')
