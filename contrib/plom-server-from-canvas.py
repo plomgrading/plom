@@ -42,7 +42,7 @@ import subprocess
 import sys
 from textwrap import dedent
 import time
-from typing import List, Union
+from typing import Optional, List, Union
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -156,8 +156,12 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
         f.write(toml)
 
 
-def initialize(*, server_dir="."):
+def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None):
     """Start a Plom server.
+
+    Keyword Args:
+        server_dir: filespace for the server.
+        port: port number or use a default if omitted.
 
     Returns:
         A running PlomServer object.
@@ -179,7 +183,7 @@ def initialize(*, server_dir="."):
             print("Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
-            subprocess.check_call(["plom-server", "init", "--port", f"{args.port}"])
+            subprocess.check_call(["plom-server", "init", "--port", f"{port}"])
 
     # Read server config data from the official config file
     servernamewithport = get_server_name(server_dir)
@@ -705,7 +709,7 @@ if __name__ == "__main__":
 
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")
-        plom_server = initialize(server_dir=(basedir / "srv"))
+        plom_server = initialize(server_dir=(basedir / "srv"), port=args.port)
         # Read server config data from the official config file
         servernamewithport = get_server_name(basedir / "srv")
     else:
