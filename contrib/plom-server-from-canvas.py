@@ -42,6 +42,7 @@ import subprocess
 import sys
 from textwrap import dedent
 import time
+from typing import Optional, List, Union
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -113,7 +114,7 @@ def get_server_name(server_dir):
     return servernamewithport
 
 
-def make_toml(assignment, marks, *, dur="."):
+def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> None:
     """
     (assignment): a canvasapi assignment object
     """
@@ -155,43 +156,34 @@ def make_toml(assignment, marks, *, dur="."):
         f.write(toml)
 
 
-def initialize(course, section, assignment, marks, *, server_dir="."):
-    """
-    Set up the test directory, get the classlist from canvas, make the
-    .toml, etc
+def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None):
+    """Start a Plom server.
+
+    Keyword Args:
+        server_dir: filespace for the server.
+        port: port number or use a default if omitted.
+
+    Returns:
+        A running PlomServer object.
     """
     server_dir = Path(server_dir)
     server_dir.mkdir(exist_ok=True)
 
-    print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, section=section)
-
-    print("Generating `canvasSpec.toml`...")
-    make_toml(assignment, marks)
+    # Server respects this env var (on legacy >= v0.14.3)
+    if not os.environ.get("PLOM_MANAGER_PASSWORD"):
+        # TODO do something smarter if script user does not specify
+        # TODO: for example, autogen one
+        os.environ["PLOM_MANAGER_PASSWORD"] = "lalala"
 
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
-        print("Parsing `canvasSpec.toml`...")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        print("Autogenerating users...")
-        subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
-        print("Processing userlist...")
-        subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
         if args.port is None:
             print("Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
-            subprocess.check_call(["plom-server", "init", "--port", f"{args.port}"])
-
-    print("Temporarily exporting manager password...")
-    pwds = {}
-    with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        for row in csv.reader(csvfile):
-            pwds[row[0]] = row[1]
-    os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
-    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
-    del pwds
+            subprocess.check_call(["plom-server", "init", "--port", f"{port}"])
 
     # Read server config data from the official config file
     servernamewithport = get_server_name(server_dir)
@@ -201,22 +193,60 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     # TODO: consider suppressing output https://gitlab.com/plom/plom/-/issues/1586
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
+    return plom_server
 
-    print("Trying plom-create validatespec ...")
-    subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
-    print("Trying plom-create uploadspec ...")
-    subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
 
-    # print("\n*** Here is the class list.")
-    # subprocess.check_call(["cat", "classlist.csv"])
+def configure_running_server(
+    course, section, assignment, marks: List[int], *, work_dir="."
+) -> None:
+    """Configure a fresh Plom server based on Canvas info.
+
+    Args:
+        course:
+        section:
+        assignment:
+        marks:
+
+    Keyword Args:
+        work_dir: where to download the classlist and other incidental files.
+            Note the ``userListRaw.csv`` will be left in this directory, as
+            well as a copy of your classlist, including student names and IDs.
+    """
+    print("\nGetting enrollment data from canvas and building `classlist.csv`...")
+    # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
+    download_classlist(course, section=section, server_dir=work_dir)
+
+    print("Generating `canvasSpec.toml`...")
+    make_toml(assignment, marks, dur=work_dir)
+
+    with working_directory(work_dir):
+        print("Trying plom-create validatespec ...")
+        subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
+        print("Trying plom-create uploadspec ...")
+        subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+        subprocess.check_call(["plom-create", "users"])
+        print("Autogenerating users...")
+        subprocess.check_call(
+            ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
+        )
+        print("Processing userlist...")
+        subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
+
+    print("Temporarily exporting scanner password...")
+    pwds = {}
+    with open(work_dir / "userListRaw.csv", "r") as csvfile:
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
+    del pwds
 
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
-    build_class = subprocess.check_call(["plom-create", "class", "classlist.csv"])
+    build_class = subprocess.check_call(
+        ["plom-create", "class", work_dir / "classlist.csv"]
+    )
     print("Building the database...")
     build_class = subprocess.check_call(["plom-create", "make-db"])
-
-    return plom_server
 
 
 def get_submissions(
@@ -232,7 +262,8 @@ def get_submissions(
 
     if name_by_info:
         print("Fetching conversion table...")
-        conversion = get_conversion_table()
+        # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
+        conversion = get_conversion_table(server_dir=work_dir)
 
     tmp_downloads = work_dir / "upload" / "tmp_downloads"
     for_plom = work_dir / "upload" / "submittedHWByQ"
@@ -581,7 +612,14 @@ parser.add_argument(
     "--no-init",
     action="store_false",
     dest="init",
-    help="Do not initialize the plom server",
+    help="""
+        Do not initialize the plom server.  Assume there is one running
+        elsewhere and the user has provided appropriate environment
+        variables, namely PLOM_MANAGER_PASSWORD and PLOM_SERVER to access
+        it.  The server must be in a fresh raw state and will be configured
+        by this script.  Due to legacy server limitations, this process
+        cannot be easily undone.
+    """,
 )
 parser.add_argument(
     "--no-upload",
@@ -642,10 +680,9 @@ if __name__ == "__main__":
     o_dir = os.getcwd()
 
     if args.dir is None:
-        basedir = input("Name of dir to use for this assignment: ")
+        basedir = Path(input("Name of dir to use for this assignment: "))
     else:
-        basedir = args.dir
-    basedir = Path(basedir)
+        basedir = Path(args.dir)
 
     if basedir.is_dir():
         print(f'Using existing dir "{basedir}"')
@@ -672,23 +709,25 @@ if __name__ == "__main__":
 
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")
-        plom_server = initialize(
-            course, section, assignment, args.marks, server_dir=(basedir / "srv")
-        )
+        plom_server = initialize(server_dir=(basedir / "srv"), port=args.port)
+        # Read server config data from the official config file
+        servernamewithport = get_server_name(basedir / "srv")
     else:
-        print(f"Using an already-initialize plom server in {basedir}")
-        plom_server = PlomServer(basedir=basedir)
+        # TODO: how to support both this an a remote server?
+        # print(f"Using an already-initialize plom server in {basedir}")
+        # plom_server = PlomServer(basedir=basedir)
 
-    # Read server config data from the official config file
-    servernamewithport = get_server_name(basedir / "srv")
+        # TODO: think about this
+        servernamewithport = os.environ.get("PLOM_SERVER")
+
+    # TODO: note this happens EVEN IF dry-run, which is likely surprising behaviour
+    configure_running_server(course, section, assignment, args.marks, work_dir=basedir)
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
         get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
 
         print("scanning submissions...")
-        print(plom_server)
-        print(type(plom_server))
         scan_submissions(
             len(args.marks),
             server=servernamewithport,
@@ -703,8 +742,9 @@ if __name__ == "__main__":
 
     print("\nAll ready after {:6.1f} seconds.\n".format(time.time() - starttime))
 
-    input("Press enter when you want to stop the server...")
-    print("\nShutting down server. To restart, just say")
-    print(f"  plom-server launch {basedir}/srv\n")
-    plom_server.stop()
-    print("Server stopped. Goodbye!")
+    if args.init:
+        input("Press enter when you want to stop the server...")
+        print("\nShutting down server. To restart, just say")
+        print(f"  plom-server launch {basedir}/srv\n")
+        plom_server.stop()
+        print("Server stopped. Goodbye!")
