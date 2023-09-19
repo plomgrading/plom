@@ -87,15 +87,20 @@ class QMenuNextPrefDialog(QMenu):
         a.setDefaultWidget(frame)
         self.addAction(a)
 
-    def prefer_above(self):
+    def prefer_above(self) -> Union[None, int]:
         if not self._prefer_above_action_checkbox.isChecked():
             return None
         return int(self._prefer_above_action_lineedit.text())
 
-    def update_tag_menu(self, all_tags: List[str]):
+    def update_tag_menu(self, all_tags: List[str]) -> None:
         q = self._prefer_tags_combobox
+        cur = q.currentText()
         q.clear()
         q.addItems(all_tags)
+        if cur:
+            # TODO: we could restore the previous text only if its still a tag
+            # if cur in all_tags:
+            q.setCurrentText(cur)
 
     def get_preferred_tag(self, username: str) -> Union[None, str]:
         if self._prefer_tags_radiobuttons[0].isChecked():
