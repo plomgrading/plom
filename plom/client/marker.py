@@ -1132,28 +1132,8 @@ class MarkerClient(QWidget):
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
     def updateTagMenu(self):
-        q = self._tagging_menu._prefer_tags_combobox
-        q.clear()
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        q.addItems(all_tags)
-
-    def get_preferred_tag(self) -> Union[None, str]:
-        m = self._tagging_menu
-        if m._prefer_tags_radiobuttons[0].isChecked():
-            tag = "@" + self.msgr.username
-        elif m._prefer_tags_radiobuttons[1].isChecked():
-            tag = m._prefer_tags_combobox.currentText()
-        else:
-            tag = None
-        return tag
-
-    @property
-    def prefer_above(self) -> Union[None, int]:
-        """User prefers to mark papers above this value, or None if no preference."""
-        m = self._tagging_menu
-        if not m._prefer_above_action._checkbox.isChecked():
-            return None
-        return int(m._prefer_above_action._lineedit.text())
+        self._tagging_menu.update_tag_menu(all_tags)
 
     def loadMarkedList(self):
         """Loads the list of previously marked papers into self.examModel.
@@ -1394,8 +1374,8 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
-        tag = self.get_preferred_tag()
-        above = self.prefer_above
+        tag = self._tagging_menu.get_preferred_tag(self.msgr.username)
+        above = self._tagging_menu.prefer_above()
         if tag and above:
             log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
         elif tag:
