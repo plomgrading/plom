@@ -5,20 +5,15 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
-from typing import Dict
+from typing import Dict, Optional, Any
 from pathlib import Path
-import sys
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 
 from plom import SpecVerifier
 
+from Base.compat import load_toml_from_path
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 
@@ -30,12 +25,13 @@ log = logging.getLogger("ValidatedSpecService")
 
 
 @transaction.atomic
-def load_spec_from_toml(
-    pathname,
-    update_staging=False,
-    public_code=None,
+def load_spec_from_dict(
+    spec_dict: Dict[str, Any],
+    *,
+    update_staging: bool = False,
+    public_code: Optional[str] = None,
 ) -> Specification:
-    """Load a test spec from a TOML file, and saves to the database.
+    """Load a test spec from a dictionary and save to the database.
 
     Will call the SpecSerializer on the loaded TOML string and validate.
 
@@ -47,24 +43,34 @@ def load_spec_from_toml(
     Returns:
         Specification: saved test spec instance.
     """
-    with open(Path(pathname), "rb") as toml_f:
-        data = tomllib.load(toml_f)
+    # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
+    serializer.is_valid()
+    valid_data = serializer.validated_data
 
-        # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
-        data["question"] = question_list_to_dict(data["question"])
-        serializer = SpecSerializer(data=data)
-        serializer.is_valid()
-        valid_data = serializer.validated_data
+    if public_code:
+        valid_data["publicCode"] = public_code
 
-        if public_code:
-            valid_data["publicCode"] = public_code
+    if update_staging:
+        from SpecCreator.services import StagingSpecificationService
 
-        if update_staging:
-            from SpecCreator.services import StagingSpecificationService
+        StagingSpecificationService().create_from_dict(serializer.validated_data)
 
-            StagingSpecificationService().create_from_dict(serializer.validated_data)
+    return serializer.create(serializer.validated_data)
 
-        return serializer.create(serializer.validated_data)
+
+@transaction.atomic
+def load_spec_from_toml(
+    pathname,
+    update_staging=False,
+    public_code=None,
+) -> Specification:
+    """Load a test spec from a TOML file and save it to the database."""
+    data = load_toml_from_path(pathname)
+    return load_spec_from_dict(
+        data, update_staging=update_staging, public_code=public_code
+    )
 
 
 @transaction.atomic

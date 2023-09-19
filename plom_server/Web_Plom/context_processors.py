@@ -3,13 +3,17 @@
 
 
 def user_group_information(request):
-    # Use following colors for nav bar for groups {
-    #     "admin": "danger",
-    #     "manager": "warning",
-    #     "scanner": "info",
-    #     "marker": "primary",   # use marker as the default color
-    #     "lead_marker": "dark",
-    # }
+    """Add user group membership booleans to the view context.
+
+    Adds booleans "user_is_admin", "user_is_manager", "user_is_scanner", "user_is_marker", and "user_is_lead_marker".
+
+    Also adds navbar_color information via bootstrap standard colors
+      * admin = danger
+      * manager = warning
+      * scanner = info
+      * marker = primary (we also use this as the default color)
+      * lead_marker = secondary
+    """
     group_list = list(request.user.groups.values_list("name", flat=True))
     context = {
         "user_is_admin": "admin" in group_list,
@@ -17,7 +21,8 @@ def user_group_information(request):
         "user_is_scanner": "scanner" in group_list,
         "user_is_lead_marker": "lead_marker" in group_list,
         "user_is_marker": "marker" in group_list,
-        "navbar_colour": "primary",  # default to the marker color, no 'u' to keep north americans happy
+        "navbar_color": "primary",
+        # default to the marker color, no 'u' to keep north americans happy
     }
     if "admin" in group_list:
         context["navbar_color"] = "danger"
