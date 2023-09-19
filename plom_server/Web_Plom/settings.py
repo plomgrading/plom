@@ -102,6 +102,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # add our own context processor to get information about user's groups
+                "Web_Plom.context_processors.user_group_information",
             ],
         },
     },

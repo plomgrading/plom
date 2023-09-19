@@ -20,7 +20,11 @@ from random_username.generate import generate_username
 
 from .services import generate_link, check_username
 from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
-from Base.base_group_views import AdminRequiredView, ManagerRequiredView
+from Base.base_group_views import (
+    AdminRequiredView,
+    ManagerRequiredView,
+    RoleRequiredView,
+)
 
 
 # Create your views here.
@@ -123,31 +127,13 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 # login_required make sure user is log in first
-class Home(LoginRequiredMixin, View):
+class Home(RoleRequiredView):
     login_url = "login/"
     redirect_field_name = "login"
-    home_page = "Authentication/home.html"
-    no_group_page = "Authentication/no_group.html"
-    navbar_colour = {
-        "admin": "#808080",
-        "manager": "#AD9CFF",
-        "marker": "#FF434B",
-        "scanner": "#0F984F",
-    }
 
     def get(self, request):
-        try:
-            user = request.user.groups.all()[0].name
-        except IndexError:
-            user = None
-        if user in Home.navbar_colour:
-            colour = Home.navbar_colour[user]
-        else:
-            colour = "#4000FF"
-            context = {"navbar_colour": colour, "user_group": user}
-            return render(request, self.no_group_page, context)
-        context = {"navbar_colour": colour, "user_group": user}
-        return render(request, self.home_page, context, status=200)
+        context = {}
+        return render(request, "Authentication/home.html", context)
 
 
 # Login the user
@@ -192,7 +178,7 @@ class Signup(ManagerRequiredView):
     template_name = "Authentication/signup.html"
 
     def get(self, request):
-        context = self.build_context()
+        context = {}
         return render(request, self.template_name, context)
 
 
@@ -203,15 +189,14 @@ class SignupManager(AdminRequiredView):
     form = CreateManagerForm()
 
     def get(self, request):
-        context = self.build_context()
-        context.update({"form": self.form})
+        context = {"form": self.form}
         return render(request, self.template_name, context)
 
     def post(self, request):
         form = CreateManagerForm(request.POST)
         username = request.POST.get("username")
         exist_username = User.objects.filter(username__iexact=username)
-        context = self.build_context()
+        context = {}
         if form.is_valid() and not exist_username.exists():
             user = form.save()
             user.refresh_from_db()
@@ -248,13 +233,10 @@ class SignupScanners(ManagerRequiredView):
     form = CreateScannersAndMarkersForm()
 
     def get(self, request):
-        context = self.build_context()
-        context.update(
-            {
-                "form": self.form,
-                "created": False,
-            }
-        )
+        context = {
+            "form": self.form,
+            "created": False,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -284,14 +266,11 @@ class SignupScanners(ManagerRequiredView):
                 link = generate_link(request, user)
                 scanner_dict[scanner] = link
 
-            context = self.build_context()
-            context.update(
-                {
-                    "form": self.form,
-                    "links": scanner_dict,
-                    "created": True,
-                }
-            )
+            context = {
+                "form": self.form,
+                "links": scanner_dict,
+                "created": True,
+            }
             return render(request, self.template_name, context)
 
 
@@ -301,13 +280,10 @@ class SignupMarkers(ManagerRequiredView):
     form = CreateScannersAndMarkersForm()
 
     def get(self, request):
-        context = self.build_context()
-        context.update(
-            {
-                "form": self.form,
-                "created": False,
-            }
-        )
+        context = {
+            "form": self.form,
+            "created": False,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -335,14 +311,11 @@ class SignupMarkers(ManagerRequiredView):
                 link = generate_link(request, user)
                 marker_dict[marker] = link
 
-            context = self.build_context()
-            context.update(
-                {
-                    "form": self.form,
-                    "links": marker_dict,
-                    "created": True,
-                }
-            )
+            context = {
+                "form": self.form,
+                "links": marker_dict,
+                "created": True,
+            }
             return render(request, self.template_name, context)
 
 
@@ -352,38 +325,18 @@ class PasswordResetLinks(AdminRequiredView):
 
     def get(self, request):
         users = User.objects.all().filter(groups__name="manager").values()
-        context = self.build_context()
-        context.update({"users": users})
+        context = {"users": users}
         return render(request, self.template_name, context)
 
     def post(self, request):
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
         link = generate_link(request, user)
-        context = self.build_context()
-        context.update({"link": link})
+        context = {"link": link}
         return render(request, self.activation_link, context)
 
 
 class Maintenance(Home, View):
-    template_name = "Authentication/maintenance.html"
-    navbar_colour = {
-        "admin": "#808080",
-        "manager": "#AD9CFF",
-        "marker": "#FF434B",
-        "scanner": "#0F984F",
-    }
-
     def get(self, request):
-        try:
-            user = request.user.groups.all()[0].name
-        except IndexError:
-            user = None
-        if user in Home.navbar_colour:
-            colour = Home.navbar_colour[user]
-        else:
-            colour = "#4000FF"
-            context = {"navbar_colour": colour, "user_group": user}
-            return render(request, self.template_name, context)
-        context = {"navbar_colour": colour, "user_group": user}
-        return render(request, self.template_name, context, status=200)
+        context = {}
+        return render(request, "Authentication/maintenance.html", context)
