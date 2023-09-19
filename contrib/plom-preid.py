@@ -76,7 +76,7 @@ def main():
 
     try:
         print(f"Checking if any tests already associated with {args.sid}")
-        r = msgr.sidToTest(args.sid)
+        r = msgr.sid_to_paper_number(args.sid)
         if not r[0]:
             print(f"  {r[1]}")
         else:
@@ -93,7 +93,7 @@ def main():
 
         # can also confirm it worked in Manager -> Progress -> ID Progress -> table on right
         print("Confirming change...")
-        r = msgr.sidToTest(args.sid)
+        r = msgr.sid_to_paper_number(args.sid)
         if not r[0]:
             raise RuntimeError(r[1])
         testnum = r[1]
