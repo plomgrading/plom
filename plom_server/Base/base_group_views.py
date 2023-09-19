@@ -21,7 +21,7 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class AdminRequiredView(RoleRequiredView):
-    """A base class view for admins."""
+    """A base class view for any authorised user."""
 
     group_required = ["admin"]
 
