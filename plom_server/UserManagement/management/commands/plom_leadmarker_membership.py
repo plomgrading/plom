@@ -4,6 +4,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import Group, User
 
+from UserManagement.services import PermissionChanger
+
 
 class Command(BaseCommand):
     """Show users membership of the marker and lead markers groups,
@@ -11,11 +13,7 @@ class Command(BaseCommand):
     """
 
     def show_group_membership(self, username):
-        try:
-            user_obj = User.objects.get_by_natural_key(username)
-        except User.DoesNotExist:
-            raise CommandError("No such user")
-        user_in_groups = list(user_obj.groups.values_list("name", flat=True))
+        user_in_groups = PermissionChanger.get_users_groups(username)
         self.stdout.write(f"User {username} is in groups {user_in_groups}")
 
     def toggle_membership_of_leadmarker_group(self, username):

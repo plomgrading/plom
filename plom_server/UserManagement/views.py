@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
@@ -12,10 +13,10 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
 
+from .services import PermissionChanger
+
 
 class UserPage(ManagerRequiredView):
-    user_page = "UserManagement/users.html"
-
     def get(self, request):
         managers = User.objects.filter(groups__name="manager")
         scanners = User.objects.filter(groups__name="scanner")
@@ -29,58 +30,36 @@ class UserPage(ManagerRequiredView):
             "lead_markers": lead_markers,
             "managers": managers,
         }
-        return render(request, self.user_page, context)
+        return render(request, "UserManagement/users.html", context)
 
     def post(self, request, username):
-        user_to_change = User.objects.get_by_natural_key(username)
-
-        # toggle active status
-        user_to_change.is_active = not user_to_change.is_active
-        user_to_change.save()
+        PermissionChanger.toggle_user_active(username)
 
         return HttpResponseClientRefresh()
 
     @login_required
     def enableScanners(self):
-        users_in_group = Group.objects.get(name="scanner").user_set.all()
-        for user in users_in_group:
-            user.is_active = True
-            user.save()
+        PermissionChanger.set_all_scanners_active(True)
         return redirect("/users")
 
     @login_required
     def disableScanners(self):
-        users_in_group = Group.objects.get(name="scanner").user_set.all()
-        for user in users_in_group:
-            user.is_active = False
-            user.save()
+        PermissionChanger.set_all_scanners_active(False)
         return redirect("/users")
 
     @login_required
     def enableMarkers(self):
-        users_in_group = Group.objects.get(name="marker").user_set.all()
-        for user in users_in_group:
-            user.is_active = True
-            user.save()
+        PermissionChanger.set_all_marker_active(True)
         return redirect("/users")
 
     @login_required
     def disableMarkers(self):
-        users_in_group = Group.objects.get(name="marker").user_set.all()
-        for user in users_in_group:
-            user.is_active = False
-            user.save()
+        PermissionChanger.set_all_marker_active(False)
         return redirect("/users")
 
     @login_required
     def toggleLeadMarker(self, username):
-        lead_marker_group = Group.objects.get(name="lead_marker")
-        user_to_change = User.objects.get_by_natural_key(username)
-        if lead_marker_group in user_to_change.groups.all():
-            user_to_change.groups.remove(lead_marker_group)
-        else:
-            user_to_change.groups.add(lead_marker_group)
-        user_to_change.save()
+        PermissionChanger.toggle_lead_marker_group_membership(username)
         return redirect("/users")
 
 
