@@ -8,10 +8,10 @@ from UserManagement.services import PermissionChanger
 
 
 class Command(BaseCommand):
-    """Show users membership of the marker and lead markers groups,
-    and allow toggling of memebership of the lead-marker group.
-    """
+    """Show users membership of the marker and lead markers groups.
 
+    Allow toggling of membership of the lead-marker group.
+    """
     def show_group_membership(self, username):
         user_in_groups = PermissionChanger.get_users_groups(username)
         self.stdout.write(f"User {username} is in groups {user_in_groups}")
