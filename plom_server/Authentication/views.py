@@ -18,7 +18,7 @@ from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 from random_username.generate import generate_username
 
-from .services import generate_link, check_username
+from .services import generate_link, check_username, AuthenticationServices
 from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
 from Base.base_group_views import AdminRequiredView, ManagerRequiredView
 
@@ -246,6 +246,7 @@ class SignupManager(AdminRequiredView):
 class SignupScanners(ManagerRequiredView):
     template_name = "Authentication/scanner_signup.html"
     form = CreateScannersAndMarkersForm()
+    __group_name = Group.objects.get(name="scanner").name
 
     def get(self, request):
         context = self.build_context()
@@ -259,30 +260,35 @@ class SignupScanners(ManagerRequiredView):
 
     def post(self, request):
         form = CreateScannersAndMarkersForm(request.POST)
-        scanner_group = Group.objects.get(name="scanner")
         scanner_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
 
         if form.is_valid():
             num_users = form.cleaned_data.get("num_users")
-            scanner_username_list = generate_username(num_users)
+            username_choices = form.cleaned_data.get("basic_or_funky_username")
+            
+            if username_choices == "basic":
+                basic_usernames_list = AuthenticationServices().generate_list_of_basic_usernames(group_name=self.__group_name, num_users=num_users)
+            elif username_choices == "funky":
+                funky_usernames_list = AuthenticationServices().generate_list_of_funky_usernames(num_users=num_users)
+            # num_users = form.cleaned_data.get("num_users")
+            # scanner_username_list = generate_username(num_users)
 
-            for scanner in scanner_username_list:
-                scanner = check_username(
-                    scanner, exist_usernames, scanner_username_list
-                )
-                exist_usernames.append(scanner)
+            # for scanner in scanner_username_list:
+            #     scanner = check_username(
+            #         scanner, exist_usernames, scanner_username_list
+            #     )
+            #     exist_usernames.append(scanner)
 
-                User.objects.create_user(
-                    username=scanner,
-                    email=None,
-                    password=None,
-                ).groups.add(scanner_group)
-                user = User.objects.get(username=scanner)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                scanner_dict[scanner] = link
+            #     User.objects.create_user(
+            #         username=scanner,
+            #         email=None,
+            #         password=None,
+            #     ).groups.add(scanner_group)
+            #     user = User.objects.get(username=scanner)
+            #     user.is_active = False
+            #     user.save()
+            #     link = generate_link(request, user)
+            #     scanner_dict[scanner] = link
 
             context = self.build_context()
             context.update(

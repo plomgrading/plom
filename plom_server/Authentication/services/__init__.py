@@ -4,3 +4,4 @@
 
 from .link_generator import *
 from .check_exist_username import *
+from .authentication_services import *

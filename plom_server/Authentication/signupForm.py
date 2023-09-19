@@ -31,6 +31,11 @@ class CreateManagerForm(UserCreationForm):
 
 
 class CreateScannersAndMarkersForm(forms.Form):
+    USERNAME_CHOICES = [
+        ("basic", "Basic Usernames"),
+        ("funky", "Funky Usernames"),
+    ]
+
     num_users = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
@@ -41,6 +46,12 @@ class CreateScannersAndMarkersForm(forms.Form):
                 "name": "num_users",
             }
         ),
+    )
+
+    basic_or_funky_username = forms.CharField(
+        label="Do you want to generate basic or funky usernames?",
+        widget=forms.RadioSelect(choices=USERNAME_CHOICES),
+        initial="basic"
     )
 
     def clean(self):
