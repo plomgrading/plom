@@ -9,7 +9,7 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
 
 class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for admins."""
+    """A base class view for any authorised user."""
 
     group_required = ["admin", "manager", "scanner", "marker", "lead_marker"]
     login_url = "login"
@@ -21,30 +21,30 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class AdminRequiredView(RoleRequiredView):
-    """A base class view for any authorised user."""
+    """A class view for admins."""
 
     group_required = ["admin"]
 
 
 class ManagerRequiredView(RoleRequiredView):
-    """A base class view for managers."""
+    """A class view for managers."""
 
     group_required = ["manager"]
 
 
 class ScannerRequiredView(RoleRequiredView):
-    """A base class view for scanners."""
+    """A class view for scanners."""
 
     group_required = ["scanner"]
 
 
 class MarkerRequiredView(RoleRequiredView):
-    """A base class view for markers."""
+    """A class view for markers."""
 
     group_required = ["marker"]
 
 
 class LeadMarkerRequiredView(RoleRequiredView):
-    """A base class view for markers."""
+    """A class view for markers."""
 
     group_required = ["lead_marker"]
