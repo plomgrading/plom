@@ -72,7 +72,6 @@ class SetPassword(View):
                     user.is_active = True
                     user.profile.signup_confirmation = True
                     user.save()
-                    print(reset_form.cleaned_data.get("new_password1"))
                     return render(request, self.set_password_complete)
                 # display error message
                 else:
@@ -260,41 +259,35 @@ class SignupScanners(ManagerRequiredView):
 
     def post(self, request):
         form = CreateScannersAndMarkersForm(request.POST)
-        scanner_dict = {}
 
         if form.is_valid():
             num_users = form.cleaned_data.get("num_users")
             username_choices = form.cleaned_data.get("basic_or_funky_username")
-            
+
             if username_choices == "basic":
-                basic_usernames_list = AuthenticationServices().generate_list_of_basic_usernames(group_name=self.__group_name, num_users=num_users)
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_basic_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
+                )
             elif username_choices == "funky":
-                funky_usernames_list = AuthenticationServices().generate_list_of_funky_usernames(num_users=num_users)
-            # num_users = form.cleaned_data.get("num_users")
-            # scanner_username_list = generate_username(num_users)
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_funky_usernames(
+                        num_users=num_users
+                    )
+                )
 
-            # for scanner in scanner_username_list:
-            #     scanner = check_username(
-            #         scanner, exist_usernames, scanner_username_list
-            #     )
-            #     exist_usernames.append(scanner)
-
-            #     User.objects.create_user(
-            #         username=scanner,
-            #         email=None,
-            #         password=None,
-            #     ).groups.add(scanner_group)
-            #     user = User.objects.get(username=scanner)
-            #     user.is_active = False
-            #     user.save()
-            #     link = generate_link(request, user)
-            #     scanner_dict[scanner] = link
+            password_reset_links = (
+                AuthenticationServices().generate_password_reset_links_dict(
+                    request=request, username_list=usernames_list
+                )
+            )
 
             context = self.build_context()
             context.update(
                 {
                     "form": self.form,
-                    "links": scanner_dict,
+                    "links": password_reset_links,
                     "created": True,
                 }
             )
@@ -305,6 +298,7 @@ class SignupScanners(ManagerRequiredView):
 class SignupMarkers(ManagerRequiredView):
     template_name = "Authentication/marker_signup.html"
     form = CreateScannersAndMarkersForm()
+    __group_name = Group.objects.get(name="marker").name
 
     def get(self, request):
         context = self.build_context()
@@ -318,34 +312,35 @@ class SignupMarkers(ManagerRequiredView):
 
     def post(self, request):
         form = CreateScannersAndMarkersForm(request.POST)
-        marker_group = Group.objects.get(name="marker")
-        marker_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
 
         if form.is_valid():
             num_users = form.cleaned_data.get("num_users")
-            marker_username_list = generate_username(num_users)
+            username_choices = form.cleaned_data.get("basic_or_funky_username")
 
-            for marker in marker_username_list:
-                marker = check_username(marker, exist_usernames, marker_username_list)
-                exist_usernames.append(marker)
+            if username_choices == "basic":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_basic_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
+                )
+            elif username_choices == "funky":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_funky_usernames(
+                        num_users=num_users
+                    )
+                )
 
-                User.objects.create_user(
-                    username=marker,
-                    email=None,
-                    password=None,
-                ).groups.add(marker_group)
-                user = User.objects.get(username=marker)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                marker_dict[marker] = link
+            password_reset_links = (
+                AuthenticationServices().generate_password_reset_links_dict(
+                    request=request, username_list=usernames_list
+                )
+            )
 
             context = self.build_context()
             context.update(
                 {
                     "form": self.form,
-                    "links": marker_dict,
+                    "links": password_reset_links,
                     "created": True,
                 }
             )

@@ -2,42 +2,77 @@
 # Copyright (C) 2023 Brennen Chiu
 
 from django.contrib.auth.models import User, Group
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
 
 
 class AuthenticationServices:
+    @transaction.atomic
     def generate_list_of_basic_usernames(self, group_name, num_users):
         user_list = []
-        if group_name == 'scanner':
+        if group_name == "scanner":
             for indx in range(1, num_users + 1):
                 scanner_name = "Scanner" + str(indx)
-                new_user = self.check_and_create_basic_usernames(username=scanner_name, indx=indx, group_name=group_name)
+                new_user = self.check_and_create_basic_usernames(
+                    username=scanner_name, indx=indx, group_name=group_name
+                )
                 user_list.append(new_user)
-        elif group_name == 'marker':
-            pass
-        
+        elif group_name == "marker":
+            for indx in range(1, num_users + 1):
+                marker_name = "Marker" + str(indx)
+                new_user = self.check_and_create_basic_usernames(
+                    username=marker_name, indx=indx, group_name=group_name
+                )
+                user_list.append(new_user)
+
         return user_list
-    
+
+    @transaction.atomic
     def check_and_create_basic_usernames(self, username, indx, group_name):
-        
         if User.objects.filter(username=username).exists():
             new_indx = indx + 1
             new_basic_username = group_name.capitalize() + str(new_indx)
-            return self.check_and_create_basic_usernames(username=new_basic_username, indx=new_indx, group_name=group_name)
+            return self.check_and_create_basic_usernames(
+                username=new_basic_username, indx=new_indx, group_name=group_name
+            )
         else:
-            user = self.create_user_and_add_to_group(username=username, group_name=group_name)
+            user = self.create_user_and_add_to_group(
+                username=username, group_name=group_name
+            )
             return user
-        
+
     @transaction.atomic
     def create_user_and_add_to_group(self, username, group_name):
         group = Group.objects.get(name=group_name)
-        User.objects.create_user(username=username, email=None, password=None).groups.add(group)
+        User.objects.create_user(
+            username=username, email=None, password=None
+        ).groups.add(group)
         user = User.objects.get(username=username)
         user.is_active = False
         user.save()
 
         return user.username
-    
+
     def generate_list_of_funky_usernames(self, num_users):
         return generate_username(num_users)
+
+    @transaction.atomic
+    def generate_password_reset_links_dict(self, request, username_list):
+        # change this when plom_server is deploy
+        http_protocol = "http://"
+        domain = get_current_site(request).domain
+        url_path = "/reset/"
+        forward_slash = "/"
+        links_dict = {}
+        for username in username_list:
+            user = User.objects.get(username=username)
+            uid = uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            link = http_protocol + domain + url_path + uid + forward_slash + token
+            links_dict[username] = link
+
+        return links_dict

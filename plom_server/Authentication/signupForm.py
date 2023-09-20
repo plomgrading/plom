@@ -51,7 +51,7 @@ class CreateScannersAndMarkersForm(forms.Form):
     basic_or_funky_username = forms.CharField(
         label="Do you want to generate basic or funky usernames?",
         widget=forms.RadioSelect(choices=USERNAME_CHOICES),
-        initial="basic"
+        initial="basic",
     )
 
     def clean(self):
