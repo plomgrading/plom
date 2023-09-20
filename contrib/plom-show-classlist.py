@@ -16,9 +16,9 @@ are essential. Perhaps PLOM_NO_SSL_VERIFY must also have a value.
 This is for learning and experimentation.
 It does not change anything on the server.
 
-The classlist that comes back has a field named paper_number that 
+The classlist that comes back has a field named paper_number that
 is apparently *not* updated when an ID is assigned to the student
-named on the list. So that field cannot be trusted at later stages 
+named on the list. So that field cannot be trusted at later stages
 of any operation.
 
 Instead, the ManagerMessenger can get the paper_number from the
