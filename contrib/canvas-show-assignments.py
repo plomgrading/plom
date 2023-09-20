@@ -70,12 +70,11 @@ for cnum, ctitle in sorted(cnum2title.items(), key=lambda kv: kv[1]):
         for hwobject in canvas.get_course(cnum).get_assignments()
         if hasattr(hwobject, "name")
     ]
-    for ii, aa in enumerate(aa):
-        anum2title[aa.id] = aa.name
-        anum2value[aa.id] = aa.points_possible
+    for _, a in enumerate(aa):
+        anum2title[a.id] = a.name
+        anum2value[a.id] = a.points_possible
     # print(f"Found {len(anum2title)} named assignments.")
 
-    # print(aa)
     for anum, atitle in sorted(anum2title.items(), key=lambda kv: kv[1]):
         # print(f"    DEBUG: Thinking about anum {anum} and atitle {atitle}")
         value = anum2value[anum]
