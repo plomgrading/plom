@@ -48,10 +48,7 @@
                                 <p class="text-muted mb-4">
                                     @{{ user_group }} <span class="mx-2">|</span> <a href="">{{ email }}</a>
                                 </p>
-                                <button style="background-color: {{ navbar_colour }};
-                                               color: white"
-                                        id="edit"
-                                        type="button">Edit Profile</button>
+                                <button style="background-color: grey; color: white" id="edit" type="button">Edit Profile</button>
                             </div>
                         </div>
                     </div>
@@ -68,9 +65,7 @@
                             {{ form.email }}
                             <br>
                             <br>
-                            <button style="background-color: {{ navbar_colour }};
-                                           color: white"
-                                    type="submit">Save</button>
+                            <button class="btn btn-success" type="submit">Save</button>
                         </form>
                         <button id="cancel"
                                 style="background-color: grey;
