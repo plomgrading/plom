@@ -27,6 +27,14 @@ from .progress_mark import (
     ProgressMarkVersionCompareView,
 )
 
+from .progress_task_annot import (
+    ProgressTaskAnnotationFilterView,
+    ProgressTaskAnnotationView,
+    AnnotationImageWrapView,
+    AnnotationImageView,
+    OriginalImageWrapView,
+)
+
 from .progress_userinfo import (
     ProgressUserInfoHome,
 )

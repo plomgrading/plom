@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
+import arrow
 import statistics
 from typing import Any, Dict, List, Optional
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from ..models import (
-    MarkingTask,
-)
+from Papers.models import Paper
+from ..models import MarkingTask, AnnotationImage
 
 
 class MarkingStatsService:
@@ -271,3 +271,73 @@ class MarkingStatsService:
                 data[ver]["mark_stdev"] = "n/a"
 
         return data
+
+    @transaction.atomic
+    def get_marking_task_annotation_info(self, question, version):
+        task_info = {}
+        for task in (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .filter(question_number=question, question_version=version)
+            .prefetch_related("latest_annotation", "paper", "assigned_user")
+            .order_by("paper__paper_number")
+        ):
+            dat = {
+                "status": task.get_status_display(),
+            }
+            if task.status == MarkingTask.COMPLETE:
+                dat.update(
+                    {
+                        "username": task.assigned_user.username,
+                        "score": task.latest_annotation.score,
+                        "annotation_image": task.latest_annotation.image.pk,
+                    }
+                )
+
+            task_info[task.paper.paper_number] = dat
+
+        return task_info
+
+    @transaction.atomic
+    def filter_marking_task_annotation_info(
+        self, question=None, version=None, username=None
+    ):
+        task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        if question:
+            task_set = task_set.filter(question_number=question)
+        if version:
+            task_set = task_set.filter(question_version=version)
+        if username:
+            task_set = task_set.filter(assigned_user__username=username)
+        task_info = {}
+        for task in task_set.prefetch_related(
+            "latest_annotation", "paper", "assigned_user"
+        ).order_by("paper__paper_number"):
+            dat = {
+                "status": task.get_status_display(),
+                "question": task.question_number,
+                "version": task.question_version,
+            }
+            if task.status == MarkingTask.COMPLETE:
+                dat.update(
+                    {
+                        "username": task.assigned_user.username,
+                        "last_update": arrow.get(
+                            task.latest_annotation.time_of_last_update
+                        ).humanize(),
+                        "score": task.latest_annotation.score,
+                        "annotation_pk": task.latest_annotation.pk,
+                    }
+                )
+
+            task_info[task.paper.paper_number] = dat
+
+        return task_info
+
+    @transaction.atomic
+    def get_list_of_users_who_marked_anything(self):
+        return [
+            X.assigned_user.username
+            for X in MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+            .prefetch_related("assigned_user")
+            .distinct("assigned_user")
+        ]

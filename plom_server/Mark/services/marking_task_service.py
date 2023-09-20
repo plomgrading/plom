@@ -25,7 +25,7 @@ from Papers.services import ImageBundleService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
-from . import marking_priority
+from . import marking_priority, mark_task
 from ..models import (
     MarkingTask,
     MarkingTaskTag,
@@ -113,63 +113,6 @@ class MarkingTaskService:
 
         return (completed.count(), total.count())
 
-    def get_latest_task(self, paper_number, question_number) -> MarkingTask:
-        """Get a marking task from its paper number and question number.
-
-        Args:
-            paper_number: int
-            question_number: int
-
-        Returns:
-            The MarkingTask.
-
-        Raises:
-            ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
-        """
-        try:
-            paper = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist as e:
-            # reraise with a more detailed error message
-            raise ObjectDoesNotExist(
-                f"Task for paper {paper_number} question {question_number} does not exist"
-            ) from e
-        r = (
-            MarkingTask.objects.filter(paper=paper, question_number=question_number)
-            .order_by("-time")
-            .first()
-        )
-        # Issue #2851, special handling of the None return
-        if r is None:
-            raise ObjectDoesNotExist(
-                f"Task does not exist: we have paper {paper_number} but "
-                f"not question index {question_number}"
-            )
-        return r
-
-    def unpack_code(self, code):
-        """Return a tuple of (paper_number, question_number) from a task code string.
-
-        Args:
-            code (str): a task code, e.g. q0001g1. Requires code to be at least 4 characters
-            long. Requires code to start with "q" and contain a "g" somewhere after the second
-            character, but not be the last character and the rest of the characters to be numeric.
-        """
-        assert len(code) >= len("q0g0")
-        assert code[0] == "q"
-
-        split_index = code.find("g", 2)
-
-        # g must be present
-        assert split_index != -1
-        # g cannot be the last character
-        assert split_index != len(code) - 1
-
-        paper_number = int(code[1:split_index])
-        question_number = int(code[split_index + 1 :])
-
-        return paper_number, question_number
-
     def get_task_from_code(self, code: str) -> MarkingTask:
         """Get a marking task from its code.
 
@@ -184,11 +127,11 @@ class MarkingTaskService:
             RuntimeError: code valid but task does not exist.
         """
         try:
-            paper_number, question_number = self.unpack_code(code)
+            paper_number, question_number = mark_task.unpack_code(code)
         except AssertionError as e:
             raise ValueError(f"{code} is not a valid task code.") from e
         try:
-            return self.get_latest_task(paper_number, question_number)
+            return mark_task.get_latest_task(paper_number, question_number)
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
@@ -384,27 +327,6 @@ class MarkingTaskService:
         task.status = MarkingTask.COMPLETE
         task.save()
 
-    @transaction.atomic
-    def save_annotation_image(self, md5sum: str, annot_img) -> AnnotationImage:
-        """Save an annotation image to disk and the database.
-
-        Args:
-            md5sum: the annotation image's hash.
-            annot_img: (InMemoryUploadedFile) the annotation image file.
-                The filename including extension is taken from this.
-
-        Return:
-            Reference to the database object.
-        """
-        imgtype = pathlib.Path(annot_img.name).suffix.casefold()
-        if imgtype not in (".png", ".jpg", ".jpeg"):
-            raise ValidationError(
-                f"Unsupported image type: expected png or jpeg, got '{imgtype}'"
-            )
-        img = AnnotationImage(hash=md5sum, image=annot_img)
-        img.save()
-        return img
-
     def validate_and_clean_marking_data(self, user, code, data, plomfile):
         """Validate the incoming marking data.
 
@@ -503,7 +425,7 @@ class MarkingTaskService:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
-        task = self.get_latest_task(paper, question)
+        task = mark_task.get_latest_task(paper, question)
         return task.latest_annotation
 
     def get_all_tags(self):

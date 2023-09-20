@@ -10,7 +10,9 @@
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Back to overview</a>
     <a class="btn btn-success"
        href="{% url 'progress_mark_details' question version %}">refresh page</a>
-    <div class="container">
+    <a class="btn btn-info"
+       href="{% url 'progress_task_annotation_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
+    <div class="container my-4">
         <div class="card">
             <div class="card-header">
                 <h5>Histograms and statistics - all users</h5>
@@ -41,7 +43,7 @@
                                 <thead>
                                     <tr>
                                         <th>avg time</th>
-                                        <th>approx remaining time</th>
+                                        <th>estimated remaining time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -60,7 +62,7 @@
                     <table class="table table-sm table-bordered text-center">
                         <thead>
                             <tr>
-                                <th>number</th>
+                                <th>number marked</th>
                                 <th>mean</th>
                                 <th>median</th>
                                 <th>mode</th>
@@ -97,7 +99,7 @@
                                     <thead>
                                         <tr>
                                             <th></th>
-                                            <th>number</th>
+                                            <th>number marked</th>
                                             <th>mean</th>
                                             <th>median</th>
                                             <th>mode</th>
@@ -148,6 +150,10 @@
         options: {
 	  plugins: {
 	      legend: { display: false },
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by all users',
+	      },
 	  },
 	  scales: {
                 y: {
@@ -160,7 +166,15 @@
   var ctx_pies = document.getElementById('pies');
   new Chart(ctx_pies, {
       type: 'doughnut',
-      options: {circumference: {{pie_angle}} },
+      options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Number marked by user',
+	      }
+	  },
+	  circumference: {{pie_angle}},
+      },
       data: {
 	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %}],
 	  datasets: [{
@@ -178,27 +192,33 @@
 	      type: 'bar',
 	      label: '{{data.username}}',
               data: {{data.hist_values}},
-              borderWidth: 3  
+              borderWidth: 3
 	  },{
 	      type: 'line',
 	      label: 'Everyone',
               data: {{data.hist_everyone_values}},
               borderWidth: 3,
 	      tension: 0.075,
-	      
+
 	  }],
-	labels: {{hist_keys}},	  
+	labels: {{hist_keys}},
       },
         options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by {{data.username}}',
+	      }
+	  },
 	  scales: {
                 y: {
 		  beginAtZero: true
                 }
 	  }
       }
-      
+
     });
-	    
+
                 </script>
             {% endfor %}
         {% endblock main_content %}

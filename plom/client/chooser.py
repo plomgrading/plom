@@ -599,20 +599,23 @@ class Chooser(QDialog):
         try:
             spec = self.messenger.get_spec()
         except PlomServerNotReady as e:
-            WarnMsg(
-                self,
-                "Server does not yet have a spec, nothing to mark. "
-                " Perhaps you want to login with the manager account to"
-                " configure the server.",
-                info=str(e),
-            ).exec()
-            self.messenger = None
-            return
+            if not self.messenger.username == "manager":
+                WarnMsg(
+                    self,
+                    "Server does not yet have a spec, nothing to mark. "
+                    " Perhaps you want to login with the manager account to"
+                    " configure the server.",
+                    info=str(e),
+                ).exec()
+                self.messenger = None
+                return
+            spec = None
         except PlomException as e:
             WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None
             return
-        self._set_restrictions_from_spec(spec)
+        if spec:
+            self._set_restrictions_from_spec(spec)
         self.ui.loginInfoLabel.setText(f'logged in as "{user}"')
         self.ui.logoutButton.setVisible(True)
         self.ui.userLE.setEnabled(False)

@@ -4,12 +4,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-import sys
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
@@ -18,7 +13,8 @@ from django.db import transaction
 import fitz
 
 from Papers.services import SpecificationService
-from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from SpecCreator.services import SpecificationUploadService
+from SpecCreator.services.spec_upload import SpecExistsException
 
 from ...services import PQVMappingService
 
@@ -57,68 +53,52 @@ class Command(BaseCommand):
         with open(fname, "w") as f:
             f.write(SpecificationService.get_the_spec_as_toml())
 
-    @transaction.atomic
     def upload_spec(self, spec_file, pdf_file):
-        if SpecificationService.is_there_a_spec():
-            raise CommandError(
-                "There is already a spec present. Cannot proceed with upload."
-            )
-
-        spec_path = Path(spec_file)
-        if spec_path.exists() is False:
-            self.stderr.write(f"Cannot open {spec_path}.")
-            return
         try:
-            with open(spec_path) as fh:
-                spec_dict = tomllib.load(fh)
-        except tomllib.TomlDecodeError as err:
-            self.stderr.write(f"Cannot decode the toml file - {err}")
-            return
-        self.stdout.write(f"From {spec_path} read spec dict = {spec_dict}")
-
-        pdf_path = Path(pdf_file)
-        if pdf_path.exists() is False:
-            self.stderr.write(f"Cannot open {pdf_path}.")
-            return
-        pdf_doc = fitz.Document(pdf_path)
-        if pdf_doc.page_count != spec_dict["numberOfPages"]:
-            self.stderr.write(
-                f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}."
+            service = SpecificationUploadService(
+                toml_file_path=spec_file, reference_pdf_path=pdf_file
             )
-        with open(pdf_path, "rb") as f:
-            pdf_doc_file = SimpleUploadedFile("spec_reference.pdf", f.read())
-        self.stdout.write("Sample pdf has correct page count - matches specification.")
+        except ValueError as e:
+            raise CommandError("Cannot save test specification.") from e
 
-        reference = ReferencePDFService()
-        # TODO: Issue #3001: staging_spec was undefined: here I define it, not sure it works...
-        staging_spec = StagingSpecificationService()
-        reference.new_pdf(
-            staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
-        )
+        with transaction.atomic:
+            try:
+                service.save_spec(update_staging=True)
+            except SpecExistsError:
+                input_loop_done = False
+                while not input_loop_done:
+                    confirm = input(
+                        "There is already a spec present. Do you wish to overwrite? (y/n)"
+                    ).casefold()
+                    if confirm == "y":
+                        service.delete_spec(delete_staging=True)
+                        service.save_spec(update_staging=True)
+                    elif confirm == "n":
+                        return
+                    input_loop_done = True
+            except RuntimeError as e:
+                raise CommandError("Cannot save test specification.") from e
 
-        try:
-            SpecificationService.load_spec_from_toml(spec_path, True)
-        except ValueError as err:
-            self.stderr.write(f"There was an error validating the spec: {err}")
-            return
+            try:
+                service.save_reference_pdf()
+            except (ValueError, RuntimeError) as e:
+                raise CommandError("Cannot save test specification.") from e
 
         self.stdout.write("Test specification validated.")
 
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):
-        pqvs = PQVMappingService()
-        if pqvs.is_there_a_pqv_map():
-            self.stderr.write("Warning - there is question-version mapping present.")
-            self.stderr.write(
-                "The test-spec cannot be deleted until that is removed; use the plom_preparation_qvmap command to remove the qv-mapping."
-            )
-            return
-        staging_spec = StagingSpecificationService()
-        self.stdout.write("Removing the test specification.")
-        staging_spec.reset_specification()
-        if SpecificationService.is_there_a_spec():
-            SpecificationService.remove_spec()
+        service = SpecificationUploadService()
+        try:
+            service.can_spec_be_modified()
+        except SpecExistsException:
+            self.stdout.write("Removing the test specification.")
+            service.delete_spec(delete_staging=True)
+        except RuntimeError as e:
+            raise CommandError("Cannot delete specification.") from e
+
+        self.stdout.write("No specification uploaded - no action taken.")
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
