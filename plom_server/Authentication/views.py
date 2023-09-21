@@ -255,7 +255,7 @@ class SignupScanners(ManagerRequiredView):
             elif username_choices == "funky":
                 usernames_list = (
                     AuthenticationServices().generate_list_of_funky_usernames(
-                        num_users=num_users
+                        group_name=self.__group_name, num_users=num_users
                     )
                 )
 
@@ -267,7 +267,7 @@ class SignupScanners(ManagerRequiredView):
 
             context = {
                 "form": self.form,
-                "links": scanner_dict,
+                "links": password_reset_links,
                 "created": True,
             }
             return render(request, self.template_name, context)
@@ -302,7 +302,7 @@ class SignupMarkers(ManagerRequiredView):
             elif username_choices == "funky":
                 usernames_list = (
                     AuthenticationServices().generate_list_of_funky_usernames(
-                        num_users=num_users
+                        group_name=self.__group_name, num_users=num_users
                     )
                 )
 
@@ -314,7 +314,7 @@ class SignupMarkers(ManagerRequiredView):
 
             context = {
                 "form": self.form,
-                "links": marker_dict,
+                "links": password_reset_links,
                 "created": True,
             }
             return render(request, self.template_name, context)

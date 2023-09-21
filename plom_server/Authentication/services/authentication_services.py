@@ -57,8 +57,21 @@ class AuthenticationServices:
 
         return user.username
 
-    def generate_list_of_funky_usernames(self, num_users):
-        return generate_username(num_users)
+    def generate_list_of_funky_usernames(self, group_name, num_users):
+        funky_username_list = generate_username(num_users)
+        user_list = []
+        for username in funky_username_list:
+            new_user = self.check_and_create_funky_usernames(username=username, group_name=group_name)
+            user_list.append(new_user)
+        return user_list
+    
+    def check_and_create_funky_usernames(self, username, group_name):
+        if User.objects.filter(username=username).exists():
+            new_username = generate_username(1)
+            return self.check_and_create_funky_usernames(username=new_username, group_name=group_name)
+        else:
+            user = self.create_user_and_add_to_group(username=username, group_name=group_name)
+            return user
 
     @transaction.atomic
     def generate_password_reset_links_dict(self, request, username_list):
