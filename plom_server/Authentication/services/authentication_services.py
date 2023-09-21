@@ -61,16 +61,22 @@ class AuthenticationServices:
         funky_username_list = generate_username(num_users)
         user_list = []
         for username in funky_username_list:
-            new_user = self.check_and_create_funky_usernames(username=username, group_name=group_name)
+            new_user = self.check_and_create_funky_usernames(
+                username=username, group_name=group_name
+            )
             user_list.append(new_user)
         return user_list
-    
+
     def check_and_create_funky_usernames(self, username, group_name):
         if User.objects.filter(username=username).exists():
             new_username = generate_username(1)
-            return self.check_and_create_funky_usernames(username=new_username, group_name=group_name)
+            return self.check_and_create_funky_usernames(
+                username=new_username, group_name=group_name
+            )
         else:
-            user = self.create_user_and_add_to_group(username=username, group_name=group_name)
+            user = self.create_user_and_add_to_group(
+                username=username, group_name=group_name
+            )
             return user
 
     @transaction.atomic
