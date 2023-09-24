@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
 from typing import Optional, List
@@ -44,6 +45,8 @@ class QuestionMarkingService:
         question: Optional[int] = None,
         version: Optional[int] = None,
         user: Optional[User] = None,
+        above: Optional[str] = None,
+        tag: Optional[str] = None,
         marking_data: Optional[dict] = None,
         annotation_data: Optional[dict] = None,
         annotation_image: Optional[InMemoryUploadedFile] = None,
@@ -67,6 +70,8 @@ class QuestionMarkingService:
         self.question = question
         self.version = version
         self.user = user
+        self.above = above
+        self.tag = tag
         self.marking_data = marking_data
         self.annotation_data = annotation_data
         self.annotation_image = annotation_image
@@ -89,6 +94,12 @@ class QuestionMarkingService:
 
         if self.version:
             available = available.filter(question_version=self.version)
+
+        if self.above:
+            available = available.filter(paper__paper_number__gte=self.above)
+
+        if self.tag:
+            available = available.filter(markingtasktag__text__in=[self.tag])
 
         if not available.exists():
             return None

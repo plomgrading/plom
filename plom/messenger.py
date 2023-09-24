@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
@@ -254,8 +255,13 @@ class Messenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             if self.webplom:
+                url = f"/MK/tasks/available?q={q}&v={v}"
+                if tag:
+                    url += f"&tag={tag}"
+                if above:
+                    url += f"&above={above}"
                 response = self.get(
-                    f"/MK/tasks/available?q={q}&v={v}&above={above}&tag={tag}",
+                    url,
                     json={
                         "user": self.user,
                         "token": self.token,

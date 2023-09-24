@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 from typing import Optional
 
@@ -33,11 +34,15 @@ class QuestionMarkingViewSet(ViewSet):
         data = request.query_params
         question: Optional[int] = data.get("q")
         version: Optional[int] = data.get("v")
+        above: Optional[str] = data.get("above")
+        tag: Optional[str] = data.get("tag")
 
         service = QuestionMarkingService(
             question=question,
             version=version,
             user=request.user,
+            above=above,
+            tag=tag,
         )
 
         task = service.get_first_available_task()
