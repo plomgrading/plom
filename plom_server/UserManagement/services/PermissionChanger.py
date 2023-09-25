@@ -10,7 +10,7 @@ def get_users_groups(username: str):
     try:
         user_obj = User.objects.get_by_natural_key(username)
     except User.DoesNotExist:
-        raise ValueError("No such user")
+        raise ValueError(f"No such user {username}")
     return list(user_obj.groups.values_list("name", flat=True))
 
 
@@ -37,16 +37,66 @@ def set_all_markers_active(active: bool):
 
 
 @transaction.atomic
+def add_user_to_group(username, groupname):
+    try:
+        user_obj = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist:
+        raise ValueError(f"Cannot find user with name {username}.")
+    try:
+        group_obj = Group.objects.get_by_natural_key(groupname)
+    except Group.DoesNotExist:
+        raise ValueError(f"Cannot find group with name {groupname}.")
+
+    user_obj.groups.add(group_obj)
+
+
+@transaction.atomic
+def remove_user_from_group(username, groupname):
+    try:
+        user_obj = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist:
+        raise ValueError(f"Cannot find user with name {username}.")
+    try:
+        group_obj = Group.objects.get_by_natural_key(groupname)
+    except Group.DoesNotExist:
+        raise ValueError(f"Cannot find group with name {groupname}.")
+
+    user_obj.groups.remove(group_obj)
+
+
+@transaction.atomic
+def toggle_user_membership_in_group(username, groupname):
+    try:
+        user_obj = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist:
+        raise ValueError(f"Cannot find user with name {username}.")
+    try:
+        group_obj = Group.objects.get_by_natural_key(groupname)
+    except Group.DoesNotExist:
+        raise ValueError(f"Cannot find group with name {groupname}.")
+
+    if group_obj in user_obj.groups.all():
+        user_obj.groups.remove(group_obj)
+    else:
+        user_obj.groups.add(group_obj)
+
+
+def is_user_in_group(username, groupname):
+    try:
+        user_obj = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist:
+        raise ValueError(f"Cannot find user with name {username}.")
+    try:
+        group_obj = Group.objects.get_by_natural_key(groupname)
+    except Group.DoesNotExist:
+        raise ValueError(f"Cannot find group with name {groupname}.")
+
+    return group_obj in user_obj.groups.all()
+
+
+@transaction.atomic
 def toggle_lead_marker_group_membership(username: str):
-    user_obj = User.objects.get_by_natural_key(username)
-    marker_group = Group.objects.get(name="marker")
-    # user must be in the marker group
-    if marker_group not in user_obj.groups.all():
+    if not is_user_in_group(username, "marker"):
         raise ValueError(f"User {username} not a marker.")
 
-    lead_marker_group = Group.objects.get(name="lead_marker")
-    if lead_marker_group in user_obj.groups.all():
-        user_obj.groups.remove(lead_marker_group)
-    else:
-        user_obj.groups.add(lead_marker_group)
-    user_obj.save()
+    toggle_user_membership_in_group(username, "lead_marker")
