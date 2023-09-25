@@ -88,45 +88,6 @@ class MarkingTaskServiceTests(TestCase):
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
 
-    def test_get_first_available_task(self):
-        """
-        Test MarkingTaskService.get_first_available_task()
-        """
-
-        baker.make(
-            MarkingTask,
-            status=MarkingTask.COMPLETE,
-            paper__paper_number=1,
-            code="1",
-        )
-        baker.make(MarkingTask, status=MarkingTask.OUT, paper__paper_number=2, code="2")
-        task3 = baker.make(
-            MarkingTask,
-            status=MarkingTask.TO_DO,
-            paper__paper_number=3,
-            code="3",
-            marking_priority=2,
-        )
-        baker.make(
-            MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
-        )
-        task5 = baker.make(
-            MarkingTask,
-            status=MarkingTask.TO_DO,
-            paper__paper_number=5,
-            code="5",
-            marking_priority=1,
-        )
-
-        mts = MarkingTaskService()
-        task = mts.get_first_available_task()
-        self.assertEqual(task, task3)
-        task3.status = MarkingTask.OUT
-        task3.save()
-
-        next_task = mts.get_first_available_task()
-        self.assertEqual(next_task, task5)
-
     def test_assign_task_to_user(self):
         """
         Test MarkingTaskService.assign_task_to_user()

@@ -12,8 +12,8 @@ from Base.tests import config_test
 from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
 
-from ..services import MarkingTaskService
-from ..models import MarkingTask, MarkingTaskPriority
+from ..services import MarkingTaskService, QuestionMarkingService
+from ..models import MarkingTask
 
 
 class MarkingTaskTestsWithConfig(TestCase):
@@ -72,12 +72,19 @@ class MarkingTaskTestsWithConfig(TestCase):
         task3 = MarkingTask.objects.get(question_number=2, question_version=1)
         task4 = MarkingTask.objects.get(question_number=2, question_version=2)
 
-        mts = MarkingTaskService()
-
-        self.assertEqual(mts.get_first_available_task(), task1)
-        self.assertEqual(mts.get_first_available_task(1, 2), task2)
-        self.assertEqual(mts.get_first_available_task(2, 1), task3)
-        self.assertEqual(mts.get_first_available_task(2, 2), task4)
+        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
+        self.assertEqual(
+            QuestionMarkingService(question=1, version=2).get_first_available_task(),
+            task2,
+        )
+        self.assertEqual(
+            QuestionMarkingService(question=2, version=1).get_first_available_task(),
+            task3,
+        )
+        self.assertEqual(
+            QuestionMarkingService(question=2, version=2).get_first_available_task(),
+            task4,
+        )
 
     @config_test()
     def test_user_can_update_task(self):
@@ -135,14 +142,16 @@ class MarkingTaskTestsWithConfig(TestCase):
         num_to_produce = 2
         auto_init_tasks = true
         """
-        mts = MarkingTaskService()
         task1 = MarkingTask.objects.get(code="q0001g1")
         task2 = MarkingTask.objects.get(code="q0001g2")
         task3 = MarkingTask.objects.get(code="q0002g1")
 
-        self.assertEqual(mts.get_first_available_task(), task1)
+        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
 
         task1.status = MarkingTask.COMPLETE
         task1.save()
 
-        self.assertEqual(mts.get_first_available_task(), task2)
+        self.assertEqual(QuestionMarkingService().get_first_available_task(), task2)
+
+        # keep linter happy
+        del task3
