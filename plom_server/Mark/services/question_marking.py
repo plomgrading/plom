@@ -81,6 +81,13 @@ class QuestionMarkingService:
     def get_first_available_task(self) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If ``tag`` is set, we try to restrict to papers with matching tags.
+        If ``above`` is set, paper numbers greater than or equal to this value
+        are preferred.  If both ``tag`` an ``above`` are set, ``tag`` takes
+        preference.  Note that setting tag and/or above is only a *preference*;
+        you can still receive tasks that do not match.
+
+        The results are sorted by priority.
         If the priority is the same, defer to paper number and then question number.
 
         Returns:
@@ -95,11 +102,18 @@ class QuestionMarkingService:
         if self.version:
             available = available.filter(question_version=self.version)
 
-        if self.above:
-            available = available.filter(paper__paper_number__gte=self.above)
-
         if self.tag:
-            available = available.filter(markingtasktag__text__in=[self.tag])
+            _available = available.filter(markingtasktag__text__in=[self.tag])
+            # Unfortunately we probably have to do the query to check for matches
+            # If no matches, fall back to previous query b/c tags is a *preference*
+            if _available.exists():
+                available = _available
+            # TODO: is it ok to filter further on a previously-evaluated query?
+
+        if self.above:
+            _available = available.filter(paper__paper_number__gte=self.above)
+            if _available.exists():
+                available = _available
 
         if not available.exists():
             return None
