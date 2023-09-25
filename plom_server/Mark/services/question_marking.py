@@ -60,6 +60,8 @@ class QuestionMarkingService:
             question: question number of task
             version: question version of task
             user: reference to a user instance
+            above: the minimum paper number of the task
+            tag: the tag that the task must have
             marking_data: dict representing a mark, rubrics used, etc
             annotation_data: a dictionary representing an annotation SVG
             annotation_image: an in-memory raster representation of an annotation
