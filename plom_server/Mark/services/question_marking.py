@@ -81,6 +81,8 @@ class QuestionMarkingService:
     def get_first_available_task(self) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If ``question`` and/or ``version``, restrict tasks appropriately.
+
         If ``tag`` is set, we try to restrict to papers with matching tags.
         If ``above`` is set, paper numbers greater than or equal to this value
         are preferred.  If both ``tag`` an ``above`` are set, ``tag`` takes
