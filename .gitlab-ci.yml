@@ -1658,6 +1658,7 @@ winpyinst:
   stage: packaging
   before_script:
   - choco install -y python310
+  - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
   - refreshenv
   - c:\python310\python -m pip --version
   - c:\python310\python -m pip install --user --upgrade pip
