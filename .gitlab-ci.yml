@@ -1341,9 +1341,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  # Issue 3019
-  # /usr/local/bin/python3 -m pip install pyinstaller
-  - PYINSTALLER_COMPILE_BOOTLOADER=1 /usr/local/bin/python3 -m pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
+  - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
