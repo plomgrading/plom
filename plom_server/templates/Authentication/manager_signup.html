@@ -31,18 +31,12 @@
                 {{ form.email }}
                 <br>
                 <br>
-                <input class="btn"
-                       type="submit"
-                       name="Create User"
-                       style="background-color: {{ navbar_colour }};
-                              color: white">
+                <input class="btn btn-primary" type="submit" name="Create User">
                 <br>
             </form>
-            <button class="btn"
+            <button class="btn btn-primary"
                     id="generate-username"
-                    style="background-color: {{ navbar_colour }};
-                           color: white;
-                           margin-top: 3px">Generate Username</button>
+                    style="margin-top: 3px">Generate Username</button>
             <p style="color: red">{{ error }}</p>
             <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
         {% endblock main_content %}

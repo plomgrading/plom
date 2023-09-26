@@ -38,12 +38,10 @@
                                     <td style="padding-top: 14px">{{ user.username }}</td>
                                     <td style="padding-top: 14px">{{ user.is_active }}</td>
                                     <td>
-                                        <button class="btn"
+                                        <button class="btn btn-primary"
                                                 type="submit"
                                                 name="new_link"
-                                                value="{{ user.username }}"
-                                                style="background-color: {{ navbar_colour }};
-                                                       color: white">Generate new password reset link</button>
+                                                value="{{ user.username }}">Generate new password reset link</button>
                                     </td>
                                 </tr>
                             </form>
