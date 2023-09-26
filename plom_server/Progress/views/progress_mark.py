@@ -6,16 +6,15 @@
 from django.shortcuts import render
 
 from Base.base_group_views import (
-    ManagerRequiredView,
-    MarkerOrHigherView,
-    LeadMarkerOrHigherView,
+    MarkerLeadMarkerOrManagerView,
+    LeadMarkerOrManagerView,
 )
 
 from Papers.services import SpecificationService
 from Mark.services import MarkingStatsService
 
 
-class ProgressMarkHome(MarkerOrHigherView):
+class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request):
         context = super().build_context()
 
@@ -34,7 +33,7 @@ class ProgressMarkHome(MarkerOrHigherView):
         return render(request, "Progress/Mark/mark_home.html", context)
 
 
-class ProgressMarkStatsView(MarkerOrHigherView):
+class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
     def get(self, request, question, version):
         context = super().build_context()
         mss = MarkingStatsService()
@@ -49,7 +48,7 @@ class ProgressMarkStatsView(MarkerOrHigherView):
         return render(request, "Progress/Mark/mark_stats_card.html", context)
 
 
-class ProgressMarkDetailsView(LeadMarkerOrHigherView):
+class ProgressMarkDetailsView(LeadMarkerOrManagerView):
     def get(self, request, question, version):
         context = super().build_context()
         mss = MarkingStatsService()
@@ -90,7 +89,7 @@ class ProgressMarkDetailsView(LeadMarkerOrHigherView):
         return render(request, "Progress/Mark/mark_details.html", context)
 
 
-class ProgressMarkVersionCompareView(LeadMarkerOrHigherView):
+class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
     def get(self, request, question):
         version = 1
         context = super().build_context()

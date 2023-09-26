@@ -2,16 +2,13 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 
 from Progress.services import ManageScanService
-from Progress.views import BaseScanProgressPage
 
 
-class ScanIncompleteView(BaseScanProgressPage):
+class ScanIncompleteView(ManagerRequiredView):
     """View the table of complete pushed papers."""
 
     def get(self, request):
@@ -24,9 +21,10 @@ class ScanIncompleteView(BaseScanProgressPage):
             (pn, pgs) for pn, pgs in sorted(incomplete_papers_dict.items())
         ]
 
-        context = self.build_context("incomplete")
+        context = self.build_context()
         context.update(
             {
+                "current_page": "incomplete",
                 "number_of_incomplete_papers": len(incomplete_papers_dict),
                 "incomplete_papers_list": incomplete_papers_list,
             }

@@ -7,28 +7,36 @@ from django.urls import reverse
 from django.http import HttpResponse
 
 
+from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 from Progress.services import ManageScanService, ManageDiscardService
-from Progress.views import BaseScanProgressPage
 
 
-class ScanDiscardView(BaseScanProgressPage):
+class ScanDiscardView(ManagerRequiredView):
     """View the table of discarded images."""
 
     def get(self, request):
         mss = ManageScanService()
-        context = self.build_context("discard")
+        context = self.build_context()
         discards = mss.get_discarded_images()
-        context.update({"number_of_discards": len(discards), "discards": discards})
+        context.update(
+            {
+                "current_page": "discard",
+                "number_of_discards": len(discards),
+                "discards": discards,
+            }
+        )
         return render(request, "Progress/scan_discard.html", context)
 
 
-class ScanReassignView(BaseScanProgressPage):
+class ScanReassignView(ManagerRequiredView):
     def get(self, request, img_pk):
         mss = ManageScanService()
         img_angle = -mss.get_pushed_image(img_pk).rotation
-        context = self.build_context("reassign")
-        context.update({"image_pk": img_pk, "angle": img_angle})
+        context = self.build_context()
+        context.update(
+            {"current_page": "reassign", "image_pk": img_pk, "angle": img_angle}
+        )
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
         question_labels = [

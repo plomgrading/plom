@@ -3,12 +3,12 @@
 from django.shortcuts import render
 from django.http import FileResponse
 
-from Base.base_group_views import ManagerRequiredView, LeadMarkerOrHigherView
+from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
 
 
-class ProgressTaskAnnotationFilterView(LeadMarkerOrHigherView):
+class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
     def get(self, request):
         mss = MarkingStatsService()
 
@@ -51,7 +51,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrHigherView):
         return render(request, "Progress/Mark/task_annotations_filter.html", context)
 
 
-class ProgressTaskAnnotationView(LeadMarkerOrHigherView):
+class ProgressTaskAnnotationView(LeadMarkerOrManagerView):
     def get(self, request, question, version):
         context = super().build_context()
         context.update(
@@ -67,7 +67,7 @@ class ProgressTaskAnnotationView(LeadMarkerOrHigherView):
         return render(request, "Progress/Mark/task_annotations.html", context)
 
 
-class AnnotationImageWrapView(LeadMarkerOrHigherView):
+class AnnotationImageWrapView(LeadMarkerOrManagerView):
     def get(self, request, paper, question):
         annot = MarkingTaskService().get_latest_annotation(paper, question)
         context = {"paper": paper, "question": question, "annotation_pk": annot.pk}
@@ -76,13 +76,13 @@ class AnnotationImageWrapView(LeadMarkerOrHigherView):
         )
 
 
-class AnnotationImageView(LeadMarkerOrHigherView):
+class AnnotationImageView(LeadMarkerOrManagerView):
     def get(self, request, paper, question):
         annot = MarkingTaskService().get_latest_annotation(paper, question)
         return FileResponse(annot.image.image)
 
 
-class OriginalImageWrapView(LeadMarkerOrHigherView):
+class OriginalImageWrapView(LeadMarkerOrManagerView):
     def get(self, request, paper, question):
         img_list = page_data.get_question_pages_list(paper, question)
         # update this to include an angle which is (-1)*orientation - for css transforms

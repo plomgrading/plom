@@ -44,7 +44,7 @@ class LeadMarkerRequiredView(RoleRequiredView):
     group_required = ["lead_marker"]
 
 
-class LeadMarkerOrHigherView(RoleRequiredView):
+class LeadMarkerOrManagerView(RoleRequiredView):
     """A base class view for lead markers and managers."""
 
     group_required = ["lead_marker", "manager"]
@@ -56,7 +56,13 @@ class MarkerRequiredView(RoleRequiredView):
     group_required = ["marker"]
 
 
-class MarkerOrHigherView(RoleRequiredView):
+class MarkerLeadMarkerOrManagerView(RoleRequiredView):
     """A base class view for markers, lead markers and managers."""
 
     group_required = ["marker", "lead_marker", "manager"]
+
+
+class ScannerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for scanners, lead markers and managers."""
+
+    group_required = ["scanner", "lead_marker", "manager"]

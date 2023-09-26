@@ -2,17 +2,15 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import FileResponse
 from django_htmx.http import HttpResponseClientRefresh
 
-from Base.base_group_views import ManagerRequiredView
+from Base.base_group_views import ManagerRequiredView, LeadMarkerOrManagerView
 
 from Progress.services import ManageScanService, ManageDiscardService
-from Progress.views import BaseScanProgressPage
 
 
-class ScanCompleteView(BaseScanProgressPage):
+class ScanCompleteView(ManagerRequiredView):
     """View the table of complete pushed papers."""
 
     def get(self, request):
@@ -25,9 +23,10 @@ class ScanCompleteView(BaseScanProgressPage):
             (pn, pgs) for pn, pgs in sorted(completed_papers_dict.items())
         ]
 
-        context = self.build_context("complete")
+        context = self.build_context()
         context.update(
             {
+                "current_page": "complete",
                 "number_of_completed_papers": len(completed_papers_dict),
                 "completed_papers_list": completed_papers_list,
             }
@@ -35,11 +34,8 @@ class ScanCompleteView(BaseScanProgressPage):
         return render(request, "Progress/scan_complete.html", context)
 
 
-class PushedImageView(BaseScanProgressPage):
+class PushedImageView(LeadMarkerOrManagerView):
     """Return a pushed image given by its pk."""
-
-    # add lead_marker to the access list - used by mark-progress views
-    group_required = ["lead_marker", "manager"]
 
     def get(self, request, img_pk):
         img = ManageScanService().get_pushed_image(img_pk)
@@ -51,11 +47,8 @@ class PushedImageView(BaseScanProgressPage):
         return HttpResponseClientRefresh()
 
 
-class PushedImageWrapView(BaseScanProgressPage):
+class PushedImageWrapView(LeadMarkerOrManagerView):
     """Return the simple html wrapper around the pushed image with correct rotation."""
-
-    # add lead_marker to the access list - used by mark-progress views
-    group_required = ["lead_marker", "manager"]
 
     def get(self, request, img_pk):
         mss = ManageScanService()
