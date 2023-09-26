@@ -652,7 +652,7 @@ def main():
         sv = SpecVerifier.from_toml_file(fname)
         sv.verifySpec()
         sv.checkCodes()
-        print("spec seems ok: we will upload it to the server")
+        print(f"spec seems ok: we will upload it to the server {args.server}")
         msgr = start_messenger(args.server, args.password)
         try:
             # TODO: sv.spec versus sv.get_public_spec_dict()?

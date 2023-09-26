@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # add newly created app folder below
     "Base",
     "Authentication",
+    "UserManagement",
     "Preparation",
     "Papers",
     "SpecCreator",
