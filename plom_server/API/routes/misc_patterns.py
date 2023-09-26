@@ -2,9 +2,9 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.urls import path
-from rest_framework.authtoken.views import obtain_auth_token
 
 from ..views import (
     ExamInfo,
@@ -13,6 +13,7 @@ from ..views import (
     ServerVersion,
     CloseUser,
     QuestionMaxMark,
+    ObtainAuthTokenUpdateLastLogin,
 )
 
 
@@ -38,7 +39,11 @@ class MiscURLPatterns:
 
         # Authentication and token handling
         misc_patterns += [
-            path("get_token/", obtain_auth_token, name="api_get_token"),
+            path(
+                "get_token/",
+                ObtainAuthTokenUpdateLastLogin.as_view(),
+                name="api_get_token",
+            ),
             path("close_user/", CloseUser.as_view(), name="api_close_user"),
         ]
 
