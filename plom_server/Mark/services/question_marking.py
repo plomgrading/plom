@@ -86,10 +86,9 @@ class QuestionMarkingService:
         If ``question`` and/or ``version``, restrict tasks appropriately.
 
         If ``tag`` is set, we try to restrict to papers with matching tags.
+
         If ``above`` is set, paper numbers greater than or equal to this value
-        are preferred.  If both ``tag`` an ``above`` are set, ``tag`` takes
-        preference.  Note that setting tag and/or above is only a *preference*;
-        you can still receive tasks that do not match.
+        are required.
 
         The results are sorted by priority.
         If the priority is the same, defer to paper number and then question number.
@@ -107,17 +106,10 @@ class QuestionMarkingService:
             available = available.filter(question_version=self.version)
 
         if self.tag:
-            _available = available.filter(markingtasktag__text__in=[self.tag])
-            # Unfortunately we probably have to do the query to check for matches
-            # If no matches, fall back to previous query b/c tags is a *preference*
-            if _available.exists():
-                available = _available
-            # TODO: is it ok to filter further on a previously-evaluated query?
+            available = available.filter(markingtasktag__text__in=[self.tag])
 
         if self.above:
-            _available = available.filter(paper__paper_number__gte=self.above)
-            if _available.exists():
-                available = _available
+            available = available.filter(paper__paper_number__gte=self.above)
 
         if not available.exists():
             return None
