@@ -635,6 +635,9 @@ class IDHandler:
         except IndexError as e:
             log.warning(e)
             return web.HTTPNotAcceptable(reason=e)
+        except ValueError as e:
+            log.warning(e)
+            return web.HTTPNotAcceptable(reason=e)
         except FileNotFoundError as e:
             log.warning(e)
             return web.HTTPPreconditionFailed(reason=f"Must run id reader first: {e}")

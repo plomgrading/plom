@@ -28,10 +28,19 @@ def calc_log_likelihood(
         log likelihood, approx -log(prob), so more probable means smaller.
         Negative since we'll minimise
         "cost" when we do the linear assignment problem later.
+
+    Raises:
+        ValueError: unexpected mismatches such as short student ID.
+            or non-integer characters in the student ID.
+            For example, if the student ID contains a "z", we'd get
+            ``invalid literal for int() with base 10: z``.
     """
     num_digits = len(student_ID)
     if len(prediction_probs) != num_digits:
-        raise ValueError("Wrong length")
+        raise ValueError(
+            f"Length mismatch: {num_digits} in student ID but "
+            f"{len(prediction_probs)} probabilities"
+        )
 
     log_likelihood = np.float64(0)
     for digit_index in range(0, num_digits):
@@ -58,6 +67,8 @@ def assemble_cost_matrix(
 
     Raises:
         KeyError: If probabilities is missing data for one of the test numbers.
+        ValueError: various unexpected stuff about student IDs, coming
+            from the ``calc_log_likelihood`` function.
     """
     # could precompute big cost matrix, then select rows/columns: more complex
     costs = []
