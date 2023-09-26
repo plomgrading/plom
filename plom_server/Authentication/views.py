@@ -16,9 +16,8 @@ from django.utils.encoding import force_str
 from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
-from random_username.generate import generate_username
 
-from .services import generate_link, check_username, AuthenticationServices
+from .services import AuthenticationServices
 from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
 from Base.base_group_views import (
     AdminRequiredView,
@@ -205,7 +204,7 @@ class SignupManager(AdminRequiredView):
             # user can't log in until the link is confirmed
             user.is_active = False
             user.save()
-            link = generate_link(request, user)
+            link = AuthenticationServices().generate_link(request, user)
             context.update(
                 {
                     "user_email": user.profile.email,
@@ -230,7 +229,7 @@ class SignupManager(AdminRequiredView):
 class SignupScanners(ManagerRequiredView):
     template_name = "Authentication/scanner_signup.html"
     form = CreateScannersAndMarkersForm()
-    __group_name = Group.objects.get(name="scanner").name
+    __group_name = "scanner"
 
     def get(self, request):
         context = {
@@ -277,7 +276,7 @@ class SignupScanners(ManagerRequiredView):
 class SignupMarkers(ManagerRequiredView):
     template_name = "Authentication/marker_signup.html"
     form = CreateScannersAndMarkersForm()
-    __group_name = Group.objects.get(name="marker").name
+    __group_name = "marker"
 
     def get(self, request):
         context = {

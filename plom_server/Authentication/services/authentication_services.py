@@ -95,3 +95,14 @@ class AuthenticationServices:
             links_dict[username] = link
 
         return links_dict
+
+    @transaction.atomic
+    def generate_link(request, user):
+        http_protocol = "http://"
+        domain = get_current_site(request).domain
+        url_path = "/reset/"
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        forward_slash = "/"
+        link = http_protocol + domain + url_path + uid + forward_slash + token
+        return link
