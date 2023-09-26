@@ -636,6 +636,7 @@ class IDHandler:
             log.warning(e)
             return web.HTTPNotAcceptable(reason=e)
         except ValueError as e:
+            # note this may echo a student ID into the log
             log.warning(e)
             return web.HTTPNotAcceptable(reason=e)
         except FileNotFoundError as e:

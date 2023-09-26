@@ -11,8 +11,6 @@ from typing import List
 
 import numpy as np
 
-from plom.rules import censorStudentNumber as censor
-
 
 def calc_log_likelihood(
     student_ID: str, prediction_probs: List[List[float]]
@@ -40,7 +38,7 @@ def calc_log_likelihood(
     num_digits = len(student_ID)
     if len(prediction_probs) != num_digits:
         raise ValueError(
-            f'Length mismatch: {num_digits} in student ID "{censor(student_ID)}"'
+            f'Length mismatch: {num_digits} in student ID "{student_ID}"'
             f" but {len(prediction_probs)} probabilities"
         )
 
@@ -50,7 +48,7 @@ def calc_log_likelihood(
             digit_predicted = int(student_ID[digit_index])
         except ValueError as e:
             raise ValueError(
-                f'Student ID digit {digit_index} of "{censor(student_ID)}"'
+                f'Student ID digit {digit_index} of "{student_ID}"'
                 f" cannot be converted to an integer: {e}"
             ) from e
         log_likelihood -= np.log(
