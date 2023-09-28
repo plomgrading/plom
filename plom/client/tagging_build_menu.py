@@ -77,7 +77,8 @@ class QMenuNextPrefDialog(QMenu):
         self._prefer_above_action_checkbox = c
         self.addAction(a)
         c.setToolTip(
-            "this is only a preference on legacy servers (as commonly used in 2023)"
+            "On legacy servers (commonly used in 2023) this is only"
+            " a preference, not a requirement"
         )
 
         a = QWidgetAction(parent)
