@@ -36,14 +36,19 @@ class QuestionMarkingViewSet(ViewSet):
             204: There are no available tasks.
         """
         data = request.query_params
-        question: Optional[int] = data.get("q")
-        version: Optional[int] = data.get("v")
-        # TODO: someday rename above in transit as well: a later problem
-        # TODO: fix this while also adding `max_paper_num`
-        _ = data.get("above")
-        if _ is not None:
-            _ = int(_)
-        min_paper_num: Optional[int] = _
+
+        def int_or_None(x):
+            return None if x is None else int(x)
+
+        try:
+            question: Optional[int] = int_or_None(data.get("q"))
+            version: Optional[int] = int_or_None(data.get("v"))
+            # TODO: someday rename above in transit as well: a later problem
+            # TODO: fix this while also adding `max_paper_num`
+            min_paper_num: Optional[int] = int_or_None(data.get("above"))
+        except ValueError as e:
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+
         tag: Optional[str] = data.get("tag")
 
         task = QuestionMarkingService(

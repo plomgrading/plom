@@ -76,6 +76,7 @@ class QMenuNextPrefDialog(QMenu):
         self._prefer_above_action_lineedit = t
         self._prefer_above_action_checkbox = c
         self.addAction(a)
+        # TODO: remove this sometime in 2024!
         c.setToolTip(
             "On legacy servers (commonly used in 2023) this is only"
             " a preference, not a requirement"
