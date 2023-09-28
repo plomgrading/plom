@@ -26,10 +26,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.24
+image: docker:24.0.6
 
 services:
-  - docker:20.10.24-dind
+  - docker:24.0.6-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
