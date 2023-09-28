@@ -59,7 +59,7 @@ class QuestionMarkingViewSet(ViewSet):
             tag=tag,
         ).get_first_available_task()
 
-        if tag and not task:
+        if not task and tag:
             # didn't find anything tagged, so try again without
             task = QuestionMarkingService(
                 question=question,
