@@ -28,11 +28,8 @@ class QuestionMarkingViewSet(ViewSet):
         Responds with a code for the next available marking task.
 
         The behaviour is influenced by various options.  A confusing case is
-        ``tag`` and ``above``, which are *preferences* not *requiremennts*.
-        You can still receive tasks that do not match, such as when no tasks
-        matches ``tag``.
-        If both ``tag`` an ``above`` are set, ``tag`` takes preference; that
-        is tasks below ``above`` that are tagged will be returned.
+        ``tag`` which is a *preference* and not a *requiremennt*.
+        You can still receive tasks that do not match the tag.
 
         Returns:
             200: An available task exists, returns the task code as a string.
@@ -41,43 +38,34 @@ class QuestionMarkingViewSet(ViewSet):
         data = request.query_params
         question: Optional[int] = data.get("q")
         version: Optional[int] = data.get("v")
-        # `above` and `tag` are *preferences* not requirements so some
-        # finesse is needed, hence the multiple fall-thru below.
-        above: Optional[str] = data.get("above")
+        # TODO: someday rename above in transit as well: a later problem
+        # TODO: fix this while also adding `max_paper_num`
+        _ = data.get("above")
+        if _ is not None:
+            _ = int(_)
+        min_paper_num: Optional[int] = _
         tag: Optional[str] = data.get("tag")
 
         task = QuestionMarkingService(
             question=question,
             version=version,
             user=request.user,
-            above=above,
+            min_paper_num=min_paper_num,
             tag=tag,
         ).get_first_available_task()
-        if task:
-            return Response(task.code, status=status.HTTP_200_OK)
 
-        if tag and above:
-            # both tag and above specified, try again without `above`
+        if tag and not task:
+            # didn't find anything tagged, so try again without
             task = QuestionMarkingService(
                 question=question,
                 version=version,
                 user=request.user,
-                tag=tag,
+                min_paper_num=min_paper_num,
             ).get_first_available_task()
-            if task:
-                return Response(task.code, status=status.HTTP_200_OK)
 
-        if tag or above:
-            # either tag or above (non-exclusively), try again unrestricted
-            task = QuestionMarkingService(
-                question=question,
-                version=version,
-                user=request.user,
-            ).get_first_available_task()
-            if task:
-                return Response(task.code, status=status.HTTP_200_OK)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if not task:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(task.code, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):

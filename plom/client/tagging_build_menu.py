@@ -64,7 +64,7 @@ class QMenuNextPrefDialog(QMenu):
         a = QWidgetAction(parent)
         frame = QFrame()
         lay = QHBoxLayout(frame)
-        c = QCheckBox("Prefer paper number \N{Greater-than Or Equal To}")
+        c = QCheckBox("Require paper number \N{Greater-than Or Equal To}")
         c.setCheckable(True)
         c.setChecked(False)
         lay.addWidget(c)
@@ -76,6 +76,9 @@ class QMenuNextPrefDialog(QMenu):
         self._prefer_above_action_lineedit = t
         self._prefer_above_action_checkbox = c
         self.addAction(a)
+        c.setToolTip(
+            "this is only a preference on legacy servers (as commonly used in 2023)"
+        )
 
         a = QWidgetAction(parent)
         frame = QFrame()

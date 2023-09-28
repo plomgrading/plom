@@ -45,7 +45,7 @@ class QuestionMarkingService:
         question: Optional[int] = None,
         version: Optional[int] = None,
         user: Optional[User] = None,
-        above: Optional[str] = None,
+        min_paper_num: Optional[int] = None,
         tag: Optional[str] = None,
         marking_data: Optional[dict] = None,
         annotation_data: Optional[dict] = None,
@@ -60,7 +60,7 @@ class QuestionMarkingService:
             question: question number of task
             version: question version of task
             user: reference to a user instance
-            above: the minimum paper number of the task
+            min_paper_num: the minimum paper number of the task
             tag: the tag that the task must have
             marking_data: dict representing a mark, rubrics used, etc
             annotation_data: a dictionary representing an annotation SVG
@@ -72,7 +72,7 @@ class QuestionMarkingService:
         self.question = question
         self.version = version
         self.user = user
-        self.above = above
+        self.min_paper_num = min_paper_num
         self.tag = tag
         self.marking_data = marking_data
         self.annotation_data = annotation_data
@@ -85,10 +85,10 @@ class QuestionMarkingService:
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
 
-        If ``tag`` is set, we try to restrict to papers with matching tags.
+        If ``tag`` is set, we restrict to papers with matching tags.
 
-        If ``above`` is set, paper numbers greater than or equal to this value
-        are required.
+        If ``min_paper_num`` is set, paper numbers greater than or equal
+        to this value are required.
 
         The results are sorted by priority.
         If the priority is the same, defer to paper number and then question number.
@@ -105,11 +105,11 @@ class QuestionMarkingService:
         if self.version:
             available = available.filter(question_version=self.version)
 
+        if self.min_paper_num:
+            available = available.filter(paper__paper_number__gte=self.min_paper_num)
+
         if self.tag:
             available = available.filter(markingtasktag__text__in=[self.tag])
-
-        if self.above:
-            available = available.filter(paper__paper_number__gte=self.above)
 
         if not available.exists():
             return None
