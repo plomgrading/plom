@@ -14,12 +14,12 @@ Also can customize the default form that django gives us.
 """
 
 
-class CreateManagerForm(UserCreationForm):
+class CreateUserForm(UserCreationForm):
     username = forms.CharField(max_length=40, help_text="Username")
     email = forms.EmailField(max_length=100, help_text="Email", required=False)
 
     def __init__(self, *args, **kwargs):
-        super(CreateManagerForm, self).__init__(*args, **kwargs)
+        super(CreateUserForm, self).__init__(*args, **kwargs)
         self.fields["password1"].required = False
         self.fields["password2"].required = False
         self.fields["password1"].widget.attrs["autocomplete"] = "off"
@@ -32,7 +32,7 @@ class CreateManagerForm(UserCreationForm):
 
 class CreateScannersAndMarkersForm(forms.Form):
     USERNAME_CHOICES = [
-        ("basic", "Basic Usernames"),
+        ("basic", "Basic Numbered Usernames"),
         ("funky", "Funky Usernames"),
     ]
 
@@ -49,7 +49,7 @@ class CreateScannersAndMarkersForm(forms.Form):
     )
 
     basic_or_funky_username = forms.CharField(
-        label="Do you want to generate basic or funky usernames?",
+        label="Do you want to generate basic numbered or funky usernames?",
         widget=forms.RadioSelect(choices=USERNAME_CHOICES),
         initial="basic",
     )

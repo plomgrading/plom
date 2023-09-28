@@ -18,7 +18,7 @@ from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 
 from .services import AuthenticationServices
-from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
+from .signupForm import CreateUserForm, CreateScannersAndMarkersForm
 from Base.base_group_views import (
     AdminRequiredView,
     ManagerRequiredView,
@@ -184,14 +184,14 @@ class Signup(ManagerRequiredView):
 class SignupManager(AdminRequiredView):
     template_name = "Authentication/manager_signup.html"
     activation_link = "Authentication/manager_activation_link.html"
-    form = CreateManagerForm()
+    form = CreateUserForm()
 
     def get(self, request):
         context = {"form": self.form}
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = CreateManagerForm(request.POST)
+        form = CreateUserForm(request.POST)
         username = request.POST.get("username")
         exist_username = User.objects.filter(username__iexact=username)
         context = {}
@@ -248,13 +248,13 @@ class SignupScanners(ManagerRequiredView):
             if username_choices == "basic":
                 usernames_list = (
                     AuthenticationServices().generate_list_of_basic_usernames(
-                        group_name=self.__group_name, num_users=num_users
+                        group_name=self.__group_name, num_users_wanted=num_users
                     )
                 )
             elif username_choices == "funky":
                 usernames_list = (
                     AuthenticationServices().generate_list_of_funky_usernames(
-                        group_name=self.__group_name, num_users=num_users
+                        group_name=self.__group_name, num_users_wanted=num_users
                     )
                 )
 

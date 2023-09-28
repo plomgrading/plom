@@ -12,38 +12,22 @@ from random_username.generate import generate_username
 
 class AuthenticationServices:
     @transaction.atomic
-    def generate_list_of_basic_usernames(self, group_name, num_users):
+    def generate_list_of_basic_usernames(self, group_name, num_users_wanted):
         user_list = []
-        if group_name == "scanner":
-            for indx in range(1, num_users + 1):
-                scanner_name = "Scanner" + str(indx)
-                new_user = self.check_and_create_basic_usernames(
-                    username=scanner_name, indx=indx, group_name=group_name
+        username_number = 0
+
+        while len(user_list) < num_users_wanted:
+            username_number += 1
+            try:
+                user = self.create_user_and_add_to_group(
+                    username=group_name.capitalize() + str(username_number),
+                    group_name=group_name,
                 )
-                user_list.append(new_user)
-        elif group_name == "marker":
-            for indx in range(1, num_users + 1):
-                marker_name = "Marker" + str(indx)
-                new_user = self.check_and_create_basic_usernames(
-                    username=marker_name, indx=indx, group_name=group_name
-                )
-                user_list.append(new_user)
+                user_list.append(user)
+            except:
+                pass
 
         return user_list
-
-    @transaction.atomic
-    def check_and_create_basic_usernames(self, username, indx, group_name):
-        if User.objects.filter(username=username).exists():
-            new_indx = indx + 1
-            new_basic_username = group_name.capitalize() + str(new_indx)
-            return self.check_and_create_basic_usernames(
-                username=new_basic_username, indx=new_indx, group_name=group_name
-            )
-        else:
-            user = self.create_user_and_add_to_group(
-                username=username, group_name=group_name
-            )
-            return user
 
     @transaction.atomic
     def create_user_and_add_to_group(self, username, group_name):
@@ -57,8 +41,8 @@ class AuthenticationServices:
 
         return user.username
 
-    def generate_list_of_funky_usernames(self, group_name, num_users):
-        funky_username_list = generate_username(num_users)
+    def generate_list_of_funky_usernames(self, group_name, num_users_wanted):
+        funky_username_list = generate_username(num_users_wanted)
         user_list = []
         for username in funky_username_list:
             new_user = self.check_and_create_funky_usernames(
