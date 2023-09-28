@@ -18,7 +18,7 @@ importlib-resources==6.0.1
 packaging==23.1
 pandas==1.5.3
 passlib==1.7.4
-Pillow==10.0.0
+Pillow==10.0.1
 pymupdf==1.23.3
 PyMySQL==1.1.0
 requests==2.31.0
@@ -28,4 +28,4 @@ stdiomask==0.0.6
 tomli==2.0.1
 tomlkit==0.12.1
 tqdm==4.66.1
-urllib3==2.0.4
+urllib3==2.0.5
