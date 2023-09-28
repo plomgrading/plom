@@ -338,8 +338,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.6
-    - python3 -m pip install pylint~=2.17.5
+    - python3 -m pip install astroid~=2.15.8
+    - python3 -m pip install pylint~=2.17.6
   script:
     - pylint plom
   allow_failure: true
