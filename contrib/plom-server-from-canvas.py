@@ -76,7 +76,7 @@ from plom.create import start_messenger
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.4.5"
+__script_version__ = "0.4.7"
 
 
 def get_short_name(long_name):
@@ -125,7 +125,7 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
 
     numberOfVersions = 1
     numberOfQuestions = len(marks)
-    numberOfPages = len(marks) + 1
+    numberOfPages = 1 + pages_per_question * len(marks)
 
     numberToProduce = -1
     # note potentially useful
@@ -144,10 +144,19 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
         """
     ).lstrip()
     for i, mark in enumerate(marks):
+        # PDL Changed pages setting -- TODO This is interesting for pages
+        pagestring = ", ".join(
+            (
+                f"{_}"
+                for _ in range(
+                    2 + i * pages_per_question, 2 + (i + 1) * pages_per_question
+                )
+            )
+        )
         toml += dedent(
             f"""
             [question.{i + 1}]
-            pages = [{i + 2}]
+            pages = [{pagestring}]
             mark = {mark}
             select = "fix"
             """
@@ -184,9 +193,6 @@ def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None
             subprocess.check_call(["plom-server", "init"])
         else:
             subprocess.check_call(["plom-server", "init", "--port", f"{port}"])
-
-    # Read server config data from the official config file
-    servernamewithport = get_server_name(server_dir)
 
     print("Launching plom server.")
     plom_server = PlomServer(basedir=server_dir)
@@ -248,6 +254,10 @@ def configure_running_server(
     print("Building the database...")
     build_class = subprocess.check_call(["plom-create", "make-db"])
 
+    # flake8 insists that we use this variable, so here's something to do.
+    if not build_class:
+        print("Something terrible happened in configure_running_server.")
+
 
 def get_submissions(
     assignment, work_dir=".", name_by_info=True, dry_run=False, replace_existing=False
@@ -275,7 +285,6 @@ def get_submissions(
     subs = assignment.get_submissions()
 
     unsubmitted = []
-    timeouts = []
     errors = []
     for sub in tqdm(subs):
         # Try to avoid overheating the canvas api (this is soooooo dumb lol)
@@ -296,13 +305,13 @@ def get_submissions(
         if not attachments:
             unsubmitted.append(sub)
 
-        # Loop over all the attachments, save to disc, do some stitching
+        # Loop over all the attachments, save to disk, do some stitching
         # TODO: useful later to keep the student's original filename somewhere?
         attachment_filenames = []
         for i, obj in enumerate(attachments):
-            print(f"\n*** Handling attachment number {i}")
+            print(f"\n*** Handling attachment number {i}, sub_name {sub_name}")
             ctype = getattr(obj, "content-type")
-            print(f"    Content type is {ctype}")
+            # print(f"    Content type is {ctype}")
             if ctype == "null":
                 # TODO: in what cases does this occur?
                 continue
@@ -447,12 +456,15 @@ def scan_submissions(
             errors.append((sid, e))
             continue
 
-        if num_pages == num_questions:
-            # If number of pages precisely matches number of questions then
-            # do a 1-1 mapping...
-            q = [[x] for x in range(1, num_questions + 1)]
+        expected = pages_per_question * num_questions
+        if num_pages == expected:
+            # If number of pages equals expected number
+            # then do this simple thing. Clumsy but effective.
+            q = []
+            for qnum in range(1, num_questions + 1):
+                q.extend(([qnum] for _ in range(pages_per_question)))
         else:
-            # ... otherwise push each page to all questionsa.
+            # ... otherwise push each page to all questions. And kvetch later.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
@@ -460,11 +472,13 @@ def scan_submissions(
             print("\n*** Found what looks like a legit PDF, as follows ...")
             print(f"    pdf:         {pdf}")
             print(f"    sid:         {sid}")
-            print(f"    q:           {q}")
-
             studentname = sid2name[sid]
-            print(f"    studentname: {studentname}", end="")
-            print("   ... (from homebrew lookup in script)")
+            print(f"    studentname: {studentname}")
+            if num_pages == expected:
+                print(f"    pages:   {num_pages}, as expected.")
+            else:
+                print(f" xx pages:   {num_pages}, but expected {expected}.")
+            print(f"    q:           {q}")
 
             # Just-In-Time ID starts here.
             mm = start_messenger(server, manager_pwd)
@@ -627,14 +641,20 @@ parser.add_argument(
     dest="upload",
     help="Do not run submission-grabbing from Canvas and uploading to plom server",
 )
-parser.add_argument(  # After parsing, args.port will be None or an integer
+parser.add_argument(  # Define args.port -- None or an integer
     "--port",
     type=int,
     metavar="PORT",
     action="store",
     help="Port number for server",
 )
-
+parser.add_argument(  # Define args.pagesperquestion -- None or an integer
+    "--pagesperquestion",
+    type=int,
+    metavar="PAGESPERQUESTION",
+    action="store",
+    help="Number of PDF pages per question (default 1)",
+)
 if __name__ == "__main__":
     print("************************************************************")
     print("WARNING: this script in a work-in-progress, largely progress")
@@ -643,6 +663,11 @@ if __name__ == "__main__":
     starttime = time.time()
 
     args = parser.parse_args()
+
+    pages_per_question = 1
+    if hasattr(args, "pagesperquestion"):
+        if args.pagesperquestion is not None:
+            pages_per_question = args.pagesperquestion
 
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -739,8 +764,6 @@ if __name__ == "__main__":
     tmp2 = os.environ["PLOM_SCAN_PASSWORD"]
     print(f"  manager: {tmp1}")
     print(f"  scanner: {tmp2}")
-
-    print("\nAll ready after {:6.1f} seconds.\n".format(time.time() - starttime))
 
     if args.init:
         input("Press enter when you want to stop the server...")
