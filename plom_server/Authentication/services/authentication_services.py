@@ -1,18 +1,37 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 
+from typing import List, Dict
+
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
 
 
 class AuthenticationServices:
+    """A service class for managing authentication-related tasks."""
+
     @transaction.atomic
-    def generate_list_of_basic_usernames(self, group_name, num_users_wanted):
+    def generate_list_of_basic_usernames(
+        self, group_name: str, num_users_wanted: int
+    ) -> List[str]:
+        """Generate a list of basic numbered usernames.
+
+        Args:
+            group_name: (str) The name of the group.
+            num_users_wanted: (int) The number of users to generate.
+
+        Returns:
+            List[str]: List of generated basic numbered usernames.
+
+        Raises:
+            IntegrityError: If there is an integrity error while
+                creating users and adding them to the group.
+        """
         user_list = []
         username_number = 0
 
@@ -24,13 +43,22 @@ class AuthenticationServices:
                     group_name=group_name,
                 )
                 user_list.append(user)
-            except:
+            except IntegrityError:
                 pass
 
         return user_list
 
     @transaction.atomic
-    def create_user_and_add_to_group(self, username, group_name):
+    def create_user_and_add_to_group(self, username: str, group_name: str) -> str:
+        """Create a user and add them to a group.
+
+        Args:
+            username: (str) The username of the user.
+            group_name: (str) The name of the group.
+
+        Returns:
+            str: The username of the created user.
+        """
         group = Group.objects.get(name=group_name)
         User.objects.create_user(
             username=username, email=None, password=None
@@ -41,7 +69,18 @@ class AuthenticationServices:
 
         return user.username
 
-    def generate_list_of_funky_usernames(self, group_name, num_users_wanted):
+    def generate_list_of_funky_usernames(
+        self, group_name: str, num_users_wanted: int
+    ) -> List[str]:
+        """Generate a list of funky usernames and add them to a group.
+
+        Args:
+            group_name: (str) The name of the group.
+            num_users_wanted: (int) The number of users to generate.
+
+        Returns:
+            List[str]: List of generated usernames.
+        """
         funky_username_list = generate_username(num_users_wanted)
         user_list = []
         for username in funky_username_list:
@@ -49,9 +88,19 @@ class AuthenticationServices:
                 username=username, group_name=group_name
             )
             user_list.append(new_user)
+
         return user_list
 
-    def check_and_create_funky_usernames(self, username, group_name):
+    def check_and_create_funky_usernames(self, username: str, group_name: str) -> str:
+        """Check if a username exists, and if it does, generate a new one recursively.
+
+        Args:
+            username: (str) The username to check.
+            group_name: (str) The name of the group.
+
+        Returns:
+            str: The username of the created user.
+        """
         if User.objects.filter(username=username).exists():
             new_username = generate_username(1)
             return self.check_and_create_funky_usernames(
@@ -64,8 +113,19 @@ class AuthenticationServices:
             return user
 
     @transaction.atomic
-    def generate_password_reset_links_dict(self, request, username_list):
-        # change this when plom_server is deploy
+    def generate_password_reset_links_dict(
+        self, request, username_list: List[str]
+    ) -> Dict[str, str]:
+        """Generate a dictionary of password reset links for a list of usernames.
+
+        Args:
+            request: The HTTP request object.
+            username_list: (List[str]) List of usernames.
+
+        Returns:
+            Dict[str, str]: Dictionary of username to password reset link.
+        """
+        # TODO change to https:// when plom_server is deploy
         http_protocol = "http://"
         domain = get_current_site(request).domain
         url_path = "/reset/"
@@ -81,7 +141,19 @@ class AuthenticationServices:
         return links_dict
 
     @transaction.atomic
-    def generate_link(request, user):
+    def generate_link(request, user: User) -> str:
+        """Generate a password reset link for a user.
+
+        Args:
+            request: The HTTP request object.
+            user: (User) The user for whom the password reset link is generated.
+
+        Returns:
+            str: The generated password reset link.
+
+        Note:
+            The generated link follows the format: 'http://<domain>/reset/<uid>/<token>'.
+        """
         http_protocol = "http://"
         domain = get_current_site(request).domain
         url_path = "/reset/"
@@ -89,4 +161,5 @@ class AuthenticationServices:
         token = default_token_generator.make_token(user)
         forward_slash = "/"
         link = http_protocol + domain + url_path + uid + forward_slash + token
+
         return link
