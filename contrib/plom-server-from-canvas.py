@@ -243,14 +243,9 @@ def configure_running_server(
 
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
-    build_class = subprocess.check_call(
-        ["plom-create", "class", work_dir / "classlist.csv"]
-    )
-    assert build_class
+    subprocess.check_call(["plom-create", "class", work_dir / "classlist.csv"])
     print("Building the database...")
-    build_db = subprocess.check_call(["plom-create", "make-db"])
-
-    assert build_db
+    subprocess.check_call(["plom-create", "make-db"])
 
 
 def get_submissions(
