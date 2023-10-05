@@ -525,7 +525,7 @@ def scan_submissions(
     else:
         print(f"There was nothing in {upload_dir} to iterate over")
 
-    if len(errors) > 0:
+    if errors:
         print("\nError log:")
         for sid, err in errors:
             print(f"Error processing user_id {sid}: {str(err)}")
