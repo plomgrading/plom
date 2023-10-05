@@ -33,7 +33,7 @@ class CreateUserForm(UserCreationForm):
 class CreateScannersAndMarkersForm(forms.Form):
     USERNAME_CHOICES = [
         ("basic", "Basic numbered usernames"),
-        ("funky", '"Funky" usernames (such as "hungryHeron8")'),
+        ("funky", "&#8220;Funky&#8221; usernames (such as &#8220;hungryHeron8&#8221;)"),
     ]
 
     num_users = forms.IntegerField(
