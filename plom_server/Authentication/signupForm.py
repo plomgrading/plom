@@ -32,8 +32,8 @@ class CreateUserForm(UserCreationForm):
 
 class CreateScannersAndMarkersForm(forms.Form):
     USERNAME_CHOICES = [
-        ("basic", "Basic Numbered Usernames"),
-        ("funky", "Funky Usernames"),
+        ("basic", "Basic numbered usernames"),
+        ("funky", '"Funky" usernames (such as "hungryHeron8")'),
     ]
 
     num_users = forms.IntegerField(
@@ -49,7 +49,7 @@ class CreateScannersAndMarkersForm(forms.Form):
     )
 
     basic_or_funky_username = forms.CharField(
-        label="Do you want to generate basic numbered or funky usernames?",
+        label="What sort of usernames would you like?",
         widget=forms.RadioSelect(choices=USERNAME_CHOICES),
         initial="basic",
     )
