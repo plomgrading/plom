@@ -1888,15 +1888,13 @@ class MarkerClient(QWidget):
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
-        """
-        Called when anotator is done grading.
+        """Called when annotator is done grading.
 
         Args:
             task (str): task name
 
         Returns:
             None
-
         """
         self.setEnabled(True)
         if task:

@@ -94,7 +94,7 @@ def test_get_digit_box(tmpdir):
     for probs in x:
         assert len(probs) == 10
         for p in probs:
-            assert 0 <= p <= 1, "Not a probablility"
+            assert 0 <= p <= 1, "Not a probability"
 
     # test: debug_extracts_images
     with working_directory(tmpdir):

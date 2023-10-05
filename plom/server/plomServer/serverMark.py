@@ -112,7 +112,7 @@ def MreturnMarkedTask(
     Args:
         username (str): User who marked the paper.
         task_code (str): Code string for the task.
-        question_number (int): Marked queston number.
+        question_number (int): Marked question number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
         annot_img_bytes (bytearray): Marked image of question.  Currently
