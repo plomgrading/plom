@@ -16,10 +16,9 @@ from django.utils.encoding import force_str
 from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
-from random_username.generate import generate_username
 
-from .services import generate_link, check_username
-from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
+from .services import AuthenticationServices
+from .signupForm import CreateUserForm, CreateScannersAndMarkersForm
 from Base.base_group_views import (
     AdminRequiredView,
     ManagerRequiredView,
@@ -76,7 +75,6 @@ class SetPassword(View):
                     user.is_active = True
                     user.profile.signup_confirmation = True
                     user.save()
-                    print(reset_form.cleaned_data.get("new_password1"))
                     return render(request, self.set_password_complete)
                 # display error message
                 else:
@@ -186,14 +184,14 @@ class Signup(ManagerRequiredView):
 class SignupManager(AdminRequiredView):
     template_name = "Authentication/manager_signup.html"
     activation_link = "Authentication/manager_activation_link.html"
-    form = CreateManagerForm()
+    form = CreateUserForm()
 
     def get(self, request):
         context = {"form": self.form}
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = CreateManagerForm(request.POST)
+        form = CreateUserForm(request.POST)
         username = request.POST.get("username")
         exist_username = User.objects.filter(username__iexact=username)
         context = {}
@@ -206,7 +204,7 @@ class SignupManager(AdminRequiredView):
             # user can't log in until the link is confirmed
             user.is_active = False
             user.save()
-            link = generate_link(request, user)
+            link = AuthenticationServices().generate_link(request, user)
             context.update(
                 {
                     "user_email": user.profile.email,
@@ -231,6 +229,7 @@ class SignupManager(AdminRequiredView):
 class SignupScanners(ManagerRequiredView):
     template_name = "Authentication/scanner_signup.html"
     form = CreateScannersAndMarkersForm()
+    __group_name = "scanner"
 
     def get(self, request):
         context = {
@@ -241,34 +240,33 @@ class SignupScanners(ManagerRequiredView):
 
     def post(self, request):
         form = CreateScannersAndMarkersForm(request.POST)
-        scanner_group = Group.objects.get(name="scanner")
-        scanner_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
 
         if form.is_valid():
             num_users = form.cleaned_data.get("num_users")
-            scanner_username_list = generate_username(num_users)
+            username_choices = form.cleaned_data.get("basic_or_funky_username")
 
-            for scanner in scanner_username_list:
-                scanner = check_username(
-                    scanner, exist_usernames, scanner_username_list
+            if username_choices == "basic":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_basic_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
                 )
-                exist_usernames.append(scanner)
+            elif username_choices == "funky":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_funky_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
+                )
 
-                User.objects.create_user(
-                    username=scanner,
-                    email=None,
-                    password=None,
-                ).groups.add(scanner_group)
-                user = User.objects.get(username=scanner)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                scanner_dict[scanner] = link
+            password_reset_links = (
+                AuthenticationServices().generate_password_reset_links_dict(
+                    request=request, username_list=usernames_list
+                )
+            )
 
             context = {
                 "form": self.form,
-                "links": scanner_dict,
+                "links": password_reset_links,
                 "created": True,
             }
             return render(request, self.template_name, context)
@@ -278,6 +276,7 @@ class SignupScanners(ManagerRequiredView):
 class SignupMarkers(ManagerRequiredView):
     template_name = "Authentication/marker_signup.html"
     form = CreateScannersAndMarkersForm()
+    __group_name = "marker"
 
     def get(self, request):
         context = {
@@ -288,32 +287,35 @@ class SignupMarkers(ManagerRequiredView):
 
     def post(self, request):
         form = CreateScannersAndMarkersForm(request.POST)
-        marker_group = Group.objects.get(name="marker")
-        marker_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
 
         if form.is_valid():
             num_users = form.cleaned_data.get("num_users")
-            marker_username_list = generate_username(num_users)
+            username_choices = form.cleaned_data.get("basic_or_funky_username")
 
-            for marker in marker_username_list:
-                marker = check_username(marker, exist_usernames, marker_username_list)
-                exist_usernames.append(marker)
+            if username_choices == "basic":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_basic_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
+                )
+            elif username_choices == "funky":
+                usernames_list = (
+                    AuthenticationServices().generate_list_of_funky_usernames(
+                        group_name=self.__group_name, num_users=num_users
+                    )
+                )
+            else:
+                raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-                User.objects.create_user(
-                    username=marker,
-                    email=None,
-                    password=None,
-                ).groups.add(marker_group)
-                user = User.objects.get(username=marker)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                marker_dict[marker] = link
+            password_reset_links = (
+                AuthenticationServices().generate_password_reset_links_dict(
+                    request=request, username_list=usernames_list
+                )
+            )
 
             context = {
                 "form": self.form,
-                "links": marker_dict,
+                "links": password_reset_links,
                 "created": True,
             }
             return render(request, self.template_name, context)
