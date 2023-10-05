@@ -32,7 +32,7 @@ class AuthenticationServices:
             IntegrityError: If there is an integrity error while
                 creating users and adding them to the group.
         """
-        user_list = []
+        user_list: List[str] = []
         username_number = 0
 
         while len(user_list) < num_users_wanted:
