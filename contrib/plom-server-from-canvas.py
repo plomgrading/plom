@@ -246,12 +246,11 @@ def configure_running_server(
     build_class = subprocess.check_call(
         ["plom-create", "class", work_dir / "classlist.csv"]
     )
+    assert build_class
     print("Building the database...")
-    build_class = subprocess.check_call(["plom-create", "make-db"])
+    build_db = subprocess.check_call(["plom-create", "make-db"])
 
-    # flake8 insists that we use this variable, so here's something to do.
-    if not build_class:
-        print("Something terrible happened in configure_running_server.")
+    assert build_db
 
 
 def get_submissions(
