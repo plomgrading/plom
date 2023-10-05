@@ -508,9 +508,7 @@ def scan_submissions(
                 pdf, sid, q, basedir=upload_dir, msgr=(server, scan_pwd)
             )
         except ValueError as e:
-            print(
-                "*** processHWScans failed; error logged. Continuing ... ***"
-            )
+            print("*** processHWScans failed; error logged. Continuing ... ***")
             errors.append((sid, e))
             continue
 
@@ -663,7 +661,7 @@ parser.add_argument(  # Define args.pagesperquestion -- None or an integer
 if __name__ == "__main__":
     print("************************************************************")
     print("WARNING: this script, though awesome already, changes often.")
-    print('Cross your fingers before every invocation.')
+    print("Cross your fingers before every invocation.")
     print("************************************************************")
     starttime = time.time()
 
