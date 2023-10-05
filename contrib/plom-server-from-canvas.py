@@ -454,7 +454,7 @@ def scan_submissions(
         expected = pages_per_question * num_questions
         if num_pages == expected:
             # If number of pages equals expected number
-            # then do this simple thing. Clumsy but effective.
+            # then we map each page to the expected question.
             q = []
             for qnum in range(1, num_questions + 1):
                 q.extend(([qnum] for _ in range(pages_per_question)))
