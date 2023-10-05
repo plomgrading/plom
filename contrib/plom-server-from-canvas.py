@@ -666,7 +666,7 @@ parser.add_argument(
     help="""
         Which question(s) are answered in file.
         You can pass a single integer, or a list like `-q [1,2,3]`
-        which updates each page to questions 1, 2 and 3.
+        which uploads each page to questions 1, 2 and 3.
         You can also pass the special string `-q all` which uploads
         each page to all questions.
         If you need to specify questions per page, you can pass a list
