@@ -27,10 +27,6 @@ class AuthenticationServices:
 
         Returns:
             List of generated basic numbered usernames.
-
-        Raises:
-            IntegrityError: If there is an integrity error while
-                creating users and adding them to the group.
         """
         user_list: List[str] = []
         username_number = 0
