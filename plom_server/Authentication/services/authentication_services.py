@@ -22,11 +22,11 @@ class AuthenticationServices:
         """Generate a list of basic numbered usernames.
 
         Args:
-            group_name: (str) The name of the group.
-            num_users_wanted: (int) The number of users to generate.
+            group_name: The name of the group.
+            num_users_wanted: The number of users to generate.
 
         Returns:
-            List[str]: List of generated basic numbered usernames.
+            List of generated basic numbered usernames.
 
         Raises:
             IntegrityError: If there is an integrity error while
@@ -53,11 +53,11 @@ class AuthenticationServices:
         """Create a user and add them to a group.
 
         Args:
-            username: (str) The username of the user.
-            group_name: (str) The name of the group.
+            username: The username of the user.
+            group_name: The name of the group.
 
         Returns:
-            str: The username of the created user.
+            The username of the created user.
         """
         group = Group.objects.get(name=group_name)
         User.objects.create_user(
@@ -72,14 +72,14 @@ class AuthenticationServices:
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users_wanted: int
     ) -> List[str]:
-        """Generate a list of funky usernames and add them to a group.
+        """Generate a list of "funky usernames" and add them to a group.
 
         Args:
-            group_name: (str) The name of the group.
-            num_users_wanted: (int) The number of users to generate.
+            group_name: The name of the group.
+            num_users_wanted: The number of users to generate.
 
         Returns:
-            List[str]: List of generated usernames.
+            List of generated usernames.
         """
         funky_username_list = generate_username(num_users_wanted)
         user_list = []
@@ -95,11 +95,11 @@ class AuthenticationServices:
         """Check if a username exists, and if it does, generate a new one recursively.
 
         Args:
-            username: (str) The username to check.
-            group_name: (str) The name of the group.
+            username: The username to check.
+            group_name: The name of the group.
 
         Returns:
-            str: The username of the created user.
+            The username of the created user.
         """
         if User.objects.filter(username=username).exists():
             new_username = generate_username(1)
@@ -120,10 +120,10 @@ class AuthenticationServices:
 
         Args:
             request: The HTTP request object.
-            username_list: (List[str]) List of usernames.
+            username_list: List of usernames.
 
         Returns:
-            Dict[str, str]: Dictionary of username to password reset link.
+            Dictionary of username to password reset link.
         """
         # TODO change to https:// when plom_server is deploy
         http_protocol = "http://"
@@ -146,10 +146,11 @@ class AuthenticationServices:
 
         Args:
             request: The HTTP request object.
-            user: (User) The user for whom the password reset link is generated.
+            user: The user object for whom the password reset link is
+                generated.
 
         Returns:
-            str: The generated password reset link.
+            The generated password reset link as a string.
 
         Note:
             The generated link follows the format: 'http://<domain>/reset/<uid>/<token>'.
