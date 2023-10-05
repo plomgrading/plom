@@ -6,7 +6,7 @@
 Processing homework
 ===================
 
-This document outlines how we might Plom to mark homework.
+This document outlines how we might use Plom to mark homework.
 The main issue here is that homework (say uploaded by
 students to an LMS like Canvas) are **not** structured. A typical
 homework pdf will not contain an ID-page nor will it have questions
@@ -16,7 +16,7 @@ page-7 of the PDF.
 .. caution::
 
    This feature is under active development.  Plom's primary use
-   case is for QR-coded hardcopy assessments; we are working
+   is QR-coded hardcopy assessments; we are working
    toward supporting scripting for other use-cases such as
    homework.
 

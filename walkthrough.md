@@ -36,7 +36,7 @@ __license__ = "GFDL"
 ## Image server
 * A port is used for message passing (to and from the clients).  The default port was chosen because it is the backup ssh port (and so our IT lads have it open on the departmental firewall).  If you want to play around (and serve files to other machines) you might need to ask the IT lads to open a port for you. Though if you are doing things on UBC wireless it might be different. Experiment.
 * Before you run the server, first run userManager.py and put in a couple of users with passwords. (this is not yet ready to be done while the server is running, but it shouldn't be too hard to get that working)
-    - If you want to re-use a user list from previous exam, copy
+    - If you want to reuse a user list from previous exam, copy
       the `resources/userList.json` file from the old test.
 * When you run image_server.py, it reads all the relevant page group images and indexes them in 2 databases (in ../resources) - one for identifying and one for marks. It also loads in the user list you have generated so that it can authenticate clients.
 * Not much else to do while things are being id'd or marked.

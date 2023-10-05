@@ -103,13 +103,13 @@
                                                     <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
-                                                            class="btn btn-outline-info">original</button>
+                                                            class="btn btn-outline-info">orig</button>
                                                 {% endif %}
                                                 {% if task_data.status == "Complete" %}
                                                     <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
-                                                            class="btn btn-outline-success">annotation</button>
+                                                            class="btn btn-outline-success">annot</button>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -119,7 +119,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card col" style="height: 30vw; width: 40vw;">
+                <div class="card col" style="height: auto; width: 40vw;">
                     <div id="imageHere"></div>
                 </div>
             </div>

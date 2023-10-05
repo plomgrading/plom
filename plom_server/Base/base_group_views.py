@@ -38,13 +38,31 @@ class ScannerRequiredView(RoleRequiredView):
     group_required = ["scanner"]
 
 
+class LeadMarkerRequiredView(RoleRequiredView):
+    """A base class view for lead markers."""
+
+    group_required = ["lead_marker"]
+
+
+class LeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for lead markers and managers."""
+
+    group_required = ["lead_marker", "manager"]
+
+
 class MarkerRequiredView(RoleRequiredView):
     """A class view for markers."""
 
     group_required = ["marker"]
 
 
-class LeadMarkerRequiredView(RoleRequiredView):
-    """A class view for markers."""
+class MarkerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for markers, lead markers and managers."""
 
-    group_required = ["lead_marker"]
+    group_required = ["marker", "lead_marker", "manager"]
+
+
+class ScannerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for scanners, lead markers and managers."""
+
+    group_required = ["scanner", "lead_marker", "manager"]
