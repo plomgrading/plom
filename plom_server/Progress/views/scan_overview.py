@@ -3,16 +3,15 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
+from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 
 from Progress.services import ManageScanService
-from Progress.views import BaseScanProgressPage
 
 
-class ScanOverview(BaseScanProgressPage):
+class ScanOverview(ManagerRequiredView):
     """View the progress of scanning/validating page-images."""
 
     def get(self, request):
@@ -24,9 +23,10 @@ class ScanOverview(BaseScanProgressPage):
         pushed_bundles = mss.get_number_pushed_bundles()
         unpushed_bundles = mss.get_number_unpushed_bundles()
 
-        context = self.build_context("overview")
+        context = self.build_context()
         context.update(
             {
+                "current_page": "overview",
                 "total_papers": total_papers,
                 "completed_papers": completed_papers,
                 "incomplete_papers": incomplete_papers,
@@ -53,17 +53,18 @@ class ScanGetPageImage(ManagerRequiredView):
         return FileResponse(image_file)
 
 
-class ScanBundlesView(BaseScanProgressPage):
+class ScanBundlesView(ManagerRequiredView):
     """View the bundles uploaded by scanner users."""
 
     def get(self, request):
-        context = self.build_context("bundles")
+        context = self.build_context()
         mss = ManageScanService()
 
         bundle_list = mss.get_pushed_bundles_list()
 
         context.update(
             {
+                "current_page": "bundles",
                 "number_of_pushed_bundles": len(bundle_list),
                 "pushed_bundles": bundle_list,
             }

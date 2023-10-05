@@ -18,7 +18,7 @@ Using a word processor
 Of course, you do not need to use LaTeX to prepare your test.  The
 included `idBox.pdf` should be used as a template for students to
 enter their name and student number.  This standard template will help
-with the automated optical character recongnition of student numbers.
+with the automated optical character recognition of student numbers.
 
 
 Extra sheets

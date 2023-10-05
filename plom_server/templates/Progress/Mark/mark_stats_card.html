@@ -43,39 +43,45 @@
                         </tr>
                     </tbody>
                 </table>
-                <table class="table table-sm table-bordered text-center">
-                    <thead>
-                        <tr>
-                            <th>mean</th>
-                            <th>median</th>
-                            <th>mode</th>
-                            <th>stdev</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ stats.mark_mean }}</td>
-                            <td>{{ stats.mark_median }}</td>
-                            <td>{{ stats.mark_mode }}</td>
-                            <td>{{ stats.mark_stdev }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- These statistics only viewable by lead markers and managers -->
+                {% if user_is_lead_marker or user_is_manager %}
+                    <table class="table table-sm table-bordered text-center">
+                        <thead>
+                            <tr>
+                                <th>mean</th>
+                                <th>median</th>
+                                <th>mode</th>
+                                <th>stdev</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ stats.mark_mean }}</td>
+                                <td>{{ stats.mark_median }}</td>
+                                <td>{{ stats.mark_mode }}</td>
+                                <td>{{ stats.mark_stdev }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
             </div>
         </div>
     {% endif %}
-    <div class="card-footer">
-        <button class="btn btn-info"
-                hx-swap="outerHTML"
-                hx-target="#stats_{{ question }}_{{ version }}"
-                hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
-        {% if stats.all_task_count %}
-            <a href="{% url 'progress_mark_details' question version %}"
-               class="btn btn-success">show details</a>
-        {% endif %}
-        {% if version == 1 %}
-            <a href="{% url 'progress_mark_version_compare' question %}"
-               class="btn btn-success">compare all Q{{ question }} versions</a>
-        {% endif %}
-    </div>
+    <!-- These buttons only viewable by lead markers and managers -->
+    {% if user_is_lead_marker or user_is_manager %}
+        <div class="card-footer">
+            <button class="btn btn-info"
+                    hx-swap="outerHTML"
+                    hx-target="#stats_{{ question }}_{{ version }}"
+                    hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
+            {% if stats.all_task_count %}
+                <a href="{% url 'progress_mark_details' question version %}"
+                   class="btn btn-success">show details</a>
+            {% endif %}
+            {% if version == 1 %}
+                <a href="{% url 'progress_mark_version_compare' question %}"
+                   class="btn btn-success">compare all Q{{ question }} versions</a>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>

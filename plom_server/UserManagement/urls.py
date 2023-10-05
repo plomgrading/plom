@@ -13,5 +13,10 @@ urlpatterns = [
     path("enableScanners/", views.UserPage.enableScanners, name="enableScanners"),
     path("disableMarkers/", views.UserPage.disableMarkers, name="disableMarkers"),
     path("enableMarkers/", views.UserPage.enableMarkers, name="enableMarkers"),
+    path(
+        "toggleLeadMarker/<str:username>",
+        views.UserPage.toggleLeadMarker,
+        name="toggleLeadMarker",
+    ),
     path("progress/<str:username>", view=views.ProgressPage.as_view(), name="progress"),
 ]

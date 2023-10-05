@@ -319,7 +319,7 @@ class Downloader(QObject):
                  (that is, rename) the file.
 
         This will emit a signal that others can listen for.
-        In some cases, the worker will deliver something that somone else
+        In some cases, the worker will deliver something that someone else
         has downloaded in the meantime.  In that case we do not emit a
         signal.
         """

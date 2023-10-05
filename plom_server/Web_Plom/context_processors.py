@@ -31,5 +31,5 @@ def user_group_information(request):
     elif "scanner" in group_list:
         context["navbar_color"] = "info"
     elif "lead_marker" in group_list:
-        context["navbar_color"] = "secondary"
+        context["navbar_color"] = "dark"
     return context

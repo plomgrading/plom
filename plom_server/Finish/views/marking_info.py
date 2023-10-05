@@ -65,7 +65,7 @@ class MarkingInformationView(ManagerRequiredView):
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()
         grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
-            question_avgs, "Question number", "Grade", "Quesion vs Grade"
+            question_avgs, "Question number", "Grade", "Question vs Grade"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
