@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
-from typing import List, Dict
+from typing import Dict, List, Optional
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
@@ -17,7 +18,7 @@ class AuthenticationServices:
 
     @transaction.atomic
     def generate_list_of_basic_usernames(
-        self, group_name: str, num_users: int
+        self, group_name: str, num_users: int, *, basename: Optional[str] = None
     ) -> List[str]:
         """Generate a list of basic numbered usernames.
 
@@ -25,9 +26,17 @@ class AuthenticationServices:
             group_name: The name of the group.
             num_users: The number of users to generate.
 
+        Keyword Args:
+            basename: The base part of the username, to which numbers
+                will be appended.  If omitted, use the `group_name`
+                with a capital letter.
+
         Returns:
             List of generated basic numbered usernames.
         """
+        if not basename:
+            basename = group_name.capitalize()
+
         user_list: List[str] = []
         username_number = 0
 
@@ -35,7 +44,7 @@ class AuthenticationServices:
             username_number += 1
             try:
                 user = self.create_user_and_add_to_group(
-                    username=group_name.capitalize() + str(username_number),
+                    username=basename + str(username_number),
                     group_name=group_name,
                 )
                 user_list.append(user)
