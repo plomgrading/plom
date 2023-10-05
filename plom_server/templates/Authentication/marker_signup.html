@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
@@ -37,8 +37,9 @@
                 {% csrf_token %}
                 {{ form.basic_or_funky_username.label }}
                 {{ form.basic_or_funky_username }}
+                <br />
+                <!-- TODO: remove this br somehow -->
                 <p>How many markers would you like to create?</p>
-                <p style="margin-bottom: 2px">Number of marker users:</p>
                 <div class="input-group mb-1" style="width: 190px;">
                     {{ form.num_users }}
                     <input class="btn btn-primary" type="submit" value="Create">
