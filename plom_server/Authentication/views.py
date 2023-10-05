@@ -304,6 +304,8 @@ class SignupMarkers(ManagerRequiredView):
                         group_name=self.__group_name, num_users=num_users
                     )
                 )
+            else:
+                raise RuntimeError("Tertium non datur: unexpected third choice!")
 
             password_reset_links = (
                 AuthenticationServices().generate_password_reset_links_dict(
