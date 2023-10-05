@@ -53,7 +53,7 @@ class Messenger(BaseMessenger):
     # ID client API stuff
 
     def IDprogressCount(self):
-        """Return info about progress on identifiying.
+        """Return info about progress on identifying.
 
         Return:
             list: with two integers, indicating the number of papers

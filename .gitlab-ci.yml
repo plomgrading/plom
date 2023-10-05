@@ -26,10 +26,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.24
+image: docker:24.0.6
 
 services:
-  - docker:20.10.24-dind
+  - docker:24.0.6-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -90,10 +90,10 @@ codespell:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install codespell
+    - python3 -m pip install codespell~=2.2.6
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell -S "*.pdf,*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
     reports:
@@ -145,7 +145,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.32.1
+    - pip install djlint~=1.34.0
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.32.1
+    - pip install djlint~=1.34.0
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -285,7 +285,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.7.0"
+    - pip3 install "black~=23.9.1"
   script:
     - black --check --diff .
   allow_failure: true
@@ -306,7 +306,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.2.7
+    - pip install pytest pytest-cov coverage[toml]~=7.3.1
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -338,8 +338,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.6
-    - python3 -m pip install pylint~=2.17.5
+    - python3 -m pip install astroid~=2.15.8
+    - python3 -m pip install pylint~=2.17.6
   script:
     - pylint plom
   allow_failure: true
@@ -426,7 +426,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.2.7
+    - python3 -m pip install coverage~=7.3.1
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
