@@ -150,7 +150,7 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
     for i, mark in enumerate(marks):
         toml += dedent(
             f"""
-            [question.{i + 1}]
+            [[question]]
             pages = [{i + 2}]
             mark = {mark}
             select = "fix"
