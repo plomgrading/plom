@@ -22,11 +22,6 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
-Notes:
-  * If number of pages precisely matches number of questions then
-    we do a 1-1 mapping onto questions.  Otherwise we push each
-    page to all questions.  This could be made more configurable.
-
 TODO:
   * needs to log instead of just discarding so much output
   * support an existing configured server in basedir: or fork
@@ -650,13 +645,44 @@ parser.add_argument(  # Define args.port -- None or an integer
     action="store",
     help="Port number for server",
 )
-parser.add_argument(  # Define args.pagesperquestion -- None or an integer
-    "--pagesperquestion",
-    type=int,
-    metavar="PAGESPERQUESTION",
-    action="store",
-    help="Number of PDF pages per question (default 1)",
+g = parser.add_mutually_exclusive_group()
+g.add_argument(
+    "--all",
+    action="store_true",
+    help="""By default, we push each page to all questions.""",
 )
+g.add_argument(
+    "--expected-pages-per-question",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        If the paper contains EXACTLY the right number of pages then we
+        map sets of N pages to each question.
+        N = 1 indicates we expect a 1-1 mapping from pages to
+        questions.
+        If the paper does not contain an appropriate number of pages
+        we fallback to the default `--all` mapping, pushing each page
+        to all questions.
+        For example, if N = 2 and there are 4 questions, then if the
+        input has precisely 8 pages, we map pages 1 and 2 to question 1,
+        pages 3 and 4 to question 2, etc.
+    """,
+)
+# TODO: support a vector for above
+g.add_argument(
+    "--custom-pages-to-question-map",
+    type=int,
+    metavar="...",
+    action="store",
+    help="""
+        If you need more careful control, you can pass a list of lists
+        for which question(s) each page should be mapped too.
+        See also `plom-hwscan process --help`.
+        WARNING: not yet implemented.
+    """,
+)
+
 
 if __name__ == "__main__":
     print("************************************************************")
