@@ -83,15 +83,21 @@
                                         <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
                                     </li>
                                 {% elif user_is_manager %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'users' %}">Users</a>
+                                    <li class="nav-item accordion accordion-flush">
+                                        <a class="nav-link" data-bs-toggle="collapse" href="#users">Users</a>
                                     </li>
+                                    <div class="collapse" id="users">
+                                        <ul>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="{% url 'signup' %}">Create Users</a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'signup' %}">Create
-                                        Scanners/Markers</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
