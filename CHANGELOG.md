@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Fix a crash when users sync a changed rubric.
 
 
 ## [0.14.3] - 2023-09-15

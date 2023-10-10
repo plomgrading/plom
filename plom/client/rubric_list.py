@@ -1112,12 +1112,13 @@ class RubricWidget(QWidget):
         msg += "<p>\N{Check Mark} server: "
         msg += f"<b>{len(added)} new</b>, "
         msg += f"<b>{len(deleted)} deleted</b> rubrics.</p>\n"
+        d = ""
         if added and deleted:
-            d = "<h3>Added/Deleted</h3>\n"
+            d += "<h3>Added/Deleted</h3>\n"
         elif added:
-            d = "<h3>Added</h3>\n"
+            d += "<h3>Added</h3>\n"
         elif deleted:
-            d = "<h3>Deleted</h3>\n"
+            d += "<h3>Deleted</h3>\n"
         if added or deleted:
             d += "<ul>\n"
             for rid in added:
