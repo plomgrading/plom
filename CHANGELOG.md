@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fix a crash when users sync a changed rubric.
 * Clearer error messages when auto-IDing an a student number has less than 8 digits.
+* Filter leading/trailing whitespace from server address.
 * Fixes in contrib scripts related to just-in-time prenaming and IDing.
 * Typos and clarifications in docs.
 
