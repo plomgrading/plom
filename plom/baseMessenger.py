@@ -72,7 +72,7 @@ class BaseMessenger:
         """Initialize a new BaseMessenger.
 
         Args:
-            server (str/None): URL or None to default to localhost.
+            server: URL or None to default to localhost.
 
         Keyword Arguments:
             port (None/int): What port to try to connect to.  Defaults
@@ -99,6 +99,9 @@ class BaseMessenger:
 
         if not server:
             server = "127.0.0.1"
+
+        # Issue 3051: e.g. trailing control chararacters or whitespace
+        server = server.strip()
 
         try:
             parsed_url = urllib3.util.parse_url(server)
