@@ -1341,9 +1341,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  # Issue 3019
-  # /usr/local/bin/python3 -m pip install pyinstaller
-  - PYINSTALLER_COMPILE_BOOTLOADER=1 /usr/local/bin/python3 -m pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
+  - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1398,9 +1396,7 @@ macos12_x86_64_client:
   # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  # Issue 3019
-  # arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
-  - PYINSTALLER_COMPILE_BOOTLOADER=1 arch -x86_64 /usr/local/bin/python3 -m pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1667,7 +1663,7 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==5.13.0
+  - c:\python310\python -m pip install pyinstaller==6.0.0
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
