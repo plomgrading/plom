@@ -52,14 +52,14 @@ longerHelp = """
         rather than (say) p3,4 in V1 and p4,5 in V2.
       - the solution files are sitting in the same 'sourceVersions'
         directory as your sourceX.pdf test pdfs. They should be
-        named 'solutionX.pdf' where X is the version number.
+        named 'solutionsX.pdf' where X is the version number.
   * If your solution pdfs have identical structure to your test-pdfs,
     ie solutions for Q3 are on exactly the pages you specified in
     your test spec for Q3, then you can simply run
         `plom-solutions extract --upload`
     or perhaps
         `plom-solutions extract --upload --server ...`
-  * This will then take pages from your `solutionX.pdf` files and
+  * This will then take pages from your `solutionsX.pdf` files and
     combine them into a solution png file for each question/version
     and place the results in the `solutionImages` directory
   * Those images will then automatically be uploaded to the Plom server.
