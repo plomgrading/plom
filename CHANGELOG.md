@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Various edits to contrib scripts, especially pulling from Canvas.
 
 ### Fixed
 * Fix a crash when users sync a changed rubric.
+* Clearer error messages when auto-IDing an a student number has less than 8 digits.
+* Fixes in contrib scripts related to just-in-time prenaming and IDing.
+* Typos and clarifications in docs.
 
 
 ## [0.14.3] - 2023-09-15
