@@ -100,7 +100,7 @@ class BaseMessenger:
         if not server:
             server = "127.0.0.1"
 
-        # Issue 3051: e.g. trailing control chararacters or whitespace
+        # Issue 3051: e.g. trailing control characters or whitespace
         server = server.strip()
 
         try:
