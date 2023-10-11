@@ -264,6 +264,7 @@ extra_first_names = [
 
 # Customizable data
 blue = [0, 0, 0.75]
+grey = [0.75, 0.75, 0.75]
 name_font_size = 26
 answer_font_size = 18
 
@@ -356,6 +357,12 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
         if page_index in exclude:
             continue
+
+        if random.random() < 0.1:
+            color = grey
+        else:
+            color = blue
+            
         fontres = resources.files(plom.create.fonts) / ttf
         excess = pdf_page.insert_textbox(
             answer_rect,
