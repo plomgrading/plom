@@ -368,7 +368,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
             answer_rect,
             answer_text,
             fontsize=answer_font_size,
-            color=blue,
+            color=color,
             fontname=fontname,
             fontfile=fontres,
             align=0,
