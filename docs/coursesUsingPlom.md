@@ -178,8 +178,12 @@ Approx: 14550 over 12 courses
 
 Approx: 2070 over 6 courses
 
+## Totals up to Aug 2023
 
-## 2022W2
+  * Approx 95020 papers in 76 courses.
+
+
+## 2023W1 (as of mid Oct)
 
 | Course  |  Tasks                           | # students |  Notes                        |
 |---------|----------------------------------|:----------:|-------------------------------|
@@ -189,14 +193,15 @@ Approx: 2070 over 6 courses
 | BIOL155 | midterm                          | 356        |                               |
 | Math200 | midterm 1                        | ~1000      |                               |
 | Math215 | 4 quizzes, ...                   | 370        |                               |
-| Math220 |
+| Math220 | midterm                          |            |                               |
 | Math221 | midterm
 | Math317 |
-| Math319 |
+| Math319 | midterm                          |            |                               |
 | Math405 |
 | Math402 |
 
+Approx: 7000 over 6 courses
 
-## Totals up to Aug 2023
+## Totals up to Oct 2023
 
-  * Approx 95020 papers in 76 courses.
+  * Approx 102000 papers in 82 courses.
