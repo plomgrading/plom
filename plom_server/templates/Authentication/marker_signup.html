@@ -58,11 +58,11 @@
                 </tbody>
             </table>
         </div>
+        <script>
+            function myfunction() {
+              const link = document.getElementById('link');
+              navigator.clipboard.writeText(link.textContent.replace(/Copy/, ''));
+            }
+        </script>
     {% endif %}
-    <script>
-        function myfunction() {
-          const link = document.getElementById('link');
-          navigator.clipboard.writeText(link.textContent.replace(/Copy/, ''));
-        }
-    </script>
 {% endblock main_content %}
