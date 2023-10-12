@@ -42,7 +42,8 @@ class CreateScannersAndMarkersForm(forms.Form):
     num_users = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control mb-1",
+                "style": "max-width: 375px; min-width: 74.25px",
                 "min": 1,
                 "max": 100,
                 "name": "num_users",
