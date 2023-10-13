@@ -362,7 +362,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
             color = grey
         else:
             color = blue
-            
+
         fontres = resources.files(plom.create.fonts) / ttf
         excess = pdf_page.insert_textbox(
             answer_rect,
