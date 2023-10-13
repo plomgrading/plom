@@ -5,79 +5,57 @@
 -->
 {% extends "base/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Web Plom - Profile
-            {% endblock title %}
-        </title>
-        <!-- Font Awesome -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-              rel="stylesheet" />
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-              rel="stylesheet" />
-        <!-- MDB -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.4.0/mdb.min.css"
-              rel="stylesheet" />
-    </head>
-    <body>
-        {% block page_heading %}
-            Profile
-        {% endblock page_heading %}
-        {% block main_content %}
-            <div style="display: grid; grid-template-columns: auto auto;">
-                <div class="row d-flex justify-content-center align-items-center h-100">
-                    <div id="profile-card"
-                         class="col-md-12 col-xl-8"
-                         style="border-radius: 15px;
-                                transform: translateX(55%);
-                                transition: 1s">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <div class="mt-3 mb-4">
-                                    <img src="{% static 'defaultUserIcon.png' %}"
-                                         class="rounded-circle img-fluid"
-                                         style="width: 100px" />
-                                </div>
-                                <h3 class="mb-2">{{ request.user.first_name }}</h3>
-                                <p class="mb-2">{{ request.user.username }}</p>
-                                <p class="text-muted mb-4">
-                                    @{{ user_group }} <span class="mx-2">|</span> <a href="">{{ email }}</a>
-                                </p>
-                                <button style="background-color: grey; color: white" id="edit" type="button">Edit Profile</button>
-                            </div>
+{% block title %}
+    Web Plom - Profile
+{% endblock title %}
+{% block page_heading %}
+    Profile
+{% endblock page_heading %}
+{% block main_content %}
+    <div style="display: grid; grid-template-columns: auto auto;">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div id="profile-card"
+                 class="col-md-12 col-xl-8"
+                 style="border-radius: 15px;
+                        transform: translateX(55%);
+                        transition: 1s">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="mt-3 mb-4">
+                            <img src="{% static 'defaultUserIcon.png' %}"
+                                 class="rounded-circle img-fluid"
+                                 style="width: 100px" />
                         </div>
-                    </div>
-                </div>
-                <div class="row d-flex justify-content-left align-items-center h-100">
-                    <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
-                        <form class="form" method="post">
-                            {% csrf_token %}
-                            <p id="name-label">Prefer Name</p>
-                            {{ form.first_name }}
-                            <br>
-                            <br>
-                            <p id="email-label">Email</p>
-                            {{ form.email }}
-                            <br>
-                            <br>
-                            <button class="btn btn-success" type="submit">Save</button>
-                        </form>
-                        <button id="cancel"
-                                style="background-color: grey;
-                                       color: white;
-                                       margin-top: 3px">Cancel</button>
+                        <h3 class="mb-2">{{ request.user.first_name }}</h3>
+                        <p class="mb-2">{{ request.user.username }}</p>
+                        <p class="text-muted mb-4">
+                            @{{ user_group }} <span class="mx-2">|</span> <a href="">{{ email }}</a>
+                        </p>
+                        <button style="background-color: grey; color: white" id="edit" type="button">Edit Profile</button>
                     </div>
                 </div>
             </div>
-            <!-- MDB -->
-            <script type="text/javascript"
-                    src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.4.0/mdb.min.js"></script>
-            <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
-        {% endblock main_content %}
-    </body>
-</html>
+        </div>
+        <div class="row d-flex justify-content-left align-items-center h-100">
+            <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
+                <form class="form" method="post">
+                    {% csrf_token %}
+                    <p id="name-label">Prefer Name</p>
+                    {{ form.first_name }}
+                    <br>
+                    <br>
+                    <p id="email-label">Email</p>
+                    {{ form.email }}
+                    <br>
+                    <br>
+                    <button class="btn btn-success" type="submit">Save</button>
+                </form>
+                <button id="cancel"
+                        style="background-color: grey;
+                               color: white;
+                               margin-top: 3px">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+{% endblock main_content %}
