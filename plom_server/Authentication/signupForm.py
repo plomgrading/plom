@@ -42,18 +42,19 @@ class CreateScannersAndMarkersForm(forms.Form):
     num_users = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control mb-1",
+                "style": "max-width: 23rem; min-width: 4.5rem",
                 "min": 1,
                 "max": 100,
-                "style": "width: 10%",
                 "name": "num_users",
             }
         ),
+        initial=1,
     )
 
     basic_or_funky_username = forms.CharField(
         label="What sort of usernames would you like?",
-        widget=forms.RadioSelect(choices=USERNAME_CHOICES),
+        widget=forms.RadioSelect(choices=USERNAME_CHOICES, attrs={"class": "me-2"}),
         initial="basic",
     )
 
