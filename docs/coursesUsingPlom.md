@@ -185,22 +185,25 @@ Approx: 2070 over 6 courses
 
 ## 2023W1 (as of mid Oct)
 
-| Course  |  Tasks                           | # students |  Notes                        |
-|---------|----------------------------------|:----------:|-------------------------------|
-| Math100 | Midterm                          | 4000       |                               |
-| BIOL331 | midterm                          | 72         |                               |
-| BIOL323 | lab midterm and lecture midterm  | 46         |                               |
-| BIOL155 | midterm                          | 356        |                               |
-| Math200 | midterm 1                        | ~1000      |                               |
-| Math215 | 4 quizzes, ...                   | 370        |                               |
-| Math220 | midterm                          |            |                               |
-| Math221 | midterm
-| Math317 |
-| Math319 | midterm                          |            |                               |
-| Math405 |
-| Math402 |
+| Course   |  Tasks                           | # students |  Notes                        |
+|----------|----------------------------------|:----------:|-------------------------------|
+| Math100  | Midterm                          | 4000       |                               |
+| BIOL331  | midterm                          | 72         |                               |
+| BIOL323  | lab midterm and lecture midterm  | 46         |                               |
+| BIOL155  | midterm                          | 356        |                               |
+| Math200  | midterm 1                        | ~1000      |                               |
+| Math200* | midterm                          |            |                               |
+| Math215  | 4 quizzes, ...                   | 370        |                               |
+| Math220  | midterm                          |            |                               |
+| Math221* | midterm                          |            |                               |
+| Math317  |                                  |            |                               |
+| Math319  | midterm                          |            |                               |
+| Math320  | HW x 12                          | 60         |                               |
+| Math405  |                                  |            |                               |
 
-Approx: 7000 over 6 courses
+Math220* and Math221*: "10M" sections run independently.
+
+Approx: 7000 over 13 courses
 
 ## Totals up to Oct 2023
 
