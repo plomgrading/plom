@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Sarah Oskuei
 
 """Plom tools for scribbling fake answers on PDF files."""
 
