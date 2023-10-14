@@ -225,7 +225,7 @@ def get_parser():
         epilog=dedent(
             """
             The classlist can be a .csv file exported from Canvas (specifically,
-            Canvas -> Grades -> Actions -> Export).  Plom will do some light sanity
+            Canvas -> Grades -> Actions -> Export).  Plom will do a little bit of
             checking such as dropping names like "Test Student".
 
             Alternatively, the classlist can be a .csv file with column headers:

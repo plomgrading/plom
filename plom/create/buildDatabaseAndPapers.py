@@ -172,7 +172,7 @@ def build_database(*, msgr, vermap={}, verbose=True):
             tuple appropriate for credientials.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
-            :func:`plom.finish.make_random_version_map`.
+            :func:`plom.make_random_version_map`.
         verbose (bool): default True, print status of each DB row
             creation to stdout.
 

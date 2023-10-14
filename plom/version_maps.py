@@ -11,11 +11,11 @@ import random
 
 
 def check_version_map(vm, spec=None):
-    """Sanity checks on version maps.
+    """Correctness checks of a version maps.
 
     Args:
         vm (dict): a dict-of-dicts describing versions.  See the output
-            of :func:`plom.finish.make_random_version_map`.
+            of :func:`plom.make_random_version_map`.
         spec (plom.SpecVerifier/dict): a plom spec or the underlying
             dict, see :func:`plom.SpecVerifier`.
 
