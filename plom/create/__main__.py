@@ -45,6 +45,7 @@ from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 from plom.create import version_map_from_file
 from plom.create import save_version_map
+from plom import check_version_map
 
 # we may want to shift some files around
 from plom.server.manageUserFiles import write_csv_user_list
@@ -698,7 +699,14 @@ def main():
             build_database(msgr=(args.server, args.password))
         else:
             qvmap = version_map_from_file(args.from_file)
-            build_database(vermap=qvmap, msgr=(args.server, args.password))
+            msgr = start_messenger(args.server, args.password)
+            try:
+                spec = msgr.get_spec()
+                check_version_map(qvmap, spec)
+                build_database(vermap=qvmap, msgr=msgr)
+            finally:
+                msgr.closeUser()
+                msgr.stop()
 
     elif args.command == "get-ver-map":
         f = save_version_map(args.file, msgr=(args.server, args.password))
