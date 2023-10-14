@@ -29,7 +29,9 @@ def check_version_map(vm, spec=None):
     """
     if spec:
         # Issue #1745: no such restriction and/or not accurate
-        assert len(vm) == spec["numberToProduce"]
+        assert (
+            len(vm) == spec["numberToProduce"]
+        ), "Legacy server requires numberToProduce to match the number of rows of the version map"
     rowlens = set()
     for t, qd in vm.items():
         assert isinstance(t, int)
@@ -47,6 +49,13 @@ def check_version_map(vm, spec=None):
                 if spec["question"][str(q)]["select"] == "fix":
                     assert v == 1
     assert len(rowlens) <= 1, "Not all rows had same length"
+    if vm.keys():
+        min_testnum = min(vm.keys())
+        max_testnum = max(vm.keys())
+        assert min_testnum == 1, f"test_number should start at 1: got {list(vm.keys())}"
+        assert set(vm.keys()) == set(
+            range(min_testnum, max_testnum + 1)
+        ), f"No gaps allowed in test_num: got {list(vm.keys())}"
 
 
 def make_random_version_map(spec):

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
 import json
 
@@ -19,12 +19,35 @@ def test_make_rand_ver_map():
 
 
 def test_ver_map_fails_if_too_short():
+    # likely legacy specific: remove?
+    spec = SpecVerifier.demo()
+    spec.verify()
+    vm = make_random_version_map(spec)
+    vm.pop(spec["numberToProduce"])
+    check_version_map(vm)  # passes if we don't know spec
+    with raises(AssertionError, match="number of rows"):
+        check_version_map(vm, spec)
+
+
+def test_ver_map_fails_if_non_contiguous():
+    # likely legacy specific: remove?
+    spec = SpecVerifier.demo()
+    spec.verify()
+    vm = make_random_version_map(spec)
+    maxkey = max(vm.keys())
+    vm.pop(maxkey // 2)
+    with raises(AssertionError, match="gap"):
+        check_version_map(vm)
+
+
+def test_ver_map_fails_if_not_start_at_1():
+    # likely legacy specific: remove?
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
     vm.pop(1)
-    check_version_map(vm)  # passes if we don't know spec
-    raises(AssertionError, lambda: check_version_map(vm, spec))
+    with raises(AssertionError, match="start"):
+        check_version_map(vm)
 
 
 def test_ver_map_types():

@@ -283,7 +283,7 @@ def get_parser():
     spDB.add_argument(
         "--from-file",
         metavar="FILE",
-        help="Read the version map from FILE.  WORK-IN-PROGRESS!",
+        help="Read the version map from FILE.",
     )
 
     spQVM = sub.add_parser(
