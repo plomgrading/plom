@@ -4,6 +4,7 @@
 import csv
 import json
 from pathlib import Path
+from typing import Dict, Union
 from warnings import warn
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
@@ -13,7 +14,7 @@ from plom import undo_json_packing_of_version_map, check_version_map
 from plom.create import with_manager_messenger
 
 
-def _version_map_from_json(f):
+def _version_map_from_json(f: Path) -> Dict:
     with open(f, "r") as fh:
         qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
@@ -21,11 +22,11 @@ def _version_map_from_json(f):
     return qvmap
 
 
-def _version_map_from_csv(f):
+def _version_map_from_csv(f: Path) -> Dict:
     """Extract the version map from a csv file.
 
     Args:
-        f (pathlib.Path): a csv file, must have a `test_number` column
+        f: a csv file, must have a `test_number` column
             and some `q{n}.version` columns.  The number of such columns
             is autodetected.  For example, this could be output of
             :func:`save_question_version_map`.
@@ -34,6 +35,10 @@ def _version_map_from_csv(f):
         dict: keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
+
+    Raises:
+        ValueError
+        AssertionError
 
     TODO: `f` could have names in it: this routine makes no use of that
     information.  In particular, it does not try to verify that they match
@@ -63,20 +68,24 @@ def _version_map_from_csv(f):
     return qvmap
 
 
-def version_map_from_file(f):
+def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
     """Extract the version map from a csv or json file.
 
     Args:
-        f (pathlib.Path): If ``.csv`` file, must have a `test_number`
+        f: If ``.csv`` file, must have a `test_number`
             column and some `q{n}.version` columns.  The number of such
             columns is autodetected.  If ``.json`` file, its a dict of
             dicts.  Either case could, for example, be the output of
             :func:`save_question_version_map`.
 
     Returns:
-        dict: keys are the paper numbers (`int`) and each value is a row
+        keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
+
+    Raises:
+        ValueError
+        AssertionError
     """
     f = Path(f)
     if f.suffix.casefold() not in (".json", ".csv"):
@@ -91,12 +100,12 @@ def version_map_from_file(f):
         raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
 
 
-def _version_map_to_csv(qvmap, filename):
+def _version_map_to_csv(qvmap: Dict, filename: Path) -> None:
     """Output a csv of the question-version map.
 
     Arguments:
-        qvmap (dict): the question-version map, documented elsewhere.
-        filename (pathlib.Path): where to save.
+        qvmap: the question-version map, documented elsewhere.
+        filename: where to save.
 
     Raises:
         ValueError: some rows have differing numbers of questions.
