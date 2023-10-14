@@ -59,6 +59,7 @@ def _version_map_from_csv(f):
     for i, r in df.iterrows():
         testnum = int(r["test_number"])
         qvmap[testnum] = {n: int(r[f"q{n}.version"]) for n in range(1, N + 1)}
+    check_version_map(qvmap)
     return qvmap
 
 
