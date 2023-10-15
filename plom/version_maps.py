@@ -28,40 +28,57 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
         None
 
     Raises:
-        AssertionError
+        ValueError
     """
     rowlens = set()
     for t, qd in vm.items():
-        assert isinstance(t, int)
-        assert isinstance(qd, dict)
-        if spec:
-            assert len(qd) == spec["numberOfQuestions"]
+        if not isinstance(t, int):
+            raise ValueError(f'test number key "{t}" ({type(t)}) is not an integer')
+        if not isinstance(qd, dict):
+            raise ValueError(f'row "{qd}" of version map should be a dict')
+        if spec and not len(qd) == spec["numberOfQuestions"]:
+            raise ValueError(
+                f"length of row {qd}  does not match numberOfQuestion in spec {spec}"
+            )
         # even if no spec we can ensure all rows the same
         rowlens.add(len(qd))
         for q, v in qd.items():
-            assert isinstance(q, int)
-            assert isinstance(v, int)
-            assert v > 0
+            if not isinstance(q, int):
+                raise ValueError(f'question key "{q}" ({type(q)}) is not an integer')
+            if not isinstance(v, int):
+                raise ValueError(f'version "{v}" ({type(v)}) should be an integer')
+            if not v > 0:
+                raise ValueError(f'version "{v}" should be strictly positive')
             if spec:
-                assert v <= spec["numberOfVersions"]
+                if not v <= spec["numberOfVersions"]:
+                    raise ValueError(
+                        f'version "{v}" should be less than numberOfVersions in spec {spec}'
+                    )
+                # TODO: unsure about this: maybe we should doc that we ignore "select"
+                # when custom version maps are used
                 if spec["question"][str(q)]["select"] == "fix":
-                    assert v == 1
-    assert len(rowlens) <= 1, "Not all rows had same length"
+                    if not v == 1:
+                        raise ValueError(
+                            f'version "{v}" is not 1 but question is "fix" in spec {spec}'
+                        )
+
+    if not len(rowlens) <= 1:
+        raise ValueError("Inconsistency in version map: not all rows had same length")
 
     if not legacy:
         return
     # remaining checks should matter only for legacy servers
-    if spec:
-        assert (
-            len(vm) == spec["numberToProduce"]
-        ), "Legacy server requires numberToProduce to match the number of rows of the version map"
+    if spec and not len(vm) == spec["numberToProduce"]:
+        raise ValueError(
+            "Legacy server requires numberToProduce to match the number of rows of the version map"
+        )
     if vm.keys():
         min_testnum = min(vm.keys())
         max_testnum = max(vm.keys())
-        assert min_testnum == 1, f"test_number should start at 1: got {list(vm.keys())}"
-        assert set(vm.keys()) == set(
-            range(min_testnum, max_testnum + 1)
-        ), f"No gaps allowed in test_num: got {list(vm.keys())}"
+        if not min_testnum == 1:
+            raise ValueError(f"test_number should start at 1: got {list(vm.keys())}")
+        if not set(vm.keys()) == set(range(min_testnum, max_testnum + 1)):
+            raise ValueError(f"No gaps allowed in test_num: got {list(vm.keys())}")
 
 
 def make_random_version_map(spec):

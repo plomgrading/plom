@@ -25,7 +25,7 @@ def test_ver_map_legacy_fails_if_too_short():
     vm = make_random_version_map(spec)
     vm.pop(spec["numberToProduce"])
     check_version_map(vm)  # passes if we don't know spec
-    with raises(AssertionError, match="number of rows"):
+    with raises(ValueError, match="number of rows"):
         check_version_map(vm, spec, legacy=True)
 
 
@@ -35,7 +35,7 @@ def test_ver_map_legacy_fails_if_non_contiguous():
     vm = make_random_version_map(spec)
     maxkey = max(vm.keys())
     vm.pop(maxkey // 2)
-    with raises(AssertionError, match="gap"):
+    with raises(ValueError, match="gap"):
         check_version_map(vm, legacy=True)
 
 
@@ -44,7 +44,7 @@ def test_ver_map_legacy_fails_if_not_start_at_1():
     spec.verify()
     vm = make_random_version_map(spec)
     vm.pop(1)
-    with raises(AssertionError, match="start"):
+    with raises(ValueError, match="start"):
         check_version_map(vm, legacy=True)
 
 
@@ -53,7 +53,8 @@ def test_ver_map_types():
     spec.verify()
     vm = make_random_version_map(spec)
     vm["1"] = vm.pop(1)
-    raises(AssertionError, lambda: check_version_map(vm))
+    with raises(ValueError, match="test number.*integer"):
+        check_version_map(vm)
 
 
 def test_ver_map_types2():
@@ -61,7 +62,8 @@ def test_ver_map_types2():
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1] = 42
-    raises(AssertionError, lambda: check_version_map(vm))
+    with raises(ValueError, match="row.*dict"):
+        check_version_map(vm)
 
 
 def test_ver_map_types3():
@@ -69,7 +71,8 @@ def test_ver_map_types3():
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1]["2"] = vm[1].pop(2)
-    raises(AssertionError, lambda: check_version_map(vm))
+    with raises(ValueError, match="question.*integer"):
+        check_version_map(vm)
 
 
 def test_ver_map_types4():
@@ -77,7 +80,8 @@ def test_ver_map_types4():
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1][2] = "str"
-    raises(AssertionError, lambda: check_version_map(vm))
+    with raises(ValueError, match="version.*integer"):
+        check_version_map(vm)
 
 
 def test_ver_map_verions_in_range():
@@ -85,9 +89,11 @@ def test_ver_map_verions_in_range():
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1][1] = -1
-    raises(AssertionError, lambda: check_version_map(vm))
-    vm[1][1] = spec["numberOfQuestions"] + 1
-    raises(AssertionError, lambda: check_version_map(vm, spec))
+    with raises(ValueError, match="positive"):
+        check_version_map(vm)
+    vm[1][1] = spec["numberOfVersions"] + 1
+    with raises(ValueError, match="numberOfVersions"):
+        check_version_map(vm, spec)
 
 
 def test_ver_map_fix_has_ver1_only():
@@ -96,7 +102,8 @@ def test_ver_map_fix_has_ver1_only():
     spec.verify()
     vm = make_random_version_map(spec)
     vm[1][2] = 2
-    raises(AssertionError, lambda: check_version_map(vm, spec))
+    with raises(ValueError, match="fix"):
+        check_version_map(vm, spec)
 
 
 def test_ver_map_json_roundtrip():

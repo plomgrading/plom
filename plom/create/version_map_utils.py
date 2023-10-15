@@ -33,10 +33,9 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
         number (`int`) and value version (`int`).
 
     Raises:
-        ValueError: integer conversions from the input.
+        ValueError: values could not be converted to integers, or
+            other errors in the version map.
         KeyError: wrong column header names.
-        AssertionError: various failures in checking the resulting
-            version map.
     """
     qvmap = {}
     with open(f, "r") as csvfile:
@@ -65,8 +64,9 @@ def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
         number (`int`) and value version (`int`).
 
     Raises:
-        ValueError
-        AssertionError
+        ValueError: values could not be converted to integers, or
+            other errors in the version map.
+        KeyError: wrong column header names.
     """
     f = Path(f)
     if f.suffix.casefold() not in (".json", ".csv"):
