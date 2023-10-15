@@ -381,6 +381,7 @@ def scan_submissions(
     server=None,
     scan_pwd=None,
     manager_pwd=None,
+    page_question_map_params={},
 ):
     """Apply `plom-scan` to all the pdfs we've just pulled from canvas."""
     upload_dir = Path(upload_dir)
@@ -444,16 +445,17 @@ def scan_submissions(
             errors.append((sid, e))
             continue
 
-        expected = pages_per_question * num_questions
-        if num_pages == expected:
-            # If number of pages equals expected number
-            # then we map each page to the expected question.
+        # by default, otherwise push each page to all questions. And kvetch later.
+        q = "all"
+        expected: Union[None, int] = None
+        ppq = page_question_map_params["expected_pages_per_question"]
+        if ppq is not None:
+            expected = ppq * num_questions
             q = []
             for qnum in range(1, num_questions + 1):
-                q.extend(([qnum] for _ in range(pages_per_question)))
-        else:
-            # ... otherwise push each page to all questions. And kvetch later.
-            q = [x for x in range(1, num_questions + 1)]
+                q.extend(([qnum] for _ in range(ppq)))
+        del ppq
+
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
         print("\n*** Found what looks like a legit PDF, as follows ...")
@@ -461,7 +463,9 @@ def scan_submissions(
         print(f"    sid:         {sid}")
         studentname = sid2name[sid]
         print(f"    studentname: {studentname}")
-        if num_pages == expected:
+        if expected is None:
+            print(f"    pages:   {num_pages}, no expectation.")
+        elif num_pages == expected:
             print(f"    pages:   {num_pages}, as expected.")
         else:
             print(f" xx pages:   {num_pages}, but expected {expected}.")
@@ -693,10 +697,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    pages_per_question = 1
-    if hasattr(args, "pagesperquestion"):
-        if args.pagesperquestion is not None:
-            pages_per_question = args.pagesperquestion
+    # Parameters for the page-to-question mapping
+    if not hasattr(args, "expected_pages_per_question"):
+        args.expected_pages_per_question = None
+    page_question_map_params = {
+        "expected_pages_per_question": args.expected_pages_per_question,
+    }
 
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -786,6 +792,7 @@ if __name__ == "__main__":
             len(args.marks),
             server=servernamewithport,
             upload_dir=(basedir / "upload"),
+            page_question_map_params=page_question_map_params,
         )
 
     print("\nPasswords for quick reference (gulp):")
