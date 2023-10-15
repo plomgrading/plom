@@ -5,10 +5,6 @@ import csv
 import json
 from pathlib import Path
 from typing import Dict, Union
-from warnings import warn
-
-# try to avoid importing Pandas unless we use specific functions: Issue #2154
-# import pandas
 
 from plom import undo_json_packing_of_version_map, check_version_map
 from plom.create import with_manager_messenger
@@ -22,7 +18,7 @@ def _version_map_from_json(f: Path) -> Dict:
     return qvmap
 
 
-def _version_map_from_csv(f: Path) -> Dict:
+def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
     """Extract the version map from a csv file.
 
     Args:
@@ -37,26 +33,18 @@ def _version_map_from_csv(f: Path) -> Dict:
         number (`int`) and value version (`int`).
 
     Raises:
-        ValueError
-        AssertionError
+        ValueError: integer conversions from the input.
+        KeyError: wrong column header names.
+        AssertionError: various failures in checking the resulting
+            version map.
     """
-    import pandas
-
-    df = pandas.read_csv(f, dtype="object")
-
-    # autodetect number of questions from column headers
-    N = 0
-    while True:
-        if f"q{N + 1}.version" not in df.columns:
-            break
-        N += 1
-    if N == 0:
-        raise ValueError(f"Could not find q1.version column in {df.columns}")
-
     qvmap = {}
-    for i, r in df.iterrows():
-        testnum = int(r["test_number"])
-        qvmap[testnum] = {n: int(r[f"q{n}.version"]) for n in range(1, N + 1)}
+    with open(f, "r") as csvfile:
+        reader = csv.DictReader(csvfile)
+        N = len(reader.fieldnames) - 1
+        for row in reader:
+            testnum = int(row["test_number"])
+            qvmap[testnum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
     check_version_map(qvmap)
     return qvmap
 
