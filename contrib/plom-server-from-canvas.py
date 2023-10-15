@@ -673,7 +673,6 @@ g.add_argument(
         pages 3 and 4 to question 2, etc.
     """,
 )
-# TODO: support a vector for above
 g.add_argument(
     "--custom-pages-to-question-map",
     type=int,
@@ -686,6 +685,10 @@ g.add_argument(
         WARNING: not yet implemented.
     """,
 )
+# TODO: consider re-implementing Omer Angel's interpolation mapping
+# --interpolate-pages and --interpolate-pages-leeway
+# Leeway could be some extra added to each end (in addition to floor/ceil)
+# perhaps default leeway to 1
 
 
 if __name__ == "__main__":
