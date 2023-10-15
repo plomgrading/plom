@@ -41,6 +41,7 @@ from .rules import isValidStudentNumber
 
 from .version_maps import undo_json_packing_of_version_map
 from .version_maps import make_random_version_map, check_version_map
+from .version_maps import version_map_from_file, version_map_to_csv
 
 from .tagging import is_valid_tag_text
 
