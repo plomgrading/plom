@@ -193,6 +193,8 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
     qvmap = {}
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
+        if not reader.fieldnames:
+            raise ValueError("csv must have column names")
         N = len(reader.fieldnames) - 1
         for row in reader:
             testnum = int(row["test_number"])
