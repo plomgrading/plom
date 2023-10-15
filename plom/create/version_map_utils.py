@@ -39,10 +39,6 @@ def _version_map_from_csv(f: Path) -> Dict:
     Raises:
         ValueError
         AssertionError
-
-    TODO: `f` could have names in it: this routine makes no use of that
-    information.  In particular, it does not try to verify that they match
-    the current server's classlist.
     """
     import pandas
 
@@ -56,9 +52,6 @@ def _version_map_from_csv(f: Path) -> Dict:
         N += 1
     if N == 0:
         raise ValueError(f"Could not find q1.version column in {df.columns}")
-
-    if "sID" in df.columns or "sname" in df.columns:
-        warn(f'Ignoring the "sID" and "sname" columns in {f}')
 
     qvmap = {}
     for i, r in df.iterrows():
