@@ -104,7 +104,7 @@ def get_server_name(server_dir):
     with open(server_dir / "serverConfiguration/serverDetails.toml", "rb") as f:
         configdata = tomllib.load(f)
     servernamewithport = f"{configdata['server']}:{configdata['port']}"
-    print("DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
+    print(f"DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
     os.environ["PLOM_SERVER"] = servernamewithport
     return servernamewithport
 
