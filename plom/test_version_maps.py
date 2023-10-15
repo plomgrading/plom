@@ -18,7 +18,7 @@ def test_make_rand_ver_map():
     check_version_map(vm, spec)
 
 
-def test_ver_map_fails_if_too_short():
+def test_ver_map_legacy_fails_if_too_short():
     # likely legacy specific: remove?
     spec = SpecVerifier.demo()
     spec.verify()
@@ -26,28 +26,26 @@ def test_ver_map_fails_if_too_short():
     vm.pop(spec["numberToProduce"])
     check_version_map(vm)  # passes if we don't know spec
     with raises(AssertionError, match="number of rows"):
-        check_version_map(vm, spec)
+        check_version_map(vm, spec, legacy=True)
 
 
-def test_ver_map_fails_if_non_contiguous():
-    # likely legacy specific: remove?
+def test_ver_map_legacy_fails_if_non_contiguous():
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
     maxkey = max(vm.keys())
     vm.pop(maxkey // 2)
     with raises(AssertionError, match="gap"):
-        check_version_map(vm)
+        check_version_map(vm, legacy=True)
 
 
-def test_ver_map_fails_if_not_start_at_1():
-    # likely legacy specific: remove?
+def test_ver_map_legacy_fails_if_not_start_at_1():
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
     vm.pop(1)
     with raises(AssertionError, match="start"):
-        check_version_map(vm)
+        check_version_map(vm, legacy=True)
 
 
 def test_ver_map_types():
@@ -116,9 +114,8 @@ def test_ver_map_check_spec_or_dict():
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
-    vm.pop(1)
-    raises(AssertionError, lambda: check_version_map(vm, spec))
-    raises(AssertionError, lambda: check_version_map(vm, spec.get_public_spec_dict()))
+    check_version_map(vm, spec)
+    check_version_map(vm, spec.get_public_spec_dict())
 
 
 def test_ver_map_from_dict():

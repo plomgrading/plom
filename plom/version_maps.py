@@ -5,12 +5,13 @@
 """Tools for manipulating version maps."""
 
 import random
+from typing import Optional
 
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
 
-def check_version_map(vm, spec=None):
+def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
     """Correctness checks of a version maps.
 
     Args:
@@ -19,19 +20,16 @@ def check_version_map(vm, spec=None):
         spec (plom.SpecVerifier/dict): a plom spec or the underlying
             dict, see :func:`plom.SpecVerifier`.
 
+    Keyword Args:
+        legacy: True if this version map is for a legacy server, which
+            is more strict about contiguous range of papers for example.
+
     Return:
         None
 
     Raises:
         AssertionError
-
-    This function currently only works properly for legacy servers.
     """
-    if spec:
-        # Issue #1745: no such restriction and/or not accurate
-        assert (
-            len(vm) == spec["numberToProduce"]
-        ), "Legacy server requires numberToProduce to match the number of rows of the version map"
     rowlens = set()
     for t, qd in vm.items():
         assert isinstance(t, int)
@@ -49,6 +47,14 @@ def check_version_map(vm, spec=None):
                 if spec["question"][str(q)]["select"] == "fix":
                     assert v == 1
     assert len(rowlens) <= 1, "Not all rows had same length"
+
+    if not legacy:
+        return
+    # remaining checks should matter only for legacy servers
+    if spec:
+        assert (
+            len(vm) == spec["numberToProduce"]
+        ), "Legacy server requires numberToProduce to match the number of rows of the version map"
     if vm.keys():
         min_testnum = min(vm.keys())
         max_testnum = max(vm.keys())

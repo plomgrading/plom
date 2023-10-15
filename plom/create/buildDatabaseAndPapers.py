@@ -182,8 +182,10 @@ def build_database(*, msgr, vermap={}, verbose=True):
     Raises:
         PlomExistingDatabase
         PlomServerNotReady
+
+    TODO: only works for legacy servers at the moment.
     """
-    check_version_map(vermap)
+    check_version_map(vermap, legacy=True)
 
     new_vmap = msgr.InitialiseDB(vermap)
     # sanity check the version maps

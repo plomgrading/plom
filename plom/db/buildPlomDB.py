@@ -137,6 +137,6 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
         # TODO: move reproducible random seed support to the make fcn?
         random.seed(spec["privateSeed"])
         version_map = make_random_version_map(spec)
-    check_version_map(version_map)
+    check_version_map(version_map, spec, legacy=True)
 
     return version_map
