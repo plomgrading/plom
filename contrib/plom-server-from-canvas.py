@@ -22,11 +22,6 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
-Notes:
-  * If number of pages precisely matches number of questions then
-    we do a 1-1 mapping onto questions.  Otherwise we push each
-    page to all questions.  This could be made more configurable.
-
 TODO:
   * needs to log instead of just discarding so much output
   * support an existing configured server in basedir: or fork
@@ -109,7 +104,7 @@ def get_server_name(server_dir):
     with open(server_dir / "serverConfiguration/serverDetails.toml", "rb") as f:
         configdata = tomllib.load(f)
     servernamewithport = f"{configdata['server']}:{configdata['port']}"
-    print("DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
+    print(f"DEBUG: get_server_name is setting PLOM_SERVER={servernamewithport} ...")
     os.environ["PLOM_SERVER"] = servernamewithport
     return servernamewithport
 
@@ -386,6 +381,7 @@ def scan_submissions(
     server=None,
     scan_pwd=None,
     manager_pwd=None,
+    page_question_map_params={},
 ):
     """Apply `plom-scan` to all the pdfs we've just pulled from canvas."""
     upload_dir = Path(upload_dir)
@@ -449,16 +445,17 @@ def scan_submissions(
             errors.append((sid, e))
             continue
 
-        expected = pages_per_question * num_questions
-        if num_pages == expected:
-            # If number of pages equals expected number
-            # then we map each page to the expected question.
+        # by default, otherwise push each page to all questions. And kvetch later.
+        q = "all"
+        expected: Union[None, int] = None
+        ppq = page_question_map_params["expected_pages_per_question"]
+        if ppq is not None:
+            expected = ppq * num_questions
             q = []
             for qnum in range(1, num_questions + 1):
-                q.extend(([qnum] for _ in range(pages_per_question)))
-        else:
-            # ... otherwise push each page to all questions. And kvetch later.
-            q = [x for x in range(1, num_questions + 1)]
+                q.extend(([qnum] for _ in range(ppq)))
+        del ppq
+
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
         print("\n*** Found what looks like a legit PDF, as follows ...")
@@ -466,7 +463,9 @@ def scan_submissions(
         print(f"    sid:         {sid}")
         studentname = sid2name[sid]
         print(f"    studentname: {studentname}")
-        if num_pages == expected:
+        if expected is None:
+            print(f"    pages:   {num_pages}, no expectation.")
+        elif num_pages == expected:
             print(f"    pages:   {num_pages}, as expected.")
         else:
             print(f" xx pages:   {num_pages}, but expected {expected}.")
@@ -650,13 +649,47 @@ parser.add_argument(  # Define args.port -- None or an integer
     action="store",
     help="Port number for server",
 )
-parser.add_argument(  # Define args.pagesperquestion -- None or an integer
-    "--pagesperquestion",
-    type=int,
-    metavar="PAGESPERQUESTION",
-    action="store",
-    help="Number of PDF pages per question (default 1)",
+g = parser.add_mutually_exclusive_group()
+g.add_argument(
+    "--all",
+    action="store_true",
+    help="""By default, we push each page to all questions.""",
 )
+g.add_argument(
+    "--expected-pages-per-question",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        If the paper contains EXACTLY the right number of pages then we
+        map sets of N pages to each question.
+        N = 1 indicates we expect a 1-1 mapping from pages to
+        questions.
+        If the paper does not contain an appropriate number of pages
+        we fallback to the default `--all` mapping, pushing each page
+        to all questions.
+        For example, if N = 2 and there are 4 questions, then if the
+        input has precisely 8 pages, we map pages 1 and 2 to question 1,
+        pages 3 and 4 to question 2, etc.
+    """,
+)
+g.add_argument(
+    "--custom-pages-to-question-map",
+    type=int,
+    metavar="...",
+    action="store",
+    help="""
+        If you need more careful control, you can pass a list of lists
+        for which question(s) each page should be mapped too.
+        See also `plom-hwscan process --help`.
+        WARNING: not yet implemented.
+    """,
+)
+# TODO: consider re-implementing Omer Angel's interpolation mapping
+# --interpolate-pages and --interpolate-pages-leeway
+# Leeway could be some extra added to each end (in addition to floor/ceil)
+# perhaps default leeway to 1
+
 
 if __name__ == "__main__":
     print("************************************************************")
@@ -667,10 +700,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    pages_per_question = 1
-    if hasattr(args, "pagesperquestion"):
-        if args.pagesperquestion is not None:
-            pages_per_question = args.pagesperquestion
+    # Parameters for the page-to-question mapping
+    if not hasattr(args, "expected_pages_per_question"):
+        args.expected_pages_per_question = None
+    page_question_map_params = {
+        "expected_pages_per_question": args.expected_pages_per_question,
+    }
 
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
@@ -760,6 +795,7 @@ if __name__ == "__main__":
             len(args.marks),
             server=servernamewithport,
             upload_dir=(basedir / "upload"),
+            page_question_map_params=page_question_map_params,
         )
 
     print("\nPasswords for quick reference (gulp):")
