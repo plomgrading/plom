@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Sophia Vetrici
 
 from pathlib import Path
 
@@ -46,8 +47,8 @@ def test_log_likelihood():
         calc_log_likelihood([1, 2, 3], probabilities)
 
 
-def test_download_or_train_model(tmpdir):
-    with working_directory(tmpdir):
+def test_download_or_train_model(tmp_path):
+    with working_directory(tmp_path):
         assert not is_model_present()
         assert download_model()
         # check correct files are present
@@ -60,19 +61,18 @@ def test_download_or_train_model(tmpdir):
 
 
 # Bit messy with so many subtests: refactor to a setup / teardown class?
-def test_get_digit_box(tmpdir):
-    tmpdir = Path(tmpdir)
-    # for persistent debugging:
-    # tmpdir = Path("/home/cbm/src/plom/plom.git/tmp")
+def test_get_digit_box(tmp_path):
+    # for persistent debugging: 
+    # tmp_path = "/home/cbm/src/plom/plom.git/tmp" 
 
-    assert buildDemoSourceFiles(basedir=tmpdir)
+    assert buildDemoSourceFiles(basedir=tmp_path)
 
-    d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
+    d = fitz.open(tmp_path / "sourceVersions/version1.pdf")
     scribble_name_and_id(d, "01234567", "Testy McTester")
-    f = tmpdir / "foo.pdf"
+    f = tmp_path / "foo.pdf"
     d.save(f)
     d.close()
-    files = processFileToBitmaps(f, tmpdir)
+    files = processFileToBitmaps(f, tmp_path)
     id_img = files[0]
 
     # these will fail if we don't include the box
@@ -86,7 +86,7 @@ def test_get_digit_box(tmpdir):
     assert len(x) > 100
 
     # test: list_of_list_of_probabilities
-    with working_directory(tmpdir):
+    with working_directory(tmp_path):
         download_or_train_model()
         model = load_model()
     x = get_digit_prob(model, id_img, 0.05, 0.975, 8, debug=False)
@@ -97,9 +97,9 @@ def test_get_digit_box(tmpdir):
             assert 0 <= p <= 1, "Not a probability"
 
     # test: debug_extracts_images
-    with working_directory(tmpdir):
+    with working_directory(tmp_path):
         x = get_digit_prob(model, id_img, 0.0, 1.0, 8, debug=True)
-    d = tmpdir / "debug_id_reader"
+    d = tmp_path / "debug_id_reader"
     assert len(list(d.glob("digit_foo*"))) == 8
     for f in d.glob("digit_*"):
         p = PIL.Image.open(f)
@@ -107,9 +107,8 @@ def test_get_digit_box(tmpdir):
     assert len(list(d.glob("idbox_foo*"))) == 1
 
     # nice to split out but waste to download
-    # def test_lap_solver(tmpdir):
-    # tmpdir = Path(tmpdir)
-    # assert buildDemoSourceFiles(basedir=tmpdir)
+    # def test_lap_solver(tmp_path):
+    # assert buildDemoSourceFiles(basedir=tmp_path)
 
     miniclass = [
         {"id": "01234567", "studentName": "Testy McTester"},
@@ -120,18 +119,18 @@ def test_get_digit_box(tmpdir):
     ]
     id_imgs = []
     for s in miniclass:
-        d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
+        d = fitz.open(tmp_path / "sourceVersions/version1.pdf")
         scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
-        f = tmpdir / f"mytest_{s['id']}.pdf"
+        f = tmp_path / f"mytest_{s['id']}.pdf"
         d.save(f)
         d.close()
-        files = processFileToBitmaps(f, tmpdir)
+        files = processFileToBitmaps(f, tmp_path)
         id_imgs.append(files[0])
 
     id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
     test_nums = list(range(1, len(id_imgs)))
     ids = [x["id"] for x in miniclass]
-    with working_directory(tmpdir):
+    with working_directory(tmp_path):
         probs = compute_probabilities(id_imgs, 0.15, 0.9, 8)
         cost_matrix = assemble_cost_matrix(test_nums, ids, probs)
         pred = lap_solver(test_nums, ids, probs)
