@@ -49,124 +49,121 @@
             <div class="row" style="min-height: 100vh;">
                 <div class="col-auto shadow bg-{{ navbar_color }}-subtle text-start">
                     <nav class="navbar">
-                        <div class="container-fluid">
-                            <!-- Navbar links -->
-                            <ul class="nav flex-column">
-                                <li class="nav-item text-center">
-                                    <!-- Plom logo -->
-                                    <a class="navbar-brand nav-link" href="{% url 'home' %}">
-                                        <img class="img-fluid"
-                                             src="{% static 'plomLogo.png' %}"
-                                             style="max-width: 8rem">
-                                    </a>
-                                    <p>
-                                        <b>
-                                            {% if request.user.first_name %}
-                                                {{ request.user.first_name }}
-                                            {% else %}
-                                                {{ request.user.username.lower }}
-                                            {% endif %}
-                                        </b>
-                                    </p>
+                        <!-- Navbar links -->
+                        <ul class="nav flex-column">
+                            <li class="nav-item text-center">
+                                <!-- Plom logo -->
+                                <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                                    <img class="img-fluid"
+                                         src="{% static 'plomLogo.png' %}"
+                                         style="max-width: 8rem">
+                                </a>
+                                <p>
+                                    <b>
+                                        {% if request.user.first_name %}
+                                            {{ request.user.first_name }}
+                                        {% else %}
+                                            {{ request.user.username.lower }}
+                                        {% endif %}
+                                    </b>
+                                </p>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                            </li>
+                            {% if user_is_admin %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'signup_manager' %}">Sign Up Manager</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+                                    <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
+                                </li>
+                            {% elif user_is_manager %}
+                                <li class="nav-item accordion accordion-flush">
+                                    <a class="nav-link" data-bs-toggle="collapse" href="#users">Users</a>
+                                </li>
+                                <div class="collapse" id="users">
+                                    <ul>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'signup' %}">Create Users</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                                    <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
                                 </li>
-                                {% if user_is_admin %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'signup_manager' %}">Sign Up Manager</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
-                                    </li>
-                                {% elif user_is_manager %}
-                                    <li class="nav-item accordion accordion-flush">
-                                        <a class="nav-link" data-bs-toggle="collapse" href="#users">Users</a>
-                                    </li>
-                                    <div class="collapse" id="users">
-                                        <ul>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'signup' %}">Create Users</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
-                                    </li>
-                                    <li class="nav-item accordion accordion-flush">
-                                        <a class="nav-link" data-bs-toggle="collapse" href="#progress">Progress</a>
-                                    </li>
-                                    <div class="collapse" id="progress">
-                                        <ul>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'progress_mark_home' %}">Mark</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'progress_identify_home' %}">Identify</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'reports_landing' %}">Reports</a>
-                                    </li>
-                                {% elif user_is_scanner %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'scan_home' %}">Scan</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
-                                    </li>
-                                {% elif user_is_marker %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'progress_mark_home' %}">Marking progress</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </div>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
+                                </li>
+                                <li class="nav-item accordion accordion-flush">
+                                    <a class="nav-link" data-bs-toggle="collapse" href="#progress">Progress</a>
+                                </li>
+                                <div class="collapse" id="progress">
+                                    <ul>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'progress_mark_home' %}">Mark</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'progress_identify_home' %}">Identify</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'reports_landing' %}">Reports</a>
+                                </li>
+                            {% elif user_is_scanner %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'scan_home' %}">Scan</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
+                                </li>
+                            {% elif user_is_marker %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'progress_mark_home' %}">Marking progress</a>
+                                </li>
+                            {% endif %}
+                        </ul>
                     </nav>
                 </div>
-                <div class="col">
-                    <div class="container-fluid shadow-sm py-4 px-5">
-                        <!-- Page heading -->
-                        <h1 class="fw-lighter m-2">
-                            {% block page_heading %}
-                            {% endblock page_heading %}
-                        </h1>
-                        <p class="lead mb-2">
-                            {% block page_subheading %}
-                            {% endblock page_subheading %}
-                        </p>
-                        <!-- Main content -->
-                        {% block main_content %}
-                        {% endblock main_content %}
-                    </div>
+                <!-- padding-start-4 b/c content was too close to navbar shadow -->
+                <div class="col ps-4">
+                    <!-- Page heading -->
+                    <h1 class="fw-lighter m-2">
+                        {% block page_heading %}
+                        {% endblock page_heading %}
+                    </h1>
+                    <p class="lead mb-2">
+                        {% block page_subheading %}
+                        {% endblock page_subheading %}
+                    </p>
+                    <!-- Main content -->
+                    {% block main_content %}
+                    {% endblock main_content %}
                 </div>
             </div>
         </div>
