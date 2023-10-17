@@ -110,7 +110,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
     def test_tag_task_no_such_task_code(self):
         s = MarkingTaskService()
         user = baker.make(User)
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegex(RuntimeError, "Task .* does not exist"):
             s.add_tag_text_from_task_code("hello", "q9999g9", user)
 
     def test_get_tags_for_task(self):
@@ -136,7 +136,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
 
     def test_get_tags_for_task_no_such_task(self):
         s = MarkingTaskService()
-        with self.assertRaisesRegexp(RuntimeError, "Task .* does not exist"):
+        with self.assertRaisesRegex(RuntimeError, "Task .* does not exist"):
             s.get_tags_for_task("q9999g9")
 
 
@@ -175,5 +175,5 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         s = MarkingTaskService()
         user = baker.make(User)
         s.create_tag(user, "hello")
-        with self.assertRaisesRegexp(RuntimeError, "Task .*does not exist"):
+        with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.remove_tag_text_from_task_code("hello", "q9999g9")

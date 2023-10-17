@@ -214,7 +214,7 @@ class ScanServiceTests(TestCase):
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
-            self.assertEquals(rotation, 180)
+            self.assertEqual(rotation, 180)
 
             # read QR codes a second time due to rotation of image
             qrs_flipped = QRextract(image_flipped_path, rotation=rotation)
@@ -261,7 +261,7 @@ class ScanServiceTests(TestCase):
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
-            self.assertEquals(rotation, 180)
+            self.assertEqual(rotation, 180)
 
             with open(image_flipped_path, "rb") as f:
                 im = exif.Image(f)
@@ -305,18 +305,18 @@ class ScanServiceTests(TestCase):
             rotate.rotate_bitmap_jpeg_exif(image_exif_180_path, 180)
             with open(image_exif_180_path, "rb") as f:
                 orig_im = exif.Image(f)
-            self.assertEquals(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
+            self.assertEqual(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
 
             qrs_exif_180 = QRextract(image_exif_180_path)
             codes_exif_180 = scanner.parse_qr_code([qrs_exif_180])
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_exif_180)
-            self.assertEquals(rotation, 180)
+            self.assertEqual(rotation, 180)
 
             with open(image_exif_180_path, "rb") as f:
                 im = exif.Image(f)
-            self.assertEquals(im.get("orientation"), orig_im.get("orientation"))
+            self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
     def test_parse_qr_codes_jpeg_upside_down_exif_180(self):
         """
@@ -337,18 +337,18 @@ class ScanServiceTests(TestCase):
             rotate.rotate_bitmap_jpeg_exif(image_flipped_path, 180)
             with open(image_flipped_path, "rb") as f:
                 orig_im = exif.Image(f)
-            self.assertEquals(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
+            self.assertEqual(orig_im.get("orientation"), exif.Orientation.BOTTOM_RIGHT)
 
             qrs_flipped = QRextract(image_flipped_path)
             codes_flipped = scanner.parse_qr_code([qrs_flipped])
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_flipped)
-            self.assertEquals(rotation, 0)
+            self.assertEqual(rotation, 0)
 
             with open(image_flipped_path, "rb") as f:
                 im = exif.Image(f)
-            self.assertEquals(im.get("orientation"), orig_im.get("orientation"))
+            self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
             xy_upright = []
             xy_flipped = []
@@ -383,18 +383,18 @@ class ScanServiceTests(TestCase):
             rotate.rotate_bitmap_jpeg_exif(image_exif_90_path, 90)
             with open(image_exif_90_path, "rb") as f:
                 orig_im = exif.Image(f)
-            self.assertEquals(orig_im.get("orientation"), exif.Orientation.LEFT_BOTTOM)
+            self.assertEqual(orig_im.get("orientation"), exif.Orientation.LEFT_BOTTOM)
 
             qrs_90_rot = QRextract(image_exif_90_path)
             codes_90_rot = scanner.parse_qr_code([qrs_90_rot])
 
             pipr = PageImageProcessor()
             rotation = pipr.get_rotation_angle_from_QRs(codes_90_rot)
-            self.assertEquals(rotation, -90)
+            self.assertEqual(rotation, -90)
 
             with open(image_exif_90_path, "rb") as f:
                 im = exif.Image(f)
-            self.assertEquals(im.get("orientation"), orig_im.get("orientation"))
+            self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
             # read QR codes a second time due to rotation of image
             qrs_90_rot = QRextract(image_exif_90_path, rotation=rotation)
