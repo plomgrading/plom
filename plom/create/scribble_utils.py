@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Sarah Oskuei
 
 """Plom tools for scribbling fake answers on PDF files."""
 
@@ -264,6 +265,7 @@ extra_first_names = [
 
 # Customizable data
 blue = [0, 0, 0.75]
+grey = [0.75, 0.75, 0.75]
 name_font_size = 26
 answer_font_size = 18
 
@@ -356,12 +358,18 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
         if page_index in exclude:
             continue
+
+        if random.random() < 0.1:
+            color = grey
+        else:
+            color = blue
+
         fontres = resources.files(plom.create.fonts) / ttf
         excess = pdf_page.insert_textbox(
             answer_rect,
             answer_text,
             fontsize=answer_font_size,
-            color=blue,
+            color=color,
             fontname=fontname,
             fontfile=fontres,
             align=0,
