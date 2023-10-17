@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
 
 ### Fixed
 

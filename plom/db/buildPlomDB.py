@@ -116,7 +116,7 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
         version_map (dict/None): optional predetermined version map
             keyed by test number and question number.  If None, we will
             build our own random version mapping.  For the map format
-            see :func:`plom.finish.make_random_version_map`.
+            see :func:`plom.make_random_version_map`.
 
     Returns:
         dict: the question-version map.
@@ -137,6 +137,6 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
         # TODO: move reproducible random seed support to the make fcn?
         random.seed(spec["privateSeed"])
         version_map = make_random_version_map(spec)
-    check_version_map(version_map)
+    check_version_map(version_map, spec, legacy=True)
 
     return version_map
