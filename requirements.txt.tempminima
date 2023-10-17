@@ -26,6 +26,7 @@ appdirs==1.4.3
 arrow==1.1.1
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
+cryptography==37.0.2
 debugpy==1.6.7
 django==4.0.10
 django-braces==1.15.0

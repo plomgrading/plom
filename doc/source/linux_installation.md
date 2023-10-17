@@ -19,21 +19,22 @@ a **Plom Client**.
 Fedora
 ------
 
-Tested on Fedora 37.  Some stuff from the package manager:
+Tested on Fedora 38.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl gcc gcc-c++ cmake \
+        ImageMagick gcc gcc-c++ cmake \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
         python3-more-itertools python3-chardet \
         python3-seaborn python3-cairosvg \
-        python3-aiohttp python3-appdirs python3-arrow \
-        python3-pillow python3-pandas python3-peewee \
+        python3-appdirs python3-arrow \
+        python3-pillow python3-pandas \
         python3-PyMuPDF python3-scikit-learn \
         python3-stdiomask python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
         python3-pytest python3-PyMySQL \
+        python3-aiohttp python3-peewee python3-cryptography \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
@@ -62,7 +63,7 @@ It will not work on Ubuntu 18.04.  It is time to upgrade your OS.
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        cmake make imagemagick dvipng g++ openssl \
+        cmake make imagemagick dvipng g++ \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \

@@ -8,11 +8,11 @@ __license__ = "AGPL-3.0-or-later"
 Installing from source on MacOS
 ===============================
 
-Tested on Catalina 10.15.4.
+Tested on Catalina 10.15.4, in mid 2020.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-brew install imagemagick openssl cmake
+brew install imagemagick cmake
 ```
 You will also need Python, perhaps:
 ```
