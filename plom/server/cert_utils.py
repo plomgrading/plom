@@ -23,6 +23,9 @@ def build_self_signed_SSL_keys(dur: Path = confdir) -> None:
     This uses the ``cryptography`` module and follows
     `their tutorial <https://cryptography.io/en/latest/x509/tutorial>`_.
 
+    There is some nonsense in there that tries to guess the country code
+    from the locale.
+
     Args:
         dur (pathlib.Path): where to put the key and cert file.
 
