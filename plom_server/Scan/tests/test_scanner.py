@@ -294,8 +294,6 @@ class ScanServiceTests(TestCase):
         scanner = ScanService()
 
         image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
-        qrs_original = QRextract(image_original_path)
-        codes_original = scanner.parse_qr_code([qrs_original])
 
         image_original = Image.open(image_original_path)
 

@@ -8,14 +8,11 @@ from django.test import TestCase
 from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
-from Base.tests import config_test
 
-from Preparation.models import StagingPQVMapping
-from Papers.models import Paper, QuestionPage, Image
+from Papers.models import Paper, QuestionPage
 
 from ..services import MarkingTaskService, mark_task
 from ..models import MarkingTask, AnnotationImage
-from Papers.services import ImageBundleService
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -27,7 +24,6 @@ class MarkingTaskServiceTests(TestCase):
     def test_unpack_code(self):
         """Test mark_task.unpack_code()."""
 
-        mts = MarkingTaskService()
         with self.assertRaises(AssertionError):
             mark_task.unpack_code("")
 
@@ -45,7 +41,6 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(question_number, 2)
 
     def test_unpack_code_additional_tests(self):
-        mts = MarkingTaskService()
         with self.assertRaises(AssertionError):
             mark_task.unpack_code("g0001q2")
 
@@ -173,7 +168,7 @@ class MarkingTaskServiceTests(TestCase):
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
 
         user0 = baker.make(User)
-        task1a = baker.make(
+        baker.make(
             MarkingTask,
             code="q0001g1",
             status=MarkingTask.TO_DO,
@@ -181,7 +176,7 @@ class MarkingTaskServiceTests(TestCase):
             paper=paper1,
             question_number=1,
         )
-        task1b = baker.make(
+        baker.make(
             MarkingTask,
             code="q0001g1",
             status=MarkingTask.TO_DO,
@@ -193,7 +188,7 @@ class MarkingTaskServiceTests(TestCase):
             MultipleObjectsReturned, mts.set_paper_marking_task_outdated, 1, 1
         )
 
-        task1c = baker.make(
+        baker.make(
             MarkingTask,
             code="q0001g2",
             status=MarkingTask.OUT_OF_DATE,
@@ -206,7 +201,7 @@ class MarkingTaskServiceTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        qp2 = baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
 
         task2a = baker.make(
             MarkingTask,
