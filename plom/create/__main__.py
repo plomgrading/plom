@@ -702,7 +702,8 @@ def main():
             msgr = start_messenger(args.server, args.password)
             try:
                 spec = msgr.get_spec()
-                check_version_map(qvmap, spec)
+                # TODO: hardcoded for legacy server restrictions
+                check_version_map(qvmap, spec, legacy=True)
                 build_database(vermap=qvmap, msgr=msgr)
             finally:
                 msgr.closeUser()
