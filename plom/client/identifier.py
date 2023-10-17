@@ -60,7 +60,7 @@ from .viewers import WholeTestView
 
 log = logging.getLogger("identr")
 
-no_style = "background-color: color:"
+no_style = ""
 angry_orange_style = "background-color: #FF7F50; color: #000;"
 warning_yellow_style = "background-color: #FFD700; color: #000"
 safe_green_style = "background-color: #00FA9A; color: #000;"
