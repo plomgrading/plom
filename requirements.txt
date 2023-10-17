@@ -21,7 +21,7 @@ PyQt6-sip==13.5.2
 pytest-qt==4.2.0
 
 # Legacy-server only deps
-aiohttp==3.8.5
+aiohttp==3.8.6
 cryptography==41.0.4
 peewee==3.16.3
 
