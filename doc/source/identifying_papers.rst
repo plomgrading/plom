@@ -39,9 +39,9 @@ Running the auto-identifier (legacy server)
 2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
 3. Click "Recognize digits in IDs" which starts a background job.
    Click "Refresh" to update the output window.
-4. Click "Run LAP Solver".  This currently blocks and might take a
+4. Click "Run matching tools".  This currently blocks and might take a
    few seconds (say 3 seconds for 1000 papers).
-5. Click "Refresh Prediction list" to update the table view.
+5. Click "Refresh prediction list" to update the table view.
 
 .. caution::
 
