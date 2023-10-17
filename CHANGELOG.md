@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Making self-signed certs no longer needs command-line `openssl`, instead uses the `cryptography` package.
 
 ### Fixed
+* Wrong padding on the top paper number box on recent versions of PyMuPDF.
 * Various fixes for Python 3.12 but full support may be waiting on a new release of AIOHttp library.
 * Fix a crash in server manager when unpredicting a row without a prediction.
 
