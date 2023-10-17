@@ -713,7 +713,7 @@ docs_sphinx:
 fedora_legacy:
   stage: alt_build
   needs: []
-  image: fedora:38
+  image: fedora:39
   when: manual
   allow_failure: true
   before_script:
@@ -798,7 +798,7 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:38
+  image: fedora:39
   when: manual
   allow_failure: true
   before_script:
