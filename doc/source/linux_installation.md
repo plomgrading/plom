@@ -22,7 +22,7 @@ Fedora
 Tested on Fedora 38.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl gcc gcc-c++ cmake \
+        ImageMagick gcc gcc-c++ cmake \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
         python3-more-itertools python3-chardet \
@@ -63,7 +63,7 @@ It will not work on Ubuntu 18.04.  It is time to upgrade your OS.
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        cmake make imagemagick dvipng g++ openssl \
+        cmake make imagemagick dvipng g++ \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
