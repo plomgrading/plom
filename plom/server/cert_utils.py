@@ -4,7 +4,7 @@
 
 """SSL and related utilities for the Plom Server"""
 
-import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from cryptography import x509
@@ -63,10 +63,8 @@ def build_self_signed_SSL_keys(dur: Path = confdir) -> None:
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
-        .not_valid_after(
-            datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
-        )
+        .not_valid_before(datetime.now(timezone.utc))
+        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365))
         .add_extension(
             x509.SubjectAlternativeName([x509.DNSName("localhost")]),
             critical=False,
