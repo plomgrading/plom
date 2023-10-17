@@ -177,7 +177,7 @@ def pdf_page_add_stamp(page, stamp):
     )
     assert not excess, "Text didn't fit: is paper number label too long?"
     r = tw.text_rect
-    # stems of p, q mean a big less added in y
+    # stems of p, q mean a bit less added in y
     r = r + (-4, -4, 4, 2)
     page.draw_rect(r, color=(0, 0, 0), width=0.5)
     tw.write_text(page)
