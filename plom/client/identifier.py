@@ -60,6 +60,12 @@ from .viewers import WholeTestView
 
 log = logging.getLogger("identr")
 
+no_style = "background-color: color:"
+angry_orange_style = "background-color: #FF7F50; color: #000;"
+warning_yellow_style = "background-color: #FFD700; color: #000"
+safe_green_style = "background-color: #00FA9A; color: #000;"
+notice_blue_style = "background-color: #89CFF0; color: #000"
+
 
 class Paper:
     """A simple container for storing a test's idgroup code (tgv) and
@@ -459,13 +465,13 @@ class IDClient(QWidget):
         self.ui.pSIDLabel0.setText("")
         self.ui.pNameLabel0.setText("")
         self.ui.predictionBox0.setTitle("No prediction")
-        self.ui.predictionBox0.setStyleSheet("background-color:")
+        self.ui.predictionBox0.setStyleSheet(no_style)
         self.ui.predButton0.hide()
         self.ui.predictionBox0.hide()
         self.ui.pSIDLabel1.setText("")
         self.ui.pNameLabel1.setText("")
         self.ui.predictionBox1.setTitle("No prediction")
-        self.ui.predictionBox1.setStyleSheet("background-color:")
+        self.ui.predictionBox1.setStyleSheet(no_style)
         self.ui.predButton1.hide()
         self.ui.predictionBox1.hide()
 
@@ -488,16 +494,16 @@ class IDClient(QWidget):
                     "Prenamed paper: is it signed?  if not signed, is it blank?"
                 )
                 self.ui.predButton0.setText("Confirm\n&Prename")
-                self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+                self.ui.predictionBox0.setStyleSheet(notice_blue_style)
             elif pred["predictor"] in ("MLLAP", "MLGreedy"):
                 self.ui.predictionBox0.setTitle(
                     f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
                 )
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 if pred["certainty"] < 0.3:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                    self.ui.predictionBox0.setStyleSheet(angry_orange_style)
                 else:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+                    self.ui.predictionBox0.setStyleSheet(safe_green_style)
             else:
                 raise RuntimeError(
                     f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
@@ -525,9 +531,9 @@ class IDClient(QWidget):
                 # only single option shown, so keep alt-a shortcut
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 if pred0["certainty"] < 0.3 or pred1["certainty"] < 0.3:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                    self.ui.predictionBox0.setStyleSheet(angry_orange_style)
                 else:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+                    self.ui.predictionBox0.setStyleSheet(safe_green_style)
             else:
                 # show two bars
                 self.ui.predictionBox0.show()
@@ -557,8 +563,8 @@ class IDClient(QWidget):
                 self.ui.predButton0.setText("Accept\nPrediction")
                 self.ui.predButton1.setText("Accept\nPrediction")
 
-                self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
-                self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
+                self.ui.predictionBox0.setStyleSheet(warning_yellow_style)
+                self.ui.predictionBox1.setStyleSheet(warning_yellow_style)
         else:
             raise RuntimeError(
                 f"Found unexpected 3 or more predictions:\n{all_predictions_for_paper}"
