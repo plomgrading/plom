@@ -370,29 +370,29 @@ class RearrangementViewer(QDialog):
 
         self.appendB = QToolButton()
         # TODO: move &A here and use alt-Enter to Accept dialog?
-        self.appendB.setText("Add &Page(s)")
+        self.appendB.setText("Add &page(s)")
         self.appendB.setArrowType(Qt.ArrowType.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.ArrowType.UpArrow)
-        self.removeB.setText("&Remove Page(s)")
+        self.removeB.setText("&Remove page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.removeOthersB = QToolButton()
         self.removeOthersB.setArrowType(Qt.ArrowType.UpArrow)
-        self.removeOthersB.setText("Remove &other page(s)")
+        self.removeOthersB.setText("Remove &others")
         self.removeOthersB.setToolTip("The non-selected pages will be removed")
         self.removeOthersB.setToolButtonStyle(
             Qt.ToolButtonStyle.ToolButtonTextBesideIcon
         )
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.ArrowType.LeftArrow)
-        self.sLeftB.setText("Shift Left")
+        self.sLeftB.setText("Shift left")
         self.sLeftB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.sRightB = QToolButton()
         self.sRightB.setArrowType(Qt.ArrowType.RightArrow)
-        self.sRightB.setText("Shift Right")
+        self.sRightB.setText("Shift right")
         self.sRightB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.reverseB = QPushButton("Reverse Order")
+        self.reverseB = QPushButton("Reverse order")
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
@@ -413,7 +413,7 @@ class RearrangementViewer(QDialog):
                 QSpacerItem(
                     pad,
                     1,
-                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Preferred,
                     QSizePolicy.Policy.Minimum,
                 )
             )
@@ -423,7 +423,7 @@ class RearrangementViewer(QDialog):
                 QSpacerItem(
                     pad,
                     1,
-                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Preferred,
                     QSizePolicy.Policy.Minimum,
                 )
             )
@@ -460,21 +460,14 @@ class RearrangementViewer(QDialog):
         hb.setContentsMargins(0, 0, 0, 0)
         hb.addWidget(self.rotateB_ccw)
         hb.addWidget(self.rotateB_cw)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        )
+        hb.addSpacing(16)
         hb.addWidget(self.sLeftB)
         hb.addWidget(self.sRightB)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        )
+        hb.addSpacing(16)
         hb3.addWidget(self.tools)
         hb3.addWidget(self.reverseB)
-        hb3.addItem(
-            QSpacerItem(
-                16, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
-            )
-        )
+        hb3.addSpacing(16)
+        hb3.addStretch()
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
 
