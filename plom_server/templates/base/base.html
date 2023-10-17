@@ -153,20 +153,18 @@
                     </nav>
                 </div>
                 <div class="col">
-                    <div class="container-fluid shadow-sm py-4 px-5">
-                        <!-- Page heading -->
-                        <h1 class="fw-lighter m-2">
-                            {% block page_heading %}
-                            {% endblock page_heading %}
-                        </h1>
-                        <p class="lead mb-2">
-                            {% block page_subheading %}
-                            {% endblock page_subheading %}
-                        </p>
-                        <!-- Main content -->
-                        {% block main_content %}
-                        {% endblock main_content %}
-                    </div>
+                    <!-- Page heading -->
+                    <h1 class="fw-lighter m-2">
+                        {% block page_heading %}
+                        {% endblock page_heading %}
+                    </h1>
+                    <p class="lead mb-2">
+                        {% block page_subheading %}
+                        {% endblock page_subheading %}
+                    </p>
+                    <!-- Main content -->
+                    {% block main_content %}
+                    {% endblock main_content %}
                 </div>
             </div>
         </div>
