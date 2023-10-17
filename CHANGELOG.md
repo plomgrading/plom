@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* New "idBox3.pdf" template moves the signature box up to avoid signatures hitting the bounding box (which was leading to additional manual IDing).
 
 ### Changed
 * Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
+* Making self-signed certs no longer needs command-line `openssl`, instead uses the `cryptography` package.
 
 ### Fixed
+* Various fixes for Python 3.12 but full support may be waiting on a new release of AIOHttp library.
+* Fix a crash in server manager when unpredicting a row without a prediction.
 
 
 
