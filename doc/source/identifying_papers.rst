@@ -26,6 +26,11 @@ All these eventually require verification by a human.
 Running the auto-identifier
 ---------------------------
 
+This will only work if your test uses our ``idBox`` template because
+the code first looks for the outer bold rectangle and then tries to locate
+the 8 digits of the student number, based on known locations inside that
+larger box.
+
 Currently, the django-server requires command line access to run
 the autoidentifier.  TODO: xref here once those tools are in the docs
 Tracking issue for running this via the web
@@ -36,7 +41,9 @@ Running the auto-identifier (legacy server)
 -------------------------------------------
 
 1. Open the :doc:`Manager tool <manage>`, then "Progress" → "ID progress".
-2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
+2. Optionally, adjust the top/bottom crop values, either manually or by
+   clicking "Select interactively".  Only the vertical coordinate are used.
+   The defaults probably work in most cases.
 3. Click "Recognize digits in IDs" which starts a background job.
    Click "Refresh" to update the output window.
 4. Click "Run matching tools".  This currently blocks and might take a
