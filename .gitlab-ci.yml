@@ -1275,6 +1275,7 @@ macos12_universal_client:
   - arch -x86_64 uname -m
   - brew --version
   - brew install ninja
+  - brew install cmake
   # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
