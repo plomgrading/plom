@@ -303,7 +303,10 @@ if __name__ == "__main__":
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
-        sis_id = pdf.stem.split("_")[1]
+        # the student number is whatever is after the last underscore
+        sis_id = pdf.stem.split("_")[-1]
+        # rebuild the stuff before the last underscore
+        basename = "_".join(pdf.stem.split("_")[0:-1])
         assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
         assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
@@ -317,7 +320,8 @@ if __name__ == "__main__":
             continue
         assert sub.user_id == student.user_id
         if args.solutions:
-            soln_pdf = soln_dir / f"{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
+            # stuff "solutions" into filename, b/w base and SID
+            soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
