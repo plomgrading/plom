@@ -166,8 +166,8 @@ def buildLaTeX(src, out):
     TODO: this is more generally useful but how to handle the idBox2?
     """
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
-            fh.write((resources.files(plom) / "idBox2.pdf").read_bytes())
+        with open(Path(tmpdir) / "idBox3.pdf", "wb") as fh:
+            fh.write((resources.files(plom) / "idBox3.pdf").read_bytes())
         with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 

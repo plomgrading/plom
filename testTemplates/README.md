@@ -54,5 +54,10 @@ Alternatively, with more steps and intermediaries, run
   * `ps2epsi idBox2-source.ps`    (note that this produces a large and not especially good eps file)
   * `epspdf idBox2-source.epsi idBox2.pdf`
   * `pdf2svg idBox2.pdf idBox2.svg`
+  * `pdftops idBox2.pdf -eps`   (this is not how idBox2.eps was created: no record kept)
+
+With a single command:
+  * `A=idBox3 && latex $A-source.tex && dvips $A-source.dvi && ps2epsi $A-source.ps && epspdf $A-source.epsi $A.pdf && pdf2svg $A.pdf $A.svg && pdftops $A.pdf -eps`
+    (this was precisely how `idBox3.pdf` and `idBox3.eps` were created in 2023-10 on Fedora 38.)
 
 Note that without the extra `margins` argument pdfcrop leaves a 1pt white margin around the idbox. Also note that the intermediate .epsi file is quite large but the final cropped pdf is reasonably sized.
