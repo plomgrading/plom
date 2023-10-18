@@ -1276,6 +1276,7 @@ macos12_universal_client:
   - brew --version
   - brew install ninja
   - brew install cmake
+  - brew install numpy
   # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
@@ -1295,7 +1296,8 @@ macos12_universal_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
-  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
+  # numpy fails complaining about blas, try from brew instead?
+  # /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
