@@ -1258,6 +1258,10 @@ macos12_universal_client:
   allow_failure: true
   stage: alt_build
   needs: []
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   script:
   - pwd
   - sw_vers
@@ -1269,6 +1273,8 @@ macos12_universal_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
+  - brew --version
+  - brew install ninja
   # quite likely the built-in python would work...  but below we installer latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
