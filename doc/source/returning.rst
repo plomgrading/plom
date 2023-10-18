@@ -18,7 +18,7 @@ Is everything done?
     TODO: One way to access this information is through the :doc:`module-plom-manager`.
 
 Once we are mopping up the last few questions, and it becomes important
-to know what is tasks are left to do.
+to know what tasks are left to do.
 You can get a quick overview on the command line::
 
 
