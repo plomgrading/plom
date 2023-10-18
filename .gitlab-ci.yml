@@ -1275,7 +1275,7 @@ macos12_universal_client:
   - arch -x86_64 uname -m
   - brew --version
   - brew install ninja
-  # quite likely the built-in python would work...  but below we installer latest
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
   - /usr/bin/python3 -m pip --version
@@ -1389,7 +1389,7 @@ macos12_x86_64_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we installer latest
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   # install specific python
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
