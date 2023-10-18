@@ -21,7 +21,8 @@ function generateRandomUsername() {
     generateUsernameBtn.addEventListener('click', () => {
         let firstUserWord = firstWordList[Math.floor(Math.random() * firstWordList.length)].split(' ').join('');
         let secondUserWord = secondWordList[Math.floor(Math.random() * secondWordList.length)].split(' ').join('');
-        document.getElementById('id_username').value = firstUserWord + secondUserWord;
+        let randomNumAsString = (Math.floor(Math.random() * 10) + 1).toString();
+        document.getElementById('id_username').value = firstUserWord + secondUserWord + randomNumAsString;
     });
 }
 

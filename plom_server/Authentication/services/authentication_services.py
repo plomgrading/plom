@@ -54,7 +54,9 @@ class AuthenticationServices:
         return user_list
 
     @transaction.atomic
-    def create_user_and_add_to_group(self, username: str, group_name: str) -> str:
+    def create_user_and_add_to_group(
+        self, username: str, group_name: str, email: str = None
+    ) -> str:
         """Create a user and add them to a group.
 
         Args:
@@ -66,7 +68,7 @@ class AuthenticationServices:
         """
         group = Group.objects.get(name=group_name)
         User.objects.create_user(
-            username=username, email=None, password=None
+            username=username, email=email, password=None
         ).groups.add(group)
         user = User.objects.get(username=username)
         user.is_active = False

@@ -1,0 +1,29 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Brennen Chiu
+-->
+{% extends "Authentication/signup_marker_base.html" %}
+{% load static %}
+{% block card_content %}
+    <form method="post" action="">
+        {% csrf_token %}
+        {{ form.username.label }}
+        {{ form.username }}
+        <div style="font-size: smaller">
+            <p>
+                Click <b>Generate Username</b> to automatically generate username
+            </p>
+        </div>
+        {{ form.email.label }}
+        {{ form.email }}
+        <br>
+        <br>
+        <input class="btn btn-primary" type="submit" name="Create User">
+        <br>
+    </form>
+    <button class="btn btn-primary"
+            id="generate-username"
+            style="margin-top: 3px">Generate Username</button>
+    <p style="color: red">{{ error }}</p>
+    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+{% endblock card_content %}

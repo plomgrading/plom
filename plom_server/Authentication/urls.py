@@ -5,6 +5,12 @@
 
 from django.urls import path
 
+from .signup_views.signup import (
+    SignupSingleMarker,
+    SignupMultipleMarkers,
+    SignupSingleScanner,
+    SignupMultipleScanners,
+)
 import Authentication.views
 
 urlpatterns = [
@@ -41,8 +47,13 @@ urlpatterns = [
         name="signup_scanners",
     ),
     path(
+        "signup/marker/",
+        SignupSingleMarker.as_view(),
+        name="signup_marker",
+    ),
+    path(
         "signup/markers/",
-        Authentication.views.SignupMarkers.as_view(),
+        SignupMultipleMarkers.as_view(),
         name="signup_markers",
     ),
     path(

@@ -272,55 +272,6 @@ class SignupScanners(ManagerRequiredView):
             return render(request, self.template_name, context)
 
 
-# Signup Markers
-class SignupMarkers(ManagerRequiredView):
-    template_name = "Authentication/marker_signup.html"
-    form = CreateScannersAndMarkersForm()
-    __group_name = "marker"
-
-    def get(self, request):
-        context = {
-            "form": self.form,
-            "created": False,
-        }
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        form = CreateScannersAndMarkersForm(request.POST)
-
-        if form.is_valid():
-            num_users = form.cleaned_data.get("num_users")
-            username_choices = form.cleaned_data.get("basic_or_funky_username")
-
-            if username_choices == "basic":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_basic_usernames(
-                        group_name=self.__group_name, num_users=num_users
-                    )
-                )
-            elif username_choices == "funky":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_funky_usernames(
-                        group_name=self.__group_name, num_users=num_users
-                    )
-                )
-            else:
-                raise RuntimeError("Tertium non datur: unexpected third choice!")
-
-            password_reset_links = (
-                AuthenticationServices().generate_password_reset_links_dict(
-                    request=request, username_list=usernames_list
-                )
-            )
-
-            context = {
-                "form": self.form,
-                "links": password_reset_links,
-                "created": True,
-            }
-            return render(request, self.template_name, context)
-
-
 class PasswordResetLinks(AdminRequiredView):
     template_name = "Authentication/regenerative_links.html"
     activation_link = "Authentication/manager_activation_link.html"
@@ -333,7 +284,7 @@ class PasswordResetLinks(AdminRequiredView):
     def post(self, request):
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
-        link = generate_link(request, user)
+        link = AuthenticationServices().generate_link(request, user)
         context = {"link": link}
         return render(request, self.activation_link, context)
 
