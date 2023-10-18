@@ -1482,7 +1482,8 @@ macos11_client:
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
 # Runs Python 3.10 as of 2023-10
-macos_server:
+# As of 2023-10, we only try to run webplom tests, see TODO about legacy
+macos_server_webplom:
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1529,13 +1530,20 @@ macos_server:
   - sudo tlmgr install preview exam preprint
   - which latexmk
   - pip install pytest
-  - pip install wheel
-  - pip install tomli
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
-  # TODO: this fails on multiprocessing, Issue #2198.
-  - python -m pytest -l --pyargs plom
+  # TODO this fails b/c it runs python3, which is not the right Python
+  # python -m pytest -l --pyargs plom
+  # Instead test webplom
+  - export PYTHONPATH=$PWD
+  - echo $PYTHONPATH
+  - pushd plom_server
+  # no postgres yet
+  # python manage.py plom_demo --no-waiting --randomarker
+  - export PLOM_DATABASE_BACKEND=sqlite
+  - python manage.py test
+  - popd
 
 
 .shared_windows_runners:
