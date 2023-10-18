@@ -317,7 +317,7 @@ def scribble_name_and_id(
         # TODO - there should be an assert or something here after insert?
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
-    rect = fitz.Rect(220 + random.randrange(0, 16), 345, 600, 450)
+    rect = fitz.Rect(220 + random.randrange(0, 16), 406, 600, 511)
     fontres = resources.files(plom.create.fonts) / ttf
     excess = id_page.insert_textbox(
         rect,
