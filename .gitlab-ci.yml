@@ -1478,6 +1478,7 @@ macos11_client:
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
+# Runs Python 3.10 as of 2023-10
 macos_server:
   image: macos-12-xcode-14
   tags:
@@ -1526,6 +1527,7 @@ macos_server:
   - which latexmk
   - pip install pytest
   - pip install wheel
+  - pip install tomli
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
