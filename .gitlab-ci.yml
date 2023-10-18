@@ -39,7 +39,7 @@ variables:
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
-  MACBIN_PY_VER: 3.11.4
+  MACBIN_PY_VER: 3.11.6
   QT_QPA_PLATFORM: offscreen
 
 stages:
@@ -1258,6 +1258,10 @@ macos12_universal_client:
   allow_failure: true
   stage: alt_build
   needs: []
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   script:
   - pwd
   - sw_vers
@@ -1269,7 +1273,11 @@ macos12_universal_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we installer latest
+  - brew --version
+  - brew install ninja
+  - brew install cmake
+  - brew install numpy
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
   - /usr/bin/python3 -m pip --version
@@ -1288,19 +1296,20 @@ macos12_universal_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
-  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
+  # numpy fails complaining about blas, try from brew instead?
+  # /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
-  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller --target-arch universal2 client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos12.zip
   - pushd dist
   - ls
-  - ls -sklR PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER-universal2.app
   - zip -r $ZIPNAME PlomClient-$VER.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
@@ -1383,7 +1392,7 @@ macos12_x86_64_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we installer latest
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   # install specific python
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
@@ -1469,107 +1478,24 @@ macos11_client:
     expire_in: 16 days
 
 
-# set to manual to reduce number of macOS jobs #2149
-macos1015_client:
-  image: macos-10.15-xcode-11
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - asdf current
-  - asdf which python
-  - asdf uninstall python 3.8.0
-  - asdf install python $MACBIN_PY_VER
-  - asdf which python
-  - asdf shell python $MACBIN_PY_VER
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_15.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-macos1014_client:
-  image: macos-10.14-xcode-10
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - asdf current
-  # asdf which python  # has no python for some reason
-  - asdf install python $MACBIN_PY_VER
-  - asdf local python $MACBIN_PY_VER
-  - asdf which python
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_14.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
-macos_server:
+# Runs Python 3.10 as of 2023-10
+# As of 2023-10, we only try to run webplom tests, see TODO about legacy
+# TODO: tests don't work without running demo first?
+macos_server_webplom:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1581,10 +1507,6 @@ macos_server:
   allow_failure: true
   stage: alt_build
   needs: []
-  variables:
-    HOMEBREW_NO_AUTO_UPDATE: 1
-    HOMEBREW_NO_INSTALL_CLEANUP: 1
-    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   script:
   - sw_vers
   - echo $SHELL
@@ -1616,12 +1538,20 @@ macos_server:
   - sudo tlmgr install preview exam preprint
   - which latexmk
   - pip install pytest
-  - pip install wheel
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
-  # TODO: this fails on multiprocessing, Issue #2198.
-  - python -m pytest -l --pyargs plom
+  # TODO this fails b/c it runs python3, which is not the right Python
+  # python -m pytest -l --pyargs plom
+  # Instead test webplom
+  - export PYTHONPATH=$PWD
+  - echo $PYTHONPATH
+  - pushd plom_server
+  # no postgres yet
+  - python manage.py plom_demo --no-waiting --randomarker
+  - export PLOM_DATABASE_BACKEND=sqlite
+  - python manage.py test
+  - popd
 
 
 .shared_windows_runners:
@@ -1662,7 +1592,7 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==6.0.0
+  - c:\python310\python -m pip install pyinstaller==6.1.0
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
