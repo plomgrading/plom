@@ -304,8 +304,8 @@ if __name__ == "__main__":
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
         sis_id = pdf.stem.split("_")[1]
-        assert len(sis_id) == 8
-        assert set(sis_id) <= set(string.digits)
+        assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
+        assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
             sub, name = sis_id_to_sub_and_name[sis_id]
             student = sis_id_to_students[sis_id]
