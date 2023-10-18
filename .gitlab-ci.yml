@@ -1254,7 +1254,7 @@ macos12_universal_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
+  #  when: manual
   allow_failure: true
   stage: alt_build
   needs: []
