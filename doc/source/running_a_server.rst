@@ -6,9 +6,9 @@
 Running your own server
 =======================
 
-Plom consists of several components.  One of these is the Plom server, used both for preparing new tests and for coordinating grading.
+Plom has several components. One of these is the Plom server, used both for preparing new tests and for coordinating grading.
 
-If you already have a running server to connect to you can skip this section and move onto :doc:`preparing_an_exam`
+If you already have a running server, you can skip this section and move onto :doc:`preparing_an_exam`
 
 .. note::
 
