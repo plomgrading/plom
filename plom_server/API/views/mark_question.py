@@ -105,9 +105,6 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
-        except ValidationError as e:
-            # TODO: explicitly throwing server 500 is ok?  Better to just remove this block?
-            return _error_response(e, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         annotation_image = files["annotation_image"]
         img_md5sum = data["md5sum"]
