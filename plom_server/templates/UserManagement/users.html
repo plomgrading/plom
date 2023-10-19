@@ -25,6 +25,17 @@
         {% block main_content %}
             <div class="card my-2">
                 <div class="card-body">
+                    Notes:
+                    <ul>
+                        <li>
+                            Promoting a marker to <q>lead marker</q> allows them to see more detailed information about progress and tasks
+                        </li>
+                        <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
+                        <li>
+                            If you wish to <q>force-logout</q> a user then toggling disable then enable will achieve this.
+                        </li>
+                        <li>Reset password buttons not yet working</li>
+                    </ul>
                     <h4 class="card-title">Markers</h4>
                     <p>
                         <button type="button" class="btn btn-success">
@@ -43,6 +54,7 @@
                             <th>Progress</th>
                             <th>Lead Marker</th>
                             <th>Enable/Disable</th>
+                            <th>Password</th>
                         </thead>
                         {% for user in markers %}
                             <tr>
@@ -84,6 +96,9 @@
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    <button class="btn btn-danger disabled">reset</button>
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
@@ -107,6 +122,7 @@
                         <th>Online/Offline</th>
                         <th>Last login</th>
                         <th>Enable/Disable</th>
+                        <th>Password</th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
@@ -125,6 +141,9 @@
                                     <button hx-post="{% url 'change_user_status' user.username %}"
                                             class="btn btn-success">enable</button>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-danger disabled">reset</button>
                             </td>
                         </tr>
                     {% endfor %}
