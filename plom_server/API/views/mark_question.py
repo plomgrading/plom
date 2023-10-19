@@ -66,6 +66,7 @@ class QuestionMarkingViewSet(ViewSet):
                 version=version,
                 user=request.user,
                 min_paper_num=min_paper_num,
+                max_paper_num=max_paper_num,
             ).get_first_available_task()
 
         if not task:
