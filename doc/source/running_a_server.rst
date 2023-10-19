@@ -1,5 +1,6 @@
 .. Plom documentation
-   Copyright 2022 Colin B. Macdonald
+   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2023 Philip D. Loewen
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
