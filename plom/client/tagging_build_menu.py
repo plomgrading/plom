@@ -103,11 +103,6 @@ class QMenuNextPrefDialog(QMenu):
         a.setDefaultWidget(frame)
         self.addAction(a)
 
-    def prefer_above(self) -> Union[None, int]:
-        if not self._minmax_action_checkbox.isChecked():
-            return None
-        return int(self._minmax_action_min_lineedit.text())
-
     def get_papernum_range(self) -> Tuple[Union[None, int], Union[None, int]]:
         """Return a restricted range of paper numbers, either of which can be None.
 
