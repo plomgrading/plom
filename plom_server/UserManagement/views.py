@@ -15,6 +15,8 @@ from Base.base_group_views import ManagerRequiredView
 
 from .services import PermissionChanger
 
+from Authentication.services import AuthenticationServices
+
 
 class UserPage(ManagerRequiredView):
     def get(self, request):
@@ -72,3 +74,12 @@ class ProgressPage(ManagerRequiredView):
 
     def post(self, request, username):
         return render(request, self.progress_page, username)
+
+
+class PasswordResetPage(ManagerRequiredView):
+    def get(self, request, username):
+        user_obj = User.objects.get(username=username)
+        link = AuthenticationServices().generate_link(request, user_obj)
+
+        context = {"username": username, "link": link}
+        return render(request, "UserManagement/password_reset_page.html", context)

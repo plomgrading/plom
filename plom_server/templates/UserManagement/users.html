@@ -32,9 +32,8 @@
                         </li>
                         <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
                         <li>
-                            If you wish to <q>force-logout</q> a user then toggling disable then enable will achieve this.
+                            If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
                         </li>
-                        <li>Reset password buttons not yet working</li>
                     </ul>
                     <h4 class="card-title">Markers</h4>
                     <p>
@@ -97,7 +96,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-danger disabled">reset</button>
+                                    <a href="{% url 'reset_user_password' user.username %}"
+                                       class="btn btn-danger">reset</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -143,7 +143,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <button class="btn btn-danger disabled">reset</button>
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class="btn btn-danger">reset</a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -159,6 +160,7 @@
                     <th>Name</th>
                     <th>Online/Offline</th>
                     <th>Last login</th>
+                    <th>Reset password</th>
                 </thead>
                 {% for user in managers %}
                     <tr>
@@ -169,6 +171,12 @@
                             <td>Offline</td>
                         {% endif %}
                         <td>{{ user.last_login|naturaltime }}</td>
+                        <td>
+                            <!-- since this is a manager account, make sure user is user. -->
+                            <a href="{% url 'reset_user_password' user.username %}"
+                               class="btn btn-danger"
+                               onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
+                        </td>
                     </tr>
                 {% endfor %}
             </table>
