@@ -10,9 +10,9 @@ from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
-from django.db import transaction
 
-from Mark.services import MarkingTaskService, PageDataService, QuestionMarkingService
+from Mark.services import mark_task
+from Mark.services import MarkingTaskService, PageDataService
 from Papers.services import SpecificationService
 from Papers.models import Image
 
@@ -270,7 +270,7 @@ class MgetAnnotations(APIView):
         annotation_data = annotation.annotation_data
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             # Possibly should be 410?  see baseMessenger.py
             return _error_response(e, status.HTTP_404_NOT_FOUND)
@@ -304,7 +304,7 @@ class MgetAnnotationImage(APIView):
         annotation_image = annotation.image
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         if latest_task != annotation_task:

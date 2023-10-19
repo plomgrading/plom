@@ -8,11 +8,10 @@
 import json
 import pathlib
 import random
-from typing import Tuple, Union, Dict, Optional
+from typing import Tuple, Union
 
 from rest_framework.exceptions import ValidationError
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
@@ -31,7 +30,6 @@ from ..models import (
     MarkingTaskTag,
     MarkingTaskPriority,
     Annotation,
-    AnnotationImage,
 )
 
 
