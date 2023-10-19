@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from typing import Optional, List
-from dataclasses import asdict
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
@@ -110,7 +110,7 @@ class QuestionMarkingService:
             self.task_pk = task_to_assign.pk
             return task_to_assign
         else:
-            raise ValueError(f"Cannot find task - no public key or code specified.")
+            raise ValueError("Cannot find task - no public key or code specified.")
 
     @transaction.atomic
     def assign_task_to_user(self) -> MarkingTask:
