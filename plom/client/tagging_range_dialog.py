@@ -4,28 +4,37 @@
 from typing import List, Tuple, Union
 
 from PyQt6.QtWidgets import (
-    QPushButton,
     QCheckBox,
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
     QFrame,
     QHBoxLayout,
     QVBoxLayout,
     QLabel,
     QLineEdit,
-    QMenu,
+    QPushButton,
     QRadioButton,
     QWidget,
     QWidgetAction,
 )
 
 
-class QMenuNextPrefDialog(QMenu):
+class TaggingAndRangeOptions(QDialog):
     """Just want to store some extra instance variables inside a QMenu.
 
     This is all a bit "hack" and not in the good sense.
     """
 
-    def __init__(self, parent, get_paper_fcn):
+    def __init__(
+        self,
+        parent,
+        prefer_tagged_for_me: bool,
+        tag: Union[str, None],
+        all_tags: List[str],
+        min_paper_num: Union[str, None],
+        max_paper_num: Union[str, None],
+    ) -> None:
         super().__init__(parent)
         # list new instance vars in one place
         self._prefer_tags_combobox = None
@@ -35,35 +44,40 @@ class QMenuNextPrefDialog(QMenu):
         self._minmax_action_max_lineedit = None
         self._minmax_action_checkbox = None
 
-        # TODO: rather yuck
-        self.addAction("Get paper number...", get_paper_fcn)
+        overall_layout = QVBoxLayout()
 
-        self.addSection("Options")
         q = QComboBox()
         q.setEditable(True)
         self._prefer_tags_combobox = q
-        a = QWidgetAction(parent)
         frame = QFrame()
         vlay = QVBoxLayout(frame)
         b = QRadioButton("Prefer tasks tagged for me")
         # TODO: would like on-by-default: Issue #2253
         # b.setChecked(True)
+        if prefer_tagged_for_me:
+            b.setChecked(True)
         self._prefer_tags_radiobuttons = [b]
         vlay.addWidget(b)
         b = QRadioButton("Prefer tasks tagged")
+        if not prefer_tagged_for_me and tag:
+            b.setChecked(True)
         self._prefer_tags_radiobuttons.append(b)
         lay = QHBoxLayout()
         lay.addWidget(b)
         lay.addWidget(q)
+        self._update_tag_menu(all_tags)
+        if tag:
+            q.setCurrentText(tag)
+
         vlay.addLayout(lay)
         b = QRadioButton("No preference for tagged papers")
-        b.setChecked(True)
+        if not prefer_tagged_for_me and not tag:
+            b.setChecked(True)
         self._prefer_tags_radiobuttons.append(b)
         vlay.addWidget(b)
-        a.setDefaultWidget(frame)
-        self.addAction(a)
 
-        a = QWidgetAction(parent)
+        overall_layout.addWidget(frame)
+
         frame = QFrame()
         lay = QHBoxLayout(frame)
         c = QCheckBox("Require")
@@ -71,7 +85,6 @@ class QMenuNextPrefDialog(QMenu):
         c.setChecked(False)
         lay.addWidget(c)
         t_min = QLineEdit()
-        t_min.setText("0")
         lay.addWidget(t_min, 2)
         _ = QLabel("\N{Less-than Or Equal To} paper number \N{Less-than Or Equal To}")
         lay.addWidget(_)
@@ -84,24 +97,27 @@ class QMenuNextPrefDialog(QMenu):
         t_max = QLineEdit()
         lay.addWidget(t_max, 2)
         # boo, hardcoded sizes in pixels :(
-        t_min.setFixedWidth(70)
-        t_max.setFixedWidth(70)
-        a.setDefaultWidget(frame)
-        self._minmax_action = a
+        # t_min.setFixedWidth(70)
+        # t_max.setFixedWidth(70)
+        if min_paper_num is not None:
+            t_min.setText(str(min_paper_num))
+        if max_paper_num is not None:
+            t_max.setText(str(max_paper_num))
+        if min_paper_num is not None or max_paper_num is not None:
+            c.setChecked(True)
         self._minmax_action_min_lineedit = t_min
         self._minmax_action_max_lineedit = t_max
         self._minmax_action_checkbox = c
-        self.addAction(a)
+        overall_layout.addWidget(frame)
 
-        a = QWidgetAction(parent)
-        frame = QFrame()
-        lay = QHBoxLayout(frame)
-        lay.addStretch()
-        _ = QPushButton("Ok")
-        _.clicked.connect(self.close)
-        lay.addWidget(_)
-        a.setDefaultWidget(frame)
-        self.addAction(a)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        overall_layout.addWidget(buttons)
+
+        self.setLayout(overall_layout)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
 
     def get_papernum_range(self) -> Tuple[Union[None, int], Union[None, int]]:
         """Return a restricted range of paper numbers, either of which can be None.
@@ -122,7 +138,8 @@ class QMenuNextPrefDialog(QMenu):
             mx = None
         return mn, mx
 
-    def update_tag_menu(self, all_tags: List[str]) -> None:
+    def _update_tag_menu(self, all_tags: List[str]) -> None:
+        # we don't update once dialog open, probably unneeded
         q = self._prefer_tags_combobox
         cur = q.currentText()
         q.clear()
@@ -140,18 +157,3 @@ class QMenuNextPrefDialog(QMenu):
         else:
             tag = None
         return tag
-
-
-def build_tagging_menu(parent: QWidget, get_paper_fcn) -> QMenuNextPrefDialog:
-    """Build a pop-up menu/dialog thing for get-next preferences.
-
-    Args:
-        parent: the window that will popup this menu.
-        get_paper_fcn: a function to call for the get particular
-            paper number feature.
-
-    Return:
-        A QMenu with some monkey patched hackery: instance variables
-        for manipulating the menu.  Probably it should be a subclass.
-    """
-    return QMenuNextPrefDialog(parent, get_paper_fcn)

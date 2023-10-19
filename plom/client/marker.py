@@ -26,7 +26,6 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
-from typing import Union
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -51,6 +50,7 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QDialog,
     QInputDialog,
+    QMenu,
     QMessageBox,
     QProgressDialog,
     QWidget,
@@ -81,7 +81,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .tagging_build_menu import build_tagging_menu
+from .tagging_range_dialog import TaggingAndRangeOptions
 
 
 if platform.system() == "Darwin":
@@ -1115,11 +1115,10 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
-        m = build_tagging_menu(self, self.requestInteractive)
-        m.aboutToShow.connect(self.updateTagMenu)
+        m = QMenu()
+        m.addAction("Get paper number n...", self.requestInteractive)
+        m.addAction("Tagging and range options...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
-        self._tagging_menu = m
-        # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
@@ -1131,9 +1130,53 @@ class MarkerClient(QWidget):
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
-    def updateTagMenu(self):
+    def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        self._tagging_menu.update_tag_menu(all_tags)
+        r = (
+            self.annotatorSettings["nextTaskMinPaperNum"],
+            self.annotatorSettings["nextTaskMaxPaperNum"],
+        )
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        mytag = "@" + self.msgr.username
+        if tag == mytag:
+            prefer_tagged_for_me = True
+            tag = ""
+        else:
+            prefer_tagged_for_me = False
+        d = TaggingAndRangeOptions(self, prefer_tagged_for_me, tag, all_tags, *r)
+        if not d.exec():
+            return
+        r = d.get_papernum_range()
+        tag = d.get_preferred_tag(self.msgr.username)
+        self.annotatorSettings["nextTaskMinPaperNum"] = r[0]
+        self.annotatorSettings["nextTaskMaxPaperNum"] = r[1]
+        self.annotatorSettings["nextTaskPreferTagged"] = tag
+        self.update_get_next_button()
+
+    def update_get_next_button(self):
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        mn = self.annotatorSettings["nextTaskMinPaperNum"]
+        mx = self.annotatorSettings["nextTaskMaxPaperNum"]
+        exclaim = False
+        tips = []
+        if mn is not None or max is not None:
+            exclaim = True
+            s = "Restricted paper number "
+            if mx is None:
+                s += f"\N{Greater-than Or Equal To} {mn}"
+            elif mn is None:
+                s += f"\N{Less-than Or Equal To} {mx}"
+            else:
+                s += f"in [{mn}, {mx}]"
+            tips.append(s)
+        if tag:
+            tips.append(f'prefer tagged "{tag}"')
+
+        button_text = "&Get next"
+        if exclaim:
+            button_text += " (!)"
+        self.getNextButton.setText(button_text)
+        self.getNextButton.setToolTip("\n".join(tips))
 
     def loadMarkedList(self):
         """Loads the list of previously marked papers into self.examModel.
@@ -1374,8 +1417,11 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
-        tag = self._tagging_menu.get_preferred_tag(self.msgr.username)
-        paper_range = self._tagging_menu.get_papernum_range()
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        paper_range = (
+            self.annotatorSettings["nextTaskMinPaperNum"],
+            self.annotatorSettings["nextTaskMaxPaperNum"],
+        )
         if tag and (paper_range[0] or paper_range[1]):
             log.info('Next available?  Range %s, prefer tagged "%s"', paper_range, tag)
         elif tag:
