@@ -123,14 +123,12 @@ class TaggingAndRangeOptions(QDialog):
         """
         if not self._minmax_action_checkbox.isChecked():
             return None, None
-        mn = self._minmax_action_min_lineedit.text()
-        mx = self._minmax_action_max_lineedit.text()
         try:
-            mn = int(mn)
+            mn = int(self._minmax_action_min_lineedit.text())
         except ValueError:
             mn = None
         try:
-            mx = int(mx)
+            mx = int(self._minmax_action_max_lineedit.text())
         except ValueError:
             mx = None
         return mn, mx
