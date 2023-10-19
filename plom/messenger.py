@@ -10,7 +10,7 @@ from io import BytesIO
 import json
 import logging
 import mimetypes
-from typing import Union, Tuple
+from typing import Optional, Union, Tuple
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -228,26 +228,32 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MaskNextTask(self, q, v, tag=None, above=None):
+    def MaskNextTask(
+        self,
+        q: int,
+        v: int,
+        *,
+        tag: Optional[str] = None,
+        min_paper_num: Optional[int] = None,
+        max_paper_num: Optional[int] = None,
+    ) -> Union[str, None]:
         """Ask server for a new marking task, return tgv or None.
 
         Args:
-            q (int): question.
-            v (int): version.
+            q: question number.
+            v: version number.
 
         Keyword Args:
-            tag (str/None): if any tasks are available with this tag,
+            tag: if any tasks are available with this tag,
                 we have a preference for those.  (But we will still
                 accept tasks without the tag).
-            above (int/None): start asking for tasks with paper
-                number at least this large, but wrapping around if
-                necessary.
-
-        If you specify both ``tag`` and ``above``, the logic is
-        currently "or" but this could change without notice!
+            min_paper_num: paper number must be at least this value.
+                (Only a preference on legacy servers).
+            max_paper_num: paper number must at most this value.
+                (Ignored on legacy servers).
 
         Returns:
-            str/None: either the task string or `None` indicated no
+            Either the task string or ``None`` indicated no
             more tasks available.
 
         TODO: why are we using json for a string return?
@@ -258,8 +264,10 @@ class Messenger(BaseMessenger):
                 url = f"/MK/tasks/available?q={q}&v={v}"
                 if tag:
                     url += f"&tag={tag}"
-                if above:
-                    url += f"&above={above}"
+                if min_paper_num:
+                    url += f"&min_paper_num={min_paper_num}"
+                if max_paper_num:
+                    url += f"&max_paper_num={max_paper_num}"
                 response = self.get(
                     url,
                     json={
@@ -275,7 +283,7 @@ class Messenger(BaseMessenger):
                         "token": self.token,
                         "q": q,
                         "v": v,
-                        "above": above,
+                        "above": min_paper_num,
                         "tag": tag,
                     },
                 )

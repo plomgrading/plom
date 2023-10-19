@@ -43,9 +43,8 @@ class QuestionMarkingViewSet(ViewSet):
         try:
             question: Optional[int] = int_or_None(data.get("q"))
             version: Optional[int] = int_or_None(data.get("v"))
-            # TODO: someday rename above in transit as well: a later problem
-            # TODO: fix this while also adding `max_paper_num`
-            min_paper_num: Optional[int] = int_or_None(data.get("above"))
+            min_paper_num: Optional[int] = int_or_None(data.get("min_paper_num"))
+            max_paper_num: Optional[int] = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -56,6 +55,7 @@ class QuestionMarkingViewSet(ViewSet):
             version=version,
             user=request.user,
             min_paper_num=min_paper_num,
+            max_paper_num=max_paper_num,
             tag=tag,
         ).get_first_available_task()
 

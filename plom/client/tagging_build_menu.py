@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from PyQt6.QtWidgets import (
     QPushButton,
@@ -107,6 +107,25 @@ class QMenuNextPrefDialog(QMenu):
         if not self._minmax_action_checkbox.isChecked():
             return None
         return int(self._minmax_action_min_lineedit.text())
+
+    def get_papernum_range(self) -> Tuple[Union[None, int], Union[None, int]]:
+        """Return a restricted range of paper numbers, either of which can be None.
+
+        None indicates no restricion.
+        """
+        if not self._minmax_action_checkbox.isChecked():
+            return None, None
+        mn = self._minmax_action_min_lineedit.text()
+        mx = self._minmax_action_max_lineedit.text()
+        try:
+            mn = int(mn)
+        except ValueError:
+            mn = None
+        try:
+            mx = int(mx)
+        except ValueError:
+            mx = None
+        return mn, mx
 
     def update_tag_menu(self, all_tags: List[str]) -> None:
         q = self._prefer_tags_combobox
