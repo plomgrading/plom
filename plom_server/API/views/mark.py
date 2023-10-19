@@ -19,31 +19,6 @@ from Papers.models import Image
 from .utils import _error_response
 
 
-class QuestionMaxMark_how_to_get_data(APIView):
-    """Return the max mark for a given question.
-
-    TODO: how do I make the `data["q"]` thing work?  This always fails with KeyError
-    """
-
-    def get(self, request):
-        data = request.query_params
-        try:
-            question = int(data["q"])
-            version = int(data["v"])
-        except KeyError:
-            return _error_response(
-                "Missing question and/or version data.",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        except (ValueError, TypeError):
-            return _error_response(
-                "question and version must be integers",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        max_mark = SpecificationService.get_question_mark(question)
-        return Response(max_mark)
-
-
 class QuestionMaxMark(APIView):
     """Return the max mark for a given question.
 
