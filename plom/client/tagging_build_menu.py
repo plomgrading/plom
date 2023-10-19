@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QVBoxLayout,
+    QLabel,
     QLineEdit,
     QMenu,
     QRadioButton,
@@ -29,9 +30,10 @@ class QMenuNextPrefDialog(QMenu):
         # list new instance vars in one place
         self._prefer_tags_combobox = None
         self._prefer_tags_radiobuttons = None
-        self._prefer_above_action = None
-        self._prefer_above_action_lineedit = None
-        self._prefer_above_action_checkbox = None
+        self._minmax_action = None
+        self._minmax_action_min_lineedit = None
+        self._minmax_action_max_lineedit = None
+        self._minmax_action_checkbox = None
 
         # TODO: rather yuck
         self.addAction("Get paper number...", get_paper_fcn)
@@ -64,23 +66,32 @@ class QMenuNextPrefDialog(QMenu):
         a = QWidgetAction(parent)
         frame = QFrame()
         lay = QHBoxLayout(frame)
-        c = QCheckBox("Require paper number \N{Greater-than Or Equal To}")
+        c = QCheckBox("Require")
         c.setCheckable(True)
         c.setChecked(False)
         lay.addWidget(c)
-        t = QLineEdit()
-        t.setText("0")
-        lay.addWidget(t)
-        a.setDefaultWidget(frame)
-        self._prefer_above_action = a
-        self._prefer_above_action_lineedit = t
-        self._prefer_above_action_checkbox = c
-        self.addAction(a)
+        t_min = QLineEdit()
+        t_min.setText("0")
+        lay.addWidget(t_min, 2)
+        _ = QLabel("\N{Less-than Or Equal To} paper number \N{Less-than Or Equal To}")
+        lay.addWidget(_)
         # TODO: remove this sometime in 2024!
         c.setToolTip(
             "On legacy servers (commonly used in 2023) this is only"
             " a preference, not a requirement"
         )
+        _.setToolTip(c.toolTip())
+        t_max = QLineEdit()
+        lay.addWidget(t_max, 2)
+        # boo, hardcoded sizes in pixels :(
+        t_min.setFixedWidth(70)
+        t_max.setFixedWidth(70)
+        a.setDefaultWidget(frame)
+        self._minmax_action = a
+        self._minmax_action_min_lineedit = t_min
+        self._minmax_action_max_lineedit = t_max
+        self._minmax_action_checkbox = c
+        self.addAction(a)
 
         a = QWidgetAction(parent)
         frame = QFrame()
@@ -93,9 +104,9 @@ class QMenuNextPrefDialog(QMenu):
         self.addAction(a)
 
     def prefer_above(self) -> Union[None, int]:
-        if not self._prefer_above_action_checkbox.isChecked():
+        if not self._minmax_action_checkbox.isChecked():
             return None
-        return int(self._prefer_above_action_lineedit.text())
+        return int(self._minmax_action_min_lineedit.text())
 
     def update_tag_menu(self, all_tags: List[str]) -> None:
         q = self._prefer_tags_combobox
