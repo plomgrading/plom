@@ -46,7 +46,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
             page = doc.new_page(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
-                rect1 = fitz.Rect(20, 24, 300, 44)
+                rect1 = fitz.Rect(24, 24, page.rect.width - 24, 100)
                 rc = page.insert_textbox(
                     rect1,
                     f"Q.{q} - {name}:{student_num}",
@@ -56,7 +56,8 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                     fontfile=None,
                     align=0,
                 )
-                assert rc > 0
+                # page.draw_rect(rect1, color=(1, 0, 0), width=0.25)
+                assert rc > 0, f"overfull fitz textbox by {rc}"
 
             rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
@@ -71,7 +72,8 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                 fontfile=None,
                 align=0,
             )
-            assert rc > 0
+            # page.draw_rect(rect, color=(1, 0, 0), width=0.25)
+            assert rc > 0, f"overfull fitz textbox by {rc}"
 
 
 def download_classlist_and_spec(server=None, password=None):
