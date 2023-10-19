@@ -9,21 +9,17 @@
         {% csrf_token %}
         {{ form.username.label }}
         {{ form.username }}
-        <div style="font-size: smaller">
-            <p>
-                Click <b>Generate Username</b> to automatically generate username
-            </p>
-        </div>
+        <p style="font-size: smaller">
+            Click <b>Generate Username</b> to automatically generate username
+        </p>
         {{ form.email.label }}
         {{ form.email }}
-        <br>
-        <br>
-        <input class="btn btn-primary" type="submit" name="Create User">
-        <br>
+        <div class="mt-2">
+            <input class="btn btn-primary" type="submit" name="Create User">
+        </div>   
     </form>
-    <button class="btn btn-primary"
-            id="generate-username"
-            style="margin-top: 3px">Generate Username</button>
-    <p style="color: red">{{ error }}</p>
+    <button class="btn btn-primary mt-1"
+            id="generate-username">Generate Username</button>
+    <p class="text-danger">{{ error }}</p>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 {% endblock card_content %}

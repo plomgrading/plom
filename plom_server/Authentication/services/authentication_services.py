@@ -55,7 +55,7 @@ class AuthenticationServices:
 
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, email: str = None
+        self, username: str, group_name: str, email: Optional[str] = None
     ) -> str:
         """Create a user and add them to a group.
 

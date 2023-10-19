@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 
-from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from ..services import AuthenticationServices
