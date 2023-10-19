@@ -1375,13 +1375,13 @@ class MarkerClient(QWidget):
         """
         attempts = 0
         tag = self._tagging_menu.get_preferred_tag(self.msgr.username)
-        above = self._tagging_menu.prefer_above()
-        if tag and above:
-            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
+        paper_range = self._tagging_menu.get_papernum_range()
+        if tag and (paper_range[0] or paper_range[1]):
+            log.info('Next available?  Range %s, prefer tagged "%s"', paper_range, tag)
         elif tag:
-            log.info('Next available?  Prefer tagged with "%s"', tag)
-        elif above:
-            log.info("Next available?  Prefer above %s", above)
+            log.info('Next available?  Prefer tagged "%s"', tag)
+        elif paper_range[0] or paper_range[1]:
+            log.info("Next available?  Range %s", paper_range)
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1390,7 +1390,11 @@ class MarkerClient(QWidget):
                 return
             try:
                 task = self.msgr.MaskNextTask(
-                    self.question, self.version, tag=tag, above=above
+                    self.question,
+                    self.version,
+                    tag=tag,
+                    min_paper_num=paper_range[0],
+                    max_paper_num=paper_range[1],
                 )
                 if not task:
                     return

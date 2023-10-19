@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
 from typing import Optional, List
@@ -44,6 +45,9 @@ class QuestionMarkingService:
         question: Optional[int] = None,
         version: Optional[int] = None,
         user: Optional[User] = None,
+        min_paper_num: Optional[int] = None,
+        max_paper_num: Optional[int] = None,
+        tag: Optional[str] = None,
         marking_data: Optional[dict] = None,
         annotation_data: Optional[dict] = None,
         annotation_image: Optional[InMemoryUploadedFile] = None,
@@ -57,6 +61,9 @@ class QuestionMarkingService:
             question: question number of task
             version: question version of task
             user: reference to a user instance
+            min_paper_num: the minimum paper number of the task
+            max_paper_num: the maximum paper number of the task
+            tag: the tag that the task must have
             marking_data: dict representing a mark, rubrics used, etc
             annotation_data: a dictionary representing an annotation SVG
             annotation_image: an in-memory raster representation of an annotation
@@ -67,6 +74,9 @@ class QuestionMarkingService:
         self.question = question
         self.version = version
         self.user = user
+        self.min_paper_num = min_paper_num
+        self.max_paper_num = max_paper_num
+        self.tag = tag
         self.marking_data = marking_data
         self.annotation_data = annotation_data
         self.annotation_image = annotation_image
@@ -76,6 +86,14 @@ class QuestionMarkingService:
     def get_first_available_task(self) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
+        If ``question`` and/or ``version``, restrict tasks appropriately.
+
+        If ``tag`` is set, we restrict to papers with matching tags.
+
+        If ``min_paper_num`` and/or ``max_paper_num`` are set, paper numbers in this
+        range (including end points) are required.
+
+        The results are sorted by priority.
         If the priority is the same, defer to paper number and then question number.
 
         Returns:
@@ -89,6 +107,15 @@ class QuestionMarkingService:
 
         if self.version:
             available = available.filter(question_version=self.version)
+
+        if self.min_paper_num:
+            available = available.filter(paper__paper_number__gte=self.min_paper_num)
+
+        if self.max_paper_num:
+            available = available.filter(paper__paper_number__lte=self.max_paper_num)
+
+        if self.tag:
+            available = available.filter(markingtasktag__text__in=[self.tag])
 
         if not available.exists():
             return None
@@ -175,7 +202,7 @@ class QuestionMarkingService:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
-        annotation = annotations.save_annotation(
+        annotations.save_annotation(
             task,
             self.marking_data["score"],
             self.marking_data["marking_time"],
