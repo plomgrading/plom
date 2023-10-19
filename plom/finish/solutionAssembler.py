@@ -66,7 +66,7 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
                 pg.insert_image(rec, filename=img_name)
             # add a watermark of the student-id in rect at bottom of page
         if watermark:
-            wm_rect = fitz.Rect(margin, h - margin - 24, margin + 200, h - margin)
+            wm_rect = fitz.Rect(margin, h - margin - 32, margin + 200, h - margin)
             text = f"produced for {sid}"
             excess = pg.insert_textbox(
                 wm_rect,
@@ -78,8 +78,8 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
                 fill_opacity=0.33,
                 overlay=True,
             )
-            assert excess > 0, "Text didn't fit: is SID label too long?"
             pg.draw_rect(wm_rect, color=[0, 0, 0], stroke_opacity=0.25)
+            assert excess > 0, f"Text didn't fit by {excess}: is SID label too long?"
 
     exam.set_metadata(
         {
