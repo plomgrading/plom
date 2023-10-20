@@ -33,13 +33,8 @@ class TaggingAndRangeOptions(QDialog):
         max_paper_num: Union[str, None],
     ) -> None:
         super().__init__(parent)
-        # list new instance vars in one place
-        self._prefer_tags_combobox = None
-        self._prefer_tags_radiobuttons = None
-        self._minmax_action = None
-        self._minmax_action_min_lineedit = None
-        self._minmax_action_max_lineedit = None
-        self._minmax_action_checkbox = None
+
+        self.setWindowTitle("Tagging and Range options")
 
         overall_layout = QVBoxLayout()
 
