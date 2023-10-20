@@ -56,9 +56,7 @@
                                             <input id="check-password" class="text-black-100" type="checkbox">
                                             Show Password
                                         </div>
-                                        {% if request.GET.next %}
-                                            <input type="hidden" name="next" value="{{ request.GET.next }}">
-                                        {% endif %}
+                                        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
                                         <button class="btn btn-outline-dark btn-lg px-5" type="submit">
                                             <span class="bi-box-arrow-in-right"></span>
                                             Login

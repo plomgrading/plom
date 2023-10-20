@@ -159,8 +159,8 @@ class LoginView(View):
             )
             if user is not None:
                 login(request, user)
-                if 'next' in request.POST:
-                    return redirect(request.POST.get('next'))
+                if "next" in request.POST:
+                    return redirect(request.POST.get("next"))
                 else:
                     return redirect("home")
             else:
