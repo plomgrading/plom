@@ -6,6 +6,7 @@
 from django.urls import path
 
 from .signup_views.signup import (
+    Signup,
     SignupSingleMarker,
     SignupMultipleMarkers,
     SignupSingleScanner,
@@ -38,12 +39,17 @@ urlpatterns = [
     ),
     path(
         "signup/",
-        Authentication.views.Signup.as_view(),
+        Signup.as_view(),
         name="signup",
     ),
     path(
+        "signup/scanner/",
+        SignupSingleScanner.as_view(),
+        name="signup_scanner",
+    ),
+    path(
         "signup/scanners/",
-        Authentication.views.SignupScanners.as_view(),
+        SignupMultipleScanners.as_view(),
         name="signup_scanners",
     ),
     path(

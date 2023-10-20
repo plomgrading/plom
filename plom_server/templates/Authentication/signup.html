@@ -22,22 +22,8 @@
         {% block main_content %}
             <div>
                 <p>Click on the user type you want to create.</p>
-                <a class="btn"
-                   style="background-color: #0F984F;
-                          color: white;
-                          width: 150px;
-                          height: 60px;
-                          margin-right: 3px;
-                          padding-top: 16px"
-                   href="{% url 'signup_scanners' %}">Scanners</a>
-                <a class="btn"
-                   style="background-color: #FF434B;
-                          color: white;
-                          width: 150px;
-                          height: 60px;
-                          margin-left: 3px;
-                          padding-top: 16px"
-                   href="{% url 'signup_marker' %}">Markers</a>
+                <a class="btn bg-info-subtle btn-lg" href="{% url 'signup_scanner' %}">Scanners</a>
+                <a class="btn bg-primary-subtle btn-lg" href="{% url 'signup_marker' %}">Markers</a>
             </div>
         {% endblock main_content %}
     </body>
