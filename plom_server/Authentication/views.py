@@ -145,7 +145,6 @@ class LoginView(View):
 
     def post(self, request):
         if request.user.is_authenticated:
-            print("this")
             return redirect("home")
         else:
             username = request.POST.get("username")
