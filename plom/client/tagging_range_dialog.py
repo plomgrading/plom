@@ -43,9 +43,9 @@ class TaggingAndRangeOptions(QDialog):
         self._prefer_tags_combobox = q
         frame = QFrame()
         vlay = QVBoxLayout(frame)
+        vlay.setContentsMargins(0, 0, 0, 0)
         b = QRadioButton("Prefer tasks tagged for me")
         # TODO: would like on-by-default: Issue #2253
-        # b.setChecked(True)
         if prefer_tagged_for_me:
             b.setChecked(True)
         self._prefer_tags_radiobuttons = [b]
@@ -69,9 +69,11 @@ class TaggingAndRangeOptions(QDialog):
         vlay.addWidget(b)
 
         overall_layout.addWidget(frame)
+        overall_layout.addSpacing(8)
 
         frame = QFrame()
         lay = QHBoxLayout(frame)
+        lay.setContentsMargins(0, 0, 0, 0)
         c = QCheckBox("Require")
         c.setCheckable(True)
         c.setChecked(False)
@@ -101,6 +103,7 @@ class TaggingAndRangeOptions(QDialog):
         self._minmax_action_max_lineedit = t_max
         self._minmax_action_checkbox = c
         overall_layout.addWidget(frame)
+        overall_layout.addSpacing(8)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
