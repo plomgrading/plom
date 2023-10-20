@@ -56,13 +56,16 @@
                                             <input id="check-password" class="text-black-100" type="checkbox">
                                             Show Password
                                         </div>
+                                        {% if request.GET.next %}
+                                            <input type="hidden" name="next" value="{{ request.GET.next }}">
+                                        {% endif %}
                                         <button class="btn btn-outline-dark btn-lg px-5" type="submit">
                                             <span class="bi-box-arrow-in-right"></span>
                                             Login
                                         </button>
                                     </form>
                                     <br>
-                                    {% for message in messages %}<p style="color: red">{{ message }}</p>{% endfor %}
+                                    {% for message in messages %}<p class="text-danger">{{ message }}</p>{% endfor %}
                                 </div>
                             </div>
                         </div>
