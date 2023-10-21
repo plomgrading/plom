@@ -4,7 +4,6 @@
 from typing import List, Tuple, Union
 
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -31,29 +30,32 @@ class TaggingAndRangeOptions(QDialog):
     ) -> None:
         super().__init__(parent)
 
-        self.setWindowTitle("Tagging and Range options")
+        self.setWindowTitle("Which papers to mark?")
 
         overall_layout = QVBoxLayout()
 
-        q = QComboBox()
-        q.setEditable(True)
-        self._prefer_tags_combobox = q
+        overall_layout.addWidget(QLabel("Tags:"))
         frame = QFrame()
         vlay = QVBoxLayout(frame)
-        vlay.setContentsMargins(0, 0, 0, 0)
+        vlay.setContentsMargins(48, 0, 0, 0)
         b = QRadioButton("Prefer tasks tagged for me")
         # TODO: would like on-by-default: Issue #2253
         if prefer_tagged_for_me:
             b.setChecked(True)
         self._prefer_tags_radiobuttons = [b]
         vlay.addWidget(b)
+        q = QComboBox()
+        q.setEditable(True)
+        self._prefer_tags_combobox = q
         b = QRadioButton("Prefer tasks tagged")
         if not prefer_tagged_for_me and tag:
             b.setChecked(True)
         self._prefer_tags_radiobuttons.append(b)
         lay = QHBoxLayout()
         lay.addWidget(b)
-        lay.addWidget(q)
+        lay.addWidget(q, 3)
+        lay.addStretch(1)
+
         self._update_tag_menu(all_tags)
         if tag:
             q.setCurrentText(tag)
@@ -68,15 +70,13 @@ class TaggingAndRangeOptions(QDialog):
         overall_layout.addWidget(frame)
         overall_layout.addSpacing(8)
 
+        c = QLabel("Restrict papers to a range:")
+        overall_layout.addWidget(c)
         frame = QFrame()
         lay = QHBoxLayout(frame)
-        lay.setContentsMargins(0, 0, 0, 0)
-        c = QCheckBox("Require")
-        c.setCheckable(True)
-        c.setChecked(False)
-        lay.addWidget(c)
+        lay.setContentsMargins(48, 0, 0, 0)
         t_min = QLineEdit()
-        lay.addWidget(t_min, 2)
+        lay.addWidget(t_min, 3)
         _ = QLabel("\N{Less-than Or Equal To} paper number \N{Less-than Or Equal To}")
         lay.addWidget(_)
         # TODO: remove this sometime in 2024!
@@ -86,7 +86,9 @@ class TaggingAndRangeOptions(QDialog):
         )
         _.setToolTip(c.toolTip())
         t_max = QLineEdit()
-        lay.addWidget(t_max, 2)
+        lay.addWidget(t_max, 3)
+        lay.addStretch(1)
+
         # boo, hardcoded sizes in pixels :(
         # t_min.setFixedWidth(70)
         # t_max.setFixedWidth(70)
@@ -94,11 +96,8 @@ class TaggingAndRangeOptions(QDialog):
             t_min.setText(str(min_paper_num))
         if max_paper_num is not None:
             t_max.setText(str(max_paper_num))
-        if min_paper_num is not None or max_paper_num is not None:
-            c.setChecked(True)
         self._minmax_action_min_lineedit = t_min
         self._minmax_action_max_lineedit = t_max
-        self._minmax_action_checkbox = c
         overall_layout.addWidget(frame)
         overall_layout.addSpacing(8)
 
@@ -116,8 +115,6 @@ class TaggingAndRangeOptions(QDialog):
 
         None indicates no restricion.
         """
-        if not self._minmax_action_checkbox.isChecked():
-            return None, None
         try:
             mn = int(self._minmax_action_min_lineedit.text())
         except ValueError:
