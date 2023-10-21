@@ -9,16 +9,13 @@
         {% csrf_token %}
         {{ form.username.label }}
         {{ form.username }}
-        <p style="font-size: smaller">
-            Click <b>Generate Username</b> to automatically generate username
-        </p>
+        <button class="btn btn-secondary" type="button" id="generate-username">AutoGenerate</button>
         {{ form.email.label }}
         {{ form.email }}
         <div class="mt-2">
             <input class="btn btn-primary" type="submit" value="Create User">
         </div>
     </form>
-    <button class="btn btn-primary mt-1" id="generate-username">Generate Username</button>
     <p class="text-danger">{{ error }}</p>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 {% endblock card_content %}
