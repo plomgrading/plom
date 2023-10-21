@@ -8,14 +8,18 @@
 {% block card_content %}
     <form method="post" action="">
         {% csrf_token %}
-        {{ form.username.label }}
-        {{ form.username }}
-        <button class="btn btn-secondary" type="button" id="generate-username">Autogenerate</button>
-        {{ form.email.label }}
-        {{ form.email }}
-        <div class="mt-2">
+        <p>
+            {{ form.username.label }}
+            {{ form.username }}
+            <button class="btn btn-secondary" type="button" id="generate-username">Autogenerate</button>
+        </p>
+        <p>
+            {{ form.email.label }}
+            {{ form.email }}
+        </p>
+        <p>
             <input class="btn btn-primary" type="submit" value="Create User">
-        </div>
+        </p>
     </form>
     <p class="text-danger">{{ error }}</p>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
