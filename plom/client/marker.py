@@ -1115,9 +1115,9 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
-        m = QMenu()
-        m.addAction("Get paper number n...", self.requestInteractive)
-        m.addAction("Tagging and range options...", self.change_tag_range_options)
+        m = QMenu(self)
+        m.addAction("Get \N{Mathematical Italic Small N}th...", self.requestInteractive)
+        m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
