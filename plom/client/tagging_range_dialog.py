@@ -18,10 +18,7 @@ from PyQt6.QtWidgets import (
 
 
 class TaggingAndRangeOptions(QDialog):
-    """Just want to store some extra instance variables inside a QMenu.
-
-    This is all a bit "hack" and not in the good sense.
-    """
+    """A dialog for setting preferences about which papers to grade."""
 
     def __init__(
         self,
