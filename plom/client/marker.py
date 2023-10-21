@@ -1159,7 +1159,7 @@ class MarkerClient(QWidget):
         mx = self.annotatorSettings["nextTaskMaxPaperNum"]
         exclaim = False
         tips = []
-        if mn is not None or max is not None:
+        if mn is not None or mx is not None:
             exclaim = True
             s = "Restricted paper number "
             if mx is None:
