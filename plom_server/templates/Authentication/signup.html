@@ -4,27 +4,16 @@
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Web Plom - Sign Up
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block page_heading %}
-            Sign up
-        {% endblock page_heading %}
-        {% block main_content %}
-            <div>
-                <p>Click on the user type you want to create.</p>
-                <a class="btn bg-info-subtle btn-lg" href="{% url 'signup_scanner' %}">Scanners</a>
-                <a class="btn bg-primary-subtle btn-lg" href="{% url 'signup_marker' %}">Markers</a>
-            </div>
-        {% endblock main_content %}
-    </body>
-</html>
+{% block title %}
+    Web Plom - Sign Up
+{% endblock title %}
+{% block page_heading %}
+    Sign up
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <p>Click on the user type you want to create.</p>
+        <a class="btn bg-info-subtle btn-lg" href="{% url 'signup_scanner' %}">Scanners</a>
+        <a class="btn bg-primary-subtle btn-lg" href="{% url 'signup_marker' %}">Markers</a>
+    </div>
+{% endblock main_content %}
