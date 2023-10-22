@@ -51,7 +51,11 @@ class SetPassword(View):
             user.is_active = True
             user.profile.signup_confirmation = False
             user.save()
-            context = {"form": reset_form, "help_text": self.help_text}
+            context = {
+                "form": reset_form,
+                "help_text": self.help_text,
+                "username": user.username,
+            }
             return render(request, self.template_name, context)
         else:
             return render(request, self.reset_invalid)

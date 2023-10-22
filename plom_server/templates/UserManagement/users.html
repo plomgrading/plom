@@ -172,7 +172,7 @@
                         {% endif %}
                         <td>{{ user.last_login|naturaltime }}</td>
                         <td>
-                            <!-- since this is a manager account, make sure user is user. -->
+                            <!-- since this allows reset of manager - ask for confirmation -->
                             <a href="{% url 'reset_user_password' user.username %}"
                                class="btn btn-danger"
                                onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>

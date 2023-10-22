@@ -114,7 +114,13 @@ class CloseUser(APIView):
     """
 
     def surrender_tasks_and_logout(self, user_obj):
-        user_obj.auth_token.delete()
+        # if user has an auth token then delete it
+        try:
+            user_obj.auth_token.delete()
+        except Token.DoesNotExist:
+            # does not have a token, no need to delete.
+            pass
+
         MarkingTaskService().surrender_all_tasks(user_obj)
         IdentifyTaskService().surrender_all_tasks(user_obj)
 
