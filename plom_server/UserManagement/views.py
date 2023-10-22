@@ -56,7 +56,7 @@ class UserPage(ManagerRequiredView):
 
     @login_required
     def disableMarkers(self):
-        PermissionChanger.set_all_marker_active(False)
+        PermissionChanger.set_all_markers_active(False)
         return redirect("/users")
 
     @login_required
