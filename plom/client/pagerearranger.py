@@ -377,13 +377,6 @@ class RearrangementViewer(QDialog):
         self.removeB.setArrowType(Qt.ArrowType.UpArrow)
         self.removeB.setText("&Remove page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.removeOthersB = QToolButton()
-        self.removeOthersB.setArrowType(Qt.ArrowType.UpArrow)
-        self.removeOthersB.setText("Remove &others")
-        self.removeOthersB.setToolTip("The non-selected pages will be removed")
-        self.removeOthersB.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
-        )
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.ArrowType.LeftArrow)
         self.sLeftB.setText("Shift left")
@@ -487,9 +480,6 @@ class RearrangementViewer(QDialog):
         hb.addSpacing(16)
         hb.addStretch()
         hb.addWidget(self.removeB)
-        hb.addSpacing(16)
-        hb.addStretch()
-        hb.addWidget(self.removeOthersB)
         hb1.addLayout(hb)
         hb1.addLayout(GrippyMcGrab())
         hb1.addWidget(self.revertB)
@@ -524,7 +514,7 @@ class RearrangementViewer(QDialog):
         handle.setLayout(hb1)
         hb1.setContentsMargins(0, 0, 0, 0)
         # TODO: Buttons inside the splitter bar, disable drag and custom cursor
-        for b in (self.removeB, self.removeOthersB, self.appendB, self.revertB):
+        for b in (self.removeB, self.appendB, self.revertB):
             b.mouseMoveEvent = lambda *args: None
             b.setCursor(Qt.CursorShape.ArrowCursor)
 
@@ -544,7 +534,6 @@ class RearrangementViewer(QDialog):
         self.rotateB_ccw.clicked.connect(lambda: self.rotateImages(90))
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
-        self.removeOthersB.clicked.connect(self.sinkInvToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
         allPageWidgets = [self.listA, self.listB]
@@ -635,11 +624,9 @@ class RearrangementViewer(QDialog):
         """Hide/show tools based on current selections."""
         if self.listB.selectionModel().hasSelection():
             self.removeB.setEnabled(True)
-            self.removeOthersB.setEnabled(True)
             self.tools.setEnabled(True)
         else:
             self.removeB.setEnabled(False)
-            self.removeOthersB.setEnabled(False)
             self.tools.setEnabled(False)
         if self.listA.selectionModel().hasSelection():
             self.appendB.setEnabled(True)
@@ -749,13 +736,12 @@ class RearrangementViewer(QDialog):
             return
         self.listA.unhideNamedItems(self.listB.removeSelectedItems())
 
-    def sinkInvToSource(self):
+    def _sinkInvToSource(self):
         """Removes all pages NOT currently selected from the list for the current question.
 
-        Returns:
-            None
+        Currently unused as not connected to any buttons.
         """
-        self.listB.invert_selection()
+        self.invert_selection()
         self.sinkToSource()
 
     def shuffleLeft(self):
