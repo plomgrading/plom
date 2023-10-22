@@ -393,6 +393,8 @@ class RearrangementViewer(QDialog):
         self.sRightB.setText("Shift right")
         self.sRightB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse order")
+        self.invertSelectionB = QPushButton("Invert selection")
+        self.invertSelectionB.clicked.connect(self.invert_selection)
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
@@ -466,6 +468,8 @@ class RearrangementViewer(QDialog):
         hb.addSpacing(16)
         hb3.addWidget(self.tools)
         hb3.addWidget(self.reverseB)
+        hb3.addSpacing(16)
+        hb3.addWidget(self.invertSelectionB)
         hb3.addSpacing(16)
         hb3.addStretch()
         hb3.addWidget(self.acceptB)
@@ -787,10 +791,12 @@ class RearrangementViewer(QDialog):
             pass
 
     def reverseOrder(self):
-        """
-        reverses the order of the pages in current question.
-        """
+        """Reverses the order of the pages in current question."""
         self.listB.reverseOrder()
+
+    def invert_selection(self):
+        """Invert the selection of the bottom list."""
+        self.listB.invert_selection()
 
     def rotateImages(self, angle=90):
         """Rotates the currently selected page, by default by 90 degrees CCW."""
