@@ -83,7 +83,7 @@ class QuestionMarkingViewSet(ViewSet):
                 tags = service.get_tags()
 
             return Response([question_data, tags, service.task_pk])
-        except ValueError as e:
+        except (ValueError, ObjectDoesNotExist) as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

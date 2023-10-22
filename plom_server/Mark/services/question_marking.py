@@ -101,7 +101,13 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def get_task(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk."""
+        """Retrieve the relevant marking task using self.code or self.task_pk.
+
+        Raises:
+            ObjectDoesNotExist: paper or paper with that question does not exist,
+                not raised directly but from ``get_latest_task``.
+            ValueError:
+        """
         if self.task_pk:
             return MarkingTask.objects.get(pk=self.task_pk)
         elif self.code:
