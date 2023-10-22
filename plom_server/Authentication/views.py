@@ -87,6 +87,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
@@ -108,6 +109,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
