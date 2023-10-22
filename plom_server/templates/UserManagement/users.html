@@ -37,12 +37,8 @@
                     </ul>
                     <h4 class="card-title">Markers</h4>
                     <p>
-                        <button type="button" class="btn btn-success">
-                            <a href="{% url 'enableMarkers' %}" class="nav-link">Enable Markers &nbsp;</a>
-                        </button>
-                        <button type="button" class="btn btn-danger">
-                            <a href="{% url 'disableMarkers' %}" class="nav-link">Disable Markers &nbsp;</a>
-                        </button>
+                        <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
+                        <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
                     </p>
                     <table class="table table-striped">
                         <thead>
@@ -77,13 +73,11 @@
                                 </td>
                                 <td>
                                     {% if user in lead_markers %}
-                                        <button type="button" class="btn btn-info">
-                                            <a href="{% url 'toggleLeadMarker' user.username %}" class="nav-link">demote</a>
-                                        </button>
+                                        <a class="btn btn-info"
+                                           href="{% url 'toggleLeadMarker' user.username %}">demote</a>
                                     {% else %}
-                                        <button type="button" class="btn btn-warning">
-                                            <a href="{% url 'toggleLeadMarker' user.username %}" class="nav-link">promote</a>
-                                        </button>
+                                        <a class="btn btn-warning"
+                                           href="{% url 'toggleLeadMarker' user.username %}">promote</a>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -109,12 +103,8 @@
             <div class="card-body">
                 <h4 class="card-title">Scanners</h4>
                 <p>
-                    <button type="button" class="btn btn-success">
-                        <a href="{% url 'enableScanners' %}" class="nav-link">Enable Scanners</a>
-                    </button>
-                    <button type="button" class="btn btn-danger">
-                        <a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a>
-                    </button>
+                    <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
+                    <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
                 </p>
                 <table class="table table-striped">
                     <thead>
