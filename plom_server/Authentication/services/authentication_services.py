@@ -146,7 +146,7 @@ class AuthenticationServices:
         return links_dict
 
     @transaction.atomic
-    def generate_link(request, user: User) -> str:
+    def generate_link(self, request, user: User) -> str:
         """Generate a password reset link for a user.
 
         Args:

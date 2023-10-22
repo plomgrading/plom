@@ -25,14 +25,20 @@
         {% block main_content %}
             <div class="card my-2">
                 <div class="card-body">
+                    Notes:
+                    <ul>
+                        <li>
+                            Promoting a marker to <q>lead marker</q> allows them to see more detailed information about progress and tasks
+                        </li>
+                        <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
+                        <li>
+                            If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
+                        </li>
+                    </ul>
                     <h4 class="card-title">Markers</h4>
                     <p>
-                        <button type="button" class="btn btn-success">
-                            <a href="{% url 'enableMarkers' %}" class="nav-link">Enable Markers &nbsp;</a>
-                        </button>
-                        <button type="button" class="btn btn-danger">
-                            <a href="{% url 'disableMarkers' %}" class="nav-link">Disable Markers &nbsp;</a>
-                        </button>
+                        <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
+                        <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
                     </p>
                     <table class="table table-striped">
                         <thead>
@@ -43,6 +49,7 @@
                             <th>Progress</th>
                             <th>Lead Marker</th>
                             <th>Enable/Disable</th>
+                            <th>Password</th>
                         </thead>
                         {% for user in markers %}
                             <tr>
@@ -66,13 +73,11 @@
                                 </td>
                                 <td>
                                     {% if user in lead_markers %}
-                                        <button type="button" class="btn btn-info">
-                                            <a href="{% url 'toggleLeadMarker' user.username %}" class="nav-link">demote</a>
-                                        </button>
+                                        <a class="btn btn-info"
+                                           href="{% url 'toggleLeadMarker' user.username %}">demote</a>
                                     {% else %}
-                                        <button type="button" class="btn btn-warning">
-                                            <a href="{% url 'toggleLeadMarker' user.username %}" class="nav-link">promote</a>
-                                        </button>
+                                        <a class="btn btn-warning"
+                                           href="{% url 'toggleLeadMarker' user.username %}">promote</a>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -84,6 +89,10 @@
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    <a href="{% url 'reset_user_password' user.username %}"
+                                       class="btn btn-danger">reset</a>
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
@@ -94,12 +103,8 @@
             <div class="card-body">
                 <h4 class="card-title">Scanners</h4>
                 <p>
-                    <button type="button" class="btn btn-success">
-                        <a href="{% url 'enableScanners' %}" class="nav-link">Enable Scanners</a>
-                    </button>
-                    <button type="button" class="btn btn-danger">
-                        <a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a>
-                    </button>
+                    <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
+                    <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
                 </p>
                 <table class="table table-striped">
                     <thead>
@@ -107,6 +112,7 @@
                         <th>Online/Offline</th>
                         <th>Last login</th>
                         <th>Enable/Disable</th>
+                        <th>Password</th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
@@ -126,6 +132,10 @@
                                             class="btn btn-success">enable</button>
                                 {% endif %}
                             </td>
+                            <td>
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class="btn btn-danger">reset</a>
+                            </td>
                         </tr>
                     {% endfor %}
                 </table>
@@ -140,6 +150,7 @@
                     <th>Name</th>
                     <th>Online/Offline</th>
                     <th>Last login</th>
+                    <th>Reset password</th>
                 </thead>
                 {% for user in managers %}
                     <tr>
@@ -150,6 +161,12 @@
                             <td>Offline</td>
                         {% endif %}
                         <td>{{ user.last_login|naturaltime }}</td>
+                        <td>
+                            <!-- since this allows reset of manager - ask for confirmation -->
+                            <a href="{% url 'reset_user_password' user.username %}"
+                               class="btn btn-danger"
+                               onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
+                        </td>
                     </tr>
                 {% endfor %}
             </table>
