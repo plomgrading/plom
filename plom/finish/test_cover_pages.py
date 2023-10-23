@@ -20,6 +20,14 @@ def test_cover_page(tmp_path):
     assert "12345678" in text
 
 
+def test_cover_page_leading_zero_sid(tmp_path):
+    f = tmp_path / "foo.pdf"
+    data = [[1, 1, 3, 4], [2, 1, 4, 6], [3, 2, 0, 5]]
+    makeCover(data, f, test_num="0123", info=("Agnesi", "00123400"))
+    with fitz.open(f) as doc:
+        assert "00123400" in doc[0].get_text()
+
+
 def test_cover_page_hardcoded_letter_paper(tmp_path):
     f = tmp_path / "foo.pdf"
     data = [[1, 1, 4], [2, 1, 6]]
