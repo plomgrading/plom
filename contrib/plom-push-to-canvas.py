@@ -368,12 +368,12 @@ if __name__ == "__main__":
         dedent(
             """
 
-        ## Viewing the PDF files as an instructor
+            ## Viewing the PDF files as an instructor
 
-        Because of a Canvas bug, you (an instructor) may not be able to see these
-        attachments directly in Canvas -> Grades.  There are two workarounds noted
-        in https://github.com/instructure/canvas-lms/issues/1886
-        (Students have no such problem; they will be able to see the attachment).
+            Because of a Canvas bug, you (an instructor) may not be able to see these
+            attachments directly in Canvas -> Grades.  There are two workarounds noted
+            in https://github.com/instructure/canvas-lms/issues/1886
+            (Students have no such problem; they will be able to see the attachment).
             """
         )
     )
