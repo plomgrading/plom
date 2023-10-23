@@ -1,24 +1,26 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "Authentication/signup_marker_base.html" %}
 {% load static %}
 {% block card_content %}
     <form method="post" action="">
         {% csrf_token %}
-        {{ form.username.label }}
-        {{ form.username }}
-        <p style="font-size: smaller">
-            Click <b>Generate Username</b> to automatically generate username
+        <p>
+            {{ form.username.label }}
+            {{ form.username }}
+            <button class="btn btn-secondary btn-sm" type="button" id="generate-username">Autogenerate</button>
         </p>
-        {{ form.email.label }}
-        {{ form.email }}
-        <div class="mt-2">
+        <p>
+            {{ form.email.label }}
+            {{ form.email }}
+        </p>
+        <p>
             <input class="btn btn-primary" type="submit" value="Create User">
-        </div>
+        </p>
     </form>
-    <button class="btn btn-primary mt-1" id="generate-username">Generate Username</button>
     <p class="text-danger">{{ error }}</p>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 {% endblock card_content %}
