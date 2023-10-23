@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * New "idBox3.pdf" template moves the signature box up to avoid signatures hitting the bounding box (which was leading to additional manual IDing).
+* Page Arrange: new "Invert selection" button is useful to quickly discard all but the highlighted pages.
 
 ### Changed
 * Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
@@ -19,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Wrong padding on the top paper number box on recent versions of PyMuPDF.
 * Various fixes for Python 3.12 but full support may be waiting on a new release of AIOHttp library.
 * Fix a crash in server manager when unpredicting a row without a prediction.
-
+* Improved contrast in Identifier client when OS is in dark mode.
+* Push-to-Canvas could fail when assessment shortname contained underscores.
+* Documentation edits and fixes.
 
 
 ## [0.14.4] - 2023-10-10
