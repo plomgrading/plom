@@ -71,7 +71,7 @@ from plom.create import start_messenger
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.4.7"
+__script_version__ = "0.4.8"
 
 
 def get_short_name(long_name):
@@ -445,17 +445,6 @@ def scan_submissions(
             errors.append((sid, e))
             continue
 
-        # by default, otherwise push each page to all questions. And kvetch later.
-        q = "all"
-        expected: Union[None, int] = None
-        ppq = page_question_map_params["expected_pages_per_question"]
-        if ppq is not None:
-            expected = ppq * num_questions
-            q = []
-            for qnum in range(1, num_questions + 1):
-                q.extend(([qnum] for _ in range(ppq)))
-        del ppq
-
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
 
         print("\n*** Found what looks like a legit PDF, as follows ...")
@@ -463,13 +452,25 @@ def scan_submissions(
         print(f"    sid:         {sid}")
         studentname = sid2name[sid]
         print(f"    studentname: {studentname}")
+
+        # Construct the page-to-question map, covering various cases.
+        expected: Union[None, int] = None
+        ppq = page_question_map_params["expected_pages_per_question"]
+        if ppq is not None:
+            expected = ppq * num_questions
+
         if expected is None:
-            print(f"    pages:   {num_pages}, no expectation.")
+            print(f"    pages:   {num_pages}, OK -- no prior expectation.")
+            q = "all"
         elif num_pages == expected:
             print(f"    pages:   {num_pages}, as expected.")
+            q = []
+            for qnum in range(1, num_questions + 1):
+                q.extend(([qnum] for _ in range(ppq)))
         else:
             print(f" xx pages:   {num_pages}, but expected {expected}.")
-            e = f"submitted {num_pages} pages, but {expected} were expected."
+            e = f"{studentname} submitted {num_pages} pages, but {expected} were expected."
+            q = "all"
             errors.append((sid, e))
         print(f"    q:           {q}")
 
