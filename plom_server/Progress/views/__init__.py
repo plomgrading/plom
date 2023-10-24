@@ -32,6 +32,7 @@ from .progress_task_annot import (
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,
+    AllTaskOverviewView,
 )
 
 from .progress_userinfo import (

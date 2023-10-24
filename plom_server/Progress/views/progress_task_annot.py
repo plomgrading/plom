@@ -6,6 +6,7 @@ from django.http import FileResponse
 from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
+from Progress.services import ProgressOverviewService
 
 
 class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
@@ -93,3 +94,40 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
         return render(
             request, "Progress/Mark/original_image_wrap_fragment.html", context
         )
+
+
+class AllTaskOverviewView(LeadMarkerOrManagerView):
+    def get(self, request):
+        question_numbers = [
+            q + 1 for q in range(SpecificationService.get_n_questions())
+        ]
+
+        context = self.build_context()
+        pos = ProgressOverviewService()  # excellent acronym work.
+        task_overview = pos.get_task_overview()
+        n_papers = len(task_overview)
+        task_counts = pos.get_completed_task_counts()
+        # convert completed counts to percentages for progress bars
+        if n_papers > 0:
+            percent_complete = {
+                "id": round(100 * task_counts["id"] / n_papers),
+                "mk": {
+                    q: round(100 * n / n_papers) for q, n in task_counts["mk"].items()
+                },
+            }
+        else:
+            percent_complete = {
+                "id": 0,
+                "mk": {q: 0 for q, n in task_counts["mk"].items()},
+            }
+
+        context.update(
+            {
+                "question_numbers": question_numbers,
+                "task_overview": task_overview,
+                "n_papers": n_papers,
+                "completed_task_counts": task_counts,
+                "percent_complete": percent_complete,
+            }
+        )
+        return render(request, "Progress/task_overview_home.html", context=context)

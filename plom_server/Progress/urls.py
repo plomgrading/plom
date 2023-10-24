@@ -25,6 +25,7 @@ from Progress.views import (
     AnnotationImageView,
     OriginalImageWrapView,
     ProgressUserInfoHome,
+    AllTaskOverviewView,
     IDImageView,
     ClearID,
     IDImageWrapView,
@@ -128,5 +129,10 @@ urlpatterns = [
         "userinfo/overview/",
         ProgressUserInfoHome.as_view(),
         name="progress_user_info_home",
+    ),
+    path(
+        "alltaskoverview/",
+        AllTaskOverviewView.as_view(),
+        name="all_task_overview",
     ),
 ]

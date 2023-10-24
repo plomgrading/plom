@@ -1,0 +1,129 @@
+<!-- Copyright (C) 2023 Julian Lapenna -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+{% extends "base/base.html" %}
+{% block title %}
+    Web Plom - Marking and Identify Tasks
+{% endblock title %}
+{% block page_heading %}
+    Overiew of all marking and identifying
+{% endblock page_heading %}
+{% block main_content %}
+    <p>
+        <ul>
+            <li>Click on any marking task to see the corresponding annotation</li>
+            <li>Click on the ID progress or question statistics buttons to see a more details</li>
+        </ul>
+    </p>
+    <div class="table-responsive" style="max-height: 80vh;">
+        <table class="table sortable text-center align-middle table-bordered border-dark-subtle">
+            <thead class="sticky-top">
+                <tr>
+                    <th>paper</th>
+                    <th>
+                        identify
+                        <div class="progress"
+                             role="progressbar"
+                             aria-label="id complete percentage"
+                             aria-valuenow="{{ percent_complete.id }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            <div class="progress-bar text-dark bg-success-subtle"
+                                 style="width: {{ percent_complete.id }}%">
+                                {{ completed_task_counts.id }} / {{ n_papers }}
+                            </div>
+                        </div>
+                    </th>
+                    {% for qn in question_numbers %}
+                        <th>
+                            Q.{{ qn }}
+                            <div class="progress"
+                                 role="progressbar"
+                                 aria-label="id complete percentage"
+                                 aria-valuenow="{{ percent_complete.mk|get_item:qn }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                <div class="progress-bar text-dark bg-success-subtle"
+                                     style="width: {{ percent_complete.mk|get_item:qn }}%">
+                                    {{ completed_task_counts.mk|get_item:qn }} / {{ n_papers }}
+                                </div>
+                            </div>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for pn, info in task_overview.items %}
+                    <tr>
+                        <td>{{ pn }}</td>
+                        <!-- the id info column -->
+                        {% with dat=info.id %}
+                            {% if dat.status == "Complete" %}
+                                <td class="table-success"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    data-bs-title="by {{ dat.user }}">{{ dat.sid }}</td>
+                            {% elif dat.status == "To Do" %}
+                                <td class="table-warning">to do</td>
+                            {% elif dat.status == "Out" %}
+                                <td class="table-info"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    data-bs-title="with {{ dat.user }}">out</td>
+                            {% else %}
+                                <td class="table-danger">task missing</td>
+                            {% endif %}
+                        {% endwith %}
+                        <!-- all done -->
+                        <!-- the question info columns -->
+                        {% for qn in question_numbers %}
+                            {% with dat=info.mk|get_item:qn %}
+                                {% if dat.status == "Complete" %}
+                                    <td class="table-success">
+                                        <a class="btn btn-success-subtle w-100"
+                                           href="{% url 'annotation_item' dat.annotation_pk %}"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="bottom"
+                                           data-bs-title="v.{{ dat.version }} by {{ dat.user }}">{{ dat.score }}</a>
+                                    </td>
+                                {% elif dat.status == "To Do" %}
+                                    <td class="table-warning">to do</td>
+                                {% elif dat.status == "Out" %}
+                                    <td class="table-info"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="bottom"
+                                        data-bs-title="with {{ dat.user }}">out</td>
+                                {% else %}
+                                    <td class="table-danger">task missing</td>
+                                {% endif %}
+                            {% endwith %}
+                            <!-- all done -->
+                        {% endfor %}
+                        <!-- all done -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="sticky-bottom table-group-divider">
+                <tr>
+                    <td></td>
+                    <td>
+                        <a class="btn btn-primary w-100"
+                           href="{% url 'progress_identify_home' %}">ID progress</a>
+                    </td>
+                    {% for qn in question_numbers %}
+                        <td>
+                            <a class="btn btn-primary w-100"
+                               href="{% url 'progress_mark_version_compare' qn %}">Q.{{ qn }} statistics</a>
+                        </td>
+                    {% endfor %}
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+  
+    </script>
+{% endblock main_content %}
