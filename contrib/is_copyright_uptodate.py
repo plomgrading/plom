@@ -32,7 +32,7 @@ ok_no_copyright = [
     "*/uiFiles/ui_*.py",
     ".mailmap",
     "*/cl_*.csv",
-    "*/demoClasslist.csv",
+    "*/demoClassList.csv",
     "*papers_to_rooms.csv",
     "plom_server/static/*.svg",
     "testTemplates/idBox*.eps",
