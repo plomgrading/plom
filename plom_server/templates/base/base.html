@@ -83,9 +83,9 @@
                                 </li>
                             {% elif user_is_manager %}
                                 <li class="nav-item accordion accordion-flush">
-                                    <a class="nav-link" data-bs-toggle="collapse" href="#users">Users</a>
+                                    <a class="nav-link" href="#users">Users</a>
                                 </li>
-                                <div class="collapse" id="users">
+                                <div id="users">
                                     <ul>
                                         <li class="nav-item">
                                             <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
@@ -111,9 +111,9 @@
                                     <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
                                 </li>
                                 <li class="nav-item accordion accordion-flush">
-                                    <a class="nav-link" data-bs-toggle="collapse" href="#progress">Progress</a>
+                                    <a class="nav-link" href="#progress">Progress</a>
                                 </li>
-                                <div class="collapse" id="progress">
+                                <div id="progress">
                                     <ul>
                                         <li class="nav-item">
                                             <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>

@@ -27,7 +27,7 @@ def get_latest_task(paper_number: int, question_number: int) -> MarkingTask:
 
     Raises:
         ObjectDoesNotExist: no such marking task, either b/c the paper
-        does not exist or the question does not exist for that paper.
+            does not exist or the question does not exist for that paper.
     """
     try:
         paper = Paper.objects.get(paper_number=paper_number)

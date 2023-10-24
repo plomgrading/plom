@@ -1,6 +1,7 @@
 .. Plom documentation
-   Copyright 2020 Andrew Rechnitzer
-   Copyright 2020-2022 Colin B. Macdonald
+   Copyright (C) 2020 Andrew Rechnitzer
+   Copyright (C) 2020-2023 Colin B. Macdonald
+   Copyright (C) 2023 Philip D. Loewen
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -10,6 +11,10 @@ Returning Work to Students
 Once marking is done (or very nearly done) it is time to reassemble the
 papers, build a spreadsheet and return results to students.
 
+.. note::
+
+   Much of this information refers to "Legacy Servers" and needs updating.
+
 
 Is everything done?
 -------------------
@@ -18,7 +23,7 @@ Is everything done?
     TODO: One way to access this information is through the :doc:`module-plom-manager`.
 
 Once we are mopping up the last few questions, and it becomes important
-to know what is tasks are left to do.
+to know what tasks are left to do.
 You can get a quick overview on the command line::
 
 

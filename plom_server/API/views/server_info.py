@@ -113,16 +113,20 @@ class CloseUser(APIView):
         (401) user is not signed in
     """
 
+    def surrender_tasks_and_logout(self, user_obj):
+        # if user has an auth token then delete it
+        try:
+            user_obj.auth_token.delete()
+        except Token.DoesNotExist:
+            # does not have a token, no need to delete.
+            pass
+
+        MarkingTaskService().surrender_all_tasks(user_obj)
+        IdentifyTaskService().surrender_all_tasks(user_obj)
+
     def delete(self, request):
         try:
-            request.user.auth_token.delete()
-
-            mts = MarkingTaskService()
-            mts.surrender_all_tasks(request.user)
-
-            its = IdentifyTaskService()
-            its.surrender_all_tasks(request.user)
-
+            self.surrender_tasks_and_logout(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)

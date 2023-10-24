@@ -51,7 +51,11 @@ class SetPassword(View):
             user.is_active = True
             user.profile.signup_confirmation = False
             user.save()
-            context = {"form": reset_form, "help_text": self.help_text}
+            context = {
+                "form": reset_form,
+                "help_text": self.help_text,
+                "username": user.username,
+            }
             return render(request, self.template_name, context)
         else:
             return render(request, self.reset_invalid)
@@ -83,6 +87,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
@@ -104,6 +109,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
@@ -158,7 +164,10 @@ class LoginView(View):
             )
             if user is not None:
                 login(request, user)
-                return redirect("home")
+                if "next" in request.POST:
+                    return redirect(request.POST.get("next"))
+                else:
+                    return redirect("home")
             else:
                 messages.info(request, "Username or Password is incorrect!")
             return render(request, self.template_name)

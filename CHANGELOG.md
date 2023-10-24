@@ -11,10 +11,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-* Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
 
 ### Fixed
 
+
+
+## [0.14.5] - 2023-10-23
+
+### Added
+* New "idBox3.pdf" template moves the signature box up to avoid signatures hitting the bounding box (which was leading to additional manual IDing).
+* Page Arrange: new "Invert selection" button is useful to quickly discard all but the highlighted pages.
+
+### Changed
+* Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
+* Making self-signed certs no longer needs command-line `openssl`, instead uses the `cryptography` package.
+
+### Fixed
+* Wrong padding on the top paper number box on recent versions of PyMuPDF.
+* Various fixes for Python 3.12 but full support may be waiting on a new release of AIOHttp library.
+* Fix a crash in server manager when unpredicting a row without a prediction.
+* Improved contrast in Identifier client when OS is in dark mode.
+* Push-to-Canvas could fail when assessment shortname contained underscores.
+* Documentation edits and fixes.
 
 
 ## [0.14.4] - 2023-10-10
@@ -1048,7 +1066,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.4...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.5...main
+[0.14.5]: https://gitlab.com/plom/plom/-/compare/v0.14.4...v0.14.5
 [0.14.4]: https://gitlab.com/plom/plom/-/compare/v0.14.3...v0.14.4
 [0.14.3]: https://gitlab.com/plom/plom/-/compare/v0.14.2...v0.14.3
 [0.14.2]: https://gitlab.com/plom/plom/-/compare/v0.14.1...v0.14.2

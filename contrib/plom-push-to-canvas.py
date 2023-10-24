@@ -45,6 +45,7 @@ from pathlib import Path
 import random
 import string
 import time
+from textwrap import dedent
 
 from canvasapi.exceptions import CanvasException
 from canvasapi import __version__ as __canvasapi_version__
@@ -303,9 +304,12 @@ if __name__ == "__main__":
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
-        sis_id = pdf.stem.split("_")[1]
-        assert len(sis_id) == 8
-        assert set(sis_id) <= set(string.digits)
+        # the student number is whatever is after the last underscore
+        sis_id = pdf.stem.split("_")[-1]
+        # rebuild the stuff before the last underscore
+        basename = "_".join(pdf.stem.split("_")[0:-1])
+        assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
+        assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
             sub, name = sis_id_to_sub_and_name[sis_id]
             student = sis_id_to_students[sis_id]
@@ -317,7 +321,8 @@ if __name__ == "__main__":
             continue
         assert sub.user_id == student.user_id
         if args.solutions:
-            soln_pdf = soln_dir / f"{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
+            # stuff "solutions" into filename, b/w base and SID
+            soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
@@ -358,6 +363,20 @@ if __name__ == "__main__":
             print(e)
             timeouts.append((mark, sis_id, name))
         time.sleep(random.uniform(0.25, 0.5))
+
+    print(
+        dedent(
+            """
+
+            ## Viewing the PDF files as an instructor
+
+            Because of a Canvas bug, you (an instructor) may not be able to see these
+            attachments directly in Canvas -> Grades.  There are two workarounds noted
+            in https://github.com/instructure/canvas-lms/issues/1886
+            (Students have no such problem; they will be able to see the attachment).
+            """
+        )
+    )
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
