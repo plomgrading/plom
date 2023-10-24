@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -16,7 +16,12 @@ Also can customize the default form that django gives us.
 
 class CreateUserForm(UserCreationForm):
     username = forms.CharField(max_length=40, help_text="Username")
-    email = forms.EmailField(max_length=100, help_text="Email", required=False)
+    email = forms.EmailField(
+        max_length=100,
+        help_text="Email",
+        required=False,
+        widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
+    )
 
     def __init__(self, *args, **kwargs):
         super(CreateUserForm, self).__init__(*args, **kwargs)
@@ -42,7 +47,7 @@ class CreateScannersAndMarkersForm(forms.Form):
     num_users = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
-                "class": "form-control mb-1",
+                "class": "form-control mb-2",
                 "style": "max-width: 23rem; min-width: 4.5rem",
                 "min": 1,
                 "max": 100,

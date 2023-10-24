@@ -1,10 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
 
+from .signup_views.signup import (
+    Signup,
+    SignupSingleMarker,
+    SignupMultipleMarkers,
+    SignupSingleScanner,
+    SignupMultipleScanners,
+)
 import Authentication.views
 
 urlpatterns = [
@@ -32,17 +39,27 @@ urlpatterns = [
     ),
     path(
         "signup/",
-        Authentication.views.Signup.as_view(),
+        Signup.as_view(),
         name="signup",
     ),
     path(
+        "signup/scanner/",
+        SignupSingleScanner.as_view(),
+        name="signup_scanner",
+    ),
+    path(
         "signup/scanners/",
-        Authentication.views.SignupScanners.as_view(),
+        SignupMultipleScanners.as_view(),
         name="signup_scanners",
     ),
     path(
+        "signup/marker/",
+        SignupSingleMarker.as_view(),
+        name="signup_marker",
+    ),
+    path(
         "signup/markers/",
-        Authentication.views.SignupMarkers.as_view(),
+        SignupMultipleMarkers.as_view(),
         name="signup_markers",
     ),
     path(
