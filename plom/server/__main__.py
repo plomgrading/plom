@@ -172,7 +172,7 @@ def get_parser():
         dest="selfsigned",
         help="""
             Do not build self-signed SSL cert and key.  You will need to
-            provide plom-custom.key and plom-custom.cert in this case.
+            provide plom-custom.key and plom-custom.crt in this case.
         """,
     )
     spI.add_argument(
