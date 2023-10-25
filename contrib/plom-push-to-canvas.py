@@ -349,20 +349,20 @@ if __name__ == "__main__":
         except CanvasException as e:
             print(e)
             timeouts.append((pdf.name, sis_id, name))
-        time.sleep(random.uniform(0.25, 0.5))
+        time.sleep(random.uniform(0.1, 0.2))
         if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)
             except CanvasException as e:
                 print(e)
                 timeouts.append((soln_pdf.name, sis_id, name))
-            time.sleep(random.uniform(0.25, 0.5))
+            time.sleep(random.uniform(0.1, 0.2))
         try:
             sub.edit(submission={"posted_grade": mark})
         except CanvasException as e:
             print(e)
             timeouts.append((mark, sis_id, name))
-        time.sleep(random.uniform(0.25, 0.5))
+        time.sleep(random.uniform(0.1, 0.2))
 
     print(
         dedent(
@@ -380,13 +380,22 @@ if __name__ == "__main__":
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
-    else:
-        print(f"Done.  There were {len(timeouts)} timeouts:")
+        print("")
+        print("    sis_id    student name       filename/mark")
+        print("    --------------------------------------------")
+        # note dry_run co-ops the timeout structure
+        for thing, sis_id, name in timeouts:
+            print(f"    {sis_id}  {name} \t {thing}")
 
-    print("    sis_id   student name     filename/mark")
-    print("    --------------------------------------------")
-    for thing, sis_id, name in timeouts:
-        print(f"    {sis_id} {name} \t {thing}")
-    if not args.dry_run:
+    elif timeouts:
+        print(f"Done, but there were {len(timeouts)} timeouts:")
+        print("")
+        print("    sis_id    student name       filename/mark")
+        print("    --------------------------------------------")
+        for thing, sis_id, name in timeouts:
+            print(f"    {sis_id} {name} \t {thing}")
         print("  These should be uploaded manually, or rerun with only")
         print("  the failures placed in reassembled/")
+
+    else:
+        print("Done!  And there were no timeouts.")
