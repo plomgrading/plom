@@ -380,13 +380,22 @@ if __name__ == "__main__":
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
-    else:
-        print(f"Done.  There were {len(timeouts)} timeouts:")
+        print("")
+        print("    sis_id   student name     filename/mark")
+        print("    --------------------------------------------")
+        # note dry_run co-ops the timeout structure
+        for thing, sis_id, name in timeouts:
+            print(f"    {sis_id} {name} \t {thing}")
 
-    print("    sis_id   student name     filename/mark")
-    print("    --------------------------------------------")
-    for thing, sis_id, name in timeouts:
-        print(f"    {sis_id} {name} \t {thing}")
-    if not args.dry_run:
+    elif timeouts:
+        print(f"Done, but there were {len(timeouts)} timeouts:")
+        print("")
+        print("    sis_id   student name     filename/mark")
+        print("    --------------------------------------------")
+        for thing, sis_id, name in timeouts:
+            print(f"    {sis_id} {name} \t {thing}")
         print("  These should be uploaded manually, or rerun with only")
         print("  the failures placed in reassembled/")
+
+    else:
+        print("Done!  And there were no timeouts.")
