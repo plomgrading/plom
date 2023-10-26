@@ -564,7 +564,11 @@ parser.add_argument(
 parser.add_argument(
     "--dry-run",
     action="store_true",
-    help="Perform a dry-run, for example, don't download papers",
+    help="""
+        Perform a dry-run, for example, don't download papers.
+        This is a bit of a misnomer currently b/c it still irreversibly
+        configures the Plom server.
+    """,
 )
 parser.add_argument(
     "--dir",
