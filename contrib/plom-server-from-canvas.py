@@ -594,7 +594,12 @@ parser.add_argument(
     "--dir",
     type=str,
     action="store",
-    help="The local directory for the Plom Server files (prompts if omitted).",
+    help="""
+        The local directory for the Plom Server files (prompts if omitted).
+        Probably it should be empty.
+        A dry-run will populate this with files: you probably want to erase
+        it before calling this script.
+    """,
 )
 parser.add_argument(
     "--course",
