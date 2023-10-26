@@ -231,6 +231,7 @@ def configure_running_server(
         else:
             print("Trying plom-create uploadspec ...")
             subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+        print("Listing current users: will warn about scanner: ok, we will make")
         subprocess.check_call(["plom-create", "users"])
         print("Autogenerating users...")
         subprocess.check_call(
