@@ -777,12 +777,8 @@ if __name__ == "__main__":
     else:
         basedir = Path(args.dir)
 
-    if basedir.is_dir():
-        print(f'Using existing dir "{basedir}"')
-        # TODO: ensure empty or warn if somethings exist?
-    else:
-        print(f'Creating dir "{basedir}"')
-        basedir.mkdir(exist_ok=True)
+    print(f'Creating dir "{basedir}"')
+    basedir.mkdir(exist_ok=False)
 
     pp = assignment.points_possible
     print(f'\n"{assignment}" has "{pp}" points possible')
