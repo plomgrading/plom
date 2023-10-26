@@ -207,6 +207,9 @@ def configure_running_server(
 ) -> None:
     """Configure a fresh Plom server based on Canvas info.
 
+    Server info is taken from the environment variables PLOM_SERVER
+    and PLOM_MANAGER_PASSWORD.
+
     Args:
         course:
         section:
@@ -392,15 +395,26 @@ def get_submissions(
 
 
 def scan_submissions(
-    num_questions,
+    num_questions: int,
     *,
-    upload_dir,
-    server=None,
-    scan_pwd=None,
-    manager_pwd=None,
+    upload_dir: Union[str, Path],
+    server: Optional[str] = None,
+    scan_pwd: Optional[str] = None,
+    manager_pwd: Optional[str] = None,
     page_question_map_params={},
 ):
-    """Apply `plom-scan` to all the pdfs we've just pulled from canvas."""
+    """Apply `plom-scan` to all the pdfs we've just pulled from canvas.
+
+    Args:
+        num_questions: how many questions are there, used to
+            hack the page to question map.
+
+    Keywork Args:
+        upload_dir: temporary workspace.
+        server: taken from env var PLOM_SERVER if omitted.
+        manager_pwd: taken from env var PLOM_MANAGER_PASSWORD if omitted.
+        scan_pwd: taken from env var PLOM_SCAN_PASSWORD if omitted.
+    """
     upload_dir = Path(upload_dir)
     errors = []
 
@@ -408,10 +422,8 @@ def scan_submissions(
         scan_pwd = os.environ["PLOM_SCAN_PASSWORD"]
     if not manager_pwd:
         manager_pwd = os.environ["PLOM_MANAGER_PASSWORD"]
-    # PDL - Bad idea! Read from config file instead!
-    # CBM: maybe, but we also want to support remote servers (see TODO in docstring)
     if not server:
-        server = os.environ["PLOM_SERVER"]  # Remember, we set this env var earlier.
+        server = os.environ["PLOM_SERVER"]
 
     try:
         mm = start_messenger(server, manager_pwd)
