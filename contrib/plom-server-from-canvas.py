@@ -197,7 +197,13 @@ def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None
 
 
 def configure_running_server(
-    course, section, assignment, marks: List[int], *, work_dir="."
+    course,
+    section,
+    assignment,
+    marks: List[int],
+    *,
+    work_dir=".",
+    dry_run: bool = False,
 ) -> None:
     """Configure a fresh Plom server based on Canvas info.
 
@@ -211,6 +217,7 @@ def configure_running_server(
         work_dir: where to download the classlist and other incidental files.
             Note the ``userListRaw.csv`` will be left in this directory, as
             well as a copy of your classlist, including student names and IDs.
+        dry_run: download stuff but don't actually configure the server.
     """
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
     # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
@@ -222,15 +229,21 @@ def configure_running_server(
     with working_directory(work_dir):
         print("Trying plom-create validatespec ...")
         subprocess.check_call(["plom-create", "validatespec", "canvasSpec.toml"])
-        print("Trying plom-create uploadspec ...")
-        subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
+        if dry_run:
+            print("This is a DRY RUN so not uploading spec")
+        else:
+            print("Trying plom-create uploadspec ...")
+            subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
         subprocess.check_call(["plom-create", "users"])
         print("Autogenerating users...")
         subprocess.check_call(
             ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
         )
-        print("Processing userlist...")
-        subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
+        if dry_run:
+            print("This is a DRY RUN so not processing userlist")
+        else:
+            print("Processing userlist...")
+            subprocess.check_call(["plom-create", "users", "userListRaw.csv"])
 
     print("Temporarily exporting scanner password...")
     pwds = {}
@@ -239,6 +252,10 @@ def configure_running_server(
             pwds[row[0]] = row[1]
     os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
     del pwds
+
+    if dry_run:
+        print("This is a DRY RUN so not pushing classlist nor building database")
+        return
 
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
@@ -565,9 +582,12 @@ parser.add_argument(
     "--dry-run",
     action="store_true",
     help="""
-        Perform a dry-run, for example, don't download papers.
-        This is a bit of a misnomer currently b/c it still irreversibly
-        configures the Plom server.
+        Perform a dry-run, for example, don't download papers
+        nor configure the Plom server.
+        Some files will still be downloaded and appear in the folder
+        specified by `--dir`.
+        Unless `--no-init` is passed, a local server will still be
+        created.
     """,
 )
 parser.add_argument(
@@ -788,20 +808,22 @@ if __name__ == "__main__":
         # TODO: think about this
         servernamewithport = os.environ.get("PLOM_SERVER")
 
-    # TODO: note this happens EVEN IF dry-run, which is likely surprising behaviour
-    configure_running_server(course, section, assignment, args.marks, work_dir=basedir)
+    configure_running_server(
+        course, section, assignment, args.marks, work_dir=basedir, dry_run=args.dry_run
+    )
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
         get_submissions(assignment, dry_run=args.dry_run, work_dir=basedir)
 
-        print("scanning submissions...")
-        scan_submissions(
-            len(args.marks),
-            server=servernamewithport,
-            upload_dir=(basedir / "upload"),
-            page_question_map_params=page_question_map_params,
-        )
+        if not args.dry_run:
+            print("scanning submissions...")
+            scan_submissions(
+                len(args.marks),
+                server=servernamewithport,
+                upload_dir=(basedir / "upload"),
+                page_question_map_params=page_question_map_params,
+            )
 
     print("\nPasswords for quick reference (gulp):")
     tmp1 = os.environ["PLOM_MANAGER_PASSWORD"]
