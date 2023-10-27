@@ -5,8 +5,12 @@
 -->
 {% extends "base/base.html" %}
 {% load static %}
-{% block title %}Sign Up - Manager{% endblock title %}
-{% block page_heading %}Sign Up - Manager{% endblock page_heading %}
+{% block title %}
+    Sign Up - Manager
+{% endblock title %}
+{% block page_heading %}
+    Sign Up - Manager
+{% endblock page_heading %}
 {% block main_content %}
     <form method="post" action="">
         {% csrf_token %}
