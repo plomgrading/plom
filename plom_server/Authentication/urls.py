@@ -25,16 +25,6 @@ urlpatterns = [
         name="signup_manager",
     ),
     path(
-        "reset/<slug:uidb64>/<slug:token>/",
-        Authentication.views.SetPassword.as_view(),
-        name="password_reset",
-    ),
-    path(
-        "reset/done/",
-        Authentication.views.SetPasswordComplete.as_view(),
-        name="password_reset_complete",
-    ),
-    path(
         "signup/single/",
         SingleUserSignUp.as_view(),
         name="signup_single",
@@ -43,6 +33,16 @@ urlpatterns = [
         "signup/multiple/",
         MultiUsersSignUp.as_view(),
         name="signup_multiple",
+    ),
+    path(
+        "reset/<slug:uidb64>/<slug:token>/",
+        Authentication.views.SetPassword.as_view(),
+        name="password_reset",
+    ),
+    path(
+        "reset/done/",
+        Authentication.views.SetPasswordComplete.as_view(),
+        name="password_reset_complete",
     ),
     path(
         "passwordresetlinks/",
