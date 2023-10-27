@@ -6,11 +6,8 @@
 from django.urls import path
 
 from .signup_views.signup import (
-    Signup,
-    SignupSingleMarker,
-    SignupMultipleMarkers,
-    SignupSingleScanner,
-    SignupMultipleScanners,
+    SingleUserSignUp,
+    MultiUsersSignUp,
 )
 import Authentication.views
 
@@ -38,29 +35,14 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path(
-        "signup/",
-        Signup.as_view(),
-        name="signup",
+        "signup/single/",
+        SingleUserSignUp.as_view(),
+        name="signup_single",
     ),
     path(
-        "signup/scanner/",
-        SignupSingleScanner.as_view(),
-        name="signup_scanner",
-    ),
-    path(
-        "signup/scanners/",
-        SignupMultipleScanners.as_view(),
-        name="signup_scanners",
-    ),
-    path(
-        "signup/marker/",
-        SignupSingleMarker.as_view(),
-        name="signup_marker",
-    ),
-    path(
-        "signup/markers/",
-        SignupMultipleMarkers.as_view(),
-        name="signup_markers",
+        "signup/multiple/",
+        MultiUsersSignUp.as_view(),
+        name="signup_multiple",
     ),
     path(
         "passwordresetlinks/",

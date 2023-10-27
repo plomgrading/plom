@@ -18,10 +18,9 @@ from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 
 from .services import AuthenticationServices
-from .signupForm import CreateUserForm, CreateScannersAndMarkersForm
+from .form.signupForm import CreateUserForm
 from Base.base_group_views import (
     AdminRequiredView,
-    ManagerRequiredView,
     RoleRequiredView,
 )
 
