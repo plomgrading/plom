@@ -15,7 +15,7 @@ class SingleUserSignUp(ManagerRequiredView):
     def get(self, request):
         context = {"form": self.form, "current_page": "single"}
         return render(request, self.template_name, context)
-    
+
     def post(self, request):
         form = CreateUserForm(request.POST)
         if form.is_valid():
@@ -55,7 +55,7 @@ class MultiUsersSignUp(ManagerRequiredView):
     def get(self, request):
         context = {"form": self.form, "current_page": "multiple"}
         return render(request, self.template_name, context)
-    
+
     def post(self, request):
         form = CreateMultiUsersForm(request.POST)
 

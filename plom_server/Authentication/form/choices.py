@@ -1,8 +1,8 @@
 USER_TYPE_CHOICES = [
-        ("manager", "Manager"),
-        ("marker", "Marker"),
-        ("scanner", "Scanner")
-    ]
+    ("manager", "Manager"),
+    ("marker", "Marker"),
+    ("scanner", "Scanner"),
+]
 
 USERNAME_CHOICES = [
     ("basic", "Basic numbered usernames"),

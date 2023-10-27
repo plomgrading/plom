@@ -8,7 +8,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from .choices import (USERNAME_CHOICES, USER_TYPE_CHOICES)
+from .choices import USERNAME_CHOICES, USER_TYPE_CHOICES
+
 """
 This is the collection of forms to be use in a website.
 Also can customize the default form that django gives us.
