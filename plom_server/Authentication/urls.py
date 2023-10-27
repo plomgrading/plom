@@ -8,6 +8,7 @@ from django.urls import path
 from .signup_views.signup import (
     SingleUserSignUp,
     MultiUsersSignUp,
+    SignupManager,
 )
 import Authentication.views
 
@@ -21,7 +22,7 @@ urlpatterns = [
     # signup path
     path(
         "signup/manager/",
-        Authentication.views.SignupManager.as_view(),
+        SignupManager.as_view(),
         name="signup_manager",
     ),
     path(

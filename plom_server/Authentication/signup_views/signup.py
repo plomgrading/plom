@@ -5,7 +5,7 @@ from django.shortcuts import render
 
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
-from Base.base_group_views import ManagerRequiredView
+from Base.base_group_views import ManagerRequiredView, AdminRequiredView
 
 
 class SingleUserSignUp(ManagerRequiredView):
@@ -90,5 +90,41 @@ class MultiUsersSignUp(ManagerRequiredView):
                 "current_page": "multiple",
                 "links": password_reset_links,
                 "created": True,
+            }
+            return render(request, self.template_name, context)
+
+
+class SignupManager(AdminRequiredView):
+    template_name = "Authentication/manager_signup.html"
+    activation_link = "Authentication/manager_activation_link.html"
+    form = CreateUserForm()
+
+    def get(self, request):
+        context = {"form": self.form}
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            user_email = form.cleaned_data.get("email")
+            user_type = form.cleaned_data.get("user_types")
+
+            created_username = AuthenticationServices().create_user_and_add_to_group(
+                username=username, group_name=user_type, email=user_email
+            )
+            usernames_list = list(created_username.split(" "))
+            password_reset_links = (
+                AuthenticationServices().generate_password_reset_links_dict(
+                    request=request, username_list=usernames_list
+                )
+            )
+
+            context = {"user_email": user_email, "links": password_reset_links}
+            return render(request, self.activation_link, context)
+        else:
+            context = {
+                "form": form,
+                "error": form.errors["username"][0],
             }
             return render(request, self.template_name, context)

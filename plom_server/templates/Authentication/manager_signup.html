@@ -5,40 +5,26 @@
 -->
 {% extends "base/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Web Plom - Manager Sign Up
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block main_content %}
-            <h1>Manager Sign Up</h1>
-            <form method="post" action="">
-                {% csrf_token %}
-                {{ form.username.label }}
-                {{ form.username }}
-                <div style="font-size: smaller">
-                    <p>
-                        Click <b>Generate Username</b> to automatically generate username
-                    </p>
-                </div>
-                {{ form.email.label }}
-                {{ form.email }}
-                <br>
-                <br>
-                <input class="btn btn-primary" type="submit" name="Create User">
-                <br>
-            </form>
-            <button class="btn btn-primary"
-                    id="generate-username"
-                    style="margin-top: 3px">Generate Username</button>
-            <p style="color: red">{{ error }}</p>
-            <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
-        {% endblock main_content %}
-    </body>
-</html>
+{% block title %}Sign Up - Manager{% endblock %}
+{% block page_heading %}Sign Up - Manager{% endblock %}
+{% block main_content %}
+    <form method="post" action="">
+        {% csrf_token %}
+        {{ form.user_types.label }}
+        {{ form.user_types }}
+        <p class="mt-3">
+            {{ form.username.label }}
+            {{ form.username }}
+            <button class="btn btn-secondary btn-sm" type="button" id="generate-username">Autogenerate</button>
+        </p>
+        <p>
+            {{ form.email.label }}
+            {{ form.email }}
+        </p>
+        <p>
+            <input class="btn btn-primary" type="submit" value="Create User">
+        </p>
+    </form>
+    <p class="text-danger">{{ error }}</p>
+    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+{% endblock %}
