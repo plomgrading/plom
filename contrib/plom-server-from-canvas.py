@@ -404,7 +404,7 @@ def scan_submissions(
         num_questions: how many questions are there, used to
             hack the page to question map.
 
-    Keywork Args:
+    Keyword Args:
         upload_dir: temporary workspace.
         server: taken from env var PLOM_SERVER if omitted.
         manager_pwd: taken from env var PLOM_MANAGER_PASSWORD if omitted.
