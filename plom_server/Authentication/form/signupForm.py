@@ -8,7 +8,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from .choices import USERNAME_CHOICES, USER_TYPE_CHOICES
+from .choices import (
+    USERNAME_CHOICES,
+    USER_TYPE_WITH_MANAGER_CHOICES,
+    USER_TYPE_WITHOUT_MANAGER_CHOICES,
+)
 
 """
 This is the collection of forms to be use in a website.
@@ -27,8 +31,10 @@ class CreateUserForm(UserCreationForm):
 
     user_types = forms.CharField(
         label="What user type would you like to create?",
-        widget=forms.RadioSelect(choices=USER_TYPE_CHOICES, attrs={"class": "me-2"}),
-        initial="manager",
+        widget=forms.RadioSelect(
+            choices=USER_TYPE_WITH_MANAGER_CHOICES, attrs={"class": "me-2"}
+        ),
+        initial="marker",
     )
 
     def __init__(self, *args, **kwargs):
@@ -65,8 +71,10 @@ class CreateMultiUsersForm(forms.Form):
 
     user_types = forms.CharField(
         label="What user type would you like to create?",
-        widget=forms.RadioSelect(choices=USER_TYPE_CHOICES, attrs={"class": "me-2"}),
-        initial="manager",
+        widget=forms.RadioSelect(
+            choices=USER_TYPE_WITHOUT_MANAGER_CHOICES, attrs={"class": "me-2"}
+        ),
+        initial="marker",
     )
 
     def clean(self):
