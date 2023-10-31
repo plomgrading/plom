@@ -5,8 +5,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
-from typing import Dict, Optional, Any
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
@@ -216,11 +215,11 @@ def get_n_pages() -> int:
 
 
 @transaction.atomic
-def get_question_mark(question_one_index) -> int:
+def get_question_mark(question_one_index: Union[str, int]) -> int:
     """Get the max mark of a given question.
 
     Args:
-        question_one_index (str/int): question number, indexed from 1.
+        question_one_index: question index, indexed from 1.
 
     Returns:
         The maximum mark.
@@ -253,6 +252,16 @@ def get_question_label(question_one_index) -> str:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.label
+
+
+@transaction.atomic
+def get_question_labels() -> List[str]:
+    """Get the question labels in a list.
+
+    Returns:
+        The question labels.
+    """
+    return [get_question_label(i) for i in range(1, get_n_questions() + 1)]
 
 
 @transaction.atomic
