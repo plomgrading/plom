@@ -32,9 +32,9 @@
                             </div>
                         </div>
                     </th>
-                    {% for qi,ql in tmp_question_labels %}
+                    {% for qi, qlabel in question_labels %}
                         <th>
-                            {{ ql }}
+                            {{ qlabel }}
                             <div class="progress"
                                  role="progressbar"
                                  aria-label="id complete percentage"
@@ -109,22 +109,21 @@
                         <a class="btn btn-primary w-100"
                            href="{% url 'progress_identify_home' %}">ID progress</a>
                     </td>
-                    {% for qi,ql in tmp_question_labels %}
+                    {% for qi, qlabel in question_labels %}
                         <td>
                             <a class="btn btn-primary w-100"
-                               href="{% url 'progress_mark_version_compare' qi %}">{{ ql }} statistics</a>
+                               href="{% url 'progress_mark_version_compare' qi %}">{{ qlabel }} statistics</a>
                         </td>
                     {% endfor %}
                 </tr>
                 <tr>
                     <td></td>
                     <td></td>
-                    <!-- "qi, qlabel" doesn't work here: not sure why! -->
-                    {% for qi,ql in tmp_question_labels %}
+                    {% for qi, qlabel in question_labels %}
                         <td>
                             <a class="btn btn-info w-100"
                                href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">
-                                {{ ql }} annotations
+                                {{ qlabel }} annotations
                             </a>
                         </td>
                     {% endfor %}

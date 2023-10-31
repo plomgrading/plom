@@ -119,8 +119,8 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
             id_percent_complete = 0
             mark_percent_complete = {q: 0 for q, n in task_counts["mk"].items()}
 
-        # Just experimenting with passing unpacked lists
-        tmp = [
+        # unpack the dict for pairs of (index, label)
+        question_labels = [
             (qi, label)
             for qi, label in SpecificationService.get_question_labels_map().items()
         ]
@@ -128,8 +128,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
         context.update(
             {
                 "question_indices": question_indices,
-                "question_labels": SpecificationService.get_question_labels_map(),
-                "tmp_question_labels": tmp,
+                "question_labels": question_labels,
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,
                 "marking_task_overview": marking_task_overview,
