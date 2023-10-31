@@ -2,9 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 
 from .signup import (
-    Signup,
-    SignupSingleMarker,
-    SignupMultipleMarkers,
-    SignupSingleScanner,
-    SignupMultipleScanners,
+    SingleUserSignUp,
+    MultiUsersSignUp,
+    SignupManager,
 )

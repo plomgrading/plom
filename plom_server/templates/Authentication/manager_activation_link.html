@@ -25,10 +25,12 @@
             <p>
                 Email address: <b>{{ user_email }}</b>
             </p>
-            <p style="display: inline">{{ link }}</p>
-            <button class="btn" id="copy-btn" style="background-color: {{ navbar_colour }}; color: white" data-passwordResetLink={{ link }}>
-                Copy
-            </button>
+            {% for username, link in links.items %}
+                <p style="display: inline">{{ link }}</p>
+                <button class="btn btn-primary" id="copy-btn" data-passwordResetLink={{ link }}>
+                    Copy
+                </button>
+            {% endfor %}
             <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
         {% endblock main_content %}
     </body>
