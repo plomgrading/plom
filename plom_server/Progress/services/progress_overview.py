@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Dict, Union, List
+from typing import Any, Dict, Union, List, Optional
 
 from django.db import transaction
 
@@ -53,31 +53,33 @@ class ProgressOverviewService:
         return marking_info
 
     @transaction.atomic
-    def get_task_overview(self) -> Dict:
-        task_overview = {}
+    def get_task_overview(self) -> tuple[Dict, Dict]:
+        id_task_overview: Dict[int, Optional[Dict[str, Any]]] = {}
+        marking_task_overview: Dict[int, Dict[int, Optional[Dict[str, Any]]]] = {}
         question_numbers = [
             q + 1 for q in range(SpecificationService.get_n_questions())
         ]
+
         id_info = self.get_id_task_status()
         marking_info = self.get_marking_task_status()
-        # set up the dict carefully for papers with potentially missing tasks
-        for X in id_info:
-            task_overview[X["paper"]] = {
-                "id": None,
-                "mk": {qn: None for qn in question_numbers},
-            }
-        for X in marking_info:
-            task_overview[X["paper"]] = {
-                "id": None,
-                "mk": {qn: None for qn in question_numbers},
-            }
-        # now put data into that dict
+        # get all the paper numbers that have **some** task
+        papers_with_id_task = [X["paper"] for X in id_info]
+        papers_with_marking_task = [X["paper"] for X in marking_info]
+        papers_with_some_task = list(
+            set(papers_with_id_task + papers_with_marking_task)
+        )
+        # now set up the over-view dicts so that we know about any missing tasks
+        for paper_number in papers_with_some_task:
+            id_task_overview[paper_number] = None
+            marking_task_overview[paper_number] = {qn: None for qn in question_numbers}
+        # now put the data into those dictionaries
+        # we will have Nones where the tasks are missing
         for dat in id_info:
-            task_overview[dat["paper"]]["id"] = dat
+            id_task_overview[dat["paper"]] = dat
         for dat in marking_info:
-            task_overview[dat["paper"]]["mk"][dat["question"]] = dat
+            marking_task_overview[dat["paper"]][dat["question"]] = dat
 
-        return task_overview
+        return (id_task_overview, marking_task_overview)
 
     @transaction.atomic
     def get_completed_task_counts(self) -> Dict:

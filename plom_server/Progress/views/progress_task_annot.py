@@ -98,14 +98,16 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
 class AllTaskOverviewView(LeadMarkerOrManagerView):
     def get(self, request):
-        question_numbers = [
+        question_indices = [
             q + 1 for q in range(SpecificationService.get_n_questions())
         ]
 
         context = self.build_context()
-        pos = ProgressOverviewService()  # excellent acronym work.
-        task_overview = pos.get_task_overview()
-        n_papers = len(task_overview)
+        pos = ProgressOverviewService()  # acronym excellence
+        id_task_overview, marking_task_overview = pos.get_task_overview()
+        papers_with_a_task = list(id_task_overview.keys())
+        n_papers = len(papers_with_a_task)
+
         task_counts = pos.get_completed_task_counts()
         # convert completed counts to percentages for progress bars
         if n_papers > 0:
@@ -123,8 +125,10 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         context.update(
             {
-                "question_numbers": question_numbers,
-                "task_overview": task_overview,
+                "question_indices": question_indices,
+                "papers_with_a_task": papers_with_a_task,
+                "id_task_overview": id_task_overview,
+                "marking_task_overview": marking_task_overview,
                 "n_papers": n_papers,
                 "completed_task_counts": task_counts,
                 "percent_complete": percent_complete,
