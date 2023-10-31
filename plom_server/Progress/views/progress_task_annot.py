@@ -124,10 +124,10 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
             }
 
         # Just experimenting with passing unpacked lists
-        tmp = (
+        tmp = [
             (qi, label)
             for qi, label in SpecificationService.get_question_labels_map().items()
-        )
+        ]
 
         context.update(
             {
