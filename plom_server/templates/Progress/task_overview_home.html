@@ -24,10 +24,10 @@
                         <div class="progress"
                              role="progressbar"
                              aria-label="id complete percentage"
-                             aria-valuenow="{{ percent_complete.id }}"
+                             aria-valuenow="{{ id_percent_complete }}"
                              aria-valuemin="0"
                              aria-valuemax="100">
-                            <div class="progress-bar" style="width: {{ percent_complete.id }}%">
+                            <div class="progress-bar" style="width: {{ id_percent_complete }}%">
                                 {{ completed_task_counts.id }} / {{ n_papers }}
                             </div>
                         </div>
@@ -38,11 +38,11 @@
                             <div class="progress"
                                  role="progressbar"
                                  aria-label="id complete percentage"
-                                 aria-valuenow="{{ percent_complete.mk|get_item:qi }}"
+                                 aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
                                  aria-valuemin="0"
                                  aria-valuemax="100">
                                 <div class="progress-bar"
-                                     style="width: {{ percent_complete.mk|get_item:qi }}%">
+                                     style="width: {{ mark_percent_complete|get_item:qi }}%">
                                     {{ completed_task_counts.mk|get_item:qi }} / {{ n_papers }}
                                 </div>
                             </div>

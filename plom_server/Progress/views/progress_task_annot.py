@@ -111,17 +111,13 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
         task_counts = pos.get_completed_task_counts()
         # convert completed counts to percentages for progress bars
         if n_papers > 0:
-            percent_complete = {
-                "id": round(100 * task_counts["id"] / n_papers),
-                "mk": {
-                    q: round(100 * n / n_papers) for q, n in task_counts["mk"].items()
-                },
+            id_percent_complete = round(100 * task_counts["id"] / n_papers)
+            mark_percent_complete = {
+                q: round(100 * n / n_papers) for q, n in task_counts["mk"].items()
             }
         else:
-            percent_complete = {
-                "id": 0,
-                "mk": {q: 0 for q, n in task_counts["mk"].items()},
-            }
+            id_percent_complete = 0
+            mark_percent_complete = {q: 0 for q, n in task_counts["mk"].items()}
 
         # Just experimenting with passing unpacked lists
         tmp = [
@@ -139,7 +135,8 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "marking_task_overview": marking_task_overview,
                 "n_papers": n_papers,
                 "completed_task_counts": task_counts,
-                "percent_complete": percent_complete,
+                "id_percent_complete": id_percent_complete,
+                "mark_percent_complete": mark_percent_complete,
             }
         )
         return render(request, "Progress/task_overview_home.html", context=context)
