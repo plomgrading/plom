@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2022 Andrew Rechnitzer
 
 from pytest import raises
@@ -365,3 +365,22 @@ def test_repeated_papernumbers(tmpdir):
     assert len(warn_err) == len(expected)
     for X in expected:
         assert X in warn_err
+
+
+def test_leading_zero_sid(tmp_path):
+    vlad = PlomClasslistValidator()
+    foo = tmp_path / "foo.csv"
+    with open(foo, "w") as f:
+        f.write('"ID","name","paper_number"\n')
+        f.write('12345677,"Doe, Ursula",\n')
+        f.write('00123400,"Doe, Carol",\n')
+        f.write('12345678,"Doe, Max",\n')
+    assert vlad.check_is_non_canvas_csv(foo)
+    df = clean_non_canvas_csv(foo)
+    assert "id" in df.columns
+    success, warn_err = vlad.validate_csv(foo, spec=None)
+    assert success
+    assert warn_err == []
+    # and 00123400 still in there!
+    d = df["id"].to_dict()
+    assert "00123400" in d.values()
