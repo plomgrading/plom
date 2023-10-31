@@ -4,5 +4,4 @@
 from .signup import (
     SingleUserSignUp,
     MultiUsersSignUp,
-    SignupManager,
 )
