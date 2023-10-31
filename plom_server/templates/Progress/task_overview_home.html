@@ -109,22 +109,23 @@
                         <a class="btn btn-primary w-100"
                            href="{% url 'progress_identify_home' %}">ID progress</a>
                     </td>
-                    {% for qi in question_indices %}
+                    {% for qi, qlabel in tmp_question_labels %}
                         <td>
                             <a class="btn btn-primary w-100"
-                               href="{% url 'progress_mark_version_compare' qi %}">{{ question_labels|get_item:qi }}
-                            statistics</a>
+                               href="{% url 'progress_mark_version_compare' qi %}">{{ qlabel }} statistics</a>
                         </td>
                     {% endfor %}
                 </tr>
                 <tr>
                     <td></td>
                     <td></td>
+                    <!-- "qi, qlabel" doesn't work here: not sure why! -->
                     {% for qi in question_indices %}
                         <td>
                             <a class="btn btn-info w-100"
-                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">{{ question_labels|get_item:qi }}
-                            annotations</a>
+                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">
+                                {{ question_labels|get_item:qi }} annotations
+                            </a>
                         </td>
                     {% endfor %}
                 </tr>

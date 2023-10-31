@@ -123,10 +123,17 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "mk": {q: 0 for q, n in task_counts["mk"].items()},
             }
 
+        # Just experimenting with passing unpacked lists
+        tmp = (
+            (qi, label)
+            for qi, label in SpecificationService.get_question_labels_map().items()
+        )
+
         context.update(
             {
                 "question_indices": question_indices,
                 "question_labels": SpecificationService.get_question_labels_map(),
+                "tmp_question_labels": tmp,
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,
                 "marking_task_overview": marking_task_overview,
