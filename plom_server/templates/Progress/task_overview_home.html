@@ -34,7 +34,7 @@
                     </th>
                     {% for qi in question_indices %}
                         <th>
-                            Q.{{ qi }}
+                            {{ question_labels|get_item:qi }}
                             <div class="progress"
                                  role="progressbar"
                                  aria-label="id complete percentage"
@@ -112,7 +112,8 @@
                     {% for qi in question_indices %}
                         <td>
                             <a class="btn btn-primary w-100"
-                               href="{% url 'progress_mark_version_compare' qi %}">Q.{{ qi }} statistics</a>
+                               href="{% url 'progress_mark_version_compare' qi %}">{{ question_labels|get_item:qi }}
+                            statistics</a>
                         </td>
                     {% endfor %}
                 </tr>
@@ -122,7 +123,8 @@
                     {% for qi in question_indices %}
                         <td>
                             <a class="btn btn-info w-100"
-                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">Q.{{ qi }} annotations</a>
+                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">{{ question_labels|get_item:qi }}
+                            annotations</a>
                         </td>
                     {% endfor %}
                 </tr>
@@ -134,6 +136,5 @@
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
   })
-  
     </script>
 {% endblock main_content %}

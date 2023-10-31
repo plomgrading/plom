@@ -126,6 +126,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
         context.update(
             {
                 "question_indices": question_indices,
+                "question_labels": SpecificationService.get_question_labels_map(),
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,
                 "marking_task_overview": marking_task_overview,

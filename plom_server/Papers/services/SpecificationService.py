@@ -251,6 +251,10 @@ def get_question_label(question_one_index) -> str:
         ObjectDoesNotExist: no question exists with the given index.
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
+    # TODO: is this the right place for this hack?  Its not documented
+    # to return None so it seemed like a bug to me...
+    if question.label is None:
+        return f"Q{question_one_index}"
     return question.label
 
 
