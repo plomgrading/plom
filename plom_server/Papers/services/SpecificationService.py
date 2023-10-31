@@ -259,9 +259,20 @@ def get_question_labels() -> List[str]:
     """Get the question labels in a list.
 
     Returns:
-        The question labels.
+        The question labels in a list.
     """
     return [get_question_label(i) for i in range(1, get_n_questions() + 1)]
+
+
+@transaction.atomic
+def get_question_labels_map() -> Dict[int, str]:
+    """Get the question labels as a mapping from unit-indexed question indices.
+
+    Returns:
+        The question labels as a dictionary mapping from unit-indexed
+        question indices.
+    """
+    return {i: get_question_label(i) for i in range(1, get_n_questions() + 1)}
 
 
 @transaction.atomic
