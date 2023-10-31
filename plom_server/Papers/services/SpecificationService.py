@@ -35,9 +35,11 @@ def load_spec_from_dict(
     Will call the SpecSerializer on the loaded TOML string and validate.
 
     Args:
-        pathname (pathlib.Path or string): the filename on disk.
-        update_staging (bool): if true, update the staging specification (mainly for UI purposes)
-        public_code (str | None): pass a manually specified public code (mainly for unit testing)
+        spec_dict:
+
+    Keyword Args:
+        update_staging: if true, update the staging specification (mainly for UI purposes)
+        public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
         Specification: saved test spec instance.
@@ -73,7 +75,7 @@ def load_spec_from_toml(
 
 
 @transaction.atomic
-def is_there_a_spec():
+def is_there_a_spec() -> bool:
     """Has a test-specification been uploaded to the database."""
     return Specification.objects.count() == 1
 
@@ -130,7 +132,7 @@ def store_validated_spec(validated_spec: Dict) -> None:
     """Takes the validated test specification and stores it in the db.
 
     Args:
-        validated_spec (dict): A dictionary containing a validated test
+        validated_spec: A dictionary containing a validated test
             specification.
     """
     serializer = SpecSerializer()
@@ -238,11 +240,12 @@ def n_pages_for_question(question_one_index) -> int:
 
 
 @transaction.atomic
-def get_question_label(question_one_index) -> str:
+def get_question_label(question_one_index: Union[str, int]) -> str:
     """Get the question label from its one-index.
 
     Args:
-        question_one_index (str | int): question number indexed from 1.
+        question_one_index: question number indexed from 1.
+            TODO: does it really accept string input?
 
     Returns:
         The question label.
