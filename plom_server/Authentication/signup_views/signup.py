@@ -5,10 +5,10 @@ from django.shortcuts import render
 
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
-from Base.base_group_views import ManagerRequiredView, AdminRequiredView
+from Base.base_group_views import ManagerRequiredView
 
 
-class SingleUserSignUp(AdminRequiredView, ManagerRequiredView):
+class SingleUserSignUp(ManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
     form = CreateUserForm()
 
