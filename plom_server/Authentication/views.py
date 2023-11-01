@@ -179,51 +179,6 @@ class LogoutView(View):
         return redirect("login")
 
 
-# Signup Manager
-class SignupManager(AdminRequiredView):
-    template_name = "Authentication/manager_signup.html"
-    activation_link = "Authentication/manager_activation_link.html"
-    form = CreateUserForm()
-
-    def get(self, request):
-        context = {"form": self.form}
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        form = CreateUserForm(request.POST)
-        username = request.POST.get("username")
-        exist_username = User.objects.filter(username__iexact=username)
-        context = {}
-        if form.is_valid() and not exist_username.exists():
-            user = form.save()
-            user.refresh_from_db()
-            user.profile.email = form.cleaned_data.get("email")
-            group = Group.objects.get(name="manager")
-            user.groups.add(group)
-            # user can't log in until the link is confirmed
-            user.is_active = False
-            user.save()
-            link = AuthenticationServices().generate_link(request, user)
-            context.update(
-                {
-                    "user_email": user.profile.email,
-                    "link": link,
-                }
-            )
-            return render(request, self.activation_link, context)
-        else:
-            if exist_username.exists():
-                context.update(
-                    {
-                        "form": self.form,
-                        "error": "A user with that username already exists.",
-                    }
-                )
-                return render(request, self.template_name, context)
-            context.update({"form": self.form, "error": form.errors})
-            return render(request, self.template_name, context)
-
-
 class PasswordResetLinks(AdminRequiredView):
     template_name = "Authentication/regenerative_links.html"
     activation_link = "Authentication/manager_activation_link.html"
