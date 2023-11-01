@@ -109,6 +109,15 @@ def get_server_name(server_dir):
     return servernamewithport
 
 
+def get_assignment_name(basedir):
+    """
+    Return long name of assignment, read from the canvasSpec.toml file.
+    """
+    with open(basedir / "canvasSpec.toml", "rb") as f:
+        configdata = tomllib.load(f)
+    return f"{configdata['longName']}"
+
+
 def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> None:
     """
     (assignment): a canvasapi assignment object
@@ -805,7 +814,11 @@ if __name__ == "__main__":
     print(f"  manager: {tmp1}")
     print(f"  scanner: {tmp2}")
 
-    print("\nAll ready after {:6.1f} seconds.\n".format(time.time() - starttime))
+    print("\n==============================================")
+    print("  PLOM server for activity {:s}".format(get_assignment_name(basedir)))
+    print("  now running on {:s}".format(servernamewithport))
+    print("  (Setup took {:5.1f} seconds.)\n".format(time.time() - starttime))
+    print("==============================================")
 
     if args.init:
         input("Press enter when you want to stop the server...")
