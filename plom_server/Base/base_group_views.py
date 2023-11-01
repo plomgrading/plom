@@ -32,6 +32,12 @@ class ManagerRequiredView(RoleRequiredView):
     group_required = ["manager"]
 
 
+class AdminOrManagerRequiredView(RoleRequiredView):
+    """A base class view for admin and managers."""
+
+    group_required = ["admin", "manager"]
+
+
 class ScannerRequiredView(RoleRequiredView):
     """A class view for scanners."""
 
