@@ -49,27 +49,23 @@
                  class="d-flex flex-column flex-shrink-0 p-3 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
                  style="width: 13.75rem">
                 <!-- Plom logo-->
-                <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                <a class="navbar-brand nav-link mb-2" href="{% url 'home' %}">
                     <img class="img-fluid"
                          src="{% static 'plomLogo.png' %}"
                          style="max-width: 8rem">
                 </a>
-                <p class="mb-0 mt-2">
-                    <b>
-                        {% if request.user.first_name %}
-                            {{ request.user.first_name }}
-                        {% else %}
-                            {{ request.user.username.lower }}
-                        {% endif %}
-                    </b>
-                </p>
-                <hr>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+                        <a class="nav-link" href="{% url 'profile' %}">
+                            {% if request.user.first_name %}
+                                {{ request.user.first_name }}
+                            {% else %}
+                                {{ request.user.username.lower }}
+                            {% endif %}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                        <a class="nav-link" href="{% url 'logout' %}">Log out</a>
                     </li>
                     {% if user_is_admin %}
                         <li class="nav-item">
