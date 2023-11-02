@@ -1876,7 +1876,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
                    <item>
                     <widget class="QPushButton" name="refreshIDPredictionsB">
                      <property name="text">
-                      <string>Refresh Prediction List</string>
+                      <string>Refresh prediction list</string>
                      </property>
                     </widget>
                    </item>

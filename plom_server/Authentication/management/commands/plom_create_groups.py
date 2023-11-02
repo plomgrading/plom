@@ -17,7 +17,7 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        group_list = ["admin", "manager", "marker", "scanner", "demo"]
+        group_list = ["admin", "manager", "marker", "scanner", "demo", "lead_marker"]
         # get all the existing groups in a list
         exist_groups = [str(group) for group in Group.objects.all()]
 

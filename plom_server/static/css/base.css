@@ -26,8 +26,12 @@ div.is_pdf_thumbnail:hover {
     opacity: 0.5;
 }
 
-a.is_sidebar_link:hover {
-    background-color: #282828;
+
+.nav-link {
+    color: black;
+}
+.nav-link:hover {
+    text-decoration: underline;
 }
 
 a.list-group-item {
@@ -39,10 +43,6 @@ p.is_test_spec_nav_text {
     margin-right: 20px;
 }
 
-.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
-    background-color: #AD9CFF !important;
-    border-color: #282828 !important;
-}
 
 a.btn.btn-primary.btn-lg {
     color: black;

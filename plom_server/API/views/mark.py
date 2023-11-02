@@ -10,38 +10,13 @@ from rest_framework import status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
-from django.db import transaction
 
-from Mark.services import MarkingTaskService, PageDataService, QuestionMarkingService
+from Mark.services import mark_task
+from Mark.services import MarkingTaskService, PageDataService
 from Papers.services import SpecificationService
 from Papers.models import Image
 
 from .utils import _error_response
-
-
-class QuestionMaxMark_how_to_get_data(APIView):
-    """Return the max mark for a given question.
-
-    TODO: how do I make the `data["q"]` thing work?  This always fails with KeyError
-    """
-
-    def get(self, request):
-        data = request.query_params
-        try:
-            question = int(data["q"])
-            version = int(data["v"])
-        except KeyError:
-            return _error_response(
-                "Missing question and/or version data.",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        except (ValueError, TypeError):
-            return _error_response(
-                "question and version must be integers",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        max_mark = SpecificationService.get_question_mark(question)
-        return Response(max_mark)
 
 
 class QuestionMaxMark(APIView):
@@ -270,7 +245,7 @@ class MgetAnnotations(APIView):
         annotation_data = annotation.annotation_data
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             # Possibly should be 410?  see baseMessenger.py
             return _error_response(e, status.HTTP_404_NOT_FOUND)
@@ -304,7 +279,7 @@ class MgetAnnotationImage(APIView):
         annotation_image = annotation.image
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         if latest_task != annotation_task:

@@ -26,10 +26,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.24
+image: docker:24.0.6
 
 services:
-  - docker:20.10.24-dind
+  - docker:24.0.6-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -39,7 +39,7 @@ variables:
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
-  MACBIN_PY_VER: 3.11.4
+  MACBIN_PY_VER: 3.11.6
   QT_QPA_PLATFORM: offscreen
 
 stages:
@@ -90,10 +90,10 @@ codespell:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install codespell
+    - python3 -m pip install codespell~=2.2.6
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell -S "*.pdf,*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
     reports:
@@ -145,7 +145,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.32.1
+    - pip install djlint~=1.34.0
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.32.1
+    - pip install djlint~=1.34.0
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -285,7 +285,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.7.0"
+    - pip3 install "black~=23.9.1"
   script:
     - black --check --diff .
   allow_failure: true
@@ -306,7 +306,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.2.7
+    - pip install pytest pytest-cov coverage[toml]~=7.3.1
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -338,8 +338,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.6
-    - python3 -m pip install pylint~=2.17.5
+    - python3 -m pip install astroid~=2.15.8
+    - python3 -m pip install pylint~=2.17.6
   script:
     - pylint plom
   allow_failure: true
@@ -426,7 +426,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.2.7
+    - python3 -m pip install coverage~=7.3.1
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
@@ -713,21 +713,21 @@ docs_sphinx:
 fedora_legacy:
   stage: alt_build
   needs: []
-  image: fedora:38
+  image: fedora:39
   when: manual
   allow_failure: true
   before_script:
-    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
+    - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-aiohttp
-          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
+          python3-aiohttp python3-peewee python3-cryptography
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
@@ -798,22 +798,22 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:38
+  image: fedora:39
   when: manual
   allow_failure: true
   before_script:
     # removed python3-PyMuPDF for Issue #2874
-    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
+    - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
-          python3-seaborn python3-aiohttp
-          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-seaborn python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
           python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
+          python3-aiohttp python3-peewee python3-cryptography
           python3-pytest
           python3-scikit-learn python3-PyMySQL
           file python3-file-magic
@@ -844,7 +844,7 @@ newOS_newdeps_legacy:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
-      cmake make g++ imagemagick openssl
+      cmake make g++ imagemagick
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3-pytest python3-dev
@@ -921,7 +921,7 @@ newOS_newdeps_webplom:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
-      cmake make g++ imagemagick openssl
+      cmake make g++ imagemagick
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3-pytest python3-dev
@@ -954,7 +954,7 @@ oldOS_mindeps:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
-      cmake make g++ imagemagick openssl
+      cmake make g++ imagemagick
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3 python3-dev
@@ -1020,7 +1020,7 @@ minpy_mindeps:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
-      cmake make imagemagick dvipng g++ openssl
+      cmake make imagemagick dvipng g++
       texlive-latex-extra latexmk texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
     - pip install pytest
@@ -1048,7 +1048,7 @@ minpy_mindeps_webplom:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
-      cmake make imagemagick dvipng g++ openssl
+      cmake make imagemagick dvipng g++
       texlive-latex-extra latexmk texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
     - pip install pytest
@@ -1258,6 +1258,10 @@ macos12_universal_client:
   allow_failure: true
   stage: alt_build
   needs: []
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   script:
   - pwd
   - sw_vers
@@ -1269,7 +1273,11 @@ macos12_universal_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we installer latest
+  - brew --version
+  - brew install ninja
+  - brew install cmake
+  - brew install numpy
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   - arch -arm64 /usr/bin/python3 --version
   - /usr/bin/python3 -m pip --version
@@ -1288,19 +1296,20 @@ macos12_universal_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
-  - /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
+  # numpy fails complaining about blas, try from brew instead?
+  # /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
-  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller --target-arch universal2 client.macos.spec
+  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos12.zip
   - pushd dist
   - ls
-  - ls -sklR PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER-universal2.app
   - zip -r $ZIPNAME PlomClient-$VER.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
@@ -1341,7 +1350,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1383,7 +1392,7 @@ macos12_x86_64_client:
   - pip --version
   - uname -m
   - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we installer latest
+  # quite likely the built-in python would work...  but below we install latest
   - arch -x86_64 /usr/bin/python3 --version
   # install specific python
   - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
@@ -1396,7 +1405,7 @@ macos12_x86_64_client:
   # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1469,107 +1478,24 @@ macos11_client:
     expire_in: 16 days
 
 
-# set to manual to reduce number of macOS jobs #2149
-macos1015_client:
-  image: macos-10.15-xcode-11
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - asdf current
-  - asdf which python
-  - asdf uninstall python 3.8.0
-  - asdf install python $MACBIN_PY_VER
-  - asdf which python
-  - asdf shell python $MACBIN_PY_VER
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_15.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-macos1014_client:
-  image: macos-10.14-xcode-10
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - asdf current
-  # asdf which python  # has no python for some reason
-  - asdf install python $MACBIN_PY_VER
-  - asdf local python $MACBIN_PY_VER
-  - asdf which python
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_14.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
-macos_server:
+# Runs Python 3.10 as of 2023-10
+# As of 2023-10, we only try to run webplom tests, see TODO about legacy
+# TODO: tests don't work without running demo first?
+macos_server_webplom:
+  services:
+    - postgres:12.2-alpine
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   image: macos-12-xcode-14
   tags:
   - saas-macos-medium-m1
@@ -1581,10 +1507,6 @@ macos_server:
   allow_failure: true
   stage: alt_build
   needs: []
-  variables:
-    HOMEBREW_NO_AUTO_UPDATE: 1
-    HOMEBREW_NO_INSTALL_CLEANUP: 1
-    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
   script:
   - sw_vers
   - echo $SHELL
@@ -1599,7 +1521,6 @@ macos_server:
   # brew --version
   - brew install cmake
   - brew install imagemagick
-  - brew install openssl
   - time brew install basictex
   - echo $PATH
   # pdflatex et al not in path until we do this:
@@ -1617,12 +1538,20 @@ macos_server:
   - sudo tlmgr install preview exam preprint
   - which latexmk
   - pip install pytest
-  - pip install wheel
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
-  # TODO: this fails on multiprocessing, Issue #2198.
-  - python -m pytest -l --pyargs plom
+  # TODO this fails b/c it runs python3, which is not the right Python
+  # python -m pytest -l --pyargs plom
+  # Instead test webplom
+  - export PYTHONPATH=$PWD
+  - echo $PYTHONPATH
+  - pushd plom_server
+  # no postgres yet
+  - python manage.py plom_demo --no-waiting --randomarker
+  - export PLOM_DATABASE_BACKEND=sqlite
+  - python manage.py test
+  - popd
 
 
 .shared_windows_runners:
@@ -1654,6 +1583,7 @@ winpyinst:
   stage: packaging
   before_script:
   - choco install -y python310
+  - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
   - refreshenv
   - c:\python310\python -m pip --version
   - c:\python310\python -m pip install --user --upgrade pip
@@ -1662,7 +1592,7 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==5.13.0
+  - c:\python310\python -m pip install pyinstaller==6.1.0
   - refreshenv
   # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec

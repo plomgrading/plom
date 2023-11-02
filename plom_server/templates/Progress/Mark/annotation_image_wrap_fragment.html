@@ -1,0 +1,15 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<div>
+    <div class="d-flex justify-content-between p-2">
+        <span class="fs-6">Annotations for paper {{ paper }} question {{ question }}</span>
+        <!-- lead-marker can view but not modify -->
+        {% if user_is_manager %}
+            <a href="{% url 'annotation_item' annotation_pk %}"
+               class="btn btn-warning">annotation details</a>
+        {% endif %}
+    </div>
+    <img src="{% url 'progress_annotation_img' paper question %}"
+         style="max-height: 100%;
+                max-width: 100%">
+</img>
+</div>

@@ -1931,9 +1931,14 @@ class Manager(QWidget):
         assert len(idx) == 6
         idx = idx[0]  # they all have the same row
         test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.ItemDataRole.DisplayRole)
-        predictor = self.ui.predictionTW.item(idx.row(), 4).data(
-            Qt.ItemDataRole.DisplayRole
-        )
+        cell = self.ui.predictionTW.item(idx.row(), 4)
+        if cell is None:
+            InfoMsg(
+                self,
+                f"Selected row index {idx.row()} seems to have no prediction to remove",
+            ).exec()
+            return
+        predictor = cell.data(Qt.ItemDataRole.DisplayRole)
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return

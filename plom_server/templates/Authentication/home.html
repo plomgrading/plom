@@ -4,19 +4,10 @@
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Web Plom - Home
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block main_content %}
-            <iframe src="https://plomgrading.org" style="width: 100%; height: 695px"></iframe>
-        {% endblock main_content %}
-    </body>
-</html>
+{% load static %}
+{% block page_heading %}
+    Welcome to Plom
+{% endblock page_heading %}
+{% block main_content %}
+    <p>Choose a task from the menu.</p>
+{% endblock main_content %}

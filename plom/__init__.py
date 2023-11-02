@@ -14,7 +14,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also hardcoded in AppImageBuilder.yml and deprecated in plom/version.py
-__version__ = "0.14.2.dev0"
+__version__ = "0.14.6.dev0"
 
 import sys
 
@@ -41,6 +41,7 @@ from .rules import isValidStudentNumber
 
 from .version_maps import undo_json_packing_of_version_map
 from .version_maps import make_random_version_map, check_version_map
+from .version_maps import version_map_from_file, version_map_to_csv
 
 from .tagging import is_valid_tag_text
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
@@ -16,11 +16,13 @@ from django.utils.encoding import force_str
 from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
-from random_username.generate import generate_username
 
-from .services import generate_link, check_username
-from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
-from Base.base_group_views import AdminRequiredView, ManagerRequiredView
+from .services import AuthenticationServices
+from .form.signupForm import CreateUserForm
+from Base.base_group_views import (
+    AdminRequiredView,
+    RoleRequiredView,
+)
 
 
 # Create your views here.
@@ -48,7 +50,11 @@ class SetPassword(View):
             user.is_active = True
             user.profile.signup_confirmation = False
             user.save()
-            context = {"form": reset_form, "help_text": self.help_text}
+            context = {
+                "form": reset_form,
+                "help_text": self.help_text,
+                "username": user.username,
+            }
             return render(request, self.template_name, context)
         else:
             return render(request, self.reset_invalid)
@@ -72,7 +78,6 @@ class SetPassword(View):
                     user.is_active = True
                     user.profile.signup_confirmation = True
                     user.save()
-                    print(reset_form.cleaned_data.get("new_password1"))
                     return render(request, self.set_password_complete)
                 # display error message
                 else:
@@ -81,6 +86,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
@@ -102,6 +108,7 @@ class SetPassword(View):
                     parsed_error = BeautifulSoup(error_message, "html.parser")
                     error = parsed_error.li.text[13:]
                     context = {
+                        "username": user.username,
                         "form": reset_form,
                         "help_text": SetPassword.help_text,
                         "error": error,
@@ -123,31 +130,13 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 # login_required make sure user is log in first
-class Home(LoginRequiredMixin, View):
+class Home(RoleRequiredView):
     login_url = "login/"
     redirect_field_name = "login"
-    home_page = "Authentication/home.html"
-    no_group_page = "Authentication/no_group.html"
-    navbar_colour = {
-        "admin": "#808080",
-        "manager": "#AD9CFF",
-        "marker": "#FF434B",
-        "scanner": "#0F984F",
-    }
 
     def get(self, request):
-        try:
-            user = request.user.groups.all()[0].name
-        except IndexError:
-            user = None
-        if user in Home.navbar_colour:
-            colour = Home.navbar_colour[user]
-        else:
-            colour = "#4000FF"
-            context = {"navbar_colour": colour, "user_group": user}
-            return render(request, self.no_group_page, context)
-        context = {"navbar_colour": colour, "user_group": user}
-        return render(request, self.home_page, context, status=200)
+        context = {}
+        return render(request, "Authentication/home.html", context)
 
 
 # Login the user
@@ -174,7 +163,10 @@ class LoginView(View):
             )
             if user is not None:
                 login(request, user)
-                return redirect("home")
+                if "next" in request.POST:
+                    return redirect(request.POST.get("next"))
+                else:
+                    return redirect("home")
             else:
                 messages.info(request, "Username or Password is incorrect!")
             return render(request, self.template_name)
@@ -187,203 +179,24 @@ class LogoutView(View):
         return redirect("login")
 
 
-# Signup Page
-class Signup(ManagerRequiredView):
-    template_name = "Authentication/signup.html"
-
-    def get(self, request):
-        context = self.build_context()
-        return render(request, self.template_name, context)
-
-
-# Signup Manager
-class SignupManager(AdminRequiredView):
-    template_name = "Authentication/manager_signup.html"
-    activation_link = "Authentication/manager_activation_link.html"
-    form = CreateManagerForm()
-
-    def get(self, request):
-        context = self.build_context()
-        context.update({"form": self.form})
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        form = CreateManagerForm(request.POST)
-        username = request.POST.get("username")
-        exist_username = User.objects.filter(username__iexact=username)
-        context = self.build_context()
-        if form.is_valid() and not exist_username.exists():
-            user = form.save()
-            user.refresh_from_db()
-            user.profile.email = form.cleaned_data.get("email")
-            group = Group.objects.get(name="manager")
-            user.groups.add(group)
-            # user can't log in until the link is confirmed
-            user.is_active = False
-            user.save()
-            link = generate_link(request, user)
-            context.update(
-                {
-                    "user_email": user.profile.email,
-                    "link": link,
-                }
-            )
-            return render(request, self.activation_link, context)
-        else:
-            if exist_username.exists():
-                context.update(
-                    {
-                        "form": self.form,
-                        "error": "A user with that username already exists.",
-                    }
-                )
-                return render(request, self.template_name, context)
-            context.update({"form": self.form, "error": form.errors})
-            return render(request, self.template_name, context)
-
-
-# Create Scanner and Marker users
-class SignupScanners(ManagerRequiredView):
-    template_name = "Authentication/scanner_signup.html"
-    form = CreateScannersAndMarkersForm()
-
-    def get(self, request):
-        context = self.build_context()
-        context.update(
-            {
-                "form": self.form,
-                "created": False,
-            }
-        )
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        form = CreateScannersAndMarkersForm(request.POST)
-        scanner_group = Group.objects.get(name="scanner")
-        scanner_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
-
-        if form.is_valid():
-            num_users = form.cleaned_data.get("num_users")
-            scanner_username_list = generate_username(num_users)
-
-            for scanner in scanner_username_list:
-                scanner = check_username(
-                    scanner, exist_usernames, scanner_username_list
-                )
-                exist_usernames.append(scanner)
-
-                User.objects.create_user(
-                    username=scanner,
-                    email=None,
-                    password=None,
-                ).groups.add(scanner_group)
-                user = User.objects.get(username=scanner)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                scanner_dict[scanner] = link
-
-            context = self.build_context()
-            context.update(
-                {
-                    "form": self.form,
-                    "links": scanner_dict,
-                    "created": True,
-                }
-            )
-            return render(request, self.template_name, context)
-
-
-# Signup Markers
-class SignupMarkers(ManagerRequiredView):
-    template_name = "Authentication/marker_signup.html"
-    form = CreateScannersAndMarkersForm()
-
-    def get(self, request):
-        context = self.build_context()
-        context.update(
-            {
-                "form": self.form,
-                "created": False,
-            }
-        )
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        form = CreateScannersAndMarkersForm(request.POST)
-        marker_group = Group.objects.get(name="marker")
-        marker_dict = {}
-        exist_usernames = [str(username) for username in User.objects.all()]
-
-        if form.is_valid():
-            num_users = form.cleaned_data.get("num_users")
-            marker_username_list = generate_username(num_users)
-
-            for marker in marker_username_list:
-                marker = check_username(marker, exist_usernames, marker_username_list)
-                exist_usernames.append(marker)
-
-                User.objects.create_user(
-                    username=marker,
-                    email=None,
-                    password=None,
-                ).groups.add(marker_group)
-                user = User.objects.get(username=marker)
-                user.is_active = False
-                user.save()
-                link = generate_link(request, user)
-                marker_dict[marker] = link
-
-            context = self.build_context()
-            context.update(
-                {
-                    "form": self.form,
-                    "links": marker_dict,
-                    "created": True,
-                }
-            )
-            return render(request, self.template_name, context)
-
-
 class PasswordResetLinks(AdminRequiredView):
     template_name = "Authentication/regenerative_links.html"
     activation_link = "Authentication/manager_activation_link.html"
 
     def get(self, request):
         users = User.objects.all().filter(groups__name="manager").values()
-        context = self.build_context()
-        context.update({"users": users})
+        context = {"users": users}
         return render(request, self.template_name, context)
 
     def post(self, request):
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
-        link = generate_link(request, user)
-        context = self.build_context()
-        context.update({"link": link})
+        link = AuthenticationServices().generate_link(request, user)
+        context = {"link": link}
         return render(request, self.activation_link, context)
 
 
 class Maintenance(Home, View):
-    template_name = "Authentication/maintenance.html"
-    navbar_colour = {
-        "admin": "#808080",
-        "manager": "#AD9CFF",
-        "marker": "#FF434B",
-        "scanner": "#0F984F",
-    }
-
     def get(self, request):
-        try:
-            user = request.user.groups.all()[0].name
-        except IndexError:
-            user = None
-        if user in Home.navbar_colour:
-            colour = Home.navbar_colour[user]
-        else:
-            colour = "#4000FF"
-            context = {"navbar_colour": colour, "user_group": user}
-            return render(request, self.template_name, context)
-        context = {"navbar_colour": colour, "user_group": user}
-        return render(request, self.template_name, context, status=200)
+        context = {}
+        return render(request, "Authentication/maintenance.html", context)

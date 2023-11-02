@@ -60,7 +60,7 @@ def processHWScans(
 
               * a scalar number: all pages map to this question.
               * a list of integers: all pages map to those questions.
-              * the string "all" maps each pages to all questions.
+              * the string "all" maps each page to all questions.
               * a list-of-lists specifying which questions each page
                 maps onto, e.g., ``[[1],[1,2],[2]]`` maps page 1 onto
                 question 1, page 2 onto questions 1 and 2, and page 3

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     # add newly created app folder below
     "Base",
     "Authentication",
+    "UserManagement",
     "Preparation",
     "Papers",
     "SpecCreator",
@@ -102,6 +104,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # add our own context processor to get information about user's groups
+                "Web_Plom.context_processors.user_group_information",
             ],
         },
     },

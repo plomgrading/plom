@@ -1,5 +1,6 @@
 .. Plom documentation
-   Copyright 2022 Colin B. Macdonald
+   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2023 Chanelle Chow
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -44,7 +45,7 @@ our template or even adhoc pages such as looseleaf.
 
 You might want to do these operations before grading begins.
 If done later, adding pages will automatically invalidate any relevant
-marking work (e.g., you assign an extra page to 0124 Q7 then 0123 Q7
+marking work (e.g., you assign an extra page to 0124 Q7 then 0124 Q7
 will need to be regraded).
 
 

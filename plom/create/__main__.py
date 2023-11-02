@@ -45,6 +45,7 @@ from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 from plom.create import version_map_from_file
 from plom.create import save_version_map
+from plom import check_version_map
 
 # we may want to shift some files around
 from plom.server.manageUserFiles import write_csv_user_list
@@ -225,7 +226,7 @@ def get_parser():
         epilog=dedent(
             """
             The classlist can be a .csv file exported from Canvas (specifically,
-            Canvas -> Grades -> Actions -> Export).  Plom will do some light sanity
+            Canvas -> Grades -> Actions -> Export).  Plom will do a little bit of
             checking such as dropping names like "Test Student".
 
             Alternatively, the classlist can be a .csv file with column headers:
@@ -283,7 +284,7 @@ def get_parser():
     spDB.add_argument(
         "--from-file",
         metavar="FILE",
-        help="Read the version map from FILE.  WORK-IN-PROGRESS!",
+        help="Read the version map from FILE.",
     )
 
     spQVM = sub.add_parser(
@@ -360,8 +361,9 @@ def get_parser():
         "extra-pages",
         help="Make an extra pages PDF",
         description="""
-          Make a simple extra-paper PDF for students to use when they need more
-          space.
+            Make a extra-paper PDF for when anyone needs more space.
+            NOTE: the resulting file is NOT COMPATIBLE with legacy
+            servers (including those in common use in 2023).
         """,
     )
 
@@ -652,7 +654,7 @@ def main():
         sv = SpecVerifier.from_toml_file(fname)
         sv.verifySpec()
         sv.checkCodes()
-        print("spec seems ok: we will upload it to the server")
+        print(f"spec seems ok: we will upload it to the server {args.server}")
         msgr = start_messenger(args.server, args.password)
         try:
             # TODO: sv.spec versus sv.get_public_spec_dict()?
@@ -697,7 +699,15 @@ def main():
             build_database(msgr=(args.server, args.password))
         else:
             qvmap = version_map_from_file(args.from_file)
-            build_database(vermap=qvmap, msgr=(args.server, args.password))
+            msgr = start_messenger(args.server, args.password)
+            try:
+                spec = msgr.get_spec()
+                # TODO: hardcoded for legacy server restrictions
+                check_version_map(qvmap, spec, legacy=True)
+                build_database(vermap=qvmap, msgr=msgr)
+            finally:
+                msgr.closeUser()
+                msgr.stop()
 
     elif args.command == "get-ver-map":
         f = save_version_map(args.file, msgr=(args.server, args.password))
