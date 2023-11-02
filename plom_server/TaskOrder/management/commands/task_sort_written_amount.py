@@ -27,7 +27,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--q_n", nargs=1, type=int, required=True, help="The question number (int)"
+            "--q_n",
+            nargs=1,
+            type=int,
+            required=True,
+            help="The question index number (int)",
         )
         parser.add_argument(
             "--q_v",
@@ -43,26 +47,26 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        question_number = options["q_n"]
+        question_index = options["q_n"]
         question_version = options["q_v"]
         reverse = options["reverse"]
-        spec = SpecificationService.get_the_spec()
 
-        if question_number is None:
-            raise CommandError("Please provide one question number.")
+        if question_index is None:
+            raise CommandError("Please provide one question index number.")
 
         if question_version is None:
             raise CommandError("Please provide one question version.")
 
-        question_number = question_number[0]
+        question_index = question_index[0]
         question_version = question_version[0]
 
-        q_range = range(1, spec["numberOfQuestions"] + 1)
-        v_range = range(0, spec["numberOfVersions"] + 1)
+        q_range = range(1, SpecificationService.get_n_questions() + 1)
+        # zero has special meaning here
+        v_range = range(0, SpecificationService.get_n_versions() + 1)
 
-        if question_number not in q_range:
+        if question_index not in q_range:
             raise CommandError(
-                f"Question {question_number} out of valid range. Valid range: {list(q_range)}."
+                f"Question index {question_index} out of valid range. Valid range: {list(q_range)}."
             )
 
         if question_version not in v_range:
@@ -71,7 +75,7 @@ class Command(BaseCommand):
             )
 
         pages = QuestionPage.objects.filter(
-            question_number=question_number
+            question_number=question_index
         ).select_related("image", "paper")
         pages = pages.filter(image__isnull=False)
 
@@ -167,7 +171,7 @@ class Command(BaseCommand):
             sorted(pixel_avgs.items(), key=lambda item: item[1], reverse=reverse),
         )
 
-        filename = f"q{question_number}_"
+        filename = f"qi{question_index}_"
         if question_version != 0:
             filename += f"v{question_version}_"
         if reverse:
