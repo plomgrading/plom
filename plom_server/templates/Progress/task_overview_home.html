@@ -1,5 +1,6 @@
 <!-- Copyright (C) 2023 Julian Lapenna -->
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Marking and Identify Tasks
@@ -28,7 +29,7 @@
                              aria-valuemin="0"
                              aria-valuemax="100">
                             <div class="progress-bar" style="width: {{ id_percent_complete }}%">
-                                {{ completed_task_counts.id }} / {{ n_papers }}
+                                {{ completed_id_task_count }} / {{ n_papers }}
                             </div>
                         </div>
                     </th>
@@ -43,7 +44,7 @@
                                  aria-valuemax="100">
                                 <div class="progress-bar"
                                      style="width: {{ mark_percent_complete|get_item:qi }}%">
-                                    {{ completed_task_counts.mk|get_item:qi }} / {{ n_papers }}
+                                    {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
                                 </div>
                             </div>
                         </th>
