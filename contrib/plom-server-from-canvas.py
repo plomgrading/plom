@@ -856,7 +856,7 @@ if __name__ == "__main__":
 
     print("\n==============================================")
     print("  PLOM server for activity {:s}".format(get_assignment_name(basedir)))
-    print("  now running on {:s}".format(servernamewithport))
+    print("  now running on {:s}".format(os.environ["PLOM_SERVER"]))
     print("  (Setup took {:5.1f} seconds.)\n".format(time.time() - starttime))
     print("==============================================")
 
