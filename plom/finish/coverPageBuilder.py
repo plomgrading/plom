@@ -48,6 +48,9 @@ def makeCover(
             assert len(row) == 3
         else:
             assert len(row) == 4
+        assert isinstance(
+            row[0], str
+        ), f'First row entry should be a string but we got "{row}"'
         for x in row[1:]:
             try:
                 y = float(x)
