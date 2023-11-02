@@ -44,10 +44,12 @@
     </head>
     <!-- Need the csrf token to enable htmx -->
     <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <!-- TODO: vh-100 is not quite right: if the page is very long, the sidebar does not extend -->
         <div class="container-fluid p-0 d-flex vh-100">
+            <!-- TODO: style max width here stops the hamburger menu from popping up too wide: find better fix -->
             <div id="sidebar"
                  class="d-flex flex-column flex-shrink-0 p-2 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
-                 style="width: 13.75rem">
+                 style="max-width: 13rem">
                 <!-- Plom logo-->
                 <a class="navbar-brand nav-link" href="{% url 'home' %}">
                     <img class="img-fluid"
