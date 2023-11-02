@@ -2384,13 +2384,12 @@ class Manager(QWidget):
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         owner = self.ui.reviewTW.item(r, 4).text()
-        img = self.msgr.get_annotations_image(test, question)
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        # TODO: but more likely superseded by "pagedata" changes
+        img_info, img_bytes = self.msgr.get_annotations_image(test, question)
+        ext = "." + img_info["extension"]
         # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=ext).name)
         with open(f, "wb") as fh:
-            fh.write(img)
+            fh.write(img_bytes)
         qlabel = self.qlabels[question - 1]
         ReviewViewWindow(self, [f], stuff=(test, question, qlabel, owner)).exec()
         f.unlink()
