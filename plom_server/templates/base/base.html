@@ -79,7 +79,7 @@
                             <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
                         </li>
                     {% elif user_is_manager %}
-                        <li class="nav-item accordion accordion-flush">
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
                         </li>
                         <li class="nav-item">
@@ -147,7 +147,7 @@
                             type="button"
                             data-bs-toggle="offcanvas"
                             data-bs-target="#sidebar">
-                        <i class="bi bi-list mb-0 mt-2"></i>
+                        <i class="bi bi-list"></i>
                     </button>
                 </div>
                 <!-- padding-start-4 b/c content was too close to navbar shadow -->
