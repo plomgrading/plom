@@ -7,189 +7,176 @@
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>User Management</title>
-        <title>
-            {% block title %}
-                Web Plom - User Management
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block page_heading %}
-            User Management
-        {% endblock page_heading %}
-        {% block main_content %}
-            <div class="card my-2">
-                <div class="card-body">
-                    <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
-                </div>
-            </div>
-            <div class="card my-2">
-                <div class="card-body">
-                    <h4 class="card-title">Markers</h4>
-                    <p>
-                        <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
-                        <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
-                    </p>
-                    <table class="table table-striped">
-                        <thead>
-                            <th>Name</th>
-                            <th>Online/Offline (web)</th>
-                            <th>Online/Offline (client)</th>
-                            <th>Last login</th>
-                            <th>Progress</th>
-                            <th>Lead Marker</th>
-                            <th>Enable/Disable</th>
-                            <th>Password</th>
-                        </thead>
-                        {% for user in markers %}
-                            <tr>
-                                <td>
-                                    {{ user.username }}
-                                    {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
-                                </td>
-                                {% if user in request.online_now %}
-                                    <td class="bg-success-subtle">Online</td>
-                                {% else %}
-                                    <td>Offline</td>
-                                {% endif %}
-                                {% if user.auth_token %}
-                                    <td class="bg-success-subtle">Online</td>
-                                {% else %}
-                                    <td>Offline</td>
-                                {% endif %}
-                                <td>{{ user.last_login|naturaltime }}</td>
-                                <td>
-                                    <a class="btn btn-info"
-                                       href="{% url 'progress_task_annotation_filter' %}?username={{ user.username }}">
-                                        marking progress
-                                    </a>
-                                </td>
-                                <td>
-                                    {% if user in lead_markers %}
-                                        <a class="btn btn-info"
-                                           href="{% url 'toggleLeadMarker' user.username %}">demote</a>
-                                    {% else %}
-                                        <a class="btn btn-warning"
-                                           href="{% url 'toggleLeadMarker' user.username %}">promote</a>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if user.has_usable_password %}
-                                        {% if user.is_active %}
-                                            <button hx-post="{% url 'change_user_status' user.username %}"
-                                                    class="btn btn-danger">disable</button>
-                                        {% else %}
-                                            <button hx-post="{% url 'change_user_status' user.username %}"
-                                                    class="btn btn-success">enable</button>
-                                        {% endif %}
-                                    {% else %}
-                                        <button class="btn btn-warning disabled">no password set</button>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'reset_user_password' user.username %}"
-                                       class="btn btn-danger">reset</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                    <p>
-                        Notes:
-                        <ul>
-                            <li>
-                                Promoting a marker to <q>lead marker</q> allows them to see more detailed information about progress and tasks
-                            </li>
-                            <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
-                            <li>
-                                If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
-                            </li>
-                        </ul>
-                    </p>
-                </div>
-            </div>
-            <div class="card my-2">
-                <div class="card-body">
-                    <h4 class="card-title">Scanners</h4>
-                    <p>
-                        <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
-                        <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
-                    </p>
-                    <table class="table table-striped">
-                        <thead>
-                            <th>Name</th>
-                            <th>Online/Offline</th>
-                            <th>Last login</th>
-                            <th>Enable/Disable</th>
-                            <th>Password</th>
-                        </thead>
-                        {% for user in scanners %}
-                            <tr>
-                                <td>{{ user.username }}</td>
-                                {% if user in request.online_now %}
-                                    <td class="bg-success-subtle">Online</td>
-                                {% else %}
-                                    <td>Offline</td>
-                                {% endif %}
-                                <td>{{ user.last_login|naturaltime }}</td>
-                                <td>
-                                    {% if user.has_usable_password %}
-                                        {% if user.is_active %}
-                                            <button hx-post="{% url 'change_user_status' user.username %}"
-                                                    class="btn btn-danger">disable</button>
-                                        {% else %}
-                                            <button hx-post="{% url 'change_user_status' user.username %}"
-                                                    class="btn btn-success">enable</button>
-                                        {% endif %}
-                                    {% else %}
-                                        <button class="btn btn-warning disabled">no password set</button>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'reset_user_password' user.username %}"
-                                       class="btn btn-danger">reset</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </h4>
-            </div>
+{% block title %}
+    Plom - User Management
+{% endblock title %}
+{% block page_heading %}
+    User Management
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card my-2">
+        <div class="card-body">
+            <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
         </div>
-        <div class="card my-2">
-            <div class="card-body">
-                <h4 class="card-title">Managers</h4>
-                <table class="table table-striped">
-                    <thead>
-                        <th>Name</th>
-                        <th>Online/Offline</th>
-                        <th>Last login</th>
-                        <th>Reset password</th>
-                    </thead>
-                    {% for user in managers %}
-                        <tr>
-                            <td>{{ user.username }}</td>
-                            {% if user in request.online_now %}
-                                <td class="bg-success-subtle">Online</td>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <h4 class="card-title">Markers</h4>
+            <p>
+                <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
+                <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
+            </p>
+            <table class="table table-striped">
+                <thead>
+                    <th>Name</th>
+                    <th>Online/Offline (web)</th>
+                    <th>Online/Offline (client)</th>
+                    <th>Last login</th>
+                    <th>Progress</th>
+                    <th>Lead Marker</th>
+                    <th>Enable/Disable</th>
+                    <th>Password</th>
+                </thead>
+                {% for user in markers %}
+                    <tr>
+                        <td>
+                            {{ user.username }}
+                            {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
+                        </td>
+                        {% if user in request.online_now %}
+                            <td class="bg-success-subtle">Online</td>
+                        {% else %}
+                            <td>Offline</td>
+                        {% endif %}
+                        {% if user.auth_token %}
+                            <td class="bg-success-subtle">Online</td>
+                        {% else %}
+                            <td>Offline</td>
+                        {% endif %}
+                        <td>{{ user.last_login|naturaltime }}</td>
+                        <td>
+                            <a class="btn btn-info"
+                               href="{% url 'progress_task_annotation_filter' %}?username={{ user.username }}">
+                                marking progress
+                            </a>
+                        </td>
+                        <td>
+                            {% if user in lead_markers %}
+                                <a class="btn btn-info"
+                                   href="{% url 'toggleLeadMarker' user.username %}">demote</a>
                             {% else %}
-                                <td>Offline</td>
+                                <a class="btn btn-warning"
+                                   href="{% url 'toggleLeadMarker' user.username %}">promote</a>
                             {% endif %}
-                            <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
-                                <!-- since this allows reset of manager - ask for confirmation -->
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger"
-                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </h4>
+                        </td>
+                        <td>
+                            {% if user.has_usable_password %}
+                                {% if user.is_active %}
+                                    <button hx-post="{% url 'change_user_status' user.username %}"
+                                            class="btn btn-danger">disable</button>
+                                {% else %}
+                                    <button hx-post="{% url 'change_user_status' user.username %}"
+                                            class="btn btn-success">enable</button>
+                                {% endif %}
+                            {% else %}
+                                <button class="btn btn-warning disabled">no password set</button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'reset_user_password' user.username %}"
+                               class="btn btn-danger">reset</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <p>
+                Notes:
+                <ul>
+                    <li>
+                        Promoting a marker to <q>lead marker</q> allows them to see more detailed information about progress and tasks
+                    </li>
+                    <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
+                    <li>
+                        If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
+                    </li>
+                </ul>
+            </p>
+        </div>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <h4 class="card-title">Scanners</h4>
+            <p>
+                <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
+                <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
+            </p>
+            <table class="table table-striped">
+                <thead>
+                    <th>Name</th>
+                    <th>Online/Offline</th>
+                    <th>Last login</th>
+                    <th>Enable/Disable</th>
+                    <th>Password</th>
+                </thead>
+                {% for user in scanners %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        {% if user in request.online_now %}
+                            <td class="bg-success-subtle">Online</td>
+                        {% else %}
+                            <td>Offline</td>
+                        {% endif %}
+                        <td>{{ user.last_login|naturaltime }}</td>
+                        <td>
+                            {% if user.has_usable_password %}
+                                {% if user.is_active %}
+                                    <button hx-post="{% url 'change_user_status' user.username %}"
+                                            class="btn btn-danger">disable</button>
+                                {% else %}
+                                    <button hx-post="{% url 'change_user_status' user.username %}"
+                                            class="btn btn-success">enable</button>
+                                {% endif %}
+                            {% else %}
+                                <button class="btn btn-warning disabled">no password set</button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'reset_user_password' user.username %}"
+                               class="btn btn-danger">reset</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <h4 class="card-title">Managers</h4>
+            <table class="table table-striped">
+                <thead>
+                    <th>Name</th>
+                    <th>Online/Offline</th>
+                    <th>Last login</th>
+                    <th>Reset password</th>
+                </thead>
+                {% for user in managers %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        {% if user in request.online_now %}
+                            <td class="bg-success-subtle">Online</td>
+                        {% else %}
+                            <td>Offline</td>
+                        {% endif %}
+                        <td>{{ user.last_login|naturaltime }}</td>
+                        <td>
+                            <!-- since this allows reset of manager - ask for confirmation -->
+                            <a href="{% url 'reset_user_password' user.username %}"
+                               class="btn btn-danger"
+                               onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
         </div>
     </div>
 {% endblock main_content %}
-</body>
-</html>
