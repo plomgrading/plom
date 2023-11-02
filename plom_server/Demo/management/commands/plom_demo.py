@@ -23,6 +23,7 @@ from ...services import (
     ConfigFileService,
 )
 from ... import config_files as demo_config_files
+from Identify.services import IDDirectService
 
 
 class Command(BaseCommand):
@@ -98,6 +99,21 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
+    def pre_id_hw_bundles(self, homework_bundles):
+        print(">", homework_bundles)
+        for hw_bundle in homework_bundles:
+            if "student_id" in hw_bundle and "student_name" in hw_bundle:
+                print(
+                    f"Direct ID of homework paper {hw_bundle['paper_number']} as student {hw_bundle['student_id']} {hw_bundle['student_name']}"
+                )
+                # use the _cmd here so that it looks up the username for us.
+                IDDirectService().identify_direct_cmd(
+                    "demoManager1",
+                    hw_bundle["paper_number"],
+                    hw_bundle["student_id"],
+                    hw_bundle["student_name"],
+                )
+
     def post_server_init(self, dcs: DemoCreationService, config, stop_at: str):
         self.papers_and_db(dcs)
 
@@ -139,6 +155,7 @@ class Command(BaseCommand):
             return
 
         self.push_bundles(dcs, number_of_bundles, homework_bundles)
+        self.pre_id_hw_bundles(homework_bundles)  # Pre-ID any homework bundles
         if stop_at == "bundles-pushed":
             return
 
