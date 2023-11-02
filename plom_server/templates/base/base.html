@@ -136,7 +136,8 @@
                     {% endif %}
                 </ul>
             </div>
-            <div class="flex-fill">
+            <!-- flex-fill here will go off the screen for very wide pages -->
+            <div class="w-100">
                 <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle d-flex">
                     <a class="navbar-brand nav-link" href="{% url 'home' %}">
                         <img class="img-fluid"
