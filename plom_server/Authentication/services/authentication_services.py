@@ -59,6 +59,8 @@ class AuthenticationServices:
     ) -> str:
         """Create a user and add them to a group.
 
+        Note that by default that new user will not be active.
+
         Args:
             username: The username of the user.
             group_name: The name of the group.

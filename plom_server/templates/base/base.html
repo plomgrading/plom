@@ -80,18 +80,8 @@
                         </li>
                     {% elif user_is_manager %}
                         <li class="nav-item accordion accordion-flush">
-                            <a class="nav-link" href="#users">Users</a>
+                            <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
                         </li>
-                        <div id="users">
-                            <ul>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'signup_single' %}">Create Users</a>
-                                </li>
-                            </ul>
-                        </div>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
                         </li>
