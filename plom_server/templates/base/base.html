@@ -36,9 +36,13 @@
               type="text/css"
               href="{% static '/css/profile.css' %}">
         <title>
-            Plom -
-            {% block title %}
-            {% endblock title %}
+            {% block full_title %}
+                {% block title_prefix %}
+                    Plom -
+                {% endblock title_prefix %}
+                {% block title %}
+                {% endblock title %}
+            {% endblock full_title %}
         </title>
     </head>
     <!-- Need the csrf token to enable htmx -->
