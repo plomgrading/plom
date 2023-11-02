@@ -75,9 +75,7 @@ __script_version__ = "0.4.8"
 
 
 def get_short_name(long_name):
-    """
-    Generate the short name of assignment
-    """
+    """Generate the short name of assignment."""
     short_name = ""
     push_letter = True
     while len(long_name):
@@ -104,17 +102,21 @@ def _get_server_name(server_dir):
 
 
 def get_assignment_name(basedir):
-    """
-    Return long name of assignment, read from the canvasSpec.toml file.
-    """
+    """Return long name of assignment, read from the local canvasSpec.toml file."""
     with open(basedir / "canvasSpec.toml", "rb") as f:
         configdata = tomllib.load(f)
     return f"{configdata['longName']}"
 
 
 def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> None:
-    """
-    (assignment): a canvasapi assignment object
+    """Make a server config called canvasSpec.toml from a Canvas assignment.
+
+    Args:
+        assignment: a canvasapi assignment object
+        marks:
+
+    Keyword Args:
+        dur: where to write the toml file.
     """
     dur = Path(dur)
     longName = assignment.name
@@ -272,13 +274,23 @@ def configure_running_server(
 
 
 def get_submissions(
-    assignment, work_dir=".", name_by_info=True, dry_run=False, replace_existing=False
+    assignment,
+    *,
+    work_dir=".",
+    name_by_info=True,
+    dry_run=False,
+    replace_existing=False,
 ):
-    """
-    get the submission pdfs out of Canvas
+    """Get the submission pdfs out of Canvas.
 
-    (name_by_info): Whether to make the filenames of the form ID_Last_First.pdf
+    Args:
+        assignment:
 
+    Keyword Args
+        work_dir:
+        name_by_info: Whether to make the filenames of the form ID_Last_First.pdf
+        dry_run:
+        replace_existing:
     """
     work_dir = Path(work_dir)
 
