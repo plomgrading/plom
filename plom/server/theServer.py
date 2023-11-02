@@ -53,7 +53,7 @@ class Server:
         log.debug("Initialising server")
         try:
             self.testSpec = SpecVerifier.load_verified()
-            log.info("existing spec loaded")
+            log.info("has spec for assessment: %s", self.testSpec["longName"])
         except FileNotFoundError:
             self.testSpec = None
             log.info("no spec file: we expect it later...")
