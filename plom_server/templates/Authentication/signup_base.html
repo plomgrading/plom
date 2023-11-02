@@ -5,40 +5,40 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Markers Sign Up
+    Web Plom - Sign Up
 {% endblock title %}
 {% block page_heading %}
-    Sign up - Markers
+    Sign up
 {% endblock page_heading %}
 {% block main_content %}
     <style>
-      table {
+        table {
         counter-reset: tableCount;
-      }
-      .counterCell:before {
+        }
+        .counterCell:before {
         content: counter(tableCount);
         counter-increment: tableCount;
-      }
-      th,
-      td {
+        }
+        th,
+        td {
         vertical-align: middle;
-      }
+        }
     </style>
     <div class="card">
         <div class="card-header">
             <ul class="nav nav-pills nav-fill">
                 <li class="nav-item">
                     {% if current_page == "single" %}
-                        <a class="nav-link active" href="{% url 'signup_marker' %}">Create Single User</a>
+                        <a class="nav-link active" href="{% url 'signup_single' %}">Create Single User</a>
                     {% else %}
-                        <a class="nav-link" href="{% url 'signup_marker' %}">Create Single User</a>
+                        <a class="nav-link" href="{% url 'signup_single' %}">Create Single User</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if current_page == "multiple" %}
-                        <a class="nav-link active" href="{% url 'signup_markers' %}">Create Multiple Users</a>
+                        <a class="nav-link active" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
                     {% else %}
-                        <a class="nav-link" href="{% url 'signup_markers' %}">Create Multiple Users</a>
+                        <a class="nav-link" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
                     {% endif %}
                 </li>
             </ul>
