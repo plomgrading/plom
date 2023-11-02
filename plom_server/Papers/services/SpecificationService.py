@@ -267,6 +267,7 @@ def get_question_index_label_pairs() -> List[Tuple[int, str]]:
 
     Returns:
         The question indices and labels as pairs of tuples in a list.
+        The pairs are ordered by their indices.
     """
     return [(i, get_question_label(i)) for i in range(1, get_n_questions() + 1)]
 
@@ -276,7 +277,8 @@ def get_question_labels() -> List[str]:
     """Get the question labels in a list.
 
     Returns:
-        The question labels in a list.
+        The question labels in a list, in the order of
+        increasing question index.
     """
     return [label for _, label in get_question_index_label_pairs()]
 
