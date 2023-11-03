@@ -1095,7 +1095,7 @@ binary_upload:
     - export VER=${CI_COMMIT_TAG:1}
     - echo $VER
     - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
-    - export LINKNAME1="Plom Client for Windows"
+    - export LINKNAME1="Plom Client for Windows (Windows ≥ 10, x86-64)"
     - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 12)"
     - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 12)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
