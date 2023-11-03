@@ -1,7 +1,11 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Mark Comparison
+    Mark Comparison
 {% endblock title %}
 {% block page_heading %}
     Detailed view of Question {{ question }} all versions
@@ -133,8 +137,9 @@
                 </div>
             {% endfor %}
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
   var ctx_all = document.getElementById('hist_all');
     new Chart(ctx_all, {
       type: 'bar',
@@ -181,9 +186,9 @@
 	  }],
       }
   });
-        </script>
-        {% for ver, data in version_hists.items %}
-            <script>
+    </script>
+    {% for ver, data in version_hists.items %}
+        <script>
   var ctx_{{ver}} = document.getElementById('hist_{{ver}}');
   new Chart(ctx_{{ver}}, {
       data: {
@@ -218,6 +223,6 @@
 
     });
 
-            </script>
-        {% endfor %}
-    {% endblock main_content %}
+        </script>
+    {% endfor %}
+{% endblock main_content %}
