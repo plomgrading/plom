@@ -35,11 +35,14 @@
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/profile.css' %}">
-        <!-- Title -->
         <title>
-            {% block title %}
-                Plom
-            {% endblock title %}
+            {% block full_title %}
+                {% block title_prefix %}
+                    Plom -
+                {% endblock title_prefix %}
+                {% block title %}
+                {% endblock title %}
+            {% endblock full_title %}
         </title>
     </head>
     <!-- Need the csrf token to enable htmx -->
@@ -54,7 +57,7 @@
                 <a class="navbar-brand nav-link" href="{% url 'home' %}">
                     <img class="img-fluid"
                          src="{% static 'plomLogo.png' %}"
-                         style="max-width: 8rem">
+                         style="max-width: 8rem" />
                 </a>
                 <ul class="nav flex-column mt-2">
                     <li class="nav-item">
@@ -142,7 +145,7 @@
                     <a class="navbar-brand nav-link" href="{% url 'home' %}">
                         <img class="img-fluid"
                              src="{% static 'plomLogo.png' %}"
-                             style="max-width: 8rem">
+                             style="max-width: 8rem" />
                     </a>
                     <button class="btn ms-auto border border-black"
                             type="button"

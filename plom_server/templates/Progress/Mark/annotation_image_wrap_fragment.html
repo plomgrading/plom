@@ -1,4 +1,8 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 <div>
     <div class="d-flex justify-content-between p-2">
         <span class="fs-6">Annotations for paper {{ paper }} question {{ question }}</span>
@@ -10,6 +14,5 @@
     </div>
     <img src="{% url 'progress_annotation_img' paper question %}"
          style="max-height: 100%;
-                max-width: 100%">
-</img>
+                max-width: 100%" />
 </div>
