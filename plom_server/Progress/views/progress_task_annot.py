@@ -138,4 +138,4 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "mark_percent_complete": mark_percent_complete,
             }
         )
-        return render(request, "Progress/task_overview_home.html", context=context)
+        return render(request, "Progress/all_task_overview.html", context=context)
