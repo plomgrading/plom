@@ -44,10 +44,12 @@
     </head>
     <!-- Need the csrf token to enable htmx -->
     <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <!-- TODO: vh-100 is not quite right: if the page is very long, the sidebar does not extend -->
         <div class="container-fluid p-0 d-flex vh-100">
+            <!-- TODO: style max width here stops the hamburger menu from popping up too wide: find better fix -->
             <div id="sidebar"
                  class="d-flex flex-column flex-shrink-0 p-2 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
-                 style="width: 13.75rem">
+                 style="max-width: 13rem">
                 <!-- Plom logo-->
                 <a class="navbar-brand nav-link" href="{% url 'home' %}">
                     <img class="img-fluid"
@@ -77,7 +79,7 @@
                             <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
                         </li>
                     {% elif user_is_manager %}
-                        <li class="nav-item accordion accordion-flush">
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
                         </li>
                         <li class="nav-item">
@@ -134,7 +136,8 @@
                     {% endif %}
                 </ul>
             </div>
-            <div class="flex-fill">
+            <!-- flex-fill here will go off the screen for very wide pages -->
+            <div class="w-100">
                 <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle d-flex">
                     <a class="navbar-brand nav-link" href="{% url 'home' %}">
                         <img class="img-fluid"
@@ -145,7 +148,7 @@
                             type="button"
                             data-bs-toggle="offcanvas"
                             data-bs-target="#sidebar">
-                        <i class="bi bi-list mb-0 mt-2"></i>
+                        <i class="bi bi-list"></i>
                     </button>
                 </div>
                 <!-- padding-start-4 b/c content was too close to navbar shadow -->
