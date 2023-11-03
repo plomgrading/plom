@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
+import numpy as np
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 class DataExtractionService:
@@ -27,7 +28,7 @@ class DataExtractionService:
     def __init__(self):
         sms = StudentMarkService()
         tms = TaMarkingService()
-        self.spec = Specification.load().spec_dict
+        self.spec = SpecificationService.get_the_spec()
 
         student_dict = sms.get_all_students_download(
             version_info=True, timing_info=False, warning_info=False
@@ -129,6 +130,28 @@ class DataExtractionService:
                 )
             averages.append(_averages)
 
+        return averages
+
+    def _get_average_grade_on_question(self, question_number: int) -> float:
+        """Return the average grade on a specific question (not percentage).
+
+        Args:
+            question_number: The question number to get the average grade for.
+
+        Returns:
+            The average grade on the question as a float.
+        """
+        return self.student_df[f"q{question_number}_mark"].mean()
+
+    def get_average_grade_on_all_questions(self) -> Dict[str, float]:
+        """Return the average grade on each question (not percentage).
+
+        Returns:
+            A list of floats containing the average grade on each question.
+        """
+        averages = {}
+        for q in self.spec["question"].keys():
+            averages[q] = self._get_average_grade_on_question(int(q))
         return averages
 
     def _get_marks_for_all_questions(

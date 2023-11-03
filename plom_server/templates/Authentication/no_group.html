@@ -4,23 +4,13 @@
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Web Plom Error - User is not in a group
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block main_content %}
-            <h1>Sorry!</h1>
-            <p>
-                You are in this page because you are not in a group.
-                Please contact the administrator and ask them to add you to the appropriate group.
-            </p>
-        {% endblock main_content %}
-    </body>
-</html>
+{% block title %}
+    Error - User is not in a group
+{% endblock title %}
+{% block main_content %}
+    <h1>Sorry!</h1>
+    <p>
+        You are in this page because you are not in a group.
+        Please contact the administrator and ask them to add you to the appropriate group.
+    </p>
+{% endblock main_content %}

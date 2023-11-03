@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import datetime as dt
 from tqdm import tqdm
@@ -12,7 +13,7 @@ from ...services import DataExtractionService
 from ...services import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 class Command(BaseCommand):
@@ -53,7 +54,7 @@ Generating..."""
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
-        spec = Specification.load().spec_dict
+        spec = SpecificationService.get_the_spec()
 
         # info for report
         name = spec["name"]
@@ -238,20 +239,20 @@ Generating..."""
             for i, graph in enumerate(list_of_graphs):
                 odd = i % 2
                 if not odd:
-                    out += f"""
+                    out += """
                     <div class="row">
                     """
                 out += f"""
                 <div class="col" style="margin-left:0mm;">
-                <img src="data:image/png;base64,{graph}" width="50px" height="40px">
+                <img src="data:image/png;base64,{graph}" width="50px" height="40px" />
                 </div>
                 """
                 if odd:
-                    out += f"""
+                    out += """
                     </div>
                     """
             if not odd:
-                out += f"""
+                out += """
                 </div>
                 """
             return out
@@ -262,7 +263,7 @@ Generating..."""
             for graph in list_of_graphs:
                 out += f"""
                 <div class="col" style="margin-left:0mm;">
-                <img src="data:image/png;base64,{graph}" width="100%" height="100%">
+                <img src="data:image/png;base64,{graph}" width="100%" height="100%" />
                 </div>
                 """
             return out
@@ -272,7 +273,7 @@ Generating..."""
         <h2>Marking report: {longName}</h2>
         """
         if not all_marked:
-            html += f"""
+            html += """
             <p style="color:red;">WARNING: Not all papers have been marked.</p>
             """
 
@@ -286,7 +287,7 @@ Generating..."""
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
         <h3>Histogram of total marks</h3>
-        <img src="data:image/png;base64,{histogram_of_grades}">
+        <img src="data:image/png;base64,{histogram_of_grades}" />
         """
 
         html += _html_add_title("Histogram of marks by question")
@@ -295,7 +296,7 @@ Generating..."""
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
-        <img src="data:image/png;base64,{corr}">
+        <img src="data:image/png;base64,{corr}" />
         """
 
         html += _html_add_title("Histograms of grades by marker by question")
@@ -324,7 +325,7 @@ Generating..."""
 
         html += _html_add_title("Line graph of average mark on each question")
         html += f"""
-            <img src="data:image/png;base64,{line_graph}">
+            <img src="data:image/png;base64,{line_graph}" />
             """
 
         def create_pdf(html):
@@ -341,7 +342,6 @@ Generating..."""
                 f.write(pdf_data)
 
         date_filename = "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-
         filename = "Report-" + name + date_filename + ".pdf"
 
         print("Writing to " + filename + ".")

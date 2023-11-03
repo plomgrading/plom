@@ -13,7 +13,7 @@ import pandas as pd
 import seaborn as sns
 
 from . import DataExtractionService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 RANGE_BIN_OFFSET = 2
@@ -26,7 +26,7 @@ class MatplotlibService:
 
     def __init__(self):
         self.des = DataExtractionService()
-        self.spec = Specification.load().spec_dict
+        self.spec = SpecificationService.get_the_spec()
 
         self.student_df = self.des._get_student_data()
         self.ta_df = self.des._get_ta_data()

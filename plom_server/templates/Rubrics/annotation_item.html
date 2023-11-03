@@ -1,29 +1,33 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% block title %}
+    Annotation Info
+{% endblock title %}
 {% block page_heading %}
     Annotation Info
 {% endblock page_heading %}
 {% block main_content %}
     {% comment %} Flex box for image on the right {% endcomment %}
     <div class="container mx-0">
-        <div class="d-flex">
-            <div class="flex-fill">
-                <p>Question: {{ annotation.task.question_number }}</p>
-                <p>Version: {{ annotation.task.version }}</p>
-                <p>Score: {{ annotation.score }}</p>
+        <div class="row">
+            <div class="col">
                 <p>
-                    Paper: <!-- TODO: ADD LINK TO PAPER PAGE HERE --> {{ annotation.task.paper }}
+                    Paper: <!-- TODO: ADD LINK TO PAPER PAGE HERE --> {{ annotation.task.paper.paper_number }}
                 </p>
+                <p>Question: {{ annotation.task.question_number }}</p>
+                <p>Version: {{ annotation.task.question_version }}</p>
+                <p>Score: {{ annotation.score }}</p>
                 <p>Edition: {{ annotation.edition }}</p>
                 <p>User: {{ annotation.user.username }}</p>
             </div>
-            <div class="flex-fill">
-                <!-- TODO (#2798): add image here -->
-                <p>Annotation Image here</p>
+            <div class="col">
+                <img style="height: 50vh"
+                     src="{% url 'progress_annotation_img' annotation.task.paper.paper_number annotation.task.question_number %}" />
             </div>
         </div>
     </div>
@@ -52,6 +56,4 @@
             {% endfor %}
         </tbody>
     </table>
-    {% comment %} TODO: move to a more appropriate place (Issue #2762) {% endcomment %}
-    <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
 {% endblock main_content %}

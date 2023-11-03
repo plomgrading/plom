@@ -1,0 +1,226 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Detailed view of Question {{ question }} Version {{ version }}
+{% endblock title %}
+{% block page_heading %}
+    Detailed view of Question {{ question }} Version {{ version }}
+{% endblock page_heading %}
+{% block main_content %}
+    <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Back to overview</a>
+    <a class="btn btn-success"
+       href="{% url 'progress_mark_details' question version %}">refresh page</a>
+    <a class="btn btn-info"
+       href="{% url 'progress_task_annotation_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
+    <div class="container my-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Histograms and statistics - all users</h5>
+            </div>
+            <div class="card-body">
+                <div class="card-text">
+                    <div class="row">
+                        <div class="col">
+                            <div class="progress m-2"
+                                 style="height: 2em"
+                                 role="progressbar"
+                                 aria-valuenow="{{ stats.number_of_completed_tasks }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="{{ stats.all_task_count }}">
+                                {% if stats.all_task_count == stats.number_of_completed_tasks %}
+                                    <div class="progress-bar bg-success fs-6"
+                                         style="width: {{ stats.completed_percentage }}%">
+                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
+                                    </div>
+                                {% else %}
+                                    <div class="progress-bar fs-6"
+                                         style="width: {{ stats.completed_percentage }}%">
+                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <table class="table table-sm table-bordered text-center">
+                                <thead>
+                                    <tr>
+                                        <th>avg time</th>
+                                        <th>estimated remaining time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ stats.avg_marking_time }} s</td>
+                                        <td>{{ stats.approx_remaining_hours }} h</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col">
+                            <canvas class="col" id="pies" style="max-height:30vh;">
+                            </canvas>
+                        </div>
+                    </div>
+                    <table class="table table-sm table-bordered text-center">
+                        <thead>
+                            <tr>
+                                <th>number marked</th>
+                                <th>mean</th>
+                                <th>median</th>
+                                <th>mode</th>
+                                <th>stdev</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ stats.number_of_completed_tasks }}</td>
+                                <td>{{ stats.mark_mean }}</td>
+                                <td>{{ stats.mark_median }}</td>
+                                <td>{{ stats.mark_mode }}</td>
+                                <td>{{ stats.mark_stdev }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <canvas id="hist_all" style="max-height:30vh;">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        {% for upk, data in user_hists.items %}
+            <div class="card mt-2">
+                <div class="card-header">
+                    <h6>Histograms and statistics: {{ data.username }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-sm table-bordered text-center">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>number marked</th>
+                                    <th>mean</th>
+                                    <th>median</th>
+                                    <th>mode</th>
+                                    <th>stdev</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ data.username }}</td>
+                                    <td>{{ data.number }}</td>
+                                    <td>{{ data.mark_mean }}</td>
+                                    <td>{{ data.mark_median }}</td>
+                                    <td>{{ data.mark_mode }}</td>
+                                    <td>{{ data.mark_stdev }}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr>
+                                    <td>vs Everyone</td>
+                                    <td>{{ stats.number_of_completed_tasks }}</td>
+                                    <td>{{ stats.mark_mean }}</td>
+                                    <td>{{ stats.mark_median }}</td>
+                                    <td>{{ stats.mark_mode }}</td>
+                                    <td>{{ stats.mark_stdev }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <canvas id="hist_{{ upk }}" style="max-height:30vh;">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+  var ctx_all = document.getElementById('hist_all');
+    new Chart(ctx_all, {
+      type: 'bar',
+      data: {
+	labels: {{hist_keys}},
+	datasets: [{
+	    label: "counts",
+              data: {{hist_values}},
+              borderWidth: 3
+        }]
+      },
+        options: {
+	  plugins: {
+	      legend: { display: false },
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by all users',
+	      },
+	  },
+	  scales: {
+                y: {
+		  beginAtZero: true
+                }
+	  }
+      }
+    });
+
+  var ctx_pies = document.getElementById('pies');
+  new Chart(ctx_pies, {
+      type: 'doughnut',
+      options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Number marked by user',
+	      }
+	  },
+	  circumference: {{pie_angle}},
+      },
+      data: {
+	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %}],
+	  datasets: [{
+	      data: [ {% for upk, data in user_hists.items %}{{data.number}},{% endfor %}],
+	  }],
+      }
+  });
+    </script>
+    {% for upk, data in user_hists.items %}
+        <script>
+  var ctx_{{upk}} = document.getElementById('hist_{{upk}}');
+  new Chart(ctx_{{upk}}, {
+      data: {
+	  datasets: [ {
+	      type: 'bar',
+	      label: '{{data.username}}',
+              data: {{data.hist_values}},
+              borderWidth: 3
+	  },{
+	      type: 'line',
+	      label: 'Everyone',
+              data: {{data.hist_everyone_values}},
+              borderWidth: 3,
+	      tension: 0.075,
+
+	  }],
+	labels: {{hist_keys}},
+      },
+        options: {
+	  plugins: {
+	      title: {
+		  display: true,
+		  text: 'Histogram of scores marked by {{data.username}}',
+	      }
+	  },
+	  scales: {
+                y: {
+		  beginAtZero: true
+                }
+	  }
+      }
+
+    });
+
+        </script>
+    {% endfor %}
+{% endblock main_content %}

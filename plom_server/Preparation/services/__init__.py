@@ -9,3 +9,4 @@ from .classlist import StagingClasslistCSVService, StagingStudentService
 from .pqv_mapping import PQVMappingService
 from .mocker import ExamMockerService
 from .extra_page import ExtraPageService
+from .scrap_paper import ScrapPaperService

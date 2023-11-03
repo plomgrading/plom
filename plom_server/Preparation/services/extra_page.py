@@ -22,10 +22,10 @@ class ExtraPageService:
         """Status of the build extra page task, creating a "todo" task if it does not exist.
 
         Return:
-            The status as string: "todo", "queued", "started", "error" or "complete".
+            The status as string: "To do", "Queued", "Started", "Error" or "Complete".
 
         """
-        return ExtraPagePDFTask.load().status
+        return ExtraPagePDFTask.load().get_status_display()
 
     @transaction.atomic()
     def get_extra_page_pdf_filepath(self):
@@ -36,7 +36,7 @@ class ExtraPageService:
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ExtraPagePDFTask.load()
         Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
-        task_obj.status = "todo"
+        task_obj.status = ExtraPagePDFTask.TO_DO
         task_obj.huey_id = None
         task_obj.save()
 
@@ -70,17 +70,17 @@ class ExtraPageService:
     def build_extra_page_pdf(self):
         """Enqueue the huey task of building the extra page pdf."""
         task_obj = ExtraPagePDFTask.load()
-        if task_obj.status == "complete":
+        if task_obj.status == ExtraPagePDFTask.COMPLETE:
             return
         pdf_build = self._build_the_extra_page_pdf()
         task_obj.huey_id = pdf_build.id
-        task_obj.status = "queued"
+        task_obj.status = ExtraPagePDFTask.QUEUED
         task_obj.save()
 
     @transaction.atomic
     def get_extra_page_pdf_as_bytes(self):
         epp_obj = ExtraPagePDFTask.load()
-        if epp_obj.status == "complete":
+        if epp_obj.status == ExtraPagePDFTask.COMPLETE:
             with epp_obj.extra_page_pdf.open("rb") as fh:
                 return fh.read()
         else:

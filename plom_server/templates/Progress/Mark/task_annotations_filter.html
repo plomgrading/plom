@@ -1,0 +1,132 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Tasks and Annotations
+{% endblock title %}
+{% block page_heading %}
+    Tasks and annotations
+    {% if username == "*" %}
+    {% else %}
+        by {{ username }}
+    {% endif %}
+    {% if question == "*" %}
+    {% else %}
+        of q.{{ question }}
+    {% endif %}
+    {% if version == "*" %}
+    {% else %}
+        of v.{{ version }}
+    {% endif %}
+{% endblock page_heading %}
+{% block main_content %}
+    <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Back to overview</a>
+    <div class="w-100">
+        <div class="row">
+            <form class="p-4 mb-4"
+                  action="{% url 'progress_task_annotation_filter' %}"
+                  method="get">
+                <div class="row">
+                    <label class="col-sm-1 col-form-label" for="question">Question:</label>
+                    <div class="col-sm-4">
+                        <select name="question" class="form-select">
+                            <option>*</option>
+                            {% for qn in question_list %}
+                                <option {% if question == qn %}selected{% endif %}>{{ qn }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label class="col-sm-1 col-form-label" for="username">User:</label>
+                    <div class="col-sm-4">
+                        <select name="username" class="form-select">
+                            <option>*</option>
+                            {% for un in username_list %}
+                                <option {% if username == un %}selected{% endif %}>{{ un }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-sm-1 col-form-label" for="version">Version:</label>
+                    <div class="col-sm-4">
+                        <select name="version" class="form-select">
+                            <option>*</option>
+                            {% for v in version_list %}
+                                <option {% if version == v %}selected{% endif %}>{{ v }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-1">
+                        <button class="btn btn-primary" type="submit">filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="row">
+            <div class="card col">
+                <div class="card-header">
+                    <h5>Tasks list</h5>
+                </div>
+                <div class="card-body">
+                    <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
+                        <table class="table table-sm table-bordered text-center sortable">
+                            <thead>
+                                <tr>
+                                    <th>Paper</th>
+                                    <th>Question</th>
+                                    <th>Version</th>
+                                    <th>Status</th>
+                                    <th>Last update</th>
+                                    <th>Username</th>
+                                    <th>Score</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pn, task_data in task_info.items %}
+                                    <tr>
+                                        <td>{{ pn }}</td>
+                                        <td>{{ task_data.question }}</td>
+                                        <td>{{ task_data.version }}</td>
+                                        {% if task_data.status == "Complete" %}
+                                            <td class="bg-success">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "To Do" %}
+                                            <td class="bg-warning">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "Out" %}
+                                            <td class="bg-info">{{ task_data.status }}</td>
+                                        {% else %}
+                                            <td>{{ task_data.status }}</td>
+                                        {% endif %}
+                                        <td>{{ task_data.last_update }}</td>
+                                        <td>{{ task_data.username }}</td>
+                                        <td>{{ task_data.score }}</td>
+                                        <td class="text-start">
+                                            {% if task_data.status %}
+                                                <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-info">orig</button>
+                                            {% endif %}
+                                            {% if task_data.status == "Complete" %}
+                                                <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-success">annot</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card col" style="height: auto; width: 40vw;">
+                <div id="imageHere"></div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

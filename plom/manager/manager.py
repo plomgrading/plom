@@ -10,7 +10,6 @@
 
 from collections import defaultdict
 import html
-import imghdr
 import logging
 import os
 from pathlib import Path
@@ -1779,12 +1778,10 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i, img_bytes in enumerate(imageList):
-                img_ext = imghdr.what(None, h=img_bytes)
+                img_ext = "unknown_ext"
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
-                if not img_ext:
-                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec() == QDialog.DialogCode.Accepted:
@@ -1934,9 +1931,14 @@ class Manager(QWidget):
         assert len(idx) == 6
         idx = idx[0]  # they all have the same row
         test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.ItemDataRole.DisplayRole)
-        predictor = self.ui.predictionTW.item(idx.row(), 4).data(
-            Qt.ItemDataRole.DisplayRole
-        )
+        cell = self.ui.predictionTW.item(idx.row(), 4)
+        if cell is None:
+            InfoMsg(
+                self,
+                f"Selected row index {idx.row()} seems to have no prediction to remove",
+            ).exec()
+            return
+        predictor = cell.data(Qt.ItemDataRole.DisplayRole)
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
@@ -2367,7 +2369,7 @@ class Manager(QWidget):
         t2 = time()
         log.debug("filterReview: %.3gs waiting for API call", t1 - t0)
         if t2 - t1 > 0.5:
-            log.warn("filterReview: slow UI table build: %.3gs", t2 - t1)
+            log.warning("filterReview: slow UI table build: %.3gs", t2 - t1)
 
     def reviewAnnotated(self):
         ri = self.ui.reviewTW.selectedIndexes()
@@ -2382,13 +2384,12 @@ class Manager(QWidget):
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         owner = self.ui.reviewTW.item(r, 4).text()
-        img = self.msgr.get_annotations_image(test, question)
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        # TODO: but more likely superseded by "pagedata" changes
+        img_info, img_bytes = self.msgr.get_annotations_image(test, question)
+        ext = "." + img_info["extension"]
         # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=ext).name)
         with open(f, "wb") as fh:
-            fh.write(img)
+            fh.write(img_bytes)
         qlabel = self.qlabels[question - 1]
         ReviewViewWindow(self, [f], stuff=(test, question, qlabel, owner)).exec()
         f.unlink()

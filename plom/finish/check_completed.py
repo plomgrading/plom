@@ -86,10 +86,23 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
     students_from_db = {
         (s["sid"], s["sname"]) for n, s in pns_to_ids.items() if s["identified"]
     }
-    students_to_papernum = {(s["sid"], s["sname"]): n for n, s in pns_to_ids.items()}
 
     cl_not_db = students_from_cl - students_from_db
-    db_not_cl = students_from_db - students_from_cl
+
+    # db_not_cl = students_from_db - students_from_cl
+    # Non-unique b/c of blanks, so instead of set subtraction above, we
+    # compute, and stick the papernum in as well for unique triplets.
+    db_not_cl = [
+        (s["sid"], s["sname"], papernum)
+        for papernum, s in pns_to_ids.items()
+        if s["identified"] and (s["sid"], s["sname"]) not in students_from_cl
+    ]
+    # filter out those with None SID to highlight separately
+    ided_to_None = []
+    for papernum, v in pns_to_ids.items():
+        if v["sid"] is None:
+            # TODO: show sum of mark here?
+            ided_to_None.append((v["sid"], v["sname"], papernum))
 
     if cl_not_db:
         print(
@@ -111,14 +124,13 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
             f"There were {len(db_not_cl)} students present in the Plom "
             "database who do not seem to be listed in `classlist.csv`."
         )
-        for s in db_not_cl:
-            try:
-                testnum = students_to_papernum[s]
-            except KeyError:
-                print(f"WARNING: could not find testnum for {s}!")
-                print("Continuing, but this is very likely a bug!")
-            else:
-                print(f"  Test no.: {testnum}\tID: {s[0]}\tName: {s[1]}")
+        for sid, sname, testnum in db_not_cl:
+            print(f"  Test no.: {testnum}\tID: {sid}\tName: {sname}")
+
+    if ided_to_None:
+        print(f"There are {len(ided_to_None)} papers ID'd to SID None:")
+        for sid, sname, papernum in ided_to_None:
+            print(f"  Test no.: {papernum}\tID: {sid}\tName: {sname}")
 
 
 def main(server=None, password=None, dangling_check=False):

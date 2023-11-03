@@ -43,7 +43,8 @@ dependencies = [
     "appdirs>=1.4.3",
     "arrow>=1.1.1",
     "beautifulsoup4>=4.12.2",
-    "canvasapi>=2.0.0",
+    "canvasapi>=3.0.0",
+    "cryptography>=37.0.2",
     "debugpy>=1.6.7",
     "django>=4.0.10",
     "django-braces>=1.15.0",
@@ -67,7 +68,7 @@ dependencies = [
     "passlib",
     "peewee>=3.13.3",
     "Pillow>=7.0.0",
-    "pymupdf>=1.21.0",
+    "pymupdf>=1.22.5",
     "PyMySQL>=1.0.2",
     "pytest>=6.0.0",
     "pytest-qt>=4.1.0",
@@ -93,7 +94,6 @@ dependencies = [
 #   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
-#   - openssl (legacy)
 #   - imagemagick (legacy)
 #   - ghostscript (optional, legacy)
 #   - latex installation including (Debian/Ubuntu pkg names):
@@ -104,7 +104,7 @@ dependencies = [
 
 [project.readme]
 file = 'README.md'
-content-type = 'text/x-markdown'
+content-type = 'text/markdown'
 [project.urls]
 Homepage = 'https://plomgrading.org/'
 'Source Code' = 'https://gitlab.com/plom/plom'
@@ -151,7 +151,8 @@ packages = [
     "plom/templateUserList.csv",
     "plom/demoClassList.csv",
     "plom/demo_rubrics.toml",
-    "plom/create/extra_pages_src.tex"
+    "plom/create/extra_pages_src.tex",
+    "plom/create/scrap_paper_src.tex"
 ]
 "share/plom/testTemplates" = ["testTemplates/*"]
 "share/applications" = ["org.plomgrading.PlomClient.desktop"]

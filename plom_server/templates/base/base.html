@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
-    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
 -->
@@ -26,182 +26,149 @@
         <!-- Bootstrap icons -->
         <link rel="stylesheet"
               href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+        <!-- Sorttable by Stuart Langridge
+            website = https://www.kryogenix.org/code/browser/sorttable/
+            GitHub = https://github.com/stuartlangridge/sorttable -->
+        <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
         <!-- Base stylesheet -->
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/profile.css' %}">
-        <!-- Title -->
         <title>
-            {% block title %}
-                Web Plom
-            {% endblock title %}
+            {% block full_title %}
+                {% block title_prefix %}
+                    Plom -
+                {% endblock title_prefix %}
+                {% block title %}
+                {% endblock title %}
+            {% endblock full_title %}
         </title>
     </head>
     <!-- Need the csrf token to enable htmx -->
-    <body style="background-color: #F5F6FA;
-                 display: flex"
-          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
-                integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
-                crossorigin="anonymous"></script>
-        <div class="container-fluid" style="padding: 0px;">
-            <div class="row" style="min-height: 100vh; margin: 0px;">
-                <div class="col-auto shadow"
-                     style="background-color: {{ navbar_colour }};
-                            padding: 0px">
-                    <nav class="navbar">
-                        <div class="container-fluid" style="padding: 0px; ">
-                            <!-- Navbar links -->
-                            <ul class="nav flex-column">
+    <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <!-- TODO: vh-100 is not quite right: if the page is very long, the sidebar does not extend -->
+        <div class="container-fluid p-0 d-flex vh-100">
+            <!-- TODO: style max width here stops the hamburger menu from popping up too wide: find better fix -->
+            <div id="sidebar"
+                 class="d-flex flex-column flex-shrink-0 p-2 shadow bg-{{ navbar_color }}-subtle text-start offcanvas-md offcanvas-start overflow-auto"
+                 style="max-width: 13rem">
+                <!-- Plom logo-->
+                <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                    <img class="img-fluid"
+                         src="{% static 'plomLogo.png' %}"
+                         style="max-width: 8rem" />
+                </a>
+                <ul class="nav flex-column mt-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">
+                            {% if request.user.first_name %}
+                                {{ request.user.first_name }}
+                            {% else %}
+                                {{ request.user.username.lower }}
+                            {% endif %}
+                        </a>
+                    </li>
+                    <ul>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+                        </li>
+                    </ul>
+                    {% if user_is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'signup_manager' %}">Sign Up Manager</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
+                        </li>
+                    {% elif user_is_manager %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
+                        </li>
+                        <li class="nav-item accordion accordion-flush">
+                            <a class="nav-link" href="#progress">Progress</a>
+                        </li>
+                        <div id="progress">
+                            <ul>
                                 <li class="nav-item">
-                                    <!-- Plom logo -->
-                                    <a class="navbar-brand nav-link"
-                                       style="padding-right: 15px;
-                                              padding-left: 0px;
-                                              margin: 0px;
-                                              text-align: center"
-                                       href="{% url 'home' %}">
-                                        <img class="img-fluid"
-                                             src="{% static 'plomLogo.png' %}"
-                                             style="max-width: 8rem">
-                                    </a>
+                                    <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
                                 </li>
-                                {% if request.user.first_name %}
-                                    <li class="nav-item">
-                                        <p style="text-align: center; padding: 0px 5px; color: white">
-                                            Welcome
-                                            <br>
-                                            <b>{{ request.user.first_name }}</b>!
-                                        </p>
-                                    </li>
-                                {% else %}
-                                    <li class="nav-item">
-                                        <p style="text-align: center; padding: 0px 5px; color: white">
-                                            Welcome
-                                            <br>
-                                            <b>{{ request.user.username.lower }}</b>!
-                                        </p>
-                                    </li>
-                                {% endif %}
                                 <li class="nav-item">
-                                    <p style="text-align: center; color: white">
-                                        <b>{{ user_group }}</b> group
-                                    </p>
+                                    <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link link-light is_sidebar_link"
-                                       href="{% url 'profile' %}">Profile</a>
+                                    <a class="nav-link" href="{% url 'progress_mark_home' %}">Mark</a>
                                 </li>
-                                {% if user_group == 'admin' %}
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'signup_manager' %}">Sign Up
-                                            <br>
-                                        Manager</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'password_reset' %}">Password
-                                            <br>
-                                        Reset Link</a>
-                                    </li>
-                                {% elif user_group == 'manager' %}
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'users' %}">Users</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'prep_landing' %}">Create test</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'signup' %}">Create
-                                            <br>
-                                        Scanners/Markers</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'rubrics_landing' %}">Rubrics</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'tags_landing' %}">Tags</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'marking_info' %}">Marking Info</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'task_order_landing' %}">Task Ordering</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'visualization_landing' %}">Visualization</a>
-                                    </li>
-                                    <li class="nav-item accordion accordion-flush">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           data-bs-toggle="collapse"
-                                           href="#progress">Progress</a>
-                                    </li>
-                                    <div class="collapse" id="progress">
-                                        <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link"
-                                               href="{% url 'progress_scan_overview' %}">Scan</a>
-                                        </li>
-                                        <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link"
-                                               href="{% url 'progress_mark_home' %}">Mark</a>
-                                        </li>
-                                        <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link"
-                                               href="{% url 'progress_identify_home' %}">Identify</a>
-                                        </li>
-                                        <li class="nav-item" style="background-color: #b5a7fa;">
-                                            <a class="nav-link link-light is_sidebar_link"
-                                               href="{% url 'progress_user_info_home' %}">User Info</a>
-                                        </li>
-                                    </div>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'reports_landing' %}">Reports</a>
-                                    </li>
-                                {% elif user_group == 'scanner' %}
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'scan_home' %}">Scan</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link"
-                                           href="{% url 'scan_summary' %}">Summary</a>
-                                    </li>
-                                {% endif %}
                                 <li class="nav-item">
-                                    <a class="nav-link link-light is_sidebar_link" href="{% url 'logout' %}">Log out</a>
+                                    <a class="nav-link" href="{% url 'progress_identify_home' %}">Identify</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
                                 </li>
                             </ul>
                         </div>
-                    </nav>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'reports_landing' %}">Reports</a>
+                        </li>
+                    {% elif user_is_scanner %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'scan_home' %}">Scan</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
+                        </li>
+                    {% elif user_is_marker %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'progress_mark_home' %}">Marking progress</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <!-- flex-fill here will go off the screen for very wide pages -->
+            <div class="w-100">
+                <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle d-flex">
+                    <a class="navbar-brand nav-link" href="{% url 'home' %}">
+                        <img class="img-fluid"
+                             src="{% static 'plomLogo.png' %}"
+                             style="max-width: 8rem" />
+                    </a>
+                    <button class="btn ms-auto border border-black"
+                            type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#sidebar">
+                        <i class="bi bi-list"></i>
+                    </button>
                 </div>
-                <div class="col">
-                    <div class="container-fluid"
-                         style="padding-top: 12px;
-                                padding-bottom: 12px;
-                                min-height: 100%">
-                        <!-- Page heading -->
-                        <h1 class="fw-lighter" style="margin: 15px;">
-                            {% block page_heading %}
-                            {% endblock page_heading %}
-                        </h1>
-                        <p class="lead" style="margin-bottom: 25px;">
-                            {% block page_subheading %}
-                            {% endblock page_subheading %}
-                        </p>
-                        <!-- Main content -->
-                        {% block main_content %}
-                        {% endblock main_content %}
-                    </div>
+                <!-- padding-start-4 b/c content was too close to navbar shadow -->
+                <!-- 1.5rem is the bootstrap padding for 4 -->
+                <div style="padding: 0rem 1.5rem">
+                    <!-- Page heading -->
+                    <h1 class="fw-lighter m-2">
+                        {% block page_heading %}
+                        {% endblock page_heading %}
+                    </h1>
+                    <p class="lead mb-2">
+                        {% block page_subheading %}
+                        {% endblock page_subheading %}
+                    </p>
+                    <!-- Main content -->
+                    {% block main_content %}
+                    {% endblock main_content %}
                 </div>
             </div>
         </div>

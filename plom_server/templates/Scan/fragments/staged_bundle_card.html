@@ -11,10 +11,17 @@
             height:100%">
     <div class="card-body d-flex flex-row p-0">
         {% if has_been_processed %}
-            <img src="{% url 'scan_get_thumbnail' timestamp 1 %}"
-                 class="border rounded-start"
-                 style="max-height: 16em;
-                        transform:rotate(calc(-1 * {{ cover_angle|default_if_none:0 }}deg))">
+            <div class="p-2 m-2"
+                 style="height: 16em;
+                        width: 16em;
+                        justify-content: center;
+                        display:flex;
+                        align-items:center">
+                <img src="{% url 'scan_get_thumbnail' timestamp 1 %}"
+                     class="border rounded-start"
+                     style="max-height: 16em;
+                            transform:rotate(calc(-1 * {{ cover_angle|default_if_none:0 }}deg))" />
+            </div>
         {% else %}
             <!-- display an animating loading thingy and refresh after a few seconds -->
             <img class="shadow-sm p-3 border rounded-start"
@@ -23,7 +30,7 @@
                  hx-get="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
                  hw-swap="innerHTML"
                  hx-trigger="load delay:2s"
-                 hx-target="#bundle{{ slug }}">
+                 hx-target="#bundle{{ slug }}" />
         {% endif %}
         <div class="p-2">
             <h5 class="card-title">{{ slug }}.pdf</h5>
@@ -106,7 +113,7 @@
                                      hx-get="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
                                      hw-swap="innerHTML"
                                      hx-trigger="load delay:2s"
-                                     hx-target="#bundle{{ slug }}">
+                                     hx-target="#bundle{{ slug }}" />
                             </li>
                         {% else %}
                             <li>QR codes not yet scanned</li>

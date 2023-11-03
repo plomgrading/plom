@@ -55,7 +55,7 @@ class Command(BaseCommand):
         multiply over questions.
         """
         if numquestions is None:
-            spec = SpecificationService().get_the_spec()
+            spec = SpecificationService.get_the_spec()
             numquestions = spec["numberOfQuestions"]
 
         with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:

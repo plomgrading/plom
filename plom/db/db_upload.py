@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
 from datetime import datetime, timezone
@@ -358,22 +358,29 @@ def getSIDFromTest(self, test_number):
 def sidToTest(self, student_id):
     """Find the test number associated with a student ID.
 
+    Note: we check ID'd first so if the paper is ID'd you'll
+    get that (even if ``student_id`` is also used in a prename.
+    If its not ID'd but its prenamed, there can be more than one
+    prename pointing to the same paper.  In this case, you'll
+    get one of them; its not well-defined which.
+
     Args:
         student_id (int):
 
     Returns:
-        tuple: ``(True, int)`` on success with an integer test number.
-        Or ``(False, str)`` with an error message.
+        tuple: on success either ``(True, int, "ided")`` or
+        ``(True, int, "prenamed")`` with an integer test number.
+        Or ``(False, str, "")`` with an error message.
     """
     iref = IDGroup.get_or_none(student_id=student_id)
     if iref is not None:
-        return (True, iref.test.test_number)
+        return (True, iref.test.test_number, "ided")
     # TODO: Issue #2248, could be more than one response here
     preidref = IDPrediction.get_or_none(student_id=student_id, predictor="prename")
     if preidref is not None:
-        return (True, preidref.test.test_number)
+        return (True, preidref.test.test_number, "prenamed")
     # Consider refactoring to throw exception
-    return (False, "Cannot find test with sid {}".format(student_id))
+    return (False, f"Cannot find test with sid {student_id}", "")
 
 
 def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):

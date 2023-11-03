@@ -1,11 +1,11 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Create papers
+    Create papers
 {% endblock title %}
 {% block page_heading %}
     Create test papers
@@ -20,7 +20,11 @@
                 <div class="card-body">
                     <h5 class="card-title">Papers created.</h5>
                     <p class="card-text">Ready to build test paper PDFs.</p>
-                    <a class="btn btn-danger" hx-delete="{% url 'create_papers' %}">DEBUG: delete from DB</a>
+                    {% if is_test_prepared %}
+                        <a disabled>Preparation set as finished - cannot modify test papers any further.</a>
+                    {% else %}
+                        <a class="btn btn-danger" hx-delete="{% url 'create_papers' %}">Clear papers from database</a>
+                    {% endif %}
                 </div>
             {% else %}
                 <div class="card-body">

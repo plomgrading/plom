@@ -1,76 +1,77 @@
-<!-- Copyright (C) 2023 Brennen Chiu -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Identify Progress
+    Identifying progress
 {% endblock title %}
 {% block page_heading %}
     Identifying progress
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card mb-2 w-25">
-        <h5 class="p-2" style="margin-bottom: 0px;">ID Papers Scanned: {{ id_papers_count }} / {{ all_id_papers_count }}</h5>
-        <h5 class="p-2" style="margin-bottom: 0px;">
-            Papers Identified: {{ identified_papers_count }} / {{ all_id_papers_count }}
-        </h5>
+        <div class="progress m-2"
+             style="height: 2em"
+             role="progressbar"
+             aria-valuenow="{{ completed_task_count }}"
+             aria-valuemin="0"
+             aria-valuemax="{{ all_task_count }}">
+            {% if completed_task_count == all_task_count %}
+                <div class="progress-bar bg-success fs-6"
+                     style="width: {{ percent_complete }}%">{{ completed_task_count }} / {{ all_task_count }}</div>
+            {% else %}
+                <div class="progress-bar fs-6" style="width: {{ percent_complete }}%">
+                    {{ completed_task_count }} / {{ all_task_count }}
+                </div>
+            {% endif %}
+        </div>
     </div>
-    <div class="row" x-data="{idimage: ''}">
+    <div class="row">
         <div class="col">
-            <div class="card">
-                <table class="table table-hover sticky-header" style="margin-bottom: 0px;">
-                    <thead>
-                        <tr class="text-center align-middle"
-                            style="position: sticky;
-                                   top: 0;
-                                   z-index: 1;
-                                   background-color: #373737;
-                                   color: white">
-                            <th scope="col">Paper</th>
-                            <th scope="col">ID Page</th>
-                            <th scope="col">Student ID</th>
-                            <th scope="col">Student Name</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if id_papers %}
-                            {% for id_paper, identified_paper in identified_papers.items %}
-                                <tr class="text-center align-middle">
-                                    <td scope="row">{{ id_paper.paper.paper_number }}</td>
-                                    {% if id_paper.image %}
-                                        <td scope="row">
-                                            <button hx-get="id_img_wrap/{{ id_paper.image.pk }}"
-                                                    hx-target="#imageHere"
-                                                    hx-replace="innerHTML"
-                                                    class="btn btn-outline-success">View ID page</button>
-                                        </td>
-                                    {% else %}
-                                        <td scope="row">Not scan yet.</td>
-                                    {% endif %}
-                                    {% if identified_paper %}
-                                        <td scope="row">{{ identified_paper.student_id }}</td>
-                                        <td scope="row">{{ identified_paper.student_name }}</td>
-                                        <td scope="row">
-                                            <a class="btn btn-outline-danger"
-                                               hx-post="{% url 'clear_ID' id_paper.paper.pk %}"
-                                               hx-confirm="Are you sure you wish to clear the ID for paper number {{ id_paper.paper.paper_number }}?">
-                                            Clear ID</a>
-                                        </td>
-                                    {% else %}
-                                        <td scope="row" colspan="2">Not ID yet</td>
-                                        <td scope="row">
-                                            <button class="btn btn-outline-danger disabled">Clear ID</button>
-                                        </td>
-                                    {% endif %}
-                                </tr>
-                            {% endfor %}
+            <table class="table sortable">
+                <thead>
+                    <th>Paper</th>
+                    <th>ID Page</th>
+                    <th>Status</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Action</th>
+                </thead>
+                {% for pn, data in id_task_info.items %}
+                    <tr>
+                        <td>{{ pn }}</td>
+                        <td>
+                            {% if data.idpageimage_pk %}
+                                <button hx-get="id_img_wrap/{{ data.idpageimage_pk }}"
+                                        hx-target="#imageHere"
+                                        hx-replace="innerHTML"
+                                        class="btn btn-outline-success">view</button>
+                            {% else %}
+                                No ID page
+                            {% endif %}
+                        </td>
+                        <td>{{ data.status }}</td>
+                        {% if data.status == "Complete" %}
+                            <td>{{ data.student_id }}</td>
+                            <td>{{ data.student_name }}</td>
+                            <td>
+                                <button class="btn btn-outline-danger"
+                                        hx-delete="{% url 'clear_ID' pn %}"
+                                        hx-confirm="Are you sure you wish to clear the ID for paper number {{ pn }}?">
+                                    clear
+                                </button>
+                            </td>
                         {% else %}
-                            <tr class="text-center align-middle">
-                                <td scope="row" colspan="5">No papers scanned yet.</td>
-                            </tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
                         {% endif %}
-                    </tbody>
-                </table>
-            </div>
+                    </tr>
+                {% endfor %}
+            </table>
         </div>
         <div class="col">
             <div style="height: 45vw;

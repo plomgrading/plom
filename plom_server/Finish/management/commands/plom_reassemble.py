@@ -7,7 +7,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from Finish.services import ReassembleService
-from Papers.services import PaperInfoService, SpecificationService
+from Papers.services import PaperInfoService
 from Papers.models import Paper
 
 
@@ -28,6 +28,12 @@ class Command(BaseCommand):
             type=Path,
             nargs="?",
             help="Path for saving reassembled papers (optional)",
+        )
+        parser.add_argument(
+            "--zip",
+            type=Path,
+            nargs="?",
+            help="Path for saving zip of reassembled papers (optional)",
         )
 
     def reassemble_one_paper(self, test_num, save_path="reassembled"):
@@ -61,10 +67,22 @@ class Command(BaseCommand):
                 self.stderr.write(f"Warning: {e}")
         self.stdout.write(f"Papers written to {out_path.parent.absolute()}")
 
+    def download_zip(self, zip_path):
+        zipper = ReassembleService().get_zipfly_generator("reassembled")
+        if zip_path.exists():
+            raise CommandError(f"File '{zip_path}' already exists.")
+        with zip_path.open("wb") as fh:
+            for chunk in zipper:
+                fh.write(chunk)
+
     def handle(self, *args, **options):
         save_path = options["save_path"]
         test_num = options["testnum"]
-        if test_num:
+        zip_path = options["zip"]
+        if zip_path:
+            self.stdout.write("Downloading zip of reassembled papers")
+            self.download_zip(Path(zip_path))
+        elif test_num:
             self.stdout.write(f"Reassembling paper {test_num}...")
             self.reassemble_one_paper(test_num, save_path=save_path)
         else:

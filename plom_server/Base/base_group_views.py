@@ -8,71 +8,67 @@ from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
 
-# Create your views here.
-class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for admins."""
+class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
+    """A base class view for any authorised user."""
 
-    group_required = ["admin"]
+    group_required = ["admin", "manager", "scanner", "marker", "lead_marker"]
     login_url = "login"
-    navbar_colour = "#808080"
-    raise_exception = True
-
-    def build_context(self):
-        context = {
-            "navbar_colour": self.navbar_colour,
-            "user_group": self.group_required[0],
-        }
-
-        return context
-
-
-class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for managers."""
-
-    group_required = ["manager"]
-    login_url = "login"
-    navbar_colour = "#AD9CFF"
-    raise_exception = True
-
-    def build_context(self):
-        context = {
-            "navbar_colour": self.navbar_colour,
-            "user_group": self.group_required[0],
-        }
-
-        return context
-
-
-class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for scanners."""
-
-    group_required = ["scanner"]
-    login_url = "login"
-    navbar_colour = "#0F984F"
     raise_exception = True
     redirect_unauthenticated_users = True
 
     def build_context(self):
-        context = {
-            "navbar_colour": self.navbar_colour,
-            "user_group": self.group_required[0],
-        }
-
-        return context
+        return {}
 
 
-class MarkerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for markers."""
+class AdminRequiredView(RoleRequiredView):
+    """A class view for admins."""
+
+    group_required = ["admin"]
+
+
+class AdminOrManagerRequiredView(RoleRequiredView):
+    """A class view for admins and managers."""
+
+    group_required = ["admin", "manager"]
+
+
+class ManagerRequiredView(RoleRequiredView):
+    """A class view for managers."""
+
+    group_required = ["manager"]
+
+
+class ScannerRequiredView(RoleRequiredView):
+    """A class view for scanners."""
+
+    group_required = ["scanner"]
+
+
+class LeadMarkerRequiredView(RoleRequiredView):
+    """A base class view for lead markers."""
+
+    group_required = ["lead_marker"]
+
+
+class LeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for lead markers and managers."""
+
+    group_required = ["lead_marker", "manager"]
+
+
+class MarkerRequiredView(RoleRequiredView):
+    """A class view for markers."""
 
     group_required = ["marker"]
-    login_url = "login"
-    navbar_colour = "#0F984F"
-    raise_exception = True
 
-    def build_context(self):
-        context = {
-            "navbar_colour": self.navbar_colour,
-            "user_group": self.group_required[0],
-        }
 
-        return context
+class MarkerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for markers, lead markers and managers."""
+
+    group_required = ["marker", "lead_marker", "manager"]
+
+
+class ScannerLeadMarkerOrManagerView(RoleRequiredView):
+    """A base class view for scanners, lead markers and managers."""
+
+    group_required = ["scanner", "lead_marker", "manager"]

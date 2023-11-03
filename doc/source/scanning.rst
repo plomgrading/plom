@@ -1,11 +1,17 @@
 .. Plom documentation
-   Copyright 2018-2022 Andrew Rechnitzer
-   Copyright 2022-2023 Colin B. Macdonald
+   Copyright (C) 2018-2022 Andrew Rechnitzer
+   Copyright (C) 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
 Scanning and uploading
 ======================
+
+.. note::
+   These instructions are for scanning and uploading to legacy servers.
+   Much of the process is similar for the django-server, however the
+   command line tools are not needed.  TODO: update these docs.
+
 
 At this point we assume that you have printed that papers, fed them to
 your students (or the other way around), and collected the completed

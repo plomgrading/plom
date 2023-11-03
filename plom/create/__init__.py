@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 
@@ -22,6 +22,7 @@ from .start_messenger import clear_manager_login
 from .buildDatabaseAndPapers import build_database, build_papers
 from .mergeAndCodePages import make_PDF
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
+from .build_scrap_paper_with_qrcodes import build_scrap_paper_pdf
 
 from .classlistValidator import sid_field, fullname_field, papernumber_field
 from .buildClasslist import process_classlist_file, get_demo_classlist
@@ -33,7 +34,7 @@ from .push_pull_rubrics import upload_rubrics, download_rubrics
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
-from .version_map_utils import version_map_from_file
+from plom import version_map_from_file, version_map_to_csv
 from .version_map_utils import download_version_map
 from .version_map_utils import save_version_map
 
@@ -57,6 +58,7 @@ __all__ = [
     "upload_rubrics_from_file",
     "download_rubrics_to_file",
     "version_map_from_file",
+    "version_map_to_csv",
     "download_version_map",
     "save_version_map",
     "status",

@@ -1,26 +1,37 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 test_spec = "demo"
-test_sources = ["demo", "demo"]
+test_sources = "demo"
 num_to_produce = 5
 
 [[hw_bundles]]
 paper_number = 1
+student_id = 98989898
+student_name = "Kenson, Ken"
 pages = [[1], [2], [3]]
 
 [[hw_bundles]]
 paper_number = 2
+student_id = 97979797
+student_name = "Lawrence, Larry"
 pages = [[1, 2], [2, 3], [3]]
 
 [[hw_bundles]]
 paper_number = 3
+student_id = 95959595
+student_name = "Margery, Mary"
 pages = [[1], [2], [], [2, 3], []]
 
 [[hw_bundles]]
 paper_number = 4
+student_id = 94949494
+student_name = "Nowra, Nora"
 pages = [[1, 2, 3], [3]]
 
 [[hw_bundles]]
 paper_number = 5
+student_id = 93939393
+student_name = "Ostler, Owen"
 pages = [[], [1], [2, 3]]

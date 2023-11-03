@@ -14,6 +14,7 @@ from ..models import (
     UnknownStagingImage,
     KnownStagingImage,
     ExtraStagingImage,
+    DiscardStagingImage,
     ErrorStagingImage,
 )
 
@@ -26,12 +27,13 @@ class QRErrorService:
         # * check all images have correct public-key
         # * check all distinct test/page/version
 
-        spec_dictionary = SpecificationService().get_the_spec()
+        spec_dictionary = SpecificationService.get_the_spec()
 
         # lists of various image types
         no_qr_imgs = []  # no qr-codes could be read
         error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
         extra_imgs = []  # extra-page
+        scrap_imgs = []  # scrap-page
         # keep a dict of tpv to image_pk of known-images. is {tpv: [pk1, pk2, pk3,...]}
         # if a given tpv shows up in a single image, then this is a normal "known" page
         # if a given tpv corresponds to multiple images then that is
@@ -58,6 +60,8 @@ class QRErrorService:
                     tpv = self.get_tpv(img.parsed_qr)
                     if tpv == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
+                    elif tpv == "plomS":  # is a scrap-paper page
+                        scrap_imgs.append(img.pk)
                     else:  # a normal qr-coded page
                         # if not seen before then store as **list** [img.pk]
                         # if has been seen before then append to that list.
@@ -118,6 +122,14 @@ class QRErrorService:
                 img.image_type = StagingImage.EXTRA
                 img.save()
                 ExtraStagingImage.objects.create(staging_image=img)
+            # save all the scrap-paper pages.
+            for k in scrap_imgs:
+                img = StagingImage.objects.get(pk=k)
+                img.image_type = StagingImage.DISCARD
+                img.save()
+                DiscardStagingImage.objects.create(
+                    staging_image=img, discard_reason="Scrap paper"
+                )
             # save all the error-pages with the error string
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
@@ -134,7 +146,7 @@ class QRErrorService:
         {
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
         }
-        or potentially (if an extra page)
+        or potentially (if an extra page or scrap-paper)
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
 
         Returns:
@@ -152,8 +164,8 @@ class QRErrorService:
         page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent qr-codes - check scan for folded pages")
-        # if it is an extra page, then no further consistency checks
-        if page_types[0] == "plom_extra":
+        # if it is an extra page or scrap-paper, then no further consistency checks
+        if page_types[0] in ["plom_extra", "plom_scrap"]:
             return True
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
@@ -195,14 +207,14 @@ class QRErrorService:
 
         Note that
            * this should only be called after qr-code consistency checks
-           * if the page is an extra or unknown page then this test simply returns "True".
+           * if the page is an extra, scrap or unknown page then this test simply returns "True".
 
         Returns None if all good, else raises various ValueError describing the errors.
         """
         if len(parsed_qr_dict) == 0:
             return True
         qr_info = next(iter(parsed_qr_dict.values()))
-        if qr_info["page_type"] == "plom_extra":
+        if qr_info["page_type"] in ["plom_extra", "plom_scrap"]:
             return True
 
         # make sure the public code matches that given in the spec

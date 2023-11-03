@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from Papers.services import SpecificationService
-from SpecCreator.services import StagingSpecificationService
 
 from ...services import PQVMappingService
 
@@ -17,9 +16,8 @@ class Command(BaseCommand):
     help = "Displays the current status of the question-version map and allows user generate/download/remove it."
 
     def show_status(self):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
-            self.stdout.write("There no valid test specification. Stopping.")
+        if not SpecificationService.is_there_a_spec():
+            self.stdout.write("There is no valid test specification. Stopping.")
 
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
@@ -28,22 +26,19 @@ class Command(BaseCommand):
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
         else:
-            self.stdout.write("There no is a question-version mapping.")
+            self.stdout.write("There is no question-version mapping.")
             self.stdout.write(
                 f"Recommended minimum number of papers to produce is {pqvms.get_minimum_number_to_produce()}"
             )
 
     def generate_pqv_map(self, number_to_produce=None):
-        speck = SpecificationService()
-        if not speck.is_there_a_spec():
-            self.stdout.write("There no valid test specification. Stopping.")
-            return
+        if not SpecificationService.is_there_a_spec():
+            raise CommandError("There no valid test specification.")
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
-            self.stderr.write(
-                "There is already a question-version mapping on the server. Stopping"
+            raise CommandError(
+                "There is already a question-version mapping on the server."
             )
-            return
         min_production = pqvms.get_minimum_number_to_produce()
 
         if number_to_produce is None:
@@ -70,18 +65,19 @@ class Command(BaseCommand):
             )
             return
 
-        save_path = Path(f"question_version_map.csv")
+        save_path = Path("question_version_map.csv")
         if save_path.exists():
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()
             if choice != "y":
-                self.stdout.write(f"Skipping.")
+                self.stdout.write("Skipping.")
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
         csv_text = pqvms.get_pqv_map_as_csv()
         with open(save_path, "w") as fh:
             fh.write(csv_text)
+        self.stdout.write(f"Wrote {save_path}")
 
     def remove_pqv_map(self):
         pqvms = PQVMappingService()
@@ -98,10 +94,10 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to generating/downloading/deleting the question-version map.",
         )
-        sp_S = sub.add_parser("status", help="Show details of the question-version map")
+        sub.add_parser("status", help="Show details of the question-version map")
         sp_G = sub.add_parser("generate", help="Generate the question-version map")
-        sp_D = sub.add_parser("download", help="Download the question-version map")
-        sp_R = sub.add_parser("remove", help="Remove the question-version map")
+        sub.add_parser("download", help="Download the question-version map")
+        sub.add_parser("remove", help="Remove the question-version map")
 
         sp_G.add_argument(
             "-n",

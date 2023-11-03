@@ -14,7 +14,6 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import html
-import imghdr
 import json
 import logging
 from math import ceil
@@ -1235,7 +1234,7 @@ class MarkerClient(QWidget):
             plomdata = self.msgr.get_annotations(
                 num, self.question, edition=None, integrity=integrity
             )
-            annotated_image = self.msgr.get_annotations_image(
+            annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(
                 num, self.question, edition=plomdata["annotation_edition"]
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1281,16 +1280,10 @@ class MarkerClient(QWidget):
         paperdir = Path(paperdir)
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
-        im_type = imghdr.what(None, h=annotated_image)
-        if not im_type:
-            msg = f"Failed to identify extension of {len(annotated_image)} bytes"
-            msg += f" of image data for previously annotated task {task}"
-            log.error(msg)
-            raise PlomSeriousException(msg)
-        aname = paperdir / "G{}.{}".format(task[1:], im_type)
-        pname = paperdir / "G{}.plom".format(task[1:])
+        aname = paperdir / "G{task[1:]}.{annot_img_info['extension']}"
+        pname = paperdir / "G{task[1:]}.plom"
         with open(aname, "wb") as fh:
-            fh.write(annotated_image)
+            fh.write(annot_img_bytes)
         with open(pname, "w") as f:
             json.dump(plomdata, f, indent="  ")
             f.write("\n")
@@ -1895,15 +1888,13 @@ class MarkerClient(QWidget):
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
-        """
-        Called when anotator is done grading.
+        """Called when annotator is done grading.
 
         Args:
             task (str): task name
 
         Returns:
             None
-
         """
         self.setEnabled(True)
         if task:
@@ -2514,7 +2505,7 @@ class MarkerClient(QWidget):
         stuff = None
         if get_annotated:
             try:
-                annotated_image = self.msgr.get_annotations_image(tn, q)
+                annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(tn, q)
             except PlomNoPaper:
                 pass
             except PlomBenignException as e:
@@ -2522,18 +2513,11 @@ class MarkerClient(QWidget):
                 s += "\nWill try to get the original images next..."
                 WarnMsg(self, s).exec()
             else:
-                im_type = imghdr.what(None, h=annotated_image)
-                if not im_type:
-                    msg = (
-                        f"Failed to identify extension of {len(annotated_image)} bytes"
-                    )
-                    msg += f" of image data for previously annotated {tn} {q}"
-                    log.error(msg)
-                    raise PlomSeriousException(msg)
                 # TODO: nonunique if we ask again: no caching here
+                im_type = annot_img_info["extension"]
                 aname = self.workingDirectory / f"annot_{tn}_{q}.{im_type}"
                 with open(aname, "wb") as fh:
-                    fh.write(annotated_image)
+                    fh.write(annot_img_bytes)
                 stuff = [aname]
                 s = f"Annotations for paper {tn:04} question index {q}"
 

@@ -3,73 +3,72 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 
+from django_htmx.http import HttpResponseClientRefresh
+
 from Base.base_group_views import ManagerRequiredView
+
+from .services import PermissionChanger
+
+from Authentication.services import AuthenticationServices
 
 
 class UserPage(ManagerRequiredView):
-    user_page = "UserManagement/users.html"
-
     def get(self, request):
-        users = User.objects.all()
-        context = self.build_context()
-        context.update({"users": users})
-        return render(request, self.user_page, context)
+        managers = User.objects.filter(groups__name="manager")
+        scanners = User.objects.filter(groups__name="scanner")
+        lead_markers = User.objects.filter(groups__name="lead_marker")
+        markers = User.objects.filter(groups__name="marker").prefetch_related(
+            "auth_token"
+        )
+        context = {
+            "scanners": scanners,
+            "markers": markers,
+            "lead_markers": lead_markers,
+            "managers": managers,
+        }
+        return render(request, "UserManagement/users.html", context)
 
     def post(self, request, username):
-        user_to_change = User.objects.get_by_natural_key(username)
-        if "changeStatus" in request.POST:
-            if user_to_change.is_active:
-                user_to_change.is_active = False
-            else:
-                user_to_change.is_active = True
-            user_to_change.save()
-        return redirect("/users")
+        PermissionChanger.toggle_user_active(username)
+
+        return HttpResponseClientRefresh()
 
     @login_required
     def enableScanners(self):
-        users_in_group = Group.objects.get(name="scanner").user_set.all()
-        for user in users_in_group:
-            user.is_active = True
-            user.save()
+        PermissionChanger.set_all_scanners_active(True)
         return redirect("/users")
 
     @login_required
     def disableScanners(self):
-        users_in_group = Group.objects.get(name="scanner").user_set.all()
-        for user in users_in_group:
-            user.is_active = False
-            user.save()
+        PermissionChanger.set_all_scanners_active(False)
         return redirect("/users")
 
     @login_required
     def enableMarkers(self):
-        users_in_group = Group.objects.get(name="marker").user_set.all()
-        for user in users_in_group:
-            user.is_active = True
-            user.save()
+        PermissionChanger.set_all_markers_active(True)
         return redirect("/users")
 
     @login_required
     def disableMarkers(self):
-        users_in_group = Group.objects.get(name="marker").user_set.all()
-        for user in users_in_group:
-            user.is_active = False
-            user.save()
+        PermissionChanger.set_all_markers_active(False)
+        return redirect("/users")
+
+    @login_required
+    def toggleLeadMarker(self, username):
+        PermissionChanger.toggle_lead_marker_group_membership(username)
         return redirect("/users")
 
 
-class ProgressPage(ManagerRequiredView):
-    progress_page = "UserManagement/progress.html"
-
+class PasswordResetPage(ManagerRequiredView):
     def get(self, request, username):
-        context = self.build_context()
-        context.update({"username": username})
-        return render(request, self.progress_page, context)
+        user_obj = User.objects.get(username=username)
+        link = AuthenticationServices().generate_link(request, user_obj)
 
-    def post(self, request, username):
-        return render(request, self.progress_page, username)
+        context = {"username": username, "link": link}
+        return render(request, "UserManagement/password_reset_page.html", context)

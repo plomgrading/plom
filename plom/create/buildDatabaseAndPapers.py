@@ -88,7 +88,8 @@ def build_papers(
     for n in papernums:
         if int(n) > spec["numberToProduce"]:
             raise ValueError(
-                "Not enough papers to prename everything in the filtered classlist"
+                "Not enough papers to prename everything in the filtered classlist."
+                "  All paper numbers must be less than numberToProduce."
             )
     # make sure there is an equal number of pages in all the source PDFs
     if not check_equal_page_count("sourceVersions"):
@@ -171,7 +172,7 @@ def build_database(*, msgr, vermap={}, verbose=True):
             tuple appropriate for credientials.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
-            :func:`plom.finish.make_random_version_map`.
+            :func:`plom.make_random_version_map`.
         verbose (bool): default True, print status of each DB row
             creation to stdout.
 
@@ -181,8 +182,10 @@ def build_database(*, msgr, vermap={}, verbose=True):
     Raises:
         PlomExistingDatabase
         PlomServerNotReady
+
+    TODO: only works for legacy servers at the moment.
     """
-    check_version_map(vermap)
+    check_version_map(vermap, legacy=True)
 
     new_vmap = msgr.InitialiseDB(vermap)
     # sanity check the version maps

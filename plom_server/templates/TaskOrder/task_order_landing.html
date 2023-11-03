@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -47,7 +48,7 @@
         </div>
     </div>
     <br>
-    <div class="row">
+    <div>
         <h4>Current Task Order</h4>
         <p>Tooltip: Click on a header to sort by that column.</p>
         <table style="width: auto" class="table table-bordered sortable">
@@ -67,5 +68,4 @@
             </tbody>
         </table>
     </div>
-    <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
 {% endblock main_content %}

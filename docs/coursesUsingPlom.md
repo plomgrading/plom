@@ -169,15 +169,42 @@ Approx: 14550 over 12 courses
 
 | Course  |  Tasks                           | # students |  Notes                        |
 |---------|----------------------------------|:----------:|-------------------------------|
-| Math100 | Mock final, Final                | 380        |
-| Math220 | Midterm, Midterm 2, Final        | 59         |
-| Math200 | Final                            | 176        |
-| Math253 | Midterm, Final                   | 134        |
+| Math100 | Mock final, Final                | 380        |                               |
+| Math220 | Midterm, Midterm 2, Final        | 59         |                               |
+| Math200 | Final                            | 176        |                               |
+| Math253 | Midterm, Final                   | 134        |                               |
+| Math101 | Mock final, Final                | 326        |                               |
+| BIOL204 | Lab exam                         | 33         |                               |
+
+Approx: 2070 over 6 courses
+
+## Totals up to Aug 2023
+
+  * Approx 95020 papers in 76 courses.
 
 
-Approx: 1380 over 4 courses
+## 2023W1 (as of mid Oct)
 
+| Course   |  Tasks                           | # students |  Notes                        |
+|----------|----------------------------------|:----------:|-------------------------------|
+| Math100  | Midterm                          | 4000       |                               |
+| BIOL331  | midterm                          | 72         |                               |
+| BIOL323  | lab midterm and lecture midterm  | 46         |                               |
+| BIOL155  | midterm                          | 356        |                               |
+| Math200  | midterm 1                        | ~1000      |                               |
+| Math200* | midterm                          |            |                               |
+| Math215  | 4 quizzes, ...                   | 370        |                               |
+| Math220  | midterm                          |            |                               |
+| Math221* | midterm                          |            |                               |
+| Math317  |                                  |            |                               |
+| Math319  | midterm                          |            |                               |
+| Math320  | HW x 12                          | 60         |                               |
+| Math405  |                                  |            |                               |
 
-## Totals up to July 12 2023
+Math220* and Math221*: "10M" sections run independently.
 
-  * Approx 94330 papers in 74 courses.
+Approx: 7000 over 13 courses
+
+## Totals up to Oct 2023
+
+  * Approx 102000 papers in 82 courses.

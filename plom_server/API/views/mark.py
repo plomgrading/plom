@@ -11,36 +11,12 @@ from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
+from Mark.services import mark_task
 from Mark.services import MarkingTaskService, PageDataService
 from Papers.services import SpecificationService
 from Papers.models import Image
 
 from .utils import _error_response
-
-
-class QuestionMaxMark_how_to_get_data(APIView):
-    """Return the max mark for a given question.
-
-    TODO: how do I make the `data["q"]` thing work?  This always fails with KeyError
-    """
-
-    def get(self, request):
-        data = request.query_params
-        try:
-            question = int(data["q"])
-            version = int(data["v"])
-        except KeyError:
-            return _error_response(
-                "Missing question and/or version data.",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        except (ValueError, TypeError):
-            return _error_response(
-                "question and version must be integers",
-                status.HTTP_400_BAD_REQUEST,
-            )
-        spec = SpecificationService()
-        return Response(spec.get_question_mark(question))
 
 
 class QuestionMaxMark(APIView):
@@ -53,9 +29,9 @@ class QuestionMaxMark(APIView):
     """
 
     def get(self, request, *, question):
-        spec = SpecificationService()
         try:
-            return Response(spec.get_question_mark(question))
+            max_mark = SpecificationService.get_question_mark(question)
+            return Response(max_mark)
         except KeyError:
             return _error_response(
                 "question out of range",
@@ -127,92 +103,6 @@ class MgetDoneTasks(APIView):
             marks,
         )
         return Response(rows, status=status.HTTP_200_OK)
-
-
-class MgetNextTask(APIView):
-    """Responds with a code for the next available marking task.
-
-    Returns:
-        200: An available task exists, returns the task code as a string.
-        204: There are no available tasks.
-    """
-
-    def get(self, request, *args):
-        data = request.data
-        question = data["q"]
-        version = data["v"]
-
-        mts = MarkingTaskService()
-
-        task = mts.get_first_available_task(question=question, version=version)
-        if task:
-            return Response(task.code, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class MclaimThisTask(APIView):
-    def patch(self, request, code, *args):
-        """Attach a user to a marking task and return the task's metadata."""
-        mss = MarkingTaskService()
-        the_task = mss.get_task_from_code(code)
-        mss.assign_task_to_user(request.user, the_task)
-
-        pds = PageDataService()
-        paper, question = mss.unpack_code(code)
-        question_data = pds.get_question_pages_list(paper, question)
-
-        return Response([question_data, mss.get_tags_for_task(code), the_task.pk])
-
-    def post(self, request, code, *args):
-        """Accept a marker's grade and annotation for a task."""
-        mts = MarkingTaskService()
-        data = request.POST
-        files = request.FILES
-
-        plomfile = request.FILES["plomfile"]
-        plomfile_data = plomfile.read().decode("utf-8")
-
-        try:
-            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
-                request.user, code, data, plomfile_data
-            )
-        except ObjectDoesNotExist as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
-        except ValidationError as e:
-            # TODO: explicitly throwing server 500 is ok?  Better to just remove this block?
-            return _error_response(e, status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        annotation_image = files["annotation_image"]
-        try:
-            img_md5sum = data["md5sum"]
-            img = mts.save_annotation_image(img_md5sum, annotation_image)
-        except FileExistsError:
-            return _error_response(
-                "Annotation image already exists.", status.HTTP_409_CONFLICT
-            )
-        except ValidationError:
-            return _error_response(
-                "Unsupported media type for annotation image",
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            )
-
-        mts.mark_task(
-            request.user,
-            code,
-            mark_data["score"],
-            mark_data["marking_time"],
-            img,
-            annot_data,
-        )
-        mts.mark_task_as_complete(code)
-
-        return Response(
-            [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
-            status=status.HTTP_200_OK,
-        )
 
 
 class MgetPageDataQuestionInContext(APIView):
@@ -355,7 +245,7 @@ class MgetAnnotations(APIView):
         annotation_data = annotation.annotation_data
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             # Possibly should be 410?  see baseMessenger.py
             return _error_response(e, status.HTTP_404_NOT_FOUND)
@@ -389,7 +279,7 @@ class MgetAnnotationImage(APIView):
         annotation_image = annotation.image
 
         try:
-            latest_task = mts.get_latest_task(paper, question)
+            latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
         if latest_task != annotation_task:
@@ -398,9 +288,7 @@ class MgetAnnotationImage(APIView):
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        return FileResponse(
-            open(annotation_image.path, "rb"), status=status.HTTP_200_OK
-        )
+        return FileResponse(annotation_image.image, status=status.HTTP_200_OK)
 
 
 class TagsFromCodeView(APIView):

@@ -81,7 +81,7 @@ class DemoProcessesService:
 
         # TODO: don't delete things that are not ours
         # TODO: some of these don't exist any more?
-        # for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
+        # for rmdir in ["sourceVersions", "papersToPrint", "media"]:
         #     shutil.rmtree(rmdir, ignore_errors=True)
 
         # surely Django will do this?  Else we need the settings here

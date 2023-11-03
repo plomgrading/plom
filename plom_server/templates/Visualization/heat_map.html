@@ -4,10 +4,11 @@
 -->
 {% load static %}
 {% block main_content %}
+    <div class="row">
+        <div id="heatmap" class="col-auto"></div>
+        <div id="cell_popup" class="col"></div>
+    </div>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="{% static 'js/heat_map.js' %}"></script>
-    <script>
-    parentDiv = this.document.currentScript.parentElement.id;
-    renderHeatMap({{ data|safe }}, parentDiv);
-    </script>
+    <script src="{% static 'js/heatmap/heatmap.js' %}"></script>
+    <script>renderHeatMap({{ data|safe }}, "heatmap");</script>
 {% endblock main_content %}

@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
@@ -8,7 +8,7 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Scan
+    Scan bundles
 {% endblock title %}
 {% block page_heading %}
     Scan bundles
@@ -48,25 +48,26 @@
             <div class="card-body">
                 <h5 class="card-title">Upload bundle PDF</h5>
                 <details style="margin-bottom: 10px;">
-                    <summary>Dummy help text!</summary>
-                    <p>
-                        <ul>
-                            <li>Upload scanned tests here.</li>
-                            <li>Plom will read the QR codes and find problems if there are any.</li>
-                        </ul>
-                    </p>
+                    <ul>
+                        <li>Upload scanned tests here.</li>
+                        <li>Plom will read the QR codes and find problems if there are any.</li>
+                    </ul>
                 </details>
-                <form enctype="multipart/form-data"
-                      method="post"
-                      action="{% url 'scan_home' %}">
-                    {% csrf_token %}
-                    {{ form }}
-                    <input type="submit"
-                           class="btn"
-                           value="Upload"
-                           style="background-color: #0F984F;
-                                  color: white">
-                </form>
+                {% if preparation_finished %}
+                    <form enctype="multipart/form-data"
+                          method="post"
+                          action="{% url 'scan_home' %}">
+                        {% csrf_token %}
+                        {{ form }}
+                        <input type="submit"
+                               class="btn"
+                               value="Upload"
+                               style="background-color: #0F984F;
+                                      color: white">
+                    </form>
+                {% else %}
+                    <a disabled>No bundles to upload - test preparation is still in progress.</a>
+                {% endif %}
             </div>
         </div>
         <br>
@@ -103,7 +104,7 @@
                                             <img src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}"
                                                  class="border rounded-start"
                                                  style="max-height: 16em;
-                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle|default_if_none:0 }}deg))">
+                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle|default_if_none:0 }}deg))" />
                                             <div class="p-2">
                                                 <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
                                                 <ul class="list-unstyled">

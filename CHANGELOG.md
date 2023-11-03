@@ -6,11 +6,93 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [Unreleased]]
 
 ### Added
 
 ### Changed
+
+### Fixed
+
+
+
+## [0.14.6] - 2023-11-02
+
+### Changed
+* Improved messages for push-to-canvas script.
+
+### Fixed
+* Fix crash in Manager viewing annotations in Review tab.
+* Documentation and misc fixes.
+
+
+## [0.14.5] - 2023-10-23
+
+### Added
+* New "idBox3.pdf" template moves the signature box up to avoid signatures hitting the bounding box (which was leading to additional manual IDing).
+* Page Arrange: new "Invert selection" button is useful to quickly discard all but the highlighted pages.
+
+### Changed
+* Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
+* Making self-signed certs no longer needs command-line `openssl`, instead uses the `cryptography` package.
+
+### Fixed
+* Wrong padding on the top paper number box on recent versions of PyMuPDF.
+* Various fixes for Python 3.12 but full support may be waiting on a new release of AIOHttp library.
+* Fix a crash in server manager when unpredicting a row without a prediction.
+* Improved contrast in Identifier client when OS is in dark mode.
+* Push-to-Canvas could fail when assessment shortname contained underscores.
+* Documentation edits and fixes.
+
+
+## [0.14.4] - 2023-10-10
+
+### Changed
+* Various edits to contrib scripts, especially pulling from Canvas.
+
+### Fixed
+* Fix a crash when users sync a changed rubric.
+* Clearer error messages when auto-IDing an a student number has less than 8 digits.
+* Filter leading/trailing whitespace from server address.
+* Fixes in contrib scripts related to just-in-time prenaming and IDing.
+* Typos and clarifications in docs.
+
+
+## [0.14.3] - 2023-09-15
+
+### Fixed
+* Fix crash on start of the provided macOS client binaries.
+* Manager can login to Client before the server has a spec.
+
+
+## [0.14.2] - 2023-09-13
+
+### Added
+* Absolute rubrics are no longer considered experimental and can be created in the Add
+  Rubric dialog by default.
+
+### Changed
+* The legacy `sidToTest` API call (rarely used) now reports whether the paper is IDed
+  or prenamed.  This is documented in `msgr.sid_to_paper_number()`.
+* Many next-gen server changes.
+
+### Fixed
+* Client: crash from invalid version restrictions specified in the Add Rubric dialog.
+* Legacy server was not creating backup files on regrade since sometime in 2022.
+* Fix regrading on next-gen servers.
+* Client: rubric tabs now hide properly when all rubrics inside them are hidden.
+
+
+## [0.14.1] - 2023-09-01
+
+### Added
+* The next-gen web-based Plom Server is ready for wider testing.  Production use should probably remain on the "Legacy Plom Server" for the time being.
+* Plom Client can connect to both the next-gen server and the legacy server.
+* Plom Client supports `http://` URLs, if specified explicitly, e.g., for development.  The default remains `https://`
+
+### Changed
+* On the next-gen server, papers can be graded in a random but predetermined order.
+* On the next-gen server, the priority for papers to be graded can be changed.
 * Plom now requires at least Python 3.8.
 
 ### Fixed
@@ -994,7 +1076,13 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.3...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.6...main
+[0.14.6]: https://gitlab.com/plom/plom/-/compare/v0.14.5...v0.14.6
+[0.14.5]: https://gitlab.com/plom/plom/-/compare/v0.14.4...v0.14.5
+[0.14.4]: https://gitlab.com/plom/plom/-/compare/v0.14.3...v0.14.4
+[0.14.3]: https://gitlab.com/plom/plom/-/compare/v0.14.2...v0.14.3
+[0.14.2]: https://gitlab.com/plom/plom/-/compare/v0.14.1...v0.14.2
+[0.14.1]: https://gitlab.com/plom/plom/-/compare/v0.13.3...v0.14.1
 [0.13.3]: https://gitlab.com/plom/plom/-/compare/v0.13.2...v0.13.3
 [0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1

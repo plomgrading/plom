@@ -60,7 +60,7 @@ def processHWScans(
 
               * a scalar number: all pages map to this question.
               * a list of integers: all pages map to those questions.
-              * the string "all" maps each pages to all questions.
+              * the string "all" maps each page to all questions.
               * a list-of-lists specifying which questions each page
                 maps onto, e.g., ``[[1],[1,2],[2]]`` maps page 1 onto
                 question 1, page 2 onto questions 1 and 2, and page 3
@@ -93,8 +93,8 @@ def processHWScans(
             other methods.
 
     Ask server to map `student_id` to a test-number; these should have been
-    pre-populated on test-generation so if `student_id` not known there is
-    an error.
+    pre-populated on test-generation or just-in-time before calling this
+    so if `student_id` not known there is an error.
 
     Turn `pdf_fname` into a bundle name and check with server if that
     bundle_name / md5sum known.

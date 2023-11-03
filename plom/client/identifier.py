@@ -60,6 +60,12 @@ from .viewers import WholeTestView
 
 log = logging.getLogger("identr")
 
+no_style = ""
+angry_orange_style = "background-color: #FF7F50; color: #000;"
+warning_yellow_style = "background-color: #FFD700; color: #000"
+safe_green_style = "background-color: #00FA9A; color: #000;"
+notice_blue_style = "background-color: #89CFF0; color: #000"
+
 
 class Paper:
     """A simple container for storing a test's idgroup code (tgv) and
@@ -67,7 +73,9 @@ class Paper:
     store the studentName and ID-number.
     """
 
-    def __init__(self, test, fname=None, *, stat="unidentified", id="", name=""):
+    def __init__(
+        self, test, fname=None, *, orientation=0, stat="unidentified", id="", name=""
+    ):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -78,6 +86,7 @@ class Paper:
         self.sname = name
         self.sid = id
         self.originalFile = fname
+        self.orientation = orientation
 
     def setStatus(self, st):
         self.status = st
@@ -363,7 +372,14 @@ class IDClient(QWidget):
         idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fname=None, stat="identified", id=x[1], name=x[2]),
+                Paper(
+                    x[0],
+                    fname=None,
+                    orientation=0,
+                    stat="identified",
+                    id=x[1],
+                    name=x[2],
+                ),
                 update=False,
             )
 
@@ -393,17 +409,37 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            id_pages.append(filename)
+            angle = row["orientation"]
+            id_pages.append([filename, angle])
+        if not id_pages:
+            InfoMsg(
+                self,
+                "Unexpectedly no ID page: see Issue #2722 and related.  "
+                "Could happen if someone is mucking around in the management tool.",
+            ).exec()
+            return
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        (imageName,) = id_pages
+        (
+            imageName,
+            angle,
+        ) = id_pages[0]
 
         self.exM.paperList[r].originalFile = imageName
+        self.exM.paperList[r].orientation = angle
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
+        self.testImg.updateImage(
+            [
+                {
+                    "filename": self.exM.paperList[r].originalFile,
+                    "orientation": self.exM.paperList[r].orientation,
+                }
+            ],
+            keep_zoom=True,
+        )
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
 
@@ -429,13 +465,13 @@ class IDClient(QWidget):
         self.ui.pSIDLabel0.setText("")
         self.ui.pNameLabel0.setText("")
         self.ui.predictionBox0.setTitle("No prediction")
-        self.ui.predictionBox0.setStyleSheet("background-color:")
+        self.ui.predictionBox0.setStyleSheet(no_style)
         self.ui.predButton0.hide()
         self.ui.predictionBox0.hide()
         self.ui.pSIDLabel1.setText("")
         self.ui.pNameLabel1.setText("")
         self.ui.predictionBox1.setTitle("No prediction")
-        self.ui.predictionBox1.setStyleSheet("background-color:")
+        self.ui.predictionBox1.setStyleSheet(no_style)
         self.ui.predButton1.hide()
         self.ui.predictionBox1.hide()
 
@@ -458,16 +494,16 @@ class IDClient(QWidget):
                     "Prenamed paper: is it signed?  if not signed, is it blank?"
                 )
                 self.ui.predButton0.setText("Confirm\n&Prename")
-                self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+                self.ui.predictionBox0.setStyleSheet(notice_blue_style)
             elif pred["predictor"] in ("MLLAP", "MLGreedy"):
                 self.ui.predictionBox0.setTitle(
                     f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
                 )
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 if pred["certainty"] < 0.3:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                    self.ui.predictionBox0.setStyleSheet(angry_orange_style)
                 else:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+                    self.ui.predictionBox0.setStyleSheet(safe_green_style)
             else:
                 raise RuntimeError(
                     f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
@@ -495,9 +531,9 @@ class IDClient(QWidget):
                 # only single option shown, so keep alt-a shortcut
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 if pred0["certainty"] < 0.3 or pred1["certainty"] < 0.3:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                    self.ui.predictionBox0.setStyleSheet(angry_orange_style)
                 else:
-                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+                    self.ui.predictionBox0.setStyleSheet(safe_green_style)
             else:
                 # show two bars
                 self.ui.predictionBox0.show()
@@ -527,8 +563,8 @@ class IDClient(QWidget):
                 self.ui.predButton0.setText("Accept\nPrediction")
                 self.ui.predButton1.setText("Accept\nPrediction")
 
-                self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
-                self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
+                self.ui.predictionBox0.setStyleSheet(warning_yellow_style)
+                self.ui.predictionBox1.setStyleSheet(warning_yellow_style)
         else:
             raise RuntimeError(
                 f"Found unexpected 3 or more predictions:\n{all_predictions_for_paper}"
@@ -611,12 +647,23 @@ class IDClient(QWidget):
             filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
             with open(filename, "wb") as fh:
                 fh.write(img_bytes)
-            id_pages.append(filename)
+            angle = row["orientation"]
+            id_pages.append([filename, angle])
+        if not id_pages:
+            InfoMsg(
+                self,
+                "Unexpectedly no ID page: see Issue #2722 and related.  "
+                "Could happen if someone is mucking around in the management tool.",
+            ).exec()
+            return False
         assert len(id_pages) == 1, "Expected exactly one ID page"
-        (filename,) = id_pages
+        (
+            filename,
+            angle,
+        ) = id_pages[0]
 
         # Add the paper [code, filename, etc] to the list
-        self.addPaperToList(Paper(test, filename))
+        self.addPaperToList(Paper(test, filename, orientation=angle))
 
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
@@ -710,7 +757,7 @@ class IDClient(QWidget):
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomConflict as err:
-            log.warn("Conflict when returning paper %s: %s", code, err)
+            log.warning("Conflict when returning paper %s: %s", code, err)
             hints = """
                 <p>If you are unable to resolve this conflict, you may need
                 to use the Manager tool to "Un-ID" the other paper.</p>

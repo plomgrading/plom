@@ -319,7 +319,7 @@ class Downloader(QObject):
                  (that is, rename) the file.
 
         This will emit a signal that others can listen for.
-        In some cases, the worker will deliver something that somone else
+        In some cases, the worker will deliver something that someone else
         has downloaded in the meantime.  In that case we do not emit a
         signal.
         """
@@ -446,7 +446,6 @@ class Downloader(QObject):
         im_bytes = self.msgr.get_image(row["id"], md5)
         if self.simulate_failures:
             sleep(wait2)
-        # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
         row["filename"] = str(f)

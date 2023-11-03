@@ -7,31 +7,50 @@
 
 """Tools for building and solving assignment problems."""
 
+from typing import List
+
 import numpy as np
 
 
-def calc_log_likelihood(student_ID, prediction_probs):
+def calc_log_likelihood(
+    student_ID: str, prediction_probs: List[List[float]]
+) -> np.float64:
     """Calculate the log likelihood that an ID prediction matches the student ID.
 
     Args:
-        student_ID (str): Student ID as a string.
-        prediction_probs (list): A list of the probabilities predicted
-            by the model.
-            `prediction_probs[k][n]` is the probability that digit k of
-            ID is n.
+        student_ID: Student ID as a string of digit characters.
+        prediction_probs: A list of lists of the probabilities
+            predicted by the model, where
+            ``prediction_probs[k][n]`` is the probability that
+            digit ``k`` of ID is ``n``.
 
     Returns:
-        numpy.float64: log likelihood.  Approx -log(prob), so more
-            probable means smaller.  Negative since we'll minimise
-            "cost" when we do the linear assignment problem later.
+        log likelihood, approx -log(prob), so more probable means smaller.
+        Negative since we'll minimise
+        "cost" when we do the linear assignment problem later.
+
+    Raises:
+        ValueError: unexpected mismatches such as short student ID.
+            or non-integer characters in the student ID.
+            For example, if the student ID contains a "z", we'd get
+            ``invalid literal for int() with base 10: z``.
     """
     num_digits = len(student_ID)
     if len(prediction_probs) != num_digits:
-        raise ValueError("Wrong length")
+        raise ValueError(
+            f'Length mismatch: {num_digits} in student ID "{student_ID}"'
+            f" but {len(prediction_probs)} probabilities"
+        )
 
-    log_likelihood = 0
+    log_likelihood = np.float64(0)
     for digit_index in range(0, num_digits):
-        digit_predicted = int(student_ID[digit_index])
+        try:
+            digit_predicted = int(student_ID[digit_index])
+        except ValueError as e:
+            raise ValueError(
+                f'Student ID digit {digit_index} of "{student_ID}"'
+                f" cannot be converted to an integer: {e}"
+            ) from e
         log_likelihood -= np.log(
             max(prediction_probs[digit_index][digit_predicted], 1e-30)
         )  # avoids taking log of 0.
@@ -39,7 +58,9 @@ def calc_log_likelihood(student_ID, prediction_probs):
     return log_likelihood
 
 
-def assemble_cost_matrix(test_numbers, student_IDs, probabilities):
+def assemble_cost_matrix(
+    test_numbers, student_IDs, probabilities
+) -> List[List[np.float64]]:
     """Compute the cost matrix between list of tests and list of student IDs.
 
     Args:
@@ -48,10 +69,12 @@ def assemble_cost_matrix(test_numbers, student_IDs, probabilities):
         student_IDs (list): A list of student ID numbers
 
     Returns:
-        list: list of lists of floats representing a matrix.
+        A matrix as a list of lists of floats.
 
     Raises:
         KeyError: If probabilities is missing data for one of the test numbers.
+        ValueError: various unexpected stuff about student IDs, coming
+            from the ``calc_log_likelihood`` function.
     """
     # could precompute big cost matrix, then select rows/columns: more complex
     costs = []

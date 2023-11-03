@@ -357,7 +357,7 @@ class Chooser(QDialog):
         _ssl_excused = False
         try:
             try:
-                server_ver_str = msgr.start()
+                server_ver_str = msgr._start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     self,
@@ -370,7 +370,7 @@ class Chooser(QDialog):
                     return False
                 _ssl_excused = True
                 msgr.force_ssl_unverified()
-                server_ver_str = msgr.start()
+                server_ver_str = msgr._start()
         except PlomBenignException as e:
             WarnMsg(
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
@@ -398,12 +398,12 @@ class Chooser(QDialog):
 
         # in theory we could support older servers by scrapping the API version from above
         info = msgr.get_server_info()
-        # TODO: should be the default and/or needs an accessor method?
-        msgr.disable_legacy_server_support()
         if "Legacy" in info["product_string"]:
             msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
+        else:
+            msgr.disable_legacy_server_support()
 
         if Version(__version__) < Version(srv_ver):
             s = "\nWARNING: old client!"
@@ -599,20 +599,23 @@ class Chooser(QDialog):
         try:
             spec = self.messenger.get_spec()
         except PlomServerNotReady as e:
-            WarnMsg(
-                self,
-                "Server does not yet have a spec, nothing to mark. "
-                " Perhaps you want to login with the manager account to"
-                " configure the server.",
-                info=str(e),
-            ).exec()
-            self.messenger = None
-            return
+            if not self.messenger.username == "manager":
+                WarnMsg(
+                    self,
+                    "Server does not yet have a spec, nothing to mark. "
+                    " Perhaps you want to login with the manager account to"
+                    " configure the server.",
+                    info=str(e),
+                ).exec()
+                self.messenger = None
+                return
+            spec = None
         except PlomException as e:
             WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None
             return
-        self._set_restrictions_from_spec(spec)
+        if spec:
+            self._set_restrictions_from_spec(spec)
         self.ui.loginInfoLabel.setText(f'logged in as "{user}"')
         self.ui.logoutButton.setVisible(True)
         self.ui.userLE.setEnabled(False)

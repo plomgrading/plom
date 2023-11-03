@@ -10,7 +10,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Union, Dict, Any
+from typing import Any, Dict, Tuple, Union
 
 import requests
 from requests_toolbelt import MultipartDecoder
@@ -67,12 +67,12 @@ class BaseMessenger:
         port: Union[int, None] = None,
         scheme: Union[str, None] = None,
         verify_ssl: Union[bool, str] = True,
-        webplom: bool = False,
-    ):
+        webplom: Union[bool, None] = None,
+    ) -> None:
         """Initialize a new BaseMessenger.
 
         Args:
-            server (str/None): URL or None to default to localhost.
+            server: URL or None to default to localhost.
 
         Keyword Arguments:
             port (None/int): What port to try to connect to.  Defaults
@@ -84,8 +84,10 @@ class BaseMessenger:
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
-            webplom (True/False): default False, whether to connect to
-                Django-based servers.  Experimental!
+            webplom (True/False/None): whether to connect to a newer
+                Django-based server.  If False, force connection to a
+                legacy server.  If True, force connect to a new server.
+                The default (recommended!) is None, to autodetect.
 
         Returns:
             None
@@ -94,12 +96,12 @@ class BaseMessenger:
             PlomConnectionError
         """
         self.webplom = webplom
-        if os.environ.get("WEBPLOM"):
-            log.warning("Enabling experimental WebPlom support via environment var")
-            self.webplom = True
 
         if not server:
             server = "127.0.0.1"
+
+        # Issue 3051: e.g. trailing control characters or whitespace
+        server = server.strip()
 
         try:
             parsed_url = urllib3.util.parse_url(server)
@@ -128,7 +130,7 @@ class BaseMessenger:
         self._raw_init(server, verify_ssl=verify_ssl)
 
     def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
-        self.session = None
+        self.session: Union[requests.Session, None] = None
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
@@ -193,8 +195,14 @@ class BaseMessenger:
             raise RuntimeError('cannot change "legacy" status after login')
         self.webplom = True
 
-    def is_legacy_server(self) -> bool:
+    def is_legacy_server(self) -> Union[bool, None]:
+        if self.webplom is None:
+            return None
         return not self.webplom
+
+    @property
+    def server(self) -> str:
+        return self.base
 
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
@@ -287,17 +295,18 @@ class BaseMessenger:
 
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def start(self):
-        """Start the messenger session.
+    def _start(self) -> str:
+        """Start the messenger session, low-level.
 
         Returns:
-            str: the version string of the server,
+            the version string of the server.
         """
         if self.session:
             log.debug("already have an requests-session")
         else:
             log.debug("starting a new requests-session")
             self.session = requests.Session()
+            assert self.session
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount(
@@ -328,7 +337,24 @@ class BaseMessenger:
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
 
-    def stop(self):
+    def start(self) -> str:
+        """Start the messenger session, including detecting legacy servers.
+
+        Returns:
+            The version string of the server.
+        """
+        s = self._start()
+        if self.webplom is not None:
+            return s
+        info = self.get_server_info()
+        if "Legacy" in info["product_string"]:
+            self.enable_legacy_server_support()
+            log.warning("Using legacy messenger to talk to legacy server")
+        else:
+            self.disable_legacy_server_support()
+        return s
+
+    def stop(self) -> None:
         """Stop the messenger."""
         if self.session:
             log.debug("stopping requests-session")
@@ -709,6 +735,58 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def sid_to_paper_number(self, student_id) -> Tuple[bool, Union[int, str], str]:
+        """Ask server to match given student_id to a test-number.
+
+        This is callable only by "manager" and "scanner" users and currently
+        only implemented on legacy servers.
+
+        The test number could be b/c the paper is IDed.  Or it could be a
+        prediction (a confident one, currently "prename").  The third
+        argument can be used to distinguish which case (if the server is
+        new enough: needs > 0.14.1).
+
+        Note: we check ID'd first so if the paper is ID'd you'll
+        get that (even if ``student_id`` is also used in a prename.
+        If its not ID'd but its prenamed, there can be more than one
+        prename pointing to the same paper.  In this case, you'll
+        get one of them; its not well-defined which.
+
+        Returns:
+            If we found a paper then ``(True, test_number, how)`` where
+            ``how`` is a string "ided" or "prenamed" (or on older servers
+            <= 0.14.1 we'll get an apology that we don't know.).
+            If no paper then, we get
+            ``(False, 'Cannot find test with that student id', '')``.
+
+        Raises:
+            PlomAuthenticationException: wrong user, wrong token etc.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/plom/admin/sidToTest",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": student_id,
+                    },
+                )
+                response.raise_for_status()
+                r = response.json()
+                # TODO: could remove workaround when we stop supported 0.14.1
+                if len(r) <= 2:
+                    if r[0]:
+                        r.append("[Older server; cannot tell if ided or prenamed]")
+                    else:
+                        r.append("")
+                r = tuple(r)
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_all_tags(self):
         """All the tags currently in use and their frequencies.
 
@@ -725,7 +803,7 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_tags(self, code):
@@ -1107,7 +1185,7 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_annotations_image(self, num, question, edition=None) -> bytes:
+    def get_annotations_image(self, num, question, edition=None) -> Tuple[Dict, bytes]:
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
@@ -1116,7 +1194,10 @@ class BaseMessenger:
             edition (int/None): which annotation set or None for latest.
 
         Returns:
-            contents of a bitmap file.
+            2-tuple, the first being a dictionary with info about the download and
+            the second being the raw bytes of a bitmap file.  The dictionary contains
+            at least the keys ``extension``and ``Content-Type`` and possibly others.
+            For now, ``extension`` will be either ``"png"`` or ``"jpg"``.
 
         Raises:
             PlomAuthenticationException
@@ -1133,7 +1214,17 @@ class BaseMessenger:
             try:
                 response = self.get(url, json={"user": self.user, "token": self.token})
                 response.raise_for_status()
-                return BytesIO(response.content).getvalue()
+                info: Dict[str, Any] = {}
+                info["Content-Type"] = response.headers.get("Content-Type", None)
+                if info["Content-Type"] == "image/png":
+                    info["extension"] = "png"
+                elif info["Content-Type"] == "image/jpeg":
+                    info["extension"] = "jpg"
+                else:
+                    raise PlomSeriousException(
+                        "Failed to identify extension of image data for previous annotations"
+                    )
+                return info, BytesIO(response.content).getvalue()
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomRangeException(response.reason) from None

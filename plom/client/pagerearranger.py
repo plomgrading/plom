@@ -193,6 +193,15 @@ class SinkList(QListWidget):
         self.setCurrentItem(None)
         return name_list
 
+    def invert_selection(self):
+        selected_indices = [x.row() for x in self.selectedIndexes()]
+        for n in range(0, self.count()):
+            # self.selectionModel().select(n, QItemSelectionModel.SelectionFlag.Toggle)
+            if n in selected_indices:
+                self.item(n).setSelected(False)
+            else:
+                self.item(n).setSelected(True)
+
     def appendItem(self, name):
         if name is None:
             return
@@ -361,22 +370,24 @@ class RearrangementViewer(QDialog):
 
         self.appendB = QToolButton()
         # TODO: move &A here and use alt-Enter to Accept dialog?
-        self.appendB.setText("Add &Page(s)")
+        self.appendB.setText("Add &page(s)")
         self.appendB.setArrowType(Qt.ArrowType.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.ArrowType.UpArrow)
-        self.removeB.setText("&Remove Page(s)")
+        self.removeB.setText("&Remove page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.ArrowType.LeftArrow)
-        self.sLeftB.setText("Shift Left")
+        self.sLeftB.setText("Shift left")
         self.sLeftB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.sRightB = QToolButton()
         self.sRightB.setArrowType(Qt.ArrowType.RightArrow)
-        self.sRightB.setText("Shift Right")
+        self.sRightB.setText("Shift right")
         self.sRightB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.reverseB = QPushButton("Reverse Order")
+        self.reverseB = QPushButton("Reverse order")
+        self.invertSelectionB = QPushButton("Invert selection")
+        self.invertSelectionB.clicked.connect(self.invert_selection)
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
@@ -397,7 +408,7 @@ class RearrangementViewer(QDialog):
                 QSpacerItem(
                     pad,
                     1,
-                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Preferred,
                     QSizePolicy.Policy.Minimum,
                 )
             )
@@ -407,7 +418,7 @@ class RearrangementViewer(QDialog):
                 QSpacerItem(
                     pad,
                     1,
-                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Preferred,
                     QSizePolicy.Policy.Minimum,
                 )
             )
@@ -444,21 +455,16 @@ class RearrangementViewer(QDialog):
         hb.setContentsMargins(0, 0, 0, 0)
         hb.addWidget(self.rotateB_ccw)
         hb.addWidget(self.rotateB_cw)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        )
+        hb.addSpacing(16)
         hb.addWidget(self.sLeftB)
         hb.addWidget(self.sRightB)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        )
+        hb.addSpacing(16)
         hb3.addWidget(self.tools)
         hb3.addWidget(self.reverseB)
-        hb3.addItem(
-            QSpacerItem(
-                16, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
-            )
-        )
+        hb3.addSpacing(16)
+        hb3.addWidget(self.invertSelectionB)
+        hb3.addSpacing(16)
+        hb3.addStretch()
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
 
@@ -471,9 +477,8 @@ class RearrangementViewer(QDialog):
         hb1.addLayout(GrippyMcGrab())
         hb = QHBoxLayout()
         hb.addWidget(self.appendB)
-        hb.addItem(
-            QSpacerItem(64, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        )
+        hb.addSpacing(16)
+        hb.addStretch()
         hb.addWidget(self.removeB)
         hb1.addLayout(hb)
         hb1.addLayout(GrippyMcGrab())
@@ -704,8 +709,7 @@ class RearrangementViewer(QDialog):
             self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
-        """
-        Adds the currently selected page to the list for the current question.
+        """Adds the currently selected page to the list for the current question.
 
         Notes:
             If currently selected page is in current question, does nothing.
@@ -714,15 +718,12 @@ class RearrangementViewer(QDialog):
             None
 
         """
-        if self.listA.selectionModel().hasSelection():
-            self.listB.appendItems(self.listA.hideSelectedItems())
-        else:
-            pass
+        if not self.listA.selectionModel().hasSelection():
+            return
+        self.listB.appendItems(self.listA.hideSelectedItems())
 
     def sinkToSource(self):
-        """
-        Removes the currently selected page from the list for the current
-        question.
+        """Removes the currently selected pages from the list for the current question.
 
         Notes:
             If currently selected page isn't in current question,
@@ -731,10 +732,17 @@ class RearrangementViewer(QDialog):
         Returns:
             None
         """
-        if self.listB.selectionModel().hasSelection():
-            self.listA.unhideNamedItems(self.listB.removeSelectedItems())
-        else:
-            pass
+        if not self.listB.selectionModel().hasSelection():
+            return
+        self.listA.unhideNamedItems(self.listB.removeSelectedItems())
+
+    def _sinkInvToSource(self):
+        """Removes all pages NOT currently selected from the list for the current question.
+
+        Currently unused as not connected to any buttons.
+        """
+        self.invert_selection()
+        self.sinkToSource()
 
     def shuffleLeft(self):
         """
@@ -769,10 +777,12 @@ class RearrangementViewer(QDialog):
             pass
 
     def reverseOrder(self):
-        """
-        reverses the order of the pages in current question.
-        """
+        """Reverses the order of the pages in current question."""
         self.listB.reverseOrder()
+
+    def invert_selection(self):
+        """Invert the selection of the bottom list."""
+        self.listB.invert_selection()
 
     def rotateImages(self, angle=90):
         """Rotates the currently selected page, by default by 90 degrees CCW."""

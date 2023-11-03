@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Plom API
@@ -7,18 +7,8 @@ Plom API
 
 The Plom API is not yet properly documented and is in a state of flux.
 
-
 .. caution:: Subject to change!
 
-
-<!--
-# .. automodule:: Web_Plom.Scan.views
-#   :members:
-#   :undoc-members:
--->
-
-.. automodule:: API
-    :members:
 
 
 Plom "Legacy" API

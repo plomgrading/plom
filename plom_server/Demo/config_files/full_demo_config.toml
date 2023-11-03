@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 test_spec = "demo"
-test_sources = ["demo", "demo"]
+test_sources = "demo"
 prenaming_enabled = true
 classlist = "demo"
 num_to_produce = 70
@@ -16,6 +16,7 @@ garbage_page_papers = [1, 2]
 duplicate_qr_papers = [3, 4]
 wrong_version_papers = [5, 6]
 duplicate_page_papers = [7, 8]
+scrap_page_papers = [7, 8]
 
 
 # bundle 2
@@ -23,13 +24,15 @@ duplicate_page_papers = [7, 8]
 first_paper = 11
 last_paper = 20
 extra_page_papers = [19, 20]
-discard_pages=[51, 54, 58, 62]
+scrap_page_papers = [19, 20]
+discard_pages=[51, 54, 60, 64]
 
 
 # bundle 3
 [[bundles]]
 first_paper = 21
 last_paper = 30
+scrap_page_papers = [21, 22]
 
 
 # bundle 4
@@ -48,16 +51,22 @@ last_paper = 70
 # HW bundle 1
 [[hw_bundles]]
 paper_number = 61
+student_id = 98989898
+student_name = "Kenson, Ken"
 pages = [[1], [2], [], [2, 3], [3]]
 
 
 # HW bundle 2
 [[hw_bundles]]
 paper_number = 62
+student_id = 97979797
+student_name = "Lawrence, Larry"
 pages = [[1], [1, 2], [2], [], [3]]
 
 
 # HW bundle 3
 [[hw_bundles]]
 paper_number = 63
+student_id = 94949494
+student_name = "Nowra, Nora"
 pages = [[1, 2], [3], []]

@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2023 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -56,7 +56,7 @@ For now, see https://plomgrading.org/docs/walkthrough/testspec.html
 Technical docs
 --------------
 
-* The command-line tool :doc:`plom-create` is the current front-end for
+* On legacy servers, the command-line tool :doc:`plom-create` is used for
   most tasks related starting a new test.
 
 * For scripting or other advanced usage, you can ``import plom.create``

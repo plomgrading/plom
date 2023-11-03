@@ -2,19 +2,24 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from datetime import timedelta
 
 from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    MultipleObjectsReturned,
+)
 from django.db import IntegrityError
 from model_bakery import baker
 
-from Papers.models import Paper
+from Papers.models import Paper, Image, IDPage
 
-from Identify.services import IdentifyTaskService, IDService
+from Identify.services import IdentifyTaskService, IDProgressService, IDDirectService
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
@@ -22,7 +27,7 @@ from Identify.models import (
 
 
 class IdentifyTaskTests(TestCase):
-    """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDService`` functions."""
+    """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDProgressService`` functions."""
 
     def setUp(self):
         self.marker0 = baker.make(User, username="marker0")
@@ -169,50 +174,31 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(action.student_name, "A")
         self.assertEqual(action.student_id, "1")
 
-    def test_set_id_task_todo_and_clear_specific_id(self):
-        """Test ``IDService().set_id_task_todo_and_clear_specific_id()``."""
-        ids = IDService()
-        paper = baker.make(Paper)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        action = baker.make(PaperIDAction, task=task)
+    def test_clear_id_from_paper(self):
+        """Test ``IDProgressService().clear_id_from_paper()``."""
+        ids = IDProgressService()
+        paper = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        ids.clear_id_from_paper(1)
 
-        with self.assertRaises(ObjectDoesNotExist):
-            ids.set_id_task_todo_and_clear_specific_id(paper.pk)
-            task.refresh_from_db()
-            action.refresh_from_db()
+        with self.assertRaises(ValueError):
+            ids.clear_id_from_paper(2)
 
-        self.assertEqual(task.status, PaperIDTask.TO_DO)
-        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
+        new_task = PaperIDTask.objects.get(paper=paper, status=PaperIDTask.TO_DO)
+        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=new_task), [])
 
-    def test_set_id_task_todo_and_clear_specific_id_cmd(self):
-        """Test ``IDService().id_task_todo_and_clear_specific_id_cmd()``."""
-        ids = IDService()
-        paper = baker.make(Paper)
-        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
-        action = baker.make(PaperIDAction, task=task)
-
-        with self.assertRaises(ObjectDoesNotExist):
-            ids.set_id_task_todo_and_clear_specific_id_cmd(paper.paper_number)
-            task.refresh_from_db()
-            action.refresh_from_db()
-
-        self.assertEqual(task.status, PaperIDTask.TO_DO)
-        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=task), [])
-
-    def test_set_all_id_task_todo_and_clear_all_id_cmd(self):
-        """Test ``IDService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
-        ids = IDService()
+    def test_clear_id_from_all_identified_papers(self):
+        """Test ``IDProgressService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
+        ids = IDProgressService()
         for paper_number in range(1, 11):
             paper = baker.make(Paper, paper_number=paper_number)
             task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
             baker.make(PaperIDAction, task=task)
 
-        ids.set_all_id_task_todo_and_clear_all_id_cmd()
+        ids.clear_id_from_all_identified_papers()
 
-        for id_task in PaperIDTask.objects.all():
+        for id_task in PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE):
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
-
-        self.assertQuerysetEqual(PaperIDAction.objects.all(), [])
 
     def test_id_already_used(self):
         """Test that using same ID twice raises exception."""
@@ -271,16 +257,97 @@ class IdentifyTaskTests(TestCase):
 
         paper1 = baker.make(Paper, paper_number=1)
         baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
-        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 1)
 
         paper2 = baker.make(Paper, paper_number=2)
         baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
         baker.make(PaperIDTask, paper=paper2, status=PaperIDTask.TO_DO)
-        self.assertRaises(ValueError, its.set_paper_idtask_outdated, 2)
+        self.assertRaises(MultipleObjectsReturned, its.set_paper_idtask_outdated, 2)
 
         paper3 = baker.make(Paper, paper_number=3)
+        baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.OUT_OF_DATE)
         baker.make(PaperIDTask, paper=paper3, status=PaperIDTask.TO_DO)
         its.claim_task(self.marker0, 3)
         its.identify_paper(self.marker0, 3, "3", "ABC")
         its.identify_paper(self.marker0, 3, "4", "CBA")
         its.set_paper_idtask_outdated(3)
+
+    def test_idtask_recreate(self):
+        its = IdentifyTaskService()
+        # create a paper with at least one out-of-date tasks
+        paper1 = baker.make(Paper, paper_number=1)
+        baker.make(PaperIDTask, paper=paper1, status=PaperIDTask.OUT_OF_DATE)
+        img1 = baker.make(Image)
+        idp1 = baker.make(IDPage, paper=paper1, image=img1)
+        # make a new task for it, claim it, and id it.
+        its.create_task(paper1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "3", "ABC")
+        # now give the idpage a new image and set task as out of date (will create a new task)
+        img2 = baker.make(Image)
+        idp1.image = img2
+        idp1.save()
+        its.set_paper_idtask_outdated(1)
+        its.claim_task(self.marker0, 1)
+        its.identify_paper(self.marker0, 1, "4", "ABCD")
+
+    def test_get_all_id_task_count(self):
+        ids = IDProgressService()
+        for n in range(1, 4):
+            paper = baker.make(Paper, paper_number=n)
+            baker.make(PaperIDTask, paper=paper, status=PaperIDTask.TO_DO)
+        for n in range(4, 8):
+            paper = baker.make(Paper, paper_number=n)
+            baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
+        self.assertEqual(7, ids.get_all_id_task_count())
+        self.assertEqual(4, ids.get_completed_id_task_count())
+
+    def test_get_all_id_task_info(self):
+        its = IdentifyTaskService()
+        ids = IDProgressService()
+
+        for n in range(1, 3):
+            paper = baker.make(Paper, paper_number=n)
+            its.create_task(paper)
+
+        for n in range(1, 2):
+            its.claim_task(self.marker0, n)
+            its.identify_paper(self.marker0, n, f"99{n}", f"AB{n}")
+
+        info_dict = {
+            1: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "991",
+                "student_name": "AB1",
+            },
+            2: {"idpageimage_pk": None, "status": "To Do"},
+        }
+
+        self.assertEqual(info_dict, ids.get_all_id_task_info())
+
+    def test_id_hw(self):
+        its = IdentifyTaskService()
+        ids = IDProgressService()
+        idirs = IDDirectService()
+
+        for n in range(1, 3):
+            paper = baker.make(Paper, paper_number=n)
+            its.create_task(paper)
+        for n in range(1, 3):
+            idirs.identify_direct(self.marker0, n, f"99{n}", f"AB{n}")
+        info_dict = {
+            1: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "991",
+                "student_name": "AB1",
+            },
+            2: {
+                "idpageimage_pk": None,
+                "status": "Complete",
+                "student_id": "992",
+                "student_name": "AB2",
+            },
+        }
+
+        self.assertEqual(info_dict, ids.get_all_id_task_info())
