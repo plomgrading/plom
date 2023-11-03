@@ -23,6 +23,7 @@ from ...services import (
     ConfigFileService,
 )
 from ... import config_files as demo_config_files
+from Identify.services import IDDirectService
 
 
 class Command(BaseCommand):
@@ -98,6 +99,20 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
+    def direct_id_hw_bundles(self, homework_bundles):
+        for hw_bundle in homework_bundles:
+            if "student_id" in hw_bundle and "student_name" in hw_bundle:
+                print(
+                    f"Direct ID of homework paper {hw_bundle['paper_number']} as student {hw_bundle['student_id']} {hw_bundle['student_name']}"
+                )
+                # use the _cmd here so that it looks up the username for us.
+                IDDirectService().identify_direct_cmd(
+                    "demoManager1",
+                    hw_bundle["paper_number"],
+                    hw_bundle["student_id"],
+                    hw_bundle["student_name"],
+                )
+
     def post_server_init(self, dcs: DemoCreationService, config, stop_at: str):
         self.papers_and_db(dcs)
 
@@ -139,6 +154,7 @@ class Command(BaseCommand):
             return
 
         self.push_bundles(dcs, number_of_bundles, homework_bundles)
+        self.direct_id_hw_bundles(homework_bundles)  # Direct-ID any homework bundles
         if stop_at == "bundles-pushed":
             return
 
@@ -211,6 +227,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Run a quicker demo with fewer papers and bundles.",
         )
+        parser.add_argument(
+            "--long",
+            action="store_true",
+            help="Run a longer demo with more papers and bundles.",
+        )
 
     def handle(self, *args, **options):
         stop_at = options["stop_at"]
@@ -224,11 +245,19 @@ class Command(BaseCommand):
                     "Cannot run plom-client randomarker with a demo breakpoint."
                 )
 
+        if options["quick"] and options["long"]:
+            self.stderr.write("Cannot run a short demo at the same time")
+            return
+
         config_path = options["config"]
         if config_path is None:
             if options["quick"]:
                 config = ConfigFileService.read_server_config(
                     resources.files(demo_config_files) / "quick_demo_config.toml"
+                )
+            if options["long"]:
+                config = ConfigFileService.read_server_config(
+                    resources.files(demo_config_files) / "long_demo_config.toml"
                 )
             else:
                 config = ConfigFileService.read_server_config(

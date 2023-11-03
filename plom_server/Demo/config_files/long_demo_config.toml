@@ -4,18 +4,33 @@
 test_spec = "demo"
 test_sources = "demo"
 prenaming_enabled = true
-classlist = "demo"
-num_to_produce = 25
+classlist = "long_demo"
+num_to_produce = 250
 
 # bundle 1
 [[bundles]]
 first_paper = 1
-last_paper = 10
-
+last_paper = 25
+# bundle 2
+[[bundles]]
+first_paper = 26
+last_paper = 50
+# bundle 3
+[[bundles]]
+first_paper = 51
+last_paper = 100
+# bundle 4
+[[bundles]]
+first_paper = 101
+last_paper = 150
+# bundle 5
+[[bundles]]
+first_paper = 151
+last_paper = 200
 
 # HW bundle 1
 [[hw_bundles]]
-paper_number = 21
+paper_number = 241
 student_id = 98989898
 student_name = "Kenson, Ken"
 pages = [[1], [2], [], [2, 3], [3]]

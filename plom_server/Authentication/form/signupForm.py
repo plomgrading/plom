@@ -3,10 +3,16 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django import forms
+
+from .choices import (
+    USERNAME_CHOICES,
+    USER_TYPE_WITH_MANAGER_CHOICES,
+    USER_TYPE_WITHOUT_MANAGER_CHOICES,
+)
 
 """
 This is the collection of forms to be use in a website.
@@ -23,6 +29,14 @@ class CreateUserForm(UserCreationForm):
         widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
     )
 
+    user_types = forms.CharField(
+        label="What user type would you like to create?",
+        widget=forms.RadioSelect(
+            choices=USER_TYPE_WITH_MANAGER_CHOICES, attrs={"class": "me-2"}
+        ),
+        initial="marker",
+    )
+
     def __init__(self, *args, **kwargs):
         super(CreateUserForm, self).__init__(*args, **kwargs)
         self.fields["password1"].required = False
@@ -35,15 +49,7 @@ class CreateUserForm(UserCreationForm):
         fields = ["username", "email"]
 
 
-class CreateScannersAndMarkersForm(forms.Form):
-    USERNAME_CHOICES = [
-        ("basic", "Basic numbered usernames"),
-        (
-            "funky",
-            "\N{LEFT DOUBLE QUOTATION MARK}Funky\N{RIGHT DOUBLE QUOTATION MARK} usernames (such as \N{LEFT DOUBLE QUOTATION MARK}hungryHeron8\N{RIGHT DOUBLE QUOTATION MARK})",
-        ),
-    ]
-
+class CreateMultiUsersForm(forms.Form):
     num_users = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
@@ -61,6 +67,14 @@ class CreateScannersAndMarkersForm(forms.Form):
         label="What sort of usernames would you like?",
         widget=forms.RadioSelect(choices=USERNAME_CHOICES, attrs={"class": "me-2"}),
         initial="basic",
+    )
+
+    user_types = forms.CharField(
+        label="What user type would you like to create?",
+        widget=forms.RadioSelect(
+            choices=USER_TYPE_WITHOUT_MANAGER_CHOICES, attrs={"class": "me-2"}
+        ),
+        initial="marker",
     )
 
     def clean(self):

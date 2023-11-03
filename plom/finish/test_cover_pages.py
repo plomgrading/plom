@@ -20,6 +20,14 @@ def test_cover_page(tmp_path):
     assert "12345678" in text
 
 
+def test_cover_page_leading_zero_sid(tmp_path):
+    f = tmp_path / "foo.pdf"
+    data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
+    makeCover(data, f, test_num="0123", info=("Someone", "00123400"))
+    with fitz.open(f) as doc:
+        assert "00123400" in doc[0].get_text()
+
+
 def test_cover_page_hardcoded_letter_paper(tmp_path):
     f = tmp_path / "foo.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
@@ -31,7 +39,7 @@ def test_cover_page_hardcoded_letter_paper(tmp_path):
 
 
 def test_cover_page_solution(tmp_path):
-    f = "soln.pdf"
+    f = tmp_path / "soln.pdf"
     data = [["A", 1, 4], ["B", 1, 6]]
     makeCover(data, f, solution=True)
     doc = fitz.open(f)
@@ -81,7 +89,6 @@ def test_cover_page_at_least_20_questions_one_page_issue2519(tmp_path):
 
 
 def test_cover_page_a_great_many_questions_multipage_issue2519(tmp_path):
-    tmp_path = tmp_path
     N = 100
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
     f = tmp_path / "foo.pdf"
