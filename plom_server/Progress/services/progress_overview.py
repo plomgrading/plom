@@ -82,18 +82,20 @@ class ProgressOverviewService:
         return (id_task_overview, marking_task_overview)
 
     @transaction.atomic
-    def get_completed_task_counts(self) -> Dict:
-        task_counts = {
-            "id": PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count(),
-            "mk": {},
+    def get_completed_id_task_count(self) -> int:
+        return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
+
+    @transaction.atomic
+    def get_completed_marking_task_counts(self) -> Dict:
+        return {
+            qi: MarkingTask.objects.filter(
+                question_number=qi, status=PaperIDTask.COMPLETE
+            ).count()
+            for qi in range(1, SpecificationService.get_n_questions() + 1)
         }
 
-        for qn in range(1, SpecificationService.get_n_questions() + 1):
-            task_counts["mk"].update(
-                {
-                    qn: MarkingTask.objects.filter(
-                        question_number=qn, status=PaperIDTask.COMPLETE
-                    ).count()
-                }
-            )
-        return task_counts
+    def get_completed_task_counts(self) -> Dict:
+        return {
+            "id": self.get_completed_id_task_count(),
+            "mk": self.get_completed_marking_task_counts(),
+        }

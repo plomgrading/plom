@@ -133,6 +133,6 @@ urlpatterns = [
     path(
         "alltaskoverview/",
         AllTaskOverviewView.as_view(),
-        name="all_task_overview",
+        name="alltaskoverview",
     ),
 ]

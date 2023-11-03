@@ -1,5 +1,6 @@
 <!-- Copyright (C) 2023 Julian Lapenna -->
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Marking and Identify Tasks
@@ -24,26 +25,26 @@
                         <div class="progress"
                              role="progressbar"
                              aria-label="id complete percentage"
-                             aria-valuenow="{{ percent_complete.id }}"
+                             aria-valuenow="{{ id_percent_complete }}"
                              aria-valuemin="0"
                              aria-valuemax="100">
-                            <div class="progress-bar" style="width: {{ percent_complete.id }}%">
-                                {{ completed_task_counts.id }} / {{ n_papers }}
+                            <div class="progress-bar" style="width: {{ id_percent_complete }}%">
+                                {{ completed_id_task_count }} / {{ n_papers }}
                             </div>
                         </div>
                     </th>
-                    {% for qi in question_indices %}
+                    {% for qi, qlabel in question_labels %}
                         <th>
-                            Q.{{ qi }}
+                            {{ qlabel }}
                             <div class="progress"
                                  role="progressbar"
                                  aria-label="id complete percentage"
-                                 aria-valuenow="{{ percent_complete.mk|get_item:qi }}"
+                                 aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
                                  aria-valuemin="0"
                                  aria-valuemax="100">
                                 <div class="progress-bar"
-                                     style="width: {{ percent_complete.mk|get_item:qi }}%">
-                                    {{ completed_task_counts.mk|get_item:qi }} / {{ n_papers }}
+                                     style="width: {{ mark_percent_complete|get_item:qi }}%">
+                                    {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
                                 </div>
                             </div>
                         </th>
@@ -109,20 +110,22 @@
                         <a class="btn btn-primary w-100"
                            href="{% url 'progress_identify_home' %}">ID progress</a>
                     </td>
-                    {% for qi in question_indices %}
+                    {% for qi, qlabel in question_labels %}
                         <td>
                             <a class="btn btn-primary w-100"
-                               href="{% url 'progress_mark_version_compare' qi %}">Q.{{ qi }} statistics</a>
+                               href="{% url 'progress_mark_version_compare' qi %}">{{ qlabel }} statistics</a>
                         </td>
                     {% endfor %}
                 </tr>
                 <tr>
                     <td></td>
                     <td></td>
-                    {% for qi in question_indices %}
+                    {% for qi, qlabel in question_labels %}
                         <td>
                             <a class="btn btn-info w-100"
-                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">Q.{{ qi }} annotations</a>
+                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">
+                                {{ qlabel }} annotations
+                            </a>
                         </td>
                     {% endfor %}
                 </tr>
@@ -134,6 +137,5 @@
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
   })
-  
     </script>
 {% endblock main_content %}
