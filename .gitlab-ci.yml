@@ -1582,7 +1582,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python310
+  - choco install -y python311
   - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
   - refreshenv
   - c:\python310\python -m pip --version
