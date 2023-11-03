@@ -69,6 +69,8 @@ class DemoCreationService:
             f = config.classlist
             if f == "demo":
                 f = resources.files(useful_files) / "cl_for_demo.csv"
+            if f == "long_demo":
+                f = resources.files(useful_files) / "cl_for_long_demo.csv"
             call_command(
                 "plom_preparation_classlist",
                 "upload",
