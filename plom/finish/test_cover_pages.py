@@ -124,6 +124,20 @@ def test_cover_page_totalling(tmpdir):
         doc.close()
 
 
+def test_cover_page_label_cannot_be_None(tmpdir):
+    f = Path(tmpdir) / "foo.pdf"
+    data = ([None, 1, 4],)
+    with raises(AssertionError, match="string"):
+        makeCover(data, f, solution=True)
+
+
+def test_cover_page_labels_must_be_strings(tmpdir):
+    f = Path(tmpdir) / "foo.pdf"
+    data = ([8675309, 1, 6],)
+    with raises(AssertionError, match="string"):
+        makeCover(data, f, solution=True)
+
+
 def test_cover_page_doesnt_like_negatives(tmpdir):
     check = ((10, 25, [["Q1", 1, 4, -3], ["Q2", 1.2, 5, 6]]),)
     for score, total, data in check:
