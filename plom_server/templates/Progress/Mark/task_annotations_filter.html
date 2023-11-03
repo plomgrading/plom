@@ -1,7 +1,11 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Tasks and Annotations
+    Tasks and Annotations
 {% endblock title %}
 {% block page_heading %}
     Tasks and annotations
@@ -60,68 +64,69 @@
                     </div>
                 </div>
             </form>
-            <div class="row">
-                <div class="card col">
-                    <div class="card-header">
-                        <h5>Tasks list</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
-                            <table class="table table-sm table-bordered text-center sortable">
-                                <thead>
-                                    <tr>
-                                        <th>Paper</th>
-                                        <th>Question</th>
-                                        <th>Version</th>
-                                        <th>Status</th>
-                                        <th>Last update</th>
-                                        <th>Username</th>
-                                        <th>Score</th>
-                                        <th>View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for pn, task_data in task_info.items %}
-                                        <tr>
-                                            <td>{{ pn }}</td>
-                                            <td>{{ task_data.question }}</td>
-                                            <td>{{ task_data.version }}</td>
-                                            {% if task_data.status == "Complete" %}
-                                                <td class="bg-success">{{ task_data.status }}</td>
-                                            {% elif task_data.status == "To Do" %}
-                                                <td class="bg-warning">{{ task_data.status }}</td>
-                                            {% elif task_data.status == "Out" %}
-                                                <td class="bg-info">{{ task_data.status }}</td>
-                                            {% else %}
-                                                <td>{{ task_data.status }}</td>
-                                            {% endif %}
-                                            <td>{{ task_data.last_update }}</td>
-                                            <td>{{ task_data.username }}</td>
-                                            <td>{{ task_data.score }}</td>
-                                            <td class="text-start">
-                                                {% if task_data.status %}
-                                                    <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
-                                                            hx-target="#imageHere"
-                                                            hx-replace="innerHTML"
-                                                            class="btn btn-outline-info">orig</button>
-                                                {% endif %}
-                                                {% if task_data.status == "Complete" %}
-                                                    <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
-                                                            hx-target="#imageHere"
-                                                            hx-replace="innerHTML"
-                                                            class="btn btn-outline-success">annot</button>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        </div>
+        <div class="row">
+            <div class="card col">
+                <div class="card-header">
+                    <h5>Tasks list</h5>
                 </div>
-                <div class="card col" style="height: auto; width: 40vw;">
-                    <div id="imageHere"></div>
+                <div class="card-body">
+                    <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
+                        <table class="table table-sm table-bordered text-center sortable">
+                            <thead>
+                                <tr>
+                                    <th>Paper</th>
+                                    <th>Question</th>
+                                    <th>Version</th>
+                                    <th>Status</th>
+                                    <th>Last update</th>
+                                    <th>Username</th>
+                                    <th>Score</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pn, task_data in task_info.items %}
+                                    <tr>
+                                        <td>{{ pn }}</td>
+                                        <td>{{ task_data.question }}</td>
+                                        <td>{{ task_data.version }}</td>
+                                        {% if task_data.status == "Complete" %}
+                                            <td class="bg-success">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "To Do" %}
+                                            <td class="bg-warning">{{ task_data.status }}</td>
+                                        {% elif task_data.status == "Out" %}
+                                            <td class="bg-info">{{ task_data.status }}</td>
+                                        {% else %}
+                                            <td>{{ task_data.status }}</td>
+                                        {% endif %}
+                                        <td>{{ task_data.last_update }}</td>
+                                        <td>{{ task_data.username }}</td>
+                                        <td>{{ task_data.score }}</td>
+                                        <td class="text-start">
+                                            {% if task_data.status %}
+                                                <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-info">orig</button>
+                                            {% endif %}
+                                            {% if task_data.status == "Complete" %}
+                                                <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
+                                                        hx-target="#imageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-success">annot</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+            <div class="card col" style="height: auto; width: 40vw;">
+                <div id="imageHere"></div>
+            </div>
         </div>
-    {% endblock main_content %}
+    </div>
+{% endblock main_content %}

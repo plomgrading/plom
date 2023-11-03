@@ -65,17 +65,6 @@ class UserPage(ManagerRequiredView):
         return redirect("/users")
 
 
-class ProgressPage(ManagerRequiredView):
-    progress_page = "UserManagement/progress.html"
-
-    def get(self, request, username):
-        context = {"username": username}
-        return render(request, self.progress_page, context)
-
-    def post(self, request, username):
-        return render(request, self.progress_page, username)
-
-
 class PasswordResetPage(ManagerRequiredView):
     def get(self, request, username):
         user_obj = User.objects.get(username=username)

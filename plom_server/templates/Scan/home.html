@@ -8,7 +8,7 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Web Plom - Scan
+    Scan bundles
 {% endblock title %}
 {% block page_heading %}
     Scan bundles
@@ -104,7 +104,7 @@
                                             <img src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}"
                                                  class="border rounded-start"
                                                  style="max-height: 16em;
-                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle|default_if_none:0 }}deg))">
+                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle|default_if_none:0 }}deg))" />
                                             <div class="p-2">
                                                 <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
                                                 <ul class="list-unstyled">

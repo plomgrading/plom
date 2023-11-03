@@ -1,9 +1,13 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% block title %}
+    Reports
+{% endblock title %}
 {% block page_heading %}
     Reports
 {% endblock page_heading %}
@@ -11,14 +15,10 @@
     <h3>Main Report</h3>
     <p>Download the report with basic information and analysis for submission to department.</p>
     <button type="button" class="btn btn-primary">Download Main Report</button>
-    <br>
-    <br>
-    <h3>Enhanced Report</h3>
+    <h3 class="mt-5">Enhanced Report</h3>
     <p>Download the report with enriched analysis and insights.</p>
     <button type="button" class="btn btn-primary">Download Enhanced Report</button>
-    <br>
-    <br>
-    <h3>Analysis Scripts</h3>
+    <h3 class="mt-5">Analysis Scripts</h3>
     <p>Download the following data and scripts to reproduce the analysis and do some further analysis</p>
     <button type="button" class="btn btn-primary">Download JSON data</button>
     <button type="button" class="btn btn-primary">Download notebook scripts</button>

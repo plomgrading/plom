@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
 from UserManagement import views
@@ -24,5 +25,4 @@ urlpatterns = [
         views.UserPage.toggleLeadMarker,
         name="toggleLeadMarker",
     ),
-    path("progress/<str:username>", view=views.ProgressPage.as_view(), name="progress"),
 ]
