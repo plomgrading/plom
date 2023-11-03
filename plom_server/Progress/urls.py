@@ -131,8 +131,8 @@ urlpatterns = [
         name="progress_user_info_home",
     ),
     path(
-        "alltaskoverview/",
+        "all_task_overview/",
         AllTaskOverviewView.as_view(),
-        name="alltaskoverview",
+        name="all_task_overview",
     ),
 ]
