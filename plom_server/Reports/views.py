@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import datetime as dt
 
@@ -9,7 +10,7 @@ from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
 from .services.report_download_service import ReportDownloadService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 class ReportLandingPageView(ManagerRequiredView):
@@ -24,10 +25,9 @@ class ReportLandingPageView(ManagerRequiredView):
 
     def report_download(request):
         rds = ReportDownloadService()
-        spec = Specification.load().spec_dict
         filename = (
             "Report-"
-            + spec["name"]
+            + SpecificationService.get_shortname()
             + "--"
             + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
         )

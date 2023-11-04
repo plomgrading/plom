@@ -8,7 +8,7 @@ from weasyprint import HTML, CSS
 from Finish.services import DataExtractionService, MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
-from Papers.models import Specification
+from Papers.services import SpecificationService
 
 
 class ReportDownloadService:
@@ -26,11 +26,10 @@ class ReportDownloadService:
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
-        spec = Specification.load().spec_dict
 
         # info for report
-        longName = spec["longName"]
-        totalMarks = spec["totalMarks"]
+        longName = SpecificationService.get_longname()
+        totalMarks = SpecificationService.get_total_marks()
         date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
         num_students = (
             MarkingTask.objects.values_list("paper__paper_number", flat=True)
