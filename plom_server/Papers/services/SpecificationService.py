@@ -262,6 +262,8 @@ def get_question_label(question_one_index) -> str:
         ObjectDoesNotExist: no question exists with the given index.
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
+    if question.label is None:
+        return f"Q{question_one_index}"
     return question.label
 
 
