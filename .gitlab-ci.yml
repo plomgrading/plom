@@ -1095,7 +1095,7 @@ binary_upload:
     - export VER=${CI_COMMIT_TAG:1}
     - echo $VER
     - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
-    - export LINKNAME1="Plom Client for Windows"
+    - export LINKNAME1="Plom Client for Windows (Windows ≥ 10, x86-64)"
     - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 12)"
     - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 12)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
@@ -1567,12 +1567,12 @@ macos_server_webplom:
 #   stage: test
 #   needs: []
 #   script:
-#   - choco install -y python310
+#   - choco install -y python311
 #   - refreshenv
-#   - c:\Python310\Scripts\pip install -r requirements.txt.client
+#   - c:\Python311\Scripts\pip install -r requirements.txt.client
 #   - refreshenv
 #   - echo $Env:Path
-#   - c:\Python310\python -m plom.client -h
+#   - c:\Python311\python -m plom.client -h
 
 
 # Build Windows client binaries
@@ -1582,21 +1582,21 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python310
+  - choco install -y python311
   - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
   - refreshenv
-  - c:\python310\python -m pip --version
-  - c:\python310\python -m pip install --user --upgrade pip
-  - c:\python310\python -m pip --version
-  - c:\python310\python -m pip install --user --upgrade setuptools wheel
+  - c:\python311\python -m pip --version
+  - c:\python311\python -m pip install --user --upgrade pip
+  - c:\python311\python -m pip --version
+  - c:\python311\python -m pip install --user --upgrade setuptools wheel
   script:
-  - c:\python310\python -m pip install -r requirements.txt.client
+  - c:\python311\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==6.1.0
+  - c:\python311\python -m pip install pyinstaller==6.1.0
   - refreshenv
-  # c:\python310\python -m plom.client -h
-  - c:\python310\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  # c:\python311\python -m plom.client -h
+  - c:\python311\scripts\pyinstaller client.windows.spec
+  - $VER = &"c:\python311\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
