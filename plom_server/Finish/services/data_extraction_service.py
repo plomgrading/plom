@@ -149,10 +149,8 @@ class DataExtractionService:
         Returns:
             The average grade on each question.
         """
-        # TODO: use one of the newer loops from task_progress branch?
         averages = []
-        for qidx in range(1, SpecificationService.get_n_questions() + 1):
-            qlabel = SpecificationService.get_question_label(qidx)
+        for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
             averages.append((qidx, qlabel, self._get_average_grade_on_question(qidx)))
         return averages
 
