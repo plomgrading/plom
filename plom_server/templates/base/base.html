@@ -4,6 +4,7 @@
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Andrew Rechnitzer
 -->
 {% load static %}
 <!DOCTYPE html>
@@ -104,6 +105,9 @@
                             <ul>
                                 <li class="nav-item">
                                     <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'all_task_overview' %}">Task overview</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>

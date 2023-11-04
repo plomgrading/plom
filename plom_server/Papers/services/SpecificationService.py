@@ -5,7 +5,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
-from typing import Dict, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
@@ -35,9 +35,11 @@ def load_spec_from_dict(
     Will call the SpecSerializer on the loaded TOML string and validate.
 
     Args:
-        pathname (pathlib.Path or string): the filename on disk.
-        update_staging (bool): if true, update the staging specification (mainly for UI purposes)
-        public_code (str | None): pass a manually specified public code (mainly for unit testing)
+        spec_dict:
+
+    Keyword Args:
+        update_staging: if true, update the staging specification (mainly for UI purposes)
+        public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
         Specification: saved test spec instance.
@@ -73,7 +75,7 @@ def load_spec_from_toml(
 
 
 @transaction.atomic
-def is_there_a_spec():
+def is_there_a_spec() -> bool:
     """Has a test-specification been uploaded to the database."""
     return Specification.objects.count() == 1
 
@@ -130,7 +132,7 @@ def store_validated_spec(validated_spec: Dict) -> None:
     """Takes the validated test specification and stores it in the db.
 
     Args:
-        validated_spec (dict): A dictionary containing a validated test
+        validated_spec: A dictionary containing a validated test
             specification.
     """
     serializer = SpecSerializer()
@@ -215,11 +217,11 @@ def get_n_pages() -> int:
 
 
 @transaction.atomic
-def get_question_mark(question_one_index) -> int:
+def get_question_mark(question_one_index: Union[str, int]) -> int:
     """Get the max mark of a given question.
 
     Args:
-        question_one_index (str/int): question number, indexed from 1.
+        question_one_index: question index, indexed from 1.
 
     Returns:
         The maximum mark.
@@ -249,14 +251,16 @@ def n_pages_for_question(question_one_index) -> int:
 
 
 @transaction.atomic
-def get_question_label(question_one_index) -> str:
+def get_question_label(question_one_index: Union[str, int]) -> str:
     """Get the question label from its one-index.
 
     Args:
-        question_one_index (str | int): question number indexed from 1.
+        question_one_index: question number indexed from 1.
+            TODO: does it really accept string input?
 
     Returns:
-        The question label.
+        The question label, including a default value if a
+        custom question label was not used.
 
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
@@ -265,6 +269,39 @@ def get_question_label(question_one_index) -> str:
     if question.label is None:
         return f"Q{question_one_index}"
     return question.label
+
+
+@transaction.atomic
+def get_question_index_label_pairs() -> List[Tuple[int, str]]:
+    """Get the question indices and labels as a list of pairs of tuples.
+
+    Returns:
+        The question indices and labels as pairs of tuples in a list.
+        The pairs are ordered by their indices.
+    """
+    return [(i, get_question_label(i)) for i in range(1, get_n_questions() + 1)]
+
+
+@transaction.atomic
+def get_question_labels() -> List[str]:
+    """Get the question labels in a list.
+
+    Returns:
+        The question labels in a list, in the order of
+        increasing question index.
+    """
+    return [label for _, label in get_question_index_label_pairs()]
+
+
+@transaction.atomic
+def get_question_labels_map() -> Dict[int, str]:
+    """Get the question labels as a mapping from unit-indexed question indices.
+
+    Returns:
+        The question labels as a dictionary mapping from unit-indexed
+        question indices.
+    """
+    return {i: label for i, label in get_question_index_label_pairs()}
 
 
 @transaction.atomic

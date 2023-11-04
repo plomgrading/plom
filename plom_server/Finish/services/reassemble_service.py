@@ -249,16 +249,16 @@ class ReassembleService:
             solution (optional): bool, leave out the max possible mark.
 
         Returns:
-            list: If solution then list of tuples [question_label, version, max_mark]
-                for each question and if not solution, then tuples [question_label, version, mark, max_mark]
+            If ``solution`` is True then returns a list of lists
+            ``[question_label, version, max_mark]`` for each question.
+            Otherwise, ``[question_label, version, mark, max_mark]``.
         """
         cover_page_info = []
 
-        spec_service = SpecificationService
-        n_questions = spec_service.get_n_questions()
+        n_questions = SpecificationService.get_n_questions()
         for i in range(1, n_questions + 1):
-            question_label = spec_service.get_question_label(i)
-            max_mark = spec_service.get_question_mark(i)
+            question_label = SpecificationService.get_question_label(i)
+            max_mark = SpecificationService.get_question_mark(i)
             version, mark = self.get_question_data(paper, i)
 
             if solution:

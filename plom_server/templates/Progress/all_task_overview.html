@@ -1,0 +1,141 @@
+<!-- Copyright (C) 2023 Julian Lapenna -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+{% extends "base/base.html" %}
+{% block title %}
+    Marking and identifying overview
+{% endblock title %}
+{% block page_heading %}
+    Overiew of marking and identifying
+{% endblock page_heading %}
+{% block main_content %}
+    <p>
+        <ul>
+            <li>Click on any marking task to see the corresponding annotation</li>
+            <li>Click on the ID progress or question statistics buttons to see a more details</li>
+        </ul>
+    </p>
+    <div class="table-responsive" style="max-height: 80vh;">
+        <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
+            <thead class="sticky-top">
+                <tr>
+                    <th>paper</th>
+                    <th>
+                        identify
+                        <div class="progress"
+                             role="progressbar"
+                             aria-label="id complete percentage"
+                             aria-valuenow="{{ id_percent_complete }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            <div class="progress-bar" style="width: {{ id_percent_complete }}%">
+                                {{ completed_id_task_count }} / {{ n_papers }}
+                            </div>
+                        </div>
+                    </th>
+                    {% for qi, qlabel in question_labels %}
+                        <th>
+                            {{ qlabel }}
+                            <div class="progress"
+                                 role="progressbar"
+                                 aria-label="id complete percentage"
+                                 aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                <div class="progress-bar"
+                                     style="width: {{ mark_percent_complete|get_item:qi }}%">
+                                    {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
+                                </div>
+                            </div>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="table-group-divider">
+                {% for pn in papers_with_a_task %}
+                    <tr>
+                        <td>{{ pn }}</td>
+                        <!-- id task -->
+                        {% with dat=id_task_overview|get_item:pn %}
+                            {% if dat.status == "Complete" %}
+                                <td class="table-success"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    data-bs-title="by {{ dat.user }}">{{ dat.sid }}</td>
+                            {% elif dat.status == "To Do" %}
+                                <td class="table-warning">to do</td>
+                            {% elif dat.status == "Out" %}
+                                <td class="table-info"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    data-bs-title="with {{ dat.user }}">out</td>
+                            {% else %}
+                                <td class="table-danger">task missing</td>
+                            {% endif %}
+                        {% endwith %}
+                        <!-- end id task -->
+                        <!-- get all marking task data for this paper -->
+                        {% with all_q_dat=marking_task_overview|get_item:pn %}
+                            {% for qi in question_indices %}
+                                <!-- now get data for just this question -->
+                                {% with dat=all_q_dat|get_item:qi %}
+                                    {% if dat.status == "Complete" %}
+                                        <td class="table-success">
+                                            <a class="btn btn-sm py-0 btn-success-subtle w-100"
+                                               href="{% url 'annotation_item' dat.annotation_pk %}"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="bottom"
+                                               data-bs-title="v.{{ dat.version }} by {{ dat.user }}">{{ dat.score }}</a>
+                                        </td>
+                                    {% elif dat.status == "To Do" %}
+                                        <td class="table-warning">to do</td>
+                                    {% elif dat.status == "Out" %}
+                                        <td class="table-info"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="bottom"
+                                            data-bs-title="with {{ dat.user }}">out</td>
+                                    {% else %}
+                                        <td class="table-danger">task missing</td>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endfor %}
+                        {% endwith %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="sticky-bottom table-group-divider">
+                <tr>
+                    <td></td>
+                    <td>
+                        <a class="btn btn-primary w-100"
+                           href="{% url 'progress_identify_home' %}">ID progress</a>
+                    </td>
+                    {% for qi, qlabel in question_labels %}
+                        <td>
+                            <a class="btn btn-primary w-100"
+                               href="{% url 'progress_mark_version_compare' qi %}">{{ qlabel }} statistics</a>
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    {% for qi, qlabel in question_labels %}
+                        <td>
+                            <a class="btn btn-info w-100"
+                               href="{% url 'progress_task_annotation_filter' %}?question={{ qi }}">
+                                {{ qlabel }} annotations
+                            </a>
+                        </td>
+                    {% endfor %}
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+    </script>
+{% endblock main_content %}
