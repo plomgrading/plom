@@ -1,6 +1,7 @@
 /*
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
 */
 
 function renderHeatMap(data, divId) {
@@ -16,8 +17,8 @@ function renderHeatMap(data, divId) {
     }
 
     // Set up dimensions and margins
-    const cellSize = 40; // Set the desired cell size
-    const margin = { top: 90, right: 50, bottom: 20, left: 60 };
+    const cellSize = 50; // Set the desired cell size
+    const margin = { top: 40, right: 50, bottom: 20, left: 60 };
     const width = data.cols * cellSize + margin.left + margin.right;
     const height = data.rows * cellSize + margin.top + margin.bottom;
 
@@ -41,7 +42,7 @@ function renderHeatMap(data, divId) {
     // title for the heatmap
     svg.append("text")
         .attr("x", width / 2)
-        .attr("y", margin.top / 4)
+        .attr("y", margin.top * 0.67)
         .attr("text-anchor", "middle")
         .style("font-size", "20px")
         .text(data.title);
@@ -64,7 +65,7 @@ function renderHeatMap(data, divId) {
         }) // Apply diagonal stripes to the cells on the diagonal
         .on("click", cellClicked); // Add click event listener
 
-    // Add x-axis labels at the top
+    // Add x-axis labels at the bottom
     const xLabels = svg.selectAll(".xLabel")
         .data(data.xLabel)
         .enter()
@@ -72,7 +73,7 @@ function renderHeatMap(data, divId) {
         .text(d => d)
         .attr("class", "xLabel")
         .attr("x", (d, i) => (i + 0.5) * cellSize + margin.left)
-        .attr("y", margin.top * 3 / 4)
+        .attr("y", height - 2)
         .style("text-anchor", "middle");
 
     // Add y-axis labels
@@ -82,9 +83,9 @@ function renderHeatMap(data, divId) {
         .append("text")
         .text(d => d)
         .attr("class", "yLabel")
-        .attr("x", margin.left * 2 / 3)
+        .attr("x", margin.left * 0.9)
         .attr("y", (d, i) => (i + 0.6) * cellSize + margin.top)
-        .style("text-anchor", "middle");
+        .style("text-anchor", "end");
 
     // Add x-axis title
     svg.append("text")
