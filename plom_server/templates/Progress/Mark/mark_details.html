@@ -166,7 +166,7 @@
     });
 
   var ctx_pies = document.getElementById('pies');
-  new Chart(ctx_pies, {
+  var the_pie_chart = new Chart(ctx_pies, {
       type: 'doughnut',
       options: {
 	  plugins: {
@@ -175,15 +175,17 @@
 		  text: 'Number marked by user',
 	      }
 	  },
-	  circumference: {{pie_angle}},
       },
       data: {
-	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %}],
+	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %} 'remaining'],
 	  datasets: [{
-	      data: [ {% for upk, data in user_hists.items %}{{data.number}},{% endfor %}],
+	      data: [ {% for upk, data in user_hists.items %}{{data.number}},{% endfor %} {{remaining_tasks}}],
 	  }],
       }
   });
+  // now update the color of the 'remaining' slice.
+  the_pie_chart.data.datasets[0].backgroundColor[{{user_hists|length}}]='#eee';
+  the_pie_chart.update();
     </script>
     {% for upk, data in user_hists.items %}
         <script>

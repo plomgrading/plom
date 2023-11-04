@@ -72,7 +72,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
         # to show incomplete pie-chart need this value
-        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
+        remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
 
         context.update(
             {
@@ -82,7 +82,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "user_hists": user_hists_and_stats,
-                "pie_angle": pie_angle,
+                "remaining_tasks": remaining_tasks,
             }
         )
 
@@ -112,7 +112,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
         # to show incomplete pie-chart need this value
-        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
+        remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
 
         context.update(
             {
@@ -122,7 +122,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
-                "pie_angle": pie_angle,
+                "remaining_tasks": remaining_tasks,
             }
         )
 
