@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List
 
-import numpy as np
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
@@ -194,13 +194,15 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
+        # TODO: regex likely to break if question labels were used in spreadsheet
         marks_corr = (
             student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
         )
 
         for i, name in enumerate(marks_corr.columns):
-            marks_corr.rename({name: "Q" + str(i + 1)}, axis=1, inplace=True)
-            marks_corr.rename({name: "Q" + str(i + 1)}, axis=0, inplace=True)
+            qlabel = SpecificationService.get_question_label(i + 1)
+            marks_corr.rename({name: qlabel}, axis=1, inplace=True)
+            marks_corr.rename({name: qlabel}, axis=0, inplace=True)
 
         return marks_corr
 
