@@ -6,7 +6,6 @@
 
 import logging
 from typing import Dict, Optional, Any
-from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
@@ -230,6 +229,17 @@ def get_question_mark(question_one_index) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+@transaction.atomic
+def get_total_marks() -> int:
+    """Get the total maximum possible mark (over all questions).
+
+    Returns:
+        The maximum mark.
+    """
+    spec = Specification.objects.get()
+    return spec.totalMarks
 
 
 @transaction.atomic
