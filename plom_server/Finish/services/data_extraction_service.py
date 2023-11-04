@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -143,15 +143,17 @@ class DataExtractionService:
         """
         return self.student_df[f"q{question_number}_mark"].mean()
 
-    def get_average_grade_on_all_questions(self) -> Dict[str, float]:
+    def get_average_grade_on_all_questions(self) -> List[Tuple[int, str, float]]:
         """Return the average grade on each question (not percentage).
 
         Returns:
-            A list of floats containing the average grade on each question.
+            The average grade on each question.
         """
-        averages = {}
-        for q in self.spec["question"].keys():
-            averages[q] = self._get_average_grade_on_question(int(q))
+        # TODO: use one of the newer loops from task_progress branch?
+        averages = []
+        for qidx in range(1, SpecificationService.get_n_questions() + 1):
+            qlabel = SpecificationService.get_question_label(qidx)
+            averages.append((qidx, qlabel, self._get_average_grade_on_question(qidx)))
         return averages
 
     def _get_marks_for_all_questions(
