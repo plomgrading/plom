@@ -6,6 +6,7 @@ from django.http import FileResponse
 from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
+from Progress.services import ProgressOverviewService
 
 
 class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
@@ -93,3 +94,48 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
         return render(
             request, "Progress/Mark/original_image_wrap_fragment.html", context
         )
+
+
+class AllTaskOverviewView(LeadMarkerOrManagerView):
+    def get(self, request):
+        question_indices = [
+            q + 1 for q in range(SpecificationService.get_n_questions())
+        ]
+
+        context = self.build_context()
+        pos = ProgressOverviewService()  # acronym excellence
+        id_task_overview, marking_task_overview = pos.get_task_overview()
+        papers_with_a_task = list(id_task_overview.keys())
+        n_papers = len(papers_with_a_task)
+
+        completed_id_task_count = pos.get_completed_id_task_count()
+        completed_marking_task_counts = pos.get_completed_marking_task_counts()
+
+        # convert completed counts to percentages for progress bars
+        if n_papers > 0:
+            id_percent_complete = round(100 * completed_id_task_count / n_papers)
+            mark_percent_complete = {
+                q: round(100 * n / n_papers)
+                for q, n in completed_marking_task_counts.items()
+            }
+        else:
+            id_percent_complete = 0
+            mark_percent_complete = {
+                q: 0 for q, n in completed_marking_task_counts.items()
+            }
+
+        context.update(
+            {
+                "question_indices": question_indices,
+                "question_labels": SpecificationService.get_question_index_label_pairs(),
+                "papers_with_a_task": papers_with_a_task,
+                "id_task_overview": id_task_overview,
+                "marking_task_overview": marking_task_overview,
+                "n_papers": n_papers,
+                "completed_id_task_count": completed_id_task_count,
+                "completed_marking_task_counts": completed_marking_task_counts,
+                "id_percent_complete": id_percent_complete,
+                "mark_percent_complete": mark_percent_complete,
+            }
+        )
+        return render(request, "Progress/all_task_overview.html", context=context)

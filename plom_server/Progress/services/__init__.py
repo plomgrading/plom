@@ -5,4 +5,5 @@
 
 from .manage_scan import ManageScanService
 from .manage_discard import ManageDiscardService
+from .progress_overview import ProgressOverviewService
 from .userinfo_service import UserInfoServices
