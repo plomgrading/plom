@@ -27,7 +27,6 @@ class MatplotlibService:
 
     def __init__(self):
         self.des = DataExtractionService()
-        self.spec = SpecificationService.get_the_spec()
 
         self.student_df = self.des._get_student_data()
         self.ta_df = self.des._get_ta_data()
@@ -85,9 +84,11 @@ class MatplotlibService:
 
         fig, ax = plt.subplots()
 
+        paper_total_marks = SpecificationService.get_total_marks()
+
         ax.hist(
             self.des.get_total_marks(),
-            bins=np.arange(self.spec["totalMarks"] + RANGE_BIN_OFFSET) - 0.5,
+            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,
             ec="black",
             alpha=0.5,
             width=0.8,
@@ -154,10 +155,8 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        bins = (
-            np.arange(self.spec["question"][str(question)]["mark"] + RANGE_BIN_OFFSET)
-            - 0.5
-        )
+        maxmark = SpecificationService.get_question_mark(question)
+        bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
         ax.hist(plot_series, bins=bins, ec="black", alpha=0.5)
         ax.set_title(f"Histogram of {qlabel} marks")
@@ -469,9 +468,8 @@ class MatplotlibService:
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
 
         plt.grid(True, alpha=0.5)
-        plt.xlim(
-            left=-0.5, right=self.spec["question"][str(question_number)]["mark"] + 0.5
-        )
+        maxmark = SpecificationService.get_question_mark(question_number)
+        plt.xlim(left=-0.5, right=maxmark + 0.5)
         plt.ylim(bottom=-0.2)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -592,6 +590,7 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, 4.2), tight_layout=True)
 
+        numquestions = SpecificationService.get_n_questions()
         if versions is True:
             averages = self.des.get_averages_on_all_questions_versions_as_percentage(
                 overall=True
@@ -599,21 +598,21 @@ class MatplotlibService:
             for i, v in enumerate(averages):
                 if i == 0:
                     plt.plot(
-                        range(1, self.spec["numberOfQuestions"] + 1),
+                        range(1, numquestions + 1),
                         v,
                         marker="o",
                         label="Overall",
                     )
                 else:
                     plt.plot(
-                        range(1, self.spec["numberOfQuestions"] + 1),
+                        range(1, numquestions + 1),
                         v,
                         marker="x",
                         label="Version " + str(i),
                     )
         else:
             plt.plot(
-                range(1, self.spec["numberOfQuestions"] + 1),
+                range(1, numquestions + 1),
                 self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
                 label="All versions",
@@ -630,7 +629,7 @@ class MatplotlibService:
         plt.title("Average percentage by question")
         plt.xlabel("Question index")
         plt.ylabel("Average mark (%)")
-        plt.xticks(range(1, self.spec["numberOfQuestions"] + 1))
+        plt.xticks(range(1, numquestions + 1))
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
