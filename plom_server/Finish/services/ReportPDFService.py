@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -19,7 +19,7 @@ def _identity_in_first_input(x, *args, **kwargs):
 
 
 def pdf_builder(
-    versions: bool, *, verbose: bool = False, use_tqdm: bool = False
+    versions: bool, *, verbose: Optional[bool] = None, _use_tqdm: bool = False
 ) -> Dict[str, Any]:
     """Build a PDF file report and return it as bytes.
 
@@ -27,8 +27,8 @@ def pdf_builder(
         versions: Whether to include versions in the report.
 
     Keyword Args:
-        verbose:
-        use_tqdm:
+        verbose: print messages on the stdout
+        _use_tqdm: even more verbosity: use tqdm for progress bars.
 
     Returns:
         A dictionary with the bytes of a PDF file, a suggested
@@ -39,17 +39,10 @@ def pdf_builder(
             is incomplete, because the pandas library uses NaN for
             missing data.
     """
-    if use_tqdm:
+    if _use_tqdm:
         tqdm = _tqdm
     else:
         tqdm = _identity_in_first_input
-
-    if verbose:
-        prnt = print
-    else:
-
-        def prnt(*args):
-            pass
 
     des = DataExtractionService()
     mts = MarkingTaskService()
@@ -75,7 +68,8 @@ def pdf_builder(
     mpls.ensure_all_figures_closed()
 
     # histogram of grades
-    prnt("Histogram of total marks.")
+    if verbose:
+        print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks()
 
     # histogram of grades for each question
@@ -96,7 +90,8 @@ def pdf_builder(
     del marks_for_questions, question, _  # clean up
 
     # correlation heatmap
-    prnt("Correlation heatmap.")
+    if verbose:
+        print("Correlation heatmap.")
     corr = mpls.correlation_heatmap_of_questions()
 
     # histogram of grades given by each marker by question
@@ -212,10 +207,12 @@ def pdf_builder(
             )
         )
 
-    prnt("Line graph of average mark by question.")
+    if verbose:
+        print("Line graph of average mark by question.")
     line_graph = mpls.line_graph_of_avg_marks_by_question(versions=versions)
 
-    prnt("\nGenerating HTML.")
+    if verbose:
+        print("\nGenerating HTML.")
 
     def _html_add_title(title: str) -> str:
         """Generate HTML for a title."""

@@ -42,7 +42,7 @@ Generating..."""
 
         versions = options["versions"]
 
-        d = ReportPDFService.pdf_builder(versions, verbose=True, use_tqdm=True)
+        d = ReportPDFService.pdf_builder(versions, verbose=True, _use_tqdm=True)
 
         print(f"Writing to {d['filename']}...")
         with open(d["filename"], "wb") as f:
