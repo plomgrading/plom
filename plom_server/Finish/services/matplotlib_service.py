@@ -629,7 +629,8 @@ class MatplotlibService:
         plt.title("Average percentage by question")
         plt.xlabel("Question index")
         plt.ylabel("Average mark (%)")
-        plt.xticks(range(1, numquestions + 1))
+        # plt.xticks(range(1, numquestions + 1))
+        plt.xticks(SpecificationService.get_question_labels())
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
