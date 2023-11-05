@@ -12,8 +12,8 @@
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
-    <a class="btn btn-success"
-       href="{% url 'progress_mark_details' question version %}">refresh page</a>
+    <a href="{% url 'progress_mark_version_compare' question %}"
+       class="btn btn-success">compare all Q{{ question }} versions</a>
     <a class="btn btn-info"
        href="{% url 'progress_task_annotation_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
     <div class="container my-4">

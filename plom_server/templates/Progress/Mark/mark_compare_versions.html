@@ -12,8 +12,6 @@
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
-    <a class="btn btn-success"
-       href="{% url 'progress_mark_version_compare' question %}">refresh page</a>
     <a class="btn btn-info"
        href="{% url 'progress_task_annotation_filter' %}?question={{ question }}">tasks & annotations</a>
     <div class="container my-4">
@@ -93,8 +91,10 @@
         <div class="card">
             {% for ver, data in version_hists.items %}
                 <div class="card">
-                    <div class="card-header">
-                        <h6>Histograms and statistics: version {{ ver }}</h6>
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fs-5">Histograms and statistics: version {{ ver }}</span>
+                        <a href="{% url 'progress_mark_details' question ver %}"
+                           class="btn btn-success">more details</a>
                     </div>
                     <div class="card-body">
                         <div class="card-text">
