@@ -3,14 +3,14 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-import datetime as dt
+from datetime import datetime
 
 from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from .services.report_download_service import ReportDownloadService
 from Papers.services import SpecificationService
+from .services.report_download_service import ReportDownloadService
 
 
 class ReportLandingPageView(ManagerRequiredView):
@@ -29,7 +29,7 @@ class ReportLandingPageView(ManagerRequiredView):
             "Report-"
             + SpecificationService.get_shortname()
             + "--"
-            + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+            + datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
         )
 
         try:

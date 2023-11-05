@@ -2,18 +2,18 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-import datetime as dt
-from tqdm import tqdm
+from datetime import datetime
 
+from tqdm import tqdm
 from weasyprint import HTML, CSS
 
 from django.core.management.base import BaseCommand
 
-from ...services import DataExtractionService
-from ...services import MatplotlibService
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
+from ...services import DataExtractionService
+from ...services import MatplotlibService
 
 
 class Command(BaseCommand):
@@ -60,7 +60,7 @@ Generating..."""
         name = spec["name"]
         longName = spec["longName"]
         totalMarks = spec["totalMarks"]
-        date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
+        date = datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
         num_students = (
             MarkingTask.objects.values_list("paper__paper_number", flat=True)
             .distinct()
@@ -341,7 +341,7 @@ Generating..."""
             with open(file_path, "wb") as f:
                 f.write(pdf_data)
 
-        date_filename = "--" + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        date_filename = "--" + datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
         filename = "Report-" + name + date_filename + ".pdf"
 
         print("Writing to " + filename + ".")

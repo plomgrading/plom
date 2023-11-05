@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
-import datetime as dt
+from datetime import datetime
 
 from weasyprint import HTML, CSS
 
@@ -35,7 +36,7 @@ class ReportDownloadService:
         # info for report
         longName = SpecificationService.get_longname()
         totalMarks = SpecificationService.get_total_marks()
-        date = dt.datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
+        date = datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
         num_students = (
             MarkingTask.objects.values_list("paper__paper_number", flat=True)
             .distinct()
@@ -191,7 +192,7 @@ class ReportDownloadService:
             for i, graph in enumerate(list_of_graphs):
                 odd = i % 2
                 if not odd:
-                    out += f"""
+                    out += """
                     <div class="row">
                     """
                 out += f"""
@@ -200,11 +201,11 @@ class ReportDownloadService:
                 </div>
                 """
                 if odd:
-                    out += f"""
+                    out += """
                     </div>
                     """
             if not odd:
-                out += f"""
+                out += """
                 </div>
                 """
             return out
@@ -225,7 +226,7 @@ class ReportDownloadService:
         <h2>Marking report: {longName}</h2>
         """
         if not all_marked:
-            html += f"""
+            html += """
             <p style="color:red;">WARNING: Not all papers have been marked.</p>
             """
 
