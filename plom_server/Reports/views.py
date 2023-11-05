@@ -32,7 +32,15 @@ class ReportLandingPageView(ManagerRequiredView):
             + dt.datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
         )
 
-        report_bytes = rds.get_report_bytes(versions=True)
+        try:
+            report_bytes = rds.get_report_bytes(versions=True)
+        except ValueError as e:
+            response = HttpResponse(
+                "Error building report: it is possible marking is incomplete?\n"
+                f"Error msg: {e}",
+                content_type="text/plain",
+            )
+            return response
         response = HttpResponse(report_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f"attachment; filename={filename}.pdf"
 

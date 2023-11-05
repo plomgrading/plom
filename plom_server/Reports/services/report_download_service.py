@@ -22,6 +22,11 @@ class ReportDownloadService:
 
         Returns:
             The report as a bytes object.
+
+        Raises:
+            ValueError: lots of cases with NaN, usually indicating marking
+                is incomplete, because the pandas library uses NaN for
+                missing data.
         """
         des = DataExtractionService()
         mts = MarkingTaskService()
