@@ -57,20 +57,23 @@ class DataExtractionService:
         """
         return self.student_df
 
-    def get_total_average_mark(self) -> float:
-        """Return the average total mark for all students as a float."""
+    def get_totals_average(self) -> float:
+        """Return the average of the total mark over all students as a float."""
         return self.student_df["total_mark"].mean()
 
-    def get_total_median_mark(self) -> float:
-        """Return the median total mark for all students as a float."""
+    def get_totals_median(self) -> float:
+        """Return the median of the total mark over all students as a float."""
         return self.student_df["total_mark"].median()
 
-    def get_total_stdev_mark(self) -> float:
-        """Return the standard deviation of the total marks for all students as a float."""
+    def get_totals_stdev(self) -> float:
+        """Return the standard deviation of the total mark over all students as a float."""
         return self.student_df["total_mark"].std()
 
-    def get_total_marks(self) -> List[int]:
-        """Return the total marks for all students as a list."""
+    def get_totals(self) -> List[int]:
+        """Return the total mark for each student as a list.
+
+        No particular order is promised: useful for statistics for example.
+        """
         return self.student_df["total_mark"].tolist()
 
     def get_average_on_question_as_percentage(self, question_number: int) -> float:

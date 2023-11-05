@@ -87,7 +87,7 @@ class MatplotlibService:
         paper_total_marks = SpecificationService.get_total_marks()
 
         ax.hist(
-            self.des.get_total_marks(),
+            self.des.get_totals(),
             bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,
             ec="black",
             alpha=0.5,

@@ -42,9 +42,9 @@ class ReportDownloadService:
             .distinct()
             .count()
         )
-        average_mark = des.get_total_average_mark()
-        median_mark = des.get_total_median_mark()
-        stdev_mark = des.get_total_stdev_mark()
+        average_mark = des.get_totals_average()
+        median_mark = des.get_totals_median()
+        stdev_mark = des.get_totals_stdev()
         total_tasks = mts.get_n_total_tasks()
         all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
 
