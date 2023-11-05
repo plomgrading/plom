@@ -4,6 +4,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, Optional
+from textwrap import dedent
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -43,6 +44,25 @@ def pdf_builder(
         tqdm = _tqdm
     else:
         tqdm = _identity_in_first_input
+
+    if verbose:
+        print("Building report.")
+        print(
+            dedent(
+                """
+                Graphs to generate:
+                    1. Histogram of total marks
+                    2. Histogram of marks by question
+                    3. Correlation heatmap
+                    4. Histograms of grades by marker by question
+                    5. Histograms of time spent marking each question
+                    6. Scatter plots of time spent marking vs mark given
+                    7. Box plots of grades given by marker by question
+                    8. Line graph of average mark by question
+
+                Generating..."""
+            )
+        )
 
     des = DataExtractionService()
     mts = MarkingTaskService()
