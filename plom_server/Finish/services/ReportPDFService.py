@@ -40,10 +40,9 @@ def pdf_builder(
             is incomplete, because the pandas library uses NaN for
             missing data.
     """
+    tqdm: Any = _identity_in_first_input
     if _use_tqdm:
         tqdm = _tqdm
-    else:
-        tqdm = _identity_in_first_input
 
     if verbose:
         print("Building report.")
