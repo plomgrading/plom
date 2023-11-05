@@ -54,12 +54,11 @@ Generating..."""
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
-        spec = SpecificationService.get_the_spec()
 
         # info for report
-        name = spec["name"]
-        longName = spec["longName"]
-        totalMarks = spec["totalMarks"]
+        name = SpecificationService.get_shortname()
+        longName = SpecificationService.get_longname()
+        totalMarks = SpecificationService.get_total_marks()
         date = datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
         num_students = (
             MarkingTask.objects.values_list("paper__paper_number", flat=True)
