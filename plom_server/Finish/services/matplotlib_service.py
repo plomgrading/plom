@@ -582,8 +582,6 @@ class MatplotlibService:
 
         Returns:
             Base64 encoded string or bytes containing the line graph.
-
-        TODO: update this one to use question labels.
         """
         assert format in self.formats
         self.ensure_all_figures_closed()
@@ -627,10 +625,12 @@ class MatplotlibService:
         plt.grid(True, alpha=0.5)
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
-        plt.xlabel("Question index")
+        # plt.xlabel("Question")
         plt.ylabel("Average mark (%)")
-        # plt.xticks(range(1, numquestions + 1))
-        plt.xticks(SpecificationService.get_question_labels())
+        plt.xticks(
+            range(1, numquestions + 1),
+            labels=SpecificationService.get_question_labels(),
+        )
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
