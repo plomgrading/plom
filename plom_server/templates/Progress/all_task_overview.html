@@ -34,7 +34,7 @@
                                 </div>
                             {% else %}
                                 <div class="progress-bar" style="width: {{ id_percent_complete }}%"></div>
-                                <div class="progress-bar bg-light text-dark"
+                                <div class="progress-bar bg-transparent text-primary"
                                      style="width: {{ id_percent_remain }}%">
                                     {{ completed_id_task_count }} / {{ n_papers }}
                                 </div>
@@ -58,7 +58,7 @@
                                 {% else %}
                                     <div class="progress-bar"
                                          style="width: {{ mark_percent_complete|get_item:qi }}%"></div>
-                                    <div class="progress-bar bg-light text-dark"
+                                    <div class="progress-bar bg-transparent text-primary"
                                          style="width: {{ mark_percent_remain|get_item:qi }}%">
                                         {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
                                     </div>
