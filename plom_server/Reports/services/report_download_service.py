@@ -29,11 +29,20 @@ class ReportDownloadService:
                 is incomplete, because the pandas library uses NaN for
                 missing data.
         """
+
+        # depending on if we have a terminal, we may not want tqdm
+        def identity_in_first_input(x, *args, **kwargs):
+            return x
+
+        tqdm = identity_in_first_input
+        prnt = lambda *args: None
+
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
 
         # info for report
+        name = SpecificationService.get_shortname()
         longName = SpecificationService.get_longname()
         totalMarks = SpecificationService.get_total_marks()
         date = datetime.now().strftime("%d/%m/%Y %H:%M:%S+00:00")
@@ -51,12 +60,16 @@ class ReportDownloadService:
         mpls.ensure_all_figures_closed()
 
         # histogram of grades
+        prnt("Histogram of total marks.")
         histogram_of_grades = mpls.histogram_of_total_marks()
 
         # histogram of grades for each question
         histogram_of_grades_q = []
         marks_for_questions = des._get_marks_for_all_questions()
-        for question, _ in enumerate(marks_for_questions):
+        for question, _ in tqdm(
+            enumerate(marks_for_questions),
+            desc="Histograms of marks by question",
+        ):
             question += 1  # 1-indexing
             histogram_of_grades_q.append(  # add to the list
                 # each base64-encoded image
@@ -68,11 +81,15 @@ class ReportDownloadService:
         del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
+        prnt("Correlation heatmap.")
         corr = mpls.correlation_heatmap_of_questions()
 
         # histogram of grades given by each marker by question
         histogram_of_grades_m = []
-        for marker, scores_for_user in des._get_all_ta_data_by_ta().items():
+        for marker, scores_for_user in tqdm(
+            des._get_all_ta_data_by_ta().items(),
+            desc="Histograms of marks by marker by question",
+        ):
             questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
                 marker,
             )
@@ -98,7 +115,10 @@ class ReportDownloadService:
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         histogram_of_time = []
-        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+        for question, marking_times_df in tqdm(
+            des._get_all_ta_data_by_question().items(),
+            desc="Histograms of time spent marking each question",
+        ):
             histogram_of_time.append(
                 mpls.histogram_of_time_spent_marking_each_question(
                     question_number=question,
@@ -113,7 +133,10 @@ class ReportDownloadService:
 
         # scatter plot of time taken to mark each question vs mark given
         scatter_of_time = []
-        for question, marking_times_df in des._get_all_ta_data_by_question().items():
+        for question, marking_times_df in tqdm(
+            des._get_all_ta_data_by_question().items(),
+            desc="Scatter plots of time spent marking vs mark given",
+        ):
             if versions:
                 # list of lists of times spent marking each version of the question
                 times_for_question = []
@@ -146,7 +169,10 @@ class ReportDownloadService:
 
         # Box plot of the grades given by each marker for each question
         boxplots = []
-        for question_number, question_df in des._get_all_ta_data_by_question().items():
+        for question_number, question_df in tqdm(
+            des._get_all_ta_data_by_question().items(),
+            desc="Box plots of marks given by marker by question",
+        ):
             marks_given = []
             # add overall to names
             marker_names = ["Overall"]
@@ -173,8 +199,10 @@ class ReportDownloadService:
                 )
             )
 
-        # line graph of average mark on each question
+        prnt("Line graph of average mark by question.")
         line_graph = mpls.line_graph_of_avg_marks_by_question(versions=versions)
+
+        prnt("\nGenerating HTML.")
 
         def _html_add_title(title: str) -> str:
             """Generate HTML for a title."""
@@ -197,7 +225,7 @@ class ReportDownloadService:
                     """
                 out += f"""
                 <div class="col" style="margin-left:0mm;">
-                <img src="data:image/png;base64,{graph}" width="50px" height="40px">
+                <img src="data:image/png;base64,{graph}" width="50px" height="40px" />
                 </div>
                 """
                 if odd:
@@ -216,7 +244,7 @@ class ReportDownloadService:
             for graph in list_of_graphs:
                 out += f"""
                 <div class="col" style="margin-left:0mm;">
-                <img src="data:image/png;base64,{graph}" width="100%" height="100%">
+                <img src="data:image/png;base64,{graph}" width="100%" height="100%" />
                 </div>
                 """
             return out
@@ -240,7 +268,7 @@ class ReportDownloadService:
         <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
         <br>
         <h3>Histogram of total marks</h3>
-        <img src="data:image/png;base64,{histogram_of_grades}">
+        <img src="data:image/png;base64,{histogram_of_grades}" />
         """
 
         html += _html_add_title("Histogram of marks by question")
@@ -249,7 +277,7 @@ class ReportDownloadService:
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
-        <img src="data:image/png;base64,{corr}">
+        <img src="data:image/png;base64,{corr}" />
         """
 
         html += _html_add_title("Histograms of grades by marker by question")
@@ -277,7 +305,7 @@ class ReportDownloadService:
 
         html += _html_add_title("Line graph of average mark on each question")
         html += f"""
-            <img src="data:image/png;base64,{line_graph}">
+            <img src="data:image/png;base64,{line_graph}" />
             """
 
         return HTML(string=html, base_url="").write_pdf(

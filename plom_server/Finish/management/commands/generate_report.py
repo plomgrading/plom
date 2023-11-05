@@ -51,6 +51,28 @@ Generating..."""
 
         versions = options["versions"]
 
+        pdf_bytes = foo(versions)
+
+        def save_pdf_to_disk(pdf_data, file_path):
+            """Save the PDF data to a file."""
+            with open(file_path, "wb") as f:
+                f.write(pdf_data)
+
+        name = SpecificationService.get_shortname()
+        date_filename = "--" + datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
+        filename = "Report-" + name + date_filename + ".pdf"
+
+        print("Writing to " + filename + ".")
+
+        print(type(pdf_bytes))
+        save_pdf_to_disk(pdf_bytes, filename)
+
+        print("Finished saving report.")
+
+
+def foo(versions: bool):
+    prnt = print
+    if True:
         des = DataExtractionService()
         mts = MarkingTaskService()
         mpls = MatplotlibService()
@@ -74,7 +96,7 @@ Generating..."""
         mpls.ensure_all_figures_closed()
 
         # histogram of grades
-        print("Histogram of total marks.")
+        prnt("Histogram of total marks.")
         histogram_of_grades = mpls.histogram_of_total_marks()
 
         # histogram of grades for each question
@@ -95,7 +117,7 @@ Generating..."""
         del marks_for_questions, question, _  # clean up
 
         # correlation heatmap
-        print("Correlation heatmap.")
+        prnt("Correlation heatmap.")
         corr = mpls.correlation_heatmap_of_questions()
 
         # histogram of grades given by each marker by question
@@ -183,10 +205,7 @@ Generating..."""
 
         # Box plot of the grades given by each marker for each question
         boxplots = []
-        for (
-            question_number,
-            question_df,
-        ) in tqdm(
+        for question_number, question_df in tqdm(
             des._get_all_ta_data_by_question().items(),
             desc="Box plots of marks given by marker by question",
         ):
@@ -216,11 +235,10 @@ Generating..."""
                 )
             )
 
-        # line graph of average mark on each question
-        print("Line graph of average mark by question.")
+        prnt("Line graph of average mark by question.")
         line_graph = mpls.line_graph_of_avg_marks_by_question(versions=versions)
 
-        print("\nGenerating HTML.")
+        prnt("\nGenerating HTML.")
 
         def _html_add_title(title: str) -> str:
             """Generate HTML for a title."""
@@ -327,25 +345,5 @@ Generating..."""
             <img src="data:image/png;base64,{line_graph}" />
             """
 
-        def create_pdf(html):
-            """Generate a PDF file from a string of HTML."""
-            htmldoc = HTML(string=html, base_url="")
-
-            return htmldoc.write_pdf(
-                stylesheets=[CSS("./static/css/generate_report.css")]
-            )
-
-        def save_pdf_to_disk(pdf_data, file_path):
-            """Save the PDF data to a file."""
-            with open(file_path, "wb") as f:
-                f.write(pdf_data)
-
-        date_filename = "--" + datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        filename = "Report-" + name + date_filename + ".pdf"
-
-        print("Writing to " + filename + ".")
-
-        pdf_data = create_pdf(html)
-        save_pdf_to_disk(pdf_data, filename)
-
-        print("Finished saving report.")
+        htmldoc = HTML(string=html, base_url="")
+        return htmldoc.write_pdf(stylesheets=[CSS("./static/css/generate_report.css")])
