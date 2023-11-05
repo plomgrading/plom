@@ -28,10 +28,18 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        group = parser.add_mutually_exclusive_group(required=False)
+        group.add_argument(
             "--versions",
             action="store_true",
-            help="Include version in report graphics (optional bool)",
+            default=True,
+            help="Include details about versions in the report (default behaviour)",
+        )
+        group.add_argument(
+            "--no-versions",
+            action="store_false",
+            dest="versions",
+            help="Do not include details about versions.",
         )
 
     def handle(self, *args, **options):
