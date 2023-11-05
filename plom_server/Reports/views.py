@@ -3,14 +3,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-from datetime import datetime
-
 from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
-from .services.report_download_service import ReportDownloadService
+from Finish.services import ReportPDFService
 
 
 class ReportLandingPageView(ManagerRequiredView):
@@ -24,16 +21,8 @@ class ReportLandingPageView(ManagerRequiredView):
         return render(request, self.template_name, context=context)
 
     def report_download(request):
-        rds = ReportDownloadService()
-        filename = (
-            "Report-"
-            + SpecificationService.get_shortname()
-            + "--"
-            + datetime.now().strftime("%Y-%m-%d--%H-%M-%S+00-00")
-        )
-
         try:
-            report_bytes = rds.get_report_bytes(versions=True)
+            d = ReportPDFService.pdf_builder(versions=True)
         except ValueError as e:
             response = HttpResponse(
                 "Error building report: it is possible marking is incomplete?\n"
@@ -41,7 +30,7 @@ class ReportLandingPageView(ManagerRequiredView):
                 content_type="text/plain",
             )
             return response
-        response = HttpResponse(report_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f"attachment; filename={filename}.pdf"
+        response = HttpResponse(d["bytes"], content_type="application/pdf")
+        response["Content-Disposition"] = f"attachment; filename={d['filename']}"
 
         return response
