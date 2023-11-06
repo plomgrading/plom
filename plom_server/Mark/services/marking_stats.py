@@ -229,7 +229,7 @@ class MarkingStatsService:
         Returns:
             dict (int, dict[str,any]): for each version give a dict that
             contains 'histogram', 'number', 'mark_max, 'mark_min',
-            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev'.
+            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'remaining'.
         """
         data: Dict[int, Dict[str, Any]] = {}
         try:
@@ -269,6 +269,14 @@ class MarkingStatsService:
                 data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
             else:
                 data[ver]["mark_stdev"] = "n/a"
+            # get remaining tasks by excluding COMPLETE and OUT_OF_DATE
+            # TODO - can we optimise this a bit? one query per version is okay, but can likely do in 1.
+            data[ver]["remaining"] = (
+                MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+                .exclude(status=MarkingTask.COMPLETE)
+                .filter(question_number=question, question_version=ver)
+                .count()
+            )
 
         return data
 

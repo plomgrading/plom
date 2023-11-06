@@ -136,11 +136,6 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "completed_marking_task_counts": completed_marking_task_counts,
                 "id_percent_complete": id_percent_complete,
                 "mark_percent_complete": mark_percent_complete,
-                # also compute percent remain for nice progress bar display
-                "id_percent_remain": 100 - id_percent_complete,
-                "mark_percent_remain": {
-                    q: 100 - v for q, v in mark_percent_complete.items()
-                },
             }
         )
         return render(request, "Progress/all_task_overview.html", context=context)

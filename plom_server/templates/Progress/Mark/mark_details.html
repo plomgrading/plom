@@ -25,23 +25,22 @@
                 <div class="card-text">
                     <div class="row">
                         <div class="col">
-                            <div class="progress m-2"
-                                 style="height: 2em"
-                                 role="progressbar"
-                                 aria-valuenow="{{ stats.number_of_completed_tasks }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="{{ stats.all_task_count }}">
-                                {% if stats.all_task_count == stats.number_of_completed_tasks %}
-                                    <div class="progress-bar bg-success fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% else %}
-                                    <div class="progress-bar fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% endif %}
+                            <div class="d-flex justify-content-between align-top mb-2">
+                                <div class="progress flex-fill mx-2"
+                                     style="height: 2em"
+                                     role="progressbar"
+                                     aria-valuenow="{{ stats.number_of_completed_tasks }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="{{ stats.all_task_count }}">
+                                    {% if stats.all_task_count == stats.number_of_completed_tasks %}
+                                        <div class="progress-bar bg-success fs-6"
+                                             style="width: {{ stats.completed_percentage }}%"></div>
+                                    {% else %}
+                                        <div class="progress-bar fs-6"
+                                             style="width: {{ stats.completed_percentage }}%"></div>
+                                    {% endif %}
+                                </div>
+                                <span class="px-2 fw-bold my-0">{{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}</span>
                             </div>
                             <table class="table table-sm table-bordered text-center">
                                 <thead>

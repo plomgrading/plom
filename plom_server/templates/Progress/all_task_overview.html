@@ -22,47 +22,32 @@
                     <th>paper</th>
                     <th>
                         identify
-                        <div class="progress-stacked"
-                             role="progressbar"
-                             aria-label="id complete percentage"
-                             aria-valuenow="{{ id_percent_complete }}"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            {% if id_percent_complete >= 33 %}
-                                <div class="progress-bar" style="width: {{ id_percent_complete }}%">
-                                    {{ completed_id_task_count }} / {{ n_papers }}
-                                </div>
-                            {% else %}
+                        <div class="d-flex justify-content-between align-top">
+                            <div class="progress flex-fill my-1"
+                                 role="progressbar"
+                                 aria-label="id complete percentage"
+                                 aria-valuenow="{{ id_percent_complete }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
                                 <div class="progress-bar" style="width: {{ id_percent_complete }}%"></div>
-                                <div class="progress-bar bg-transparent text-primary"
-                                     style="width: {{ id_percent_remain }}%">
-                                    {{ completed_id_task_count }} / {{ n_papers }}
-                                </div>
-                            {% endif %}
+                            </div>
+                            <span class="px-2 fw-bold my-0">{{ completed_id_task_count }} / {{ n_papers }}</span>
                         </div>
                     </th>
                     {% for qi, qlabel in question_labels %}
                         <th>
                             {{ qlabel }}
-                            <div class="progress-stacked"
-                                 role="progressbar"
-                                 aria-label="mk complete percentage"
-                                 aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                                {% if mark_percent_complete|get_item:qi  >= 33 %}
-                                    <div class="progress-bar"
-                                         style="width: {{ mark_percent_complete|get_item:qi }}%">
-                                        {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
-                                    </div>
-                                {% else %}
+                            <div class="d-flex justify-content-between align-top">
+                                <div class="progress flex-fill my-1"
+                                     role="progressbar"
+                                     aria-label="mk complete percentage"
+                                     aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
                                     <div class="progress-bar"
                                          style="width: {{ mark_percent_complete|get_item:qi }}%"></div>
-                                    <div class="progress-bar bg-transparent text-primary"
-                                         style="width: {{ mark_percent_remain|get_item:qi }}%">
-                                        {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
-                                    </div>
-                                {% endif %}
+                                </div>
+                                <span class="px-2 fw-bold my-0">{{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}</span>
                             </div>
                         </th>
                     {% endfor %}
