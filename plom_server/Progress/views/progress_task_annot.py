@@ -108,21 +108,10 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
         papers_with_a_task = list(id_task_overview.keys())
         n_papers = len(papers_with_a_task)
 
-        completed_id_task_count = pos.get_completed_id_task_count()
-        completed_marking_task_counts = pos.get_completed_marking_task_counts()
-
-        # convert completed counts to percentages for progress bars
-        if n_papers > 0:
-            id_percent_complete = round(100 * completed_id_task_count / n_papers)
-            mark_percent_complete = {
-                q: round(100 * n / n_papers)
-                for q, n in completed_marking_task_counts.items()
-            }
-        else:
-            id_percent_complete = 0
-            mark_percent_complete = {
-                q: 0 for q, n in completed_marking_task_counts.items()
-            }
+        # get the counts for each id and marking task by their status
+        # we pass the number of papers so that we also get counts of **missing** tasks
+        id_task_status_counts = pos.get_id_task_status_counts(n_papers=n_papers)
+        marking_task_status_counts = pos.get_mark_task_status_counts(n_papers=n_papers)
 
         context.update(
             {
@@ -132,10 +121,8 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
                 "id_task_overview": id_task_overview,
                 "marking_task_overview": marking_task_overview,
                 "n_papers": n_papers,
-                "completed_id_task_count": completed_id_task_count,
-                "completed_marking_task_counts": completed_marking_task_counts,
-                "id_percent_complete": id_percent_complete,
-                "mark_percent_complete": mark_percent_complete,
+                "id_task_status_counts": id_task_status_counts,
+                "marking_task_status_counts": marking_task_status_counts,
             }
         )
         return render(request, "Progress/all_task_overview.html", context=context)

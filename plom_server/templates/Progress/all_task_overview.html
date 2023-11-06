@@ -22,33 +22,16 @@
                     <th>paper</th>
                     <th>
                         identify
-                        <div class="d-flex justify-content-between align-top">
-                            <div class="progress flex-fill my-1"
-                                 role="progressbar"
-                                 aria-label="id complete percentage"
-                                 aria-valuenow="{{ id_percent_complete }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                                <div class="progress-bar" style="width: {{ id_percent_complete }}%"></div>
-                            </div>
-                            <span class="px-2 fw-bold my-0">{{ completed_id_task_count }} / {{ n_papers }}</span>
-                        </div>
+                        {% with dat=id_task_status_counts %}
+                            {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
+                        {% endwith %}
                     </th>
                     {% for qi, qlabel in question_labels %}
                         <th>
                             {{ qlabel }}
-                            <div class="d-flex justify-content-between align-top">
-                                <div class="progress flex-fill my-1"
-                                     role="progressbar"
-                                     aria-label="mk complete percentage"
-                                     aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
-                                     aria-valuemin="0"
-                                     aria-valuemax="100">
-                                    <div class="progress-bar"
-                                         style="width: {{ mark_percent_complete|get_item:qi }}%"></div>
-                                </div>
-                                <span class="px-2 fw-bold my-0">{{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}</span>
-                            </div>
+                            {% with dat=marking_task_status_counts|get_item:qi %}
+                                {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
+                            {% endwith %}
                         </th>
                     {% endfor %}
                 </tr>
@@ -140,8 +123,4 @@
       return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
   })
     </script>
-    <div class="container w-25 m-4 shadow-sm">
-        {% include "Progress/fragments/task_progress_bar.html" with total=20 n_complete=20 %}
-        {% include "Progress/fragments/task_progress_bar.html" with total=20 n_complete=10 n_todo=8 n_out=2 %}
-    </div>
 {% endblock main_content %}

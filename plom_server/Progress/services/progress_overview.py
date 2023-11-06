@@ -5,6 +5,7 @@
 from typing import Any, Dict, Union, List, Optional
 
 from django.db import transaction
+from django.db.models import Count
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
@@ -99,3 +100,39 @@ class ProgressOverviewService:
             "id": self.get_completed_id_task_count(),
             "mk": self.get_completed_marking_task_counts(),
         }
+
+    def get_id_task_status_counts(self, n_papers=None) -> Dict[str, int]:
+        # return a dict of {status: count} for each of todo, complete, out
+        dat = {"To Do": 0, "Complete": 0, "Out": 0}
+        dat.update(
+            {
+                PaperIDTask(status=X["status"]).get_status_display(): X["the_count"]
+                for X in PaperIDTask.objects.values("status").annotate(
+                    the_count=Count("status")
+                )
+            }
+        )
+        # if n_papers is included then compute how many tasks as "missing"
+        if n_papers:
+            present = sum([v for x, v in dat.items()])
+            dat.update({"Missing": n_papers - present})
+        return dat
+
+    def get_mark_task_status_counts(self, n_papers=None) -> Dict[int, Dict[str, int]]:
+        # return a dict of dict - one for each question-index.
+        # for each index the dict is {status: count} for each of todo, complete, out
+        dat = {
+            qi: {"To Do": 0, "Complete": 0, "Out": 0}
+            for qi in range(1, SpecificationService.get_n_questions() + 1)
+        }
+        for X in MarkingTask.objects.values("status", "question_number").annotate(
+            the_count=Count("status")
+        ):
+            dat[X["question_number"]][
+                MarkingTask(status=X["status"]).get_status_display()
+            ] = X["the_count"]
+        if n_papers:
+            for qi in range(1, SpecificationService.get_n_questions() + 1):
+                present = sum([v for x, v in dat[qi].items()])
+                dat[qi].update({"Missing": n_papers - present})
+        return dat
