@@ -140,4 +140,8 @@
       return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
   })
     </script>
+    <div class="container w-25 m-4 shadow-sm">
+        {% include "Progress/fragments/task_progress_bar.html" with total=20 n_complete=20 %}
+        {% include "Progress/fragments/task_progress_bar.html" with total=20 n_complete=10 n_todo=8 n_out=2 %}
+    </div>
 {% endblock main_content %}

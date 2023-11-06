@@ -1,0 +1,54 @@
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- show [n_complete, n_out, n_todo] / total -->
+{% load mathfilters %}
+{% if n_complete == total %}
+    <div class="d-flex justify-content-between align-top">
+        <div class="progress flex-fill my-1"
+             role="progressbar"
+             aria-valuemin="0"
+             aria-valuemax="100">
+            <div class="progress-bar bg-success"
+                 style="width: 100%"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="bottom"
+                 data-bs-title="all {{ n_complete }} complete"></div>
+        </div>
+        <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
+    </div>
+{% else %}
+    {% with p_complete=n_complete|div:total|mul:100 %}
+        {% with p_todo=n_todo|div:total|mul:100 %}
+            {% with p_out=n_out|div:total|mul:100 %}
+                <div class="d-flex justify-content-between align-top">
+                    <div class="progress-stacked flex-fill my-1"
+                         role="progressbar"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <div class="progress-bar bg-primary"
+                             style="width: {{ p_complete }}%"
+                             data-bs-toggle="tooltip"
+                             data-bs-placement="bottom"
+                             data-bs-title="complete {{ n_complete }}"></div>
+                        <div class="progress-bar bg-info"
+                             style="width: {{ p_out }}%"
+                             data-bs-toggle="tooltip"
+                             data-bs-placement="bottom"
+                             data-bs-title="out {{ n_out }}"></div>
+                        <div class="progress-bar bg-warning"
+                             style="width: {{ p_todo }}%"
+                             data-bs-toggle="tooltip"
+                             data-bs-placement="bottom"
+                             data-bs-title="to do {{ n_todo }}"></div>
+                    </div>
+                    <span class="px-2 fw-bold my-0">{{ n_complete }} / {{ total }}</span>
+                </div>
+            {% endwith %}
+        {% endwith %}
+    {% endwith %}
+{% endif %}
+<script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+</script>
