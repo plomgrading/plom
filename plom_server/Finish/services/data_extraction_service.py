@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
-from typing import Optional, Dict, List, Any
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
@@ -57,20 +57,23 @@ class DataExtractionService:
         """
         return self.student_df
 
-    def get_total_average_mark(self) -> float:
-        """Return the average total mark for all students as a float."""
+    def get_totals_average(self) -> float:
+        """Return the average of the total mark over all students as a float."""
         return self.student_df["total_mark"].mean()
 
-    def get_total_median_mark(self) -> float:
-        """Return the median total mark for all students as a float."""
+    def get_totals_median(self) -> float:
+        """Return the median of the total mark over all students as a float."""
         return self.student_df["total_mark"].median()
 
-    def get_total_stdev_mark(self) -> float:
-        """Return the standard deviation of the total marks for all students as a float."""
+    def get_totals_stdev(self) -> float:
+        """Return the standard deviation of the total mark over all students as a float."""
         return self.student_df["total_mark"].std()
 
-    def get_total_marks(self) -> List[int]:
-        """Return the total marks for all students as a list."""
+    def get_totals(self) -> List[int]:
+        """Return the total mark for each student as a list.
+
+        No particular order is promised: useful for statistics for example.
+        """
         return self.student_df["total_mark"].tolist()
 
     def get_average_on_question_as_percentage(self, question_number: int) -> float:
@@ -143,15 +146,15 @@ class DataExtractionService:
         """
         return self.student_df[f"q{question_number}_mark"].mean()
 
-    def get_average_grade_on_all_questions(self) -> Dict[str, float]:
+    def get_average_grade_on_all_questions(self) -> List[Tuple[int, str, float]]:
         """Return the average grade on each question (not percentage).
 
         Returns:
-            A list of floats containing the average grade on each question.
+            The average grade on each question.
         """
-        averages = {}
-        for q in self.spec["question"].keys():
-            averages[q] = self._get_average_grade_on_question(int(q))
+        averages = []
+        for qidx, qlabel in SpecificationService.get_question_index_label_pairs():
+            averages.append((qidx, qlabel, self._get_average_grade_on_question(qidx)))
         return averages
 
     def _get_marks_for_all_questions(
@@ -194,13 +197,15 @@ class DataExtractionService:
             student_df = self.student_df
         assert isinstance(student_df, pd.DataFrame)
 
+        # TODO: regex likely to break if question labels were used in spreadsheet
         marks_corr = (
             student_df.filter(regex="q[0-9]*_mark").corr(numeric_only=True).round(2)
         )
 
         for i, name in enumerate(marks_corr.columns):
-            marks_corr.rename({name: "Q" + str(i + 1)}, axis=1, inplace=True)
-            marks_corr.rename({name: "Q" + str(i + 1)}, axis=0, inplace=True)
+            qlabel = SpecificationService.get_question_label(i + 1)
+            marks_corr.rename({name: qlabel}, axis=1, inplace=True)
+            marks_corr.rename({name: qlabel}, axis=0, inplace=True)
 
         return marks_corr
 

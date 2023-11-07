@@ -2,6 +2,7 @@
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2020 Victoria Schuster"
+__copyright__ = "Copyright (C) 2023 Julian Lapenna"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -12,7 +13,7 @@ Tested on Catalina 10.15.4, in mid 2020.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-brew install imagemagick cmake
+brew install imagemagick cmake pango
 ```
 You will also need Python, perhaps:
 ```
