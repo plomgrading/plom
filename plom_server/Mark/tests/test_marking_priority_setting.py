@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import sys
 
@@ -8,10 +9,11 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
-from Base.tests import config_test, ConfigTestCase
+from Base.tests import ConfigTestCase
 from Papers.models import Paper
 from Mark.models import MarkingTaskPriority, MarkingTask
-from Mark.services import marking_priority, MarkingTaskService
+from Mark.services import marking_priority
+from Mark.services import QuestionMarkingService
 from TaskOrder.services.task_ordering_service import TaskOrderService
 
 from . import config_files
@@ -103,7 +105,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
     def test_modify_priority(self):
         """Test modifying the priority of a single task."""
         n_papers = Paper.objects.count()
-        mts = MarkingTaskService()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
         )
@@ -112,7 +113,9 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
         for task in tasks:
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)
-        self.assertEqual(mts.get_first_available_task(), first_task)
+        self.assertEqual(
+            QuestionMarkingService().get_first_available_task(), first_task
+        )
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
             MarkingTaskPriority.PAPER_NUMBER,
@@ -128,7 +131,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                 self.assertEqual(
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
-        self.assertEqual(mts.get_first_available_task(), last_task)
+        self.assertEqual(QuestionMarkingService().get_first_available_task(), last_task)
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
             MarkingTaskPriority.PAPER_NUMBER,

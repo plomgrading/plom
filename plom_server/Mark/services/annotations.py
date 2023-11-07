@@ -31,6 +31,9 @@ def save_annotation(
         time: the amount of time it took to mark the question.
         image: reference to an AnnotationImage.
         data: JSON blob of SVG data.
+
+    Returns:
+        A reference to the new Annotation object.
     """
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition

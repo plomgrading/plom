@@ -46,12 +46,12 @@ from PyQt6.QtCore import (
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt6.QtGui import QAction, QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QDialog,
     QInputDialog,
-    QMessageBox,
     QMenu,
+    QMessageBox,
     QProgressDialog,
     QWidget,
 )
@@ -81,6 +81,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
+from .tagging_range_dialog import TaggingAndRangeOptions
 
 
 if platform.system() == "Darwin":
@@ -1114,27 +1115,10 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
-        m = QMenu()
-        m.addAction("Get nth...", self.requestInteractive)
-        m.addSection("Options")
-        a = QAction("Prefer tasks tagged for me", self)
-        a.setCheckable(True)
-        # TODO: would like on-by-default: Issue #2253
-        a.setChecked(False)
-        a.triggered.connect(self.toggle_prefer_tagged)
-        self._prefer_tags_action = a
-        m.addAction(a)
-        a = QAction("placeholder", self)
-        a.setCheckable(True)
-        a.setChecked(False)
-        a.triggered.connect(self.toggle_prefer_above)
-        # TODO: probably we should write a subclass, or a use an embedded lineEdit
-        a.stored_value = 0
-        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
-        self._prefer_above_action = a
-        m.addAction(a)
+        m = QMenu(self)
+        m.addAction("Get \N{Mathematical Italic Small N}th...", self.requestInteractive)
+        m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
-        # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
@@ -1146,40 +1130,53 @@ class MarkerClient(QWidget):
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
-    def toggle_prefer_tagged(self):
-        pass
-        # m = self.ui.getNextButton.menu()
-        # print(self._prefer_tags_action.isChecked())
-
-    @property
-    def prefer_tagged(self):
-        return self._prefer_tags_action.isChecked()
-
-    def toggle_prefer_above(self):
-        a = self._prefer_above_action
-        if not a.isChecked():
-            return
-        n, ok = QInputDialog.getInt(
-            self,
-            "Prefer paper numbers above...",
-            "<p>Perhaps you want to start marking at a particular paper number.</p>"
-            "<p>Preference for paper numbers at or above this value.</p>",
-            0,
-            a.stored_value,
-            self.max_papernum,
+    def change_tag_range_options(self):
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        r = (
+            self.annotatorSettings["nextTaskMinPaperNum"],
+            self.annotatorSettings["nextTaskMaxPaperNum"],
         )
-        if not ok:
-            a.setChecked(False)
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        mytag = "@" + self.msgr.username
+        if tag == mytag:
+            prefer_tagged_for_me = True
+            tag = ""
+        else:
+            prefer_tagged_for_me = False
+        d = TaggingAndRangeOptions(self, prefer_tagged_for_me, tag, all_tags, *r)
+        if not d.exec():
             return
-        a.stored_value = n
-        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+        r = d.get_papernum_range()
+        tag = d.get_preferred_tag(self.msgr.username)
+        self.annotatorSettings["nextTaskMinPaperNum"] = r[0]
+        self.annotatorSettings["nextTaskMaxPaperNum"] = r[1]
+        self.annotatorSettings["nextTaskPreferTagged"] = tag
+        self.update_get_next_button()
 
-    @property
-    def prefer_above(self):
-        """User prefers to mark papers above this value, or None if no preference."""
-        if not self._prefer_above_action.isChecked():
-            return None
-        return self._prefer_above_action.stored_value
+    def update_get_next_button(self):
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        mn = self.annotatorSettings["nextTaskMinPaperNum"]
+        mx = self.annotatorSettings["nextTaskMaxPaperNum"]
+        exclaim = False
+        tips = []
+        if mn is not None or mx is not None:
+            exclaim = True
+            s = "Restricted paper number "
+            if mx is None:
+                s += f"\N{Greater-than Or Equal To} {mn}"
+            elif mn is None:
+                s += f"\N{Less-than Or Equal To} {mx}"
+            else:
+                s += f"in [{mn}, {mx}]"
+            tips.append(s)
+        if tag:
+            tips.append(f'prefer tagged "{tag}"')
+
+        button_text = "&Get next"
+        if exclaim:
+            button_text += " (!)"
+        self.getNextButton.setText(button_text)
+        self.getNextButton.setToolTip("\n".join(tips))
 
     def loadMarkedList(self):
         """Loads the list of previously marked papers into self.examModel.
@@ -1420,16 +1417,17 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
-        tag = None
-        if self.prefer_tagged:
-            tag = "@" + self.msgr.username
-        above = self.prefer_above
-        if tag and above:
-            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
+        tag = self.annotatorSettings["nextTaskPreferTagged"]
+        paper_range = (
+            self.annotatorSettings["nextTaskMinPaperNum"],
+            self.annotatorSettings["nextTaskMaxPaperNum"],
+        )
+        if tag and (paper_range[0] or paper_range[1]):
+            log.info('Next available?  Range %s, prefer tagged "%s"', paper_range, tag)
         elif tag:
-            log.info('Next available?  Prefer tagged with "%s"', tag)
-        elif above:
-            log.info("Next available?  Prefer above %s", above)
+            log.info('Next available?  Prefer tagged "%s"', tag)
+        elif paper_range[0] or paper_range[1]:
+            log.info("Next available?  Range %s", paper_range)
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1438,7 +1436,11 @@ class MarkerClient(QWidget):
                 return
             try:
                 task = self.msgr.MaskNextTask(
-                    self.question, self.version, tag=tag, above=above
+                    self.question,
+                    self.version,
+                    tag=tag,
+                    min_paper_num=paper_range[0],
+                    max_paper_num=paper_range[1],
                 )
                 if not task:
                     return
