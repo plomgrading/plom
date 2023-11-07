@@ -177,7 +177,7 @@ class ProgressOverviewService:
     ) -> Dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
-        Note that, if verson is not supplied (or None) then count by
+        Note that, if version is not supplied (or None) then count by
         question only. Also note that this excludes out-of-date tasks.
 
         """
