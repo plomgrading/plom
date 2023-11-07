@@ -44,7 +44,7 @@ djangorestframework==3.14.0
 exif==1.6.0
 file-magic==0.4.1
 fonttools==4.43.1
-importlib-resources==6.1.0
+importlib-resources==6.1.1
 imutils==0.5.4
 matplotlib==3.5.3
 model-bakery==1.17.0
