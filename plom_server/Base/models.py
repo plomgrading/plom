@@ -25,7 +25,7 @@ import logging
 queue = get_queue("tasks")
 
 
-class HueyTask(PolymorphicModel):
+class HueyTask(models.Model):
     """A general-purpose model for tracking Huey tasks.
 
     It keeps track of a Huey task's ID, the time created, and the
