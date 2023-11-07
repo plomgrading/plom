@@ -19,7 +19,6 @@ class ProgressIdentifyHome(ManagerRequiredView):
         ids = IDProgressService()
 
         id_task_status_counts = ProgressOverviewService().get_id_task_status_counts()
-        print(id_task_status_counts)
         n_all_id_task = sum(id_task_status_counts.values())
         context.update(
             {
