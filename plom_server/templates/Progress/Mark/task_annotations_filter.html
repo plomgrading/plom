@@ -5,10 +5,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Tasks and Annotations
+Browse tasks and annotations
 {% endblock title %}
 {% block page_heading %}
-    Tasks and annotations
+    Browse tasks and annotations
     {% if username == "*" %}
     {% else %}
         by {{ username }}
@@ -23,7 +23,7 @@
     {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
-    <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Back to overview</a>
+<a class="btn btn-primary" href="{% url 'overview_landing' %}">Back to overview</a>
     <div class="w-100">
         <div class="row">
             <form class="p-4 mb-4"
