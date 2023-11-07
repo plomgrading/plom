@@ -2,7 +2,7 @@
 <!-- show [n_complete, n_out, n_todo, n_missing] / total -->
 {% load mathfilters %}
 {% if total == 0 %}
-    <div class="d-flex justify-content-between align-top">
+    <div class="d-flex justify-content-between align-top my-1">
         <div class="progress flex-fill my-1"
              role="progressbar"
              aria-valuemin="0"
@@ -16,7 +16,7 @@
         <span class="px-2 fw-bold my-0">no tasks</span>
     </div>
 {% elif n_complete == total %}
-    <div class="d-flex justify-content-between align-top">
+    <div class="d-flex justify-content-between align-top my-1">
         <div class="progress flex-fill my-1"
              role="progressbar"
              aria-valuemin="0"
@@ -34,7 +34,7 @@
         {% with p_todo=n_todo|div:total|mul:100 %}
             {% with p_out=n_out|div:total|mul:100 %}
                 {% with p_missing=n_missing|div:total|mul:100 %}
-                    <div class="d-flex justify-content-between align-top">
+                    <div class="d-flex justify-content-between align-top my-1">
                         <div class="progress-stacked flex-fill my-1"
                              role="progressbar"
                              aria-valuemin="0"

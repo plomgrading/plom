@@ -11,23 +11,7 @@
         </div>
         <div class="card-body">
             <div class="card-text">
-                <div class="d-flex justify-content-between">
-                    <div class="progress mb-2 flex-fill"
-                         style="height: 2em"
-                         role="progressbar"
-                         aria-valuenow="{{ stats.number_of_completed_tasks }}"
-                         aria-valuemin="0"
-                         aria-valuemax="{{ stats.all_task_count }}">
-                        {% if stats.all_task_count == stats.number_of_completed_tasks %}
-                            <div class="progress-bar bg-success fs-6"
-                                 style="width: {{ stats.completed_percentage }}%"></div>
-                        {% else %}
-                            <div class="progress-bar fs-6"
-                                 style="width: {{ stats.completed_percentage }}%"></div>
-                        {% endif %}
-                    </div>
-                    <span class="px-2 fw-bold">{{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}</span>
-                </div>
+                {% include "Progress/fragments/task_progress_bar.html" with total=stats.all_task_count n_complete=stats.number_of_completed_tasks %}
                 <table class="table table-sm table-bordered text-center">
                     <thead>
                         <tr>

@@ -101,15 +101,17 @@ class ProgressOverviewService:
             "mk": self.get_completed_marking_task_counts(),
         }
 
+    @transaction.atomic
     def get_id_task_status_counts(self, n_papers=None) -> Dict[str, int]:
         # return a dict of {status: count} for each of todo, complete, out
+        # exclude OUT OF DATE tasks
         dat = {"To Do": 0, "Complete": 0, "Out": 0}
         dat.update(
             {
                 PaperIDTask(status=X["status"]).get_status_display(): X["the_count"]
-                for X in PaperIDTask.objects.values("status").annotate(
-                    the_count=Count("status")
-                )
+                for X in PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
+                .values("status")
+                .annotate(the_count=Count("status"))
             }
         )
         # if n_papers is included then compute how many tasks as "missing"
@@ -118,15 +120,19 @@ class ProgressOverviewService:
             dat.update({"Missing": n_papers - present})
         return dat
 
+    @transaction.atomic
     def get_mark_task_status_counts(self, n_papers=None) -> Dict[int, Dict[str, int]]:
         # return a dict of dict - one for each question-index.
         # for each index the dict is {status: count} for each of todo, complete, out
+        # exclude OUT OF DATE tasks
         dat = {
             qi: {"To Do": 0, "Complete": 0, "Out": 0}
             for qi in range(1, SpecificationService.get_n_questions() + 1)
         }
-        for X in MarkingTask.objects.values("status", "question_number").annotate(
-            the_count=Count("status")
+        for X in (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .values("status", "question_number")
+            .annotate(the_count=Count("status"))
         ):
             dat[X["question_number"]][
                 MarkingTask(status=X["status"]).get_status_display()
