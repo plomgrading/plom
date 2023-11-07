@@ -255,7 +255,7 @@ class Command(BaseCommand):
                 config = ConfigFileService.read_server_config(
                     resources.files(demo_config_files) / "quick_demo_config.toml"
                 )
-            if options["long"]:
+            elif options["long"]:
                 config = ConfigFileService.read_server_config(
                     resources.files(demo_config_files) / "long_demo_config.toml"
                 )

@@ -56,7 +56,7 @@ class IDProgressService:
                 )
             id_info[task.paper.paper_number] = dat
         # now the id pages
-        for idp_obj in IDPage.objects.all().prefetch_related("paper"):
+        for idp_obj in IDPage.objects.all().prefetch_related("paper", "image"):
             if idp_obj.image and idp_obj.paper.paper_number in id_info:
                 id_info[idp_obj.paper.paper_number]["idpageimage_pk"] = idp_obj.image.pk
 
