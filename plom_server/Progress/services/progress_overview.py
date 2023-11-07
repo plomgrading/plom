@@ -142,3 +142,22 @@ class ProgressOverviewService:
                 present = sum([v for x, v in dat[qi].items()])
                 dat[qi].update({"Missing": n_papers - present})
         return dat
+
+    @transaction.atomic
+    def get_mark_task_status_counts_by_qv(
+        self, question_number, version=None
+    ) -> Dict[str, int]:
+        # return a dict for the given question/version - or just question if version=none.
+        # exclude OUT OF DATE tasks
+        dat = {"To Do": 0, "Complete": 0, "Out": 0}
+        query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
+            question_number=question_number
+        )
+        # filter by version if supplied
+        if version:
+            query = query.filter(question_version=version)
+
+        for X in query.values("status").annotate(the_count=Count("status")):
+            dat[MarkingTask(status=X["status"]).get_status_display()] = X["the_count"]
+
+        return dat
