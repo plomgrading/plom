@@ -12,6 +12,11 @@
     Identifying progress
 {% endblock page_heading %}
 {% block main_content %}
+    <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Back to overview</a>
+        </p>
+    </div>
     <div class="card mb-2 w-25">
         {% with dat=id_task_status_counts %}
             {% include "Progress/fragments/task_progress_bar.html" with total=all_task_count n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" %}

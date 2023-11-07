@@ -3,18 +3,17 @@
 <!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends "base/base.html" %}
 {% block title %}
-    Marking and identifying overview
+    Table of all tasks
 {% endblock title %}
 {% block page_heading %}
-    Overiew of marking and identifying
+    Table of all tasks
 {% endblock page_heading %}
 {% block main_content %}
-    <p>
-        <ul>
-            <li>Click on any marking task to see the corresponding annotation</li>
-            <li>Click on the ID progress or question statistics buttons to see a more details</li>
-        </ul>
-    </p>
+    <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Back to overview</a>
+        </p>
+    </div>
     <div class="table-responsive" style="max-height: 80vh;">
         <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
             <thead class="sticky-top">
