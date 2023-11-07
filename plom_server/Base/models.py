@@ -19,15 +19,21 @@ from polymorphic.models import PolymorphicModel
 
 import logging
 
+# TODO: what is this?  It is happening at import-time... scary
+# It comes from Django-Huey project and allows you to have multiple
+# task queues
 queue = get_queue("tasks")
 
 
 class HueyTask(PolymorphicModel):
-    """A general-purpose model for handling Huey tasks.
+    """A general-purpose model for tracking Huey tasks.
 
-    It keeps track of a huey task's ID, the time created, and the
+    It keeps track of a Huey task's ID, the time created, and the
     status. Also, this is where we define the functions for handling
     signals sent from the huey consumer.
+
+    TODO: well we don't actually define those here, they are in global
+    scope outside this class.  See TODO above.
     """
 
     StatusChoices = models.IntegerChoices(
@@ -181,6 +187,9 @@ class Tag(models.Model):
 # otherwise we use the signals to update information
 # in the database.
 # ---------------------------------
+
+# TODO: I am concerned that these receive signals from unrelated Huey tasks
+# on the same computer, such as our test suite Issue #2800.
 
 
 @queue.signal(SIGNAL_EXECUTING)
