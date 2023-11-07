@@ -12,8 +12,6 @@
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
-    <a class="btn btn-success"
-       href="{% url 'progress_mark_version_compare' question %}">refresh page</a>
     <a class="btn btn-info"
        href="{% url 'progress_task_annotation_filter' %}?question={{ question }}">tasks & annotations</a>
     <div class="container my-4">
@@ -25,24 +23,7 @@
                 <div class="card-text">
                     <div class="row">
                         <div class="col">
-                            <div class="progress m-2"
-                                 style="height: 2em"
-                                 role="progressbar"
-                                 aria-valuenow="{{ stats.number_of_completed_tasks }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="{{ stats.all_task_count }}">
-                                {% if stats.all_task_count == stats.number_of_completed_tasks %}
-                                    <div class="progress-bar bg-success fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% else %}
-                                    <div class="progress-bar fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            {% include "Progress/fragments/task_progress_bar.html" with total=stats.all_task_count n_complete=status_counts.Complete n_todo=status_counts|get_item:"To Do" n_out=status_counts.Out %}
                             <table class="table table-sm table-bordered text-center">
                                 <thead>
                                     <tr>
@@ -93,8 +74,10 @@
         <div class="card">
             {% for ver, data in version_hists.items %}
                 <div class="card">
-                    <div class="card-header">
-                        <h6>Histograms and statistics: version {{ ver }}</h6>
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fs-5">Histograms and statistics: version {{ ver }}</span>
+                        <a href="{% url 'progress_mark_details' question ver %}"
+                           class="btn btn-success">more details</a>
                     </div>
                     <div class="card-body">
                         <div class="card-text">
@@ -138,6 +121,12 @@
             {% endfor %}
         </div>
     </div>
+    <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
   var ctx_all = document.getElementById('hist_all');
@@ -168,10 +157,9 @@
     });
 
   var ctx_pies = document.getElementById('pies');
-  new Chart(ctx_pies, {
+  var the_pie_chart = new Chart(ctx_pies, {
       type: 'doughnut',
       options: {
-	  circumference: {{pie_angle}},
 	  plugins: {
 	      title: {
 		  display: true,
@@ -180,12 +168,21 @@
 	  },
       },
       data: {
-	  labels: [ {% for ver, data in version_hists.items %}'v {{ver}}',{% endfor %}],
+	  labels: [ {% for ver, data in version_hists.items %}'v {{ver}}',{% endfor %}
+		    {% for ver, data in version_hists.items %}'rem v {{ver}}',{% endfor %} ],
 	  datasets: [{
-	      data: [ {% for ver, data in version_hists.items %}{{data.number}},{% endfor %}],
+	      data: [ {% for ver, data in version_hists.items %}{{data.number}},{% endfor %}
+		      {% for ver, data in version_hists.items %}{{data.remaining}},{% endfor %} ],
 	  }],
       }
   });
+      // now update the color of the 'remaining' slices.
+      // some contorsions to get the index right.
+      {% for ver in version_hists %}
+      the_pie_chart.data.datasets[0].backgroundColor[{{version_hists|length|add:ver|add:'-1'}}]='#eee';
+      {% endfor %}
+      the_pie_chart.update();
+      
     </script>
     {% for ver, data in version_hists.items %}
         <script>

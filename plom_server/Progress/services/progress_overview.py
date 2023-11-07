@@ -5,6 +5,7 @@
 from typing import Any, Dict, Union, List, Optional
 
 from django.db import transaction
+from django.db.models import Count
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
@@ -18,7 +19,7 @@ class ProgressOverviewService:
         id_info = []
         for task in PaperIDTask.objects.exclude(
             status=PaperIDTask.OUT_OF_DATE
-        ).prefetch_related("paper", "latest_action"):
+        ).prefetch_related("paper", "latest_action", "assigned_user"):
             dat = {
                 "paper": task.paper.paper_number,
                 "status": task.get_status_display(),
@@ -54,6 +55,20 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_task_overview(self) -> tuple[Dict, Dict]:
+        """Return (id-info, marking-info) dicts with info for all id and marking tasks of every paper in use.
+
+        Note that a paper is in use if it has at least one ID or marking task.
+
+        ID-info dict is either {paper_number: None} if task not present, or {paper_number: data} where data is itself a dict of the form
+          * {status: 'To do'} or
+          * {'status': 'Out', 'user': username} - the name of the user who has the task
+          * {status: 'Complete', 'user': username, 'sid': student_id} - user who did the id'ing and the student-id of that paper.
+
+        Marking-info dict is of the form {paper_number: {1: dat, 2:dat, ..., n: dat} } with data for each question. For each question we have
+          * {status: 'To do'} or
+          * {'status': 'Out', 'user': username} - the name of the user who has the task
+          * {status: 'Complete', 'user': username, 'score': score, 'annotation_pk: blah} - user who did the marking'ing, the score, and the pk of the corresponding annotaiton.
+        """
         id_task_overview: Dict[int, Optional[Dict[str, Any]]] = {}
         marking_task_overview: Dict[int, Dict[int, Optional[Dict[str, Any]]]] = {}
         question_numbers = [
@@ -83,10 +98,12 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_completed_id_task_count(self) -> int:
+        """Return number of completed ID tasks."""
         return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
 
     @transaction.atomic
     def get_completed_marking_task_counts(self) -> Dict:
+        """Return dict of number of completed marking tasks for each question."""
         return {
             qi: MarkingTask.objects.filter(
                 question_number=qi, status=PaperIDTask.COMPLETE
@@ -99,3 +116,80 @@ class ProgressOverviewService:
             "id": self.get_completed_id_task_count(),
             "mk": self.get_completed_marking_task_counts(),
         }
+
+    @transaction.atomic
+    def get_id_task_status_counts(
+        self, n_papers: Optional[int] = None
+    ) -> Dict[str, int]:
+        """Return a dict of counts of ID tasks by their status.
+
+        Note that this excludes out-of-date tasks.
+        """
+        dat = {"To Do": 0, "Complete": 0, "Out": 0}
+        dat.update(
+            {
+                PaperIDTask(status=X["status"]).get_status_display(): X["the_count"]
+                for X in PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
+                .values("status")
+                .annotate(the_count=Count("status"))
+            }
+        )
+        # if n_papers is included then compute how many tasks as "missing"
+        if n_papers:
+            present = sum([v for x, v in dat.items()])
+            dat.update({"Missing": n_papers - present})
+        return dat
+
+    @transaction.atomic
+    def get_mark_task_status_counts(
+        self, n_papers: Optional[int] = None
+    ) -> Dict[int, Dict[str, int]]:
+        """Return a dict of counts of marking tasks by their status for each question.
+
+        Note that, if n_papers is supplied, then the number of missing
+        tasks is also computed. Also note that this excludes
+        out-of-date tasks.
+        """
+        # return a dict of dict - one for each question-index.
+        # for each index the dict is {status: count} for each of todo, complete, out
+        # exclude OUT OF DATE tasks
+        dat = {
+            qi: {"To Do": 0, "Complete": 0, "Out": 0}
+            for qi in range(1, SpecificationService.get_n_questions() + 1)
+        }
+        for X in (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .values("status", "question_number")
+            .annotate(the_count=Count("status"))
+        ):
+            dat[X["question_number"]][
+                MarkingTask(status=X["status"]).get_status_display()
+            ] = X["the_count"]
+        if n_papers:
+            for qi in range(1, SpecificationService.get_n_questions() + 1):
+                present = sum([v for x, v in dat[qi].items()])
+                dat[qi].update({"Missing": n_papers - present})
+        return dat
+
+    @transaction.atomic
+    def get_mark_task_status_counts_by_qv(
+        self, question_number: int, version: Optional[int] = None
+    ) -> Dict[str, int]:
+        """Return a dict of counts of marking tasks by their status for the given question/version.
+
+        Note that, if version is not supplied (or None) then count by
+        question only. Also note that this excludes out-of-date tasks.
+
+        """
+        dat = {"To Do": 0, "Complete": 0, "Out": 0}
+        query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
+            question_number=question_number
+        )
+        # filter by version if supplied
+        if version:
+            query = query.filter(question_version=version)
+
+        for X in query.values("status").annotate(the_count=Count("status")):
+            dat[MarkingTask(status=X["status"]).get_status_display()] = X["the_count"]
+
+        return dat

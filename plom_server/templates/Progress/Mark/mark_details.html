@@ -12,8 +12,8 @@
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
-    <a class="btn btn-success"
-       href="{% url 'progress_mark_details' question version %}">refresh page</a>
+    <a href="{% url 'progress_mark_version_compare' question %}"
+       class="btn btn-success">compare all Q{{ question }} versions</a>
     <a class="btn btn-info"
        href="{% url 'progress_task_annotation_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
     <div class="container my-4">
@@ -25,24 +25,7 @@
                 <div class="card-text">
                     <div class="row">
                         <div class="col">
-                            <div class="progress m-2"
-                                 style="height: 2em"
-                                 role="progressbar"
-                                 aria-valuenow="{{ stats.number_of_completed_tasks }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="{{ stats.all_task_count }}">
-                                {% if stats.all_task_count == stats.number_of_completed_tasks %}
-                                    <div class="progress-bar bg-success fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% else %}
-                                    <div class="progress-bar fs-6"
-                                         style="width: {{ stats.completed_percentage }}%">
-                                        {{ stats.number_of_completed_tasks }} / {{ stats.all_task_count }}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            {% include "Progress/fragments/task_progress_bar.html" with total=stats.all_task_count n_complete=status_counts.Complete n_todo=status_counts|get_item:"To Do" n_out=status_counts.Out %}
                             <table class="table table-sm table-bordered text-center">
                                 <thead>
                                     <tr>
@@ -136,6 +119,12 @@
             </div>
         {% endfor %}
     </div>
+    <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
   var ctx_all = document.getElementById('hist_all');
@@ -166,7 +155,7 @@
     });
 
   var ctx_pies = document.getElementById('pies');
-  new Chart(ctx_pies, {
+  var the_pie_chart = new Chart(ctx_pies, {
       type: 'doughnut',
       options: {
 	  plugins: {
@@ -175,15 +164,17 @@
 		  text: 'Number marked by user',
 	      }
 	  },
-	  circumference: {{pie_angle}},
       },
       data: {
-	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %}],
+	  labels: [ {% for upk, data in user_hists.items %}'{{data.username}}',{% endfor %} 'remaining'],
 	  datasets: [{
-	      data: [ {% for upk, data in user_hists.items %}{{data.number}},{% endfor %}],
+	      data: [ {% for upk, data in user_hists.items %}{{data.number}},{% endfor %} {{remaining_tasks}}],
 	  }],
       }
   });
+  // now update the color of the 'remaining' slice.
+  the_pie_chart.data.datasets[0].backgroundColor[{{user_hists|length}}]='#eee';
+  the_pie_chart.update();
     </script>
     {% for upk, data in user_hists.items %}
         <script>
