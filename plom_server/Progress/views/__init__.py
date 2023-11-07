@@ -12,6 +12,8 @@ from .scan_complete import ScanCompleteView, PushedImageView, PushedImageWrapVie
 from .scan_incomplete import ScanIncompleteView
 from .scan_discards import ScanDiscardView, ScanReassignView
 
+from .overview_landing import OverviewLandingView
+
 from .progress_identify import (
     ProgressIdentifyHome,
     IDImageView,
