@@ -236,7 +236,7 @@ def get_question_mark(question_one_index: Union[str, int]) -> int:
 
 @transaction.atomic
 def get_max_all_question_mark() -> int:
-    """Get the maximum mark of all questions"""
+    """Get the maximum mark of all questions."""
     return SpecQuestion.objects.all().aggregate(Max("mark"))[
         "mark__max"
     ]  # this key from the aggregate function.
