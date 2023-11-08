@@ -15,10 +15,14 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
 
         context = super().build_context()
 
+        paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
+
+        (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
+        paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
         question_list = [
             str(q + 1) for q in range(SpecificationService.get_n_questions())
@@ -36,6 +40,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
                 "version": version,
                 "username": username,
                 "score": score,
+                "paper_list": paper_list,
                 "question_list": question_list,
                 "version_list": version_list,
                 "mark_list": mark_list,
@@ -45,7 +50,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
 
         # if all filters set to * then ask user to set at least one
         # don't actually filter **all** tasks
-        if all(X == "*" for X in [question, version, username, score]):
+        if all(X == "*" for X in [paper, question, version, username, score]):
             context.update({"warning": True})
             return render(
                 request, "Progress/Mark/task_annotations_filter.html", context
@@ -59,16 +64,13 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
                 return val
 
         task_info = mss.filter_marking_task_annotation_info(
+            paper=optional_arg(paper),
             question=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
             score=optional_arg(score),
         )
-        context.update(
-            {
-                "task_info": task_info,
-            }
-        )
+        context.update({"task_info": task_info})
 
         return render(request, "Progress/Mark/task_annotations_filter.html", context)
 

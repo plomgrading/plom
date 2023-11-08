@@ -308,12 +308,15 @@ class MarkingStatsService:
     @transaction.atomic
     def filter_marking_task_annotation_info(
         self,
+        paper=None,
         question=None,
         version=None,
         username=None,
         score=None,
     ):
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+        if paper:
+            task_set = task_set.filter(paper__paper_number=paper)
         if question:
             task_set = task_set.filter(question_number=question)
         if version:

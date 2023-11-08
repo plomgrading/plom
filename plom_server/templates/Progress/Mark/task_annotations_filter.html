@@ -35,12 +35,32 @@
                   action="{% url 'progress_task_annotation_filter' %}"
                   method="get">
                 <div class="row my-2">
+                    <label class="col-sm-1 col-form-label" for="paper">Paper:</label>
+                    <div class="col-sm-4">
+                        <select name="paper" class="form-select">
+                            <option>*</option>
+                            {% for pn in paper_list %}
+                                <option {% if paper == qn %}selected{% endif %}>{{ pn }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <label class="col-sm-1 col-form-label" for="question">Question:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option>*</option>
                             {% for qn in question_list %}
                                 <option {% if question == qn %}selected{% endif %}>{{ qn }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <label class="col-sm-1 col-form-label" for="version">Version:</label>
+                    <div class="col-sm-4">
+                        <select name="version" class="form-select">
+                            <option>*</option>
+                            {% for v in version_list %}
+                                <option {% if version == v %}selected{% endif %}>{{ v }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -54,16 +74,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="row">
-                    <label class="col-sm-1 col-form-label" for="version">Version:</label>
-                    <div class="col-sm-4">
-                        <select name="version" class="form-select">
-                            <option>*</option>
-                            {% for v in version_list %}
-                                <option {% if version == v %}selected{% endif %}>{{ v }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div class="row my-2">
                     <label class="col-sm-1 col-form-label" for="username">User:</label>
                     <div class="col-sm-4">
                         <select name="username" class="form-select">
@@ -73,9 +84,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-4 mt-4">
+                    <div class="col-sm-4">
                         <button class="btn btn-primary" type="submit">filter tasks</button>
                     </div>
                 </div>
