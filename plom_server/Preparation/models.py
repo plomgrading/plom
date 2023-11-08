@@ -6,7 +6,7 @@
 from django.db import models
 from django.conf import settings
 
-from Base.models import SingletonBaseModel, HueyTask
+from Base.models import SingletonBaseModel, BaseHueyTask
 
 
 class PaperSourcePDF(models.Model):
@@ -78,11 +78,13 @@ class StagingPQVMapping(models.Model):
 # Make a table for the extra page pdf and the associated huey task
 
 
-class ExtraPagePDFTask(HueyTask):
+class ExtraPagePDFTask(BaseHueyTask):
     """Table to store the exta page pdf huey task.
 
-    Note that this inherits fields from the HueyTask table. We add
+    Note that this inherits fields from the BaseHueyTask table.  We add
     extra function to this to ensure there can only be one such task.
+
+    TODO: wasn't there some kind of SingletonHueyTask for this?
     """
 
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")
@@ -100,7 +102,7 @@ class ExtraPagePDFTask(HueyTask):
         return obj
 
 
-class ScrapPaperPDFTask(HueyTask):
+class ScrapPaperPDFTask(BaseHueyTask):
     """Table to store the scrap paper pdf huey task.
 
     Note that this inherits fields from the HueyTask table. We add

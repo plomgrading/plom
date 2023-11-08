@@ -6,11 +6,11 @@
 
 from django.db import models
 
-from Base.models import HueyTask
+from Base.models import BaseHueyTask
 from Papers.models import Paper
 
 
-class ReassembleHueyTask(HueyTask):
+class ReassembleHueyTask(BaseHueyTask):
     # OneToOneField makes a field called "reassemblehueytask" in the Paper table
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="reassemble/", null=True)

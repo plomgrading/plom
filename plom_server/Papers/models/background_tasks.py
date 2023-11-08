@@ -4,17 +4,17 @@
 
 from django.db import models
 
-from Base.models import HueyTask
+from Base.models import BaseHueyTask
 from Scan.models import StagingImage
 
 
-class CreatePaperTask(HueyTask):
+class CreatePaperTask(BaseHueyTask):
     """Create a test-paper and save its structure to the database."""
 
     paper_number = models.PositiveIntegerField(null=False, unique=True)
 
 
-class CreateImageTask(HueyTask):
+class CreateImageTask(BaseHueyTask):
     """Create an image by copying a validated StagingImage instance."""
 
     staging_image = models.ForeignKey(
