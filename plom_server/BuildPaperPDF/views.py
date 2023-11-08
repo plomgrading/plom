@@ -4,8 +4,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-import pathlib
-
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
@@ -19,8 +17,7 @@ from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import PQVMappingService, StagingStudentService
 from SpecCreator.services import StagingSpecificationService
 
-from .models import PDFTask
-from .services import BuildPapersService, RenamePDFFile
+from .services import BuildPapersService
 
 
 class BuildPaperPDFs(ManagerRequiredView):

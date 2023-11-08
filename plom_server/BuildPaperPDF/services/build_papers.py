@@ -22,7 +22,7 @@ from django_huey import get_queue
 
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
-from ..models import PDFTask
+from ..models import PDFHueyTask
 
 
 class BuildPapersService:
@@ -33,25 +33,25 @@ class BuildPapersService:
 
     @transaction.atomic
     def get_n_complete_tasks(self):
-        """Get the number of PDFTasks that have completed."""
-        return PDFTask.objects.filter(status=PDFTask.COMPLETE).count()
+        """Get the number of PDFHueyTasks that have completed."""
+        return PDFHueyTask.objects.filter(status=PDFHueyTask.COMPLETE).count()
 
     @transaction.atomic
     def get_n_pending_tasks(self):
-        """Get the number of PDFTasks with the status 'todo,' 'queued,' 'started,' or 'error'."""
-        return PDFTask.objects.exclude(status=PDFTask.COMPLETE).count()
+        """Get the number of PDFHueyTasks with the status 'todo,' 'queued,' 'started,' or 'error'."""
+        return PDFHueyTask.objects.exclude(status=PDFHueyTask.COMPLETE).count()
 
     @transaction.atomic
     def get_n_running_tasks(self):
-        """Get the number of PDFTasks with the status 'queued' or 'started'."""
-        return PDFTask.objects.filter(
-            Q(status=PDFTask.QUEUED) | Q(status=PDFTask.STARTED)
+        """Get the number of PDFHueyTasks with the status 'queued' or 'started'."""
+        return PDFHueyTask.objects.filter(
+            Q(status=PDFHueyTask.QUEUED) | Q(status=PDFHueyTask.STARTED)
         ).count()
 
     @transaction.atomic
     def get_n_tasks(self):
-        """Get the total number of PDFTasks."""
-        return PDFTask.objects.all().count()
+        """Get the total number of PDFHueyTasks."""
+        return PDFHueyTask.objects.all().count()
 
     @transaction.atomic
     def are_all_papers_built(self):
@@ -62,17 +62,17 @@ class BuildPapersService:
 
     @transaction.atomic
     def are_there_errors(self):
-        """Return True if there are any PDFTasks with an 'error' status."""
-        return PDFTask.objects.filter(status=PDFTask.ERROR).count() > 0
+        """Return True if there are any PDFHueyTasks with an 'error' status."""
+        return PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR).count() > 0
 
     def create_task(self, index: int, huey_id: int, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database."""
         paper = get_object_or_404(Paper, paper_number=index)
 
-        task = PDFTask(
+        task = PDFHueyTask(
             paper=paper,
             huey_id=huey_id,
-            status=PDFTask.TO_DO,
+            status=PDFHueyTask.TO_DO,
             student_name=student_name,
             student_id=student_id,
         )
@@ -83,7 +83,7 @@ class BuildPapersService:
         """Build a single test-paper, with huey!"""
         pdf_build = self._build_single_paper(index, spec, question_versions)
         task_obj = self.create_task(index, pdf_build.id)
-        task_obj.status = PDFTask.QUEUED
+        task_obj.status = PDFHueyTask.QUEUED
         task_obj.save()
         return task_obj
 
@@ -99,7 +99,7 @@ class BuildPapersService:
                 source_versions_path=PaperSourcePDF.upload_to(),
             )
             paper = Paper.objects.get(paper_number=index)
-            task = paper.pdftask
+            task = paper.pdfhueytask
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
@@ -120,7 +120,7 @@ class BuildPapersService:
             )
 
             paper = Paper.objects.get(paper_number=index)
-            task = paper.pdftask
+            task = paper.pdfhueytask
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
@@ -137,11 +137,12 @@ class BuildPapersService:
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
-            pdf.file_path() for pdf in PDFTask.objects.filter(status=PDFTask.COMPLETE)
+            pdf.file_path()
+            for pdf in PDFHueyTask.objects.filter(status=PDFHueyTask.COMPLETE)
         ]
 
     def stage_all_pdf_jobs(self, classdict=None):
-        """Create all the PDFTasks, and save to the database without sending them to Huey.
+        """Create all the PDFHueyTasks, and save to the database without sending them to Huey.
 
         If there are prenamed test-papers, save that info too.
         """
@@ -166,7 +167,7 @@ class BuildPapersService:
 
     def send_all_tasks(self, spec, qvmap):
         """Send all marked as todo PDF tasks to huey."""
-        todo_tasks = PDFTask.objects.filter(status=PDFTask.TO_DO)
+        todo_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.TO_DO)
         for task in todo_tasks:
             paper_number = task.paper.paper_number
             if task.student_name and task.student_id:
@@ -180,13 +181,13 @@ class BuildPapersService:
                 )
 
             task.huey_id = pdf_build.id
-            task.status = PDFTask.QUEUED
+            task.status = PDFHueyTask.QUEUED
             task.save()
 
     def send_single_task(self, paper_num, spec, qv_row):
         """Send a single todo task to Huey."""
         paper = get_object_or_404(Paper, paper_number=paper_num)
-        task = paper.pdftask
+        task = paper.pdfhueytask
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
@@ -195,52 +196,52 @@ class BuildPapersService:
             pdf_build = self._build_single_paper(paper_num, spec, qv_row)
 
         task.huey_id = pdf_build.id
-        task.status = PDFTask.QUEUED
+        task.status = PDFHueyTask.QUEUED
         task.save()
 
     def cancel_all_task(self):
         """Cancel all queued task from Huey."""
-        queue_tasks = PDFTask.objects.filter(status=PDFTask.QUEUED)
+        queue_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.QUEUED)
         for task in queue_tasks:
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
-            task.status = PDFTask.TO_DO
+            task.status = PDFHueyTask.TO_DO
             task.save()
 
     def cancel_single_task(self, paper_number):
         """Cancel a single queued task from Huey."""
-        task = get_object_or_404(Paper, paper_number=paper_number).pdftask
+        task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
         queue = get_queue("tasks")
         queue.revoke_by_id(task.huey_id)
-        task.status = PDFTask.TO_DO
+        task.status = PDFHueyTask.TO_DO
         task.save()
 
     def retry_all_task(self, spec, qvmap):
         """Retry all tasks that have error status."""
-        retry_tasks = PDFTask.objects.filter(status=PDFTask.ERROR)
+        retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
             pdf_build = self._build_single_paper(
                 paper_number, spec, qvmap[paper_number]
             )
             task.huey_id = pdf_build.id
-            task.status = PDFTask.QUEUED
+            task.status = PDFHueyTask.QUEUED
             task.save()
 
     @transaction.atomic
     def reset_all_tasks(self):
         self.cancel_all_task()
-        for task in PDFTask.objects.all():
+        for task in PDFHueyTask.objects.all():
             task.file_path().unlink(missing_ok=True)
             task.huey_id = None
-            task.status = PDFTask.TO_DO
+            task.status = PDFHueyTask.TO_DO
             task.save()
 
     @transaction.atomic
     def get_all_task_status(self):
         """Get the status of every task and return as a dict."""
         stat = {}
-        for task in PDFTask.objects.all():
+        for task in PDFHueyTask.objects.all():
             stat[task.paper.paper_number] = task.get_status_display()
         return stat
 
@@ -248,10 +249,10 @@ class BuildPapersService:
     def get_paper_path_and_bytes(self, paper_number):
         """Get the bytes of the file generated by the given task."""
         try:
-            task = Paper.objects.get(paper_number=paper_number).pdftask
-        except (Paper.DoesNotExist, PDFTask.DoesNotExist):
+            task = Paper.objects.get(paper_number=paper_number).pdfhueytask
+        except (Paper.DoesNotExist, PDFHueyTask.DoesNotExist):
             raise ValueError(f"Cannot find task {paper_number}")
-        if task.status != PDFTask.COMPLETE:
+        if task.status != PDFHueyTask.COMPLETE:
             raise ValueError(f"Task {paper_number} is not complete")
 
         paper_path = task.file_path()
@@ -268,7 +269,7 @@ class BuildPapersService:
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
             }
-            for task in PDFTask.objects.all()
+            for task in PDFHueyTask.objects.all()
             .select_related("paper")
             .order_by("paper__paper_number")
         ]

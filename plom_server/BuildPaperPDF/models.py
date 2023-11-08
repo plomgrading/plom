@@ -15,13 +15,14 @@ from Base.models import BaseHueyTask
 from Papers.models import Paper
 
 
-class PDFTask(BaseHueyTask):
+class PDFHueyTask(BaseHueyTask):
+    # OneToOneField makes a field called "pdfhueytask" in the Paper table
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 
-    # Note that the cascade-delete does not call PDFTask's delete
+    # Note that the cascade-delete does not call PDFHueyTask's delete
     # function, instead use the pre_delete signal to call a function
     # to unlink the associated file
     # See - https://docs.djangoproject.com/en/4.1/ref/models/fields/#django.db.models.CASCADE
@@ -59,8 +60,8 @@ class PDFTask(BaseHueyTask):
 
 
 @receiver(pre_delete, sender=Paper)
-def PDFTask_delete_associated_file(sender, instance, using, **kwargs):
+def PDFHueyTask_delete_associated_file(sender, instance, using, **kwargs):
     # if the paper has a pdf task then delete it.
     # we need this check or a try-except - see https://docs.djangoproject.com/en/4.1/topics/db/examples/one_to_one/
-    if hasattr(instance, "pdftask"):
-        instance.pdftask.unlink_associated_pdf()
+    if hasattr(instance, "pdfhueytask"):
+        instance.pdfhueytask.unlink_associated_pdf()
