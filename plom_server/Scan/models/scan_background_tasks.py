@@ -10,8 +10,8 @@ from Base.models import BaseHueyTask
 from ..models import StagingBundle
 
 
-class PageToImageHueyTask(BaseHueyTask):
-    """Manage the background PDF page into an image tasks."""
+class PagesToImagesHueyTask(BaseHueyTask):
+    """Manage the background task for converting PDF pages into images."""
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)

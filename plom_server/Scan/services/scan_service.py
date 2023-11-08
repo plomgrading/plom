@@ -44,7 +44,7 @@ from ..models import (
     KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
-    PageToImageHueyTask,
+    PagesToImagesHueyTask,
     ManageParseQR,
 )
 from ..services.qr_validators import QRErrorService
@@ -170,17 +170,17 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
         with transaction.atomic():
-            PageToImageHueyTask.objects.create(
+            PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
                 huey_id=task.id,
-                status=PageToImageHueyTask.QUEUED,
+                status=PagesToImagesHueyTask.QUEUED,
                 created=timezone.now(),
             )
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        return PageToImageHueyTask.objects.get(bundle=bundle_obj).completed_pages
+        return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
 
     @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk):
@@ -188,10 +188,10 @@ class ScanService:
         if bundle_obj.has_page_images:
             return False
 
-        query = PageToImageHueyTask.objects.filter(bundle=bundle_obj)
+        query = PagesToImagesHueyTask.objects.filter(bundle=bundle_obj)
         if query.exists():  # have run a bundle-split task previously
             if query.exclude(
-                status=PageToImageHueyTask.COMPLETE
+                status=PagesToImagesHueyTask.COMPLETE
             ).exists():  # one of these is not completed, so must be mid-run
                 return True
             else:  # all have finished previously
@@ -656,7 +656,7 @@ class ScanService:
             n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
-                count = PageToImageHueyTask.objects.get(bundle=bundle).completed_pages
+                count = PagesToImagesHueyTask.objects.get(bundle=bundle).completed_pages
                 total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
                 total_pages = images.count()
@@ -1216,7 +1216,7 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
             # TODO - check for error status here.
 
             with transaction.atomic():
-                task_obj = PageToImageHueyTask.objects.get(bundle=bundle_obj)
+                task_obj = PagesToImagesHueyTask.objects.get(bundle=bundle_obj)
                 task_obj.completed_pages = count
                 task_obj.save()
 

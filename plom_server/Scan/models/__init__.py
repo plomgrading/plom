@@ -15,7 +15,7 @@ from .staging_images import (
 )
 
 from .scan_background_tasks import (
-    PageToImageHueyTask,
+    PagesToImagesHueyTask,
     ManageParseQR,
     ParseQR,
 )
