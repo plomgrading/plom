@@ -13,9 +13,12 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
     def get(self, request):
         mss = MarkingStatsService()
 
+        context = super().build_context()
+
         question = request.GET.get("question", "*")
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
+        score = request.GET.get("score", "*")
 
         question_list = [
             str(q + 1) for q in range(SpecificationService.get_n_questions())
@@ -23,7 +26,32 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         version_list = [
             str(v + 1) for v in range(SpecificationService.get_n_versions())
         ]
+        mark_list = [
+            str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
+        ]
 
+        context.update(
+            {
+                "question": question,
+                "version": version,
+                "username": username,
+                "score": score,
+                "question_list": question_list,
+                "version_list": version_list,
+                "mark_list": mark_list,
+                "username_list": mss.get_list_of_users_who_marked_anything(),
+            }
+        )
+
+        # if all filters set to * then ask user to set at least one
+        # don't actually filter **all** tasks
+        if all(X == "*" for X in [question, version, username, score]):
+            context.update({"warning": True})
+            return render(
+                request, "Progress/Mark/task_annotations_filter.html", context
+            )
+
+        # at least one filter is set, so continue
         def optional_arg(val):
             if val == "*":
                 return None
@@ -34,17 +62,10 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
             question=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
+            score=optional_arg(score),
         )
-
-        context = super().build_context()
         context.update(
             {
-                "question": question,
-                "version": version,
-                "username": username,
-                "question_list": question_list,
-                "version_list": version_list,
-                "username_list": mss.get_list_of_users_who_marked_anything(),
                 "task_info": task_info,
             }
         )

@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
+from django.db.models import Max
 
 from plom import SpecVerifier
 
@@ -231,6 +232,14 @@ def get_question_mark(question_one_index: Union[str, int]) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+@transaction.atomic
+def get_max_all_question_mark() -> int:
+    """Get the maximum mark of all questions"""
+    return SpecQuestion.objects.all().aggregate(Max("mark"))[
+        "mark__max"
+    ]  # this key from the aggregate function.
 
 
 @transaction.atomic
