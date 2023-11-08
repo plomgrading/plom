@@ -10,7 +10,7 @@ from django.core.files import File
 from django.db import transaction
 from django_huey import db_task
 
-from ..models import ScrapPaperPDFTask
+from ..models import ScrapPaperPDFHueyTask as ScrapPaperPDFTask
 
 
 log = logging.getLogger("ScrapPaperService")

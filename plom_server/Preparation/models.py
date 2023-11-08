@@ -78,7 +78,7 @@ class StagingPQVMapping(models.Model):
 # Make a table for the extra page pdf and the associated huey task
 
 
-class ExtraPagePDFTask(BaseHueyTask):
+class ExtraPagePDFHueyTask(BaseHueyTask):
     """Table to store the exta page pdf huey task.
 
     Note that this inherits fields from the BaseHueyTask table.  We add
@@ -90,7 +90,7 @@ class ExtraPagePDFTask(BaseHueyTask):
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")
 
     def save(self, *args, **kwargs):
-        ExtraPagePDFTask.objects.exclude(id=self.id).delete()
+        ExtraPagePDFHueyTask.objects.exclude(id=self.id).delete()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -98,11 +98,11 @@ class ExtraPagePDFTask(BaseHueyTask):
 
     @classmethod
     def load(cls):
-        obj, created = ExtraPagePDFTask.objects.get_or_create()
+        obj, created = ExtraPagePDFHueyTask.objects.get_or_create()
         return obj
 
 
-class ScrapPaperPDFTask(BaseHueyTask):
+class ScrapPaperPDFHueyTask(BaseHueyTask):
     """Table to store the scrap paper pdf huey task.
 
     Note that this inherits fields from the HueyTask table. We add
@@ -112,7 +112,7 @@ class ScrapPaperPDFTask(BaseHueyTask):
     scrap_paper_pdf = models.FileField(upload_to="sourceVersions/")
 
     def save(self, *args, **kwargs):
-        ScrapPaperPDFTask.objects.exclude(id=self.id).delete()
+        ScrapPaperPDFHueyTask.objects.exclude(id=self.id).delete()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -120,5 +120,5 @@ class ScrapPaperPDFTask(BaseHueyTask):
 
     @classmethod
     def load(cls):
-        obj, created = ScrapPaperPDFTask.objects.get_or_create()
+        obj, created = ScrapPaperPDFHueyTask.objects.get_or_create()
         return obj
