@@ -74,7 +74,7 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
     if spec and not len(vm) == spec["numberToProduce"]:
         raise ValueError(
             f"Legacy server requires numberToProduce={spec['numberToProduce']}"
-            f"to match the number of rows {len(vm)} of the version map"
+            f" to match the number of rows {len(vm)} of the version map"
         )
     if vm.keys():
         min_testnum = min(vm.keys())
