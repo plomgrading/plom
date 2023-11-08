@@ -7,7 +7,6 @@
 import logging
 from typing import Dict, List, Tuple
 
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
@@ -20,7 +19,7 @@ from ..models import (
     IDPage,
     DNMPage,
     QuestionPage,
-    CreatePaperTask,
+    CreatePaperHueyTask,
 )
 
 
@@ -97,7 +96,7 @@ class PaperCreatorService:
         paper_task = _create_paper_with_qvmapping(
             self.spec_obj, paper_number, qv_mapping
         )
-        paper_task_obj = CreatePaperTask(
+        paper_task_obj = CreatePaperHueyTask(
             huey_id=paper_task.id, paper_number=paper_number
         )
         paper_task_obj.status = "queued"

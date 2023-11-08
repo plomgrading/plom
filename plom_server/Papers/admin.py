@@ -14,7 +14,7 @@ from Papers.models.paper_structure import (
     QuestionPage,
 )
 from Papers.models.specifications import Specification
-from Papers.models.background_tasks import CreatePaperTask, CreateImageTask
+from Papers.models.background_tasks import CreatePaperHueyTask, CreateImageHueyTask
 from Papers.models.image_bundle import Image, DiscardPage, Bundle
 
 admin.site.register(Paper)
@@ -24,8 +24,8 @@ admin.site.register(FixedPage)
 admin.site.register(IDPage)
 admin.site.register(DNMPage)
 admin.site.register(QuestionPage)
-admin.site.register(CreatePaperTask)
-admin.site.register(CreateImageTask)
+admin.site.register(CreatePaperHueyTask)
+admin.site.register(CreateImageHueyTask)
 admin.site.register(Bundle)
 admin.site.register(Image)
 admin.site.register(DiscardPage)
