@@ -39,10 +39,7 @@ class ScanServiceTests(TestCase):
         return super().tearDown()
 
     def test_upload_bundle(self):
-        """
-        Test ScanService.upload_bundle() and assert that the uploaded PDF file
-        has been saved to the right place on disk.
-        """
+        """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
 
         scanner = ScanService()
         timestamp = timezone.now().timestamp()
