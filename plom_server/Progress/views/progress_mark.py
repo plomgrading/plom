@@ -12,6 +12,7 @@ from Base.base_group_views import (
 
 from Papers.services import SpecificationService
 from Mark.services import MarkingStatsService
+from Progress.services import ProgressOverviewService
 
 
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
@@ -42,6 +43,9 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
                 "question": question,
                 "version": version,
                 "stats": mss.get_basic_marking_stats(question, version=version),
+                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
+                    question_number=question, version=version
+                ),
             }
         )
 
@@ -72,7 +76,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
         # to show incomplete pie-chart need this value
-        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
+        remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
 
         context.update(
             {
@@ -82,7 +86,10 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "user_hists": user_hists_and_stats,
-                "pie_angle": pie_angle,
+                "remaining_tasks": remaining_tasks,
+                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
+                    question_number=question, version=version
+                ),
             }
         )
 
@@ -111,8 +118,6 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
             version_hists_and_stats[ver]["hist_all_version_values"] = [
                 v * scale for v in hist_values
             ]
-        # to show incomplete pie-chart need this value
-        pie_angle = 360 * stats["number_of_completed_tasks"] / stats["all_task_count"]
 
         context.update(
             {
@@ -122,7 +127,9 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
-                "pie_angle": pie_angle,
+                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
+                    question_number=question, version=None
+                ),
             }
         )
 

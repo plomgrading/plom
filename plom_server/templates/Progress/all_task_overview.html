@@ -3,18 +3,17 @@
 <!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends "base/base.html" %}
 {% block title %}
-    Marking and identifying overview
+    Table of all tasks
 {% endblock title %}
 {% block page_heading %}
-    Overiew of marking and identifying
+    Table of all tasks
 {% endblock page_heading %}
 {% block main_content %}
-    <p>
-        <ul>
-            <li>Click on any marking task to see the corresponding annotation</li>
-            <li>Click on the ID progress or question statistics buttons to see a more details</li>
-        </ul>
-    </p>
+    <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
+        </p>
+    </div>
     <div class="table-responsive" style="max-height: 80vh;">
         <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
             <thead class="sticky-top">
@@ -22,31 +21,16 @@
                     <th>paper</th>
                     <th>
                         identify
-                        <div class="progress"
-                             role="progressbar"
-                             aria-label="id complete percentage"
-                             aria-valuenow="{{ id_percent_complete }}"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            <div class="progress-bar" style="width: {{ id_percent_complete }}%">
-                                {{ completed_id_task_count }} / {{ n_papers }}
-                            </div>
-                        </div>
+                        {% with dat=id_task_status_counts %}
+                            {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
+                        {% endwith %}
                     </th>
                     {% for qi, qlabel in question_labels %}
                         <th>
                             {{ qlabel }}
-                            <div class="progress"
-                                 role="progressbar"
-                                 aria-label="id complete percentage"
-                                 aria-valuenow="{{ mark_percent_complete|get_item:qi }}"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100">
-                                <div class="progress-bar"
-                                     style="width: {{ mark_percent_complete|get_item:qi }}%">
-                                    {{ completed_marking_task_counts|get_item:qi }} / {{ n_papers }}
-                                </div>
-                            </div>
+                            {% with dat=marking_task_status_counts|get_item:qi %}
+                                {% include "Progress/fragments/task_progress_bar.html" with total=n_papers n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" n_missing=dat|get_item:"Missing" %}
+                            {% endwith %}
                         </th>
                     {% endfor %}
                 </tr>

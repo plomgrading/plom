@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 from typing import Optional
 
@@ -26,25 +27,51 @@ class QuestionMarkingViewSet(ViewSet):
         get:
         Responds with a code for the next available marking task.
 
+        The behaviour is influenced by various options.  A confusing case is
+        ``tag`` which is a *preference* and not a *requiremennt*.
+        You can still receive tasks that do not match the tag.
+
         Returns:
             200: An available task exists, returns the task code as a string.
             204: There are no available tasks.
         """
         data = request.query_params
-        question: Optional[int] = data.get("q")
-        version: Optional[int] = data.get("v")
 
-        service = QuestionMarkingService(
+        def int_or_None(x):
+            return None if x is None else int(x)
+
+        try:
+            question: Optional[int] = int_or_None(data.get("q"))
+            version: Optional[int] = int_or_None(data.get("v"))
+            min_paper_num: Optional[int] = int_or_None(data.get("min_paper_num"))
+            max_paper_num: Optional[int] = int_or_None(data.get("max_paper_num"))
+        except ValueError as e:
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+
+        tag: Optional[str] = data.get("tag")
+
+        task = QuestionMarkingService(
             question=question,
             version=version,
             user=request.user,
-        )
+            min_paper_num=min_paper_num,
+            max_paper_num=max_paper_num,
+            tag=tag,
+        ).get_first_available_task()
 
-        task = service.get_first_available_task()
-        if task:
-            return Response(task.code, status=status.HTTP_200_OK)
-        else:
+        if not task and tag:
+            # didn't find anything tagged, so try again without
+            task = QuestionMarkingService(
+                question=question,
+                version=version,
+                user=request.user,
+                min_paper_num=min_paper_num,
+                max_paper_num=max_paper_num,
+            ).get_first_available_task()
+
+        if not task:
             return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(task.code, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request, code):

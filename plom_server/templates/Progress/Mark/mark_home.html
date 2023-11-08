@@ -12,7 +12,12 @@
     Marking progress
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="container">
+    <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
+        </p>
+    </div>
+    <div class="container w-100">
         {% for qn in questions %}
             <div class="row">
                 {% for vn in versions %}

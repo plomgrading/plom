@@ -65,14 +65,18 @@ class MarkingInformationView(ManagerRequiredView):
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()
         grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
-            question_avgs, "Question number", "Grade", "Question vs Grade"
+            question_avgs, ylabel="Grade", title="Average Grade vs Question"
         )
         grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
-        corr = self.des._get_question_correlation_heatmap_data().values
+        corr_df = self.des._get_question_correlation_heatmap_data()
+        # TODO: easily might've mixed up row/column here
         corr_heatmap_data = self.d3s.convert_correlation_to_d3_heatmap_format(
-            corr, "Question correlation", "Question", "Question"
+            corr_df.values,
+            title="Question correlation",
+            xlabels=corr_df.columns.to_list(),
+            ylabels=corr_df.index.to_list(),
         )
         corr_heatmap_data = json.dumps(corr_heatmap_data)
 

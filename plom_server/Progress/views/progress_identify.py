@@ -9,6 +9,7 @@ from django_htmx.http import HttpResponseClientRefresh
 from Base.base_group_views import ManagerRequiredView
 
 from Identify.services import IDProgressService
+from ..services import ProgressOverviewService
 
 
 class ProgressIdentifyHome(ManagerRequiredView):
@@ -17,19 +18,13 @@ class ProgressIdentifyHome(ManagerRequiredView):
 
         ids = IDProgressService()
 
-        n_all_id_task = ids.get_all_id_task_count()
-        n_complete_task = ids.get_completed_id_task_count()
-        if n_all_id_task:
-            percent_complete = round(n_complete_task / n_all_id_task * 100)
-        else:
-            percent_complete = 0
-
+        id_task_status_counts = ProgressOverviewService().get_id_task_status_counts()
+        n_all_id_task = sum(id_task_status_counts.values())
         context.update(
             {
                 "id_task_info": ids.get_all_id_task_info(),
                 "all_task_count": n_all_id_task,
-                "completed_task_count": n_complete_task,
-                "percent_complete": percent_complete,
+                "id_task_status_counts": id_task_status_counts,
             }
         )
 

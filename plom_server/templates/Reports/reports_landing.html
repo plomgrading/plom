@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Julian Lapenna
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -13,8 +14,16 @@
 {% endblock page_heading %}
 {% block main_content %}
     <h3>Main Report</h3>
-    <p>Download the report with basic information and analysis for submission to department.</p>
-    <button type="button" class="btn btn-primary">Download Main Report</button>
+    <p>Download the report with basic information and analysis.</p>
+    <form method="post" action="{% url 'report_download' %}">
+        {% csrf_token %}
+        <div class="row">
+            <div>
+                <button type="submit" class="btn btn-success" style="display: inline-block;">Download Report</button>
+                <small style="display: inline-block;">(allow up to 20 seconds for it to generate and download)</small>
+            </div>
+        </div>
+    </form>
     <h3 class="mt-5">Enhanced Report</h3>
     <p>Download the report with enriched analysis and insights.</p>
     <button type="button" class="btn btn-primary">Download Enhanced Report</button>

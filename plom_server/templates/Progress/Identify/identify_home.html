@@ -12,22 +12,15 @@
     Identifying progress
 {% endblock page_heading %}
 {% block main_content %}
+    <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
+        </p>
+    </div>
     <div class="card mb-2 w-25">
-        <div class="progress m-2"
-             style="height: 2em"
-             role="progressbar"
-             aria-valuenow="{{ completed_task_count }}"
-             aria-valuemin="0"
-             aria-valuemax="{{ all_task_count }}">
-            {% if completed_task_count == all_task_count %}
-                <div class="progress-bar bg-success fs-6"
-                     style="width: {{ percent_complete }}%">{{ completed_task_count }} / {{ all_task_count }}</div>
-            {% else %}
-                <div class="progress-bar fs-6" style="width: {{ percent_complete }}%">
-                    {{ completed_task_count }} / {{ all_task_count }}
-                </div>
-            {% endif %}
-        </div>
+        {% with dat=id_task_status_counts %}
+            {% include "Progress/fragments/task_progress_bar.html" with total=all_task_count n_complete=dat|get_item:"Complete" n_todo=dat|get_item:"To Do" n_out=dat|get_item:"Out" %}
+        {% endwith %}
     </div>
     <div class="row">
         <div class="col">
@@ -84,4 +77,11 @@
                  id="imageHere"></div>
         </div>
     </div>
+    <!-- include this for tool-tips on the progress bar -->
+    <script>
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+  })
+    </script>
 {% endblock main_content %}
