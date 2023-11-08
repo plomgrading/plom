@@ -10,7 +10,8 @@ from Base.models import HueyTask
 from Papers.models import Paper
 
 
-class ReassembleTask(HueyTask):
+class ReassembleHueyTask(HueyTask):
+    # OneToOneField makes a field called "reassemblehueytask" in the Paper table
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="reassemble/", null=True)
 

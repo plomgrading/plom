@@ -26,7 +26,7 @@ from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
-from ..models import ReassembleTask
+from ..models import ReassembleHueyTask
 
 
 class ReassembleService:
@@ -455,11 +455,11 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassembleTask.objects.all().prefetch_related("paper"):
+        for task in ReassembleHueyTask.objects.all().prefetch_related("paper"):
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
-            if task.status == ReassembleTask.COMPLETE:
+            if task.status == ReassembleHueyTask.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
                     "reassembled_time_humanised"
@@ -479,11 +479,11 @@ class ReassembleService:
         return status
 
     def create_all_reassembly_tasks(self):
-        """Create all the ReassembleTasks, and save to the database without sending them to Huey."""
+        """Create all the ReassembleHueyTasks, and save to the database without sending them to Huey."""
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
-            ReassembleTask.objects.create(
-                paper=paper_obj, huey_id=None, status=ReassembleTask.TO_DO
+            ReassembleHueyTask.objects.create(
+                paper=paper_obj, huey_id=None, status=ReassembleHueyTask.TO_DO
             )
 
     @transaction.atomic
@@ -498,10 +498,10 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassembletask
+        task = paper_obj.reassemblehueytask
         pdf_build = huey_reassemble_paper(paper_number)
         task.huey_id = pdf_build.id
-        task.status = ReassembleTask.QUEUED
+        task.status = ReassembleHueyTask.QUEUED
         task.save()
 
     @transaction.atomic
@@ -518,7 +518,7 @@ class ReassembleService:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
-        task = paper_obj.reassembletask
+        task = paper_obj.reassemblehueytask
         return task.pdf_file
 
     @transaction.atomic
@@ -533,9 +533,9 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassembletask
+        task = paper_obj.reassemblehueytask
         # if the task is queued then remove it from the queue
-        if task.status == ReassembleTask.QUEUED:
+        if task.status == ReassembleHueyTask.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
         # if there is a file then remove it
@@ -543,22 +543,24 @@ class ReassembleService:
             task.pdf_file.delete()
 
         task.huey_id = None
-        task.status = ReassembleTask.TO_DO
+        task.status = ReassembleHueyTask.TO_DO
         task.save()
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
         """Reset to TODO all reassembly tasks and remove any associated pdfs."""
         queue = get_queue("tasks")
-        for task in ReassembleTask.objects.exclude(status=ReassembleTask.TO_DO).all():
+        for task in ReassembleHueyTask.objects.exclude(
+            status=ReassembleHueyTask.TO_DO
+        ).all():
             # if the task is queued then remove it from the queue
-            if task.status == ReassembleTask.QUEUED:
+            if task.status == ReassembleHueyTask.QUEUED:
                 queue.revoke_by_id(task.huey_id)
             # if there is a file then delete it.
             if task.pdf_file:
                 task.pdf_file.delete()
             task.huey_id = None
-            task.status = ReassembleTask.TO_DO
+            task.status = ReassembleHueyTask.TO_DO
             task.save()
 
     @transaction.atomic
@@ -576,10 +578,10 @@ class ReassembleService:
                 # is complete and not outdated
                 continue
             # otherwise build it!
-            task = ReassembleTask.objects.get(paper__paper_number=pn)
+            task = ReassembleHueyTask.objects.get(paper__paper_number=pn)
             pdf_build = huey_reassemble_paper(pn)
             task.huey_id = pdf_build.id
-            task.status = ReassembleTask.QUEUED
+            task.status = ReassembleHueyTask.QUEUED
             task.save()
 
     @transaction.atomic
@@ -591,7 +593,9 @@ class ReassembleService:
         """
         return [
             task.pdf_file
-            for task in ReassembleTask.objects.filter(status=ReassembleTask.COMPLETE)
+            for task in ReassembleHueyTask.objects.filter(
+                status=ReassembleHueyTask.COMPLETE
+            )
         ]
 
     @transaction.atomic
@@ -614,7 +618,7 @@ def huey_reassemble_paper(paper_number: int) -> None:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
-    task = paper_obj.reassembletask
+    task = paper_obj.reassemblehueytask
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
