@@ -308,23 +308,29 @@ class MarkingStatsService:
     @transaction.atomic
     def filter_marking_task_annotation_info(
         self,
-        paper=None,
+        paper_min=None,
+        paper_max=None,
+        score_min=None,
+        score_max=None,
         question=None,
         version=None,
         username=None,
-        score=None,
     ):
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-        if paper:
-            task_set = task_set.filter(paper__paper_number=paper)
+        if paper_min:
+            task_set = task_set.filter(paper__paper_number__gte=paper_min)
+        if paper_max:
+            task_set = task_set.filter(paper__paper_number__lte=paper_max)
+        if score_min:
+            task_set = task_set.filter(latest_annotation__score__gte=score_min)
+        if score_max:
+            task_set = task_set.filter(latest_annotation__score__lte=score_max)
         if question:
             task_set = task_set.filter(question_number=question)
         if version:
             task_set = task_set.filter(question_version=version)
         if username:
             task_set = task_set.filter(assigned_user__username=username)
-        if score:
-            task_set = task_set.filter(latest_annotation__score=score)
         task_info = {}
         for task in task_set.prefetch_related(
             "latest_annotation", "paper", "assigned_user"

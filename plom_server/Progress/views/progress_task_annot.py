@@ -64,12 +64,16 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
             else:
                 return val
 
+        # We pass ranges for scores and papers to this filter
+        # TODO - get ranges from the filter form - needs some nice multi-range-selector widget or something.
         task_info = mss.filter_marking_task_annotation_info(
-            paper=optional_arg(paper),
+            paper_min=optional_arg(paper),
+            paper_max=optional_arg(paper),
             question=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
-            score=optional_arg(score),
+            score_min=optional_arg(score),
+            score_max=optional_arg(score),
         )
         context.update({"task_info": task_info})
 
