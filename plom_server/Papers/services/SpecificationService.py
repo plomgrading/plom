@@ -108,6 +108,7 @@ def get_the_spec_as_toml():
     is included (if present).
     """
     spec = get_the_spec()
+    print(spec)
     spec.pop("privateSeed", None)
     sv = SpecVerifier(spec)
     return sv.as_toml_string()

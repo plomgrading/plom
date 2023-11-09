@@ -10,11 +10,13 @@ from django.urls import reverse
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
+from Papers.models import Specification
 
 from . import TestSpecPageView
 from ..services import (
     StagingSpecificationService,
     ReferencePDFService,
+    SpecificationUploadService,
 )
 
 
@@ -87,49 +89,30 @@ class TestSpecSubmitView(TestSpecPageView):
 
     def build_context(self):
         context = super().build_context("submit")
-        spec = StagingSpecificationService()
-        pages = spec.get_page_list()
-        n_questions = spec.get_n_questions()
+        spec = Specification.load()
 
         context.update(
             {
-                "num_pages": len(pages),
-                "num_versions": spec.get_n_versions(),
-                "num_questions": n_questions,
-                "id_page": spec.get_id_page_number(),
-                "dnm_pages": ", ".join(f"p. {i}" for i in spec.get_dnm_page_numbers()),
-                "total_marks": spec.get_total_marks(),
+                "num_pages": SpecificationService.get_n_pages(),
+                "num_versions": SpecificationService.get_n_versions(),
+                "num_questions": SpecificationService.get_n_questions(),
+                "id_page": spec.idPage,
+                "dnm_pages": str(spec.doNotMarkPages),
+                "total_marks": SpecificationService.get_total_marks(),
             }
         )
 
         questions = []
-        for i in range(n_questions):
-            one_index = i + 1
+        for q in spec.get_question_list():
             question = {}
             question.update(
                 {
-                    "pages": ", ".join(
-                        f"p. {j}" for j in spec.get_question_pages(one_index)
-                    ),
+                    "pages": q.pages,
+                    "label": q.label,
+                    "mark": q.mark,
+                    "shuffle": q.select,
                 }
             )
-            if spec.has_question(one_index):
-                q_dict = spec.get_question(one_index)
-                question.update(
-                    {
-                        "label": q_dict["label"],
-                        "mark": q_dict["mark"],
-                        "shuffle": q_dict["select"],
-                    }
-                )
-            else:
-                question.update(
-                    {
-                        "label": "",
-                        "mark": "",
-                        "shuffle": "",
-                    }
-                )
             questions.append(question)
         context.update({"questions": questions})
 
@@ -164,10 +147,6 @@ class TestSpecSummaryView(TestSpecSubmitView):
         return ManagerRequiredView.dispatch(self, request)
 
     def get(self, request):
-        spec = StagingSpecificationService()
-        if not spec.is_valid():
-            raise PermissionDenied("Specification not completed yet.")
-
         context = self.build_context()
 
         return render(request, "SpecCreator/summary-page.html", context)
@@ -179,3 +158,11 @@ class TestSpecLaunchView(TestSpecPageView):
     def get(self, request):
         context = self.build_context("launch")
         return render(request, "SpecCreator/launch-page.html", context)
+
+    def post(self, request):
+        data = request.POST
+        if "spec" in data.keys():
+            spec = data["spec"]
+            service = SpecificationUploadService(toml_string=spec)
+            service.save_spec()
+        return render(request, "SpecCreator/validation.html", {})

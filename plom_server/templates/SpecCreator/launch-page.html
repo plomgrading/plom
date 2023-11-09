@@ -1,26 +1,39 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
 -->
-{% extends "SpecCreator/base-spec-2col.html" %}
+{% extends "base/base.html" %}
 {% block title %}
     Create specification
 {% endblock title %}
-{% block right_column %}
-    <div class="w-100 h-100">
-        <div class="h-100">
-            <p>
-                A <strong>&ldquo;test specification&rdquo;</strong>
-                contains information that Plom needs about the structure of your test.
-            </p>
-            <p>
-                The following screens will guide you through creating
-                the test specification.
-            </p>
+{% block page_heading %}
+    Create a test specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <a type="button"
-           class="btn btn-primary btn-lg float-end"
-           href="{% url 'names' %}">Next</a>
+        <div class="card">
+            <form hx-post="{% url 'creator_launch' %}"
+                hx-include="[name='spec']"
+                hx-target="#saving-status">
+                {% csrf_token %}
+                <div class="card-body">
+                    <p>Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam. </p>
+                    <div class="mb-3">
+                        <label for="spec-toml-input" class="form-label">Test specification</label>
+                        <textarea class="form-control mb-3"
+                            id="spec-toml-input" 
+                            name="spec" 
+                            rows="5"
+                            spellcheck="false"></textarea>
+                        <div id="saving-status"></div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-{% endblock right_column %}
+{% endblock main_content %}

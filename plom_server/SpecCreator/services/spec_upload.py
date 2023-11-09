@@ -8,7 +8,7 @@ from fitz import Document
 
 from django.db import transaction
 
-from Base.compat import load_toml_from_path, TOMLDecodeError
+from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
 
 from Preparation.services import TestPreparedSetting, PQVMappingService
 
@@ -53,12 +53,14 @@ class SpecificationUploadService:
         self,
         *,
         toml_file_path: Union[str, Path, None] = None,
+        toml_string: Optional[str] = None,
         reference_pdf_path: Union[str, Path, None] = None,
     ):
         """Construct service with paths and/or model instances.
 
         kwargs:
             toml_file_path: a path to a TOML specification
+            toml_string: a raw string representing a TOML specification
             reference_pdf_path: a path to a reference PDF
         """
         self.spec_dict: Optional[Dict[str, Any]] = None
@@ -69,6 +71,11 @@ class SpecificationUploadService:
                 self.spec_dict = load_toml_from_path(toml_file_path)
             except TOMLDecodeError as e:
                 raise ValueError("Unable to read TOML file.") from e
+        elif toml_string:
+            try:
+                self.spec_dict = load_toml_from_string(toml_string)
+            except TOMLDecodeError as e:
+                raise ValueError("Unable to parse TOML file from string.") from e
 
         if reference_pdf_path:
             try:
