@@ -621,12 +621,13 @@ def huey_reassemble_paper(paper_number: int) -> None:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
-    task = paper_obj.reassemblehueytasktracker
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
         with save_path.open("rb") as f:
+            # TODO: IMHO, the pdf file does not belong in the Tracker obj
+            task = paper_obj.reassemblehueytasktracker
             # delete any old file if it exists
             if task.pdf_file:
                 task.pdf_file.delete()
