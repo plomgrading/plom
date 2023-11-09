@@ -85,7 +85,8 @@ class ExtraPagePDFHueyTask(BaseHueyTaskTracker):
     Note that this inherits fields from the base class table.  We add
     extra function to this to ensure there can only be one such task.
 
-    TODO: wasn't there some kind of SingletonHueyTask for this?  Issue #3130
+    There was an attempt to make a common SingletonHueyTaskTracker but
+    for now we're just duplicating that here (Issue #3130).
     """
 
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")
@@ -109,7 +110,8 @@ class ScrapPaperPDFHueyTask(BaseHueyTaskTracker):
     Note that this inherits fields from the HueyTask table. We add
     extra function to this to ensure there can only be one such task.
 
-    TODO: wasn't there some kind of SingletonHueyTask for this?  Issue #3130
+    There was an attempt to make a common SingletonHueyTaskTracker but
+    for now we're just duplicating that here (Issue #3130).
     """
 
     scrap_paper_pdf = models.FileField(upload_to="sourceVersions/")

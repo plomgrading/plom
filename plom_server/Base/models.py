@@ -136,28 +136,6 @@ class BaseAction(PolymorphicModel):
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
 
 
-class SingletonHueyTask(BaseHueyTaskTracker):
-    """We define a singleton model for singleton huey tasks.
-
-    This will be used for jobs such as extra-page production.
-    """
-
-    class Meta:
-        abstract = True
-
-    def save(self, *args, **kwargs):
-        SingletonHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = cls.objects.get_or_create()
-        return obj
-
-
 class Tag(models.Model):
     """Represents a text entry that can have a many-to-one relationship with another table.
 
