@@ -17,18 +17,20 @@
         </div>
         <div class="card">
             <form hx-post="{% url 'creator_launch' %}"
-                hx-include="[name='spec']"
-                hx-target="#saving-status">
+                  hx-include="[name='spec']"
+                  hx-target="#saving-status">
                 {% csrf_token %}
                 <div class="card-body">
-                    <p>Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam. </p>
+                    <p>
+                        Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam.
+                    </p>
                     <div class="mb-3">
                         <label for="spec-toml-input" class="form-label">Test specification</label>
                         <textarea class="form-control mb-3"
-                            id="spec-toml-input" 
-                            name="spec" 
-                            rows="5"
-                            spellcheck="false"></textarea>
+                                  id="spec-toml-input"
+                                  name="spec"
+                                  rows="5"
+                                  spellcheck="false"></textarea>
                         <div id="saving-status"></div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
