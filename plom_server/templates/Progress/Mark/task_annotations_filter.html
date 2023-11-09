@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
--->
+  -->
 {% extends "base/base.html" %}
 {% block title %}
     Browse marking
@@ -79,7 +79,7 @@
                     </div>
                 </div>
                 <div class="row my-2">
-                    <label class="col-sm-1 col-form-label" for="username">User:</label>
+                    <label class="col-sm-1 col-form-label" for="username">Marker:</label>
                     <div class="col-sm-4">
                         <select name="username" class="form-select">
                             <option>*</option>
@@ -105,14 +105,14 @@
                             <table class="table table-sm table-bordered text-center sortable">
                                 <thead>
                                     <tr>
-                                        <th>Paper</th>
-                                        <th>Question</th>
-                                        <th>Version</th>
+                                        <th>P</th>
+                                        <th>Q</th>
+                                        <th>V</th>
                                         <th>Status</th>
                                         <th>Last update</th>
-                                        <th>Username</th>
+                                        <th>Marker</th>
                                         <th>Score</th>
-                                        <th>View</th>
+                                        <th>Show</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -122,11 +122,11 @@
                                             <td>{{ task_data.question }}</td>
                                             <td>{{ task_data.version }}</td>
                                             {% if task_data.status == "Complete" %}
-                                                <td class="bg-success">{{ task_data.status }}</td>
+                                                <td class="bg-success-subtle">{{ task_data.status }}</td>
                                             {% elif task_data.status == "To Do" %}
-                                                <td class="bg-warning">{{ task_data.status }}</td>
+                                                <td class="bg-warning-subtle">{{ task_data.status }}</td>
                                             {% elif task_data.status == "Out" %}
-                                                <td class="bg-info">{{ task_data.status }}</td>
+                                                <td class="bg-info-subtle">{{ task_data.status }}</td>
                                             {% else %}
                                                 <td>{{ task_data.status }}</td>
                                             {% endif %}
@@ -134,6 +134,7 @@
                                             <td>{{ task_data.username }}</td>
                                             <td>{{ task_data.score }}</td>
                                             <td class="text-start">
+                                                <a class="btn btn-outline-primary">details</a>
                                                 {% if task_data.status %}
                                                     <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
                                                             hx-target="#imageHere"

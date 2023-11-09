@@ -80,22 +80,6 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         return render(request, "Progress/Mark/task_annotations_filter.html", context)
 
 
-class ProgressTaskAnnotationView(LeadMarkerOrManagerView):
-    def get(self, request, question, version):
-        context = super().build_context()
-        context.update(
-            {
-                "question": question,
-                "version": version,
-                "task_info": MarkingStatsService().get_marking_task_annotation_info(
-                    question, version
-                ),
-            }
-        )
-
-        return render(request, "Progress/Mark/task_annotations.html", context)
-
-
 class AnnotationImageWrapView(LeadMarkerOrManagerView):
     def get(self, request, paper, question):
         annot = MarkingTaskService().get_latest_annotation(paper, question)
