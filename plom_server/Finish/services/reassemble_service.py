@@ -614,6 +614,7 @@ class ReassembleService:
         return zfly.generator()
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
 def huey_reassemble_paper(paper_number: int) -> None:
     try:

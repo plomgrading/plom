@@ -16,8 +16,9 @@ from ..models import ExtraPagePDFHueyTask as ExtraPagePDFTask
 log = logging.getLogger("ExtraPageService")
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)  # so that the task knows its ID etc.
-def huey_build_the_extra_page_pdf(task=None):
+def huey_build_the_extra_page_pdf(task=None) -> None:
     """Build a single test-paper."""
     from plom.create import build_extra_page_pdf
 

@@ -16,8 +16,10 @@ from ..models import ScrapPaperPDFHueyTask as ScrapPaperPDFTask
 log = logging.getLogger("ScrapPaperService")
 
 
-@db_task(queue="tasks", context=True)  # so that the task knows its ID etc.
-def huey_build_the_scrap_paper_pdf(task=None):
+# The decorated function returns a ``huey.api.Result``
+# ``context=True`` so that the task knows its ID etc.
+@db_task(queue="tasks", context=True)
+def huey_build_the_scrap_paper_pdf(task=None) -> None:
     """Build a single scrap paper pdf."""
     from plom.create import build_scrap_paper_pdf
 

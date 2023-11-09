@@ -10,7 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -154,7 +154,7 @@ class ScanService:
             debug_jpeg=debug_jpeg,
         )
 
-    def split_and_save_bundle_images(self, bundle_pk, *, debug_jpeg=False):
+    def split_and_save_bundle_images(self, bundle_pk: int, *, debug_jpeg=False):
         """Read a PDF document and save page images to filesystem/database.
 
         Args:
@@ -1187,8 +1187,11 @@ class ScanService:
 # ----------------------------------------
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
+def huey_parent_split_bundle_task(
+    bundle_pk, *, debug_jpeg: Optional[bool] = False
+) -> None:
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1243,8 +1246,9 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
             bundle_obj.save()
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_parent_read_qr_codes_task(bundle_pk):
+def huey_parent_read_qr_codes_task(bundle_pk: int) -> None:
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1285,6 +1289,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
     QRErrorService().check_read_qr_codes(bundle_obj)
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
 def huey_child_get_page_image(
     bundle_pk: int,
@@ -1355,8 +1360,11 @@ def huey_child_get_page_image(
     }
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int, *, quiet=True) -> Dict[str, Any]:
+def huey_child_parse_qr_code(
+    image_pk: int, *, quiet: Optional[bool] = True
+) -> Dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     Args:

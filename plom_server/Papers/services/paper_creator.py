@@ -26,6 +26,7 @@ from ..models import (
 log = logging.getLogger("PaperCreatorService")
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
 @transaction.atomic
 def _create_paper_with_qvmapping(

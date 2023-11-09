@@ -26,8 +26,9 @@ from Preparation.models import PaperSourcePDF
 from ..models import PDFHueyTask
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_build_single_paper(index: int, spec: dict, question_versions: dict):
+def huey_build_single_paper(index: int, spec: dict, question_versions: dict) -> None:
     """Build a single paper.
 
     It is important to understand that running this function starts an
@@ -48,10 +49,11 @@ def huey_build_single_paper(index: int, spec: dict, question_versions: dict):
             task.save()
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
 def huey_build_prenamed_paper(
     index: int, spec: dict, question_versions: dict, student_info: dict
-):
+) -> None:
     """Build a single paper and prename it.
 
     It is important to understand that running this function starts an
@@ -74,8 +76,11 @@ def huey_build_prenamed_paper(
             task.save()
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_build_single_paper_FLAKY(index: int, spec: dict, question_versions: dict):
+def huey_build_single_paper_FLAKY(
+    index: int, spec: dict, question_versions: dict
+) -> None:
     """DEBUG ONLY: build a paper with a random chance of throwing an error.
 
     It is important to understand that running this function starts an
