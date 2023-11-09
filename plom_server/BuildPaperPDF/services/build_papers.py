@@ -26,6 +26,68 @@ from Preparation.models import PaperSourcePDF
 from ..models import PDFHueyTask
 
 
+@db_task(queue="tasks")
+def huey_build_single_paper(index: int, spec: dict, question_versions: dict):
+    """Build a single paper.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+    """
+    with TemporaryDirectory() as tempdir:
+        save_path = make_PDF(
+            spec=spec,
+            papernum=index,
+            question_versions=question_versions,
+            where=pathlib.Path(tempdir),
+            source_versions_path=PaperSourcePDF.upload_to(),
+        )
+        paper = Paper.objects.get(paper_number=index)
+        task = paper.pdfhueytask
+        with save_path.open("rb") as f:
+            task.pdf_file = File(f, name=save_path.name)
+            task.save()
+
+
+@db_task(queue="tasks")
+def huey_build_prenamed_paper(
+    index: int, spec: dict, question_versions: dict, student_info: dict
+):
+    """Build a single paper and prename it.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+    """
+    with TemporaryDirectory() as tempdir:
+        save_path = make_PDF(
+            spec=spec,
+            papernum=index,
+            question_versions=question_versions,
+            extra=student_info,
+            where=pathlib.Path(tempdir),
+            source_versions_path=PaperSourcePDF.upload_to(),
+        )
+
+        paper = Paper.objects.get(paper_number=index)
+        task = paper.pdfhueytask
+        with save_path.open("rb") as f:
+            task.pdf_file = File(f, name=save_path.name)
+            task.save()
+
+
+@db_task(queue="tasks")
+def huey_build_single_paper_FLAKY(index: int, spec: dict, question_versions: dict):
+    """DEBUG ONLY: build a paper with a random chance of throwing an error.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+    """
+    roll = random.randint(1, 10)
+    if roll % 5 == 0:
+        raise ValueError("Error! This didn't work.")
+
+    make_PDF(spec=spec, papernum=index, question_versions=question_versions)
+
+
 class BuildPapersService:
     """Generate and stamp test-paper PDFs."""
 
@@ -82,63 +144,12 @@ class BuildPapersService:
 
     def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper, with huey!"""
-        # TODO: self._build_single_paper looks broken (Issue #3133)
-        res = self._build_single_paper(index, spec, question_versions)
+        res = huey_build_single_paper(index, spec, question_versions)
         # TODO: potential race calling create_task after enqueuing
         task_obj = self.create_task(index, res.id)
         task_obj.status = PDFHueyTask.QUEUED
         task_obj.save()
         return task_obj
-
-    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
-    @db_task(queue="tasks")
-    def _build_single_paper(index: int, spec: dict, question_versions: dict):
-        """Build a single test-paper."""
-        with TemporaryDirectory() as tempdir:
-            save_path = make_PDF(
-                spec=spec,
-                papernum=index,
-                question_versions=question_versions,
-                where=pathlib.Path(tempdir),
-                source_versions_path=PaperSourcePDF.upload_to(),
-            )
-            paper = Paper.objects.get(paper_number=index)
-            task = paper.pdfhueytask
-            with save_path.open("rb") as f:
-                task.pdf_file = File(f, name=save_path.name)
-                task.save()
-
-    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
-    @db_task(queue="tasks")
-    def _build_prenamed_paper(
-        index: int, spec: dict, question_versions: dict, student_info: dict
-    ):
-        """Build a single test-paper and prename it."""
-        with TemporaryDirectory() as tempdir:
-            save_path = make_PDF(
-                spec=spec,
-                papernum=index,
-                question_versions=question_versions,
-                extra=student_info,
-                where=pathlib.Path(tempdir),
-                source_versions_path=PaperSourcePDF.upload_to(),
-            )
-
-            paper = Paper.objects.get(paper_number=index)
-            task = paper.pdfhueytask
-            with save_path.open("rb") as f:
-                task.pdf_file = File(f, name=save_path.name)
-                task.save()
-
-    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
-    @db_task(queue="tasks")
-    def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
-        """DEBUG ONLY: build a test-paper with a random chance of throwing an error."""
-        roll = random.randint(1, 10)
-        if roll % 5 == 0:
-            raise ValueError("Error! This didn't work.")
-
-        make_PDF(spec=spec, papernum=index, question_versions=question_versions)
 
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers."""
@@ -178,13 +189,11 @@ class BuildPapersService:
             paper_number = task.paper.paper_number
             if task.student_name and task.student_id:
                 info_dict = {"id": task.student_id, "name": task.student_name}
-                # TODO: self looks broken (Issue #3133)
-                res = self._build_prenamed_paper(
+                res = huey_build_prenamed_paper(
                     paper_number, spec, qvmap[paper_number], info_dict
                 )
             else:
-                # TODO: self._build_single_paper looks broken (Issue #3133)
-                res = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+                res = huey_build_single_paper(paper_number, spec, qvmap[paper_number])
 
             task.huey_id = res.id
             task.status = PDFHueyTask.QUEUED
@@ -197,11 +206,9 @@ class BuildPapersService:
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
-            # TODO: self looks broken (Issue #3133)
-            res = self._build_prenamed_paper(paper_num, spec, qv_row, info_dict)
+            res = huey_build_prenamed_paper(paper_num, spec, qv_row, info_dict)
         else:
-            # TODO: self._build_single_paper looks broken (Issue #3133)
-            res = self._build_single_paper(paper_num, spec, qv_row)
+            res = huey_build_single_paper(paper_num, spec, qv_row)
 
         task.huey_id = res.id
         task.status = PDFHueyTask.QUEUED
@@ -229,8 +236,7 @@ class BuildPapersService:
         retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
-            # TODO: self._build_single_paper looks broken (Issue #3133)
-            res = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+            res = huey_build_single_paper(paper_number, spec, qvmap[paper_number])
             task.huey_id = res.id
             task.status = PDFHueyTask.QUEUED
             task.save()
