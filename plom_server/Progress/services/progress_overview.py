@@ -9,7 +9,7 @@ from django.db.models import Count, Min, Max
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
-from Papers.models import IDPage, Image
+from Papers.models import IDPage, Image, Paper
 from Papers.services import SpecificationService
 
 
@@ -197,13 +197,19 @@ class ProgressOverviewService:
     @transaction.atomic
     def get_first_last_used_paper_number(self) -> Tuple[int, int]:
         """Return the first/last paper that has some marking or iding task."""
+
+        # include a default of 1 in case there are no valid id or marking tasks
         min_max_from_marking = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).aggregate(Min("paper__paper_number"), Max("paper__paper_number"))
+        ).aggregate(
+            Min("paper__paper_number", default=1), Max("paper__paper_number", default=1)
+        )
 
         min_max_from_iding = PaperIDTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).aggregate(Min("paper__paper_number"), Max("paper__paper_number"))
+        ).aggregate(
+            Min("paper__paper_number", default=1), Max("paper__paper_number", default=1)
+        )
 
         pn_min = min(
             min_max_from_marking["paper__paper_number__min"],

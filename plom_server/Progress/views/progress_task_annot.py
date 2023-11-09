@@ -36,6 +36,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
 
         context.update(
             {
+                "paper": paper,
                 "question": question,
                 "version": version,
                 "username": username,

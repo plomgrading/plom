@@ -13,6 +13,10 @@
     {% else %}
         by {{ username }}
     {% endif %}
+    {% if paper == "*" %}
+    {% else %}
+        of paper {{ paper }}
+    {% endif %}
     {% if question == "*" %}
     {% else %}
         of q.{{ question }}
@@ -40,7 +44,7 @@
                         <select name="paper" class="form-select">
                             <option>*</option>
                             {% for pn in paper_list %}
-                                <option {% if paper == qn %}selected{% endif %}>{{ pn }}</option>
+                                <option {% if paper == pn %}selected{% endif %}>{{ pn }}</option>
                             {% endfor %}
                         </select>
                     </div>
