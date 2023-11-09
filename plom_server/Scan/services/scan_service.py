@@ -168,11 +168,11 @@ class ScanService:
             None
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
+        res = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
         with transaction.atomic():
             PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                huey_id=task.id,
+                huey_id=res.id,
                 status=PagesToImagesHueyTask.QUEUED,
                 created=timezone.now(),
             )
@@ -455,11 +455,11 @@ class ScanService:
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
-        task = huey_parent_read_qr_codes_task(bundle_pk)
+        res = huey_parent_read_qr_codes_task(bundle_pk)
         with transaction.atomic():
             ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                huey_id=task.id,
+                huey_id=res.id,
                 status=ManageParseQR.QUEUED,
                 created=timezone.now(),
             )

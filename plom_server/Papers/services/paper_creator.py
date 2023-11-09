@@ -93,12 +93,12 @@ class PaperCreatorService:
 
     @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
-        paper_task = _create_paper_with_qvmapping(
-            self.spec_obj, paper_number, qv_mapping
-        )
-        paper_task_obj = CreatePaperHueyTask(
-            huey_id=paper_task.id, paper_number=paper_number
-        )
+        res = _create_paper_with_qvmapping(self.spec_obj, paper_number, qv_mapping)
+        # TODO: potential race condition if HueyTaskTracker created after
+        # and if _create_paper_with_qvmapping accesses this, which in this
+        # case I don't think it does, but should perhaps be changed to the
+        # pattern used elsewhere.
+        paper_task_obj = CreatePaperHueyTask(huey_id=res.id, paper_number=paper_number)
         paper_task_obj.status = "queued"
         paper_task_obj.save()
 

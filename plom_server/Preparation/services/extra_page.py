@@ -40,6 +40,7 @@ class ExtraPageService:
         task_obj.huey_id = None
         task_obj.save()
 
+    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
     @db_task(queue="tasks", context=True)  # so that the task knows its ID etc.
     def _build_the_extra_page_pdf(task=None):
         """Build a single test-paper."""
@@ -58,6 +59,8 @@ class ExtraPageService:
             # worker. It should be!
             task_obj = ExtraPagePDFTask.load()
             if str(task_obj.huey_id) != str(task.id):
+                # TODO: if the task was set to retry, it would probably do so which would
+                # give the race condition time to resolve...
                 raise ValueError(
                     f"Task's huey id {task_obj.huey_id} does not match the id supplied by the huey worker {task.id}."
                 )
@@ -72,8 +75,9 @@ class ExtraPageService:
         task_obj = ExtraPagePDFTask.load()
         if task_obj.status == ExtraPagePDFTask.COMPLETE:
             return
-        pdf_build = self._build_the_extra_page_pdf()
-        task_obj.huey_id = pdf_build.id
+        res = self._build_the_extra_page_pdf()
+        # TODO: there is a race here b/c the _build function looks for this object by this id
+        task_obj.huey_id = res.id
         task_obj.status = ExtraPagePDFTask.QUEUED
         task_obj.save()
 

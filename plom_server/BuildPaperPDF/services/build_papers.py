@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
 import random
@@ -81,12 +82,15 @@ class BuildPapersService:
 
     def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper, with huey!"""
-        pdf_build = self._build_single_paper(index, spec, question_versions)
-        task_obj = self.create_task(index, pdf_build.id)
+        # TODO: self._build_single_paper looks broken (Issue #3133)
+        res = self._build_single_paper(index, spec, question_versions)
+        # TODO: potential race calling create_task after enqueuing
+        task_obj = self.create_task(index, res.id)
         task_obj.status = PDFHueyTask.QUEUED
         task_obj.save()
         return task_obj
 
+    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
     @db_task(queue="tasks")
     def _build_single_paper(index: int, spec: dict, question_versions: dict):
         """Build a single test-paper."""
@@ -104,6 +108,7 @@ class BuildPapersService:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
 
+    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
     @db_task(queue="tasks")
     def _build_prenamed_paper(
         index: int, spec: dict, question_versions: dict, student_info: dict
@@ -125,6 +130,7 @@ class BuildPapersService:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
 
+    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
     @db_task(queue="tasks")
     def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
         """DEBUG ONLY: build a test-paper with a random chance of throwing an error."""
@@ -172,15 +178,15 @@ class BuildPapersService:
             paper_number = task.paper.paper_number
             if task.student_name and task.student_id:
                 info_dict = {"id": task.student_id, "name": task.student_name}
-                pdf_build = self._build_prenamed_paper(
+                # TODO: self looks broken (Issue #3133)
+                res = self._build_prenamed_paper(
                     paper_number, spec, qvmap[paper_number], info_dict
                 )
             else:
-                pdf_build = self._build_single_paper(
-                    paper_number, spec, qvmap[paper_number]
-                )
+                # TODO: self._build_single_paper looks broken (Issue #3133)
+                res = self._build_single_paper(paper_number, spec, qvmap[paper_number])
 
-            task.huey_id = pdf_build.id
+            task.huey_id = res.id
             task.status = PDFHueyTask.QUEUED
             task.save()
 
@@ -191,11 +197,13 @@ class BuildPapersService:
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
-            pdf_build = self._build_prenamed_paper(paper_num, spec, qv_row, info_dict)
+            # TODO: self looks broken (Issue #3133)
+            res = self._build_prenamed_paper(paper_num, spec, qv_row, info_dict)
         else:
-            pdf_build = self._build_single_paper(paper_num, spec, qv_row)
+            # TODO: self._build_single_paper looks broken (Issue #3133)
+            res = self._build_single_paper(paper_num, spec, qv_row)
 
-        task.huey_id = pdf_build.id
+        task.huey_id = res.id
         task.status = PDFHueyTask.QUEUED
         task.save()
 
@@ -221,10 +229,9 @@ class BuildPapersService:
         retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
-            pdf_build = self._build_single_paper(
-                paper_number, spec, qvmap[paper_number]
-            )
-            task.huey_id = pdf_build.id
+            # TODO: self._build_single_paper looks broken (Issue #3133)
+            res = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+            task.huey_id = res.id
             task.status = PDFHueyTask.QUEUED
             task.save()
 

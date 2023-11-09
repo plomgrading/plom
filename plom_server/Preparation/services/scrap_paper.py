@@ -40,6 +40,7 @@ class ScrapPaperService:
         task_obj.huey_id = None
         task_obj.save()
 
+    # TODO: IMHO this does not belong inside the class: no use of self (Issue #3133)
     @db_task(queue="tasks", context=True)  # so that the task knows its ID etc.
     def _build_the_scrap_paper_pdf(task=None):
         """Build a single scrap paper pdf."""
@@ -73,8 +74,9 @@ class ScrapPaperService:
         task_obj = ScrapPaperPDFTask.load()
         if task_obj.status == ScrapPaperPDFTask.COMPLETE:
             return
-        pdf_build = self._build_the_scrap_paper_pdf()
-        task_obj.huey_id = pdf_build.id
+        res = self._build_the_scrap_paper_pdf()
+        # TODO: there is a race here b/c the _build function looks for this object by this id
+        task_obj.huey_id = res.id
         task_obj.status = ScrapPaperPDFTask.QUEUED
         task_obj.save()
 
