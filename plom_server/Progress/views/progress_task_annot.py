@@ -9,7 +9,7 @@ from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
 
 
-class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
+class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
     def get(self, request):
         mss = MarkingStatsService()
 
@@ -53,9 +53,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         # don't actually filter **all** tasks
         if all(X == "*" for X in [paper, question, version, username, score]):
             context.update({"warning": True})
-            return render(
-                request, "Progress/Mark/task_annotations_filter.html", context
-            )
+            return render(request, "Progress/Mark/task_filter.html", context)
 
         # at least one filter is set, so continue
         def optional_arg(val):
@@ -77,7 +75,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         )
         context.update({"task_info": task_info})
 
-        return render(request, "Progress/Mark/task_annotations_filter.html", context)
+        return render(request, "Progress/Mark/task_filter.html", context)
 
 
 class AnnotationImageWrapView(LeadMarkerOrManagerView):
@@ -138,3 +136,8 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
             }
         )
         return render(request, "Progress/all_task_overview.html", context=context)
+
+
+class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
+    def get(self, request):
+        pass
