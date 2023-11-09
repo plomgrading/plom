@@ -25,7 +25,7 @@ import logging
 queue = get_queue("tasks")
 
 
-class BaseHueyTask(models.Model):
+class BaseHueyTaskTracker(models.Model):
     """A general-purpose model for tracking Huey tasks.
 
     It keeps track of a Huey task's ID, the time created, and the
@@ -136,7 +136,7 @@ class BaseAction(PolymorphicModel):
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
 
 
-class SingletonHueyTask(BaseHueyTask):
+class SingletonHueyTask(BaseHueyTaskTracker):
     """We define a singleton model for singleton huey tasks.
 
     This will be used for jobs such as extra-page production.
@@ -198,10 +198,10 @@ def start_task(signal, task):
         return
 
     try:
-        task_obj = BaseHueyTask.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTask.STARTED
+        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = BaseHueyTaskTracker.STARTED
         task_obj.save()
-    except BaseHueyTask.DoesNotExist:
+    except BaseHueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us.
         print(
             f"(Started) Task {task.id} = {task.name} {task.args} = is no longer in the database."
@@ -213,10 +213,10 @@ def end_task(signal, task):
     if task.kwargs.get("quiet", False):
         return
     try:
-        task_obj = BaseHueyTask.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTask.COMPLETE
+        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = BaseHueyTaskTracker.COMPLETE
         task_obj.save()
-    except BaseHueyTask.DoesNotExist:
+    except BaseHueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us.
         print(
             f"(Completed) Task {task.id} = {task.name} {task.args} = is no longer in the database."
@@ -230,11 +230,11 @@ def error_task(signal, task, exc):
     if task.kwargs.get("quiet", False):
         return
     try:
-        task_obj = BaseHueyTask.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTask.ERROR
+        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = BaseHueyTaskTracker.ERROR
         task_obj.message = exc
         task_obj.save()
-    except BaseHueyTask.DoesNotExist:
+    except BaseHueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us.
         print(
             f"(Error) Task {task.id} = {task.name} {task.args} = is no longer in the database."

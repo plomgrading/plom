@@ -6,7 +6,8 @@
 from django.db import models
 from django.conf import settings
 
-from Base.models import SingletonBaseModel, BaseHueyTask
+from Base.models import SingletonBaseModel
+from Base.models import BaseHueyTaskTracker
 
 
 class PaperSourcePDF(models.Model):
@@ -78,10 +79,10 @@ class StagingPQVMapping(models.Model):
 # Make a table for the extra page pdf and the associated huey task
 
 
-class ExtraPagePDFHueyTask(BaseHueyTask):
+class ExtraPagePDFHueyTask(BaseHueyTaskTracker):
     """Table to store the exta page pdf huey task.
 
-    Note that this inherits fields from the BaseHueyTask table.  We add
+    Note that this inherits fields from the base class table.  We add
     extra function to this to ensure there can only be one such task.
 
     TODO: wasn't there some kind of SingletonHueyTask for this?  Issue #3130
@@ -102,7 +103,7 @@ class ExtraPagePDFHueyTask(BaseHueyTask):
         return obj
 
 
-class ScrapPaperPDFHueyTask(BaseHueyTask):
+class ScrapPaperPDFHueyTask(BaseHueyTaskTracker):
     """Table to store the scrap paper pdf huey task.
 
     Note that this inherits fields from the HueyTask table. We add
