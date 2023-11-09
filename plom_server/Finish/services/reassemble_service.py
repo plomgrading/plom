@@ -26,7 +26,7 @@ from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
-from ..models import ReassembleHueyTask
+from ..models import ReassembleHueyTaskTracker
 
 
 class ReassembleService:
@@ -455,11 +455,13 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassembleHueyTask.objects.all().prefetch_related("paper"):
+        for task in ReassembleHueyTaskTracker.objects.all().prefetch_related("paper"):
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
-            if task.status == ReassembleHueyTask.COMPLETE:
+            # TODO: is it ok to talk use BaseHueyTaskTracker.COMPLETE here?
+            # TODO: or is that only allowed with the PolymorphicModel stuff?
+            if task.status == ReassembleHueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
                     "reassembled_time_humanised"
@@ -479,11 +481,11 @@ class ReassembleService:
         return status
 
     def create_all_reassembly_tasks(self):
-        """Create all the ReassembleHueyTasks, and save to the database without sending them to Huey."""
+        """Create all the ReassembleHueyTaskTrackers, and save to the database without sending them to Huey."""
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
-            ReassembleHueyTask.objects.create(
-                paper=paper_obj, huey_id=None, status=ReassembleHueyTask.TO_DO
+            ReassembleHueyTaskTracker.objects.create(
+                paper=paper_obj, huey_id=None, status=ReassembleHueyTaskTracker.TO_DO
             )
 
     @transaction.atomic
@@ -498,10 +500,10 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassemblehueytask
-        pdf_build = huey_reassemble_paper(paper_number)
-        task.huey_id = pdf_build.id
-        task.status = ReassembleHueyTask.QUEUED
+        task = paper_obj.reassemblehueytasktracker
+        res = huey_reassemble_paper(paper_number)
+        task.huey_id = res.id
+        task.status = ReassembleHueyTaskTracker.QUEUED
         task.save()
 
     @transaction.atomic
@@ -518,7 +520,7 @@ class ReassembleService:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
-        task = paper_obj.reassemblehueytask
+        task = paper_obj.reassemblehueytasktracker
         return task.pdf_file
 
     @transaction.atomic
@@ -533,9 +535,9 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassemblehueytask
+        task = paper_obj.reassemblehueytasktracker
         # if the task is queued then remove it from the queue
-        if task.status == ReassembleHueyTask.QUEUED:
+        if task.status == ReassembleHueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
         # if there is a file then remove it
@@ -543,24 +545,24 @@ class ReassembleService:
             task.pdf_file.delete()
 
         task.huey_id = None
-        task.status = ReassembleHueyTask.TO_DO
+        task.status = ReassembleHueyTaskTracker.TO_DO
         task.save()
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
         """Reset to TODO all reassembly tasks and remove any associated pdfs."""
         queue = get_queue("tasks")
-        for task in ReassembleHueyTask.objects.exclude(
-            status=ReassembleHueyTask.TO_DO
+        for task in ReassembleHueyTaskTracker.objects.exclude(
+            status=ReassembleHueyTaskTracker.TO_DO
         ).all():
             # if the task is queued then remove it from the queue
-            if task.status == ReassembleHueyTask.QUEUED:
+            if task.status == ReassembleHueyTaskTracker.QUEUED:
                 queue.revoke_by_id(task.huey_id)
             # if there is a file then delete it.
             if task.pdf_file:
                 task.pdf_file.delete()
             task.huey_id = None
-            task.status = ReassembleHueyTask.TO_DO
+            task.status = ReassembleHueyTaskTracker.TO_DO
             task.save()
 
     @transaction.atomic
@@ -578,10 +580,10 @@ class ReassembleService:
                 # is complete and not outdated
                 continue
             # otherwise build it!
-            task = ReassembleHueyTask.objects.get(paper__paper_number=pn)
-            pdf_build = huey_reassemble_paper(pn)
-            task.huey_id = pdf_build.id
-            task.status = ReassembleHueyTask.QUEUED
+            task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
+            res = huey_reassemble_paper(pn)
+            task.huey_id = res.id
+            task.status = ReassembleHueyTaskTracker.QUEUED
             task.save()
 
     @transaction.atomic
@@ -593,8 +595,8 @@ class ReassembleService:
         """
         return [
             task.pdf_file
-            for task in ReassembleHueyTask.objects.filter(
-                status=ReassembleHueyTask.COMPLETE
+            for task in ReassembleHueyTaskTracker.objects.filter(
+                status=ReassembleHueyTaskTracker.COMPLETE
             )
         ]
 
@@ -618,7 +620,7 @@ def huey_reassemble_paper(paper_number: int) -> None:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
-    task = paper_obj.reassemblehueytask
+    task = paper_obj.reassemblehueytasktracker
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
