@@ -168,14 +168,19 @@ class ScanService:
             None
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        res = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
         with transaction.atomic():
-            PagesToImagesHueyTask.objects.create(
+            x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                huey_id=res.id,
-                status=PagesToImagesHueyTask.QUEUED,
+                status=PagesToImagesHueyTask.TO_DO,
                 created=timezone.now(),
             )
+        res = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
+        # TODO: still a race condition here in that this id may not be written
+        # by the time the huey job above runs (and that job looks for this id)
+        with transaction.atomic():
+            x.huey_id = res.id
+            x.status = PagesToImagesHueyTask.QUEUED
+            x.save()
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
@@ -455,14 +460,18 @@ class ScanService:
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
-        res = huey_parent_read_qr_codes_task(bundle_pk)
         with transaction.atomic():
-            ManageParseQR.objects.create(
+            x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                huey_id=res.id,
-                status=ManageParseQR.QUEUED,
+                status=ManageParseQR.TO_DO,
                 created=timezone.now(),
             )
+        res = huey_parent_read_qr_codes_task(bundle_pk)
+        # TODO: check if huey job here uses the id or status: could be a race
+        with transaction.atomic():
+            x.huey_id = res.id
+            x.status = ManageParseQR.QUEUED
+            x.save()
 
     def map_bundle_pages(self, bundle_pk, *, papernum, questions):
         """WIP support for hwscan.
@@ -1219,6 +1228,9 @@ def huey_parent_split_bundle_task(
             # TODO - check for error status here.
 
             with transaction.atomic():
+                # TODO: note get the tracker object by its bundle not its ID
+                # avoiding a race condition: its possible the tracker itself
+                # still says "TO_DO" rather than "ENQUEUED"; that's ok from our PoV.
                 task_obj = PagesToImagesHueyTask.objects.get(bundle=bundle_obj)
                 task_obj.completed_pages = count
                 task_obj.save()
