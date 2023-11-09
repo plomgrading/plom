@@ -5,13 +5,17 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Browse tasks and annotations
+    Browse marking
 {% endblock title %}
 {% block page_heading %}
-    Browse tasks and annotations
+    Browse marking
     {% if username == "*" %}
     {% else %}
         by {{ username }}
+    {% endif %}
+    {% if paper == "*" %}
+    {% else %}
+        of paper {{ paper }}
     {% endif %}
     {% if question == "*" %}
     {% else %}
@@ -21,15 +25,29 @@
     {% else %}
         of v.{{ version }}
     {% endif %}
+    {% if score == "*" %}
+    {% else %}
+        with score {{ score }}
+    {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
     <div class="w-100">
-        <div class="row">
-            <form class="p-4 mb-4"
+        {% if warning %}<div class="alert alert-info w-25 my-2">Please set at least one  filter.</div>{% endif %}
+        <div class="row border rounded my-4">
+            <form class="p-4 mb-2 w-75"
                   action="{% url 'progress_task_annotation_filter' %}"
                   method="get">
-                <div class="row">
+                <div class="row my-2">
+                    <label class="col-sm-1 col-form-label" for="paper">Paper:</label>
+                    <div class="col-sm-4">
+                        <select name="paper" class="form-select">
+                            <option>*</option>
+                            {% for pn in paper_list %}
+                                <option {% if paper == pn %}selected{% endif %}>{{ pn }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <label class="col-sm-1 col-form-label" for="question">Question:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
@@ -39,17 +57,8 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <label class="col-sm-1 col-form-label" for="username">User:</label>
-                    <div class="col-sm-4">
-                        <select name="username" class="form-select">
-                            <option>*</option>
-                            {% for un in username_list %}
-                                <option {% if username == un %}selected{% endif %}>{{ un }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
-                <div class="row">
+                <div class="row my-2">
                     <label class="col-sm-1 col-form-label" for="version">Version:</label>
                     <div class="col-sm-4">
                         <select name="version" class="form-select">
@@ -59,74 +68,98 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-sm-1">
-                        <button class="btn btn-primary" type="submit">filter</button>
+                    <label class="col-sm-1 col-form-label" for="score">Score:</label>
+                    <div class="col-sm-4">
+                        <select name="score" class="form-select">
+                            <option>*</option>
+                            {% for mk in mark_list %}
+                                <option {% if score == mk %}selected{% endif %}>{{ mk }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <label class="col-sm-1 col-form-label" for="username">User:</label>
+                    <div class="col-sm-4">
+                        <select name="username" class="form-select">
+                            <option>*</option>
+                            {% for un in username_list %}
+                                <option {% if username == un %}selected{% endif %}>{{ un }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary" type="submit">filter tasks</button>
                     </div>
                 </div>
             </form>
         </div>
-        <div class="row">
-            <div class="card col">
-                <div class="card-header">
-                    <h5>Tasks list</h5>
-                </div>
-                <div class="card-body">
-                    <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
-                        <table class="table table-sm table-bordered text-center sortable">
-                            <thead>
-                                <tr>
-                                    <th>Paper</th>
-                                    <th>Question</th>
-                                    <th>Version</th>
-                                    <th>Status</th>
-                                    <th>Last update</th>
-                                    <th>Username</th>
-                                    <th>Score</th>
-                                    <th>View</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for pn, task_data in task_info.items %}
+        {% if not warning %}
+            <div class="row">
+                <div class="card col">
+                    <div class="card-header">
+                        <h5>Tasks list</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
+                            <table class="table table-sm table-bordered text-center sortable">
+                                <thead>
                                     <tr>
-                                        <td>{{ pn }}</td>
-                                        <td>{{ task_data.question }}</td>
-                                        <td>{{ task_data.version }}</td>
-                                        {% if task_data.status == "Complete" %}
-                                            <td class="bg-success">{{ task_data.status }}</td>
-                                        {% elif task_data.status == "To Do" %}
-                                            <td class="bg-warning">{{ task_data.status }}</td>
-                                        {% elif task_data.status == "Out" %}
-                                            <td class="bg-info">{{ task_data.status }}</td>
-                                        {% else %}
-                                            <td>{{ task_data.status }}</td>
-                                        {% endif %}
-                                        <td>{{ task_data.last_update }}</td>
-                                        <td>{{ task_data.username }}</td>
-                                        <td>{{ task_data.score }}</td>
-                                        <td class="text-start">
-                                            {% if task_data.status %}
-                                                <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
-                                                        hx-target="#imageHere"
-                                                        hx-replace="innerHTML"
-                                                        class="btn btn-outline-info">orig</button>
-                                            {% endif %}
-                                            {% if task_data.status == "Complete" %}
-                                                <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
-                                                        hx-target="#imageHere"
-                                                        hx-replace="innerHTML"
-                                                        class="btn btn-outline-success">annot</button>
-                                            {% endif %}
-                                        </td>
+                                        <th>Paper</th>
+                                        <th>Question</th>
+                                        <th>Version</th>
+                                        <th>Status</th>
+                                        <th>Last update</th>
+                                        <th>Username</th>
+                                        <th>Score</th>
+                                        <th>View</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for pn, task_data in task_info.items %}
+                                        <tr>
+                                            <td>{{ pn }}</td>
+                                            <td>{{ task_data.question }}</td>
+                                            <td>{{ task_data.version }}</td>
+                                            {% if task_data.status == "Complete" %}
+                                                <td class="bg-success">{{ task_data.status }}</td>
+                                            {% elif task_data.status == "To Do" %}
+                                                <td class="bg-warning">{{ task_data.status }}</td>
+                                            {% elif task_data.status == "Out" %}
+                                                <td class="bg-info">{{ task_data.status }}</td>
+                                            {% else %}
+                                                <td>{{ task_data.status }}</td>
+                                            {% endif %}
+                                            <td>{{ task_data.last_update }}</td>
+                                            <td>{{ task_data.username }}</td>
+                                            <td>{{ task_data.score }}</td>
+                                            <td class="text-start">
+                                                {% if task_data.status %}
+                                                    <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
+                                                            hx-target="#imageHere"
+                                                            hx-replace="innerHTML"
+                                                            class="btn btn-outline-info">orig</button>
+                                                {% endif %}
+                                                {% if task_data.status == "Complete" %}
+                                                    <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
+                                                            hx-target="#imageHere"
+                                                            hx-replace="innerHTML"
+                                                            class="btn btn-outline-success">annot</button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card col" style="height: auto; width: 40vw;">
-                <div id="imageHere"></div>
-            </div>
+            {% endif %}
+            {% if not warning %}
+                <div class="card col" style="height: auto; width: 40vw;">
+                    <div id="imageHere"></div>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock main_content %}

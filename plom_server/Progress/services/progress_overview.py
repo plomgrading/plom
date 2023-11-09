@@ -2,14 +2,14 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Any, Dict, Union, List, Optional
+from typing import Any, Dict, Union, List, Optional, Tuple
 
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Min, Max
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
-from Papers.models import IDPage, Image
+from Papers.models import IDPage, Image, Paper
 from Papers.services import SpecificationService
 
 
@@ -193,3 +193,30 @@ class ProgressOverviewService:
             dat[MarkingTask(status=X["status"]).get_status_display()] = X["the_count"]
 
         return dat
+
+    @transaction.atomic
+    def get_first_last_used_paper_number(self) -> Tuple[int, int]:
+        """Return the first/last paper that has some marking or iding task."""
+        # include a default of 1 in case there are no valid id or marking tasks
+        min_max_from_marking = MarkingTask.objects.exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).aggregate(
+            Min("paper__paper_number", default=1), Max("paper__paper_number", default=1)
+        )
+
+        min_max_from_iding = PaperIDTask.objects.exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).aggregate(
+            Min("paper__paper_number", default=1), Max("paper__paper_number", default=1)
+        )
+
+        pn_min = min(
+            min_max_from_marking["paper__paper_number__min"],
+            min_max_from_iding["paper__paper_number__min"],
+        )
+        pn_max = max(
+            min_max_from_marking["paper__paper_number__max"],
+            min_max_from_iding["paper__paper_number__max"],
+        )
+
+        return (pn_min, pn_max)

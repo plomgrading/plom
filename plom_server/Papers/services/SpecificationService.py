@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
+from django.db.models import Max
 
 from plom import SpecVerifier
 
@@ -231,6 +232,13 @@ def get_question_mark(question_one_index: Union[str, int]) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+@transaction.atomic
+def get_max_all_question_mark() -> int:
+    """Get the maximum mark of all questions."""
+    # the aggregate function returns dict {"mark__max": n}
+    return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
 @transaction.atomic
