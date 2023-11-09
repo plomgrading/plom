@@ -197,7 +197,6 @@ class ProgressOverviewService:
     @transaction.atomic
     def get_first_last_used_paper_number(self) -> Tuple[int, int]:
         """Return the first/last paper that has some marking or iding task."""
-
         # include a default of 1 in case there are no valid id or marking tasks
         min_max_from_marking = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
