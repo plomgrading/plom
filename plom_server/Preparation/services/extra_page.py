@@ -36,7 +36,9 @@ def huey_build_the_extra_page_pdf(task=None) -> None:
         task_obj = ExtraPagePDFTask.load()
         if str(task_obj.huey_id) != str(task.id):
             # TODO: if the task was set to retry, it would probably do so which would
-            # give the race condition time to resolve...
+            # give the race condition time to resolve...  Issue #3134.
+            # TODO: alternatively we could wait here for a bit and try again.
+            # TODO: IMHO stop storing PDFs in the Tracker Issue #3136.
             raise ValueError(
                 f"Task's huey id {task_obj.huey_id} does not match the id supplied by the huey worker {task.id}."
             )

@@ -36,6 +36,9 @@ def huey_build_the_scrap_paper_pdf(task=None) -> None:
         # worker. It should be!
         task_obj = ScrapPaperPDFTask.load()
         if str(task_obj.huey_id) != str(task.id):
+            # Race condition: Issue #3134.
+            # TODO: alternatively we could wait here for a bit and try again.
+            # TODO: IMHO stop storing PDFs in the Tracker Issue #3136.
             raise ValueError(
                 f"Task's huey id {task_obj.huey_id} does not match the id supplied by the huey worker {task.id}."
             )
