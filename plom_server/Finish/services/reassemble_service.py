@@ -500,7 +500,7 @@ class ReassembleService:
             raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassemblehueytasktracker
-        res = huey_reassemble_paper(paper_number)
+        res = huey_reassemble_paper(paper_number, tracker_pk=task.pk)
         task.huey_id = res.id
         task.status = HueyTaskTracker.QUEUED
         task.save()
@@ -615,14 +615,29 @@ class ReassembleService:
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
-def huey_reassemble_paper(paper_number: int, *, task=None, quiet=True) -> None:
+def huey_reassemble_paper(
+    paper_number: int, *, tracker_pk: int, task=None, quiet: bool = True
+) -> None:
+    """Reassemble a single paper, updating the database with progress and resulting PDF.
+
+    Args:
+        paper_number: which paper to reassemble.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: TODO: maybe unnecessary but includes our ID in the
+            Huey process queue.
+        quiet: a hack so the Huey process started signal is ignored
+            TODO: perhaps to be removed later.  The signal handler
+            itself gets a list of our args and looks for this.
+    """
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
-    # TODO: next edit is to pass the Tracker pk in, instead of racing for the ID
-    task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+    task_obj = HueyTaskTracker.objects.get(pk=tracker_pk)
     # TODO: change to RUNNING?
     task_obj.status = HueyTaskTracker.STARTED
     task_obj.save()
