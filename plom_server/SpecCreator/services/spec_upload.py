@@ -101,7 +101,6 @@ class SpecificationUploadService:
             - Test preparation must be set as "in progress"
             - There must be no existing test-papers
             - There must be no existing QV-map
-            - There must not be an existing spec
 
         kwargs:
             raise_exception: if true, raise exceptions on assertion failure.
@@ -125,9 +124,6 @@ class SpecificationUploadService:
                     "Cannot save a new spec while a question-version map exists."
                 )
 
-            if spec_exists:
-                raise SpecExistsException("Specification already exists.")
-
         return not (test_prepared and papers_created and qvmap_created and spec_exists)
 
     @transaction.atomic
@@ -135,7 +131,4 @@ class SpecificationUploadService:
         """Remove the specification from the database."""
         if not SpecificationService.is_there_a_spec():
             return
-
-        self.can_spec_be_modified(raise_exception=True)
-
         SpecificationService.remove_spec()

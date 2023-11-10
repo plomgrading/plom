@@ -6,6 +6,7 @@
 
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
+from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
@@ -99,8 +100,14 @@ def get_the_spec_as_toml():
     is included (if present).
     """
     spec = get_the_spec()
-    print(spec)
+    spec.pop("id", None)
     spec.pop("privateSeed", None)
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     sv = SpecVerifier(spec)
     return sv.as_toml_string()
 
@@ -116,6 +123,12 @@ def get_the_spec_as_toml_with_codes():
         is calling this.
     """
     sv = SpecVerifier(get_the_spec())
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     return sv.as_toml_string()
 
 
