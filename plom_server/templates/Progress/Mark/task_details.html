@@ -1,0 +1,48 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Marking task info
+{% endblock title %}
+{% block page_heading %}
+    Marking task info
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="container mx-0 border rounded">
+        <div class="row">
+            <div class="col">
+                <p>Paper: {{ paper_number }}</p>
+                <p>Question: {{ question }}</p>
+                <p>Version: {{ version }}</p>
+                <p>Status: {{ status }}</p>
+                {% if status == "Complete" %}
+                    <p>Score: {{ score }}</p>
+                    <p>Edition: {{ edition }}</p>
+                    <p>User: {{ username }}</p>
+                {% elif status == "Out" %}
+                    <p>User: {{ username }}</p>
+                {% elif status == "To Do" %}
+                {% else %}
+                {% endif %}
+                <button hx-get="{% url 'progress_original_img_wrap' paper_number question %}"
+                        hx-target="#imageHere"
+                        hx-replace="innerHTML"
+                        class="btn btn-outline-info">orig</button>
+                {% if status == "Complete" %}
+                    <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question %}"
+                            hx-target="#imageHere"
+                            hx-replace="innerHTML"
+                            class="btn btn-outline-success">annot</button>
+                {% endif %}
+            </div>
+            <div class="col">
+                <div id="imageHere" style="max-height: 20vh; width: auto;"></div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

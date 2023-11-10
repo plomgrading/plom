@@ -30,6 +30,7 @@ from .progress_mark import (
 
 from .progress_task_annot import (
     ProgressMarkingTaskFilterView,
+    ProgressMarkingTaskDetailsView,
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,

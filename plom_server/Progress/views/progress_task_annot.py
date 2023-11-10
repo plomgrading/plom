@@ -8,6 +8,8 @@ from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
 
+from Mark.models import MarkingTask
+
 
 class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
     def get(self, request):
@@ -139,5 +141,30 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
 
 class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
-    def get(self, request):
-        pass
+    def get(self, request, task_pk):
+        # todo = move most of this DB work to a service.
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        context = self.build_context()
+        context.update(
+            {
+                "paper_number": task_obj.paper.paper_number,
+                "question": task_obj.question_number,
+                "version": task_obj.question_version,
+                "status": task_obj.get_status_display(),
+            }
+        )
+        if task_obj.status == MarkingTask.COMPLETE:
+            context.update(
+                {
+                    "annotation_pk": task_obj.latest_annotation.pk,
+                    "score": task_obj.latest_annotation.score,
+                    "username": task_obj.assigned_user.username,
+                    "edition": task_obj.latest_annotation.edition,
+                }
+            )
+        elif task_obj.status == MarkingTask.OUT:
+            context.update({"username": task_obj.assigned_user.username})
+        else:
+            pass
+
+        return render(request, "Progress/Mark/task_details.html", context=context)

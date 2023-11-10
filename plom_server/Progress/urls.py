@@ -20,6 +20,7 @@ from Progress.views import (
     ProgressMarkDetailsView,
     ProgressMarkVersionCompareView,
     ProgressMarkingTaskFilterView,
+    ProgressMarkingTaskDetailsView,
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,
@@ -80,11 +81,11 @@ urlpatterns = [
         ProgressMarkingTaskFilterView.as_view(),
         name="progress_marking_task_filter",
     ),
-    # path(
-    # "mark/task_details/<int:task_pk>",
-    # ProgressMarkTaskDetailsView.as_view(),
-    # name="progress_mark_task_details",
-    # ),
+    path(
+        "mark/task_details/<int:task_pk>",
+        ProgressMarkingTaskDetailsView.as_view(),
+        name="progress_marking_task_details",
+    ),
     path(
         "mark/task_annotation/annotation_img_wrap/<int:paper>/<int:question>",
         AnnotationImageWrapView.as_view(),

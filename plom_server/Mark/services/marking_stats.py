@@ -339,6 +339,7 @@ class MarkingStatsService:
                 "status": task.get_status_display(),
                 "question": task.question_number,
                 "version": task.question_version,
+                "task_pk": task.pk,
             }
             if task.status == MarkingTask.COMPLETE:
                 dat.update(
@@ -348,7 +349,6 @@ class MarkingStatsService:
                             task.latest_annotation.time_of_last_update
                         ).humanize(),
                         "score": task.latest_annotation.score,
-                        "task_pk": task.pk,
                     }
                 )
 

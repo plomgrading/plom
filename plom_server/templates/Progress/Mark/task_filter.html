@@ -134,7 +134,8 @@
                                             <td>{{ task_data.username }}</td>
                                             <td>{{ task_data.score }}</td>
                                             <td class="text-start">
-                                                <a class="btn btn-outline-primary">details</a>
+                                                <a class="btn btn-outline-primary"
+                                                   href="{% url 'progress_marking_task_details' task_data.task_pk %}">details</a>
                                                 {% if task_data.status %}
                                                     <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
                                                             hx-target="#imageHere"
