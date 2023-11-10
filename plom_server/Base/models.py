@@ -188,16 +188,22 @@ def start_task(signal, task):
     if task.kwargs.get("quiet", False):
         return
 
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.RUNNING
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+    # TODO: this lookup of HueyTraskTrackers by ID has races because
+    # the task can easily start before we have a change to save this ID.
+
+    # Note: using filter except of a exception on DNE because I think
+    # the exception handling was rewinding some atomic transations
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Started) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+    task_obj.status = HueyTaskTracker.STARTED
+    task_obj.save()
 
 
 @queue.signal(SIGNAL_COMPLETE)
