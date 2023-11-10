@@ -16,8 +16,6 @@ from Papers.services import SpecificationService, PaperInfoService
 from Papers.serializers import SpecSerializer
 from Papers.models import Specification
 
-from . import ReferencePDFService, StagingSpecificationService
-
 
 class SpecExistsException(Exception):
     """Raised if a specification already exists in the database."""
@@ -41,12 +39,10 @@ class SpecificationUploadService:
             want to replace the spec.
             - If the manager agrees, the server deletes the current spec
             - Otherwise, the server ends the workflow.
-        5. Server loads the toml and the reference PDF and validates them
+        5. Server loads and validates the toml
             - TOML must be decoded and de-serialized into a Specification
                 instance
-            - Reference PDF must be readable by PyMuPDF and contain the
-                same number of pages as the spec
-        6. Server saves the Specification and updates the StagingSpecification
+        6. Server saves the Specification
     """
 
     def __init__(
@@ -54,7 +50,6 @@ class SpecificationUploadService:
         *,
         toml_file_path: Union[str, Path, None] = None,
         toml_string: Optional[str] = None,
-        reference_pdf_path: Union[str, Path, None] = None,
     ):
         """Construct service with paths and/or model instances.
 
@@ -77,23 +72,15 @@ class SpecificationUploadService:
             except TOMLDecodeError as e:
                 raise ValueError("Unable to parse TOML file from string.") from e
 
-        if reference_pdf_path:
-            try:
-                self.pdf_doc = Document(reference_pdf_path)
-            except Exception as e:
-                raise ValueError("Unable to read reference PDF file.") from e
-
     @transaction.atomic
     def save_spec(
         self,
         *,
-        update_staging: bool = False,
         custom_public_code: Optional[str] = None,
     ):
         """Save the specification to the database.
 
         kwargs:
-            update_staging: whether to also update the StagingSpecification model.
             custom_public_code: override the randomly generated public code with a custom value.
         """
         if not self.spec_dict:
@@ -103,7 +90,6 @@ class SpecificationUploadService:
 
         SpecificationService.load_spec_from_dict(
             self.spec_dict,
-            update_staging=update_staging,
             public_code=custom_public_code,
         )
 
@@ -145,36 +131,11 @@ class SpecificationUploadService:
         return not (test_prepared and papers_created and qvmap_created and spec_exists)
 
     @transaction.atomic
-    def save_reference_pdf(self):
-        """Save the reference PDF to the database."""
-        if not self.pdf_doc:
-            raise ValueError("Cannot find reference PDF to upload.")
-
-        # TODO: assumes that a Specification (not staging) has been uploaded already
-        if not SpecificationService.is_there_a_spec():
-            raise RuntimeError("Spec has not been uploaded.")
-        if self.pdf_doc.page_count != SpecificationService.get_n_pages():
-            raise ValueError("Reference PDF does not match the spec's page count.")
-
-        # TODO: refactor this part of the workflow into its own function-based services
-        ref_service = ReferencePDFService()
-        staging_service = StagingSpecificationService()
-        ref_service.new_pdf(
-            staging_service, "spec_reference.pdf", self.pdf_doc.page_count, self.pdf_doc
-        )
-
-    @transaction.atomic
-    def delete_spec(self, *, delete_staging: bool = False):
-        """Remove the specification from the database.
-
-        kwargs:
-            delete_staging: whether to remove the staging specification as well.
-        """
+    def delete_spec(self, *args):
+        """Remove the specification from the database."""
         if not SpecificationService.is_there_a_spec():
             return
 
         self.can_spec_be_modified(raise_exception=True)
 
         SpecificationService.remove_spec()
-        if delete_staging:
-            StagingSpecificationService().reset_specification()
