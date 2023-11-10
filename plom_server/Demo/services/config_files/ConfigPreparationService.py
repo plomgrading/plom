@@ -50,7 +50,7 @@ def create_specification(config: PlomServerConfig):
             spec_src = resources.files(useful_files) / "testing_test_spec.toml"
         else:
             spec_src = config.parent_dir / spec_path
-        SpecificationService.load_spec_from_toml(spec_src, update_staging=True)
+        SpecificationService.load_spec_from_toml(spec_src)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 
