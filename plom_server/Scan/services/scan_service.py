@@ -68,6 +68,8 @@ class ScanService:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, split PDF into page images + store in filesystem and database.
+        Currently if that fails for any reason, the StagingBundle is still
+        created.
 
         Args:
             uploaded_pdf_file (Django File): File-object containing the pdf
@@ -87,7 +89,9 @@ class ScanService:
             None
         """
         fh = uploaded_pdf_file.open()
-        with transaction.atomic():
+        # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
+        # strange behaviour can result from relaxing this durable=True
+        with transaction.atomic(durable=True):
             bundle_obj = StagingBundle.objects.create(
                 slug=slug,
                 pdf_file=File(fh, name=f"{timestamp}.pdf"),
@@ -100,7 +104,6 @@ class ScanService:
 
         self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
-    @transaction.atomic
     def upload_bundle_cmd(
         self,
         pdf_file_path,
@@ -168,7 +171,7 @@ class ScanService:
             None
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        with transaction.atomic():
+        with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
                 status=PagesToImagesHueyTask.TO_DO,
