@@ -183,7 +183,7 @@ def start_task(signal, task):
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Started) Task {task.id} {task.name} with args {task.args}"
-            "is no longer (or not yet) in the database."
+            " is no longer (or not yet) in the database."
         )
 
 
@@ -199,7 +199,7 @@ def end_task(signal, task):
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Completed) Task {task.id} {task.name} with args {task.args}"
-            "is no longer (or not yet) in the database."
+            " is no longer (or not yet) in the database."
         )
 
 
@@ -218,7 +218,7 @@ def error_task(signal, task, exc):
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
-            "is no longer (or not yet) in the database."
+            " is no longer (or not yet) in the database."
         )
 
 
