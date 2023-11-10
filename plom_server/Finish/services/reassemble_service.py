@@ -614,12 +614,18 @@ class ReassembleService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_reassemble_paper(paper_number: int) -> None:
+@db_task(queue="tasks", context=True)
+def huey_reassemble_paper(paper_number: int, *, task=None, quiet=True) -> None:
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
+
+    # TODO: next edit is to pass the Tracker pk in, instead of racing for the ID
+    task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+    # TODO: change to RUNNING?
+    task_obj.status = HueyTaskTracker.STARTED
+    task_obj.save()
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
