@@ -2,8 +2,11 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
+
+from io import BytesIO
+from PIL import Image
 
 from Base.base_group_views import ManagerRequiredView, LeadMarkerOrManagerView
 
@@ -38,8 +41,28 @@ class PushedImageView(LeadMarkerOrManagerView):
     """Return a pushed image given by its pk."""
 
     def get(self, request, img_pk):
-        img = ManageScanService().get_pushed_image(img_pk)
-        return FileResponse(img.image_file)
+        img_obj = ManageScanService().get_pushed_image(img_pk)
+        if img_obj.rotation == 0:
+            return FileResponse(img_obj.image_file)
+        else:
+            fh = BytesIO()
+            with Image.open(img_obj.image_file) as tmp_img:
+                theta = img_obj.rotation
+                exif_orient = tmp_img.getexif().get(274, 1)
+                if exif_orient == 1:
+                    pass
+                elif exif_orient == 3:
+                    theta += 180
+                elif exif_orient == 6:
+                    theta -= 90
+                elif exif_orient == 8:
+                    theta += 90
+                else:
+                    raise ValueError(
+                        f"Do not recognise this exif orientation value {exif_orient}"
+                    )
+                tmp_img.rotate(theta, expand=True).save(fh, "png")
+                return HttpResponse(fh.getvalue(), content_type="image/png")
 
     def delete(self, request, img_pk):
         mds = ManageDiscardService()

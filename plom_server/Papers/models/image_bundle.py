@@ -50,6 +50,8 @@ class Image(models.Model):
     rotation (int): the angle to rotate the original image in order to give
         it the correct orientation.
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
+    height (int): the height of the image in px (auto-populated on save)
+    width (int): the width of the image in px (auto-populated on save)
     """
 
     def _image_upload_path(self, filename: str) -> str:
@@ -73,10 +75,18 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    image_file = models.ImageField(null=False, upload_to=_image_upload_path)
+    image_file = models.ImageField(
+        null=False,
+        upload_to=_image_upload_path,
+        height_field="height",
+        width_field="width",
+    )
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
+
+    height = models.IntegerField(default=0)
+    width = models.IntegerField(default=0)
 
 
 class DiscardPage(models.Model):

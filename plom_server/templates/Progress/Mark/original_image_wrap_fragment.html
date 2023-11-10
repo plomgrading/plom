@@ -5,6 +5,9 @@
     </div>
 </div>
 <div class="row overflow-x-scroll overflow-y-scroll">
+    {% for img in img_list %}( theta={{ img.angle }} ){% endfor %}
+</div>
+<div class="row overflow-x-scroll overflow-y-scroll">
     {% for img in img_list %}
         <div class="col"
              style="height: 30vw;
@@ -12,12 +15,15 @@
                     justify-content: center;
                     display:flex;
                     align-items:center">
-            /
+            <!-- <img class="shadow-sm" -->
+            <!--      src="{% url 'progress_pushed_img' img.id %}" -->
+            <!--      style="max-height:90%; -->
+            <!-- 		max-width: 90%; -->
+            <!--             transform: rotate({{ img.angle }}deg)" /> -->
             <img class="shadow-sm"
                  src="{% url 'progress_pushed_img' img.id %}"
-                 style="max-height: 100%;
-                        max-width: 100%;
-                        transform: rotate({{ img.angle }}deg)">
+                 style="max-height:90%;
+                        max-width: 90%" />
         </div>
     {% endfor %}
 </div>
