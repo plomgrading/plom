@@ -27,6 +27,7 @@ from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 from ..models import ReassembleHueyTaskTracker
+from Base.models import BaseHueyTaskTracker as HueyTaskTracker
 
 
 class ReassembleService:
@@ -459,9 +460,7 @@ class ReassembleService:
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
-            # TODO: is it ok to talk use BaseHueyTaskTracker.COMPLETE here?
-            # TODO: or is that only allowed with the PolymorphicModel stuff?
-            if task.status == ReassembleHueyTaskTracker.COMPLETE:
+            if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
                     "reassembled_time_humanised"
@@ -485,7 +484,7 @@ class ReassembleService:
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             ReassembleHueyTaskTracker.objects.create(
-                paper=paper_obj, huey_id=None, status=ReassembleHueyTaskTracker.TO_DO
+                paper=paper_obj, huey_id=None, status=HueyTaskTracker.TO_DO
             )
 
     @transaction.atomic
@@ -503,7 +502,7 @@ class ReassembleService:
         task = paper_obj.reassemblehueytasktracker
         res = huey_reassemble_paper(paper_number)
         task.huey_id = res.id
-        task.status = ReassembleHueyTaskTracker.QUEUED
+        task.status = HueyTaskTracker.QUEUED
         task.save()
 
     @transaction.atomic
@@ -537,7 +536,7 @@ class ReassembleService:
 
         task = paper_obj.reassemblehueytasktracker
         # if the task is queued then remove it from the queue
-        if task.status == ReassembleHueyTaskTracker.QUEUED:
+        if task.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
         # if there is a file then remove it
@@ -545,7 +544,7 @@ class ReassembleService:
             task.pdf_file.delete()
 
         task.huey_id = None
-        task.status = ReassembleHueyTaskTracker.TO_DO
+        task.status = HueyTaskTracker.TO_DO
         task.save()
 
     @transaction.atomic
@@ -553,16 +552,16 @@ class ReassembleService:
         """Reset to TODO all reassembly tasks and remove any associated pdfs."""
         queue = get_queue("tasks")
         for task in ReassembleHueyTaskTracker.objects.exclude(
-            status=ReassembleHueyTaskTracker.TO_DO
+            status=HueyTaskTracker.TO_DO
         ).all():
             # if the task is queued then remove it from the queue
-            if task.status == ReassembleHueyTaskTracker.QUEUED:
+            if task.status == HueyTaskTracker.QUEUED:
                 queue.revoke_by_id(task.huey_id)
             # if there is a file then delete it.
             if task.pdf_file:
                 task.pdf_file.delete()
             task.huey_id = None
-            task.status = ReassembleHueyTaskTracker.TO_DO
+            task.status = HueyTaskTracker.TO_DO
             task.save()
 
     @transaction.atomic
@@ -583,7 +582,7 @@ class ReassembleService:
             task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
             res = huey_reassemble_paper(pn)
             task.huey_id = res.id
-            task.status = ReassembleHueyTaskTracker.QUEUED
+            task.status = HueyTaskTracker.QUEUED
             task.save()
 
     @transaction.atomic
@@ -596,7 +595,7 @@ class ReassembleService:
         return [
             task.pdf_file
             for task in ReassembleHueyTaskTracker.objects.filter(
-                status=ReassembleHueyTaskTracker.COMPLETE
+                status=HueyTaskTracker.COMPLETE
             )
         ]
 
