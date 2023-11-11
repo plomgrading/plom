@@ -487,7 +487,6 @@ class ReassembleService:
                 paper=paper_obj, huey_id=None, status=HueyTaskTracker.TO_DO
             )
 
-    @transaction.atomic
     def queue_single_paper_reassembly(self, paper_number: int) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
@@ -499,11 +498,12 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassemblehueytasktracker
-        res = huey_reassemble_paper(paper_number, tracker_pk=task.pk)
-        task.huey_id = res.id
-        task.status = HueyTaskTracker.QUEUED
-        task.save()
+        with transaction.atomic(durable=True):
+            task = paper_obj.reassemblehueytasktracker
+            task.status = HueyTaskTracker.TO_DO
+            task.save()
+        _ = huey_reassemble_paper(paper_number, tracker_pk=task.pk, quiet=True)
+        # print(f"Just enqueued Huey reassembly task id={_.id}")
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -564,7 +564,6 @@ class ReassembleService:
             task.status = HueyTaskTracker.TO_DO
             task.save()
 
-    @transaction.atomic
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
         # first work out which papers are ready
@@ -578,12 +577,12 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            # otherwise build it!
-            task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-            res = huey_reassemble_paper(pn)
-            task.huey_id = res.id
-            task.status = HueyTaskTracker.QUEUED
-            task.save()
+            with transaction.atomic(durable=True):
+                task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
+                task.status = HueyTaskTracker.TO_DO
+                task.save()
+            _ = huey_reassemble_paper(pn, tracker_pk=task.pk, quiet=True)
+            # print(f"Just enqueued Huey reassembly task id={_.id}")
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
@@ -614,6 +613,7 @@ class ReassembleService:
 
 
 # The decorated function returns a ``huey.api.Result``
+# ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int, *, tracker_pk: int, task=None, quiet: bool = True
@@ -626,8 +626,7 @@ def huey_reassemble_paper(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: TODO: maybe unnecessary but includes our ID in the
-            Huey process queue.
+        task: includes our ID in the Huey process queue.
         quiet: a hack so the Huey process started signal is ignored
             TODO: perhaps to be removed later.  The signal handler
             itself gets a list of our args and looks for this.
@@ -640,6 +639,7 @@ def huey_reassemble_paper(
     task_obj = HueyTaskTracker.objects.get(pk=tracker_pk)
     # TODO: change to RUNNING?
     task_obj.status = HueyTaskTracker.STARTED
+    task_obj.huey_id = task.id
     task_obj.save()
 
     reas = ReassembleService()
@@ -654,3 +654,4 @@ def huey_reassemble_paper(
             # save the new one.
             task.pdf_file = File(f, name=save_path.name)
             task.save()
+    # TODO: set to COMPLETE or not?  Or should the signal handler do it?
