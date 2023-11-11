@@ -10,6 +10,7 @@ from django.core.files import File
 from django.db import transaction
 from django_huey import db_task
 
+from Base.models import BaseHueyTaskTracker as HueyTaskTracker
 from ..models import ScrapPaperPDFHueyTask as ScrapPaperPDFTask
 
 
@@ -19,9 +20,26 @@ log = logging.getLogger("ScrapPaperService")
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_build_the_scrap_paper_pdf(task=None) -> None:
-    """Build a single scrap paper pdf."""
+def huey_build_the_scrap_paper_pdf(
+    *, tracker_pk: int, task=None, quiet: bool = True
+) -> None:
+    """Build a single scrap paper pdf.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+        quiet: a hack so the Huey process started signal is ignored
+            TODO: perhaps to be removed later.  The signal handler
+            itself gets a list of our args and looks for this.
+    """
     from plom.create import build_scrap_paper_pdf
+
+    with transaction.atomic():
+        task_obj = ScrapPaperPDFTask.load()
+        task_obj.huey_id = task.id
+        task_obj.status = HueyTaskTracker.STARTED
+        task_obj.save()
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_scrap_page_pdf does already...
@@ -31,22 +49,15 @@ def huey_build_the_scrap_paper_pdf(task=None) -> None:
         build_scrap_paper_pdf(destination_dir=tmpdirname)
         # the resulting file "scrap_paper.pdf" is build in
         # tmpdirname record that task is completed in database and
-        # let it move file into place. Check that the task's
-        # huey-id matches (as strings) the id supplied by the huey
-        # worker. It should be!
-        task_obj = ScrapPaperPDFTask.load()
-        if str(task_obj.huey_id) != str(task.id):
-            # Race condition: Issue #3134.
-            # TODO: alternatively we could wait here for a bit and try again.
-            # TODO: IMHO stop storing PDFs in the Tracker Issue #3136.
-            raise ValueError(
-                f"Task's huey id {task_obj.huey_id} does not match the id supplied by the huey worker {task.id}."
-            )
+        # let it move file into place.
         scp_path = Path(tmpdirname) / "scrap_paper.pdf"
-
         with scp_path.open(mode="rb") as fh:
-            task_obj.scrap_paper_pdf = File(fh, name=scp_path.name)
-            task_obj.save()
+            with transaction.atomic():
+                # TODO: unclear to me if we need to re-get the task
+                task_obj = ScrapPaperPDFTask.load()
+                task_obj.scrap_paper_pdf = File(fh, name=scp_path.name)
+                task_obj.status = HueyTaskTracker.COMPLETE
+                task_obj.save()
 
 
 class ScrapPaperService:
@@ -69,21 +80,20 @@ class ScrapPaperService:
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ScrapPaperPDFTask.load()
         Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
-        task_obj.status = ScrapPaperPDFTask.TO_DO
+        task_obj.status = HueyTaskTracker.TO_DO
         task_obj.huey_id = None
         task_obj.save()
 
-    @transaction.atomic()
     def build_scrap_paper_pdf(self):
         """Enqueue the huey task of building the scrap paper pdf."""
         task_obj = ScrapPaperPDFTask.load()
-        if task_obj.status == ScrapPaperPDFTask.COMPLETE:
+        if task_obj.status == HueyTaskTracker.COMPLETE:
             return
-        res = huey_build_the_scrap_paper_pdf()
-        # TODO: there is a race here b/c the _build function looks for this object by this id
-        task_obj.huey_id = res.id
-        task_obj.status = ScrapPaperPDFTask.QUEUED
-        task_obj.save()
+        with transaction.atomic(durable=True):
+            task_obj.status = HueyTaskTracker.TO_DO
+            task_obj.save()
+        _ = huey_build_the_scrap_paper_pdf(tracker_pk=task_obj.pk, quiet=True)
+        # print(f"Just enqueued Huey scrap paper builder id={_.id}")
 
     @transaction.atomic
     def get_scrap_paper_pdf_as_bytes(self):
