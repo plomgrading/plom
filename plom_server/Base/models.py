@@ -193,7 +193,7 @@ def start_task(signal, task):
     # the task can easily start before we have a change to save this ID.
 
     # Note: using filter except of a exception on DNE because I think
-    # the exception handling was rewinding some atomic transations
+    # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
@@ -214,7 +214,7 @@ def end_task(signal, task):
         return
 
     # Note: using filter except of a exception on DNE because I think
-    # the exception handling was rewinding some atomic transations
+    # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
@@ -237,7 +237,7 @@ def error_task(signal, task, exc):
         return
 
     # Note: using filter except of a exception on DNE because I think
-    # the exception handling was rewinding some atomic transations
+    # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
