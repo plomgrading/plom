@@ -34,14 +34,27 @@ class BaseHueyTaskTracker(models.Model):
 
     TODO: well we don't actually define those here, they are in global
     scope outside this class.  See TODO above.
+
+    When you create one of these, set status to ``TO_DO`` or ``STARTING``,
+    choosing ``STARTING`` if just about to enqueue a Huey task.
+    The Huey task should (eventually) update the status to ``RUNNING``.
+    In the meantime, you can change status to ``QUEUED`` (provided you
+    are careful not to overwrite ``RUNNING``!)
+    Generally the Huey task itself should set status ``COMPLETE``.
+    TODO: ``ERROR`` is still in-flux.
+
+    The difference between STARTING, QUEUED, and RUNNING is rather
+    sensitive to timing.  Caller can set STARTING and try to set
+    QUEUED (but must defer to the Huey task itself about RUNNING.
     """
 
     StatusChoices = models.IntegerChoices(
-        "status", "TO_DO STARTED QUEUED COMPLETE ERROR"
+        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR"
     )
     TO_DO = StatusChoices.TO_DO
+    STARTING = StatusChoices.STARTING
     QUEUED = StatusChoices.QUEUED
-    STARTED = StatusChoices.STARTED
+    RUNNING = StatusChoices.RUNNING
     COMPLETE = StatusChoices.COMPLETE
     ERROR = StatusChoices.ERROR
 
@@ -177,7 +190,7 @@ def start_task(signal, task):
 
     try:
         task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTaskTracker.STARTED
+        task_obj.status = BaseHueyTaskTracker.RUNNING
         task_obj.save()
     except BaseHueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions

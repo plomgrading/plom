@@ -642,8 +642,7 @@ def huey_reassemble_paper(
     with transaction.atomic():
         # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        # TODO: change to RUNNING?
-        tr.status = HueyTaskTracker.STARTED
+        tr.status = HueyTaskTracker.RUNNING
         tr.huey_id = task.id
         tr.save()
 

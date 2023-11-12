@@ -106,14 +106,16 @@ class BuildPapersService:
 
     @transaction.atomic
     def get_n_pending_tasks(self):
-        """Get the number of PDFHueyTasks with the status 'todo,' 'queued,' 'started,' or 'error'."""
+        """Get the number of PDFHueyTasks with the status other than 'COMPLETE'."""
         return PDFHueyTask.objects.exclude(status=PDFHueyTask.COMPLETE).count()
 
     @transaction.atomic
     def get_n_running_tasks(self):
-        """Get the number of PDFHueyTasks with the status 'queued' or 'started'."""
+        """Get the number of PDFHueyTasks with the status 'STARTING', 'QUEUED' or 'RUNNING'."""
         return PDFHueyTask.objects.filter(
-            Q(status=PDFHueyTask.QUEUED) | Q(status=PDFHueyTask.STARTED)
+            Q(status=PDFHueyTask.STARTING)
+            | Q(status=PDFHueyTask.QUEUED)
+            | Q(status=PDFHueyTask.RUNNING)
         ).count()
 
     @transaction.atomic

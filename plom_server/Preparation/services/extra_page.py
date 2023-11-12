@@ -38,7 +38,7 @@ def huey_build_the_extra_page_pdf(
     with transaction.atomic():
         task_obj = ExtraPagePDFTask.load()
         task_obj.huey_id = task.id
-        task_obj.status = HueyTaskTracker.STARTED
+        task_obj.status = HueyTaskTracker.RUNNING
         task_obj.save()
 
     # build the pdf in a tempdirectory
