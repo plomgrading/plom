@@ -250,10 +250,10 @@ class BuildPapersService:
         self._send_single_task(task, paper_num, spec, qv_row)
 
     def _send_single_task(self, task, paper_num, spec, qv_row):
-        print("** **" * 30)
-        task.status = HueyTaskTracker.STARTING
-        task.save()
-        tracker_pk = task.pk
+        with transaction.atomic(durable=True):
+            task.status = HueyTaskTracker.STARTING
+            task.save()
+            tracker_pk = task.pk
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
@@ -265,11 +265,11 @@ class BuildPapersService:
                 paper_num, spec, qv_row, tracker_pk=tracker_pk, quiet=True
             )
 
-        with transaction.atomic:
+        with transaction.atomic(durable=True):
             task = HueyTaskTracker.objects.get(pk=tracker_pk)
             # if its still starting, safe to change to queued
             if task.status == HueyTaskTracker.STARTING:
-                task.status = PDFHueyTask.QUEUED
+                task.status = HueyTaskTracker.QUEUED
                 task.save()
 
     def cancel_all_task(self):
@@ -282,7 +282,10 @@ class BuildPapersService:
             task.save()
 
     def cancel_single_task(self, paper_number):
-        """Cancel a single queued task from Huey."""
+        """Cancel a single queued task from Huey.
+
+        TODO!  document this, when can it be expected to work etc?
+        """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
         queue = get_queue("tasks")
         queue.revoke_by_id(task.huey_id)
