@@ -294,10 +294,7 @@ class BuildPapersService:
         retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
-            res = huey_build_single_paper(paper_number, spec, qvmap[paper_number])
-            task.huey_id = res.id
-            task.status = PDFHueyTask.QUEUED
-            task.save()
+            self._send_single_task(task, paper_number, spec, qvmap[paper_number])
 
     @transaction.atomic
     def reset_all_tasks(self):
