@@ -636,22 +636,26 @@ def huey_reassemble_paper(
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
-    task_obj = HueyTaskTracker.objects.get(pk=tracker_pk)
-    # TODO: change to RUNNING?
-    task_obj.status = HueyTaskTracker.STARTED
-    task_obj.huey_id = task.id
-    task_obj.save()
+    with transaction.atomic():
+        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        # TODO: change to RUNNING?
+        tr.status = HueyTaskTracker.STARTED
+        tr.huey_id = task.id
+        tr.save()
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
         with save_path.open("rb") as f:
-            # TODO: IMHO, the pdf file does not belong in the Tracker obj
-            task = paper_obj.reassemblehueytasktracker
-            # delete any old file if it exists
-            if task.pdf_file:
-                task.pdf_file.delete()
-            # save the new one.
-            task.pdf_file = File(f, name=save_path.name)
-            task.save()
-    # TODO: set to COMPLETE or not?  Or should the signal handler do it?
+            with transaction.atomic():
+                # TODO: unclear to me if we need to re-get the task
+                tr = ReassembleHueyTaskTracker(pk=tracker_pk)
+                # TODO: IMHO, the pdf file does not belong in the Tracker obj
+                # delete any old file if it exists
+                if tr.pdf_file:
+                    tr.pdf_file.delete()
+                # save the new one.
+                tr.pdf_file = File(f, name=save_path.name)
+                tr.status = HueyTaskTracker.COMPLETE
+                tr.save()
