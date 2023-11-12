@@ -25,7 +25,7 @@ import logging
 queue = get_queue("tasks")
 
 
-class BaseHueyTaskTracker(models.Model):
+class HueyTaskTracker(models.Model):
     """A general-purpose model for tracking Huey tasks.
 
     It keeps track of a Huey task's ID, the time created, and the
@@ -189,10 +189,10 @@ def start_task(signal, task):
         return
 
     try:
-        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTaskTracker.RUNNING
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.RUNNING
         task_obj.save()
-    except BaseHueyTaskTracker.DoesNotExist:
+    except HueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Started) Task {task.id} {task.name} with args {task.args}"
@@ -205,10 +205,10 @@ def end_task(signal, task):
     if task.kwargs.get("quiet", False):
         return
     try:
-        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTaskTracker.COMPLETE
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.COMPLETE
         task_obj.save()
-    except BaseHueyTaskTracker.DoesNotExist:
+    except HueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Completed) Task {task.id} {task.name} with args {task.args}"
@@ -223,11 +223,11 @@ def error_task(signal, task, exc):
     if task.kwargs.get("quiet", False):
         return
     try:
-        task_obj = BaseHueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = BaseHueyTaskTracker.ERROR
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
         task_obj.message = exc
         task_obj.save()
-    except BaseHueyTaskTracker.DoesNotExist:
+    except HueyTaskTracker.DoesNotExist:
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"

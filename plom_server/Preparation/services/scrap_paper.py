@@ -10,7 +10,7 @@ from django.core.files import File
 from django.db import transaction
 from django_huey import db_task
 
-from Base.models import BaseHueyTaskTracker as HueyTaskTracker
+from Base.models import HueyTaskTracker
 from ..models import ScrapPaperPDFHueyTask as ScrapPaperPDFTask
 
 

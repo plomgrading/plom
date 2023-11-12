@@ -27,7 +27,7 @@ from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 from ..models import ReassembleHueyTaskTracker
-from Base.models import BaseHueyTaskTracker as HueyTaskTracker
+from Base.models import HueyTaskTracker
 
 
 class ReassembleService:
