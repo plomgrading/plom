@@ -630,6 +630,9 @@ def huey_reassemble_paper(
         quiet: a hack so the Huey process started signal is ignored
             TODO: perhaps to be removed later.  The signal handler
             itself gets a list of our args and looks for this.
+
+    Returns:
+        None
     """
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
