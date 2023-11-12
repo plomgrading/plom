@@ -267,7 +267,7 @@ class BuildPapersService:
 
         with transaction.atomic(durable=True):
             task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, safe to change to queued
+            # if its still starting, it is safe to change to queued
             if task.status == HueyTaskTracker.STARTING:
                 task.status = HueyTaskTracker.QUEUED
                 task.save()

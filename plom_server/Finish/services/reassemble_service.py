@@ -502,8 +502,17 @@ class ReassembleService:
             task = paper_obj.reassemblehueytasktracker
             task.status = HueyTaskTracker.TO_DO
             task.save()
-        _ = huey_reassemble_paper(paper_number, tracker_pk=task.pk, quiet=True)
+            tracker_pk = task.ok
+
+        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk, quiet=True)
         # print(f"Just enqueued Huey reassembly task id={_.id}")
+
+        with transaction.atomic(durable=True):
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = HueyTaskTracker.QUEUED
+                task.save()
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -581,8 +590,16 @@ class ReassembleService:
                 task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
                 task.status = HueyTaskTracker.TO_DO
                 task.save()
-            _ = huey_reassemble_paper(pn, tracker_pk=task.pk, quiet=True)
+                tracker_pk = task.pk
+            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk, quiet=True)
             # print(f"Just enqueued Huey reassembly task id={_.id}")
+
+            with transaction.atomic(durable=True):
+                task = HueyTaskTracker.objects.get(pk=tracker_pk)
+                # if its still starting, it is safe to change to queued
+                if task.status == HueyTaskTracker.STARTING:
+                    task.status = HueyTaskTracker.QUEUED
+                    task.save()
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:

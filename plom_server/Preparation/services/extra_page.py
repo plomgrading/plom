@@ -92,8 +92,17 @@ class ExtraPageService:
         with transaction.atomic(durable=True):
             task_obj.status = HueyTaskTracker.TO_DO
             task_obj.save()
-        _ = huey_build_the_extra_page_pdf(tracker_pk=task_obj.pk, quiet=True)
+            tracker_pk = task_obj.pk
+
+        _ = huey_build_the_extra_page_pdf(tracker_pk=tracker_pk, quiet=True)
         # print(f"Just enqueued Huey extra page builder id={_.id}")
+
+        with transaction.atomic(durable=True):
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = HueyTaskTracker.QUEUED
+                task.save()
 
     @transaction.atomic
     def get_extra_page_pdf_as_bytes(self):
