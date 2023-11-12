@@ -31,18 +31,37 @@ from ..models import PDFHueyTask
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
 def huey_build_single_paper(
-    index: int,
+    papernum: int,
     spec: dict,
     question_versions: dict,
     *,
     tracker_pk: int,
     task=None,
     quiet: bool = True,
+    _debug_be_flaky: bool = False,
 ) -> None:
     """Build a single paper.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
+
+    Args:
+        papernum:
+        spec:
+        question_versions:
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+        quiet: a hack so the Huey process started signal is ignored
+            TODO: perhaps to be removed later.  The signal handler
+            itself gets a list of our args and looks for this.
+        _debug_be_flaky: for debugging, fail some percentage of their
+            building.
+
+    Returns:
+        None
     """
     print(f"Huey: single paper build pk={tracker_pk}: setting tracker to RUNNING")
     with transaction.atomic():
@@ -56,13 +75,21 @@ def huey_build_single_paper(
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
-            papernum=index,
+            papernum=papernum,
             question_versions=question_versions,
             where=pathlib.Path(tempdir),
             source_versions_path=PaperSourcePDF.upload_to(),
         )
+
+        if _debug_be_flaky:
+            roll = random.randint(1, 10)
+            if roll % 5 == 0:
+                raise ValueError(
+                    f"DEBUG: deliberately failing creation of papernum={papernum}"
+                )
+
         print(f"Huey: single paper build pk={tracker_pk}: cleanup")
-        paper = Paper.objects.get(paper_number=index)
+        paper = Paper.objects.get(paper_number=papernum)
         tr = paper.pdfhueytask
         # TODO: which way is "better"?
         tr2 = PDFHueyTask(pk=tracker_pk)
@@ -78,7 +105,7 @@ def huey_build_single_paper(
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
 def huey_build_prenamed_paper(
-    index: int,
+    papernum: int,
     spec: dict,
     question_versions: dict,
     student_info: dict,
@@ -86,11 +113,31 @@ def huey_build_prenamed_paper(
     tracker_pk: int,
     task=None,
     quiet: bool = True,
+    _debug_be_flaky: bool = False,
 ) -> None:
     """Build a single paper and prename it.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
+
+    Args:
+        papernum:
+        spec:
+        question_versions:
+        student_info:
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+        quiet: a hack so the Huey process started signal is ignored
+            TODO: perhaps to be removed later.  The signal handler
+            itself gets a list of our args and looks for this.
+        _debug_be_flaky: for debugging, fail some percentage of their
+            building.
+
+    Returns:
+        None
     """
     print(f"Huey: prenamed paper build pk={tracker_pk}: setting tracker to RUNNING")
     with transaction.atomic():
@@ -103,14 +150,21 @@ def huey_build_prenamed_paper(
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
-            papernum=index,
+            papernum=papernum,
             question_versions=question_versions,
             extra=student_info,
             where=pathlib.Path(tempdir),
             source_versions_path=PaperSourcePDF.upload_to(),
         )
 
-        paper = Paper.objects.get(paper_number=index)
+        if _debug_be_flaky:
+            roll = random.randint(1, 10)
+            if roll % 5 == 0:
+                raise ValueError(
+                    f"DEBUG: deliberately failing creation of papernum={papernum}"
+                )
+
+        paper = Paper.objects.get(paper_number=papernum)
         tr = paper.pdfhueytask
         # TODO: which way is "better"?
         tr2 = PDFHueyTask(pk=tracker_pk)
@@ -119,23 +173,6 @@ def huey_build_prenamed_paper(
             tr.pdf_file = File(f, name=save_path.name)
             tr.status = HueyTaskTracker.COMPLETE
             tr.save()
-
-
-# The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_build_single_paper_FLAKY(
-    index: int, spec: dict, question_versions: dict
-) -> None:
-    """DEBUG ONLY: build a paper with a random chance of throwing an error.
-
-    It is important to understand that running this function starts an
-    async task in queue that will run sometime in the future.
-    """
-    roll = random.randint(1, 10)
-    if roll % 5 == 0:
-        raise ValueError("Error! This didn't work.")
-
-    make_PDF(spec=spec, papernum=index, question_versions=question_versions)
 
 
 class BuildPapersService:
