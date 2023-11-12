@@ -23,17 +23,34 @@ from django_huey import get_queue
 
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
+from Base.models import HueyTaskTracker
 from ..models import PDFHueyTask
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_build_single_paper(index: int, spec: dict, question_versions: dict) -> None:
+# ``context=True`` so that the task knows its ID etc.
+@db_task(queue="tasks", context=True)
+def huey_build_single_paper(
+    index: int,
+    spec: dict,
+    question_versions: dict,
+    *,
+    tracker_pk: int,
+    task=None,
+    quiet: bool = True,
+) -> None:
     """Build a single paper.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
     """
+    with transaction.atomic():
+        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.RUNNING
+        tr.huey_id = task.id
+        tr.save()
+
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
@@ -43,22 +60,41 @@ def huey_build_single_paper(index: int, spec: dict, question_versions: dict) -> 
             source_versions_path=PaperSourcePDF.upload_to(),
         )
         paper = Paper.objects.get(paper_number=index)
-        task = paper.pdfhueytask
+        tr = paper.pdfhueytask
+        # TODO: which way is "better"?
+        tr2 = PDFHueyTask(pk=tracker_pk)
+        assert tr == tr2
         with save_path.open("rb") as f:
-            task.pdf_file = File(f, name=save_path.name)
-            task.save()
+            tr.pdf_file = File(f, name=save_path.name)
+            tr.status = HueyTaskTracker.COMPLETE
+            tr.save()
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+# ``context=True`` so that the task knows its ID etc.
+@db_task(queue="tasks", context=True)
 def huey_build_prenamed_paper(
-    index: int, spec: dict, question_versions: dict, student_info: dict
+    index: int,
+    spec: dict,
+    question_versions: dict,
+    student_info: dict,
+    *,
+    tracker_pk: int,
+    task=None,
+    quiet: bool = True,
 ) -> None:
     """Build a single paper and prename it.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
     """
+    with transaction.atomic():
+        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.RUNNING
+        tr.huey_id = task.id
+        tr.save()
+
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
@@ -70,10 +106,14 @@ def huey_build_prenamed_paper(
         )
 
         paper = Paper.objects.get(paper_number=index)
-        task = paper.pdfhueytask
+        tr = paper.pdfhueytask
+        # TODO: which way is "better"?
+        tr2 = PDFHueyTask(pk=tracker_pk)
+        assert tr == tr2
         with save_path.open("rb") as f:
-            task.pdf_file = File(f, name=save_path.name)
-            task.save()
+            tr.pdf_file = File(f, name=save_path.name)
+            tr.status = HueyTaskTracker.COMPLETE
+            tr.save()
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -135,28 +175,20 @@ class BuildPapersService:
         """Return True if there are any PDFHueyTasks with an 'error' status."""
         return PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR).count() > 0
 
-    def create_task(self, index: int, huey_id: int, student_name=None, student_id=None):
-        """Create and save a PDF-building task to the database."""
-        paper = get_object_or_404(Paper, paper_number=index)
+    def _create_task_to_do(
+        self, papernum: int, *, student_name=None, student_id=None
+    ) -> None:
+        """Create and save a PDF-building task to the database, but don't start it."""
+        paper = get_object_or_404(Paper, paper_number=papernum)
 
         task = PDFHueyTask(
             paper=paper,
-            huey_id=huey_id,
+            huey_id=None,
             status=PDFHueyTask.TO_DO,
             student_name=student_name,
             student_id=student_id,
         )
         task.save()
-        return task
-
-    def build_single_paper(self, index: int, spec: dict, question_versions: dict):
-        """Build a single test-paper, with huey!"""
-        res = huey_build_single_paper(index, spec, question_versions)
-        # TODO: potential race calling create_task after enqueuing
-        task_obj = self.create_task(index, res.id)
-        task_obj.status = PDFHueyTask.QUEUED
-        task_obj.save()
-        return task_obj
 
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers."""
@@ -182,9 +214,8 @@ class BuildPapersService:
                 student_id = prenamed[paper_number]["id"]
                 student_name = prenamed[paper_number]["studentName"]
 
-            self.create_task(
+            self._create_task_to_do(
                 paper_number,
-                None,
                 student_id=student_id,
                 student_name=student_name,
             )
@@ -194,32 +225,40 @@ class BuildPapersService:
         todo_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.TO_DO)
         for task in todo_tasks:
             paper_number = task.paper.paper_number
-            if task.student_name and task.student_id:
-                info_dict = {"id": task.student_id, "name": task.student_name}
-                res = huey_build_prenamed_paper(
-                    paper_number, spec, qvmap[paper_number], info_dict
-                )
-            else:
-                res = huey_build_single_paper(paper_number, spec, qvmap[paper_number])
-
-            task.huey_id = res.id
-            task.status = PDFHueyTask.QUEUED
-            task.save()
+            self._send_single_task(task, paper_number, spec, qvmap[paper_number])
 
     def send_single_task(self, paper_num, spec, qv_row):
-        """Send a single todo task to Huey."""
+        """Send a single todo task to Huey.
+
+        TODO: nothing here asserts it is really status TO_DO, nor that
+        the tracker already exists.  Perhaps this is only used for retries
+        or similar?
+        """
         paper = get_object_or_404(Paper, paper_number=paper_num)
         task = paper.pdfhueytask
+        self._send_single_task(task, paper_num, spec, qv_row)
+
+    def _send_single_task(self, task, paper_num, spec, qv_row):
+        task.status = HueyTaskTracker.STARTING
+        task.save()
+        tracker_pk = task.pk
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
-            res = huey_build_prenamed_paper(paper_num, spec, qv_row, info_dict)
+            _ = huey_build_prenamed_paper(
+                paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk, quiet=True
+            )
         else:
-            res = huey_build_single_paper(paper_num, spec, qv_row)
+            _ = huey_build_single_paper(
+                paper_num, spec, qv_row, tracker_pk=tracker_pk, quiet=True
+            )
 
-        task.huey_id = res.id
-        task.status = PDFHueyTask.QUEUED
-        task.save()
+        with transaction.atomic:
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, safe to change to queued
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = PDFHueyTask.QUEUED
+                task.save()
 
     def cancel_all_task(self):
         """Cancel all queued task from Huey."""
