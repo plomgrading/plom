@@ -12,6 +12,7 @@ from huey.signals import (
 )
 
 from django.db import models
+from django.db import transaction
 from django.contrib.auth.models import User
 from django_huey import get_queue
 from django.utils import timezone
@@ -201,25 +202,31 @@ def start_task(signal, task):
         )
         return
 
-    task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-    task_obj.status = HueyTaskTracker.STARTED
-    task_obj.save()
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.STARTED
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_COMPLETE)
 def end_task(signal, task):
     if task.kwargs.get("quiet", False):
         return
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.COMPLETE
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+
+    # Note: using filter except of a exception on DNE because I think
+    # the exception handling was rewinding some atomic transations
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Completed) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.COMPLETE
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_ERROR)
@@ -228,17 +235,22 @@ def error_task(signal, task, exc):
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     if task.kwargs.get("quiet", False):
         return
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = exc
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+
+    # Note: using filter except of a exception on DNE because I think
+    # the exception handling was rewinding some atomic transations
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = exc
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
