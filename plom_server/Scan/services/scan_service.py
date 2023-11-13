@@ -37,6 +37,7 @@ from plom.tpv_utils import (
 
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
+from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
     StagingImage,
@@ -68,6 +69,8 @@ class ScanService:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, split PDF into page images + store in filesystem and database.
+        Currently if that fails for any reason, the StagingBundle is still
+        created.
 
         Args:
             uploaded_pdf_file (Django File): File-object containing the pdf
@@ -87,7 +90,9 @@ class ScanService:
             None
         """
         fh = uploaded_pdf_file.open()
-        with transaction.atomic():
+        # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
+        # strange behaviour can result from relaxing this durable=True
+        with transaction.atomic(durable=True):
             bundle_obj = StagingBundle.objects.create(
                 slug=slug,
                 pdf_file=File(fh, name=f"{timestamp}.pdf"),
@@ -100,7 +105,6 @@ class ScanService:
 
         self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
-    @transaction.atomic
     def upload_bundle_cmd(
         self,
         pdf_file_path,
@@ -168,14 +172,26 @@ class ScanService:
             None
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        res = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
-        with transaction.atomic():
-            PagesToImagesHueyTask.objects.create(
+
+        with transaction.atomic(durable=True):
+            x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                huey_id=res.id,
-                status=PagesToImagesHueyTask.QUEUED,
+                status=PagesToImagesHueyTask.STARTING,
                 created=timezone.now(),
             )
+            tracker_pk = x.pk
+
+        _ = huey_parent_split_bundle_task(
+            bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
+        )
+        # print(f"Just enqueued Huey parent_split_and_save task id={_.id}")
+
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            if tr.status == HueyTaskTracker.STARTING:
+                tr.status = HueyTaskTracker.QUEUED
+                tr.save()
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
@@ -429,7 +445,6 @@ class ScanService:
                 groupings[quadrant] = qr_code_dict
         return groupings
 
-    @transaction.atomic
     def read_qr_codes(self, bundle_pk):
         """Read QR codes of scanned pages in a bundle.
 
@@ -455,14 +470,23 @@ class ScanService:
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
-        res = huey_parent_read_qr_codes_task(bundle_pk)
-        with transaction.atomic():
-            ManageParseQR.objects.create(
+        with transaction.atomic(durable=True):
+            x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                huey_id=res.id,
-                status=ManageParseQR.QUEUED,
+                status=ManageParseQR.STARTING,
                 created=timezone.now(),
             )
+            tracker_pk = x.pk
+
+        _ = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
+        # print(f"Just enqueued Huey parent_read_qr_codes task id={_.id}")
+
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            if tr.status == HueyTaskTracker.STARTING:
+                tr.status = HueyTaskTracker.QUEUED
+                tr.save()
 
     def map_bundle_pages(self, bundle_pk, *, papernum, questions):
         """WIP support for hwscan.
@@ -682,8 +706,8 @@ class ScanService:
             bundle_status.append(bundle_data)
         return bundle_status
 
-    @transaction.atomic
-    def read_bundle_qr_cmd(self, bundle_name):
+    def read_bundle_qr_cmd(self, bundle_name: str) -> None:
+        """Read all the QR codes from a bundle specified by its name."""
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -1188,13 +1212,39 @@ class ScanService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+@db_task(queue="tasks", context=True)
 def huey_parent_split_bundle_task(
-    bundle_pk, *, debug_jpeg: Optional[bool] = False
+    bundle_pk,
+    *,
+    debug_jpeg: Optional[bool] = False,
+    tracker_pk: int,
+    task=None,
 ) -> None:
+    """Split a PDF document into individual page images.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+
+    Args:
+        bundle_pk: StagingBundle object primary key
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+
+    Returns:
+        None
+    """
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+    with transaction.atomic(durable=True):
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.RUNNING
+        tr.huey_id = task.id
+        tr.save()
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1204,7 +1254,6 @@ def huey_parent_split_bundle_task(
                 pg,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
                 f"page{pg:05}",  # filename matches our 1-index
-                quiet=True,
                 debug_jpeg=debug_jpeg,
             )
             for pg in range(1, bundle_obj.number_of_pages + 1)
@@ -1219,6 +1268,9 @@ def huey_parent_split_bundle_task(
             # TODO - check for error status here.
 
             with transaction.atomic():
+                # TODO: note get the tracker object by its bundle not its ID
+                # avoiding a race condition: its possible the tracker itself
+                # still says "TO_DO" rather than "ENQUEUED"; that's ok from our PoV.
                 task_obj = PagesToImagesHueyTask.objects.get(bundle=bundle_obj)
                 task_obj.completed_pages = count
                 task_obj.save()
@@ -1244,18 +1296,47 @@ def huey_parent_split_bundle_task(
 
             bundle_obj.has_page_images = True
             bundle_obj.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.status = HueyTaskTracker.COMPLETE
+            tr.save()
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_parent_read_qr_codes_task(bundle_pk: int) -> None:
+@db_task(queue="tasks", context=True)
+def huey_parent_read_qr_codes_task(
+    bundle_pk: int,
+    *,
+    tracker_pk: int,
+    task=None,
+) -> None:
+    """Read the QR codes of a bunch of pages.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+
+    Args:
+        bundle_pk: StagingBundle object primary key
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+
+    Returns:
+        None
+    """
     from time import sleep
+
+    with transaction.atomic(durable=True):
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.RUNNING
+        tr.huey_id = task.id
+        tr.save()
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk, quiet=True)
-        for page in bundle_obj.stagingimage_set.all()
+        huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
     ]
 
     # results = [X.get(blocking=True) for X in task_list]
@@ -1288,6 +1369,11 @@ def huey_parent_read_qr_codes_task(bundle_pk: int) -> None:
 
     QRErrorService().check_read_qr_codes(bundle_obj)
 
+    with transaction.atomic(durable=True):
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.COMPLETE
+        tr.save()
+
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
@@ -1297,10 +1383,12 @@ def huey_child_get_page_image(
     basedir: pathlib.Path,
     basename: str,
     *,
-    quiet=True,
     debug_jpeg=False,
 ) -> Dict[str, Any]:
     """Render a page image and save to disk in the background.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
 
     Args:
         bundle_pk: bundle DB object's primary key
@@ -1309,7 +1397,6 @@ def huey_child_get_page_image(
         basename (str): a basic filename without the extension
 
     Keyword Args:
-        quiet (bool): currently unused?
         debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
 
@@ -1362,16 +1449,14 @@ def huey_child_get_page_image(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(
-    image_pk: int, *, quiet: Optional[bool] = True
-) -> Dict[str, Any]:
+def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
 
     Args:
         image_pk: primary key of the image
-
-    Keyword Args:
-        quiet: currently unused?
 
     Returns:
         Information about the QR codes.

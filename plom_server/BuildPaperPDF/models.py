@@ -11,11 +11,11 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from Base.models import BaseHueyTaskTracker
+from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class PDFHueyTask(BaseHueyTaskTracker):
+class PDFHueyTask(HueyTaskTracker):
     # OneToOneField makes a field called "pdfhueytask" in the Paper table
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
