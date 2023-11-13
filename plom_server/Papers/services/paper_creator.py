@@ -178,8 +178,6 @@ class PaperCreatorService:
         for paper_number, qv_mapping in qv_map.items():
             try:
                 if background:
-                    # TODO: I don't think anyone is using this yet: we have no background
-                    # PDF paper construction?
                     self.create_paper_with_qvmapping_huey_wrapper(
                         paper_number, qv_mapping
                     )
