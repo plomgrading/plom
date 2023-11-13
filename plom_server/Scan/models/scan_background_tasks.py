@@ -6,25 +6,25 @@
 
 from django.db import models
 
-from Base.models import BaseHueyTaskTracker
+from Base.models import HueyTaskTracker
 from ..models import StagingBundle
 
 
-class PagesToImagesHueyTask(BaseHueyTaskTracker):
+class PagesToImagesHueyTask(HueyTaskTracker):
     """Manage the background task for converting PDF pages into images."""
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)
 
 
-class ManageParseQR(BaseHueyTaskTracker):
+class ManageParseQR(HueyTaskTracker):
     """Manage the background parse-qr tasks."""
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)
 
 
-class ParseQR(BaseHueyTaskTracker):
+class ParseQR(HueyTaskTracker):
     """Parse a page of QR codes in the background."""
 
     file_path = models.TextField(default="")

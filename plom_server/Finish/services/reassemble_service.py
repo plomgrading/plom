@@ -27,7 +27,7 @@ from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 from ..models import ReassembleHueyTaskTracker
-from Base.models import BaseHueyTaskTracker as HueyTaskTracker
+from Base.models import HueyTaskTracker
 
 
 class ReassembleService:
@@ -500,10 +500,20 @@ class ReassembleService:
 
         with transaction.atomic(durable=True):
             task = paper_obj.reassemblehueytasktracker
-            task.status = HueyTaskTracker.TO_DO
+            task.status = HueyTaskTracker.STARTING
             task.save()
-        _ = huey_reassemble_paper(paper_number, tracker_pk=task.pk, quiet=True)
+            tracker_pk = task.pk
+
+        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk, quiet=True)
         # print(f"Just enqueued Huey reassembly task id={_.id}")
+
+        with transaction.atomic(durable=True):
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            assert task.status != HueyTaskTracker.TO_DO
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = HueyTaskTracker.QUEUED
+                task.save()
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -528,6 +538,8 @@ class ReassembleService:
 
         Args:
             paper_number (int): The paper number of the reassembly task to reset.
+
+        TODO: QUEUED, STARTING, RUNNING?
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -549,7 +561,10 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
-        """Reset to TODO all reassembly tasks and remove any associated pdfs."""
+        """Reset to TODO all reassembly tasks and remove any associated pdfs.
+
+        TODO: QUEUED, STARTING, RUNNING?
+        """
         queue = get_queue("tasks")
         for task in ReassembleHueyTaskTracker.objects.exclude(
             status=HueyTaskTracker.TO_DO
@@ -579,10 +594,19 @@ class ReassembleService:
                 continue
             with transaction.atomic(durable=True):
                 task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-                task.status = HueyTaskTracker.TO_DO
+                task.status = HueyTaskTracker.STARTING
                 task.save()
-            _ = huey_reassemble_paper(pn, tracker_pk=task.pk, quiet=True)
+                tracker_pk = task.pk
+            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk, quiet=True)
             # print(f"Just enqueued Huey reassembly task id={_.id}")
+
+            with transaction.atomic(durable=True):
+                task = HueyTaskTracker.objects.get(pk=tracker_pk)
+                # if its still starting, it is safe to change to queued
+                assert task.status != HueyTaskTracker.TO_DO
+                if task.status == HueyTaskTracker.STARTING:
+                    task.status = HueyTaskTracker.QUEUED
+                    task.save()
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
@@ -642,8 +666,7 @@ def huey_reassemble_paper(
     with transaction.atomic():
         # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        # TODO: change to RUNNING?
-        tr.status = HueyTaskTracker.STARTED
+        tr.status = HueyTaskTracker.RUNNING
         tr.huey_id = task.id
         tr.save()
 
@@ -653,7 +676,7 @@ def huey_reassemble_paper(
         with save_path.open("rb") as f:
             with transaction.atomic():
                 # TODO: unclear to me if we need to re-get the task
-                tr = ReassembleHueyTaskTracker(pk=tracker_pk)
+                tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
                 # TODO: IMHO, the pdf file does not belong in the Tracker obj
                 # delete any old file if it exists
                 if tr.pdf_file:

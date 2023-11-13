@@ -28,7 +28,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         bps = BuildPapersService()
         task_context = bps.get_task_context()
 
-        running_tasks = bps.get_n_running_tasks()
+        running_tasks = bps.get_n_tasks_started_but_not_complete()
         if running_tasks > 0:
             poll = True
         else:
@@ -128,7 +128,7 @@ class PDFTableView(ManagerRequiredView):
             status = 286
             zip_disabled = False
 
-        n_running = bps.get_n_running_tasks()
+        n_running = bps.get_n_tasks_started_but_not_complete()
         poll = n_running > 0
 
         context = self.build_context()

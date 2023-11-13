@@ -6,11 +6,11 @@
 
 from django.db import models
 
-from Base.models import BaseHueyTaskTracker
+from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class ReassembleHueyTaskTracker(BaseHueyTaskTracker):
+class ReassembleHueyTaskTracker(HueyTaskTracker):
     # OneToOneField makes a field called "reassemblehueytasktracker" in the Paper table
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     # TODO: I'm not convinced this should have a PDF file in it... TBD

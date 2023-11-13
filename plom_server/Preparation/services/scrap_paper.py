@@ -10,7 +10,7 @@ from django.core.files import File
 from django.db import transaction
 from django_huey import db_task
 
-from Base.models import BaseHueyTaskTracker as HueyTaskTracker
+from Base.models import HueyTaskTracker
 from ..models import ScrapPaperPDFHueyTask as ScrapPaperPDFTask
 
 
@@ -38,7 +38,7 @@ def huey_build_the_scrap_paper_pdf(
     with transaction.atomic():
         task_obj = ScrapPaperPDFTask.load()
         task_obj.huey_id = task.id
-        task_obj.status = HueyTaskTracker.STARTED
+        task_obj.status = HueyTaskTracker.RUNNING
         task_obj.save()
 
     # build the pdf in a tempdirectory
@@ -92,8 +92,17 @@ class ScrapPaperService:
         with transaction.atomic(durable=True):
             task_obj.status = HueyTaskTracker.TO_DO
             task_obj.save()
-        _ = huey_build_the_scrap_paper_pdf(tracker_pk=task_obj.pk, quiet=True)
+            tracker_pk = task_obj.pk
+
+        _ = huey_build_the_scrap_paper_pdf(tracker_pk=tracker_pk, quiet=True)
         # print(f"Just enqueued Huey scrap paper builder id={_.id}")
+
+        with transaction.atomic(durable=True):
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = HueyTaskTracker.QUEUED
+                task.save()
 
     @transaction.atomic
     def get_scrap_paper_pdf_as_bytes(self):
