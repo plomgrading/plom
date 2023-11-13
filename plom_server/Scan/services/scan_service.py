@@ -184,7 +184,7 @@ class ScanService:
         _ = huey_parent_split_bundle_task(
             bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
         )
-        print(f"Just enqueued Huey parent_split_and_save task id={_.id}")
+        # print(f"Just enqueued Huey parent_split_and_save task id={_.id}")
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
@@ -479,7 +479,7 @@ class ScanService:
             tracker_pk = x.pk
 
         _ = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
-        print(f"Just enqueued Huey parent_read_qr_codes task id={_.id}")
+        # print(f"Just enqueued Huey parent_read_qr_codes task id={_.id}")
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
