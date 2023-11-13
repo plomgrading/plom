@@ -22,4 +22,6 @@ from .specifications import (
     Specification,
     SolutionSpecification,
 )
-from .background_tasks import CreatePaperHueyTask, CreateImageHueyTask
+
+# TODO: Issue #3140
+from .background_tasks import CreateImageHueyTask

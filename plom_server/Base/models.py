@@ -184,7 +184,7 @@ class Tag(models.Model):
 def on_huey_task_start(signal, task):
     """Action to take when a huey task starts up.
 
-    Most of our tasks don't use this becaues it races for the status update.
+    Most of our tasks don't use this because it races for the status update.
     But if the `_deprecated_task_signalling` kwarg of the task is True,
     then we update the Tracker.
     """
