@@ -502,7 +502,7 @@ class ReassembleService:
             task = paper_obj.reassemblehueytasktracker
             task.status = HueyTaskTracker.TO_DO
             task.save()
-            tracker_pk = task.ok
+            tracker_pk = task.pk
 
         _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk, quiet=True)
         # print(f"Just enqueued Huey reassembly task id={_.id}")
