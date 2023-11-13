@@ -85,7 +85,9 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
             raise ValueError(f"No gaps allowed in test_num: got {list(vm.keys())}")
 
 
-def make_random_version_map(spec, *, seed: Optional[str]) -> Dict[int, Dict[int, int]]:
+def make_random_version_map(
+    spec, *, seed: Optional[str] = None
+) -> Dict[int, Dict[int, int]]:
     """Build a random version map.
 
     Args:
