@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Colin Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -57,13 +58,13 @@ class BuildPaperPDFTests(TestCase):
         n_total = bps.get_n_tasks()
         self.assertEqual(n_total, 7)
 
-    def test_get_n_running_tasks(self):
-        """Test BuildPapersService.get_n_running_tasks."""
+    def test_get_n_tasks_started_but_not_complete(self):
+        """Test BuildPapersService checking how many in progress."""
         bps = BuildPapersService()
-        n_running = bps.get_n_running_tasks()
+        n_running = bps.get_n_tasks_started_but_not_complete()
         self.assertEqual(n_running, 0)
 
         self.make_tasks()
 
-        n_running = bps.get_n_running_tasks()
+        n_running = bps.get_n_tasks_started_but_not_complete()
         self.assertEqual(n_running, 3)

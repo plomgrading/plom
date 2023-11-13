@@ -185,7 +185,7 @@ class BuildPapersService:
         return PDFHueyTask.objects.exclude(status=PDFHueyTask.COMPLETE).count()
 
     @transaction.atomic
-    def get_n_running_tasks(self):
+    def get_n_tasks_started_but_not_complete(self):
         """Get the number of PDFHueyTasks with the status 'STARTING', 'QUEUED' or 'RUNNING'."""
         return PDFHueyTask.objects.filter(
             Q(status=PDFHueyTask.STARTING)
