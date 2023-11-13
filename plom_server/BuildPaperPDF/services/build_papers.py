@@ -64,7 +64,6 @@ def huey_build_single_paper(
         None
     """
     with transaction.atomic():
-        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
         tr.status = HueyTaskTracker.RUNNING
         tr.huey_id = task.id
@@ -136,7 +135,6 @@ def huey_build_prenamed_paper(
         None
     """
     with transaction.atomic():
-        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
         tr.status = HueyTaskTracker.RUNNING
         tr.huey_id = task.id
