@@ -12,6 +12,7 @@ from huey.signals import (
 )
 
 from django.db import models
+from django.db import transaction
 from django.contrib.auth.models import User
 from django_huey import get_queue
 from django.utils import timezone
@@ -173,10 +174,6 @@ class Tag(models.Model):
 
 # ---------------------------------
 # Define the signal handlers for huey tasks.
-# if the task has the kwarg "quiet=True" then
-# we ignore the signals
-# otherwise we use the signals to update information
-# in the database.
 # ---------------------------------
 
 # TODO: I am concerned that these receive signals from unrelated Huey tasks
@@ -184,57 +181,85 @@ class Tag(models.Model):
 
 
 @queue.signal(SIGNAL_EXECUTING)
-def start_task(signal, task):
-    if task.kwargs.get("quiet", False):
+def on_huey_task_start(signal, task):
+    """Action to take when a huey task starts up.
+
+    Most of our tasks don't use this because it races for the status update.
+    But if the `_deprecated_task_signalling` kwarg of the task is True,
+    then we update the Tracker.
+    """
+    if not task.kwargs.get("_deprecated_task_signalling", False):
         return
 
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.RUNNING
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+    # TODO: this lookup of HueyTaskTrackers by ID has races because
+    # the task can easily start before we have a change to save this ID.
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Started) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.RUNNING
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_COMPLETE)
-def end_task(signal, task):
-    if task.kwargs.get("quiet", False):
+def on_huey_task_end(signal, task):
+    """Action to take when a Huey task completes.
+
+    Currently most of our tasks don't use this, instead setting status
+    ``COMPLETE`` themselves.  But if the `_deprecated_task_signalling`
+    kwarg of the task is True, then we update the Tracker.
+    """
+    if not task.kwargs.get("_deprecated_task_signalling", False):
         return
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.COMPLETE
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Completed) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.COMPLETE
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_ERROR)
-def error_task(signal, task, exc):
+def on_huey_task_error(signal, task, exc):
+    """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-    if task.kwargs.get("quiet", False):
-        return
-    try:
-        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.ERROR
-        task_obj.message = exc
-        task_obj.save()
-    except HueyTaskTracker.DoesNotExist:
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
             " is no longer (or not yet) in the database."
         )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = exc
+        task_obj.save()
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
-def interrupt_task(signal, task):
-    print(f"Interrupt sent to task {task.id} - {task.name} {task.args}")
+def on_huey_task_interrupted(signal, task):
+    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")

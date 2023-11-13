@@ -38,7 +38,6 @@ def huey_build_single_paper(
     *,
     tracker_pk: int,
     task=None,
-    quiet: bool = True,
     _debug_be_flaky: bool = False,
 ) -> None:
     """Build a single paper.
@@ -55,9 +54,6 @@ def huey_build_single_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
         _debug_be_flaky: for debugging, fail some percentage of their
             building.
 
@@ -108,7 +104,6 @@ def huey_build_prenamed_paper(
     *,
     tracker_pk: int,
     task=None,
-    quiet: bool = True,
     _debug_be_flaky: bool = False,
 ) -> None:
     """Build a single paper and prename it.
@@ -126,9 +121,6 @@ def huey_build_prenamed_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
         _debug_be_flaky: for debugging, fail some percentage of their
             building.
 
@@ -294,12 +286,10 @@ class BuildPapersService:
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
             _ = huey_build_prenamed_paper(
-                paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk, quiet=True
+                paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk
             )
         else:
-            _ = huey_build_single_paper(
-                paper_num, spec, qv_row, tracker_pk=tracker_pk, quiet=True
-            )
+            _ = huey_build_single_paper(paper_num, spec, qv_row, tracker_pk=tracker_pk)
 
         with transaction.atomic(durable=True):
             task = HueyTaskTracker.objects.get(pk=tracker_pk)

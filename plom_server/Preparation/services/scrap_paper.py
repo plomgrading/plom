@@ -20,18 +20,13 @@ log = logging.getLogger("ScrapPaperService")
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_build_the_scrap_paper_pdf(
-    *, tracker_pk: int, task=None, quiet: bool = True
-) -> None:
+def huey_build_the_scrap_paper_pdf(*, tracker_pk: int, task=None) -> None:
     """Build a single scrap paper pdf.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
     """
     from plom.create import build_scrap_paper_pdf
 
@@ -94,7 +89,7 @@ class ScrapPaperService:
             task_obj.save()
             tracker_pk = task_obj.pk
 
-        _ = huey_build_the_scrap_paper_pdf(tracker_pk=tracker_pk, quiet=True)
+        _ = huey_build_the_scrap_paper_pdf(tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey scrap paper builder id={_.id}")
 
         with transaction.atomic(durable=True):
