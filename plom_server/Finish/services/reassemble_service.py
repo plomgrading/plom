@@ -504,7 +504,7 @@ class ReassembleService:
             task.save()
             tracker_pk = task.pk
 
-        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk, quiet=True)
+        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey reassembly task id={_.id}")
 
         with transaction.atomic(durable=True):
@@ -597,7 +597,7 @@ class ReassembleService:
                 task.status = HueyTaskTracker.STARTING
                 task.save()
                 tracker_pk = task.pk
-            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk, quiet=True)
+            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk)
             # print(f"Just enqueued Huey reassembly task id={_.id}")
 
             with transaction.atomic(durable=True):
@@ -639,9 +639,7 @@ class ReassembleService:
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_reassemble_paper(
-    paper_number: int, *, tracker_pk: int, task=None, quiet: bool = True
-) -> None:
+def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> None:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
     Args:
@@ -651,9 +649,6 @@ def huey_reassemble_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
 
     Returns:
         None

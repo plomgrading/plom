@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
 
+from Base.models import HueyTaskTracker
 from ..models import (
     Specification,
     Paper,
@@ -29,8 +30,11 @@ log = logging.getLogger("PaperCreatorService")
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
 @transaction.atomic
-def _create_paper_with_qvmapping(
-    spec_obj: Specification, paper_number: int, qv_mapping: Dict
+def huey_create_paper_with_qvmapping(
+    spec_obj: Specification,
+    paper_number: int,
+    qv_mapping: Dict,
+    _deprecated_task_signalling: bool = True,
 ) -> None:
     """Creates a paper with the given paper number and the given question-version mapping.
 
@@ -94,13 +98,15 @@ class PaperCreatorService:
 
     @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
-        res = _create_paper_with_qvmapping(self.spec_obj, paper_number, qv_mapping)
+        res = huey_create_paper_with_qvmapping(
+            self.spec_obj, paper_number, qv_mapping, _deprecated_task_signalling=True
+        )
         # TODO: potential race condition if HueyTaskTracker created after
         # and if _create_paper_with_qvmapping accesses this, which in this
         # case I don't think it does, but should perhaps be changed to the
         # pattern used elsewhere.
         paper_task_obj = CreatePaperHueyTask(huey_id=res.id, paper_number=paper_number)
-        paper_task_obj.status = "queued"
+        paper_task_obj.status = HueyTaskTracker.QUEUED
         paper_task_obj.save()
 
     def add_all_papers_in_qv_map(
@@ -127,7 +133,8 @@ class PaperCreatorService:
                 if background:
                     self.create_paper_with_qvmapping(paper_number, qv_mapping)
                 else:
-                    _create_paper_with_qvmapping.call_local(
+                    # Note call_local to just do it without invoking the queue
+                    huey_create_paper_with_qvmapping.call_local(
                         self.spec_obj, paper_number, qv_mapping
                     )
             except ValueError as err:

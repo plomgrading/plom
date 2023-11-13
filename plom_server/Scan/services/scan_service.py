@@ -182,7 +182,7 @@ class ScanService:
             tracker_pk = x.pk
 
         _ = huey_parent_split_bundle_task(
-            bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk, quiet=True
+            bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
         )
         print(f"Just enqueued Huey parent_split_and_save task id={_.id}")
 
@@ -478,7 +478,7 @@ class ScanService:
             )
             tracker_pk = x.pk
 
-        _ = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk, quiet=True)
+        _ = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
         print(f"Just enqueued Huey parent_read_qr_codes task id={_.id}")
 
         with transaction.atomic(durable=True):
@@ -1219,7 +1219,6 @@ def huey_parent_split_bundle_task(
     debug_jpeg: Optional[bool] = False,
     tracker_pk: int,
     task=None,
-    quiet: bool = True,
 ) -> None:
     """Split a PDF document into individual page images.
 
@@ -1233,9 +1232,6 @@ def huey_parent_split_bundle_task(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
 
     Returns:
         None
@@ -1258,7 +1254,6 @@ def huey_parent_split_bundle_task(
                 pg,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
                 f"page{pg:05}",  # filename matches our 1-index
-                quiet=True,
                 debug_jpeg=debug_jpeg,
             )
             for pg in range(1, bundle_obj.number_of_pages + 1)
@@ -1313,7 +1308,6 @@ def huey_parent_read_qr_codes_task(
     *,
     tracker_pk: int,
     task=None,
-    quiet: bool = True,
 ) -> None:
     """Read the QR codes of a bunch of pages.
 
@@ -1327,9 +1321,6 @@ def huey_parent_read_qr_codes_task(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        quiet: a hack so the Huey process started signal is ignored
-            TODO: perhaps to be removed later.  The signal handler
-            itself gets a list of our args and looks for this.
 
     Returns:
         None
@@ -1345,8 +1336,7 @@ def huey_parent_read_qr_codes_task(
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk, quiet=True)
-        for page in bundle_obj.stagingimage_set.all()
+        huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
     ]
 
     # results = [X.get(blocking=True) for X in task_list]
@@ -1393,7 +1383,6 @@ def huey_child_get_page_image(
     basedir: pathlib.Path,
     basename: str,
     *,
-    quiet=True,
     debug_jpeg=False,
 ) -> Dict[str, Any]:
     """Render a page image and save to disk in the background.
@@ -1408,7 +1397,6 @@ def huey_child_get_page_image(
         basename (str): a basic filename without the extension
 
     Keyword Args:
-        quiet (bool): currently unused?
         debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
 
@@ -1461,9 +1449,7 @@ def huey_child_get_page_image(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(
-    image_pk: int, *, quiet: Optional[bool] = True
-) -> Dict[str, Any]:
+def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
@@ -1471,9 +1457,6 @@ def huey_child_parse_qr_code(
 
     Args:
         image_pk: primary key of the image
-
-    Keyword Args:
-        quiet: currently unused?
 
     Returns:
         Information about the QR codes.

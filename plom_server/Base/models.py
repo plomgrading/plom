@@ -174,10 +174,6 @@ class Tag(models.Model):
 
 # ---------------------------------
 # Define the signal handlers for huey tasks.
-# if the task has the kwarg "quiet=True" then
-# we ignore the signals
-# otherwise we use the signals to update information
-# in the database.
 # ---------------------------------
 
 # TODO: I am concerned that these receive signals from unrelated Huey tasks
@@ -185,11 +181,17 @@ class Tag(models.Model):
 
 
 @queue.signal(SIGNAL_EXECUTING)
-def start_task(signal, task):
-    if task.kwargs.get("quiet", False):
+def on_huey_task_start(signal, task):
+    """Action to take when a huey task starts up.
+
+    Most of our tasks don't use this becaues it races for the status update.
+    But if the `_deprecated_task_signalling` kwarg of the task is True,
+    then we update the Tracker.
+    """
+    if not task.kwargs.get("_deprecated_task_signalling", False):
         return
 
-    # TODO: this lookup of HueyTraskTrackers by ID has races because
+    # TODO: this lookup of HueyTaskTrackers by ID has races because
     # the task can easily start before we have a change to save this ID.
 
     # Note: using filter except of a exception on DoesNotExist because I think
@@ -204,13 +206,19 @@ def start_task(signal, task):
 
     with transaction.atomic():
         task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
-        task_obj.status = HueyTaskTracker.STARTED
+        task_obj.status = HueyTaskTracker.RUNNING
         task_obj.save()
 
 
 @queue.signal(SIGNAL_COMPLETE)
-def end_task(signal, task):
-    if task.kwargs.get("quiet", False):
+def on_huey_task_end(signal, task):
+    """Action to take when a Huey task completes.
+
+    Currently most of our tasks don't use this, instead setting status
+    ``COMPLETE`` themselves.  But if the `_deprecated_task_signalling`
+    kwarg of the task is True, then we update the Tracker.
+    """
+    if not task.kwargs.get("_deprecated_task_signalling", False):
         return
 
     # Note: using filter except of a exception on DoesNotExist because I think
@@ -230,11 +238,10 @@ def end_task(signal, task):
 
 
 @queue.signal(SIGNAL_ERROR)
-def error_task(signal, task, exc):
+def on_huey_task_error(signal, task, exc):
+    """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-    if task.kwargs.get("quiet", False):
-        return
 
     # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
@@ -254,5 +261,5 @@ def error_task(signal, task, exc):
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
-def interrupt_task(signal, task):
-    print(f"Interrupt sent to task {task.id} - {task.name} {task.args}")
+def on_huey_task_interrupted(signal, task):
+    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
