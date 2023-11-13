@@ -4,18 +4,21 @@
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% block title %}
+    View question-version mapping
+{% endblock title %}
 {% block page_heading %}
-    Prepare assessment
+    View question-version mapping
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
             <a type="button" class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <div class="card" style="max-height:45%;">
+        <div class="card">
             <div class="card-body">
                 <h3 class="card-title">Question-version map</h3>
-                <div style="overflow: auto; max-height:40%;">
+                <div style="overflow: auto;">
                     <table class="table table-striped">
                         <thead>
                             <th>Paper number</th>
