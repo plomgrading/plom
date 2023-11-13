@@ -500,7 +500,7 @@ class ReassembleService:
 
         with transaction.atomic(durable=True):
             task = paper_obj.reassemblehueytasktracker
-            task.status = HueyTaskTracker.TO_DO
+            task.status = HueyTaskTracker.STARTING
             task.save()
             tracker_pk = task.pk
 
@@ -510,6 +510,7 @@ class ReassembleService:
         with transaction.atomic(durable=True):
             task = HueyTaskTracker.objects.get(pk=tracker_pk)
             # if its still starting, it is safe to change to queued
+            assert task.status != HueyTaskTracker.TO_DO
             if task.status == HueyTaskTracker.STARTING:
                 task.status = HueyTaskTracker.QUEUED
                 task.save()
@@ -537,6 +538,8 @@ class ReassembleService:
 
         Args:
             paper_number (int): The paper number of the reassembly task to reset.
+
+        TODO: QUEUED, STARTING, RUNNING?
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -558,7 +561,10 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
-        """Reset to TODO all reassembly tasks and remove any associated pdfs."""
+        """Reset to TODO all reassembly tasks and remove any associated pdfs.
+
+        TODO: QUEUED, STARTING, RUNNING?
+        """
         queue = get_queue("tasks")
         for task in ReassembleHueyTaskTracker.objects.exclude(
             status=HueyTaskTracker.TO_DO
@@ -588,7 +594,7 @@ class ReassembleService:
                 continue
             with transaction.atomic(durable=True):
                 task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-                task.status = HueyTaskTracker.TO_DO
+                task.status = HueyTaskTracker.STARTING
                 task.save()
                 tracker_pk = task.pk
             _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk, quiet=True)
@@ -597,6 +603,7 @@ class ReassembleService:
             with transaction.atomic(durable=True):
                 task = HueyTaskTracker.objects.get(pk=tracker_pk)
                 # if its still starting, it is safe to change to queued
+                assert task.status != HueyTaskTracker.TO_DO
                 if task.status == HueyTaskTracker.STARTING:
                     task.status = HueyTaskTracker.QUEUED
                     task.save()
