@@ -192,7 +192,7 @@ def start_task(signal, task):
     # TODO: this lookup of HueyTraskTrackers by ID has races because
     # the task can easily start before we have a change to save this ID.
 
-    # Note: using filter except of a exception on DNE because I think
+    # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
@@ -213,7 +213,7 @@ def end_task(signal, task):
     if task.kwargs.get("quiet", False):
         return
 
-    # Note: using filter except of a exception on DNE because I think
+    # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
@@ -236,7 +236,7 @@ def error_task(signal, task, exc):
     if task.kwargs.get("quiet", False):
         return
 
-    # Note: using filter except of a exception on DNE because I think
+    # Note: using filter except of a exception on DoesNotExist because I think
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
