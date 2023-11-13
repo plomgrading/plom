@@ -63,7 +63,6 @@ def huey_build_single_paper(
     Returns:
         None
     """
-    print(f"Huey: single paper build pk={tracker_pk}: setting tracker to RUNNING")
     with transaction.atomic():
         # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
@@ -71,7 +70,6 @@ def huey_build_single_paper(
         tr.huey_id = task.id
         tr.save()
 
-    print(f"Huey: single paper build pk={tracker_pk}: working")
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
@@ -88,7 +86,6 @@ def huey_build_single_paper(
                     f"DEBUG: deliberately failing creation of papernum={papernum}"
                 )
 
-        print(f"Huey: single paper build pk={tracker_pk}: cleanup")
         paper = Paper.objects.get(paper_number=papernum)
         tr = paper.pdfhueytask
         # TODO: which way is "better"?
@@ -96,7 +93,6 @@ def huey_build_single_paper(
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
-            print(f"Huey: single paper build pk={tracker_pk}: setting complete")
             tr.status = HueyTaskTracker.COMPLETE
             tr.save()
 
@@ -139,7 +135,6 @@ def huey_build_prenamed_paper(
     Returns:
         None
     """
-    print(f"Huey: prenamed paper build pk={tracker_pk}: setting tracker to RUNNING")
     with transaction.atomic():
         # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
         tr = HueyTaskTracker.objects.get(pk=tracker_pk)
@@ -247,7 +242,6 @@ class BuildPapersService:
         # note - classdict is a list of dicts - change this to more useful format
         prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
 
-        print("Creating all PDFHueyTasks, but not sending to Huey yet")
         self.papers_to_print.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             paper_number = paper_obj.paper_number
@@ -265,12 +259,8 @@ class BuildPapersService:
 
     def send_all_tasks(self, spec, qvmap):
         """Send all marked as todo PDF tasks to huey."""
-        print("^=" * 40)
-        print("getting all tasks")
         todo_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.TO_DO)
-        print(f"there are len {len(todo_tasks)} tasks")
         for task in todo_tasks:
-            print(task)
             paper_number = task.paper.paper_number
             self._send_single_task(task, paper_number, spec, qvmap[paper_number])
 
@@ -281,7 +271,6 @@ class BuildPapersService:
         the tracker already exists.  Perhaps this is only used for retries
         or similar?
         """
-        print("SEND SINGLE" * 10)
         paper = get_object_or_404(Paper, paper_number=paper_num)
         task = paper.pdfhueytask
         self._send_single_task(task, paper_num, spec, qv_row)
