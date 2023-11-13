@@ -89,7 +89,7 @@ def huey_build_single_paper(
         paper = Paper.objects.get(paper_number=papernum)
         tr = paper.pdfhueytask
         # TODO: which way is "better"?
-        tr2 = PDFHueyTask(pk=tracker_pk)
+        tr2 = PDFHueyTask.objects.get(pk=tracker_pk)
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
@@ -161,7 +161,7 @@ def huey_build_prenamed_paper(
         paper = Paper.objects.get(paper_number=papernum)
         tr = paper.pdfhueytask
         # TODO: which way is "better"?
-        tr2 = PDFHueyTask(pk=tracker_pk)
+        tr2 = PDFHueyTask.objects.get(pk=tracker_pk)
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
@@ -224,7 +224,7 @@ class BuildPapersService:
         """Create and save a PDF-building task to the database, but don't start it."""
         paper = get_object_or_404(Paper, paper_number=papernum)
 
-        task = PDFHueyTask(
+        task = PDFHueyTask.objects.create(
             paper=paper,
             huey_id=None,
             status=PDFHueyTask.TO_DO,

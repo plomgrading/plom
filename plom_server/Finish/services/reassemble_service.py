@@ -676,7 +676,7 @@ def huey_reassemble_paper(
         with save_path.open("rb") as f:
             with transaction.atomic():
                 # TODO: unclear to me if we need to re-get the task
-                tr = ReassembleHueyTaskTracker(pk=tracker_pk)
+                tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
                 # TODO: IMHO, the pdf file does not belong in the Tracker obj
                 # delete any old file if it exists
                 if tr.pdf_file:
