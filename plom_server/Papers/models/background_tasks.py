@@ -8,12 +8,6 @@ from Base.models import HueyTaskTracker
 from Scan.models import StagingImage
 
 
-class CreatePaperHueyTask(HueyTaskTracker):
-    """Create a test-paper and save its structure to the database."""
-
-    paper_number = models.PositiveIntegerField(null=False, unique=True)
-
-
 class CreateImageHueyTask(HueyTaskTracker):
     """Create an image by copying a validated StagingImage instance."""
 

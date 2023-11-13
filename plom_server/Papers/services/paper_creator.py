@@ -20,7 +20,6 @@ from ..models import (
     IDPage,
     DNMPage,
     QuestionPage,
-    CreatePaperHueyTask,
 )
 
 
@@ -28,13 +27,15 @@ log = logging.getLogger("PaperCreatorService")
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+@db_task(queue="tasks", context=True)
 @transaction.atomic
 def huey_create_paper_with_qvmapping(
     spec_obj: Specification,
     paper_number: int,
-    qv_mapping: Dict,
-    _deprecated_task_signalling: bool = True,
+    qv_mapping: Dict[int, int],
+    *,
+    tracker_pk: int,
+    task=None,
 ) -> None:
     """Creates a paper with the given paper number and the given question-version mapping.
 
@@ -44,8 +45,22 @@ def huey_create_paper_with_qvmapping(
         spec_obj: The test specification
         paper_number: The number of the paper being created
         qv_mapping: Mapping from each question-number to
-            version for this particular paper. Of the form {q: v}
+            version for this particular paper. Of the form ``{q: v}``.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+
+    Returns:
+        None
     """
+    with transaction.atomic():
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.RUNNING
+        tr.huey_id = task.id
+        tr.save()
+
     paper_obj = Paper(paper_number=paper_number)
     try:
         paper_obj.save()
@@ -79,6 +94,10 @@ def huey_create_paper_with_qvmapping(
                 version=version,  # I don't like having to double-up here, but....
             )
             question_page.save()
+    with transaction.atomic():
+        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+        tr.status = HueyTaskTracker.COMPLETE
+        tr.save()
 
 
 class PaperCreatorService:
@@ -96,18 +115,25 @@ class PaperCreatorService:
                 "The database does not contain a test specification."
             ) from e
 
-    @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
-        res = huey_create_paper_with_qvmapping(
-            self.spec_obj, paper_number, qv_mapping, _deprecated_task_signalling=True
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.create(huey_id=None)
+            tr.status = HueyTaskTracker.STARTING
+            tr.save()
+            tracker_pk = tr.pk
+
+        _ = huey_create_paper_with_qvmapping(
+            self.spec_obj, paper_number, qv_mapping, tracker_pk=tracker_pk
         )
-        # TODO: potential race condition if HueyTaskTracker created after
-        # and if _create_paper_with_qvmapping accesses this, which in this
-        # case I don't think it does, but should perhaps be changed to the
-        # pattern used elsewhere.
-        paper_task_obj = CreatePaperHueyTask(huey_id=res.id, paper_number=paper_number)
-        paper_task_obj.status = HueyTaskTracker.QUEUED
-        paper_task_obj.save()
+        print(f"Just enqueued Huey create paper task id={_.id}")
+
+        with transaction.atomic(durable=True):
+            task = HueyTaskTracker.objects.get(pk=tracker_pk)
+            # if its still starting, it is safe to change to queued
+            assert task.status != HueyTaskTracker.TO_DO
+            if task.status == HueyTaskTracker.STARTING:
+                task.status = HueyTaskTracker.QUEUED
+                task.save()
 
     def add_all_papers_in_qv_map(
         self, qv_map: Dict, *, background: bool = True
