@@ -313,7 +313,9 @@ class BuildPapersService:
 
         TODO!  document this, when can it be expected to work etc?
         """
-        queue_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.QUEUED)
+        queue_tasks = PDFHueyTask.objects.filter(
+            Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
+        )
         for task in queue_tasks:
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
