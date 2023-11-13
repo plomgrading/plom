@@ -85,7 +85,7 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
             raise ValueError(f"No gaps allowed in test_num: got {list(vm.keys())}")
 
 
-def make_random_version_map(spec):
+def make_random_version_map(spec, *, seed: Optional[str]) -> Dict[int, Dict[int, int]]:
     """Build a random version map.
 
     Args:
@@ -93,6 +93,11 @@ def make_random_version_map(spec):
             underlying dict.  See :func:`plom.SpecVerifier`.  The most
             important properties are the `numberToProduce`, the
             `numberOfQuestions`, and the `select` of each question.
+
+    Keyword Args:
+        seed: to get a reproducible version map, we can seed the
+            pseudo-random number generator.  Unknown how portable this
+            is between Python versions or OSes.
 
     Return:
         dict: a dict-of-dicts keyed by paper number (int) and then
@@ -102,6 +107,9 @@ def make_random_version_map(spec):
     Raises:
         KeyError: invalid question selection scheme in spec.
     """
+    if seed is not None:
+        random.seed(seed)
+
     # we want to have nearly equal numbers of each version - issue #1470
     # first make a list which cycles through versions
     vlist = [(x % spec["numberOfVersions"]) + 1 for x in range(spec["numberToProduce"])]

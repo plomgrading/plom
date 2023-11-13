@@ -115,6 +115,13 @@ def get_the_spec_as_toml():
 
 
 @transaction.atomic
+def get_private_seed() -> str:
+    """Return the private seed."""
+    spec = Specification.objects.get()
+    return spec.privateSeed
+
+
+@transaction.atomic
 def get_the_spec_as_toml_with_codes():
     """Return the test-specification from the database.
 
