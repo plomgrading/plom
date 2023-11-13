@@ -343,7 +343,8 @@ class BuildPapersService:
         """Reset all tasks back their initial "TO DO" state.
 
         TODO: this could be racing, depending on when you call it.
-        I think this code assumes we're at some "steady state".
+        I think this code assumes we're at some "steady state".  Maybe that's
+        harsh; at any rate it depends on understanding how cancelling works.
         """
         self.cancel_all_task()
         for task in PDFHueyTask.objects.all():
