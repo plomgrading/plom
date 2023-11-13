@@ -4,13 +4,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.contrib.auth.models import User
 from django.test import TestCase
 from django.db import IntegrityError
 from model_bakery import baker
 
 from ..services import PaperCreatorService, SpecificationService
-from ..services.paper_creator import _create_paper_with_qvmapping
 from ..models import Paper, IDPage, DNMPage, QuestionPage, FixedPage, Specification
 
 
@@ -51,14 +49,9 @@ class PaperCreatorTests(TestCase):
         return n_papers, n_pages, n_id, n_dnm, n_question
 
     def test_create_with_qvmapping(self):
-        """
-        Test PaperCreatorService._create_paper_with_qvmapping()
-        """
-
+        """Basic tests for creating paper tables."""
         qv_map = {1: 2, 2: 1}
-
-        pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec_obj, 1, qv_map)
+        PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
@@ -77,17 +70,12 @@ class PaperCreatorTests(TestCase):
         self.assertEqual(q_2.version, 1)
 
     def test_remake_paper_raises(self):
-        """
-        Test that _create_paper_with_qvmapping raises an IntegrityError if called on
-        a paper that already exists.
-        """
-
+        """Test creating paper tables raises an IntegrityError if called on a paper that already exists."""
         qv_map = {1: 2, 2: 1}
-        pcs = PaperCreatorService()
-        _create_paper_with_qvmapping.call_local(pcs.spec_obj, 1, qv_map)
+        PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
 
         with self.assertRaises(IntegrityError):
-            _create_paper_with_qvmapping.call_local(pcs.spec_obj, 1, qv_map)
+            PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
 
     def test_clear_papers(self):
         """
