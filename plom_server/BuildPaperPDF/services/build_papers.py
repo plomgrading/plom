@@ -8,7 +8,7 @@
 import pathlib
 import random
 from tempfile import TemporaryDirectory
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import zipfly
 
@@ -376,7 +376,7 @@ class BuildPapersService:
             return (paper_path.name, fh.read())
 
     @transaction.atomic
-    def get_task_context(self) -> Dict[str, Any]:
+    def get_task_context(self) -> List[Dict[str, Any]]:
         """Get information about all tasks."""
         return [
             {
