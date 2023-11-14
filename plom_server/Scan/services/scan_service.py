@@ -1289,9 +1289,7 @@ def huey_parent_split_bundle_task(
 
             bundle_obj.has_page_images = True
             bundle_obj.save()
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.status = HueyTaskTracker.COMPLETE
-            tr.save()
+            HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
 
 # The decorated function returns a ``huey.api.Result``
