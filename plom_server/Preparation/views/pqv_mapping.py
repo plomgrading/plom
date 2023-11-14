@@ -3,7 +3,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
-from django.shortcuts import render
+from pathlib import Path
+import tempfile
+
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -17,12 +20,45 @@ from ..services import (
     StagingStudentService,
 )
 
+from plom.version_maps import version_map_from_file
+
 
 class PQVMappingUploadView(ManagerRequiredView):
-    # NOT CURRENTLY BEING USED
+    def get(self, request):
+        return redirect("prep_qvmapping")
+
     def post(self, request):
-        context = {}
-        return render(request, "Preparation/pqv_mapping_attempt.html", context)
+        if not request.FILES["pqvmap_csv"]:
+            return redirect("prep_qvmapping")
+
+        context = {"errors": []}
+        # far from ideal, but the csv module doesn't like bytes.
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                f = Path(td) / "file.csv"
+                with f.open("wb") as fh:
+                    fh.write(request.FILES["pqvmap_csv"].read())
+                vm = version_map_from_file(f)
+        except ValueError as e:
+            context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
+        except KeyError as e:
+            context["errors"].append({"kind": "KeyError", "err_text": f"{e}"})
+
+        if context["errors"]:
+            return render(request, "Preparation/pqv_mapping_attempt.html", context)
+
+        # if any errors at this point, bail out and report them
+
+        try:
+            PQVMappingService().use_pqv_map(vm)
+        except ValueError as e:
+            context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
+
+        if context["errors"]:
+            return render(request, "Preparation/pqv_mapping_attempt.html", context)
+
+        # all successful, so return to the main pqvmapping-management page
+        return redirect("prep_qvmapping")
 
 
 class PQVMappingDownloadView(ManagerRequiredView):

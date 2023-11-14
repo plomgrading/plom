@@ -191,20 +191,37 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
         KeyError: wrong column header names.
     """
     qvmap: Dict[int, Dict[int, int]] = {}
+
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
         N = len(reader.fieldnames) - 1
+        l = 1 # since we have read the header, the first line processed is actually 2.
         for row in reader:
-            try:
-                # Its called "test_number" on legacy and "paper_number" on django
+            l += 1
+            # Its called "test_number" on legacy and "paper_number" on webplom
+            # raise a value error if you cannot find either.
+            if "paper_number" in row:
                 papernum = int(row["paper_number"])
-            except KeyError:
+            elif "test_number" in row:
                 papernum = int(row["test_number"])
+            else:
+                raise ValueError("Cannot find paper_number column")
+
             if papernum in qvmap.keys():
-                raise ValueError(f"Duplicate paper number detected: {papernum}")
-            qvmap[papernum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
+                raise ValueError(
+                    f"In line {l} Duplicate paper number detected: {papernum}"
+                )
+            try:
+                qvmap[papernum] = {
+                    n: int(row[f"q{n}.version"]) for n in range(1, N + 1)
+                }
+            except KeyError as err:
+                raise KeyError(f"Missing column header {err}")
+            except ValueError as err:
+                raise ValueError(f"In line {l}: {err}")
+
     check_version_map(qvmap)
     return qvmap
 

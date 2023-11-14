@@ -56,8 +56,9 @@ class PQVMappingService:
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> Dict[int, Dict[int, int]]:
+        # put into the dict in paper_number order.
         pqvmapping: Dict[int, Dict[int, int]] = {}
-        for pqv_obj in StagingPQVMapping.objects.all():
+        for pqv_obj in StagingPQVMapping.objects.all().order_by("paper_number"):
             if pqv_obj.paper_number in pqvmapping:
                 pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
             else:
@@ -91,7 +92,12 @@ class PQVMappingService:
         if prenaming:
             sss = StagingStudentService()
             for paper_number, student in sss.get_prenamed_papers().items():
-                pqv_table[paper_number]["prename"] = student
+                if paper_number in pqv_table:
+                    pqv_table[paper_number]["prename"] = student
+                else:
+                    # TODO - issue a warning - means we are trying to prename a
+                    # paper for which we do not have a qvmap.
+                    pass
         return pqv_table
 
     @transaction.atomic()
