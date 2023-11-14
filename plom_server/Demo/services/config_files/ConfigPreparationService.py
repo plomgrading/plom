@@ -112,13 +112,14 @@ def create_qv_map(config: PlomServerConfig):
                     "Number to produce and qvmap path missing from config."
                 )
 
+            # Some duplicated code here from `plom.version_maps``
             qvmap_path = config.parent_dir / qvmap_path
             with open(qvmap_path, "rb") as qvmap_file:
                 qvmap_rows = tomllib.load(qvmap_file)
-                qvmap: Dict[str, Dict[int, int]] = {}
+                qvmap: Dict[int, Dict[int, int]] = {}
                 for i in range(len(qvmap_rows)):
-                    paper_number = str(i + 1)
-                    row = qvmap_rows[paper_number]
+                    paper_number = i + 1
+                    row = qvmap_rows[str(paper_number)]
                     qvmap[paper_number] = {
                         j: row[j - 1] for j in range(1, len(row) + 1)
                     }
