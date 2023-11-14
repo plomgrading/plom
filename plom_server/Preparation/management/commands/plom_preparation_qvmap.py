@@ -11,6 +11,8 @@ from Papers.services import SpecificationService
 
 from ...services import PQVMappingService
 
+from plom.version_maps import version_map_from_file
+
 
 class Command(BaseCommand):
     help = "Displays the current status of the question-version map and allows user generate/download/remove it."
@@ -60,10 +62,9 @@ class Command(BaseCommand):
     def download_pqv_map(self):
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
-            self.stderr.write(
+            raise CommandError(
                 "There is no a question-version mapping on the server. Stopping"
             )
-            return
 
         save_path = Path("question_version_map.csv")
         if save_path.exists():
@@ -74,10 +75,18 @@ class Command(BaseCommand):
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
-        csv_text = pqvms.get_pqv_map_as_csv()
-        with open(save_path, "w") as fh:
-            fh.write(csv_text)
+        pqvms.pqv_map_to_csv(save_path)
         self.stdout.write(f"Wrote {save_path}")
+
+    def upload_pqv_map(self, f: Path) -> None:
+        pqvms = PQVMappingService()
+        if pqvms.is_there_a_pqv_map():
+            raise CommandError("Already has a question-version map - remove it first")
+
+        self.stdout.write(f"Reading qvmap from {f}")
+        vm = version_map_from_file(f)
+        pqvms.use_pqv_map(vm)
+        self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self):
         pqvms = PQVMappingService()
@@ -95,16 +104,20 @@ class Command(BaseCommand):
             description="Perform tasks related to generating/downloading/deleting the question-version map.",
         )
         sub.add_parser("status", help="Show details of the question-version map")
-        sp_G = sub.add_parser("generate", help="Generate the question-version map")
-        sub.add_parser("download", help="Download the question-version map")
-        sub.add_parser("remove", help="Remove the question-version map")
-
-        sp_G.add_argument(
+        p = sub.add_parser("generate", help="Generate the question-version map")
+        p.add_argument(
             "-n",
             "--number_to_produce",
             type=int,
-            help="The number of papers to produce. If not present, then system will compute this for you (not recommended).",
+            help="""
+                The number of papers to produce.  If not present, the system will
+                compute this for you (not recommended).
+            """,
         )
+        sub.add_parser("download", help="Download the question-version map")
+        p = sub.add_parser("upload", help="Upload a question-version map")
+        p.add_argument("csv_or_json_file")
+        sub.add_parser("remove", help="Remove the question-version map")
 
     def handle(self, *args, **options):
         if options["command"] == "status":
@@ -114,6 +127,8 @@ class Command(BaseCommand):
 
         elif options["command"] == "download":
             self.download_pqv_map()
+        elif options["command"] == "upload":
+            self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "remove":
             self.remove_pqv_map()
         else:

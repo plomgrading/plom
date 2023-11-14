@@ -197,7 +197,11 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
             raise ValueError("csv must have column names")
         N = len(reader.fieldnames) - 1
         for row in reader:
-            testnum = int(row["test_number"])
+            try:
+                # Its called "test_number" on legacy and "paper_number" on django
+                testnum = int(row["paper_number"])
+            except KeyError:
+                testnum = int(row["test_number"])
             qvmap[testnum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
     check_version_map(qvmap)
     return qvmap

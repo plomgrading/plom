@@ -3,9 +3,13 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+
 from django.db import transaction
 
 from plom import SpecVerifier
+from plom.version_maps import version_map_to_csv
+
 from Papers.services import SpecificationService
 
 from ..models import StagingPQVMapping
@@ -80,6 +84,11 @@ class PQVMappingService:
             for paper_number, student in sss.get_prenamed_papers().items():
                 pqv_table[paper_number]["prename"] = student
         return pqv_table
+
+    @transaction.atomic()
+    def pqv_map_to_csv(self, f: Path) -> None:
+        pqvmap = self.get_pqv_map_dict()
+        version_map_to_csv(pqvmap, f)
 
     @transaction.atomic()
     def get_pqv_map_as_csv(self):
