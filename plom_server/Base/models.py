@@ -23,6 +23,8 @@ import logging
 # TODO: what is this?  It is happening at import-time... scary
 # It comes from Django-Huey project and allows you to have multiple
 # task queues
+# TODO: this is used for the decorators to define the signal handlers
+# below, so it must presumably somehow be lazy...  but this :-(
 queue = get_queue("tasks")
 
 
