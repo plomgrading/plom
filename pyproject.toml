@@ -191,7 +191,7 @@ plom-solutions = "plom.solutions.__main__:main"
 # You can run `black plom` or `black plom --verbose`
 [tool.black]
 line-length = 88
-target-version = ['py37']
+target-version = ["py38"]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
