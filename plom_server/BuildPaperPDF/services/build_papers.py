@@ -148,7 +148,7 @@ class BuildPapersService:
         # note - classdict is a list of dicts - change this to more useful format
         prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
 
-        self.papers_to_print.mkdir(exist_ok=True)
+        self.papers_to_print.mkdir(exist_ok=True, parents=True)
         for paper_obj in Paper.objects.all():
             paper_number = paper_obj.paper_number
             student_name = None
