@@ -298,12 +298,10 @@ class BuildPapersService:
             Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
         )
         for task in queue_tasks:
-            if not task.huey_id:
-                continue
-            queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
-            task.status = PDFHueyTask.TO_DO
-            task.save()
+            if task.huey_id:
+                queue = get_queue("tasks")
+                queue.revoke_by_id(task.huey_id)
+            task.transition_back_to_todo()
 
     def cancel_single_task(self, paper_number: int):
         """Cancel a single queued task from Huey.
