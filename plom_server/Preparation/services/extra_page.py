@@ -71,9 +71,7 @@ class ExtraPageService:
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ExtraPagePDFTask.load()
         Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
-        task_obj.status = ExtraPagePDFTask.TO_DO
-        task_obj.huey_id = None
-        task_obj.save()
+        task_obj.transition_back_to_todo()
 
     def build_extra_page_pdf(self):
         """Enqueue the huey task of building the extra page pdf."""

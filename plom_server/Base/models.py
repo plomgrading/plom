@@ -69,9 +69,21 @@ class HueyTaskTracker(models.Model):
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
 
+    def transition_back_to_todo(self):
+        # TODO: which states are allowed to transition here?
+        self.self.huey_id = None
+        self.status = self.TO_DO
+        self.save()
+
     def transition_to_starting(self):
-        # TODO
-        # assert self.huey_id is None
+        assert self.status == self.TO_DO, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Starting (only from To_Do state)"
+        )
+        assert self.huey_id is None, (
+            "Tracker must have id None to transition to Starting"
+            f" but we have id={self.huey_id}"
+        )
         self.status = self.STARTING
         self.save()
 
