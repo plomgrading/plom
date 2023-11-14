@@ -351,6 +351,7 @@ pylint:
 # Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
 #       Will make not allowed to fail in the future, once types are more widely adopted in the project
 #       and 3.10 becomes our minimum supported Python version.
+# Issue #3151, seems to be holding back a mypy bump to 1.7.0
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
