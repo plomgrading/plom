@@ -309,7 +309,9 @@ class BuildPapersService:
         If a task is already running, it is probably difficult to cancel
         but we can try to cancel if starting or enqueued.  Should be harmless
         to call on tasks that have errored out, or are incomplete or are still
-        todo.
+        to do.
+
+        TODO: its unclear what happens if you call this on a running task.
         """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
         if task.huey_id:

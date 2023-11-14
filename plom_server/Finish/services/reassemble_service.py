@@ -529,12 +529,12 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_single_paper_reassembly(self, paper_number: int) -> None:
-        """Reset to TODO the reassembly task of the given paper and remove pdf if it exists.
+        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
 
         Args:
             paper_number (int): The paper number of the reassembly task to reset.
 
-        TODO: QUEUED, STARTING, RUNNING?
+        TODO: likely does not properly handle running tasks.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -542,37 +542,29 @@ class ReassembleService:
             raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassemblehueytasktracker
-        # if the task is queued then remove it from the queue
-        if task.status == HueyTaskTracker.QUEUED:
-            queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
-        # if there is a file then remove it
-        if task.pdf_file:
-            task.pdf_file.delete()
-
-        task.huey_id = None
-        task.status = HueyTaskTracker.TO_DO
-        task.save()
+        self._reset_paper_reassembly(task)
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
-        """Reset to TODO all reassembly tasks and remove any associated pdfs.
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
 
-        TODO: QUEUED, STARTING, RUNNING?
+        TODO: likely does not properly handle running tasks.
         """
-        queue = get_queue("tasks")
         for task in ReassembleHueyTaskTracker.objects.exclude(
             status=HueyTaskTracker.TO_DO
         ).all():
-            # if the task is queued then remove it from the queue
-            if task.status == HueyTaskTracker.QUEUED:
-                queue.revoke_by_id(task.huey_id)
-            # if there is a file then delete it.
-            if task.pdf_file:
-                task.pdf_file.delete()
-            task.huey_id = None
-            task.status = HueyTaskTracker.TO_DO
-            task.save()
+            self._reset_paper_reassembly(task)
+
+    def _reset_paper_reassembly(self, task) -> None:
+        queue = get_queue("tasks")
+        # if the task is queued then remove it from the queue
+        if task.status == HueyTaskTracker.QUEUED:
+            queue.revoke_by_id(task.huey_id)
+        # TODO: what if it is RUNNING?
+        # if there is a file then delete it.
+        if task.pdf_file:
+            task.pdf_file.delete()
+        task.transition_back_to_todo()
 
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
