@@ -111,7 +111,8 @@ class PQVMappingService:
         # qv-map creator
         speck = SpecVerifier(spec_dict)
 
-        return make_random_version_map(speck)
+        seed = SpecificationService.get_private_seed()
+        return make_random_version_map(speck, seed=seed)
 
     def generate_and_set_pqvmap(self, numberToProduce):
         # delete old map, build a new one, and then use it.
