@@ -190,7 +190,7 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
             other errors in the version map.
         KeyError: wrong column header names.
     """
-    qvmap = {}
+    qvmap: Dict[int, Dict[int, int]] = {}
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:

@@ -56,7 +56,7 @@ class PQVMappingService:
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> Dict[int, Dict[int, int]]:
-        pqvmapping = {}
+        pqvmapping: Dict[int, Dict[int, int]] = {}
         for pqv_obj in StagingPQVMapping.objects.all():
             if pqv_obj.paper_number in pqvmapping:
                 pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
