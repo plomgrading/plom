@@ -15,11 +15,11 @@
         <div>
             <a type="button" class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-body">
                 <h3 class="card-title">Question-version map</h3>
-                <div style="overflow: auto;">
-                    <table class="table table-striped">
+                <div>
+                    <table class="table table-striped border">
                         <thead>
                             <th>Paper number</th>
                             {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
