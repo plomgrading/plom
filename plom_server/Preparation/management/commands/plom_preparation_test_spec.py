@@ -8,9 +8,7 @@ from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
-import fitz
 
 from Papers.services import SpecificationService
 from SpecCreator.services import SpecificationUploadService
@@ -64,9 +62,10 @@ class Command(BaseCommand):
         with transaction.atomic():
             try:
                 service.save_spec()
-            except SpecExistsError:
+            except SpecExistsException as e:
                 input_loop_done = False
                 while not input_loop_done:
+                    print(e)
                     confirm = input(
                         "There is already a spec present. Do you wish to overwrite? (y/n)"
                     ).casefold()
