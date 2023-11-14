@@ -84,8 +84,15 @@ class Command(BaseCommand):
             raise CommandError("Already has a question-version map - remove it first")
 
         self.stdout.write(f"Reading qvmap from {f}")
-        vm = version_map_from_file(f)
-        pqvms.use_pqv_map(vm)
+        try:
+            vm = version_map_from_file(f)
+        except ValueError as e:
+            raise CommandError(e)
+
+        try:
+            pqvms.use_pqv_map(vm)
+        except ValueError as e:
+            raise CommandError(e)
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self):

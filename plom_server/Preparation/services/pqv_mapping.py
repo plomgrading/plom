@@ -10,7 +10,7 @@ from typing import Dict
 from django.db import transaction
 
 from plom import SpecVerifier
-from plom.version_maps import version_map_to_csv
+from plom.version_maps import version_map_to_csv, check_version_map
 
 from Papers.services import SpecificationService
 
@@ -38,10 +38,17 @@ class PQVMappingService:
         StagingPQVMapping.objects.all().delete()
 
     @transaction.atomic()
-    def use_pqv_map(self, valid_pqvmap):
-        # assumes that there is no current pqvmap.
-        # assumes that passed pqvmap is valid
-        for paper_number, qvmap in valid_pqvmap.items():
+    def use_pqv_map(self, pqvmap: Dict[int, Dict[int, int]]):
+        """Populate the database with this particular version map.
+
+        Note: assumes that there is no current pqvmap or that you are adding
+        to the existing pqvmap.
+
+        Raises:
+            ValueError: invalid map.
+        """
+        check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
+        for paper_number, qvmap in pqvmap.items():
             for question, version in qvmap.items():
                 StagingPQVMapping.objects.create(
                     paper_number=paper_number, question=question, version=version
