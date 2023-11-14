@@ -38,8 +38,8 @@
                         hx-target="body"
                         hx-swap="outerHTML">delete question-version map</button>
             </div>
-            <div class="border p-2" style="overflow: auto; max-height:40%;">
-                <table class="table table-striped">
+            <div>
+                <table class="table table-striped border">
                     <thead>
                         <th>Paper number</th>
                         {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
@@ -137,55 +137,54 @@
                                        max="9999"
                                        required />
                                 <button class="btn btn-primary" type="submit">build qv-map</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <hr class="border border-danger border-2" />
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Upload a question-version map (advanced)</h4>
-                <div class="card-text">
-                    <h5>
-                        <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
-                    </h5>
-                    <p>
-                        <details>
-                            <summary>
-                                You can also upload a csv-file containing a question-version map. This is not recommended unless you really know what you are doing.
-                            </summary>
-                            <ul>
-                                <li>
-                                    The file must contain
-                                    <ul>
-                                        <li>a "test_number" column &mdash; this is legacy term which will become "paper_number" in the future</li>
-                                        <li>
-                                            {{ number_of_questions }} columns with headers "q{{ question_list|first }}.version", &hellip; and "q{{ question_list|last }}.version"
-                                        </li>
-                                        <li>it must contain at least {{ min_number_to_produce }} consecutive entries starting from "paper_number" 1</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </details>
-                    </p>
-                    <form enctype="multipart/form-data"
-                          id="form"
-                          method="post"
-                          action="{% url 'prep_qvmapping_upload' %}">
-                        {% csrf_token %}
-                        <div>
-                            <input type="file" accepts=".csv" name="pqvmap_csv" required disabled />
-                            <button class="btn btn-primary" type="submit" disabled>upload</button>
-                        </div>
-                    </form>
-                    <h5>
-                        <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED (sorry Omer) <i class="bi bi-x-octagon-fill text-danger"></i>
-                    </h5>
+            <hr class="border border-danger border-2" />
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Upload a question-version map (advanced)</h4>
+                    <div class="card-text">
+                        <h5>
+                            <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
+                        </h5>
+                        <p>
+                            <details>
+                                <summary>
+                                    You can also upload a csv-file containing a question-version map. This is not recommended unless you really know what you are doing.
+                                </summary>
+                                <ul>
+                                    <li>
+                                        The file must contain
+                                        <ul>
+                                            <li>a "test_number" column &mdash; this is legacy term which will become "paper_number" in the future</li>
+                                            <li>
+                                                {{ number_of_questions }} columns with headers "q{{ question_list|first }}.version", &hellip; and "q{{ question_list|last }}.version"
+                                            </li>
+                                            <li>it must contain at least {{ min_number_to_produce }} consecutive entries starting from "paper_number" 1</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </details>
+                        </p>
+                        <form enctype="multipart/form-data"
+                              id="form"
+                              method="post"
+                              action="{% url 'prep_qvmapping_upload' %}">
+                            {% csrf_token %}
+                            <div>
+                                <input type="file" accepts=".csv" name="pqvmap_csv" required disabled />
+                                <button class="btn btn-primary" type="submit" disabled>upload</button>
+                            </div>
+                        </form>
+                        <h5>
+                            <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED (sorry Omer) <i class="bi bi-x-octagon-fill text-danger"></i>
+                        </h5>
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endif %}
-</div>
+        {% endif %}
+    </div>
 {% endblock main_content %}
