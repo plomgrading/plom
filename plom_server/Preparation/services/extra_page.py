@@ -48,8 +48,7 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
                 # TODO: unclear to me if we need to re-get the task
                 task_obj = ExtraPagePDFTask.load()
                 task_obj.extra_page_pdf = File(fh, name=epp_path.name)
-                task_obj.status = HueyTaskTracker.COMPLETE
-                task_obj.save()
+                task_obj.transition_to_complete()
 
 
 class ExtraPageService:

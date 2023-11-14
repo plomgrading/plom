@@ -1319,10 +1319,7 @@ def huey_parent_read_qr_codes_task(
     from time import sleep
 
     with transaction.atomic(durable=True):
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
@@ -1361,9 +1358,7 @@ def huey_parent_read_qr_codes_task(
     QRErrorService().check_read_qr_codes(bundle_obj)
 
     with transaction.atomic(durable=True):
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.COMPLETE
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
 
 # The decorated function returns a ``huey.api.Result``
