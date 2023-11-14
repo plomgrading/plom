@@ -328,16 +328,16 @@ class BuildPapersService:
     def reset_all_tasks(self) -> None:
         """Reset all tasks back their initial "TO DO" state.
 
-        TODO: this could be racing, depending on when you call it.
-        I think this code assumes we're at some "steady state".  Maybe that's
-        harsh; at any rate it depends on understanding how cancelling works.
+        TODO: its not clear to me how this deals with RUNNING tasks:
+        I think they cannot be cancelled...?  The ``self.cancel_all_task()``
+        is set to ignore them...  So they will keep running and perhaps
+        later try to save their PDF files into our Tracker.
         """
         self.cancel_all_task()
         for task in PDFHueyTask.objects.all():
-            task.file_path().unlink(missing_ok=True)
-            task.huey_id = None
-            task.status = PDFHueyTask.TO_DO
-            task.save()
+            if task.file_path():
+                task.file_path().unlink(missing_ok=True)
+            task.transition_back_to_todo()
 
     @transaction.atomic
     def get_all_task_status(self) -> Dict:
