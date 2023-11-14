@@ -315,7 +315,7 @@ class MarkingStatsService:
         question: Optional[int] = None,
         version: Optional[int] = None,
         username: Optional[str] = None,
-    ) -> Dict[int, Dict]:
+    ) -> List[Dict]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
             task_set = task_set.filter(paper__paper_number__gte=paper_min)
@@ -331,11 +331,12 @@ class MarkingStatsService:
             task_set = task_set.filter(question_version=version)
         if username:
             task_set = task_set.filter(assigned_user__username=username)
-        task_info = {}
+        task_info = []
         for task in task_set.prefetch_related(
             "latest_annotation", "paper", "assigned_user"
         ).order_by("paper__paper_number"):
             dat = {
+                "paper_number": task.paper.paper_number,
                 "status": task.get_status_display(),
                 "question": task.question_number,
                 "version": task.question_version,
@@ -352,7 +353,7 @@ class MarkingStatsService:
                     }
                 )
 
-            task_info[task.paper.paper_number] = dat
+            task_info.append(dat)
 
         return task_info
 

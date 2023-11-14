@@ -1,29 +1,13 @@
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
 <div>
     <div class="d-flex justify-content-between p-2">
-        <span class="fs-6">Annotations for paper {{ paper }} question {{ question }}</span>
+        <span class="fs-6">Paper {{ paper }} question {{ question }}</span>
     </div>
 </div>
-<div class="row overflow-x-scroll overflow-y-scroll">
-    {% for img in img_list %}( theta={{ img.angle }} ){% endfor %}
-</div>
-<div class="row overflow-x-scroll overflow-y-scroll">
+<div class="overflow-x-scroll overflow-y-scroll">
     {% for img in img_list %}
-        <div class="col"
-             style="height: 30vw;
-                    width: 30vw;
-                    justify-content: center;
-                    display:flex;
-                    align-items:center">
-            <!-- <img class="shadow-sm" -->
-            <!--      src="{% url 'progress_pushed_img' img.id %}" -->
-            <!--      style="max-height:90%; -->
-            <!-- 		max-width: 90%; -->
-            <!--             transform: rotate({{ img.angle }}deg)" /> -->
-            <img class="shadow-sm"
-                 src="{% url 'progress_pushed_img' img.id %}"
-                 style="max-height:90%;
-                        max-width: 90%" />
-        </div>
+        <img class="m-1"
+             src="{% url 'progress_pushed_img' img.id %}"
+             style="height: 60vh" />
     {% endfor %}
 </div>
