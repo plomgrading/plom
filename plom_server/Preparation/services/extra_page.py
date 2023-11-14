@@ -85,7 +85,7 @@ class ExtraPageService:
         if task_obj.status == HueyTaskTracker.COMPLETE:
             return
         with transaction.atomic(durable=True):
-            task_obj.status = HueyTaskTracker.TO_DO
+            task_obj.status = HueyTaskTracker.STARTING
             task_obj.save()
             tracker_pk = task_obj.pk
 
