@@ -68,8 +68,8 @@ class Command(BaseCommand):
 
         save_path = Path("question_version_map.csv")
         if save_path.exists():
-            self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
-            choice = input().lower()
+            s = f"A file exists at {save_path} - overwrite it? [y/N] "
+            choice = input(s).lower()
             if choice != "y":
                 self.stdout.write("Skipping.")
                 return
