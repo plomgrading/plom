@@ -580,20 +580,15 @@ class ReassembleService:
                 # is complete and not outdated
                 continue
             with transaction.atomic(durable=True):
-                task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-                task.status = HueyTaskTracker.STARTING
-                task.save()
-                tracker_pk = task.pk
-            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk)
-            # print(f"Just enqueued Huey reassembly task id={_.id}")
+                tr = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
+                tr.transition_to_starting()
+                tracker_pk = tr.pk
+            res = huey_reassemble_paper(pn, tracker_pk=tracker_pk)
+            # print(f"Just enqueued Huey reassembly task id={res.id}")
 
             with transaction.atomic(durable=True):
-                task = HueyTaskTracker.objects.get(pk=tracker_pk)
-                # if its still starting, it is safe to change to queued
-                assert task.status != HueyTaskTracker.TO_DO
-                if task.status == HueyTaskTracker.STARTING:
-                    task.status = HueyTaskTracker.QUEUED
-                    task.save()
+                tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+                tr.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
