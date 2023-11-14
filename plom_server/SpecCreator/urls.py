@@ -10,6 +10,6 @@ from . import views
 # TODO: Document the API here? Sphinx best practices?
 
 urlpatterns = [
-    path("", views.TestSpecLaunchView.as_view(), name="creator_launch"),
+    path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("summary", views.TestSpecSummaryView.as_view(), name="spec_summary"),
 ]

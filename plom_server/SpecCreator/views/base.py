@@ -11,7 +11,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import PaperInfoService, SpecificationService
 
 
-class TestSpecPageView(ManagerRequiredView):
+class SpecBaseView(ManagerRequiredView):
     def dispatch(self, request, *args, **kwargs):
         """Redirect to the assessment preparation page if the Papers database is already populated."""
         paper_info = PaperInfoService()

@@ -13,7 +13,7 @@ from Papers.services import SpecificationService
 from Papers.models import Specification
 
 from ..services import SpecificationUploadService
-from . import TestSpecPageView
+from . import SpecBaseView
 
 
 class TestSpecResetView(ManagerRequiredView):
@@ -22,7 +22,7 @@ class TestSpecResetView(ManagerRequiredView):
         return HttpResponseRedirect(reverse("names"))
 
 
-class TestSpecSubmitView(TestSpecPageView):
+class TestSpecSubmitView(SpecBaseView):
     """Prompt the user to confirm the test specification before submitting it to the database."""
 
     def build_context(self):
@@ -70,7 +70,7 @@ class TestSpecSummaryView(TestSpecSubmitView):
         return render(request, "SpecCreator/summary-page.html", context)
 
 
-class TestSpecLaunchView(TestSpecPageView):
+class TestSpecLaunchView(SpecBaseView):
     """Landing page for the test spec creator."""
 
     def get(self, request):

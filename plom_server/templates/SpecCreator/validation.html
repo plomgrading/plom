@@ -5,9 +5,13 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Success!</title>
+        <title>specification validation</title>
     </head>
     <body>
-        <p>Success!</p>
+        {% if success %}
+            <p>Specification saved! <a href="{% url 'spec_summary' %}">View here</a></p>
+        {% else %}
+            <p class="text-danger">{{error}}</p>
+        {% endif %}
     </body>
 </html>
