@@ -4,6 +4,8 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
+import tempfile
+from typing import Dict
 
 from django.db import transaction
 
@@ -46,7 +48,7 @@ class PQVMappingService:
                 )
 
     @transaction.atomic()
-    def get_pqv_map_dict(self):
+    def get_pqv_map_dict(self) -> Dict[int, Dict[int, int]]:
         pqvmapping = {}
         for pqv_obj in StagingPQVMapping.objects.all():
             if pqv_obj.paper_number in pqvmapping:
@@ -91,20 +93,14 @@ class PQVMappingService:
         version_map_to_csv(pqvmap, f)
 
     @transaction.atomic()
-    def get_pqv_map_as_csv(self):
-        pqvmap = self.get_pqv_map_dict()
-        qlist = [q + 1 for q in range(SpecificationService.get_n_questions())]
-        # TODO - replace this with some python csv module stuff
-        txt = '"paper_number"'
-        for q in qlist:
-            txt += f', "q{q}.version"'
-        txt += "\n"
-        for paper_number, qvmap in pqvmap.items():
-            txt += f"{paper_number}"
-            for q, v in qvmap.items():
-                txt += f", {v}"
-            txt += "\n"
-        return txt
+    def get_pqv_map_as_csv_string(self):
+        # non-ideal implementation, but version_map_to_csv does not speak to a BytesIO
+        with tempfile.TemporaryDirectory() as td:
+            f = Path(td) / "file.csv"
+            self.pqv_map_to_csv(f)
+            with open(f, "r") as fh:
+                txt = fh.readlines()
+            return txt
 
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
