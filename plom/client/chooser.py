@@ -14,16 +14,15 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import logging
-from pathlib import Path
 import re
 import sys
 import tempfile
 import time
 from typing import Union
 
-import appdirs
 import arrow
 from packaging.version import Version
+import platformdirs
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -65,8 +64,8 @@ from .useful_classes import ClientSettingsDialog
 
 
 log = logging.getLogger("client")
-logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
-cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
+logdir = platformdirs.user_log_path("plom", "PlomGrading.org")
+cfgdir = platformdirs.user_config_path("plom", "PlomGrading.org")
 cfgfile = cfgdir / "plomConfig.toml"
 
 
