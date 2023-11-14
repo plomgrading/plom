@@ -76,10 +76,10 @@ class HueyTaskTracker(models.Model):
         self.save()
 
     def transition_to_running(self, huey_id):
-        assert self.status in (
-            self.STARTING,
-            self.QUEUED,
-        ), "HueyTaskTracker can only transition to RUNNING from STARTING or QUEUED states"
+        assert self.status in (self.STARTING, self.QUEUED), (
+            f"HueyTaskTracker cannot transition from {self.get_status_display()}"
+            " to Running (only from Starting or Queued)"
+        )
         self.huey_id = huey_id
         self.status = self.RUNNING
         self.save()

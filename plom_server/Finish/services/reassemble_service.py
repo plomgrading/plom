@@ -499,21 +499,16 @@ class ReassembleService:
             raise ValueError("No paper with that number") from None
 
         with transaction.atomic(durable=True):
-            task = paper_obj.reassemblehueytasktracker
-            task.status = HueyTaskTracker.STARTING
-            task.save()
-            tracker_pk = task.pk
+            tr = paper_obj.reassemblehueytasktracker
+            tr.transition_to_starting()
+            tracker_pk = tr.pk
 
-        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
-        # print(f"Just enqueued Huey reassembly task id={_.id}")
+        res = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
+        # print(f"Just enqueued Huey reassembly task id={res.id}")
 
         with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            assert task.status != HueyTaskTracker.TO_DO
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -659,11 +654,7 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
         raise ValueError("No paper with that number") from None
 
     with transaction.atomic():
-        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
@@ -678,5 +669,4 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
                     tr.pdf_file.delete()
                 # save the new one.
                 tr.pdf_file = File(f, name=save_path.name)
-                tr.status = HueyTaskTracker.COMPLETE
-                tr.save()
+                tr.transition_to_complete()

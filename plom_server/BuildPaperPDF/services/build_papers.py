@@ -124,10 +124,7 @@ def huey_build_prenamed_paper(
         None
     """
     with transaction.atomic():
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
@@ -153,8 +150,7 @@ def huey_build_prenamed_paper(
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
-            tr.status = HueyTaskTracker.COMPLETE
-            tr.save()
+            tr.transition_to_complete()
 
 
 class BuildPapersService:
@@ -275,8 +271,7 @@ class BuildPapersService:
         self, task, paper_num: int, spec: dict, qv_row: Dict[int, int]
     ) -> None:
         with transaction.atomic(durable=True):
-            task.status = HueyTaskTracker.STARTING
-            task.save()
+            task.transition_to_starting()
             tracker_pk = task.pk
 
         if task.student_name and task.student_id:
@@ -296,12 +291,15 @@ class BuildPapersService:
     def cancel_all_task(self) -> None:
         """Cancel all queued task from Huey.
 
-        TODO!  document this, when can it be expected to work etc?
+        If a task is already running, it is probably difficult to cancel
+        but we can try to cancel all of the ones that an enqueued.
         """
         queue_tasks = PDFHueyTask.objects.filter(
             Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
         )
         for task in queue_tasks:
+            if not task.huey_id:
+                continue
             queue = get_queue("tasks")
             queue.revoke_by_id(task.huey_id)
             task.status = PDFHueyTask.TO_DO

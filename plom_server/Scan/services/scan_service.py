@@ -189,7 +189,7 @@ class ScanService:
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_running(res.id)
+            tr.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
