@@ -18,6 +18,7 @@ from ..services import (
     PQVMappingService,
     PrenameSettingService,
     StagingStudentService,
+    TestPreparedSetting,
 )
 
 from plom.version_maps import version_map_from_file
@@ -25,6 +26,7 @@ from plom.version_maps import version_map_from_file
 
 class PQVMappingUploadView(ManagerRequiredView):
     def get(self, request):
+        # if you are here, then you should really be at the main qvmap management page.
         return redirect("prep_qvmapping")
 
     def post(self, request):
@@ -105,6 +107,8 @@ class PQVMappingView(ManagerRequiredView):
         return context
 
     def get(self, request):
+        if TestPreparedSetting.is_test_prepared():
+            return redirect("prep_qvmapping_view")
         context = self.build_context()
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
