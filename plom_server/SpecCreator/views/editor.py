@@ -2,6 +2,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from typing import Dict, Any
+
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
@@ -26,7 +28,7 @@ class SpecEditorView(SpecBaseView):
 
     def post(self, request) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
-        context = {"success": False}
+        context: Dict[str, Any] = {"success": False}
         data = request.POST
         if "spec" in data.keys():
             spec = data["spec"]
