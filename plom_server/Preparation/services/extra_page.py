@@ -97,6 +97,7 @@ class ExtraPageService:
             # if its still starting, it is safe to change to queued
             if task.status == HueyTaskTracker.STARTING:
                 task.status = HueyTaskTracker.QUEUED
+                task.huey_id = _.id
                 task.save()
 
     @transaction.atomic
