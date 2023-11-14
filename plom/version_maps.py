@@ -199,10 +199,12 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
         for row in reader:
             try:
                 # Its called "test_number" on legacy and "paper_number" on django
-                testnum = int(row["paper_number"])
+                papernum = int(row["paper_number"])
             except KeyError:
-                testnum = int(row["test_number"])
-            qvmap[testnum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
+                papernum = int(row["test_number"])
+            if papernum in qvmap.keys():
+                raise ValueError(f"Duplicate paper number detected: {papernum}")
+            qvmap[papernum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
     check_version_map(qvmap)
     return qvmap
 
@@ -240,12 +242,16 @@ def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
         raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
 
 
-def version_map_to_csv(qvmap: Dict, filename: Path) -> None:
+def version_map_to_csv(qvmap: Dict, filename: Path, *, _legacy: bool = True) -> None:
     """Output a csv of the question-version map.
 
     Arguments:
         qvmap: the question-version map, documented elsewhere.
         filename: where to save.
+
+    Keyword Args:
+        _legacy: if True, we call the column "test_number" else "paper_number".
+            Currently the default is True but this is expected to change.
 
     Raises:
         ValueError: some rows have differing numbers of questions.
@@ -253,7 +259,10 @@ def version_map_to_csv(qvmap: Dict, filename: Path) -> None:
     # all rows should have same length: get than length or fail
     (N,) = {len(v) for v in qvmap.values()}
 
-    header = ["test_number"]
+    if _legacy:
+        header = ["test_number"]
+    else:
+        header = ["paper_number"]
     for q in range(1, N + 1):
         header.append(f"q{q}.version")
     with open(filename, "w") as csvfile:

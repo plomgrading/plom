@@ -90,7 +90,7 @@ class PQVMappingService:
     @transaction.atomic()
     def pqv_map_to_csv(self, f: Path) -> None:
         pqvmap = self.get_pqv_map_dict()
-        version_map_to_csv(pqvmap, f)
+        version_map_to_csv(pqvmap, f, _legacy=False)
 
     @transaction.atomic()
     def get_pqv_map_as_csv_string(self):
