@@ -62,45 +62,41 @@ class HueyTaskTracker(models.Model):
     ERROR = StatusChoices.ERROR
 
     huey_id = models.UUIDField(null=True)
-    _status = models.IntegerField(
+    status = models.IntegerField(
         null=False, choices=StatusChoices.choices, default=TO_DO
     )
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
 
-    @property
-    def status(self):
-        return self._status
-
     def transition_to_starting(self):
         # TODO
         # assert self.huey_id is None
-        self._status = self.STARTING
+        self.status = self.STARTING
         self.save()
 
     def transition_to_running(self, huey_id):
-        assert self._status in (
+        assert self.status in (
             self.STARTING,
             self.QUEUED,
         ), "HueyTaskTracker can only transition to RUNNING from STARTING or QUEUED states"
         self.huey_id = huey_id
-        self._status = self.RUNNING
+        self.status = self.RUNNING
         self.save()
 
     def transition_to_queued_or_running(self, huey_id):
         """Move to the queued state or a no-op if we're already in the running state."""
-        if self._status == self.RUNNING:
+        if self.status == self.RUNNING:
             assert self.huey_id == huey_id, (
                 f"We were already in the RUNNING state with huey id {self.huey_id} when "
                 f"you tried to enqueue us with a different huey id {huey_id}"
             )
             return
         assert (
-            self._status == self.STARTING
+            self.status == self.STARTING
         ), "HueyTaskTracker can only transition to QUEUED from STARTING"
         self.huey_id = huey_id
-        self._status = self.QUEUED
+        self.status = self.QUEUED
         self.save()
 
 
