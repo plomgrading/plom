@@ -89,7 +89,7 @@ class HueyTaskTracker(models.Model):
 
     def transition_to_running(self, huey_id):
         assert self.status in (self.STARTING, self.QUEUED), (
-            f"HueyTaskTracker cannot transition from {self.get_status_display()}"
+            f"Tracker cannot transition from {self.get_status_display()}"
             " to Running (only from Starting or Queued)"
         )
         self.huey_id = huey_id
@@ -104,18 +104,20 @@ class HueyTaskTracker(models.Model):
                 f"you tried to enqueue us with a different huey id {huey_id}"
             )
             return
-        assert (
-            self.status == self.STARTING
-        ), "HueyTaskTracker can only transition to QUEUED from STARTING"
+        assert self.status == self.STARTING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Queued (only from Starting)"
+        )
         self.huey_id = huey_id
         self.status = self.QUEUED
         self.save()
 
     def transition_to_complete(self):
         """Move to the complete state."""
-        assert (
-            self.status == self.RUNNING
-        ), "HueyTaskTracker can only transition to COMPLETE from RUNNING"
+        assert self.status == self.RUNNING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Complete (only from Running)"
+        )
         # TODO?  is this the place to set to None?
         self.huey_id = None
         self.status = self.COMPLETE
