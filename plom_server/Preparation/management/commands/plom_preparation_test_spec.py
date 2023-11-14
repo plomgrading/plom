@@ -53,11 +53,9 @@ class Command(BaseCommand):
 
     def upload_spec(self, spec_file):
         try:
-            service = SpecificationUploadService(
-                toml_file_path=spec_file,
-            )
+            service = SpecificationUploadService(toml_file_path=spec_file)
         except ValueError as e:
-            raise CommandError("Cannot save test specification.") from e
+            raise CommandError(f"Cannot save test specification: {e}") from e
 
         with transaction.atomic():
             try:

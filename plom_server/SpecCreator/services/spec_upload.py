@@ -4,7 +4,6 @@
 
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
-from fitz import Document
 
 from django.db import transaction
 
@@ -13,8 +12,6 @@ from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeEr
 from Preparation.services import TestPreparedSetting, PQVMappingService
 
 from Papers.services import SpecificationService, PaperInfoService
-from Papers.serializers import SpecSerializer
-from Papers.models import Specification
 
 
 class SpecExistsException(Exception):
@@ -26,9 +23,8 @@ class SpecificationUploadService:
 
     The flow for uploading and saving a test spec:
         1. Manager has an already-existing TOML representing a test spec
-            and one PDF representing a source version
         2. Manager requests to save the test spec from a path to a TOML
-            file and another path to a reference PDF
+            file.
         3. Server checks that a spec can be uploaded
             - Preparation must not be set as complete
             - There must be no existing QV map or test-papers
@@ -53,13 +49,15 @@ class SpecificationUploadService:
     ):
         """Construct service with paths and/or model instances.
 
-        kwargs:
-            toml_file_path: a path to a TOML specification
+        Keyword Args::
+            toml_file_path: a path to a TOML specification.  Callers
+                must provide either this input or the ``toml_string``.
             toml_string: a raw string representing a TOML specification
-            reference_pdf_path: a path to a reference PDF
+
+        Raises:
+            ValueError on failure to parse the TOML.
         """
         self.spec_dict: Optional[Dict[str, Any]] = None
-        self.pdf_doc: Optional[Document] = None
 
         if toml_file_path:
             try:
@@ -71,6 +69,8 @@ class SpecificationUploadService:
                 self.spec_dict = load_toml_from_string(toml_string)
             except TOMLDecodeError as e:
                 raise ValueError("Unable to parse TOML file from string.") from e
+        else:
+            raise ValueError("You must provide either a file or a string")
 
     @transaction.atomic
     def save_spec(
