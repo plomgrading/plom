@@ -292,7 +292,7 @@ class BuildPapersService:
         """Cancel all queued task from Huey.
 
         If a task is already running, it is probably difficult to cancel
-        but we can try to cancel all of the ones that an enqueued.
+        but we can try to cancel all of the ones that are enqueued.
         """
         queue_tasks = PDFHueyTask.objects.filter(
             Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
@@ -306,13 +306,16 @@ class BuildPapersService:
     def cancel_single_task(self, paper_number: int):
         """Cancel a single queued task from Huey.
 
-        TODO!  document this, when can it be expected to work etc?
+        If a task is already running, it is probably difficult to cancel
+        but we can try to cancel if starting or enqueued.  Should be harmless
+        to call on tasks that have errored out, or are incomplete or are still
+        todo.
         """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
-        queue = get_queue("tasks")
-        queue.revoke_by_id(task.huey_id)
-        task.status = PDFHueyTask.TO_DO
-        task.save()
+        if task.huey_id:
+            queue = get_queue("tasks")
+            queue.revoke_by_id(task.huey_id)
+        task.transition_back_to_todo()
 
     def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
         """Retry all tasks that have error status."""
