@@ -99,6 +99,16 @@ class HueyTaskTracker(models.Model):
         self.status = self.QUEUED
         self.save()
 
+    def transition_to_complete(self):
+        """Move to the complete state."""
+        assert (
+            self.status == self.RUNNING
+        ), "HueyTaskTracker can only transition to COMPLETE from RUNNING"
+        # TODO?  is this the place to set to None?
+        self.huey_id = None
+        self.status = self.COMPLETE
+        self.save()
+
 
 # ---------------------------------
 # Define a singleton model as per

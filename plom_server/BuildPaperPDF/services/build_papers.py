@@ -61,10 +61,7 @@ def huey_build_single_paper(
         None
     """
     with transaction.atomic():
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
@@ -89,8 +86,7 @@ def huey_build_single_paper(
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
-            tr.status = HueyTaskTracker.COMPLETE
-            tr.save()
+            tr.transition_to_complete()
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -285,18 +281,17 @@ class BuildPapersService:
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
-            _ = huey_build_prenamed_paper(
+            res = huey_build_prenamed_paper(
                 paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk
             )
         else:
-            _ = huey_build_single_paper(paper_num, spec, qv_row, tracker_pk=tracker_pk)
+            res = huey_build_single_paper(
+                paper_num, spec, qv_row, tracker_pk=tracker_pk
+            )
 
         with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     def cancel_all_task(self) -> None:
         """Cancel all queued task from Huey.
