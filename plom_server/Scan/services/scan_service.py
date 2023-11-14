@@ -176,22 +176,20 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.STARTING,
+                status=PagesToImagesHueyTask.TO_DO,
                 created=timezone.now(),
             )
+            x.transition_to_starting()
             tracker_pk = x.pk
 
-        _ = huey_parent_split_bundle_task(
+        res = huey_parent_split_bundle_task(
             bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
         )
-        # print(f"Just enqueued Huey parent_split_and_save task id={_.id}")
+        # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            if tr.status == HueyTaskTracker.STARTING:
-                tr.status = HueyTaskTracker.QUEUED
-                tr.save()
+            tr.transition_to_running(res.id)
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
@@ -473,20 +471,18 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.STARTING,
+                status=ManageParseQR.TO_DO,
                 created=timezone.now(),
             )
+            x.transition_to_starting()
             tracker_pk = x.pk
 
-        _ = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
-        # print(f"Just enqueued Huey parent_read_qr_codes task id={_.id}")
+        res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
+        # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            if tr.status == HueyTaskTracker.STARTING:
-                tr.status = HueyTaskTracker.QUEUED
-                tr.save()
+            tr.transition_to_queued_or_running(res.id)
 
     def map_bundle_pages(self, bundle_pk, *, papernum, questions):
         """WIP support for hwscan.
@@ -1241,10 +1237,7 @@ def huey_parent_split_bundle_task(
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     with transaction.atomic(durable=True):
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
