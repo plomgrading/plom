@@ -161,9 +161,18 @@
                                             <li>
                                                 {{ number_of_questions }} columns with headers <tt>q{{ question_list|first }}.version</tt> up to <tt>q{{ question_list|last }}.version</tt>
                                             </li>
+                                            {% if student_list_present %}
+                                                <li>
+                                                    Your version map should be compatible with your uploaded classlist. It should contain at least one row for each student, namely {{ number_of_students }} rows. We recommend that it contain at least  {{ min_number_to_produce }} rows.
+                                                </li>
+                                            {% endif %}
+                                            {% if prenaming %}
+                                                <li>
+                                                    You have enabled prenaming; your version map must contain entries for each <em>paper_number</em> given in your classlist. The following papers are prenamed: {{ prenamed_papers_list }}.
+                                                </li>
+                                            {% endif %}
                                             <li>
-                                                it must contain at least {{ min_number_to_produce }} consecutive entries starting from <tt>paper_number</tt> 1:
-                                                a restriction we expect to relax in the future: <a href="https://gitlab.com/plom/plom/-/issues/1745">Plom Issue #1745</a>
+                                                You may experience problems with non-contiguous <tt>paper_number</tt>, see  <a href="https://gitlab.com/plom/plom/-/issues/1745">Plom Issue #1745</a>.
                                             </li>
                                         </ul>
                                     </li>
