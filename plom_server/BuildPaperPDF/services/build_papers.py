@@ -9,7 +9,7 @@ import pathlib
 import random
 from tempfile import TemporaryDirectory
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import zipfly
 
@@ -31,80 +31,13 @@ from ..models import PDFHueyTask
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
-@db_task(queue="tasks", context=True)
+@db_task(queue="tasks", context=True, preserve=True)
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
     question_versions: Dict[int, int],
     *,
-    tracker_pk: int,
-    task=None,
-    _debug_be_flaky: bool = False,
-) -> bool:
-    """Build a single paper.
-
-    It is important to understand that running this function starts an
-    async task in queue that will run sometime in the future.
-
-    Args:
-        papernum:
-        spec:
-        question_versions:
-
-    Keyword Args:
-        tracker_pk: a key into the database for anyone interested in
-            our progress.
-        task: includes our ID in the Huey process queue.
-        _debug_be_flaky: for debugging, all take a while and some
-            percentage will fail.
-
-    Returns:
-        True, no meaning, just as per the Huey docs: "if you need to
-        block or detect whether a task has finished".
-    """
-    with transaction.atomic():
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
-
-    with TemporaryDirectory() as tempdir:
-        save_path = make_PDF(
-            spec=spec,
-            papernum=papernum,
-            question_versions=question_versions,
-            where=pathlib.Path(tempdir),
-            source_versions_path=PaperSourcePDF.upload_to(),
-        )
-
-        if _debug_be_flaky:
-            for i in range(10):
-                print(f"Huey sleep i={i}/10: {task.id}")
-                time.sleep(1)
-            roll = random.randint(1, 10)
-            if roll % 5 == 0:
-                raise ValueError(
-                    f"DEBUG: deliberately failing creation of papernum={papernum}"
-                )
-
-        paper = Paper.objects.get(paper_number=papernum)
-        tr = paper.pdfhueytask
-        # TODO: which way is "better"?
-        tr2 = PDFHueyTask.objects.get(pk=tracker_pk)
-        assert tr == tr2
-        with save_path.open("rb") as f:
-            tr.pdf_file = File(f, name=save_path.name)
-            tr.transition_to_complete()
-
-    return True
-
-
-# The decorated function returns a ``huey.api.Result``
-# ``context=True`` so that the task knows its ID etc.
-@db_task(queue="tasks", context=True)
-def huey_build_prenamed_paper(
-    papernum: int,
-    spec: dict,
-    question_versions: Dict[int, int],
-    student_info: Dict[str, Any],
-    *,
+    student_info: Optional[Dict[str, Any]] = None,
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
@@ -118,9 +51,10 @@ def huey_build_prenamed_paper(
         papernum:
         spec:
         question_versions:
-        student_info:
 
     Keyword Args:
+        student_info: None for a regular blank paper or a dict with
+            keys ``"id"`` and ``"name"`` for "prenaming" a paper.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
@@ -151,7 +85,7 @@ def huey_build_prenamed_paper(
             roll = random.randint(1, 10)
             if roll % 5 == 0:
                 raise ValueError(
-                    f"DEBUG: deliberately failing creation of papernum={papernum}"
+                    f"DEBUG: deliberately failing creating papernum={papernum}"
                 )
 
         paper = Paper.objects.get(paper_number=papernum)
@@ -159,9 +93,10 @@ def huey_build_prenamed_paper(
         # TODO: which way is "better"?
         tr2 = PDFHueyTask.objects.get(pk=tracker_pk)
         assert tr == tr2
-        with save_path.open("rb") as f:
-            tr.pdf_file = File(f, name=save_path.name)
-            tr.transition_to_complete()
+        with transaction.atomic():
+            with save_path.open("rb") as f:
+                tr.pdf_file = File(f, name=save_path.name)
+                tr.transition_to_complete()
 
     return True
 
@@ -287,21 +222,18 @@ class BuildPapersService:
             task.transition_to_starting()
             tracker_pk = task.pk
 
+        student_info = None
         if task.student_name and task.student_id:
-            info_dict = {"id": task.student_id, "name": task.student_name}
-            res = huey_build_prenamed_paper(
-                paper_num,
-                spec,
-                qv_row,
-                info_dict,
-                tracker_pk=tracker_pk,
-                _debug_be_flaky=True,
-            )
-        else:
-            res = huey_build_single_paper(
-                paper_num, spec, qv_row, tracker_pk=tracker_pk, _debug_be_flaky=True
-            )
-
+            student_info = {"id": task.student_id, "name": task.student_name}
+        res = huey_build_single_paper(
+            paper_num,
+            spec,
+            qv_row,
+            student_info=student_info,
+            tracker_pk=tracker_pk,
+            _debug_be_flaky=True,
+        )
+        print(f"Just enqueued Huey reassembly task id={res.id}")
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
             tr.transition_to_queued_or_running(res.id)
