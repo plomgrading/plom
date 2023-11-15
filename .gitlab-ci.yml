@@ -26,10 +26,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:24.0.6
+image: docker:24.0.7
 
 services:
-  - docker:24.0.6-dind
+  - docker:24.0.7-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -285,7 +285,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=23.9.1"
+    - pip3 install "black~=23.11.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -306,7 +306,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.3.1
+    - pip install pytest pytest-cov coverage[toml]~=7.3.2
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -337,9 +337,9 @@ pylint:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    # These are pinned at 2.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=2.15.8
-    - python3 -m pip install pylint~=2.17.6
+    # These are pinned at 3.x.*: should be manually bumped sometimes
+    - python3 -m pip install astroid~=3.0.1
+    - python3 -m pip install pylint~=3.0.2
   script:
     - pylint plom
   allow_failure: true
@@ -351,6 +351,7 @@ pylint:
 # Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
 #       Will make not allowed to fail in the future, once types are more widely adopted in the project
 #       and 3.10 becomes our minimum supported Python version.
+# Issue #3151, seems to be holding back a mypy bump to 1.7.0
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
@@ -426,7 +427,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.3.1
+    - python3 -m pip install coverage~=7.3.2
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
