@@ -75,6 +75,10 @@ class HueyTaskTracker(models.Model):
         self.status = self.TO_DO
         self.save()
 
+    def reset_to_do(self):
+        # subclasses might subclass to do more
+        self.transition_back_to_todo()
+
     def transition_to_starting(self):
         assert self.status == self.TO_DO, (
             f"Tracker cannot transition from {self.get_status_display()}"

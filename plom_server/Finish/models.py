@@ -19,3 +19,9 @@ class ReassembleHueyTaskTracker(HueyTaskTracker):
     def __str__(self):
         """Stringify task using its related test-paper's number."""
         return "Task Object " + str(self.paper.paper_number)
+
+    def reset_to_do(self):
+        """Delete the PDF and go back the TO_DO state."""
+        if self.pdf_file:
+            self.pdf_file.delete()
+        super().reset_to_do()

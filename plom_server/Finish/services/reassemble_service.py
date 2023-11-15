@@ -561,10 +561,7 @@ class ReassembleService:
         if task.status == HueyTaskTracker.QUEUED:
             queue.revoke_by_id(task.huey_id)
         # TODO: what if it is RUNNING?
-        # if there is a file then delete it.
-        if task.pdf_file:
-            task.pdf_file.delete()
-        task.transition_back_to_todo()
+        task.reset_to_do()
 
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
@@ -581,16 +578,7 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            with transaction.atomic(durable=True):
-                tr = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-                tr.transition_to_starting()
-                tracker_pk = tr.pk
-            res = huey_reassemble_paper(pn, tracker_pk=tracker_pk)
-            # print(f"Just enqueued Huey reassembly task id={res.id}")
-
-            with transaction.atomic(durable=True):
-                tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-                tr.transition_to_queued_or_running(res.id)
+            self.queue_single_paper_reassembly(pn)
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
