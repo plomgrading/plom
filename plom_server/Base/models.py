@@ -71,7 +71,7 @@ class HueyTaskTracker(models.Model):
 
     def transition_back_to_todo(self):
         # TODO: which states are allowed to transition here?
-        self.self.huey_id = None
+        self.huey_id = None
         self.status = self.TO_DO
         self.save()
 
