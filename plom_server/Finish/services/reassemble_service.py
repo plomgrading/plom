@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import random
 import tempfile
+import time
 from typing import Any, Dict, List, Optional
 import zipfly
 
@@ -529,41 +530,108 @@ class ReassembleService:
         task = paper_obj.reassemblehueytasktracker
         return task.pdf_file
 
-    @transaction.atomic
-    def reset_single_paper_reassembly(self, paper_number: int) -> None:
+    def reset_single_paper_reassembly(
+        self, paper_number: int, *, wait: int = 10
+    ) -> None:
         """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
 
         Args:
-            paper_number (int): The paper number of the reassembly task to reset.
+            paper_number: The paper number of the reassembly task to reset.
 
-        TODO: likely does not properly handle running tasks.
+        Keyword Args:
+            wait: how many seconds to wait before timing out for running
+                tasks (default 10 seconds).
+
+        Raises:
+            HueyException: timed out waiting for result.
+
+        TODO: this may be susceptible to race conditions, so I do not think
+        it is guaranteed to block a huey task from running.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassemblehueytasktracker
-        self._reset_paper_reassembly(task)
-
-    @transaction.atomic
-    def reset_all_paper_reassembly(self) -> None:
-        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
-
-        TODO: likely does not properly handle running tasks.
-        """
-        for task in ReassembleHueyTaskTracker.objects.exclude(
-            status=HueyTaskTracker.TO_DO
-        ).all():
-            self._reset_paper_reassembly(task)
-
-    def _reset_paper_reassembly(self, task) -> None:
         queue = get_queue("tasks")
+        task = paper_obj.reassemblehueytasktracker
         # if the task is queued then remove it from the queue
         if task.status == HueyTaskTracker.QUEUED:
             queue.revoke_by_id(task.huey_id)
-        # TODO: what if it is RUNNING?
+        if task.status == HueyTaskTracker.RUNNING:
+            print(f"Task running: {task.huey_id}, we will wait for {wait}s...")
+            r = queue.result(
+                str(task.huey_id), blocking=True, timeout=wait, preserve=True
+            )
+            print(f"The running task {task.huey_id} has finished, and returned {r}")
         task.reset_to_do()
+
+    def reset_all_paper_reassembly(self) -> None:
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
+
+        This tries to somewhat gracefully ("like an eagle...piloting a blimp")
+        revoke queued tasks, wait for running tasks, etc.
+
+        Raises:
+            HueyException: timed out waiting for result, if we had to
+                wait more than around (at least) 15 seconds total.
+                The total time we could wait for success in unlikely
+                worst case is ``10 + (5-epsilon)(# of running tasks)``.
+        """
+        total_wait = 15
+        tries = 10
+        blocking_wait = total_wait - tries * 1
+
+        queue = get_queue("tasks")
+
+        # I believe all this is racey and we cannot prevent something from slipping
+        # between cases: we do multiple passes through to hopefully resolve that but
+        # it still feels sloppy.  Perhaps this code should be looking on the queue,
+        # talking to Huey rather than the Tracker's 2nd source of truth.
+
+        # Regarding cost: b/c we filter excluding TO_DO, only the first loop is likely
+        # to be significant (in the common case when many things are QUEUED or STARTING).
+        while tries > 0:
+            how_many_running = 0
+            for task in ReassembleHueyTaskTracker.objects.exclude(
+                status=HueyTaskTracker.TO_DO
+            ).all():
+                if task.status == HueyTaskTracker.QUEUED:
+                    queue.revoke_by_id(task.huey_id)
+                elif task.status == HueyTaskTracker.RUNNING:
+                    how_many_running += 1
+                    print(f"There is a running task: {task.huey_id}")
+                else:
+                    task.reset_to_do()
+            if how_many_running > 0:
+                print(
+                    f"There are {how_many_running} running task(s): "
+                    f"waiting for {tries} more seconds..."
+                )
+                time.sleep(0.95)
+            time.sleep(0.05)
+            tries -= 1
+            # in principle, we could leave the loop early whenever
+            # how_many_running = 0 but I worry about race from STARTING
+            # to QUEUED and others I haven't thought of.
+
+        # Finally, blocking wait on any running, HueyException on timeout
+        for task in ReassembleHueyTaskTracker.objects.exclude(
+            status=HueyTaskTracker.TO_DO
+        ).all():
+            if task.status == HueyTaskTracker.RUNNING:
+                print(
+                    f"There is STILL a running task: {task.huey_id}, "
+                    f"blocking wait for {blocking_wait}s before exception!"
+                )
+                r = queue.result(
+                    str(task.huey_id),
+                    blocking=True,
+                    timeout=blocking_wait,
+                    preserve=True,
+                )
+                print(f"The running task {task.huey_id} has finished, and returned {r}")
+            task.reset_to_do()
 
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
@@ -615,7 +683,7 @@ class ReassembleService:
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
-) -> None:
+) -> bool:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
     Args:
@@ -625,7 +693,8 @@ def huey_reassemble_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        _debug_be_flaky: for debugging, fail some percentage.
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
 
     Returns:
         None
@@ -643,6 +712,9 @@ def huey_reassemble_paper(
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
 
         if _debug_be_flaky:
+            for i in range(10):
+                print(f"Huey sleep i={i}/10: {task.id}")
+                time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
                 raise ValueError(
@@ -661,3 +733,4 @@ def huey_reassemble_paper(
                 # save the new one.
                 tr.pdf_file = File(f, name=save_path.name)
                 tr.transition_to_complete()
+    return True
