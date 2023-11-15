@@ -115,7 +115,8 @@ class StagingStudentService:
             if prename and row["paper_number"]:
                 txt += f"{row['student_id']}, \"{row['student_name']}\", {row['paper_number']}\n"
             else:
-                txt += f"{row['student_id']}, \"{row['student_name']}\", -1\n"
+                # don't print the -1 for non-prename.
+                txt += f"{row['student_id']}, \"{row['student_name']}\", \n"
         return txt
 
     @transaction.atomic()

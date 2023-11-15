@@ -14,6 +14,8 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
 
+from plom.misc_utils import format_int_list_with_runs
+
 from ..services import (
     PQVMappingService,
     PrenameSettingService,
@@ -33,6 +35,8 @@ class PQVMappingUploadView(ManagerRequiredView):
         if not request.FILES["pqvmap_csv"]:
             return redirect("prep_qvmapping")
 
+        prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
+
         context = {"errors": []}
         # far from ideal, but the csv module doesn't like bytes.
         try:
@@ -40,7 +44,7 @@ class PQVMappingUploadView(ManagerRequiredView):
                 f = Path(td) / "file.csv"
                 with f.open("wb") as fh:
                     fh.write(request.FILES["pqvmap_csv"].read())
-                vm = version_map_from_file(f)
+                vm = version_map_from_file(f, required_papers=prenamed_papers)
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
         except KeyError as e:
@@ -93,8 +97,17 @@ class PQVMappingView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }
-        fpp, lpp = sss.get_first_last_prenamed_paper()
-        context.update({"first_prenamed_paper": fpp, "last_prenamed_paper": lpp})
+
+        prenamed_papers_list = list(
+            StagingStudentService().get_prenamed_papers().keys()
+        )
+
+        context.update(
+            {
+                "prenamed_papers_list": format_int_list_with_runs(prenamed_papers_list),
+                "last_prenamed_paper": max(prenamed_papers_list),
+            }
+        )
 
         context["min_number_to_produce"] = sss.get_minimum_number_to_produce()
 
