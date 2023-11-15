@@ -56,15 +56,25 @@ class ClasslistView(ManagerRequiredView):
         if not request.FILES["classlist_csv"]:
             return HttpResponseClientRedirect(".")
 
-        scsv = StagingClasslistCSVService()
+        # check if there are already students in the list.
+        sss = StagingStudentService()
+        if sss.are_there_students():
+            return HttpResponseClientRedirect(".")
 
-        # if there is already a classlist redirect to the classlist landing page
-        if scsv.is_there_a_classlist():
-            return redirect("prep_classlist")
+        scsv = StagingClasslistCSVService()
 
         success, warn_err = scsv.take_classlist_from_upload(
             request.FILES["classlist_csv"]
         )
+        # if successful upload and no warnings or errors, then just use it.
+        if success and not warn_err:
+            sss.use_classlist_csv()
+            return redirect("prep_classlist")
+
+        # major errors, so delete the file.
+        if not success:
+            scsv.delete_classlist_csv()
+
         context.update({"success": success, "warn_err": warn_err})
         return render(request, "Preparation/classlist_attempt.html", context)
 

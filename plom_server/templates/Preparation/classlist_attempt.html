@@ -45,26 +45,13 @@
         {% else %}
             <div class="alert alert-primary">
                 <span>Classlist csv uploaded successfully without errors</span>
-                <span>
-                    <button class="btn btn-info"
-                            hx-put="."
-                            hx-confirm="Are you sure?"
-                            hx-target="body"
-                            hx-swap="outerHTML">use</button>
-                    <button class="btn btn-warning"
-                            hx-delete="."
-                            hx-target="body"
-                            hx-swap="outerHTML">discard</button>
-                </span>
+                <a class="btn btn-success" href="{% url 'prep_classlist' %}">return</a>
             </div>
         {% endif %}
     {% else %}
         <div class="alert alert-danger">Upload failed due to errors:</div>
         <span>
-            <button class="btn btn-danger"
-                    hx-delete="."
-                    hx-target="body"
-                    hx-swap="outerHTML">discard (and upload another)</button>
+            <a class="btn btn-danger" href="{% url 'prep_classlist' %}">return to upload another file</a>
         </span>
         <table class="table table-striped">
             <thead>
