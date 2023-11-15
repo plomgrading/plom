@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -57,6 +57,11 @@ class ClasslistView(ManagerRequiredView):
             return HttpResponseClientRedirect(".")
 
         scsv = StagingClasslistCSVService()
+
+        # if there is already a classlist redirect to the classlist landing page
+        if scsv.is_there_a_classlist():
+            return redirect("prep_classlist")
+
         success, warn_err = scsv.take_classlist_from_upload(
             request.FILES["classlist_csv"]
         )

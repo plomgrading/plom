@@ -35,6 +35,10 @@ class PQVMappingUploadView(ManagerRequiredView):
         if not request.FILES["pqvmap_csv"]:
             return redirect("prep_qvmapping")
 
+        # if there is already a qv map redirect
+        if PQVMappingService().is_there_a_pqv_map():
+            return redirect("prep_qvmapping")
+
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
 
         context = {"errors": []}
