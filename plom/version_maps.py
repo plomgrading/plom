@@ -15,8 +15,12 @@ from typing import Any, Dict, Optional, Union, List
 
 
 def check_version_map(
-        vm: Dict[Any, Any], spec=None, *, legacy: Optional[bool] = False,
-            required_papers: Optional[List[int]] = None) -> None:
+    vm: Dict[Any, Any],
+    spec=None,
+    *,
+    legacy: Optional[bool] = False,
+    required_papers: Optional[List[int]] = None,
+) -> None:
     """Correctness checks of a version maps.
 
     Args:
@@ -186,13 +190,9 @@ def undo_json_packing_of_version_map(
     return vmap
 
 
-<<<<<<< HEAD
 def _version_map_from_json(
     f: Path, *, required_papers: Optional[List[int]] = None
 ) -> Dict:
-=======
-def _version_map_from_json(f: Path) -> Dict[int, Dict[int, int]]:
->>>>>>> main
     with open(f, "r") as fh:
         qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
