@@ -580,7 +580,7 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            self.queue_single_paper_reassembly(pn)
+            self.queue_single_paper_reassembly(int(pn))
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
