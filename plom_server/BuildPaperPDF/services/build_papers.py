@@ -8,6 +8,7 @@
 import pathlib
 import random
 from tempfile import TemporaryDirectory
+import time
 from typing import Any, Dict, List
 
 import zipfly
@@ -54,8 +55,8 @@ def huey_build_single_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        _debug_be_flaky: for debugging, fail some percentage of their
-            building.
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
@@ -74,6 +75,9 @@ def huey_build_single_paper(
         )
 
         if _debug_be_flaky:
+            for i in range(10):
+                print(f"Huey sleep i={i}/10: {task.id}")
+                time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
                 raise ValueError(
@@ -120,8 +124,8 @@ def huey_build_prenamed_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
-        _debug_be_flaky: for debugging, fail some percentage of their
-            building.
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
@@ -141,6 +145,9 @@ def huey_build_prenamed_paper(
         )
 
         if _debug_be_flaky:
+            for i in range(10):
+                print(f"Huey sleep i={i}/10: {task.id}")
+                time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
                 raise ValueError(
@@ -283,11 +290,16 @@ class BuildPapersService:
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
             res = huey_build_prenamed_paper(
-                paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk
+                paper_num,
+                spec,
+                qv_row,
+                info_dict,
+                tracker_pk=tracker_pk,
+                _debug_be_flaky=True,
             )
         else:
             res = huey_build_single_paper(
-                paper_num, spec, qv_row, tracker_pk=tracker_pk
+                paper_num, spec, qv_row, tracker_pk=tracker_pk, _debug_be_flaky=True
             )
 
         with transaction.atomic(durable=True):

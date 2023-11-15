@@ -506,8 +506,10 @@ class ReassembleService:
             tr.transition_to_starting()
             tracker_pk = tr.pk
 
-        res = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
-        # print(f"Just enqueued Huey reassembly task id={res.id}")
+        res = huey_reassemble_paper(
+            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=True
+        )
+        print(f"Just enqueued Huey reassembly task id={res.id}")
 
         with transaction.atomic(durable=True):
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
