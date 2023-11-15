@@ -697,7 +697,8 @@ def huey_reassemble_paper(
             percentage will fail.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)

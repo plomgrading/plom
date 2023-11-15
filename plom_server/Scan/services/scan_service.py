@@ -1215,7 +1215,7 @@ def huey_parent_split_bundle_task(
     debug_jpeg: Optional[bool] = False,
     tracker_pk: int,
     task=None,
-) -> None:
+) -> bool:
     """Split a PDF document into individual page images.
 
     It is important to understand that running this function starts an
@@ -1230,7 +1230,8 @@ def huey_parent_split_bundle_task(
         task: includes our ID in the Huey process queue.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     from time import sleep
 
@@ -1291,6 +1292,8 @@ def huey_parent_split_bundle_task(
             bundle_obj.save()
             HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
+    return True
+
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
@@ -1299,7 +1302,7 @@ def huey_parent_read_qr_codes_task(
     *,
     tracker_pk: int,
     task=None,
-) -> None:
+) -> bool:
     """Read the QR codes of a bunch of pages.
 
     It is important to understand that running this function starts an
@@ -1314,7 +1317,8 @@ def huey_parent_read_qr_codes_task(
         task: includes our ID in the Huey process queue.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     from time import sleep
 
@@ -1359,6 +1363,7 @@ def huey_parent_read_qr_codes_task(
 
     with transaction.atomic(durable=True):
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
+    return True
 
 
 # The decorated function returns a ``huey.api.Result``

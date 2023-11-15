@@ -39,7 +39,7 @@ def huey_build_single_paper(
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
-) -> None:
+) -> bool:
     """Build a single paper.
 
     It is important to understand that running this function starts an
@@ -58,7 +58,8 @@ def huey_build_single_paper(
             building.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     with transaction.atomic():
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
@@ -88,6 +89,8 @@ def huey_build_single_paper(
             tr.pdf_file = File(f, name=save_path.name)
             tr.transition_to_complete()
 
+    return True
+
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
@@ -101,7 +104,7 @@ def huey_build_prenamed_paper(
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
-) -> None:
+) -> bool:
     """Build a single paper and prename it.
 
     It is important to understand that running this function starts an
@@ -121,7 +124,8 @@ def huey_build_prenamed_paper(
             building.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     with transaction.atomic():
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
@@ -151,6 +155,8 @@ def huey_build_prenamed_paper(
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
             tr.transition_to_complete()
+
+    return True
 
 
 class BuildPapersService:
