@@ -40,6 +40,7 @@
     </thead>
     {% for task in tasks %}
         <tr>
+            <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
             <td>{{ task.paper_number }}</td>
             {% if task.status == 'Complete' %}
                 <td>
@@ -57,7 +58,7 @@
                        hx-post="{% url 'start_one_PDF' task.paper_number %}"
                        hx-target="#pdf_table">Retry</a>
                 </td>
-            {% elif task.status == 'Queued' %}
+            {% elif task.status == 'Queued' or ask.status == "Starting" %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}
@@ -68,7 +69,7 @@
                        hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
                        hx-target="#pdf_table">Cancel</a>
                 </td>
-            {% elif task.status == 'Started' %}
+            {% elif task.status == 'Running' %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}
