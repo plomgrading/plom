@@ -250,7 +250,7 @@ class BuildPapersService:
         for task in queue_tasks:
             if task.huey_id:
                 queue = get_queue("tasks")
-                queue.revoke_by_id(task.huey_id)
+                queue.revoke_by_id(str(task.huey_id))
             task.transition_back_to_todo()
 
     def cancel_single_task(self, paper_number: int):
@@ -266,7 +266,7 @@ class BuildPapersService:
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
         if task.huey_id:
             queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
+            queue.revoke_by_id(str(task.huey_id))
         task.transition_back_to_todo()
 
     def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:

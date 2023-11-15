@@ -559,7 +559,7 @@ class ReassembleService:
         task = paper_obj.reassemblehueytasktracker
         # if the task is queued then remove it from the queue
         if task.status == HueyTaskTracker.QUEUED:
-            queue.revoke_by_id(task.huey_id)
+            queue.revoke_by_id(str(task.huey_id))
         if task.status == HueyTaskTracker.RUNNING:
             print(f"Task running: {task.huey_id}, we will wait for {wait}s...")
             r = queue.result(
@@ -599,7 +599,7 @@ class ReassembleService:
                 status=HueyTaskTracker.TO_DO
             ).all():
                 if task.status == HueyTaskTracker.QUEUED:
-                    queue.revoke_by_id(task.huey_id)
+                    queue.revoke_by_id(str(task.huey_id))
                 elif task.status == HueyTaskTracker.RUNNING:
                     how_many_running += 1
                     print(f"There is a running task: {task.huey_id}")
