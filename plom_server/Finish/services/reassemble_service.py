@@ -6,6 +6,7 @@
 import arrow
 from datetime import datetime
 from pathlib import Path
+import random
 import tempfile
 from typing import Any, Dict, List, Optional
 import zipfly
@@ -611,7 +612,9 @@ class ReassembleService:
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> None:
+def huey_reassemble_paper(
+    paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
+) -> None:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
     Args:
@@ -621,6 +624,7 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
+        _debug_be_flaky: for debugging, fail some percentage.
 
     Returns:
         None
@@ -636,6 +640,14 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
+
+        if _debug_be_flaky:
+            roll = random.randint(1, 10)
+            if roll % 5 == 0:
+                raise ValueError(
+                    f"DEBUG: deliberately failing creation of reassembly {paper_number}"
+                )
+
         with save_path.open("rb") as f:
             with transaction.atomic():
                 # TODO: unclear to me if we need to re-get the task
