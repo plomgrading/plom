@@ -61,10 +61,7 @@ def huey_build_single_paper(
         None
     """
     with transaction.atomic():
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
@@ -89,8 +86,7 @@ def huey_build_single_paper(
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
-            tr.status = HueyTaskTracker.COMPLETE
-            tr.save()
+            tr.transition_to_complete()
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -128,10 +124,7 @@ def huey_build_prenamed_paper(
         None
     """
     with transaction.atomic():
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
@@ -157,8 +150,7 @@ def huey_build_prenamed_paper(
         assert tr == tr2
         with save_path.open("rb") as f:
             tr.pdf_file = File(f, name=save_path.name)
-            tr.status = HueyTaskTracker.COMPLETE
-            tr.save()
+            tr.transition_to_complete()
 
 
 class BuildPapersService:
@@ -279,49 +271,53 @@ class BuildPapersService:
         self, task, paper_num: int, spec: dict, qv_row: Dict[int, int]
     ) -> None:
         with transaction.atomic(durable=True):
-            task.status = HueyTaskTracker.STARTING
-            task.save()
+            task.transition_to_starting()
             tracker_pk = task.pk
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
-            _ = huey_build_prenamed_paper(
+            res = huey_build_prenamed_paper(
                 paper_num, spec, qv_row, info_dict, tracker_pk=tracker_pk
             )
         else:
-            _ = huey_build_single_paper(paper_num, spec, qv_row, tracker_pk=tracker_pk)
+            res = huey_build_single_paper(
+                paper_num, spec, qv_row, tracker_pk=tracker_pk
+            )
 
         with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     def cancel_all_task(self) -> None:
         """Cancel all queued task from Huey.
 
-        TODO!  document this, when can it be expected to work etc?
+        If a task is already running, it is probably difficult to cancel
+        but we can try to cancel all of the ones that are enqueued.
         """
         queue_tasks = PDFHueyTask.objects.filter(
             Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
         )
         for task in queue_tasks:
-            queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
-            task.status = PDFHueyTask.TO_DO
-            task.save()
+            if task.huey_id:
+                queue = get_queue("tasks")
+                queue.revoke_by_id(task.huey_id)
+            task.transition_back_to_todo()
 
     def cancel_single_task(self, paper_number: int):
         """Cancel a single queued task from Huey.
 
-        TODO!  document this, when can it be expected to work etc?
+        If a task is already running, it is probably difficult to cancel
+        but we can try to cancel if starting or enqueued.  Should be harmless
+        to call on tasks that have errored out, or are incomplete or are still
+        to do.
+
+        TODO: its unclear what happens if you call this on a running task.
         """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
-        queue = get_queue("tasks")
-        queue.revoke_by_id(task.huey_id)
-        task.status = PDFHueyTask.TO_DO
-        task.save()
+        if task.huey_id:
+            queue = get_queue("tasks")
+            queue.revoke_by_id(task.huey_id)
+        task.transition_back_to_todo()
 
     def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
         """Retry all tasks that have error status."""
@@ -334,16 +330,16 @@ class BuildPapersService:
     def reset_all_tasks(self) -> None:
         """Reset all tasks back their initial "TO DO" state.
 
-        TODO: this could be racing, depending on when you call it.
-        I think this code assumes we're at some "steady state".  Maybe that's
-        harsh; at any rate it depends on understanding how cancelling works.
+        TODO: its not clear to me how this deals with RUNNING tasks:
+        I think they cannot be cancelled...?  The ``self.cancel_all_task()``
+        is set to ignore them...  So they will keep running and perhaps
+        later try to save their PDF files into our Tracker.
         """
         self.cancel_all_task()
         for task in PDFHueyTask.objects.all():
-            task.file_path().unlink(missing_ok=True)
-            task.huey_id = None
-            task.status = PDFHueyTask.TO_DO
-            task.save()
+            if task.file_path():
+                task.file_path().unlink(missing_ok=True)
+            task.transition_back_to_todo()
 
     @transaction.atomic
     def get_all_task_status(self) -> Dict:

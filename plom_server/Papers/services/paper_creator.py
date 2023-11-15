@@ -53,17 +53,12 @@ def huey_create_paper_with_qvmapping(
         None
     """
     with transaction.atomic(durable=True):
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 
     with transaction.atomic(durable=True):
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.COMPLETE
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
 
 class PaperCreatorService:
@@ -136,23 +131,20 @@ class PaperCreatorService:
         self, paper_number: int, qv_mapping: Dict[int, int]
     ) -> None:
         with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.create(huey_id=None)
-            tr.status = HueyTaskTracker.STARTING
-            tr.save()
+            tr = HueyTaskTracker.objects.create(
+                huey_id=None, status=HueyTaskTracker.TO_DO
+            )
+            tr.transition_to_starting()
             tracker_pk = tr.pk
 
-        _ = huey_create_paper_with_qvmapping(
+        res = huey_create_paper_with_qvmapping(
             paper_number, qv_mapping, tracker_pk=tracker_pk
         )
-        print(f"Just enqueued Huey create paper task id={_.id}")
+        print(f"Just enqueued Huey create paper task id={res.id}")
 
         with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            assert task.status != HueyTaskTracker.TO_DO
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     def add_all_papers_in_qv_map(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True

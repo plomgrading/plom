@@ -69,6 +69,64 @@ class HueyTaskTracker(models.Model):
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
 
+    def transition_back_to_todo(self):
+        # TODO: which states are allowed to transition here?
+        self.huey_id = None
+        self.status = self.TO_DO
+        self.save()
+
+    def reset_to_do(self):
+        # subclasses might subclass to do more
+        self.transition_back_to_todo()
+
+    def transition_to_starting(self):
+        assert self.status == self.TO_DO, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Starting (only from To_Do state)"
+        )
+        assert self.huey_id is None, (
+            "Tracker must have id None to transition to Starting"
+            f" but we have id={self.huey_id}"
+        )
+        self.status = self.STARTING
+        self.save()
+
+    def transition_to_running(self, huey_id):
+        assert self.status in (self.STARTING, self.QUEUED), (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Running (only from Starting or Queued)"
+        )
+        self.huey_id = huey_id
+        self.status = self.RUNNING
+        self.save()
+
+    def transition_to_queued_or_running(self, huey_id):
+        """Move to the queued state or a no-op if we're already in the running state."""
+        if self.status == self.RUNNING:
+            assert self.huey_id == huey_id, (
+                f"We were already in the RUNNING state with huey id {self.huey_id} when "
+                f"you tried to enqueue us with a different huey id {huey_id}"
+            )
+            return
+        assert self.status == self.STARTING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Queued (only from Starting)"
+        )
+        self.huey_id = huey_id
+        self.status = self.QUEUED
+        self.save()
+
+    def transition_to_complete(self):
+        """Move to the complete state."""
+        assert self.status == self.RUNNING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Complete (only from Running)"
+        )
+        # TODO?  is this the place to set to None?
+        self.huey_id = None
+        self.status = self.COMPLETE
+        self.save()
+
 
 # ---------------------------------
 # Define a singleton model as per

@@ -31,10 +31,7 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
     from plom.create import build_extra_page_pdf
 
     with transaction.atomic():
-        task_obj = ExtraPagePDFTask.load()
-        task_obj.huey_id = task.id
-        task_obj.status = HueyTaskTracker.RUNNING
-        task_obj.save()
+        ExtraPagePDFTask.load().transition_to_running(task.id)
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_extra_page_pdf does already...
@@ -51,8 +48,7 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
                 # TODO: unclear to me if we need to re-get the task
                 task_obj = ExtraPagePDFTask.load()
                 task_obj.extra_page_pdf = File(fh, name=epp_path.name)
-                task_obj.status = HueyTaskTracker.COMPLETE
-                task_obj.save()
+                task_obj.transition_to_complete()
 
 
 class ExtraPageService:
@@ -75,9 +71,7 @@ class ExtraPageService:
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ExtraPagePDFTask.load()
         Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
-        task_obj.status = ExtraPagePDFTask.TO_DO
-        task_obj.huey_id = None
-        task_obj.save()
+        task_obj.transition_back_to_todo()
 
     def build_extra_page_pdf(self):
         """Enqueue the huey task of building the extra page pdf."""
@@ -85,20 +79,15 @@ class ExtraPageService:
         if task_obj.status == HueyTaskTracker.COMPLETE:
             return
         with transaction.atomic(durable=True):
-            task_obj.status = HueyTaskTracker.STARTING
-            task_obj.save()
+            task_obj.transition_to_starting()
             tracker_pk = task_obj.pk
 
-        _ = huey_build_the_extra_page_pdf(tracker_pk=tracker_pk)
-        # print(f"Just enqueued Huey extra page builder id={_.id}")
+        res = huey_build_the_extra_page_pdf(tracker_pk=tracker_pk)
+        # print(f"Just enqueued Huey extra page builder id={res.id}")
 
         with transaction.atomic(durable=True):
             task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.huey_id = _.id
-                task.save()
+            task.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_extra_page_pdf_as_bytes(self):

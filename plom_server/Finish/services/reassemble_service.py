@@ -6,6 +6,7 @@
 import arrow
 from datetime import datetime
 from pathlib import Path
+import random
 import tempfile
 from typing import Any, Dict, List, Optional
 import zipfly
@@ -499,21 +500,17 @@ class ReassembleService:
             raise ValueError("No paper with that number") from None
 
         with transaction.atomic(durable=True):
-            task = paper_obj.reassemblehueytasktracker
-            task.status = HueyTaskTracker.STARTING
-            task.save()
-            tracker_pk = task.pk
+            tr = paper_obj.reassemblehueytasktracker
+            tr.reset_to_do()
+            tr.transition_to_starting()
+            tracker_pk = tr.pk
 
-        _ = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
-        # print(f"Just enqueued Huey reassembly task id={_.id}")
+        res = huey_reassemble_paper(paper_number, tracker_pk=tracker_pk)
+        # print(f"Just enqueued Huey reassembly task id={res.id}")
 
         with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            # if its still starting, it is safe to change to queued
-            assert task.status != HueyTaskTracker.TO_DO
-            if task.status == HueyTaskTracker.STARTING:
-                task.status = HueyTaskTracker.QUEUED
-                task.save()
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -534,12 +531,12 @@ class ReassembleService:
 
     @transaction.atomic
     def reset_single_paper_reassembly(self, paper_number: int) -> None:
-        """Reset to TODO the reassembly task of the given paper and remove pdf if it exists.
+        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
 
         Args:
             paper_number (int): The paper number of the reassembly task to reset.
 
-        TODO: QUEUED, STARTING, RUNNING?
+        TODO: likely does not properly handle running tasks.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -547,37 +544,26 @@ class ReassembleService:
             raise ValueError("No paper with that number") from None
 
         task = paper_obj.reassemblehueytasktracker
-        # if the task is queued then remove it from the queue
-        if task.status == HueyTaskTracker.QUEUED:
-            queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
-        # if there is a file then remove it
-        if task.pdf_file:
-            task.pdf_file.delete()
-
-        task.huey_id = None
-        task.status = HueyTaskTracker.TO_DO
-        task.save()
+        self._reset_paper_reassembly(task)
 
     @transaction.atomic
     def reset_all_paper_reassembly(self) -> None:
-        """Reset to TODO all reassembly tasks and remove any associated pdfs.
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
 
-        TODO: QUEUED, STARTING, RUNNING?
+        TODO: likely does not properly handle running tasks.
         """
-        queue = get_queue("tasks")
         for task in ReassembleHueyTaskTracker.objects.exclude(
             status=HueyTaskTracker.TO_DO
         ).all():
-            # if the task is queued then remove it from the queue
-            if task.status == HueyTaskTracker.QUEUED:
-                queue.revoke_by_id(task.huey_id)
-            # if there is a file then delete it.
-            if task.pdf_file:
-                task.pdf_file.delete()
-            task.huey_id = None
-            task.status = HueyTaskTracker.TO_DO
-            task.save()
+            self._reset_paper_reassembly(task)
+
+    def _reset_paper_reassembly(self, task) -> None:
+        queue = get_queue("tasks")
+        # if the task is queued then remove it from the queue
+        if task.status == HueyTaskTracker.QUEUED:
+            queue.revoke_by_id(task.huey_id)
+        # TODO: what if it is RUNNING?
+        task.reset_to_do()
 
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
@@ -587,33 +573,21 @@ class ReassembleService:
             if not data["identified"] or not data["marked"]:
                 continue
             # check if already queued or complete
+            # TODO: "Queued" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Queued":
                 continue
+            # TODO: "Complete" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            with transaction.atomic(durable=True):
-                task = ReassembleHueyTaskTracker.objects.get(paper__paper_number=pn)
-                task.status = HueyTaskTracker.STARTING
-                task.save()
-                tracker_pk = task.pk
-            _ = huey_reassemble_paper(pn, tracker_pk=tracker_pk)
-            # print(f"Just enqueued Huey reassembly task id={_.id}")
-
-            with transaction.atomic(durable=True):
-                task = HueyTaskTracker.objects.get(pk=tracker_pk)
-                # if its still starting, it is safe to change to queued
-                assert task.status != HueyTaskTracker.TO_DO
-                if task.status == HueyTaskTracker.STARTING:
-                    task.status = HueyTaskTracker.QUEUED
-                    task.save()
+            self.queue_single_paper_reassembly(int(pn))
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
         """Get list of paths of pdf-files of completed (built) tests papers.
 
         Returns:
-            list(File): a list of django-Files of the reassembled pdf.
+            A list of django-Files of the reassembled pdf.
         """
         return [
             task.pdf_file
@@ -639,7 +613,9 @@ class ReassembleService:
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> None:
+def huey_reassemble_paper(
+    paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
+) -> None:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
     Args:
@@ -649,6 +625,7 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
+        _debug_be_flaky: for debugging, fail some percentage.
 
     Returns:
         None
@@ -659,24 +636,28 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
         raise ValueError("No paper with that number") from None
 
     with transaction.atomic():
-        # TODO: ok to use pk for both ReassembleHueyTaskTracker and superclass?
-        tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-        tr.status = HueyTaskTracker.RUNNING
-        tr.huey_id = task.id
-        tr.save()
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
+
+        if _debug_be_flaky:
+            roll = random.randint(1, 10)
+            if roll % 5 == 0:
+                raise ValueError(
+                    f"DEBUG: deliberately failing creation of reassembly {paper_number}"
+                )
+
         with save_path.open("rb") as f:
             with transaction.atomic():
                 # TODO: unclear to me if we need to re-get the task
                 tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
                 # TODO: IMHO, the pdf file does not belong in the Tracker obj
+                # TODO: I think we should have deleted it before restarting so this isn't needed
                 # delete any old file if it exists
                 if tr.pdf_file:
                     tr.pdf_file.delete()
                 # save the new one.
                 tr.pdf_file = File(f, name=save_path.name)
-                tr.status = HueyTaskTracker.COMPLETE
-                tr.save()
+                tr.transition_to_complete()
