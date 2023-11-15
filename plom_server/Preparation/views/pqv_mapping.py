@@ -106,12 +106,19 @@ class PQVMappingView(ManagerRequiredView):
             StagingStudentService().get_prenamed_papers().keys()
         )
 
-        context.update(
-            {
-                "prenamed_papers_list": format_int_list_with_runs(prenamed_papers_list),
-                "last_prenamed_paper": max(prenamed_papers_list),
-            }
-        )
+        if prenamed_papers_list:
+            context.update(
+                {
+                    "prenamed_papers_list": format_int_list_with_runs(
+                        prenamed_papers_list
+                    ),
+                    "last_prenamed_paper": max(prenamed_papers_list),
+                }
+            )
+        else:
+            context.update(
+                {"prenamed_papers_list": "n/a", "last_prenamed_paper": "n/a"}
+            )
 
         context["min_number_to_produce"] = sss.get_minimum_number_to_produce()
 
