@@ -54,11 +54,11 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
 class ExtraPageService:
     @transaction.atomic()
     def get_extra_page_task_status(self) -> str:
-        """Status of the build extra page task, creating a "todo" task if it does not exist.
+        """Status of the build extra page task, creating a "to do" task if it does not exist.
 
         Return:
-            The status as string: "To do", "Queued", "Started", "Error" or "Complete".
-
+            The status as string: "To do", "Starting", "Queued", "Running",
+            "Error" or "Complete", as defined in the HueyTaskTracker class.
         """
         return ExtraPagePDFTask.load().get_status_display()
 

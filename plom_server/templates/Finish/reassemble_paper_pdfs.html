@@ -104,9 +104,10 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ val.last_update_humanised }}</td>
+                                    <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
                                     <td>
                                         {% if val.identified and val.marked %}
-                                            {% if val.reassembled_status == "Started" or val.reassembled_status == "Queued" %}
+                                            {% if val.reassembled_status == "Starting" or val.reassembled_status == "Queued" or val.reassembled_status == "Running" %}
                                                 <i class="bi bi-clock-history text-info"></i>
                                             {% elif val.reassembled_status == "Error" %}
                                                 <i class="bi bi-exclamation-diamond-fill text-danger"></i>
@@ -151,7 +152,7 @@
                                                         class="btn btn-warning">delete</button>
                                             {% endif %}
                                         {% else %}
-                                            {% if val.identified and val.marked and val.reassembled_status != "Queued" and val.reassembled_status != "Started" %}
+                                            {% if val.identified and val.marked and val.reassembled_status != "Starting" val.reassembled_status != "Queued" and val.reassembled_status != "Running" %}
                                                 <button hx-post="{% url 'reassemble_one_paper' paper %}"
                                                         class="btn btn-success">reassemble</button>
                                             {% else %}

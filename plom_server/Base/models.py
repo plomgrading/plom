@@ -49,6 +49,12 @@ class HueyTaskTracker(models.Model):
     The difference between STARTING, QUEUED, and RUNNING is rather
     sensitive to timing.  Caller can set STARTING and try to set
     QUEUED (but must defer to the Huey task itself about RUNNING.
+
+    .. caution:: These statuses are not just symbolic constants; they
+        also appear as strings through the code as
+        "To do", "Starting", "Queued", "Running", "Error", "Complete".
+        Note the difference in cases.  They are displayed to users.
+        They are also used in logic tests.
     """
 
     StatusChoices = models.IntegerChoices(
