@@ -213,6 +213,8 @@ class BuildPapersService:
         """
         paper = get_object_or_404(Paper, paper_number=paper_num)
         task = paper.pdfhueytask
+        # code also called for "retry": first reset to "To Do"
+        task.reset_to_do()
         self._send_single_task(task, paper_num, spec, qv_row)
 
     def _send_single_task(
