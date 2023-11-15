@@ -501,6 +501,7 @@ class ReassembleService:
 
         with transaction.atomic(durable=True):
             tr = paper_obj.reassemblehueytasktracker
+            tr.reset_to_do()
             tr.transition_to_starting()
             tracker_pk = tr.pk
 
