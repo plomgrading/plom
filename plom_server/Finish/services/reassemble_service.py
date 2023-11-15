@@ -574,8 +574,10 @@ class ReassembleService:
             if not data["identified"] or not data["marked"]:
                 continue
             # check if already queued or complete
+            # TODO: "Queued" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Queued":
                 continue
+            # TODO: "Complete" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
@@ -595,7 +597,7 @@ class ReassembleService:
         """Get list of paths of pdf-files of completed (built) tests papers.
 
         Returns:
-            list(File): a list of django-Files of the reassembled pdf.
+            A list of django-Files of the reassembled pdf.
         """
         return [
             task.pdf_file
@@ -651,6 +653,7 @@ def huey_reassemble_paper(paper_number: int, *, tracker_pk: int, task=None) -> N
                 # TODO: unclear to me if we need to re-get the task
                 tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
                 # TODO: IMHO, the pdf file does not belong in the Tracker obj
+                # TODO: I think we should have deleted it before restarting so this isn't needed
                 # delete any old file if it exists
                 if tr.pdf_file:
                     tr.pdf_file.delete()
