@@ -205,10 +205,10 @@ class StartOnePDF(PDFTableView):
         return self.render_pdf_table(request)
 
 
-class CancelAllPDf(PDFTableView):
+class CancelAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        bps.cancel_all_task()
+        bps.try_to_cancel_all_queued_tasks()
 
         return self.render_pdf_table(request)
 
@@ -216,7 +216,7 @@ class CancelAllPDf(PDFTableView):
 class CancelOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
-        bps.cancel_single_task(paper_number)
+        bps.try_to_cancel_single_queued_task(paper_number)
 
         return self.render_pdf_table(request)
 

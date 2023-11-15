@@ -209,7 +209,7 @@ class BuildPapersService:
 
         TODO: nothing here asserts it is really status TO_DO, nor that
         the tracker already exists.  Perhaps this is only used for retries
-        or similar?
+        or similar?  Issue #3154.
         """
         paper = get_object_or_404(Paper, paper_number=paper_num)
         task = paper.pdfhueytask
@@ -238,30 +238,42 @@ class BuildPapersService:
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
             tr.transition_to_queued_or_running(res.id)
 
-    def cancel_all_task(self) -> None:
-        """Cancel all queued task from Huey.
+    def try_to_cancel_all_queued_tasks(self) -> None:
+        """Try to cancel all the queued tasks in the Huey queue.
 
         If a task is already running, it is probably difficult to cancel
         but we can try to cancel all of the ones that are enqueued.
-        """
-        queue_tasks = PDFHueyTask.objects.filter(
-            Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
-        )
-        for task in queue_tasks:
-            if task.huey_id:
-                queue = get_queue("tasks")
-                queue.revoke_by_id(str(task.huey_id))
-            task.transition_back_to_todo()
 
-    def cancel_single_task(self, paper_number: int):
-        """Cancel a single queued task from Huey.
+        This is a "best effort" function, not a promise that will stop
+        running tasks.
+
+        It would be embarrasing if something *became* QUEUED after this...
+        So we hold atomic DB so no Trackers can transition from STARTING
+        to QUEUED state, although I don't think there is a guarantee.
+        """
+        queue = get_queue("tasks")
+        with transaction.atomic(durable=True):
+            queue_tasks = PDFHueyTask.objects.filter(
+                Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
+            )
+            for task in queue_tasks:
+                if task.huey_id:
+                    queue.revoke_by_id(str(task.huey_id))
+                task.transition_back_to_todo()
+
+    def try_to_cancel_single_queued_task(self, paper_number: int):
+        """Try to cancel a single queued task from Huey.
+
+        This is a "best effort" function, not a promise that will stop
+        running tasks.
 
         If a task is already running, it is probably difficult to cancel
         but we can try to cancel if starting or enqueued.  Should be harmless
         to call on tasks that have errored out, or are incomplete or are still
         to do.
 
-        TODO: its unclear what happens if you call this on a running task.
+        TODO: what if it is Complete?  What then?  I'm not sure it should reset
+        but currently it does.
         """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
         if task.huey_id:
@@ -276,16 +288,15 @@ class BuildPapersService:
             paper_number = task.paper.paper_number
             self._send_single_task(task, paper_number, spec, qvmap[paper_number])
 
-    @transaction.atomic
     def reset_all_tasks(self) -> None:
         """Reset all tasks back their initial "TO DO" state.
 
         TODO: its not clear to me how this deals with RUNNING tasks:
-        I think they cannot be cancelled...?  The ``self.cancel_all_task()``
-        is set to ignore them...  So they will keep running and perhaps
-        later try to save their PDF files into our Tracker.
+        I think they cannot be (easily) be cancelled...?
+        So they will keep running and perhaps later try to save their
+        PDF files into our Tracker.
         """
-        self.cancel_all_task()
+        self.try_to_cancel_all_queued_tasks()
         for task in PDFHueyTask.objects.all():
             if task.file_path():
                 task.file_path().unlink(missing_ok=True)
