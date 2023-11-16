@@ -216,8 +216,8 @@ qt_api = "pyqt6"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
-# TODO: think about: H025, H030, H031
-ignore="H006,H013,H021,H023,H025,H030,H031"
+# TODO: think about: H030, H031
+ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
 [tool.pydocstyle]
