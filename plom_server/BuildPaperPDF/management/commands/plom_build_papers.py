@@ -5,6 +5,7 @@
 
 from pathlib import Path
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
 from BuildPaperPDF.services import BuildPapersService
@@ -76,17 +77,12 @@ class Command(BaseCommand):
 
     def start_specific_task(self, paper_number):
         bp_service = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqv_service = PQVMappingService()
-        qvmap = pqv_service.get_pqv_map_dict()
 
-        if paper_number in qvmap:
-            bp_service.send_single_task(paper_number, spec, qvmap[paper_number])
+        try:
+            bp_service.send_single_task(paper_number)
             self.stdout.write(f"Started building paper number {paper_number}.")
-        else:
-            self.stderr.write(
-                f"Paper number {paper_number} is not in the question-version map."
-            )
+        except (ValueError, ObjectDoesNotExist) as e:
+            raise CommandError(e) from e
 
     def show_task_status(self):
         bp_service = BuildPapersService()

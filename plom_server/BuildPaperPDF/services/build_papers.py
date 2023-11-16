@@ -25,6 +25,8 @@ from django_huey import get_queue
 
 # TODO: why "staging"? We should talk to the "real" student service
 from Preparation.services import StagingStudentService
+from Preparation.services import PQVMappingService
+from Papers.services import SpecificationService
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
 from Base.models import HueyTaskTracker
@@ -186,14 +188,23 @@ class BuildPapersService:
             paper_num = paper.paper_number
             self.send_single_task(paper_num, spec, qvmap[paper_num])
 
-    def send_single_task(
-        self, paper_num: int, spec: dict, qv_row: Dict[int, int]
-    ) -> None:
-        """Create a new chore and send a single task to Huey.
+    def send_single_task(self, paper_num) -> None:
+        """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
 
         Raises:
-            something about non-existing paper number
+            ObjectDoesNotExist: non-existent paper number.
+            ValueError: existing non-obsolete PDFHueyTask for that
+                paper number.
         """
+        spec = SpecificationService.get_the_spec()
+
+        # TODO: helper looks it up again, just here for error handling :(
+        _ = Paper.objects.get(paper_number=paper_num)
+
+        pqv_service = PQVMappingService()
+        qvmap = pqv_service.get_pqv_map_dict()
+        qv_row = qvmap[paper_num]
+
         prenamed = StagingStudentService().get_prenamed_papers()
         student_id, student_name = None, None
         if paper_num in prenamed:
