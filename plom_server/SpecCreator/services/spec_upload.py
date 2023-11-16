@@ -49,6 +49,10 @@ class SpecificationUploadService:
     ):
         """Construct service with paths and/or model instances.
 
+        Note: If the service is initialized with both a toml file path
+        and a toml string, it will read and use the toml file and ignore
+        the string.
+
         Keyword Args::
             toml_file_path: a path to a TOML specification.  Callers
                 must provide either this input or the ``toml_string``.
@@ -69,8 +73,6 @@ class SpecificationUploadService:
                 self.spec_dict = load_toml_from_string(toml_string)
             except TOMLDecodeError as e:
                 raise ValueError("Unable to parse TOML file from string.") from e
-        else:
-            raise ValueError("You must provide either a file or a string")
 
     @transaction.atomic
     def save_spec(
