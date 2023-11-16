@@ -1,6 +1,3 @@
-{% extends "base/base.html" %}
-{% load static %}
-<!DOCTYPE html>
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
@@ -8,92 +5,85 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Build Paper PDFs
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block page_heading %}
-            Build Paper PDFs
-        {% endblock page_heading %}
-        {% block main_content %}
-            <div class="d-grid gap-2" id="top">
-                <div>
-                    <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
-                </div>
-                {% if pdfs_staged %}
-                    <div id="pdf_table">{{ pdf_table |safe }}</div>
-                {% else %}
-                    <div class="card w-50">
-                        <div class="card-body">
-                            {% if db_initialised %}
-                                <h5 class="card-title">Build test papers</h5>
-                                <p class="card-text">Will build {{ num_pdfs }} tests.</p>
-                                <form action="{% url 'create_paperPDFs' %}" method="post">
-                                    {% csrf_token %}
-                                    <input type="submit" class="btn btn-primary" value="Submit">
-                                </form>
-                            {% else %}
-                                <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
-                                <h5 class="card-title">Database not initialised</h5>
-                                <p class="card-text">Please send all the required information to Plom-classic before building test-papers.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            <!-- Modal -->
-            <div class="modal fade"
-                 id="deleteBtnModal"
-                 tabindex="-1"
-                 aria-labelledby="ModalLabel"
-                 aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="ModalLabel">Are you sure you want to delete all PDF files?</h5>
-                            <button type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>
-                                <b>Steps after PDFs deletion:</b>
-                            </p>
-                            <ol>
-                                <li>
-                                    Click on <b>Return to assessment preparation page.</b>
-                                </li>
-                                <li>
-                                    Go to <b>Source versions</b>, then click on <b>Manage sources</b>.
-                                </li>
-                                <li>Delete the version with the mistakes.</li>
-                                <li>Upload a new version.</li>
-                                <li>
-                                    Click on <b>Return to assessment preparation page.</b>
-                                </li>
-                                <li>
-                                    Go to <b>Build test paper PDFs</b>, then click on <b>Build All PDFs</b>.
-                                </li>
-                            </ol>
-                            {% comment %} <p><b>Note:</b> If you forget the steps, take a picture or copy the instructions.</p> {% endcomment %}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <a class="btn btn-danger"
-                               hx-post="{% url 'delete_all_PDFs' %}"
-                               hx-target="#top"
-                               data-bs-dismiss="modal">Delete</a>
-                        </div>
-                    </div>
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Build Paper PDFs
+{% endblock title %}
+{% block page_heading %}
+    Build Paper PDFs
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2" id="top">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        {% if pdfs_staged %}
+            <div id="pdf_table">{{ pdf_table |safe }}</div>
+        {% else %}
+            <div class="card w-50">
+                <div class="card-body">
+                    {% if db_initialised %}
+                        <h5 class="card-title">Build test papers</h5>
+                        <p class="card-text">Will build {{ num_pdfs }} tests.</p>
+                        <form action="{% url 'create_paperPDFs' %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" class="btn btn-primary" value="Submit">
+                        </form>
+                    {% else %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
+                        <h5 class="card-title">Database not initialised</h5>
+                        <p class="card-text">Please send all the required information to Plom-classic before building test-papers.</p>
+                    {% endif %}
                 </div>
             </div>
-        {% endblock main_content %}
-    </body>
-</html>
+        {% endif %}
+    </div>
+    <!-- Modal -->
+    <div class="modal fade"
+         id="deleteBtnModal"
+         tabindex="-1"
+         aria-labelledby="ModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ModalLabel">Are you sure you want to delete all PDF files?</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <b>Steps after PDFs deletion:</b>
+                    </p>
+                    <ol>
+                        <li>
+                            Click on <b>Return to assessment preparation page.</b>
+                        </li>
+                        <li>
+                            Go to <b>Source versions</b>, then click on <b>Manage sources</b>.
+                        </li>
+                        <li>Delete the version with the mistakes.</li>
+                        <li>Upload a new version.</li>
+                        <li>
+                            Click on <b>Return to assessment preparation page.</b>
+                        </li>
+                        <li>
+                            Go to <b>Build test paper PDFs</b>, then click on <b>Build All PDFs</b>.
+                        </li>
+                    </ol>
+                    {% comment %} <p><b>Note:</b> If you forget the steps, take a picture or copy the instructions.</p> {% endcomment %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a class="btn btn-danger"
+                       hx-post="{% url 'delete_all_PDFs' %}"
+                       hx-target="#top"
+                       data-bs-dismiss="modal">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
