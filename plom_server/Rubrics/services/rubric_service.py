@@ -351,8 +351,8 @@ class RubricService:
             MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE, latest_annotation__rubric__id=rubric.pk
             )
-            .select_related("latest_annotation")
             .order_by("paper__paper_number")
+            .prefetch_related("paper", "assigned_user", "latest_annotation")
         )
 
     def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
