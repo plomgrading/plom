@@ -3,9 +3,15 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+import tempfile
+from typing import Dict
+
 from django.db import transaction
 
 from plom import SpecVerifier
+from plom.version_maps import version_map_to_csv, check_version_map
+
 from Papers.services import SpecificationService
 
 from ..models import StagingPQVMapping
@@ -32,18 +38,25 @@ class PQVMappingService:
         StagingPQVMapping.objects.all().delete()
 
     @transaction.atomic()
-    def use_pqv_map(self, valid_pqvmap):
-        # assumes that there is no current pqvmap.
-        # assumes that passed pqvmap is valid
-        for paper_number, qvmap in valid_pqvmap.items():
+    def use_pqv_map(self, pqvmap: Dict[int, Dict[int, int]]):
+        """Populate the database with this particular version map.
+
+        Note: assumes that there is no current pqvmap or that you are adding
+        to the existing pqvmap.
+
+        Raises:
+            ValueError: invalid map.
+        """
+        check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
+        for paper_number, qvmap in pqvmap.items():
             for question, version in qvmap.items():
                 StagingPQVMapping.objects.create(
                     paper_number=paper_number, question=question, version=version
                 )
 
     @transaction.atomic()
-    def get_pqv_map_dict(self):
-        pqvmapping = {}
+    def get_pqv_map_dict(self) -> Dict[int, Dict[int, int]]:
+        pqvmapping: Dict[int, Dict[int, int]] = {}
         for pqv_obj in StagingPQVMapping.objects.all():
             if pqv_obj.paper_number in pqvmapping:
                 pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
@@ -82,20 +95,19 @@ class PQVMappingService:
         return pqv_table
 
     @transaction.atomic()
-    def get_pqv_map_as_csv(self):
+    def pqv_map_to_csv(self, f: Path) -> None:
         pqvmap = self.get_pqv_map_dict()
-        qlist = [q + 1 for q in range(SpecificationService.get_n_questions())]
-        # TODO - replace this with some python csv module stuff
-        txt = '"paper_number"'
-        for q in qlist:
-            txt += f', "q{q}.version"'
-        txt += "\n"
-        for paper_number, qvmap in pqvmap.items():
-            txt += f"{paper_number}"
-            for q, v in qvmap.items():
-                txt += f", {v}"
-            txt += "\n"
-        return txt
+        version_map_to_csv(pqvmap, f, _legacy=False)
+
+    @transaction.atomic()
+    def get_pqv_map_as_csv_string(self):
+        # non-ideal implementation, but version_map_to_csv does not speak to a BytesIO
+        with tempfile.TemporaryDirectory() as td:
+            f = Path(td) / "file.csv"
+            self.pqv_map_to_csv(f)
+            with open(f, "r") as fh:
+                txt = fh.readlines()
+            return txt
 
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
@@ -111,7 +123,8 @@ class PQVMappingService:
         # qv-map creator
         speck = SpecVerifier(spec_dict)
 
-        return make_random_version_map(speck)
+        seed = SpecificationService.get_private_seed()
+        return make_random_version_map(speck, seed=seed)
 
     def generate_and_set_pqvmap(self, numberToProduce):
         # delete old map, build a new one, and then use it.

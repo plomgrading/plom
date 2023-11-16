@@ -157,7 +157,22 @@ Its also possible to make a new server from scratch that accepts scans
 intended for the old server.  This is discussed next.
 
 
-### How do I reset my server to the pre-scanned state?
+### How do I change the public code and/or private seed of my server?
+
+This can be done provided you have not yet made PDF files (whose
+QR-codes would contain that public Code).
+
+On the new Django-based server, login as any Admin user, then go to `/admin`.
+This gives your direct access to most of the raw database tables.
+Find the Specification and change the publicCode and/or privateSeed.
+
+One should be very carefully doing this sort of thing: the
+`publicCode` exists to make it difficult to accidentally upload the
+papers to the wrong server.  This question shows you how to defeat
+that mechanism.
+
+
+### How do I reset my legacy server to the pre-scanned state?
 
 You need two things: the ``question_version_map.csv`` file which you
 can get with the command line tools: ``plom-create get-ver-map``.

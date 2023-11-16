@@ -2,7 +2,7 @@
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
-__copyright__ = "Copyright (C) 2023  Natalie Balashov"
+__copyright__ = "Copyright (C) 2023 Natalie Balashov"
 __copyright__ = "Copyright (C) 2023 Julian Lapenna"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -20,7 +20,7 @@ a **Plom Client**.
 Fedora
 ------
 
-Tested on Fedora 38.  Some stuff from the package manager:
+Tested on Fedora 39.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick gcc gcc-c++ cmake \
@@ -35,6 +35,7 @@ Tested on Fedora 38.  Some stuff from the package manager:
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
         python3-pytest python3-PyMySQL \
+        python3-django python3-django-filter \
         python3-aiohttp python3-peewee python3-cryptography \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
