@@ -188,8 +188,10 @@ class BuildPapersService:
             )
 
     def send_all_tasks(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
-        """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey."""
-        # TODO:
+        """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey.
+
+        TODO: but for now, just build them all, independent of what has been done before.
+        """
         for paper in Paper.objects.all():
             print(paper)
             # TODO: andrew will make this all pre-fetchy later
@@ -222,6 +224,7 @@ class BuildPapersService:
 
         # need name and id
         # TODO: but do we really?  Why not give it to the huey thing instead?  Why does a Chore need to know this?
+        # TODO: maybe chore nows it but should not be set here but rather by huey on completion?  TBD
         # TODO: make the task in the _method?
         task = PDFHueyTask.objects.create(
             paper=paper,
