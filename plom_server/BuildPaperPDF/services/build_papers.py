@@ -249,7 +249,7 @@ class BuildPapersService:
         This is a "best effort" function, not a promise that will stop
         running tasks.
 
-        It would be embarrasing if something *became* QUEUED after this...
+        It would be embarrassing if something *became* QUEUED after this...
         So we hold atomic DB so no Trackers can transition from STARTING
         to QUEUED state, although I don't think there is a guarantee.
         """
