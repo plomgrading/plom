@@ -209,27 +209,12 @@ class BuildPapersService:
         Raises:
             something about non-existing paper number
         """
-        # TODO: error handling!
-        paper = Paper.objects.get(paper_number=paper_num)
-
         prenamed = StagingStudentService().get_prenamed_papers()
         student_name, student_name = None, None
         if paper_num in prenamed:
             student_id, student_name = prenamed[paper_num]
 
-        # need name and id
-        # TODO: but do we really?  Why not give it to the huey thing instead?  Why does a Chore need to know this?
-        # TODO: maybe chore nows it but should not be set here but rather by huey on completion?  TBD
-        # TODO: make the task in the _method?
-        task = PDFHueyTask.objects.create(
-            paper=paper,
-            huey_id=None,
-            status=PDFHueyTask.STARTING,
-            student_name=student_name,
-            student_id=student_id,
-        )
-        task.save()
-        self._send_single_task(task, paper_num, spec, student_name, student_id, qv_row)
+        self._send_single_task(paper_num, spec, student_name, student_id, qv_row)
 
     def _send_single_task(
         self,
@@ -240,8 +225,19 @@ class BuildPapersService:
         student_id: Optional[str],
         qv_row: Dict[int, int],
     ) -> None:
+        # TODO: error handling!
+        paper = Paper.objects.get(paper_number=paper_num)
+
+        # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            # task.transition_to_starting()
+            task = PDFHueyTask.objects.create(
+                paper=paper,
+                huey_id=None,
+                status=PDFHueyTask.STARTING,
+                student_name=student_name,
+                student_id=student_id,
+            )
+            task.save()
             tracker_pk = task.pk
 
         student_info = None
@@ -308,7 +304,7 @@ class BuildPapersService:
         retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
-            self._send_single_task(task, paper_number, spec, qvmap[paper_number])
+            self.send_single_task(paper_number, spec, qvmap[paper_number])
 
     def reset_all_tasks(self) -> None:
         """Reset all tasks back their initial "TO DO" state.
