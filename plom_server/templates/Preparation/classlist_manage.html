@@ -16,17 +16,17 @@
         {% if prenaming %}<div class="alert alert-warning">Prenaming is enabled, so a classlist is required</div>{% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
-                <span>Classlist present</span>
+                <span>Classlist present with {{ student_list|length }} students:</span>
                 <a href="{% url 'prep_classlist_download' %}"
                    target="_blank"
                    class="btn btn-info">download</a>
                 <button class="btn btn-danger"
-                        hx-delete="delete"
+                        hx-delete="."
                         hx-confirm="Are you sure you want to delete the classlist?"
                         hx-target="body"
                         hx-swap="outerHTML">delete whole classlist</button>
             </div>
-            <div class="border p-2" style="overflow: auto; max-height: 50%">
+            <div class="border p-2" style="overflow: auto;">
                 <table class="table table-striped">
                     <thead>
                         <th>Student ID</th>
@@ -70,6 +70,15 @@
                             <div>
                                 <input type="file" accepts=".csv" name="classlist_csv" required />
                                 <button class="btn btn-primary" type="submit">upload</button>
+                            </div>
+                            <div class="form-check form-switch m-2">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="ignoreWarnings"
+                                       value="True"
+                                       name="ignoreWarnings">
+                                <label class="form-check-label mx-2" for="ignoreWarnings">Ignore warnings (not recommended)</label>
                             </div>
                         </form>
                     </div>

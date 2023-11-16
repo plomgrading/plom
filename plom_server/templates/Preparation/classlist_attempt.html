@@ -11,18 +11,13 @@
     {% if success %}
         {% if warn_err %}
             <div class="alert alert-info">
-                <span>Classlist csv uploaded successfully, but with warnings</span>
-                <span>
-                    <button class="btn btn-primary"
-                            hx-delete="."
-                            hx-target="body"
-                            hx-swap="outerHTML">discard (recommended)</button>
-                    <button class="btn btn-warning"
-                            hx-put="."
-                            hx-confirm="There are warnings; are you sure you wish to proceed?"
-                            hx-target="body"
-                            hx-swap="outerHTML">use (at your peril)</button>
-                </span>
+                <p>
+                    <span>Classlist has warnings</span>
+                    <span>
+                        <a class="btn btn-warning" href="{% url 'prep_classlist' %}">return to upload another file</a>
+                    </span>
+                </p>
+                <p>Note that you can set "Ignore warnings" on upload to ignore these warnings.</p>
             </div>
             <div class="card">
                 <div class="card-body">
@@ -43,29 +38,33 @@
                 </div>
             </div>
         {% else %}
-            <div class="alert alert-primary">
-                <span>Classlist csv uploaded successfully without errors</span>
-                <a class="btn btn-success" href="{% url 'prep_classlist' %}">return</a>
+            <!-- Should not reach here -->
+            <div class="alert alert-succcess">
+                <p>
+                    <span>Classlist uploaded successfully</span>
+                    <span>
+                        <a class="btn btn-primary" href="{% url 'prep_classlist' %}">return</a>
+                    </span>
+                </p>
             </div>
+        {% else %}
+            <div class="alert alert-danger">Upload failed due to errors:</div>
+            <span>
+                <a class="btn btn-danger" href="{% url 'prep_classlist' %}">return to upload another file</a>
+            </span>
+            <table class="table table-striped">
+                <thead>
+                    <th>Warning or Error</th>
+                    <th>Line</th>
+                    <th>Message</th>
+                </thead>
+                {% for werr in warn_err %}
+                    <tr>
+                        <td>{{ werr.warn_or_err }}</td>
+                        <td>{{ werr.werr_line }}</td>
+                        <td>{{ werr.werr_text }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
         {% endif %}
-    {% else %}
-        <div class="alert alert-danger">Upload failed due to errors:</div>
-        <span>
-            <a class="btn btn-danger" href="{% url 'prep_classlist' %}">return to upload another file</a>
-        </span>
-        <table class="table table-striped">
-            <thead>
-                <th>Warning or Error</th>
-                <th>Line</th>
-                <th>Message</th>
-            </thead>
-            {% for werr in warn_err %}
-                <tr>
-                    <td>{{ werr.warn_or_err }}</td>
-                    <td>{{ werr.werr_line }}</td>
-                    <td>{{ werr.werr_text }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% endif %}
-{% endblock main_content %}
+    {% endblock main_content %}

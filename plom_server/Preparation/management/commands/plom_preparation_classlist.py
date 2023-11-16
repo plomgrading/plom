@@ -8,7 +8,6 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 
 from ...services import (
-    StagingClasslistCSVService,
     StagingStudentService,
     PrenameSettingService,
 )
@@ -35,12 +34,13 @@ class Command(BaseCommand):
         if not source_path.exists():
             self.stderr.write(f"Cannot open {source_csv}. Stopping.")
 
-        scsv = StagingClasslistCSVService()
         with open(source_path, "rb") as fh:
-            success, warnings = scsv.take_classlist_from_upload(fh)
+            success, warnings = sss.validate_and_use_classlist_csv(
+                fh, ignore_warnings=ignore_warnings
+            )
+
         if success and not warnings:
             self.stdout.write("Upload has no warnings.")
-            sss.use_classlist_csv()
             self.stdout.write("CSV processed.")
             return
         elif success and warnings:
@@ -53,7 +53,6 @@ class Command(BaseCommand):
                 self.stdout.write(
                     "Ignoring these warnings and using this classlist csv."
                 )
-                sss.use_classlist_csv()
                 self.stdout.write("CSV processed.")
                 return
             else:

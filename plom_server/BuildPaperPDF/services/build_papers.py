@@ -31,6 +31,11 @@ class BuildPapersService:
     base_dir = settings.MEDIA_ROOT
     papers_to_print = base_dir / "papersToPrint"
 
+    def print_stuff(self):
+        meh = get_queue("tasks")
+        for X in meh.pending():
+            print(">" * 10, X.kwargs)
+
     @transaction.atomic
     def get_n_complete_tasks(self):
         """Get the number of PDFTasks that have completed."""
@@ -81,14 +86,16 @@ class BuildPapersService:
 
     def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper, with huey!"""
-        pdf_build = self._build_single_paper(index, spec, question_versions)
+        pdf_build = self._build_single_paper(index, spec, question_versions, meh=index)
         task_obj = self.create_task(index, pdf_build.id)
         task_obj.status = PDFTask.QUEUED
         task_obj.save()
         return task_obj
 
     @db_task(queue="tasks")
-    def _build_single_paper(index: int, spec: dict, question_versions: dict):
+    def _build_single_paper(
+        index: int, spec: dict, question_versions: dict, *, meh=None
+    ):
         """Build a single test-paper."""
         with TemporaryDirectory() as tempdir:
             save_path = make_PDF(
@@ -176,7 +183,7 @@ class BuildPapersService:
                 )
             else:
                 pdf_build = self._build_single_paper(
-                    paper_number, spec, qvmap[paper_number]
+                    paper_number, spec, qvmap[paper_number], meh=task.paper.paper_number
                 )
 
             task.huey_id = pdf_build.id

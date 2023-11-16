@@ -12,54 +12,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 
-from ..models import StagingClasslistCSV, StagingStudent
+from ..models import StagingStudent
 from ..services import PrenameSettingService
 
 
 log = logging.getLogger("ClasslistService")
-
-
-class StagingClasslistCSVService:
-    def take_classlist_from_upload(self, in_memory_file):
-        from plom.create.classlistValidator import PlomClasslistValidator
-
-        # delete any old classlists
-        self.delete_classlist_csv()
-        # now save the in-memory file to a tempfile and validate
-        tmp_csv = Path(NamedTemporaryFile(delete=False).name)
-        with open(tmp_csv, "wb") as fh:
-            for chunk in in_memory_file:
-                fh.write(chunk)
-
-        vlad = PlomClasslistValidator()
-        success, werr = vlad.validate_csv(tmp_csv)
-
-        tmp_csv.unlink()
-
-        with transaction.atomic():
-            dj_file = File(in_memory_file, name="classlist.csv")
-            cl_obj = StagingClasslistCSV(
-                valid=success, csv_file=dj_file, warnings_errors_list=werr
-            )
-            cl_obj.save()
-
-        return (success, werr)
-
-    @transaction.atomic()
-    def is_there_a_classlist(self):
-        return StagingClasslistCSV.objects.exists()
-
-    @transaction.atomic()
-    def get_classlist_csv_filepath(self):
-        return StagingClasslistCSV.objects.get().csv_file.path
-
-    @transaction.atomic()
-    def delete_classlist_csv(self):
-        # explicitly delete the file, since it is not done automagically by django
-        # TODO - make this a bit cleaner.
-        if StagingClasslistCSV.objects.exists():
-            Path(StagingClasslistCSV.objects.get().csv_file.path).unlink()
-            StagingClasslistCSV.objects.filter().delete()
 
 
 class StagingStudentService:
@@ -134,20 +91,39 @@ class StagingStudentService:
         StagingStudent.objects.all().delete()
 
     @transaction.atomic()
-    def use_classlist_csv(self):
-        scsv = StagingClasslistCSVService()
-        classlist_csv = scsv.get_classlist_csv_filepath()
-        with open(classlist_csv) as fh:
-            csv_reader = csv.DictReader(fh, skipinitialspace=True)
-            # make sure headers are lowercase
-            old_headers = csv_reader.fieldnames
-            # since this has been validated we know it has 'id', 'name', 'paper_number'
-            csv_reader.fieldnames = [x.lower() for x in old_headers]
-            # now we have lower case field names
-            for row in csv_reader:
-                self.add_student(row["id"], row["name"], row["paper_number"])
-        # after used make sure the csv is deleted
-        scsv.delete_classlist_csv()
+    def validate_and_use_classlist_csv(self, in_memory_csv_file, ignore_warnings=False):
+        """Read the in-memory csv file, validate it and use if possible."""
+        from plom.create.classlistValidator import PlomClasslistValidator
+
+        # now save the in-memory file to a tempfile and validate
+        tmp_csv = Path(NamedTemporaryFile(delete=False).name)
+        with open(tmp_csv, "wb") as fh:
+            for chunk in in_memory_csv_file:
+                fh.write(chunk)
+
+        vlad = PlomClasslistValidator()
+        success, werr = vlad.validate_csv(tmp_csv)
+        # success = False means warnings+errors - listed in werr
+        # success = True means no errors, but could be warnings in werr.
+
+        if (not success) or (werr and not ignore_warnings):
+            # errors, or non-ignorable warnings.
+            pass
+        else:
+            # either no warnings, or warnings but ignore them - so read the csv
+            with open(tmp_csv) as fh:
+                csv_reader = csv.DictReader(fh, skipinitialspace=True)
+                # make sure headers are lowercase
+                old_headers = csv_reader.fieldnames
+                # since this has been validated we know it has 'id', 'name', 'paper_number'
+                csv_reader.fieldnames = [x.lower() for x in old_headers]
+                # now we have lower case field names
+                for row in csv_reader:
+                    self.add_student(row["id"], row["name"], row["paper_number"])
+
+        # don't forget to unlink the temp file
+        tmp_csv.unlink()
+        return (success, werr)
 
     @transaction.atomic()
     def get_minimum_number_to_produce(self):
