@@ -48,8 +48,14 @@ def get_question_pages_list(paper: int, question: int) -> List[dict]:
                     "server_path": image.image_file.path,
                     "included": True,
                     "order": page.page_number,
-                    "img_height": image.height,
-                    "img_width": image.width,
+                    # For Future us vvvvv ?
+                    # "img_height": image.height, "img_width": image.width,
+                    # For Future us ^^^^^ ?
+                    # We may wish to also pass height/width info
+                    # if we do so then we need to confirm how django automagically computes
+                    # these for the imagefield - they are raw image height/width before any
+                    # exif or plom rotations. So will need to document precisely what these
+                    # are for any consumers of this API.
                 }
             )
     # TODO - decide better order (see hackery comments below).

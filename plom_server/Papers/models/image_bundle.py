@@ -45,13 +45,20 @@ class Image(models.Model):
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
     image_file (ImageField): the django-imagefield storing the image for the server.
-        In the future this could be a url to some cloud storage.
+        In the future this could be a url to some cloud storage. Note that this also
+        tells django where to automagically compute+store height/width information on save
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
         it the correct orientation.
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
-    height (int): the height of the image in px (auto-populated on save)
-    width (int): the width of the image in px (auto-populated on save)
+
+    height (int): the height of the image in px (auto-populated on
+        save by django). Note that this height is the *raw* height in
+        pixels before any exif rotations and any plom rotations.
+
+    width (int): the width of the image in px (auto-populated on
+        save by django).  Note that this width is the *raw* width in
+        pixels before any exif rotations and any plom rotations.
     """
 
     def _image_upload_path(self, filename: str) -> str:
@@ -75,9 +82,12 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
+    # using imagefield over filefield allows django to automagically compute
+    # height and width of the image - see django docs.
     image_file = models.ImageField(
         null=False,
         upload_to=_image_upload_path,
+        # tell Django where to automagically store height/width info on save
         height_field="height",
         width_field="width",
     )
@@ -85,6 +95,9 @@ class Image(models.Model):
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
 
+    # height and width fields auto-populated by django on save
+    # I don't think we use these *yet* but we may in the future
+    # These are raw height/width in pixels before any exif rotations or plom rotations.
     height = models.IntegerField(default=0)
     width = models.IntegerField(default=0)
 
