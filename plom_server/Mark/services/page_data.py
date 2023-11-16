@@ -73,8 +73,9 @@ def get_question_pages_list(paper: int, question: int) -> List[dict]:
                 # BEGIN HACKERY
                 "order": len(page_list) + 1,
                 # END HACKERY
-                "img_height": image.height,
-                "img_width": image.width,
+                # For Future us vvvvv ?
+                # "img_height": image.height, "img_width": image.width,
+                # For Future us ^^^^^ ?
             }
         )
 
