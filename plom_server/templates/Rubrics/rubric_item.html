@@ -32,21 +32,22 @@
                 <th>Edition</th>
                 <th>Username</th>
                 <th>Score</th>
-		<th>More information</th>
+                <th>More information</th>
             </tr>
         </thead>
         <tbody>
             {% for task in marking_tasks %}
                 <tr>
-                    <td>
-                        {{ task.paper.paper_number }}
-                    </td>
+                    <td>{{ task.paper.paper_number }}</td>
                     <td>{{ task.latest_annotation.edition }}</td>
                     <td>{{ task.question_number }}</td>
                     <td>{{ task.question_version }}</td>
                     <td>{{ task.assigned_user }}</td>
                     <td>{{ task.latest_annotation.score }}</td>
-		    <td class="text-center"><a class="btn btn-outline-primary" href="{% url 'progress_marking_task_details' task.pk %}">view task</a></td>
+                    <td class="text-center">
+                        <a class="btn btn-outline-primary"
+                           href="{% url 'progress_marking_task_details' task.pk %}">view task</a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
