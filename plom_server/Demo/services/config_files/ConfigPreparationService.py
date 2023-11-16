@@ -30,7 +30,6 @@ from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
-    StagingClasslistCSVService,
     StagingStudentService,
     PQVMappingService,
     TestPreparedSetting,
