@@ -4,19 +4,16 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
-import fitz
 
 from Papers.services import SpecificationService
 from SpecCreator.services import SpecificationUploadService
 from SpecCreator.services.spec_upload import SpecExistsException
 
-from ...services import PQVMappingService
+from ...services import TestPreparedSetting
 
 
 class Command(BaseCommand):
@@ -54,6 +51,9 @@ class Command(BaseCommand):
             f.write(SpecificationService.get_the_spec_as_toml())
 
     def upload_spec(self, spec_file, pdf_file):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         try:
             service = SpecificationUploadService(
                 toml_file_path=spec_file, reference_pdf_path=pdf_file
@@ -64,7 +64,7 @@ class Command(BaseCommand):
         with transaction.atomic:
             try:
                 service.save_spec(update_staging=True)
-            except SpecExistsError:
+            except SpecExistsException:
                 input_loop_done = False
                 while not input_loop_done:
                     confirm = input(
@@ -89,6 +89,9 @@ class Command(BaseCommand):
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         service = SpecificationUploadService()
         try:
             service.can_spec_be_modified()
