@@ -210,7 +210,7 @@ class BuildPapersService:
             something about non-existing paper number
         """
         prenamed = StagingStudentService().get_prenamed_papers()
-        student_name, student_name = None, None
+        student_id, student_name = None, None
         if paper_num in prenamed:
             student_id, student_name = prenamed[paper_num]
 
@@ -218,7 +218,6 @@ class BuildPapersService:
 
     def _send_single_task(
         self,
-        task,
         paper_num: int,
         spec: dict,
         student_name: Optional[str],
