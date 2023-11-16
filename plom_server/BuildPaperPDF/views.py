@@ -61,10 +61,6 @@ class BuildPaperPDFs(ManagerRequiredView):
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
 
-        print("vvv STUFF vvv")
-        bps.print_stuff()
-        print("^^^ STUFF ^^^")
-
         n_tasks = bps.get_n_tasks()
         if n_tasks > 0:
             pdfs_staged = True
