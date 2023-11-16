@@ -52,14 +52,18 @@ class HueyTaskTracker(models.Model):
 
     .. caution:: These statuses are not just symbolic constants; they
         also appear as strings through the code as
-        "To Do", "Starting", "Queued", "Running", "Error", "Complete",
-        "Out Of Date".
+        "To Do", "Starting", "Queued", "Running", "Error", "Complete".
         Note the difference in cases.  They are displayed to users.
         They are also used in logic tests.
+
+    ``obsolete=True`` is a "light deletion; no one cares for the result
+    and it should not be used.  It is ok to change status (e.g., a
+    background task finishes a chore that no one cares about anymore is
+    free to complete the chore---or not!)
     """
 
     StatusChoices = models.IntegerChoices(
-        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR OUT_OF_DATE"
+        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR"
     )
     TO_DO = StatusChoices.TO_DO
     STARTING = StatusChoices.STARTING
@@ -67,7 +71,6 @@ class HueyTaskTracker(models.Model):
     RUNNING = StatusChoices.RUNNING
     COMPLETE = StatusChoices.COMPLETE
     ERROR = StatusChoices.ERROR
-    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
 
     huey_id = models.UUIDField(null=True)
     status = models.IntegerField(
@@ -76,6 +79,7 @@ class HueyTaskTracker(models.Model):
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
+    obsolete = models.BooleanField(default=False)
 
     def transition_back_to_todo(self):
         # TODO: which states are allowed to transition here?
@@ -135,11 +139,9 @@ class HueyTaskTracker(models.Model):
         self.status = self.COMPLETE
         self.save()
 
-    def transition_to_outofdate(self):
-        """Move to the outofdate state, a "light deletion" if you will."""
-        # Note they must be able to keep their huey_id as running jobs
-        # could finish later.
-        self.status = self.OUT_OF_DATE
+    def set_obsolete(self):
+        """Move to the obsolete state, a "light deletion" if you will."""
+        self.obsolete = True
         self.save()
 
 

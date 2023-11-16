@@ -92,16 +92,18 @@ def huey_build_single_paper(
 
         with transaction.atomic():
             tr = PDFHueyTask.objects.get(pk=tracker_pk)
-            if tr.status == PDFHueyTask.OUT_OF_DATE:
-                # our result is no longer wanted
-                return False
-            with save_path.open("rb") as f:
-                tr.pdf_file = File(f, name=save_path.name)
+            if tr.obsolete:
+                # if result no longer needed, no need to keep the PDF
                 tr.transition_to_complete()
-            # TODO reset all other chores as OUT_OF_DATE
+            else:
+                with save_path.open("rb") as f:
+                    tr.pdf_file = File(f, name=save_path.name)
+                    tr.transition_to_complete()
+            # TODO: should we interact with other non-Obsolete chores?
+            # TODO: e.g., reset all other chores as Obsolete?
             # TODO: or would we like last-finished rather than first-finished?
             # TODO: or maybe it should be an error to finish when there is
-            # another COMPLETE chore: that is, caller is responsibe...
+            # TODO: COMPLETE chore: that is, caller is responsible...
 
     return True
 
@@ -274,9 +276,9 @@ class BuildPapersService:
                 Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
             )
             for task in queue_tasks:
+                task.set_obsolete()
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
-                task.transition_to_outofdate()
 
     def try_to_cancel_single_queued_task(self, paper_number: int):
         """Try to cancel a single queued task from Huey.
@@ -293,10 +295,10 @@ class BuildPapersService:
         but currently it does.
         """
         task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
+        task.set_obsolete()
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
-        task.transition_to_outofdate()
 
     def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
         """Retry all tasks that have error status."""
@@ -306,18 +308,10 @@ class BuildPapersService:
             self.send_single_task(paper_number, spec, qvmap[paper_number])
 
     def reset_all_tasks(self) -> None:
-        """Reset all tasks back their initial "TO DO" state.
-
-        TODO: its not clear to me how this deals with RUNNING tasks:
-        I think they cannot be (easily) be cancelled...?
-        So they will keep running and perhaps later try to save their
-        PDF files into our Tracker.
-        """
+        """Reset all tasks, discarding all in-progress and complete PDF files."""
         self.try_to_cancel_all_queued_tasks()
         for task in PDFHueyTask.objects.all():
-            # if task.file_path():
-            #    task.file_path().unlink(missing_ok=True)
-            task.transition_to_outofdate()
+            task.set_obsolete()
 
     @transaction.atomic
     def get_all_task_status(self) -> Dict:
@@ -350,8 +344,9 @@ class BuildPapersService:
                 "status": task.get_status_display(),
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
-                "tmp_pk": task.pk,  # temp
-                "tmp_huey_id": task.huey_id,  # temp
+                "tmp_pk": task.pk,
+                "tmp_huey_id": task.huey_id,
+                "tmp_obsolete": task.obsolete,
             }
             # TODO: a loop over papers instead?
             for task in PDFHueyTask.objects.all()
