@@ -13,6 +13,7 @@ from Progress.views import (
     ScanDiscardView,
     ScanReassignView,
     PushedImageView,
+    PushedImageRotatedView,
     PushedImageWrapView,
     ProgressIdentifyHome,
     ProgressMarkHome,
@@ -55,6 +56,11 @@ urlpatterns = [
         "scan/pushed_img/<int:img_pk>",
         PushedImageView.as_view(),
         name="progress_pushed_img",
+    ),
+    path(
+        "scan/pushed_img_rot/<int:img_pk>",
+        PushedImageRotatedView.as_view(),
+        name="progress_pushed_img_rot",
     ),
     path(
         "scan/pushed_img_wrap/<int:img_pk>",

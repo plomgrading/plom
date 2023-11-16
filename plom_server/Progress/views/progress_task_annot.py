@@ -101,6 +101,7 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
         # update this to include an angle which is (-1)*orientation - for css transforms
         for X in img_list:
             X.update({"angle": -X["orientation"]})
+            X.update({"aspect": X["img_height"] / X["img_width"]})
 
         context = {"paper": paper, "question": question, "img_list": img_list}
         return render(
