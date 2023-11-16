@@ -59,11 +59,13 @@ class Command(BaseCommand):
 
     def start_all_tasks(self):
         bp_service = BuildPapersService()
-        if bp_service.get_n_tasks() == 0:
-            self.stdout.write(
-                "There are no tasks to start. Check that DB is populated."
-            )
-            return
+        # TODO: is there a check to get some message here?
+        # TODO: like are there any papers?
+        # if bp_service.get_n_tasks() == 0:
+        #    self.stdout.write(
+        #        "There are no tasks to start. Check that DB is populated."
+        #    )
+        #    return
 
         spec = SpecificationService.get_the_spec()
         pqv_service = PQVMappingService()
