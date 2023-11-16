@@ -16,12 +16,6 @@ from ..services import SpecificationUploadService
 from . import SpecBaseView
 
 
-class TestSpecResetView(ManagerRequiredView):
-    def post(self, request):
-        SpecificationService.remove_spec()
-        return HttpResponseRedirect(reverse("names"))
-
-
 class TestSpecSubmitView(SpecBaseView):
     """Prompt the user to confirm the test specification before submitting it to the database."""
 

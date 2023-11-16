@@ -26,7 +26,7 @@ class SpecEditorView(SpecBaseView):
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
         return render(request, "SpecCreator/launch-page.html", context)
 
-    def post(self, request) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
         context: Dict[str, Any] = {"success": False}
         data = request.POST
