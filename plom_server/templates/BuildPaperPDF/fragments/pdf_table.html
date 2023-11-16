@@ -41,7 +41,8 @@
     {% for task in tasks %}
         <tr>
             <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
-            <td>{{ task.paper_number }}</td>
+            <!-- TODO: temporarily showing pk, and TODO: huey_id in tooltip somewhere? -->
+            <td>{{ task.paper_number }} [{{ task.tmp_pk }}, {{ task.tmp_huey_id }} ]</td>
             {% if task.status == 'Complete' %}
                 <td>
                     <a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ task.pdf_filename }}</a>

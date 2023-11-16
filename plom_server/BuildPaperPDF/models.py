@@ -16,8 +16,18 @@ from Papers.models import Paper
 
 
 class PDFHueyTask(HueyTaskTracker):
-    # OneToOneField makes a field called "pdfhueytask" in the Paper table
-    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
+    """Represents the chore of building a PDF file for each paper.
+
+    WIP: deprecated the use of "TO_DO".
+
+    WIP: not resetting these.
+
+    WIP: renaming to BuildPDFChore or similar?
+    """
+
+    # TODO: since OneToOneField was removed does this still make a field called
+    # "pdfhueytask" in the Paper table?  Need to update the docs there!
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)

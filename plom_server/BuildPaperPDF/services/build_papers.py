@@ -88,12 +88,9 @@ def huey_build_single_paper(
                     f"DEBUG: deliberately failing creating papernum={papernum}"
                 )
 
-        paper = Paper.objects.get(paper_number=papernum)
-        tr = paper.pdfhueytask
-        # TODO: which way is "better"?
-        tr2 = PDFHueyTask.objects.get(pk=tracker_pk)
-        assert tr == tr2
         with transaction.atomic():
+            tr = PDFHueyTask.objects.get(pk=tracker_pk)
+            # TODO if out-of-date than just end early
             with save_path.open("rb") as f:
                 tr.pdf_file = File(f, name=save_path.name)
                 tr.transition_to_complete()
@@ -205,16 +202,18 @@ class BuildPapersService:
     def send_single_task(
         self, paper_num: int, spec: dict, qv_row: Dict[int, int]
     ) -> None:
-        """Send a single todo task to Huey.
-
-        TODO: nothing here asserts it is really status TO_DO, nor that
-        the tracker already exists.  Perhaps this is only used for retries
-        or similar?  Issue #3154.
-        """
+        """Create a new chore and send a single task to Huey."""
+        # TODO: remove this or_404 stuff
         paper = get_object_or_404(Paper, paper_number=paper_num)
-        task = paper.pdfhueytask
-        # code also called for "retry": first reset to "To Do"
-        task.reset_to_do()
+        # TODO: need name and id
+        task = PDFHueyTask.objects.create(
+            paper=paper,
+            huey_id=None,
+            status=PDFHueyTask.TO_DO,
+            student_name=None,
+            student_id=None,
+        )
+        task.save()
         self._send_single_task(task, paper_num, spec, qv_row)
 
     def _send_single_task(
@@ -335,7 +334,10 @@ class BuildPapersService:
                 "status": task.get_status_display(),
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
+                "tmp_pk": task.pk,  # temp
+                "tmp_huey_id": task.huey_id,  # temp
             }
+            # TODO: a loop over papers instead?
             for task in PDFHueyTask.objects.all()
             .select_related("paper")
             .order_by("paper__paper_number")
