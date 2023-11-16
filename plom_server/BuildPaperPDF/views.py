@@ -86,11 +86,7 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def post(self, request):
         bps = BuildPapersService()
-        sstu = StagingStudentService()
-        classdict = sstu.get_classdict()
 
-        # bps.clear_tasks()
-        bps.stage_all_pdf_jobs(classdict=classdict)
         task_context = bps.get_task_context()
 
         table_fragment = self.table_fragment(request)

@@ -52,13 +52,14 @@ class HueyTaskTracker(models.Model):
 
     .. caution:: These statuses are not just symbolic constants; they
         also appear as strings through the code as
-        "To do", "Starting", "Queued", "Running", "Error", "Complete".
+        "To Do", "Starting", "Queued", "Running", "Error", "Complete",
+        "Out Of Date".
         Note the difference in cases.  They are displayed to users.
         They are also used in logic tests.
     """
 
     StatusChoices = models.IntegerChoices(
-        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR"
+        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR OUT_OF_DATE"
     )
     TO_DO = StatusChoices.TO_DO
     STARTING = StatusChoices.STARTING
@@ -66,6 +67,7 @@ class HueyTaskTracker(models.Model):
     RUNNING = StatusChoices.RUNNING
     COMPLETE = StatusChoices.COMPLETE
     ERROR = StatusChoices.ERROR
+    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
 
     huey_id = models.UUIDField(null=True)
     status = models.IntegerField(
@@ -131,6 +133,13 @@ class HueyTaskTracker(models.Model):
         # TODO?  is this the place to set to None?
         self.huey_id = None
         self.status = self.COMPLETE
+        self.save()
+
+    def transition_to_outofdate(self):
+        """Move to the outofdate state, a "light deletion" if you will."""
+        # Note they must be able to keep their huey_id as running jobs
+        # could finish later.
+        self.status = self.OUT_OF_DATE
         self.save()
 
 

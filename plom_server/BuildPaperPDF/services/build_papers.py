@@ -23,6 +23,8 @@ from django.core.files import File
 from django_huey import db_task
 from django_huey import get_queue
 
+# TODO: why "staging"? We should talk to the "real" student service
+from Preparation.services import StagingStudentService
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
 from Base.models import HueyTaskTracker
@@ -90,10 +92,16 @@ def huey_build_single_paper(
 
         with transaction.atomic():
             tr = PDFHueyTask.objects.get(pk=tracker_pk)
-            # TODO if out-of-date than just end early
+            if tr.status == PDFHueyTask.OUT_OF_DATE:
+                # our result is no longer wanted
+                return False
             with save_path.open("rb") as f:
                 tr.pdf_file = File(f, name=save_path.name)
                 tr.transition_to_complete()
+            # TODO reset all other chores as OUT_OF_DATE
+            # TODO: or would we like last-finished rather than first-finished?
+            # TODO: or maybe it should be an error to finish when there is
+            # another COMPLETE chore: that is, caller is responsibe...
 
     return True
 
@@ -147,21 +155,6 @@ class BuildPapersService:
         """Return True if there are any PDFHueyTasks with an 'error' status."""
         return PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR).count() > 0
 
-    def _create_task_to_do(
-        self, papernum: int, *, student_name=None, student_id=None
-    ) -> None:
-        """Create and save a PDF-building task to the database, but don't start it."""
-        paper = get_object_or_404(Paper, paper_number=papernum)
-
-        task = PDFHueyTask.objects.create(
-            paper=paper,
-            huey_id=None,
-            status=PDFHueyTask.TO_DO,
-            student_name=student_name,
-            student_id=student_id,
-        )
-        task.save()
-
     def get_completed_pdf_paths(self) -> list:
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
@@ -174,6 +167,8 @@ class BuildPapersService:
 
         If there are prenamed test-papers, save that info too.
         """
+        # TODO: still has callers, be a no-op
+        return
         # note - classdict is a list of dicts - change this to more useful format
         prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
 
@@ -193,39 +188,67 @@ class BuildPapersService:
             )
 
     def send_all_tasks(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
-        """Send all marked as todo PDF tasks to huey."""
-        todo_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.TO_DO)
-        for task in todo_tasks:
-            paper_number = task.paper.paper_number
-            self._send_single_task(task, paper_number, spec, qvmap[paper_number])
+        """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey."""
+        # TODO:
+        for paper in Paper.objects.all():
+            print(paper)
+            # TODO: andrew will make this all pre-fetchy later
+            # any_existing_tasks = PDFHueyTask.objects.filter(paper=paper).filter(
+            #     Q(status=PDFHueyTask.COMPLETE) | Q(status=PDFHueyTask.QUEUED | Q(status=PDFHueyTask.RUNNING)).exists()
+            # if not any_existing_tasks:
+            paper_num = paper.paper_number
+            self.send_single_task(paper_num, spec, qvmap[paper_num])
 
     def send_single_task(
         self, paper_num: int, spec: dict, qv_row: Dict[int, int]
     ) -> None:
-        """Create a new chore and send a single task to Huey."""
-        # TODO: remove this or_404 stuff
-        paper = get_object_or_404(Paper, paper_number=paper_num)
-        # TODO: need name and id
+        """Create a new chore and send a single task to Huey.
+
+        Raises:
+            something about non-existing paper number
+        """
+        # TODO: error handling!
+        paper = Paper.objects.get(paper_number=paper_num)
+
+        # TODO: write a helper function to lookup prenames in the student service
+        student_name = None
+        student_id = None
+        classlist = StagingStudentService().get_classdict()
+        this = [x for x in classlist if x["paper_number"] == paper_num]
+        if this:
+            (this,) = this
+            student_name = this["studentName"]
+            student_id = this["id"]
+
+        # need name and id
+        # TODO: but do we really?  Why not give it to the huey thing instead?  Why does a Chore need to know this?
+        # TODO: make the task in the _method?
         task = PDFHueyTask.objects.create(
             paper=paper,
             huey_id=None,
-            status=PDFHueyTask.TO_DO,
-            student_name=None,
-            student_id=None,
+            status=PDFHueyTask.STARTING,
+            student_name=student_name,
+            student_id=student_id,
         )
         task.save()
-        self._send_single_task(task, paper_num, spec, qv_row)
+        self._send_single_task(task, paper_num, spec, student_name, student_id, qv_row)
 
     def _send_single_task(
-        self, task, paper_num: int, spec: dict, qv_row: Dict[int, int]
+        self,
+        task,
+        paper_num: int,
+        spec: dict,
+        student_name: Optional[str],
+        student_id: Optional[str],
+        qv_row: Dict[int, int],
     ) -> None:
         with transaction.atomic(durable=True):
-            task.transition_to_starting()
+            # task.transition_to_starting()
             tracker_pk = task.pk
 
         student_info = None
-        if task.student_name and task.student_id:
-            student_info = {"id": task.student_id, "name": task.student_name}
+        if student_name and student_id:
+            student_info = {"id": student_id, "name": student_name}
         res = huey_build_single_paper(
             paper_num,
             spec,
@@ -260,7 +283,7 @@ class BuildPapersService:
             for task in queue_tasks:
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
-                task.transition_back_to_todo()
+                task.transition_to_outofdate()
 
     def try_to_cancel_single_queued_task(self, paper_number: int):
         """Try to cancel a single queued task from Huey.
@@ -280,7 +303,7 @@ class BuildPapersService:
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
-        task.transition_back_to_todo()
+        task.transition_to_outofdate()
 
     def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
         """Retry all tasks that have error status."""
@@ -299,9 +322,9 @@ class BuildPapersService:
         """
         self.try_to_cancel_all_queued_tasks()
         for task in PDFHueyTask.objects.all():
-            if task.file_path():
-                task.file_path().unlink(missing_ok=True)
-            task.transition_back_to_todo()
+            # if task.file_path():
+            #    task.file_path().unlink(missing_ok=True)
+            task.transition_to_outofdate()
 
     @transaction.atomic
     def get_all_task_status(self) -> Dict:
