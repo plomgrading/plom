@@ -47,24 +47,25 @@
                     </span>
                 </p>
             </div>
-        {% else %}
-            <div class="alert alert-danger">Upload failed due to errors:</div>
-            <span>
-                <a class="btn btn-danger" href="{% url 'prep_classlist' %}">return to upload another file</a>
-            </span>
-            <table class="table table-striped">
-                <thead>
-                    <th>Warning or Error</th>
-                    <th>Line</th>
-                    <th>Message</th>
-                </thead>
-                {% for werr in warn_err %}
-                    <tr>
-                        <td>{{ werr.warn_or_err }}</td>
-                        <td>{{ werr.werr_line }}</td>
-                        <td>{{ werr.werr_text }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
         {% endif %}
-    {% endblock main_content %}
+    {% else %}
+        <div class="alert alert-danger">Upload failed due to errors:</div>
+        <span>
+            <a class="btn btn-danger" href="{% url 'prep_classlist' %}">return to upload another file</a>
+        </span>
+        <table class="table table-striped">
+            <thead>
+                <th>Warning or Error</th>
+                <th>Line</th>
+                <th>Message</th>
+            </thead>
+            {% for werr in warn_err %}
+                <tr>
+                    <td>{{ werr.warn_or_err }}</td>
+                    <td>{{ werr.werr_line }}</td>
+                    <td>{{ werr.werr_text }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock main_content %}
