@@ -5,11 +5,12 @@
 
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from ...services import (
     StagingStudentService,
     PrenameSettingService,
+    TestPreparedSetting,
 )
 
 
@@ -25,6 +26,11 @@ class Command(BaseCommand):
             self.stdout.write("There is no classlist on the server.")
 
     def upload_classlist(self, source_csv, ignore_warnings=False):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot change the classlist."
+            )
+
         sss = StagingStudentService()
 
         if sss.are_there_students():
@@ -96,6 +102,11 @@ class Command(BaseCommand):
             fh.write(csv_text)
 
     def remove_classlist(self):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot remove the classlist."
+            )
+
         sss = StagingStudentService()
         if sss.are_there_students():
             self.stdout.write("Removing classlist from the server")
