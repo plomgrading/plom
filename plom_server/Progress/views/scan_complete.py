@@ -42,6 +42,19 @@ class PushedImageView(LeadMarkerOrManagerView):
 
     def get(self, request, img_pk):
         img_obj = ManageScanService().get_pushed_image(img_pk)
+        return FileResponse(img_obj.image_file)
+
+    def delete(self, request, img_pk):
+        mds = ManageDiscardService()
+        mds.discard_pushed_image_from_pk(request.user, img_pk)
+        return HttpResponseClientRefresh()
+
+
+class PushedImageRotatedView(LeadMarkerOrManagerView):
+    """Return a pushed image given by its pk, pass back hard rotated image."""
+
+    def get(self, request, img_pk):
+        img_obj = ManageScanService().get_pushed_image(img_pk)
         if img_obj.rotation == 0:
             return FileResponse(img_obj.image_file)
         else:
@@ -63,11 +76,6 @@ class PushedImageView(LeadMarkerOrManagerView):
                     )
                 tmp_img.rotate(theta, expand=True).save(fh, "png")
                 return HttpResponse(fh.getvalue(), content_type="image/png")
-
-    def delete(self, request, img_pk):
-        mds = ManageDiscardService()
-        mds.discard_pushed_image_from_pk(request.user, img_pk)
-        return HttpResponseClientRefresh()
 
 
 class PushedImageWrapView(LeadMarkerOrManagerView):
