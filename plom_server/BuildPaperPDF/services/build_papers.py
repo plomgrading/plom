@@ -171,23 +171,6 @@ class BuildPapersService:
         """
         # TODO: still has callers, be a no-op
         return
-        # note - classdict is a list of dicts - change this to more useful format
-        prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
-
-        self.papers_to_print.mkdir(exist_ok=True, parents=True)
-        for paper_obj in Paper.objects.all():
-            paper_number = paper_obj.paper_number
-            student_name = None
-            student_id = None
-            if paper_number in prenamed:
-                student_id = prenamed[paper_number]["id"]
-                student_name = prenamed[paper_number]["studentName"]
-
-            self._create_task_to_do(
-                paper_number,
-                student_id=student_id,
-                student_name=student_name,
-            )
 
     def send_all_tasks(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
         """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey.
