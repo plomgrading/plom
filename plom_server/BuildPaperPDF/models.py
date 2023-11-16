@@ -25,8 +25,6 @@ class PDFHueyTask(HueyTaskTracker):
     WIP: renaming to BuildPDFChore or similar?
     """
 
-    # TODO: since OneToOneField was removed does this still make a field called
-    # "pdfhueytask" in the Paper table?  Need to update the docs there!
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
     student_name = models.TextField(default=None, null=True)
