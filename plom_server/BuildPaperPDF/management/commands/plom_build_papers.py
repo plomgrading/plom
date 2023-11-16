@@ -68,21 +68,20 @@ class Command(BaseCommand):
         #    )
         #    return
 
-        spec = SpecificationService.get_the_spec()
-        pqv_service = PQVMappingService()
-        qvmap = pqv_service.get_pqv_map_dict()
-
-        bp_service.send_all_tasks(spec, qvmap)
-        self.stdout.write(f"Started building {len(qvmap)} papers.")
+        try:
+            N = bp_service.send_all_tasks()
+        except ValueError as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Started building {N} papers.")
 
     def start_specific_task(self, paper_number):
         bp_service = BuildPapersService()
 
         try:
             bp_service.send_single_task(paper_number)
-            self.stdout.write(f"Started building paper number {paper_number}.")
         except (ValueError, ObjectDoesNotExist) as e:
             raise CommandError(e) from e
+        self.stdout.write(f"Started building paper number {paper_number}.")
 
     def show_task_status(self):
         bp_service = BuildPapersService()

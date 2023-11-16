@@ -174,11 +174,16 @@ class BuildPapersService:
         # TODO: still has callers, be a no-op
         return
 
-    def send_all_tasks(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
+    def send_all_tasks(self) -> int:
         """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey.
 
         TODO: but for now, just build them all, independent of what has been done before.
+        TODO: that means it can error on our existing non-obsolete: to be considered...
+
+        Returns:
+            How many tasks did we launch?
         """
+        N = 0
         for paper in Paper.objects.all():
             print(paper)
             # TODO: andrew will make this all pre-fetchy later
@@ -186,10 +191,15 @@ class BuildPapersService:
             #     Q(status=PDFHueyTask.COMPLETE) | Q(status=PDFHueyTask.QUEUED | Q(status=PDFHueyTask.RUNNING)).exists()
             # if not any_existing_tasks:
             paper_num = paper.paper_number
-            self.send_single_task(paper_num, spec, qvmap[paper_num])
+            self.send_single_task(paper_num)
+            N += 1
+        return N
 
     def send_single_task(self, paper_num) -> None:
         """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
+
+        Args:
+            paper_num: which paper number
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
@@ -304,7 +314,7 @@ class BuildPapersService:
         retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
         for task in retry_tasks:
             paper_number = task.paper.paper_number
-            self.send_single_task(paper_number, spec, qvmap[paper_number])
+            self.send_single_task(paper_number)
 
     def reset_all_tasks(self) -> None:
         """Reset all tasks, discarding all in-progress and complete PDF files."""

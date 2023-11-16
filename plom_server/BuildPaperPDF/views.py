@@ -181,12 +181,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 class StartAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-
-        bps.send_all_tasks(spec, qvmap)
-
+        bps.send_all_tasks()
         return self.render_pdf_table(request)
 
 
