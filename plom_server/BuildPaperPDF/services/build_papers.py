@@ -212,15 +212,10 @@ class BuildPapersService:
         # TODO: error handling!
         paper = Paper.objects.get(paper_number=paper_num)
 
-        # TODO: write a helper function to lookup prenames in the student service
-        student_name = None
-        student_id = None
-        classlist = StagingStudentService().get_classdict()
-        this = [x for x in classlist if x["paper_number"] == paper_num]
-        if this:
-            (this,) = this
-            student_name = this["studentName"]
-            student_id = this["id"]
+        prenamed = StagingStudentService().get_prenamed_papers()
+        student_name, student_name = None, None
+        if paper_num in prenamed:
+            student_id, student_name = prenamed[paper_num]
 
         # need name and id
         # TODO: but do we really?  Why not give it to the huey thing instead?  Why does a Chore need to know this?
