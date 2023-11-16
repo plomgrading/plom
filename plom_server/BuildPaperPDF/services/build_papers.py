@@ -214,6 +214,11 @@ class BuildPapersService:
 
         # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
+            if PDFHueyTask.objects.filter(paper=paper, obsolete=False).exists():
+                raise ValueError(
+                    f"There are non-obsolete PDFHueyTasks for papernum {paper_num}:"
+                    " make them obsolete before creating another"
+                )
             task = PDFHueyTask.objects.create(
                 paper=paper,
                 huey_id=None,
