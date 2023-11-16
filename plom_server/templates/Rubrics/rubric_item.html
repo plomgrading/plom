@@ -22,29 +22,31 @@
         {{ form.as_p }}
         <input type="submit" value="Submit">
     </form>
-    <h2 class="mt-5">Annotations</h2>
-    <table class="table table-striped table-bordered sortable">
+    <h2 class="mt-5">Marking tasks</h2>
+    <table class="table table-striped table-bordered sortable table-sm table-responsive w-50">
         <thead>
             <tr>
                 <th>Paper</th>
                 <th>Question</th>
+                <th>Version</th>
                 <th>Edition</th>
                 <th>Username</th>
-                <th>Version</th>
                 <th>Score</th>
+		<th>More information</th>
             </tr>
         </thead>
         <tbody>
-            {% for annotation in annotations %}
+            {% for task in marking_tasks %}
                 <tr>
                     <td>
-                        <a href="{% url 'annotation_item' annotation.pk %}">{{ annotation.task.paper }}</a>
+                        {{ task.paper.paper_number }}
                     </td>
-                    <td>{{ annotation.edition }}</td>
-                    <td>{{ annotation.task.question_number }}</td>
-                    <td>{{ annotation.user }}</td>
-                    <td>{{ annotation.task.version }}</td>
-                    <td>{{ annotation.score }}</td>
+                    <td>{{ task.latest_annotation.edition }}</td>
+                    <td>{{ task.question_number }}</td>
+                    <td>{{ task.question_version }}</td>
+                    <td>{{ task.assigned_user }}</td>
+                    <td>{{ task.latest_annotation.score }}</td>
+		    <td class="text-center"><a class="btn btn-outline-primary" href="{% url 'progress_marking_task_details' task.pk %}">view task</a></td>
                 </tr>
             {% endfor %}
         </tbody>

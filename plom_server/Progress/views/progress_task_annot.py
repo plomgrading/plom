@@ -7,6 +7,7 @@ from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
+from Rubrics.services import RubricService
 
 from Mark.models import MarkingTask
 
@@ -101,7 +102,6 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
         # update this to include an angle which is (-1)*orientation - for css transforms
         for X in img_list:
             X.update({"angle": -X["orientation"]})
-            X.update({"aspect": X["img_height"] / X["img_width"]})
 
         context = {"paper": paper, "question": question, "img_list": img_list}
         return render(
@@ -161,6 +161,11 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
                     "score": task_obj.latest_annotation.score,
                     "username": task_obj.assigned_user.username,
                     "edition": task_obj.latest_annotation.edition,
+                    "last_update": task_obj.latest_annotation.time_of_last_update,
+                    "marking_time": task_obj.latest_annotation.marking_time,
+                    "rubrics": RubricService().get_rubrics_from_annotation(
+                        task_obj.latest_annotation
+                    ),
                 }
             )
         elif task_obj.status == MarkingTask.OUT:

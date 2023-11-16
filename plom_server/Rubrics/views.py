@@ -57,13 +57,14 @@ class RubricItemView(ManagerRequiredView):
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
         rubric = rs.get_all_rubrics().get(key=rubric_key)
-        annotations = rs.get_annotation_from_rubric(rubric)
+        marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(
             {
                 "rubric": rubric,
                 "form": form(instance=rubric),
-                "annotations": annotations,
+                "marking_tasks": marking_tasks,
                 "rubric_as_html": rubric_as_html,
             }
         )
