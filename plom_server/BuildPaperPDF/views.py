@@ -14,7 +14,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import PQVMappingService, StagingStudentService
+from Preparation.services import PQVMappingService
+
 
 from .services import BuildPapersService
 
