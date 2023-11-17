@@ -150,12 +150,36 @@ class SpecTemplateBuilderService:
             "totalMarks": score,
             "idPage": 1,
             "doNotMarkPages": [],
+            "question": [],
         }
+
         if longName:
             tmp["longName"] = longName
         if shortName:
             tmp["shortName"] = shortName
 
-        import toml as tomllib
+        score_per_question = score // questions
+        pages_per_question = (pages - 1) // questions
+        page_numbers = [pn for pn in range(2, pages + 1)]
 
-        return tomllib.dumps(tmp)
+        for qi in range(questions - 1):
+            tmp["question"].append(
+                {
+                    "pages": page_numbers[:pages_per_question],
+                    "mark": score_per_question,
+                    "label": f"Q({qi+1})",
+                }
+            )
+            page_numbers = page_numbers[pages_per_question:]
+
+        tmp["question"].append(
+            {
+                "pages": page_numbers,
+                "mark": score - score_per_question * (questions - 1),
+                "label": f"Q({questions})",
+            }
+        )
+
+        import tomlkit
+
+        return tomlkit.dumps(tmp)

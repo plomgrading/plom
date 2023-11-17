@@ -14,7 +14,8 @@
         <div>
             <a class="btn btn-primary mb-3" href="{% url 'creator_launch' %}">Return to specification page</a>
         </div>
-        <div class="card" x-data="{pages: 2, questions: 1, score: 5}">
+        <div class="card"
+             x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }} }">
             <div class="card-body">
                 <h4 class="card-title">Enter information about your test</h4>
                 <form enctype="multipart/form-data"
@@ -22,61 +23,81 @@
                       method="post"
                       action="{% url 'spec_template_build' %}">
                     {% csrf_token %}
-                    <div class="form-floating mb-3 w-50">
-                        <input type="text"
-                               class="form-control"
-                               id="longName"
-                               placeholder="A long name for your test"
-                               name="longName">
-                        <label for="longName">Test long name</label>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="text"
+                                       class="form-control"
+                                       id="longName"
+                                       value="{{ longName }}"
+                                       name="longName">
+                                <label for="longName">Test long name</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="text"
+                                       class="form-control"
+                                       id="shortName"
+                                       value="{{ shortName }}"
+                                       name="shortName">
+                                <label for="shortName">Test short name</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-floating mb-3 w-50">
-                        <input type="text"
-                               class="form-control"
-                               id="shortName"
-                               placeholder="TestShortName"
-                               name="shortName">
-                        <label for="shortName">Test short name</label>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="pages"
+                                       required
+                                       min="2"
+                                       x-model.number="pages"
+                                       name="pages">
+                                <label for="pages">Number of pages</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-floating mb-3 w-50">
-                        <input type="number"
-                               class="form-control"
-                               id="pages"
-                               required
-                               min="2"
-                               x-model.number="pages"
-                               name="pages">
-                        <label for="pages">Number of pages</label>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="questions"
+                                       required
+                                       min="1"
+                                       x-model.number="questions"
+                                       name="questions">
+                                <label for="questions">Number of questions</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="versions"
+                                       required
+                                       min="1"
+                                       value="1"
+                                       name="versions">
+                                <label for="versions">Number of versions</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-floating mb-3 w-50">
-                        <input type="number"
-                               class="form-control"
-                               id="questions"
-                               required
-                               min="1"
-                               x-model.number="questions"
-                               name="questions">
-                        <label for="questions">Number of questions</label>
-                    </div>
-                    <div class="form-floating mb-3 w-50">
-                        <input type="number"
-                               class="form-control"
-                               id="versions"
-                               required
-                               min="1"
-                               value="1"
-                               name="versions">
-                        <label for="versions">Number of versions</label>
-                    </div>
-                    <div class="form-floating mb-3 w-50">
-                        <input type="number"
-                               class="form-control"
-                               id="score"
-                               required
-                               min="1"
-                               x-model.number="score"
-                               name="score">
-                        <label for="score">Total score</label>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="score"
+                                       required
+                                       min="1"
+                                       x-model.number="score"
+                                       name="score">
+                                <label for="score">Total score</label>
+                            </div>
+                        </div>
                     </div>
                     <button type="submit"
                             class="btn btn-primary"
@@ -102,10 +123,20 @@
             </template>
         </div>
         {% if generated_toml %}
-            <div class="card">
+            <div class="card" x-data="{the_toml: `{{ generated_toml }}` }">
                 <div class="card-body">
-                    <h4 class="card-title">Generated toml template</h4>
-                    {{ generated_toml }}
+                    <h4 class="card-title">
+                        Generated toml template
+                        <button class="btn btn-primary m-2"
+                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                            copy to clipboard
+                            <icon class="bi bi-clipboard2-plus"></icon>
+                        </button>
+                        <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
+                    </h4>
+                    <div class="card-text border p-2 fs-5">
+                        <pre x-model="the_toml">{{ generated_toml }}</pre>
+                    </div>
                 </div>
             </div>
         {% endif %}
