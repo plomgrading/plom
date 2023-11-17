@@ -27,7 +27,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request):
         pqvs = PQVMappingService()
-        pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
+        pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 

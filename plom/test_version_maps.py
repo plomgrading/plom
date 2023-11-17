@@ -132,3 +132,22 @@ def test_ver_map_from_dict():
     vm = make_random_version_map(spec_dict)
     check_version_map(vm, spec_dict)
     check_version_map(vm, spec)
+
+
+def test_ver_map_reproducible():
+    spec = SpecVerifier.demo()
+    spec.verify()
+    spec_dict = spec.spec
+    spec_dict["numberOfVersions"] = 5
+    spec_dict["numberToProduce"] = 6
+    vm = make_random_version_map(spec_dict, seed="plom")
+    print(vm)
+    saved_vm = {
+        1: {1: 1, 2: 1, 3: 5},
+        2: {1: 1, 2: 1, 3: 2},
+        3: {1: 5, 2: 1, 3: 1},
+        4: {1: 4, 2: 1, 3: 1},
+        5: {1: 3, 2: 1, 3: 4},
+        6: {1: 2, 2: 1, 3: 3},
+    }
+    assert vm == saved_vm

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
@@ -11,6 +11,7 @@ from copy import deepcopy
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
 from django.db import transaction
+from django.db.models import Max
 
 from plom import SpecVerifier
 
@@ -44,8 +45,11 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
-    # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
-    spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    # Also, this function does not care if there are no questions in the spec dictionary. It assumes
+    # the serializer/SpecVerifier will catch it.
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
     serializer = SpecSerializer(data=spec_dict)
     serializer.is_valid()
     valid_data = serializer.validated_data
@@ -110,6 +114,13 @@ def get_the_spec_as_toml():
 
     sv = SpecVerifier(spec)
     return sv.as_toml_string()
+
+
+@transaction.atomic
+def get_private_seed() -> str:
+    """Return the private seed."""
+    spec = Specification.objects.get()
+    return spec.privateSeed
 
 
 @transaction.atomic
@@ -246,6 +257,13 @@ def get_question_mark(question_one_index: Union[str, int]) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+@transaction.atomic
+def get_max_all_question_mark() -> int:
+    """Get the maximum mark of all questions."""
+    # the aggregate function returns dict {"mark__max": n}
+    return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
 @transaction.atomic
