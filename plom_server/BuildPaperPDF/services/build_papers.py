@@ -309,9 +309,11 @@ class BuildPapersService:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
 
-    def retry_all_task(self, spec: dict, qvmap: Dict[int, Dict[int, int]]) -> None:
-        """Retry all tasks that have error status."""
-        retry_tasks = PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR)
+    def retry_all_task(self) -> None:
+        """Retry all non-obsolete tasks that have error status."""
+        retry_tasks = PDFHueyTask.objects.filter(
+            status=PDFHueyTask.ERROR, obsolete=False
+        )
         for task in retry_tasks:
             paper_number = task.paper.paper_number
             self.send_single_task(paper_number)

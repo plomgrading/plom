@@ -196,7 +196,6 @@ class CancelAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
         bps.try_to_cancel_all_queued_tasks()
-
         return self.render_pdf_table(request)
 
 
@@ -204,19 +203,13 @@ class CancelOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
         bps.try_to_cancel_single_queued_task(paper_number)
-
         return self.render_pdf_table(request)
 
 
 class RetryAllPDF(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-
-        bps.retry_all_task(spec, qvmap)
-
+        bps.retry_all_task()
         return self.render_pdf_table(request)
 
 
