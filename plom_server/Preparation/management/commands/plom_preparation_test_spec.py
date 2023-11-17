@@ -4,17 +4,12 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-from typing import Optional
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
-from django.db import transaction
 
 from Papers.services import SpecificationService
 from SpecCreator.services import SpecificationUploadService
-from SpecCreator.services.spec_upload import SpecExistsException
-
-from ...services import PQVMappingService
 
 
 class Command(BaseCommand):
@@ -79,25 +74,21 @@ class Command(BaseCommand):
         )
         sub.add_parser("status", help="Show details of current test spec")
         sp_U = sub.add_parser("upload", help="Upload a test spec")
-        sp_D = sub.add_parser(
-            "download", help="Download the current test spec (if is valid)"
-        )
+        sp_D = sub.add_parser("download", help="Download the current test spec")
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download the test spec toml"
         )
         sub.add_parser("remove", help="Remove the current test spec from the server")
 
         sp_U.add_argument(
-            "test_spec_toml", type=str, help="The test spec toml to upload"
+            "test_spec.toml", type=str, help="Default file to upload, or specify one"
         )
 
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
-            self.upload_spec(
-                options["test_spec_toml"],
-            )
+            self.upload_spec(options["test_spec.toml"])
         elif options["command"] == "download":
             self.download_spec(options["dest"])
         elif options["command"] == "remove":
