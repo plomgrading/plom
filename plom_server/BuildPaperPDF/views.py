@@ -17,7 +17,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import PQVMappingService, StagingStudentService
-from SpecCreator.services import StagingSpecificationService
 
 from .models import PDFTask
 from .services import BuildPapersService, RenamePDFFile
@@ -179,7 +178,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
     def get(self, request):
-        short_name = StagingSpecificationService().get_short_name_slug()
+        short_name = SpecificationService.get_short_name_slug()
         zgen = BuildPapersService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = f"attachment; filename={short_name}.zip"
