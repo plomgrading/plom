@@ -53,8 +53,11 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def get(self, request):
         bps = BuildPapersService()
-        pqvs = PQVMappingService()
         pinfo = PaperInfoService()
+
+        # TODO: find a simpler way to get this!
+        # TODO: also a better name like "max_num_pdfs" or something unambiguous
+        pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
 
