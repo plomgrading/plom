@@ -3,6 +3,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from .base import *
-from .util_views import *
+from .summary import SpecSummaryView, HTMXSummaryQuestion
 from .editor import SpecEditorView
 from .toml_textarea import SpecEditorTextArea

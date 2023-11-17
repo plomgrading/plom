@@ -12,5 +12,10 @@ from . import views
 urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("text-editor", views.SpecEditorTextArea.as_view(), name="spec_text_edit"),
-    path("summary", views.TestSpecSummaryView.as_view(), name="spec_summary"),
+    path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),
+    path(
+        "summary/<int:question_number>",
+        views.HTMXSummaryQuestion.as_view(),
+        name="spec_summary_q",
+    ),
 ]
