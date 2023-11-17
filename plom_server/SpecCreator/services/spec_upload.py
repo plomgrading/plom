@@ -114,23 +114,29 @@ class SpecificationUploadService:
         test_prepared = TestPreparedSetting.is_test_prepared()
         papers_created = PaperInfoService().is_paper_database_populated()
         qvmap_created = PQVMappingService().is_there_a_pqv_map()
-        spec_exists = SpecificationService.is_there_a_spec()
 
-        if raise_exception:
-            if test_prepared:
+        if test_prepared:
+            if raise_exception:
                 raise ValueError(
                     "Cannot modify spec while preparation is set as complete."
                 )
-            if papers_created:
+            return False
+
+        if papers_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec with test papers saved to the database."
                 )
-            if qvmap_created:
+            return False
+
+        if qvmap_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec while a question-version map exists."
                 )
+            return False
 
-        return not (test_prepared and papers_created and qvmap_created and spec_exists)
+        return True
 
     @transaction.atomic
     def delete_spec(self, *args):
