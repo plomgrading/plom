@@ -7,13 +7,13 @@ from typing import Dict, Any
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
+from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
 from ..services import SpecificationUploadService, SpecTemplateBuilderService
-from . import SpecBaseView
 
 
-class SpecEditorView(SpecBaseView):
+class SpecEditorView(ManagerRequiredView):
     """Create and modify a test specification in the browser.
 
     Serves a TOML editor on GET and modifies the test spec
@@ -42,7 +42,7 @@ class SpecEditorView(SpecBaseView):
         return render(request, "SpecCreator/validation.html", context)
 
 
-class SpecTemplateView(SpecBaseView):
+class SpecTemplateView(ManagerRequiredView):
     """Create a template test specification toml."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
