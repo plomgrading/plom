@@ -54,29 +54,9 @@ class Command(BaseCommand):
     def upload_spec(self, spec_file):
         try:
             service = SpecificationUploadService(toml_file_path=spec_file)
+            service.save_spec()
         except ValueError as e:
-            raise CommandError(f"Cannot save test specification: {e}") from e
-
-        with transaction.atomic():
-            try:
-                service.save_spec()
-            except SpecExistsException as e:
-                input_loop_done = False
-                while not input_loop_done:
-                    print(e)
-                    confirm = input(
-                        "There is already a spec present. Do you wish to overwrite? (y/n)"
-                    ).casefold()
-                    if confirm == "y":
-                        service.delete_spec()
-                        service.save_spec()
-                    elif confirm == "n":
-                        return
-                    input_loop_done = True
-            except RuntimeError as e:
-                raise CommandError("Cannot save test specification.") from e
-
-        self.stdout.write("Test specification validated.")
+            raise CommandError(e) from e
 
         self.stdout.write("Test specification uploaded to server.")
 
