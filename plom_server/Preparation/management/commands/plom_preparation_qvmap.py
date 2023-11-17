@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from plom.misc_utils import format_int_list_with_runs
 from Papers.services import SpecificationService
 
-from ...services import PQVMappingService
+from ...services import PQVMappingService, TestPreparedSetting
 
 from plom.version_maps import version_map_from_file
 
@@ -34,6 +34,9 @@ class Command(BaseCommand):
             )
 
     def generate_pqv_map(self, number_to_produce=None):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         if not SpecificationService.is_there_a_spec():
             raise CommandError("There no valid test specification.")
         pqvms = PQVMappingService()
@@ -79,6 +82,9 @@ class Command(BaseCommand):
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
             raise CommandError("Already has a question-version map - remove it first")
@@ -96,6 +102,9 @@ class Command(BaseCommand):
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
             self.stderr.write(

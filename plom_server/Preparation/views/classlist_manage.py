@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -8,11 +8,7 @@ from django.shortcuts import render, redirect
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from ..services import (
-    StagingClasslistCSVService,
-    StagingStudentService,
-    PrenameSettingService,
-)
+from ..services import StagingStudentService, PrenameSettingService, TestPreparedSetting
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -25,19 +21,12 @@ class ClasslistDownloadView(ManagerRequiredView):
         return HttpResponse(csv_txt, content_type="text/plain")
 
 
-class ClasslistDeleteView(ManagerRequiredView):
-    def delete(self, request):
-        # delete both the csvfile and the classlist of students
-        sss = StagingStudentService()
-        sss.remove_all_students()
-
-        scsv = StagingClasslistCSVService()
-        scsv.delete_classlist_csv()
-        return HttpResponseClientRedirect(".")
-
-
 class ClasslistView(ManagerRequiredView):
     def get(self, request):
+        # if test is already prepared then redirect to the readonly view
+        if TestPreparedSetting.is_test_prepared():
+            return redirect("prep_classlist_view")
+
         sss = StagingStudentService()
         pss = PrenameSettingService()
 
@@ -52,40 +41,38 @@ class ClasslistView(ManagerRequiredView):
         return render(request, "Preparation/classlist_manage.html", context)
 
     def post(self, request):
+        # if test is already prepared then redirect to the readonly view
+        if TestPreparedSetting.is_test_prepared():
+            return redirect("prep_classlist_view")
+
         context = self.build_context()
+        ignore_warnings = request.POST.get("ignoreWarnings", False)
+
         if not request.FILES["classlist_csv"]:
-            return HttpResponseClientRedirect(".")
+            return redirect("prep_classlist")
 
         # check if there are already students in the list.
         sss = StagingStudentService()
         if sss.are_there_students():
             return HttpResponseClientRedirect(".")
 
-        scsv = StagingClasslistCSVService()
-
-        success, warn_err = scsv.take_classlist_from_upload(
-            request.FILES["classlist_csv"]
+        success, warn_err = sss.validate_and_use_classlist_csv(
+            request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
         )
-        # if successful upload and no warnings or errors, then just use it.
-        if success and not warn_err:
-            sss.use_classlist_csv()
+        if (not success) or (warn_err and not ignore_warnings):
+            # errors or non-ignorable warnings
+            context.update({"success": success, "warn_err": warn_err})
+            return render(request, "Preparation/classlist_attempt.html", context)
+        else:
+            # success!
             return redirect("prep_classlist")
 
-        # major errors, so delete the file.
-        if not success:
-            scsv.delete_classlist_csv()
-
-        context.update({"success": success, "warn_err": warn_err})
-        return render(request, "Preparation/classlist_attempt.html", context)
-
     def delete(self, request):
-        scsv = StagingClasslistCSVService()
-        scsv.delete_classlist_csv()
-        return HttpResponseClientRedirect(".")
+        # if test is already prepared then redirect to the readonly view
+        if TestPreparedSetting.is_test_prepared():
+            return redirect("prep_classlist_view")
 
-    def put(self, request):
-        sss = StagingStudentService()
-        sss.use_classlist_csv()
+        StagingStudentService().remove_all_students()
         return HttpResponseClientRedirect(".")
 
 
