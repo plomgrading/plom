@@ -82,8 +82,12 @@ class SpecificationUploadService:
     ):
         """Save the specification to the database.
 
-        kwargs:
+        Keyword Args:
             custom_public_code: override the randomly generated public code with a custom value.
+
+        Raises:
+            ValueError: various reasons for not being able to upload
+                the spec.
         """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to upload.")
@@ -96,7 +100,7 @@ class SpecificationUploadService:
         )
 
     @transaction.atomic
-    def can_spec_be_modified(self, raise_exception: bool = False) -> bool:
+    def can_spec_be_modified(self, *, raise_exception: bool = False) -> bool:
         """Return true if the spec can be modified, false otherwise.
 
         To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
@@ -104,7 +108,7 @@ class SpecificationUploadService:
             - There must be no existing test-papers
             - There must be no existing QV-map
 
-        kwargs:
+        Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
         test_prepared = TestPreparedSetting.is_test_prepared()
