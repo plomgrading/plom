@@ -80,13 +80,13 @@ class SpecificationUploadService:
         *,
         custom_public_code: Optional[str] = None,
     ):
-        """Save the specification to the database.
+        """Save the specification to the database if possible.
 
         Keyword Args:
             custom_public_code: override the randomly generated public code with a custom value.
 
         Raises:
-            ValueError: various reasons for not being able to upload
+            ValueError: various reasons for not being able to change
                 the spec.
         """
         if not self.spec_dict:
@@ -139,8 +139,14 @@ class SpecificationUploadService:
         return True
 
     @transaction.atomic
-    def delete_spec(self, *args):
-        """Remove the specification from the database."""
+    def delete_spec(self):
+        """Remove the specification from the database.
+
+        Raises:
+            ValueError: various reasons for not being able to change
+                the spec.
+        """
         if not SpecificationService.is_there_a_spec():
             return
+        self.can_spec_be_modified(raise_exception=True)
         SpecificationService.remove_spec()

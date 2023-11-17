@@ -67,14 +67,10 @@ class Command(BaseCommand):
 
         service = SpecificationUploadService()
         try:
-            # use more informative exceptions from inside the function
-            if service.can_spec_be_modified(raise_exception=True):
-                self.stdout.write("Removing the test specification.")
-                service.delete_spec()
-            else:
-                raise CommandError("Cannot delete specification.")
+            service.delete_spec()
         except ValueError as e:
             raise CommandError(e)
+        self.stdout.write("Test specification was removed.")
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
