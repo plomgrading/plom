@@ -15,7 +15,7 @@
             <a class="btn btn-primary mb-3" href="{% url 'creator_launch' %}">Return to specification page</a>
         </div>
         <div class="card"
-             x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }} }">
+             x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }}, shortName: '{{ shortName }}' }">
             <div class="card-body">
                 <h4 class="card-title">Enter information about your test</h4>
                 <form enctype="multipart/form-data"
@@ -39,7 +39,7 @@
                                 <input type="text"
                                        class="form-control"
                                        id="shortName"
-                                       value="{{ shortName }}"
+                                       x-model="shortName"
                                        name="shortName">
                                 <label for="shortName">Test short name</label>
                             </div>
@@ -101,12 +101,12 @@
                     </div>
                     <button type="submit"
                             class="btn btn-primary"
-                            x-bind:disabled="(pages%2==1) || (pages <= questions) || (score < questions)">
+                            x-bind:disabled="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
                         Generate template toml
                     </button>
                 </form>
             </div>
-            <template x-if="(pages%2==1) || (pages <= questions) || (score < questions)">
+            <template x-if="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
                 <span class="alert alert-danger m-2 w-50">
                     <template x-if="pages%2==1">
                         <p>The number of pages should be even.</p>
@@ -116,8 +116,11 @@
                     </template>
                     <template x-if="score < questions">
                         <p>
-                            The total score, <q x-text="score"></q> , should not be less than the number of questions, <q x-text="questions"></q>,.
+                            The total score, <q x-text="score"></q> , should not be less than the number of questions, <q x-text="questions"></q>.
                         </p>
+                    </template>
+                    <template x-if="!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName)">
+                        <p>The short name can only contain letters, numbers, underscores, hyphens and periods. No spaces.</p>
                     </template>
                 </span>
             </template>
