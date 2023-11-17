@@ -28,7 +28,7 @@
                                        type="radio"
                                        id="fixed"
                                        value="fixed"
-                                       x-model="assignment_type">
+                                       x-model="assignment_type" />
                                 <label class="form-check-label" for="fixed">missing fixed page from an incomplete paper</label>
                             </p>
                             <p>
@@ -36,7 +36,7 @@
                                        type="radio"
                                        id="mobile"
                                        value="mobile"
-                                       x-model="assignment_type">
+                                       x-model="assignment_type" />
                                 <label class="form-check-label" for="mobile">mobile page in an existing paper</label>
                             </p>
                         </div>
@@ -64,7 +64,7 @@
                                                class="form-check-input"
                                                type="checkbox"
                                                id="questionall"
-                                               x-model="allq">
+                                               x-model="allq" />
                                         <label class="form-check-label" for="questionall">all questions</label>
                                     </div>
                                     <div x-show="!allq" x-transition>
@@ -74,7 +74,7 @@
                                                        class="form-check-input"
                                                        type="checkbox"
                                                        value="{{ forloop.counter }}"
-                                                       id="{{ ql }}">
+                                                       id="{{ ql }}" />
                                                 <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
                                             </div>
                                         {% endfor %}
