@@ -21,7 +21,7 @@
                 <form hx-post="{% url 'progress_reassign_discard' image_pk %}"
                       hx-target="#invalidmessage"
                       hx-swap="innerHTML">
-                    <div x-data={"assignment_type":"fixed"}>
+                    <div x-data="{assignment_type: fixed}">
                         <div class="form-radio">
                             <p>
                                 <input class="form-check-input"
