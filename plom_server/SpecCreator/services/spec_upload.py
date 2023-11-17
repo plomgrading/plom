@@ -143,7 +143,7 @@ class SpecTemplateBuilderService:
         # TODO - UNHACK THIS
         tmp = {
             "longName": "A long test name",
-            "shortName": "mytest",
+            "name": "mytest",
             "numberOfPages": pages,
             "numberOfQuestions": questions,
             "numberOfVersions": versions,
