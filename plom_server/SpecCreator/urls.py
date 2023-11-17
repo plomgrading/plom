@@ -13,4 +13,5 @@ urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("text-editor", views.SpecEditorTextArea.as_view(), name="spec_text_edit"),
     path("summary", views.TestSpecSummaryView.as_view(), name="spec_summary"),
+    path("template", views.SpecTemplateView.as_view(), name="spec_template_build"),
 ]

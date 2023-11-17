@@ -2,4 +2,4 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-from .spec_upload import SpecificationUploadService
+from .spec_upload import SpecificationUploadService, SpecTemplateBuilderService

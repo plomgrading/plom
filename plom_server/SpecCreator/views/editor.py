@@ -9,7 +9,7 @@ from django.shortcuts import render
 
 from Papers.services import SpecificationService
 
-from ..services import SpecificationUploadService
+from ..services import SpecificationUploadService, SpecTemplateBuilderService
 from . import SpecBaseView
 
 
@@ -40,3 +40,19 @@ class SpecEditorView(SpecBaseView):
             except (ValueError, RuntimeError) as e:
                 context.update({"error": str(e)})
         return render(request, "SpecCreator/validation.html", context)
+
+
+class SpecTemplateView(SpecBaseView):
+    """Create a template test specification toml."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        return render(request, "SpecCreator/build_a_template.html", context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+
+        context.update(
+            {"generated_toml": SpecTemplateBuilderService().build_template_toml()}
+        )
+        return render(request, "SpecCreator/build_a_template.html", context)

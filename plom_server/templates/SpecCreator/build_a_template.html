@@ -1,0 +1,113 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Build a template specification
+{% endblock title %}
+{% block page_heading %}
+    Build a template test specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary mb-3" href="{% url 'creator_launch' %}">Return to specification page</a>
+        </div>
+        <div class="card" x-data="{pages: 2, questions: 1, score: 5}">
+            <div class="card-body">
+                <h4 class="card-title">Enter information about your test</h4>
+                <form enctype="multipart/form-data"
+                      id="form"
+                      method="post"
+                      action="{% url 'spec_template_build' %}">
+                    {% csrf_token %}
+                    <div class="form-floating mb-3 w-50">
+                        <input type="text"
+                               class="form-control"
+                               id="longName"
+                               placeholder="A long name for your test"
+                               name="longName">
+                        <label for="longName">Test long name</label>
+                    </div>
+                    <div class="form-floating mb-3 w-50">
+                        <input type="text"
+                               class="form-control"
+                               id="shortName"
+                               placeholder="TestShortName"
+                               name="shortName">
+                        <label for="shortName">Test short name</label>
+                    </div>
+                    <div class="form-floating mb-3 w-50">
+                        <input type="number"
+                               class="form-control"
+                               id="pages"
+                               required
+                               min="2"
+                               x-model.number="pages"
+                               name="pages">
+                        <label for="pages">Number of pages</label>
+                    </div>
+                    <div class="form-floating mb-3 w-50">
+                        <input type="number"
+                               class="form-control"
+                               id="questions"
+                               required
+                               min="1"
+                               x-model.number="questions"
+                               name="questions">
+                        <label for="questions">Number of questions</label>
+                    </div>
+                    <div class="form-floating mb-3 w-50">
+                        <input type="number"
+                               class="form-control"
+                               id="versions"
+                               required
+                               min="1"
+                               value="1"
+                               name="versions">
+                        <label for="versions">Number of versions</label>
+                    </div>
+                    <div class="form-floating mb-3 w-50">
+                        <input type="number"
+                               class="form-control"
+                               id="score"
+                               required
+                               min="1"
+                               x-model.number="score"
+                               name="score">
+                        <label for="score">Total score</label>
+                    </div>
+                    <button type="submit"
+                            class="btn btn-primary"
+                            x-bind:disabled="(pages%2==1) || (pages <= questions) || (score < questions)">
+                        Generate template toml
+                    </button>
+                </form>
+            </div>
+            <template x-if="(pages%2==1) || (pages <= questions) || (score < questions)">
+                <span class="alert alert-danger m-2 w-50">
+                    <template x-if="pages%2==1">
+                        <p>The number of pages should be even.</p>
+                    </template>
+                    <template x-if="pages <= questions">
+                        <p>You should have at least one page per question, plus one for the ID page.</p>
+                    </template>
+                    <template x-if="score < questions">
+                        <p>
+                            The total score, <q x-text="score"></q> , should not be less than the number of questions, <q x-text="questions"></q>,.
+                        </p>
+                    </template>
+                </span>
+            </template>
+        </div>
+        {% if generated_toml %}
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Generated toml template</h4>
+                    {{ generated_toml }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock main_content %}

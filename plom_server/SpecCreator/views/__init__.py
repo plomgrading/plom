@@ -4,5 +4,5 @@
 
 from .base import *
 from .util_views import *
-from .editor import SpecEditorView
+from .editor import SpecEditorView, SpecTemplateView
 from .toml_textarea import SpecEditorTextArea

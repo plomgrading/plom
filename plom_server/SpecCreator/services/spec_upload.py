@@ -134,3 +134,28 @@ class SpecificationUploadService:
         if not SpecificationService.is_there_a_spec():
             return
         SpecificationService.remove_spec()
+
+
+class SpecTemplateBuilderService:
+    def build_template_toml(
+        self, longName=None, shortName=None, pages=2, questions=1, versions=1, score=5
+    ):
+        # TODO - UNHACK THIS
+        tmp = {
+            "longName": "A long test name",
+            "shortName": "mytest",
+            "numberOfPages": pages,
+            "numberOfQuestions": questions,
+            "numberOfVersions": versions,
+            "totalMarks": score,
+            "idPage": 1,
+            "doNotMarkPages": [],
+        }
+        if longName:
+            tmp["longName"] = longName
+        if shortName:
+            tmp["shortName"] = shortName
+
+        import toml as tomllib
+
+        return tomllib.dumps(tmp)
