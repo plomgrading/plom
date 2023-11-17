@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Edith Coates
 
 import csv
 import json
@@ -15,7 +16,6 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
-from SpecCreator.services import StagingSpecificationService
 from ..services import StudentMarkService, TaMarkingService, ReassembleService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm
@@ -29,7 +29,6 @@ class MarkingInformationView(ManagerRequiredView):
         self.mts = MarkingTaskService()
         self.sms = StudentMarkService()
         self.smff = StudentMarksFilterForm()
-        self.scs = StagingSpecificationService()
         self.tms = TaMarkingService()
         self.des = DataExtractionService()
         self.d3s = D3Service()
@@ -40,8 +39,8 @@ class MarkingInformationView(ManagerRequiredView):
         context = self.build_context()
 
         papers = self.sms.get_all_marks()
-        n_questions = self.scs.get_n_questions()
-        n_versions = self.scs.get_n_versions()
+        n_questions = SpecificationService.get_n_questions()
+        n_versions = SpecificationService.get_n_versions()
         marked_question_counts = [
             [
                 self.mts.get_marking_progress(version=v, question=q)

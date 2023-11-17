@@ -1,0 +1,52 @@
+<!-- Copyright (C) 2023 Julian Lapenna -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+{% extends "base/base.html" %}
+{% block title %}
+    Overview of current marking and identifying
+{% endblock title %}
+{% block page_heading %}
+    Overview of current marking and identifying
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card m-2">
+        <div class="card-body">
+            <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress and statistics overview</a>
+            <ul>
+                <li>Shows current marking progress for each question / version</li>
+                <li>Gives summary statistics</li>
+                <li>Gives rough estimate of time required to complete marking of each question / version</li>
+            </ul>
+        </div>
+    </div>
+    <div class="card p-2 m-2">
+        <div class="card-body">
+            <a class="btn btn-primary" href="{% url 'progress_identify_home' %}">Identifying progress</a>
+            <ul>
+                <li>Shows current progress of identifying papers</li>
+                <li>User can view the ID page of any given paper</li>
+                <li>User can also clear ID from a given paper</li>
+            </ul>
+        </div>
+    </div>
+    <div class="card p-2 m-2">
+        <div class="card-body">
+            <a class="btn btn-primary"
+               href="{% url 'progress_task_annotation_filter' %}">Browse marking</a>
+            <ul>
+                <li>Shows table of marking tasks</li>
+                <li>Can view original page images and the annotations</li>
+                <li>Can be filtered by question, version and marker</li>
+            </ul>
+        </div>
+    </div>
+    <div class="card p-2 m-2">
+        <div class="card-body">
+            <a class="btn btn-primary" href="{% url 'all_task_overview' %}">Table of all tasks</a>
+            <ul>
+                <li>Shows current state of every single identification and marking task</li>
+                <li>Useful for focusing in on particular papers</li>
+            </ul>
+        </div>
+    </div>
+{% endblock main_content %}

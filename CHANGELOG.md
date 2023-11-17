@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]]
+## [Unreleased]
 
 ### Added
 
 ### Changed
 
 ### Fixed
-
+* Duplicated paper numbers in question-version map input will now be detected.
 
 
 ## [0.14.6] - 2023-11-02
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Page Arrange: new "Invert selection" button is useful to quickly discard all but the highlighted pages.
 
 ### Changed
-* Do more checks before uploading a custom version map, hopefully avoiding errors that hard to recover from.
+* Do more checks before uploading a custom version map, hopefully avoiding errors that are hard to recover from.
 * Making self-signed certs no longer needs command-line `openssl`, instead uses the `cryptography` package.
 
 ### Fixed

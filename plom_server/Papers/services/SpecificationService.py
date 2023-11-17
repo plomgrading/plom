@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
+from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils.text import slugify
 from django.db import transaction
+from django.db.models import Max
 
 from plom import SpecVerifier
 
@@ -27,7 +30,6 @@ log = logging.getLogger("ValidatedSpecService")
 def load_spec_from_dict(
     spec_dict: Dict[str, Any],
     *,
-    update_staging: bool = False,
     public_code: Optional[str] = None,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
@@ -38,7 +40,6 @@ def load_spec_from_dict(
         spec_dict:
 
     Keyword Args:
-        update_staging: if true, update the staging specification (mainly for UI purposes)
         public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
@@ -53,25 +54,17 @@ def load_spec_from_dict(
     if public_code:
         valid_data["publicCode"] = public_code
 
-    if update_staging:
-        from SpecCreator.services import StagingSpecificationService
-
-        StagingSpecificationService().create_from_dict(serializer.validated_data)
-
     return serializer.create(serializer.validated_data)
 
 
 @transaction.atomic
 def load_spec_from_toml(
     pathname,
-    update_staging=False,
     public_code=None,
 ) -> Specification:
     """Load a test spec from a TOML file and save it to the database."""
     data = load_toml_from_path(pathname)
-    return load_spec_from_dict(
-        data, update_staging=update_staging, public_code=public_code
-    )
+    return load_spec_from_dict(data, public_code=public_code)
 
 
 @transaction.atomic
@@ -108,9 +101,23 @@ def get_the_spec_as_toml():
     is included (if present).
     """
     spec = get_the_spec()
+    spec.pop("id", None)
     spec.pop("privateSeed", None)
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     sv = SpecVerifier(spec)
     return sv.as_toml_string()
+
+
+@transaction.atomic
+def get_private_seed() -> str:
+    """Return the private seed."""
+    spec = Specification.objects.get()
+    return spec.privateSeed
 
 
 @transaction.atomic
@@ -124,6 +131,12 @@ def get_the_spec_as_toml_with_codes():
         is calling this.
     """
     sv = SpecVerifier(get_the_spec())
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     return sv.as_toml_string()
 
 
@@ -184,6 +197,16 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
+def get_short_name_slug() -> str:
+    """Get the short name of the exam, slugified.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    return slugify(get_shortname())
+
+
+@transaction.atomic
 def get_n_questions() -> int:
     """Get the number of questions in the test.
 
@@ -231,6 +254,13 @@ def get_question_mark(question_one_index: Union[str, int]) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+@transaction.atomic
+def get_max_all_question_mark() -> int:
+    """Get the maximum mark of all questions."""
+    # the aggregate function returns dict {"mark__max": n}
+    return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
 
 @transaction.atomic

@@ -13,9 +13,16 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
     def get(self, request):
         mss = MarkingStatsService()
 
+        context = super().build_context()
+
+        paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
+        score = request.GET.get("score", "*")
+
+        (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
+        paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
         question_list = [
             str(q + 1) for q in range(SpecificationService.get_n_questions())
@@ -23,31 +30,52 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         version_list = [
             str(v + 1) for v in range(SpecificationService.get_n_versions())
         ]
+        mark_list = [
+            str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
+        ]
 
+        context.update(
+            {
+                "paper": paper,
+                "question": question,
+                "version": version,
+                "username": username,
+                "score": score,
+                "paper_list": paper_list,
+                "question_list": question_list,
+                "version_list": version_list,
+                "mark_list": mark_list,
+                "username_list": mss.get_list_of_users_who_marked_anything(),
+            }
+        )
+
+        # if all filters set to * then ask user to set at least one
+        # don't actually filter **all** tasks
+        if all(X == "*" for X in [paper, question, version, username, score]):
+            context.update({"warning": True})
+            return render(
+                request, "Progress/Mark/task_annotations_filter.html", context
+            )
+
+        # at least one filter is set, so continue
         def optional_arg(val):
             if val == "*":
                 return None
             else:
                 return val
 
+        # We pass ranges for scores and papers to this filter
+        # TODO - get ranges from the filter form - needs some nice multi-range-selector widget or something.
         task_info = mss.filter_marking_task_annotation_info(
+            paper_min=optional_arg(paper),
+            paper_max=optional_arg(paper),
             question=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
+            score_min=optional_arg(score),
+            score_max=optional_arg(score),
         )
-
-        context = super().build_context()
-        context.update(
-            {
-                "question": question,
-                "version": version,
-                "username": username,
-                "question_list": question_list,
-                "version_list": version_list,
-                "username_list": mss.get_list_of_users_who_marked_anything(),
-                "task_info": task_info,
-            }
-        )
+        context.update({"task_info": task_info})
 
         return render(request, "Progress/Mark/task_annotations_filter.html", context)
 

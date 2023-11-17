@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
 from django.shortcuts import render
@@ -9,7 +9,6 @@ from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
-from SpecCreator.services import StagingSpecificationService
 
 from ..services import (
     PQVMappingService,
@@ -28,7 +27,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request):
         pqvs = PQVMappingService()
-        pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
+        pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
