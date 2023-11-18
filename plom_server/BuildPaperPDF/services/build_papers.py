@@ -160,7 +160,7 @@ class BuildPapersService:
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
-        """Return True if all of the test-papers have been successfully built."""
+        """Return True if all of the papers have had their PDF built successfully."""
         # TODO: loop over the papers and ask each if its done.
         # TODO: Andrew to do some DB magic to improve the cost!
         for paper in Paper.objects.all():
