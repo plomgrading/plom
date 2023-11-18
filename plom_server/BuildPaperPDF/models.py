@@ -18,10 +18,6 @@ from Papers.models import Paper
 class PDFHueyTask(HueyTaskTracker):
     """Represents the chore of building a PDF file for each paper.
 
-    WIP: deprecated the use of "TO_DO".
-
-    WIP: not resetting these.
-
     WIP: renaming to BuildPDFChore or similar?
     """
 
