@@ -4,19 +4,14 @@
 
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
-from fitz import Document
 
 from django.db import transaction
 
-from Base.compat import load_toml_from_path, TOMLDecodeError
+from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
 
 from Preparation.services import TestPreparedSetting, PQVMappingService
 
 from Papers.services import SpecificationService, PaperInfoService
-from Papers.serializers import SpecSerializer
-from Papers.models import Specification
-
-from . import ReferencePDFService, StagingSpecificationService
 
 
 class SpecExistsException(Exception):
@@ -28,9 +23,8 @@ class SpecificationUploadService:
 
     The flow for uploading and saving a test spec:
         1. Manager has an already-existing TOML representing a test spec
-            and one PDF representing a source version
         2. Manager requests to save the test spec from a path to a TOML
-            file and another path to a reference PDF
+            file.
         3. Server checks that a spec can be uploaded
             - Preparation must not be set as complete
             - There must be no existing QV map or test-papers
@@ -41,53 +35,59 @@ class SpecificationUploadService:
             want to replace the spec.
             - If the manager agrees, the server deletes the current spec
             - Otherwise, the server ends the workflow.
-        5. Server loads the toml and the reference PDF and validates them
+        5. Server loads and validates the toml
             - TOML must be decoded and de-serialized into a Specification
                 instance
-            - Reference PDF must be readable by PyMuPDF and contain the
-                same number of pages as the spec
-        6. Server saves the Specification and updates the StagingSpecification
+        6. Server saves the Specification
     """
 
     def __init__(
         self,
         *,
         toml_file_path: Union[str, Path, None] = None,
-        reference_pdf_path: Union[str, Path, None] = None,
+        toml_string: Optional[str] = None,
     ):
         """Construct service with paths and/or model instances.
 
-        kwargs:
-            toml_file_path: a path to a TOML specification
-            reference_pdf_path: a path to a reference PDF
+        Note: If the service is initialized with both a toml file path
+        and a toml string, it will read and use the toml file and ignore
+        the string.
+
+        Keyword Args::
+            toml_file_path: a path to a TOML specification.  Callers
+                must provide either this input or the ``toml_string``.
+            toml_string: a raw string representing a TOML specification
+
+        Raises:
+            ValueError on failure to parse the TOML.
         """
         self.spec_dict: Optional[Dict[str, Any]] = None
-        self.pdf_doc: Optional[Document] = None
 
         if toml_file_path:
             try:
                 self.spec_dict = load_toml_from_path(toml_file_path)
             except TOMLDecodeError as e:
                 raise ValueError("Unable to read TOML file.") from e
-
-        if reference_pdf_path:
+        elif toml_string:
             try:
-                self.pdf_doc = Document(reference_pdf_path)
-            except Exception as e:
-                raise ValueError("Unable to read reference PDF file.") from e
+                self.spec_dict = load_toml_from_string(toml_string)
+            except TOMLDecodeError as e:
+                raise ValueError("Unable to parse TOML file from string.") from e
 
     @transaction.atomic
     def save_spec(
         self,
         *,
-        update_staging: bool = False,
         custom_public_code: Optional[str] = None,
     ):
-        """Save the specification to the database.
+        """Save the specification to the database if possible.
 
-        kwargs:
-            update_staging: whether to also update the StagingSpecification model.
+        Keyword Args:
             custom_public_code: override the randomly generated public code with a custom value.
+
+        Raises:
+            ValueError: various reasons for not being able to change
+                the spec.
         """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to upload.")
@@ -96,78 +96,57 @@ class SpecificationUploadService:
 
         SpecificationService.load_spec_from_dict(
             self.spec_dict,
-            update_staging=update_staging,
             public_code=custom_public_code,
         )
 
     @transaction.atomic
-    def can_spec_be_modified(self, raise_exception: bool = False) -> bool:
+    def can_spec_be_modified(self, *, raise_exception: bool = False) -> bool:
         """Return true if the spec can be modified, false otherwise.
 
         To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
             - Test preparation must be set as "in progress"
             - There must be no existing test-papers
             - There must be no existing QV-map
-            - There must not be an existing spec
 
-        kwargs:
+        Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
         test_prepared = TestPreparedSetting.is_test_prepared()
         papers_created = PaperInfoService().is_paper_database_populated()
         qvmap_created = PQVMappingService().is_there_a_pqv_map()
-        spec_exists = SpecificationService.is_there_a_spec()
 
-        if raise_exception:
-            if test_prepared:
+        if test_prepared:
+            if raise_exception:
                 raise ValueError(
                     "Cannot modify spec while preparation is set as complete."
                 )
-            if papers_created:
+            return False
+
+        if papers_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec with test papers saved to the database."
                 )
-            if qvmap_created:
+            return False
+
+        if qvmap_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec while a question-version map exists."
                 )
+            return False
 
-            if spec_exists:
-                raise SpecExistsException("Specification already exists.")
-
-        return not (test_prepared and papers_created and qvmap_created and spec_exists)
+        return True
 
     @transaction.atomic
-    def save_reference_pdf(self):
-        """Save the reference PDF to the database."""
-        if not self.pdf_doc:
-            raise ValueError("Cannot find reference PDF to upload.")
-
-        # TODO: assumes that a Specification (not staging) has been uploaded already
-        if not SpecificationService.is_there_a_spec():
-            raise RuntimeError("Spec has not been uploaded.")
-        if self.pdf_doc.page_count != SpecificationService.get_n_pages():
-            raise ValueError("Reference PDF does not match the spec's page count.")
-
-        # TODO: refactor this part of the workflow into its own function-based services
-        ref_service = ReferencePDFService()
-        staging_service = StagingSpecificationService()
-        ref_service.new_pdf(
-            staging_service, "spec_reference.pdf", self.pdf_doc.page_count, self.pdf_doc
-        )
-
-    @transaction.atomic
-    def delete_spec(self, *, delete_staging: bool = False):
+    def delete_spec(self):
         """Remove the specification from the database.
 
-        kwargs:
-            delete_staging: whether to remove the staging specification as well.
+        Raises:
+            ValueError: various reasons for not being able to change
+                the spec.
         """
         if not SpecificationService.is_there_a_spec():
             return
-
         self.can_spec_be_modified(raise_exception=True)
-
         SpecificationService.remove_spec()
-        if delete_staging:
-            StagingSpecificationService().reset_specification()

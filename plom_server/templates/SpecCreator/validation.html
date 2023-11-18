@@ -1,0 +1,19 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Edith Coates
+-->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>specification validation</title>
+    </head>
+    <body>
+        {% if success %}
+            <p>
+                Specification saved! <a href="{% url 'spec_summary' %}">View here</a>
+            </p>
+        {% else %}
+            <p class="text-danger">{{ error }}</p>
+        {% endif %}
+    </body>
+</html>

@@ -6,6 +6,7 @@ from copy import deepcopy
 from rest_framework import serializers
 
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
@@ -52,7 +53,10 @@ class SpecSerializer(serializers.ModelSerializer):
 
     def is_valid(self, raise_exception=True):
         """Perform additional soundness checks on the test spec."""
-        is_valid = super().is_valid(raise_exception=raise_exception)
+        try:
+            is_valid = super().is_valid(raise_exception=raise_exception)
+        except ValidationError as e:
+            raise ValueError(e)
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:

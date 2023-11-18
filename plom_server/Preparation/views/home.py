@@ -11,8 +11,6 @@ from Papers.services import (
     SpecificationService,
     PaperInfoService,
 )
-from SpecCreator.services import StagingSpecificationService
-
 from ..services import (
     TestSourceService,
     PrenameSettingService,
@@ -69,20 +67,16 @@ class PreparationLandingView(ManagerRequiredView):
                 }
             )
 
-        spec = StagingSpecificationService()
         if SpecificationService.is_there_a_spec():
             context.update(
                 {
                     "valid_spec": True,
                     "can_upload_source_tests": True,
                     "can_qvmap": True,
-                    "spec_longname": spec.get_long_name(),
-                    "spec_shortname": spec.get_short_name(),
-                    "slugged_spec_shortname": spec.get_short_name_slug(),
-                    "test_versions": spec.get_n_versions(),
-                    "is_spec_the_same": spec.compare_spec(
-                        SpecificationService.get_the_spec()
-                    ),
+                    "spec_longname": SpecificationService.get_longname(),
+                    "spec_shortname": SpecificationService.get_shortname(),
+                    "slugged_spec_shortname": SpecificationService.get_short_name_slug(),
+                    "test_versions": SpecificationService.get_n_versions(),
                 }
             )
         else:
@@ -90,7 +84,7 @@ class PreparationLandingView(ManagerRequiredView):
                 {
                     "valid_spec": False,
                     "can_upload_source_tests": False,
-                    "test_versions": spec.get_n_versions(),
+                    "test_versions": 0,
                     "can_qvmap": False,
                 }
             )
@@ -112,9 +106,6 @@ class PreparationLandingView(ManagerRequiredView):
 class LandingResetSpec(ManagerRequiredView):
     def delete(self, request):
         SpecificationService.remove_spec()
-
-        staging_spec = StagingSpecificationService()
-        staging_spec.reset_specification()
 
         sources_service = TestSourceService()
         sources_service.delete_all_test_sources()
