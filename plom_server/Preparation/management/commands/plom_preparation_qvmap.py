@@ -27,6 +27,11 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
+            if TestPreparedSetting.is_test_prepared():
+                print(
+                    'The assessment "prepared" toggle is set: you cannot change the mapping.'
+                )
+
         else:
             self.stdout.write("There is no question-version mapping.")
             self.stdout.write(
