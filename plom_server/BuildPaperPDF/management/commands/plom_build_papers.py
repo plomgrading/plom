@@ -9,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
 from BuildPaperPDF.services import BuildPapersService
-from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 
 from plom.misc_utils import format_int_list_with_runs

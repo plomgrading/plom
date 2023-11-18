@@ -155,8 +155,8 @@ class BuildPapersService:
         )
 
     def get_n_tasks(self) -> int:
-        """Get the total number of PDFHueyTasks."""
-        return PDFHueyTask.objects.all().count()
+        """Get the total number of non-obsolete PDFHueyTasks."""
+        return PDFHueyTask.objects.filter(obsolete=False).count()
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
