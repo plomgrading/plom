@@ -80,10 +80,14 @@ class SpecificationUploadService:
         *,
         custom_public_code: Optional[str] = None,
     ):
-        """Save the specification to the database.
+        """Save the specification to the database if possible.
 
-        kwargs:
+        Keyword Args:
             custom_public_code: override the randomly generated public code with a custom value.
+
+        Raises:
+            ValueError: various reasons for not being able to change
+                the spec.
         """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to upload.")
@@ -96,7 +100,7 @@ class SpecificationUploadService:
         )
 
     @transaction.atomic
-    def can_spec_be_modified(self, raise_exception: bool = False) -> bool:
+    def can_spec_be_modified(self, *, raise_exception: bool = False) -> bool:
         """Return true if the spec can be modified, false otherwise.
 
         To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
@@ -104,33 +108,45 @@ class SpecificationUploadService:
             - There must be no existing test-papers
             - There must be no existing QV-map
 
-        kwargs:
+        Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
         test_prepared = TestPreparedSetting.is_test_prepared()
         papers_created = PaperInfoService().is_paper_database_populated()
         qvmap_created = PQVMappingService().is_there_a_pqv_map()
-        spec_exists = SpecificationService.is_there_a_spec()
 
-        if raise_exception:
-            if test_prepared:
+        if test_prepared:
+            if raise_exception:
                 raise ValueError(
                     "Cannot modify spec while preparation is set as complete."
                 )
-            if papers_created:
+            return False
+
+        if papers_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec with test papers saved to the database."
                 )
-            if qvmap_created:
+            return False
+
+        if qvmap_created:
+            if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec while a question-version map exists."
                 )
+            return False
 
-        return not (test_prepared and papers_created and qvmap_created and spec_exists)
+        return True
 
     @transaction.atomic
-    def delete_spec(self, *args):
-        """Remove the specification from the database."""
+    def delete_spec(self):
+        """Remove the specification from the database.
+
+        Raises:
+            ValueError: various reasons for not being able to change
+                the spec.
+        """
         if not SpecificationService.is_there_a_spec():
             return
+        self.can_spec_be_modified(raise_exception=True)
         SpecificationService.remove_spec()
