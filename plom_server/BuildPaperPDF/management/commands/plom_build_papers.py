@@ -23,17 +23,17 @@ class Command(BaseCommand):
             "--start",
             type=int,
             metavar="N",
-            help="Start building a specific test paper in the queue",
+            help="Start building a specific paper",
         )
         grp.add_argument(
             "--start-all",
             action="store_true",
-            help="Start building all papers in the queue",
+            help="Start building all papers that are not already build",
         )
         grp.add_argument(
             "--status",
             action="store_true",
-            help="Show status of all test paper build tasks",
+            help="Show status of all paper build tasks",
         )
         grp.add_argument(
             "--delete-all",
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             "--download",
             type=int,
             metavar="N",
-            help="Download a specific test paper as a PDF file",
+            help="Download a specific paper as a PDF file",
         )
         grp.add_argument(
             "--download-all",
