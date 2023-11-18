@@ -160,7 +160,11 @@ class BuildPapersService:
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
-        """Return True if all of the papers have had their PDF built successfully."""
+        """Return True if all of the papers have had their PDF built successfully.
+
+        If there are no Papers, we still return False (despite this being technically
+        trivially true).
+        """
         # TODO: loop over the papers and ask each if its done.
         # TODO: Andrew to do some DB magic to improve the cost!
         for paper in Paper.objects.all():
@@ -168,6 +172,9 @@ class BuildPapersService:
                 obsolete=False, paper=paper, status=HueyTaskTracker.COMPLETE
             ).exists():
                 return False
+        else:
+            # special case for no papers exist
+            return False
         return True
 
     @transaction.atomic
