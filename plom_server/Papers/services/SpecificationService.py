@@ -45,8 +45,11 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
-    # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
-    spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    # Also, this function does not care if there are no questions in the spec dictionary. It assumes
+    # the serializer/SpecVerifier will catch it.
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
     serializer = SpecSerializer(data=spec_dict)
     serializer.is_valid()
     valid_data = serializer.validated_data

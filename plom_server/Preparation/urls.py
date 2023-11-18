@@ -17,7 +17,6 @@ from .views import (
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
-    ClasslistDeleteView,
     ClasslistReadOnlyView,
     PQVMappingView,
     PQVMappingDownloadView,
@@ -58,9 +57,6 @@ urlpatterns = [
         "classlist/download",
         ClasslistDownloadView.as_view(),
         name="prep_classlist_download",
-    ),
-    path(
-        "classlist/delete", ClasslistDeleteView.as_view(), name="prep_classlist_delete"
     ),
     path(
         "classlist/view/", ClasslistReadOnlyView.as_view(), name="prep_classlist_view"

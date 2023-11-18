@@ -30,7 +30,6 @@ from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
-    StagingClasslistCSVService,
     StagingStudentService,
     PQVMappingService,
     TestPreparedSetting,
@@ -85,12 +84,10 @@ def upload_classlist(config: PlomServerConfig):
     assert isinstance(classlist_path, Path)
     try:
         with open(classlist_path, "rb") as classlist_f:
-            success, warnings = StagingClasslistCSVService().take_classlist_from_upload(
-                classlist_f
+            success, warnings = StagingStudentService.validate_and_use_classlist_csv(
+                classlist_f, ignore_warnings=True
             )
-        if success:
-            StagingStudentService().use_classlist_csv()
-        else:
+        if not success:
             raise PlomConfigCreationError("Unable to upload classlist.")
     except Exception as e:
         raise PlomConfigCreationError(e) from e

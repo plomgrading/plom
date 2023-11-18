@@ -20,7 +20,7 @@
             <div class="alert alert-warning">
                 <p>Student list present, contains {{ number_of_students }} entries</p>
                 {% if prenaming %}
-                    <p>First, last prenamed papers = {{ first_prenamed_paper }}, {{ last_prenamed_paper }}</p>
+                    <p>Prenamed papers = {{ prenamed_papers_list }}</p>
                 {% else %}
                     <p>Prenaming disabled</p>
                 {% endif %}
@@ -142,14 +142,10 @@
                     </div>
                 </div>
             </div>
-            <hr class="border border-danger border-2" />
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Upload a question-version map (advanced)</h4>
                     <div class="card-text">
-                        <h5>
-                            <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
-                        </h5>
                         <p>
                             <details>
                                 <summary>
@@ -159,11 +155,25 @@
                                     <li>
                                         The file must contain
                                         <ul>
-                                            <li>a "test_number" column &mdash; this is legacy term which will become "paper_number" in the future</li>
                                             <li>
-                                                {{ number_of_questions }} columns with headers "q{{ question_list|first }}.version", &hellip; and "q{{ question_list|last }}.version"
+                                                a <tt>paper_number</tt> column
                                             </li>
-                                            <li>it must contain at least {{ min_number_to_produce }} consecutive entries starting from "paper_number" 1</li>
+                                            <li>
+                                                {{ number_of_questions }} columns with headers <tt>q{{ question_list|first }}.version</tt> up to <tt>q{{ question_list|last }}.version</tt>
+                                            </li>
+                                            {% if student_list_present %}
+                                                <li>
+                                                    Your version map should be compatible with your uploaded classlist. It should contain at least one row for each student, namely {{ number_of_students }} rows. We recommend that it contain at least  {{ min_number_to_produce }} rows.
+                                                </li>
+                                            {% endif %}
+                                            {% if prenaming %}
+                                                <li>
+                                                    You have enabled prenaming; your version map must contain entries for each <em>paper_number</em> given in your classlist. The following papers are prenamed: {{ prenamed_papers_list }}.
+                                                </li>
+                                            {% endif %}
+                                            <li>
+                                                You may experience problems with non-contiguous <tt>paper_number</tt>, see  <a href="https://gitlab.com/plom/plom/-/issues/1745">Plom Issue #1745</a>.
+                                            </li>
                                         </ul>
                                     </li>
                                 </ul>
@@ -175,13 +185,10 @@
                               action="{% url 'prep_qvmapping_upload' %}">
                             {% csrf_token %}
                             <div>
-                                <input type="file" accepts=".csv" name="pqvmap_csv" required disabled />
-                                <button class="btn btn-primary" type="submit" disabled>upload</button>
+                                <input type="file" accept=".csv" name="pqvmap_csv" required />
+                                <button class="btn btn-primary" type="submit">upload</button>
                             </div>
                         </form>
-                        <h5>
-                            <i class="bi bi-x-octagon-fill text-danger"></i> NOT IMPLEMENTED (sorry Omer) <i class="bi bi-x-octagon-fill text-danger"></i>
-                        </h5>
                     </div>
                 </div>
             </div>

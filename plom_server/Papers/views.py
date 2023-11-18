@@ -25,7 +25,6 @@ class CreateTestPapers(ManagerRequiredView):
     """
 
     def post(self, request):
-        print("v" * 40)
         pcs = PaperCreatorService()
         qvs = PQVMappingService()
 

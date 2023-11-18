@@ -28,15 +28,6 @@ class TestPreparedSettingModel(SingletonBaseModel):
     finished = models.BooleanField(default=False, null=False)
 
 
-class StagingClasslistCSV(SingletonBaseModel):
-    """A temporary holder for the classlist csv for the purposes of preparing things."""
-
-    # TODO - set a better upload path
-    csv_file = models.FileField(upload_to="sourceVersions/")
-    valid = models.BooleanField(default=False, null=False)
-    warnings_errors_list = models.JSONField()
-
-
 # ---------------------------------
 # Make a table for students - for the purposes of preparing things. Hence "staging" prefix.
 
