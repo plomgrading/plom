@@ -379,10 +379,10 @@ class BuildPapersService:
         return [
             {
                 "paper_number": task.paper.paper_number,
+                "obsolete": task.obsolete,
                 "status": task.get_status_display(),
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
-                "obsolete": task.obsolete,
             }
             for task in tasks
         ]
