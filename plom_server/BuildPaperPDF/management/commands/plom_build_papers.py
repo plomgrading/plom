@@ -28,7 +28,7 @@ class Command(BaseCommand):
         grp.add_argument(
             "--start-all",
             action="store_true",
-            help="Start building all papers that are not already build",
+            help="Start building all papers that need built",
         )
         grp.add_argument(
             "--status",
