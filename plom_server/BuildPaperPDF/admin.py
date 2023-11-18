@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib import admin
-from .models import PDFHueyTask
+from .models import BuildPaperPDFChore
 
 # This has something to do with the models appearing in an admin interface
-admin.site.register(PDFHueyTask)
+admin.site.register(BuildPaperPDFChore)

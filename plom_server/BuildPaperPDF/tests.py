@@ -8,7 +8,7 @@ from model_bakery import baker
 from warnings import catch_warnings, simplefilter
 
 from BuildPaperPDF.services import BuildPapersService
-from BuildPaperPDF.models import PDFHueyTask as PDFTask
+from BuildPaperPDF.models import BuildPaperPDFChore as PDFTask
 
 
 class BuildPaperPDFTests(TestCase):

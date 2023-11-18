@@ -30,7 +30,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
 from Base.models import HueyTaskTracker
-from ..models import PDFHueyTask
+from ..models import BuildPaperPDFChore
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -93,7 +93,7 @@ def huey_build_single_paper(
                 )
 
         with transaction.atomic():
-            tr = PDFHueyTask.objects.get(pk=tracker_pk)
+            tr = BuildPaperPDFChore.objects.get(pk=tracker_pk)
             if tr.obsolete:
                 # if result no longer needed, no need to keep the PDF
                 tr.transition_to_complete()
@@ -118,35 +118,35 @@ class BuildPapersService:
         return Paper.objects.count()
 
     def get_n_complete_tasks(self) -> int:
-        """Get the number of PDFHueyTasks that have completed."""
-        return PDFHueyTask.objects.filter(
-            status=PDFHueyTask.COMPLETE, obsolete=False
+        """Get the number of chores that have completed."""
+        return BuildPaperPDFChore.objects.filter(
+            status=BuildPaperPDFChore.COMPLETE, obsolete=False
         ).count()
 
     def get_n_obsolete_tasks(self) -> int:
-        """Get the number of obsolete PDFHueyTasks."""
-        return PDFHueyTask.objects.filter(obsolete=True).count()
+        """Get the number of obsolete chores."""
+        return BuildPaperPDFChore.objects.filter(obsolete=True).count()
 
     @transaction.atomic
     def get_n_tasks_started_but_not_complete(self) -> int:
-        """Get the number of PDFHueyTasks with the status 'STARTING', 'QUEUED' or 'RUNNING'.
+        """Get the number of chores with the status 'STARTING', 'QUEUED' or 'RUNNING'.
 
         These are the tasks that users could think of as "in-progress" in situations
         where its not important exactly where they are in the progress.
         """
         return (
-            PDFHueyTask.objects.filter(obsolete=False)
+            BuildPaperPDFChore.objects.filter(obsolete=False)
             .filter(
-                Q(status=PDFHueyTask.STARTING)
-                | Q(status=PDFHueyTask.QUEUED)
-                | Q(status=PDFHueyTask.RUNNING)
+                Q(status=BuildPaperPDFChore.STARTING)
+                | Q(status=BuildPaperPDFChore.QUEUED)
+                | Q(status=BuildPaperPDFChore.RUNNING)
             )
             .count()
         )
 
     def get_n_tasks(self) -> int:
-        """Get the total number of non-obsolete PDFHueyTasks."""
-        return PDFHueyTask.objects.filter(obsolete=False).count()
+        """Get the total number of non-obsolete chores."""
+        return BuildPaperPDFChore.objects.filter(obsolete=False).count()
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
@@ -164,17 +164,17 @@ class BuildPapersService:
 
     @transaction.atomic
     def are_there_errors(self) -> bool:
-        """Return True if there are any PDFHueyTasks with an 'error' status."""
-        return PDFHueyTask.objects.filter(
-            obsolete=False, status=PDFHueyTask.ERROR
+        """Return True if there are any chores with an 'error' status."""
+        return BuildPaperPDFChore.objects.filter(
+            obsolete=False, status=BuildPaperPDFChore.ERROR
         ).exists()
 
     def get_completed_pdf_paths(self) -> list:
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
             pdf.file_path()
-            for pdf in PDFHueyTask.objects.filter(
-                obsolete=False, status=PDFHueyTask.COMPLETE
+            for pdf in BuildPaperPDFChore.objects.filter(
+                obsolete=False, status=BuildPaperPDFChore.COMPLETE
             )
         ]
 
@@ -193,11 +193,13 @@ class BuildPapersService:
             #   - Papers with a Error chore (non-obsolete)
             _do_build = False
             try:
-                existing_task = PDFHueyTask.objects.get(paper=paper, obsolete=False)
+                existing_task = BuildPaperPDFChore.objects.get(
+                    paper=paper, obsolete=False
+                )
             except ObjectDoesNotExist:
                 _do_build = True
             else:
-                if existing_task.status == PDFHueyTask.ERROR:
+                if existing_task.status == BuildPaperPDFChore.ERROR:
                     _do_build = True
                     existing_task.set_obsolete()
             if _do_build:
@@ -214,8 +216,7 @@ class BuildPapersService:
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
-            ValueError: existing non-obsolete PDFHueyTask for that
-                paper number.
+            ValueError: existing non-obsolete chores for that paper number.
         """
         spec = SpecificationService.get_the_spec()
 
@@ -246,15 +247,15 @@ class BuildPapersService:
 
         # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            if PDFHueyTask.objects.filter(paper=paper, obsolete=False).exists():
+            if BuildPaperPDFChore.objects.filter(paper=paper, obsolete=False).exists():
                 raise ValueError(
-                    f"There are non-obsolete PDFHueyTasks for papernum {paper_num}:"
+                    f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
                     " make them obsolete before creating another"
                 )
-            task = PDFHueyTask.objects.create(
+            task = BuildPaperPDFChore.objects.create(
                 paper=paper,
                 huey_id=None,
-                status=PDFHueyTask.STARTING,
+                status=BuildPaperPDFChore.STARTING,
                 student_name=student_name,
                 student_id=student_id,
             )
@@ -296,8 +297,9 @@ class BuildPapersService:
         N = 0
         queue = get_queue("tasks")
         with transaction.atomic(durable=True):
-            queue_tasks = PDFHueyTask.objects.filter(
-                Q(status=PDFHueyTask.STARTING) | Q(status=PDFHueyTask.QUEUED)
+            queue_tasks = BuildPaperPDFChore.objects.filter(
+                Q(status=BuildPaperPDFChore.STARTING)
+                | Q(status=BuildPaperPDFChore.QUEUED)
             )
             for task in queue_tasks:
                 task.set_obsolete()
@@ -320,7 +322,9 @@ class BuildPapersService:
         TODO: what if it is Complete?  What then?  I'm not sure it should reset
         but currently it does.
         """
-        task = PDFHueyTask.objects.get(obsolete=False, paper__paper_number=paper_number)
+        task = BuildPaperPDFChore.objects.get(
+            obsolete=False, paper__paper_number=paper_number
+        )
         task.set_obsolete()
         if task.huey_id:
             queue = get_queue("tasks")
@@ -328,8 +332,8 @@ class BuildPapersService:
 
     def retry_all_task(self) -> None:
         """Retry all non-obsolete tasks that have error status."""
-        retry_tasks = PDFHueyTask.objects.filter(
-            status=PDFHueyTask.ERROR, obsolete=False
+        retry_tasks = BuildPaperPDFChore.objects.filter(
+            status=BuildPaperPDFChore.ERROR, obsolete=False
         )
         for task in retry_tasks:
             paper_number = task.paper.paper_number
@@ -338,7 +342,7 @@ class BuildPapersService:
     def reset_all_tasks(self) -> None:
         """Reset all tasks, discarding all in-progress and complete PDF files."""
         self.try_to_cancel_all_queued_tasks()
-        for task in PDFHueyTask.objects.all():
+        for task in BuildPaperPDFChore.objects.all():
             task.set_obsolete()
 
     @transaction.atomic
@@ -346,19 +350,19 @@ class BuildPapersService:
         """Get the status of every task and return as a dict."""
         return {
             task.paper.paper_number: task.get_status_display()
-            for task in PDFHueyTask.objects.exclude(obsolete=True)
+            for task in BuildPaperPDFChore.objects.exclude(obsolete=True)
         }
 
     @transaction.atomic
     def get_paper_path_and_bytes(self, paper_number: int):
         """Get the bytes of the file generated by the given task."""
         try:
-            task = PDFHueyTask.objects.get(
+            task = BuildPaperPDFChore.objects.get(
                 obsolete=False, paper__paper_number=paper_number
             )
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find PDF for {paper_number}: {e}")
-        if task.status != PDFHueyTask.COMPLETE:
+        if task.status != BuildPaperPDFChore.COMPLETE:
             raise ValueError(f"Task {paper_number} is not complete")
 
         paper_path = task.file_path()
@@ -372,7 +376,7 @@ class BuildPapersService:
         Keyword Args:
             include_obsolete: include any obsolete chores.
         """
-        tasks = PDFHueyTask.objects
+        tasks = BuildPaperPDFChore.objects
         if not include_obsolete:
             tasks = tasks.filter(obsolete=False)
         tasks = tasks.select_related("paper").order_by("paper__paper_number")

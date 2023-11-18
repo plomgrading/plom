@@ -15,11 +15,8 @@ from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class PDFHueyTask(HueyTaskTracker):
-    """Represents the chore of building a PDF file for each paper.
-
-    WIP: renaming to BuildPDFChore or similar?
-    """
+class BuildPaperPDFChore(HueyTaskTracker):
+    """Represents the chore of building a PDF file for each paper."""
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
