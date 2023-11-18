@@ -61,11 +61,3 @@ class PDFHueyTask(HueyTaskTracker):
             return f"exam_{self.paper.paper_number:04}_{self.student_id}.pdf"
         else:
             return f"exam_{self.paper.paper_number:04}.pdf"
-
-
-@receiver(pre_delete, sender=Paper)
-def PDFHueyTask_delete_associated_file(sender, instance, using, **kwargs):
-    # if the paper has a pdf task then delete it.
-    # we need this check or a try-except - see https://docs.djangoproject.com/en/4.1/topics/db/examples/one_to_one/
-    if hasattr(instance, "pdfhueytask"):
-        instance.pdfhueytask.unlink_associated_pdf()
