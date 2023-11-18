@@ -165,17 +165,12 @@ class BuildPapersService:
         If there are no Papers, we still return False (despite this being technically
         trivially true).
         """
-        # TODO: loop over the papers and ask each if its done.
-        # TODO: Andrew to do some DB magic to improve the cost!
-        for paper in Paper.objects.all():
-            if not PDFHueyTask.objects.filter(
-                obsolete=False, paper=paper, status=HueyTaskTracker.COMPLETE
-            ).exists():
-                return False
-        else:
+        num_papers = Paper.objects.count()
+        if not num_papers:
             # special case for no papers exist
             return False
-        return True
+        # instead of checking that each paper has one, just compare numbers
+        return num_papers == self.get_n_complete_tasks()
 
     @transaction.atomic
     def are_there_errors(self) -> bool:
