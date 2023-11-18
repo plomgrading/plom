@@ -7,9 +7,12 @@ from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import MarkingStatsService, MarkingTaskService, page_data
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
+from Rubrics.services import RubricService
+
+from Mark.models import MarkingTask
 
 
-class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
+class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
     def get(self, request):
         mss = MarkingStatsService()
 
@@ -53,9 +56,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         # don't actually filter **all** tasks
         if all(X == "*" for X in [paper, question, version, username, score]):
             context.update({"warning": True})
-            return render(
-                request, "Progress/Mark/task_annotations_filter.html", context
-            )
+            return render(request, "Progress/Mark/task_filter.html", context)
 
         # at least one filter is set, so continue
         def optional_arg(val):
@@ -77,23 +78,7 @@ class ProgressTaskAnnotationFilterView(LeadMarkerOrManagerView):
         )
         context.update({"task_info": task_info})
 
-        return render(request, "Progress/Mark/task_annotations_filter.html", context)
-
-
-class ProgressTaskAnnotationView(LeadMarkerOrManagerView):
-    def get(self, request, question, version):
-        context = super().build_context()
-        context.update(
-            {
-                "question": question,
-                "version": version,
-                "task_info": MarkingStatsService().get_marking_task_annotation_info(
-                    question, version
-                ),
-            }
-        )
-
-        return render(request, "Progress/Mark/task_annotations.html", context)
+        return render(request, "Progress/Mark/task_filter.html", context)
 
 
 class AnnotationImageWrapView(LeadMarkerOrManagerView):
@@ -154,3 +139,38 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
             }
         )
         return render(request, "Progress/all_task_overview.html", context=context)
+
+
+class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
+    def get(self, request, task_pk):
+        # todo = move most of this DB work to a service.
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        context = self.build_context()
+        context.update(
+            {
+                "paper_number": task_obj.paper.paper_number,
+                "question": task_obj.question_number,
+                "version": task_obj.question_version,
+                "status": task_obj.get_status_display(),
+            }
+        )
+        if task_obj.status == MarkingTask.COMPLETE:
+            context.update(
+                {
+                    "annotation_pk": task_obj.latest_annotation.pk,
+                    "score": task_obj.latest_annotation.score,
+                    "username": task_obj.assigned_user.username,
+                    "edition": task_obj.latest_annotation.edition,
+                    "last_update": task_obj.latest_annotation.time_of_last_update,
+                    "marking_time": task_obj.latest_annotation.marking_time,
+                    "rubrics": RubricService().get_rubrics_from_annotation(
+                        task_obj.latest_annotation
+                    ),
+                }
+            )
+        elif task_obj.status == MarkingTask.OUT:
+            context.update({"username": task_obj.assigned_user.username})
+        else:
+            pass
+
+        return render(request, "Progress/Mark/task_details.html", context=context)
