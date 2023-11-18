@@ -366,8 +366,16 @@ class BuildPapersService:
             return (paper_path.name, fh.read())
 
     @transaction.atomic
-    def get_task_context(self) -> List[Dict[str, Any]]:
-        """Get information about all tasks."""
+    def get_task_context(self, include_obsolete: bool = False) -> List[Dict[str, Any]]:
+        """Get information about all tasks.
+
+        Keyword Args:
+            include_obsolete: include any obsolete chores.
+        """
+        tasks = PDFHueyTask.objects
+        if not include_obsolete:
+            tasks = tasks.filter(obsolete=False)
+        tasks = tasks.select_related("paper").order_by("paper__paper_number")
         return [
             {
                 "paper_number": task.paper.paper_number,
@@ -378,10 +386,7 @@ class BuildPapersService:
                 "tmp_huey_id": task.huey_id,
                 "obsolete": task.obsolete,
             }
-            # TODO: a loop over papers instead?
-            for task in PDFHueyTask.objects.all()
-            .select_related("paper")
-            .order_by("paper__paper_number")
+            for task in tasks
         ]
 
     def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
