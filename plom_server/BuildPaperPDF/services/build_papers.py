@@ -179,24 +179,31 @@ class BuildPapersService:
         ]
 
     def send_all_tasks(self) -> int:
-        """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey.
-
-        TODO: but for now, just build them all, independent of what has been done before.
-        TODO: that means it can error on our existing non-obsolete: to be considered...
+        """For each Paper without an QUEUED or COMPLETE chore, start building PDFs.
 
         Returns:
             How many tasks did we launch?
         """
         N = 0
         for paper in Paper.objects.all():
-            print(paper)
-            # TODO: andrew will make this all pre-fetchy later
-            # any_existing_tasks = PDFHueyTask.objects.filter(paper=paper).filter(
-            #     Q(status=PDFHueyTask.COMPLETE) | Q(status=PDFHueyTask.QUEUED | Q(status=PDFHueyTask.RUNNING)).exists()
-            # if not any_existing_tasks:
-            paper_num = paper.paper_number
-            self.send_single_task(paper_num)
-            N += 1
+            # This logic and flow is unpleasant...
+            # TODO: andrew may want to help make this all pre-fetchy later
+            # There are two things we need to build:
+            #   - Papers with no chore (non-obsolete)
+            #   - Papers with a Error chore (non-obsolete)
+            _do_build = False
+            try:
+                existing_task = PDFHueyTask.objects.get(paper=paper, obsolete=False)
+            except ObjectDoesNotExist:
+                _do_build = True
+            else:
+                if existing_task.status == PDFHueyTask.ERROR:
+                    _do_build = True
+                    existing_task.set_obsolete()
+            if _do_build:
+                paper_num = paper.paper_number
+                self.send_single_task(paper_num)
+                N += 1
         return N
 
     def send_single_task(self, paper_num) -> None:
