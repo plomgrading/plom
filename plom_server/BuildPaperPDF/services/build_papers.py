@@ -116,18 +116,26 @@ class BuildPapersService:
     base_dir = settings.MEDIA_ROOT
     papers_to_print = base_dir / "papersToPrint"
 
-    @transaction.atomic
-    def get_n_complete_tasks(self) -> None:
+    def get_n_complete_tasks(self) -> int:
         """Get the number of PDFHueyTasks that have completed."""
-        return PDFHueyTask.objects.filter(status=PDFHueyTask.COMPLETE).count()
+        return PDFHueyTask.objects.filter(
+            status=PDFHueyTask.COMPLETE, obsolete=False
+        ).count()
 
-    @transaction.atomic
-    def get_n_pending_tasks(self) -> None:
+    def get_n_pending_tasks(self) -> int:
         """Get the number of PDFHueyTasks with the status other than 'COMPLETE'.
 
         This includes ones that are 'TO_DO' and in-progress.
         """
-        return PDFHueyTask.objects.exclude(status=PDFHueyTask.COMPLETE).count()
+        return (
+            PDFHueyTask.objects.filter(obsolete=False)
+            .exclude(status=PDFHueyTask.COMPLETE)
+            .count()
+        )
+
+    def get_n_obsolete_tasks(self) -> int:
+        """Get the number of obsolete PDFHueyTasks."""
+        return PDFHueyTask.objects.filter(obsolete=True).count()
 
     @transaction.atomic
     def get_n_tasks_started_but_not_complete(self) -> int:
@@ -136,13 +144,16 @@ class BuildPapersService:
         These are the tasks that users could think of as "in-progress" in situations
         where its not important exactly where they are in the progress.
         """
-        return PDFHueyTask.objects.filter(
-            Q(status=PDFHueyTask.STARTING)
-            | Q(status=PDFHueyTask.QUEUED)
-            | Q(status=PDFHueyTask.RUNNING)
-        ).count()
+        return (
+            PDFHueyTask.objects.filter(obsolete=False)
+            .filter(
+                Q(status=PDFHueyTask.STARTING)
+                | Q(status=PDFHueyTask.QUEUED)
+                | Q(status=PDFHueyTask.RUNNING)
+            )
+            .count()
+        )
 
-    @transaction.atomic
     def get_n_tasks(self) -> int:
         """Get the total number of PDFHueyTasks."""
         return PDFHueyTask.objects.all().count()
@@ -157,13 +168,17 @@ class BuildPapersService:
     @transaction.atomic
     def are_there_errors(self) -> bool:
         """Return True if there are any PDFHueyTasks with an 'error' status."""
-        return PDFHueyTask.objects.filter(status=PDFHueyTask.ERROR).count() > 0
+        return PDFHueyTask.objects.filter(
+            obsolete=False, status=PDFHueyTask.ERROR
+        ).exists()
 
     def get_completed_pdf_paths(self) -> list:
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
             pdf.file_path()
-            for pdf in PDFHueyTask.objects.filter(status=PDFHueyTask.COMPLETE)
+            for pdf in PDFHueyTask.objects.filter(
+                obsolete=False, status=PDFHueyTask.COMPLETE
+            )
         ]
 
     def stage_all_pdf_jobs(self, classdict=None) -> None:
@@ -331,12 +346,12 @@ class BuildPapersService:
             task.set_obsolete()
 
     @transaction.atomic
-    def get_all_task_status(self) -> Dict:
+    def get_all_task_status(self) -> Dict[int, str]:
         """Get the status of every task and return as a dict."""
-        stat = {}
-        for task in PDFHueyTask.objects.all():
-            stat[task.paper.paper_number] = task.get_status_display()
-        return stat
+        return {
+            task.paper.paper_number: task.get_status_display()
+            for task in PDFHueyTask.objects.exclude(obsolete=True)
+        }
 
     @transaction.atomic
     def get_paper_path_and_bytes(self, paper_number: int):

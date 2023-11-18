@@ -85,7 +85,6 @@ class Command(BaseCommand):
 
     def show_task_status(self):
         bp_service = BuildPapersService()
-        # is a list of (paper_number, status)
         stats = bp_service.get_all_task_status()
         if len(stats):
             self.stdout.write(f"{len(stats)} tasks total:")
@@ -98,6 +97,8 @@ class Command(BaseCommand):
                 self.stdout.write("All papers are now built")
         else:
             self.stdout.write("No queued tasks.")
+        N = bp_service.get_n_obsolete_tasks()
+        print(f"There are also {N} obsolete PDF building chores")
 
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
