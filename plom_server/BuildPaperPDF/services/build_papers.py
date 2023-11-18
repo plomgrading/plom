@@ -376,7 +376,7 @@ class BuildPapersService:
                 "pdf_filename": task.file_display_name(),
                 "tmp_pk": task.pk,
                 "tmp_huey_id": task.huey_id,
-                "tmp_obsolete": task.obsolete,
+                "obsolete": task.obsolete,
             }
             # TODO: a loop over papers instead?
             for task in PDFHueyTask.objects.all()
