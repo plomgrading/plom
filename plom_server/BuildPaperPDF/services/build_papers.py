@@ -382,8 +382,6 @@ class BuildPapersService:
                 "status": task.get_status_display(),
                 "message": task.message,
                 "pdf_filename": task.file_display_name(),
-                "tmp_pk": task.pk,
-                "tmp_huey_id": task.huey_id,
                 "obsolete": task.obsolete,
             }
             for task in tasks
