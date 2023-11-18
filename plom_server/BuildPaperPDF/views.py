@@ -34,7 +34,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         else:
             poll = False
 
-        if bps.get_n_complete_tasks() == bps.get_n_tasks():
+        if bps.are_all_papers_built():
             zip_disabled = False
         else:
             zip_disabled = True
