@@ -85,6 +85,10 @@ class Command(BaseCommand):
 
     def show_task_status(self):
         bp_service = BuildPapersService()
+        if bp_service.are_all_papers_built():
+            self.stdout.write("All papers are now built")
+        else:
+            self.stdout.write("Not all papers are built")
         stats = bp_service.get_all_task_status()
         if len(stats):
             self.stdout.write(f"{len(stats)} tasks total:")
@@ -93,8 +97,6 @@ class Command(BaseCommand):
                 rev_stat.setdefault(state, []).append(n)
             for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
-            if len(rev_stat.get("Complete", [])) == len(stats):
-                self.stdout.write("All papers are now built")
         else:
             self.stdout.write("No queued tasks.")
         N = bp_service.get_n_obsolete_tasks()
