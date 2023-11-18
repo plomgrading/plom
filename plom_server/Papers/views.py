@@ -12,9 +12,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import (
     PaperCreatorService,
     PaperInfoService,
-    SpecificationService,
 )
-from Papers.models import CreatePaperTask
 from Preparation.services import PQVMappingService, StagingStudentService
 from BuildPaperPDF.services import BuildPapersService
 from Finish.services import ReassembleService
@@ -27,7 +25,6 @@ class CreateTestPapers(ManagerRequiredView):
     """
 
     def post(self, request):
-        print("v" * 40)
         pcs = PaperCreatorService()
         qvs = PQVMappingService()
 
