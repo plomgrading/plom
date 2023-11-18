@@ -4,7 +4,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...services import PrenameSettingService
+from ...services import PrenameSettingService, TestPreparedSetting
 
 
 class Command(BaseCommand):
@@ -23,6 +23,19 @@ class Command(BaseCommand):
         pss = PrenameSettingService()
         current_state = pss.get_prenaming_setting()
 
+        if not (options["enable"] or options["disable"]):
+            # print current state
+            if current_state:
+                self.stdout.write("Prenaming is currently enabled")
+            else:
+                self.stdout.write("Prenaming is currently disabled")
+            return
+
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot change prenaming"
+            )
+
         # if enable or disable options given
         if options["enable"]:
             if current_state:
@@ -30,17 +43,10 @@ class Command(BaseCommand):
             else:
                 pss.set_prenaming_setting(True)
                 print("Enabling prenaming")
-            return
-        if options["disable"]:
+
+        elif options["disable"]:
             if not current_state:
                 print("Prenaming already disabled")
             else:
                 pss.set_prenaming_setting(False)
                 print("Disabling prenaming")
-            return
-
-        # otherwise print current state
-        if current_state:
-            self.stdout.write("Prenaming is currently enabled")
-        else:
-            self.stdout.write("Prenaming is currently disabled")
