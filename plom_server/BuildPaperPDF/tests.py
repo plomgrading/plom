@@ -36,17 +36,6 @@ class BuildPaperPDFTests(TestCase):
         n_complete = bps.get_n_complete_tasks()
         self.assertEqual(n_complete, 2)
 
-    def test_get_n_pending_tasks(self):
-        """Test BuildPapersService.get_n_pending_tasks."""
-        bps = BuildPapersService()
-        n_pending = bps.get_n_pending_tasks()
-        self.assertEqual(n_pending, 0)
-
-        self.make_tasks()
-
-        n_pending = bps.get_n_pending_tasks()
-        self.assertEqual(n_pending, 5)
-
     def test_get_n_tasks(self):
         """Test BuildPapersService.get_n_tasks."""
         bps = BuildPapersService()

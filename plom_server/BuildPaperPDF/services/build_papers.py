@@ -123,17 +123,6 @@ class BuildPapersService:
             status=PDFHueyTask.COMPLETE, obsolete=False
         ).count()
 
-    def get_n_pending_tasks(self) -> int:
-        """Get the number of PDFHueyTasks with the status other than 'COMPLETE'.
-
-        This includes ones that are 'TO_DO' and in-progress.
-        """
-        return (
-            PDFHueyTask.objects.filter(obsolete=False)
-            .exclude(status=PDFHueyTask.COMPLETE)
-            .count()
-        )
-
     def get_n_obsolete_tasks(self) -> int:
         """Get the number of obsolete PDFHueyTasks."""
         return PDFHueyTask.objects.filter(obsolete=True).count()
