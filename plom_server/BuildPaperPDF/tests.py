@@ -7,8 +7,8 @@ from django.test import TestCase
 from model_bakery import baker
 from warnings import catch_warnings, simplefilter
 
-from BuildPaperPDF.services import BuildPapersService
-from BuildPaperPDF.models import BuildPaperPDFChore as PDFTask
+from .services import BuildPapersService
+from .models import BuildPaperPDFChore
 
 
 class BuildPaperPDFTests(TestCase):
@@ -17,13 +17,12 @@ class BuildPaperPDFTests(TestCase):
     def make_tasks(self):
         with catch_warnings():  # Don't worry about timezone naivete
             simplefilter("ignore")
-            baker.make(PDFTask, status=PDFTask.TO_DO)
-            baker.make(PDFTask, status=PDFTask.STARTING)
-            baker.make(PDFTask, status=PDFTask.QUEUED)
-            baker.make(PDFTask, status=PDFTask.RUNNING)
-            baker.make(PDFTask, status=PDFTask.COMPLETE)
-            baker.make(PDFTask, status=PDFTask.ERROR)
-            baker.make(PDFTask, status=PDFTask.COMPLETE)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.STARTING)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.QUEUED)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.RUNNING)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.COMPLETE)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.ERROR)
+            baker.make(BuildPaperPDFChore, status=BuildPaperPDFChore.COMPLETE)
 
     def test_get_n_complete_tasks(self):
         """Test BuildPapersService.get_n_complete_tasks."""
@@ -45,7 +44,7 @@ class BuildPaperPDFTests(TestCase):
         self.make_tasks()
 
         n_total = bps.get_n_tasks()
-        self.assertEqual(n_total, 7)
+        self.assertEqual(n_total, 6)
 
     def test_get_n_tasks_started_but_not_complete(self):
         """Test BuildPapersService checking how many in progress."""
