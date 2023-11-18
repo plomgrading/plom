@@ -102,10 +102,7 @@ def huey_build_single_paper(
                     tr.pdf_file = File(f, name=save_path.name)
                     tr.transition_to_complete()
             # TODO: should we interact with other non-Obsolete chores?
-            # TODO: e.g., reset all other chores as Obsolete?
-            # TODO: or would we like last-finished rather than first-finished?
-            # TODO: or maybe it should be an error to finish when there is
-            # TODO: COMPLETE chore: that is, caller is responsible...
+            # Currently we prevent multiple non-Obsolete Chores at creation
 
     return True
 
