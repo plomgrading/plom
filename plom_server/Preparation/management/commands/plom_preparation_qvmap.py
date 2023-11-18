@@ -28,9 +28,7 @@ class Command(BaseCommand):
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
             if TestPreparedSetting.is_test_prepared():
-                print(
-                    'The assessment "prepared" toggle is set: you cannot change the mapping.'
-                )
+                print("Exam preparation is locked: cannot change qvmap.")
 
         else:
             self.stdout.write("There is no question-version mapping.")
@@ -108,7 +106,7 @@ class Command(BaseCommand):
 
     def remove_pqv_map(self):
         if TestPreparedSetting.is_test_prepared():
-            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+            raise CommandError("Exam preparation is locked: cannot change qvmap.")
 
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
