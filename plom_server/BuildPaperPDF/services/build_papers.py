@@ -113,6 +113,10 @@ class BuildPapersService:
     base_dir = settings.MEDIA_ROOT
     papers_to_print = base_dir / "papersToPrint"
 
+    def get_n_papers(self) -> int:
+        """Get the number of Papers."""
+        return Paper.objects.count()
+
     def get_n_complete_tasks(self) -> int:
         """Get the number of PDFHueyTasks that have completed."""
         return PDFHueyTask.objects.filter(
@@ -162,7 +166,7 @@ class BuildPapersService:
         If there are no Papers, we still return False (despite this being technically
         trivially true).
         """
-        num_papers = Paper.objects.count()
+        num_papers = self.get_n_papers()
         if not num_papers:
             # special case for no papers exist
             return False
