@@ -78,11 +78,12 @@
                                 <td class="text-center">
                                     <a class="btn btn-outline-primary"
                                        href="{% url 'rubric_item' rubric.key %}">info</a>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-        </div>
-    {% endblock main_content %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% endblock main_content %}
