@@ -266,7 +266,7 @@ class BuildPapersService:
             tr = HueyTaskTracker.objects.get(pk=tracker_pk)
             tr.transition_to_queued_or_running(res.id)
 
-    def try_to_cancel_all_queued_tasks(self) -> None:
+    def try_to_cancel_all_queued_tasks(self) -> int:
         """Try to cancel all the queued tasks in the Huey queue.
 
         If a task is already running, it is probably difficult to cancel
@@ -278,7 +278,11 @@ class BuildPapersService:
         It would be embarrassing if something *became* QUEUED after this...
         So we hold atomic DB so no Trackers can transition from STARTING
         to QUEUED state, although I don't think there is a guarantee.
+
+        Returns:
+            The number of tasks we tried to revoke.
         """
+        N = 0
         queue = get_queue("tasks")
         with transaction.atomic(durable=True):
             queue_tasks = PDFHueyTask.objects.filter(
@@ -288,6 +292,8 @@ class BuildPapersService:
                 task.set_obsolete()
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
+                N += 1
+        return N
 
     def try_to_cancel_single_queued_task(self, paper_number: int):
         """Try to cancel a single queued task from Huey.

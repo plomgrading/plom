@@ -105,7 +105,8 @@ class Command(BaseCommand):
 
     def cancel_all_tasks(self):
         bp_service = BuildPapersService()
-        bp_service.cancel_all_task()
+        N = bp_service.try_to_cancel_all_queued_tasks()
+        self.stdout.write(f"Revoked {N} build paper PDF chores")
 
     def download_specific_paper(self, paper_number):
         bp_service = BuildPapersService()
