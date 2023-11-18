@@ -193,14 +193,6 @@ class BuildPapersService:
             )
         ]
 
-    def stage_all_pdf_jobs(self, classdict=None) -> None:
-        """Create all the PDFHueyTasks, and save to the database without sending them to Huey.
-
-        If there are prenamed test-papers, save that info too.
-        """
-        # TODO: still has callers, be a no-op
-        return
-
     def send_all_tasks(self) -> int:
         """For each Paper without an QUEUED or COMPLETE task, send PDF tasks to huey.
 
