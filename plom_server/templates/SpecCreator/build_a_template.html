@@ -127,21 +127,45 @@
         </div>
         {% if generated_toml %}
             <div class="card" x-data="{the_toml: `{{ generated_toml }}` }">
+                <h5 class="card-header">Generated toml template</h5>
                 <div class="card-body">
-                    <h4 class="card-title">
-                        Generated toml template
-                        <button class="btn btn-primary m-2"
-                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
-                            copy to clipboard
-                            <icon class="bi bi-clipboard2-plus"></icon>
-                        </button>
-                        <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
-                    </h4>
-                    <div class="card-text border p-2 fs-5">
-                        <pre x-model="the_toml">{{ generated_toml }}</pre>
+                    <div class="card-title">
+                        <p>
+                            <ul>
+                                <li>
+                                    Download the generated toml and open in your favourite editor, or simply copy-paste the generated toml into your editor.
+                                </li>
+                                <li>Carefully check the the pages and marks for each question.</li>
+                                <li>Once you have made your changes go back to the specification page and paste in your toml.</li>
+                            </ul>
+                        </p>
+                        <p>
+                            <button class="btn btn-primary m-2" @click="downtoml(the_toml)">
+                                download toml
+                                <icon class="bi bi-file-earmark-arrow-down"></icon>
+                            </button>
+                            <button class="btn btn-primary m-2"
+                                    @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                                copy to clipboard
+                                <icon class="bi bi-clipboard2-plus"></icon>
+                            </button>
+                            <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
+                        </p>
+                    </div>
+                    <div class="card-text">
+                        <pre class="p-4 border rounded fs-6 bg-success-subtle" x-model="the_toml">{{ generated_toml }}</pre>
                     </div>
                 </div>
             </div>
         {% endif %}
     </div>
+    <script>
+      function downtoml(stuff) {
+	  let filename = 'template_test_specification.toml';
+	  let element = document.createElement('a');
+	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+	  element.setAttribute('download', filename);
+	  element.click();
+    }
+    </script>
 {% endblock main_content %}
