@@ -83,8 +83,8 @@ def huey_build_single_paper(
         )
 
         if _debug_be_flaky:
-            for i in range(10):
-                print(f"Huey sleep i={i}/10: {task.id}")
+            for i in range(5):
+                print(f"Huey sleep i={i}/4: {task.id}")
                 time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
