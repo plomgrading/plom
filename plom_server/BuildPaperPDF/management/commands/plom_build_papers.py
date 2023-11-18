@@ -5,6 +5,8 @@
 
 from pathlib import Path
 
+from tabulate import tabulate
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
@@ -34,6 +36,11 @@ class Command(BaseCommand):
             "--status",
             action="store_true",
             help="Show status of all paper build tasks",
+        )
+        grp.add_argument(
+            "--list",
+            action="store_true",
+            help="List each paper build chore and its status",
         )
         grp.add_argument(
             "--delete-all",
@@ -99,6 +106,11 @@ class Command(BaseCommand):
         N = bp_service.get_n_obsolete_tasks()
         print(f"There are also {N} obsolete PDF building chores")
 
+    def list_tasks(self):
+        bp_service = BuildPapersService()
+        tab = bp_service.get_task_context(include_obsolete=True)
+        self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
+
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
         bp_service.reset_all_tasks()
@@ -149,5 +161,7 @@ class Command(BaseCommand):
             self.cancel_all_tasks()
         elif options["status"]:
             self.show_task_status()
+        elif options["list"]:
+            self.list_tasks()
         else:
             self.print_help("manage.py", "plom_build_papers")
