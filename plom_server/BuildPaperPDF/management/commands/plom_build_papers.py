@@ -90,15 +90,15 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Not all papers are built")
         stats = bp_service.get_all_task_status()
-        if len(stats):
-            self.stdout.write(f"{len(stats)} tasks total:")
+        if not stats:
+            self.stdout.write("No current chores.")
+        else:
+            self.stdout.write(f"{len(stats)} chores total:")
             rev_stat = {}
             for n, state in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
-        else:
-            self.stdout.write("No queued tasks.")
         N = bp_service.get_n_obsolete_tasks()
         print(f"There are also {N} obsolete PDF building chores")
 
