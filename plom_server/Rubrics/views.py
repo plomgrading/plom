@@ -79,7 +79,8 @@ class RubricItemView(ManagerRequiredView):
         rubric_key = str(rubric_key).zfill(12)
 
         if form.is_valid():
-            rubric = RubricItemView.rs.get_all_rubrics().get(key=rubric_key)
+            rs = RubricService()
+            rubric = rs.get_all_rubrics().get(key=rubric_key)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
