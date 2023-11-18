@@ -7,7 +7,6 @@ class SpecTemplateBuilderService:
         self, longName=None, shortName=None, pages=2, questions=1, versions=1, score=5
     ):
         """Builds a template toml string with comments."""
-
         spec_toml = f"""
 # Two human-readable names of the test - one long, one short.
 longName = "{longName}"
@@ -30,11 +29,11 @@ doNotMarkPages = []
 
 # The information for each question starts with '[[question]]'.
 # For each we must give the list of pages and the maximum mark.
-# 
+#
 # Then optionally a specific label for the question, such as
 # 'label = "Ex3"
 #
-# And also optionally tell Plom how to select the question from the 
+# And also optionally tell Plom how to select the question from the
 # available versions - either
 #    'select = "shuffle"' - take randomly from any version, or
 #    'select = "fix"' - always take from version 1
