@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Union
 
 from django.db import models
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
+
+# from django.db.models.signals import pre_delete
 
 from Base.models import HueyTaskTracker
 from Papers.models import Paper
@@ -26,10 +26,10 @@ class PDFHueyTask(HueyTaskTracker):
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 
-    # Note that the cascade-delete does not call PDFHueyTask's delete
-    # function, instead use the pre_delete signal to call a function
-    # to unlink the associated file
+    # Note that the cascade-delete does not call our delete
+    # function, instead use the pre_delete signal to unlink the associated file
     # See - https://docs.djangoproject.com/en/4.1/ref/models/fields/#django.db.models.CASCADE
+    # TODO: we removed this.
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""
