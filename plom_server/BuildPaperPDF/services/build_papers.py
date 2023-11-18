@@ -16,7 +16,6 @@ import zipfly
 from plom.create.mergeAndCodePages import make_PDF
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
 from django.core.files import File
@@ -329,7 +328,7 @@ class BuildPapersService:
         TODO: what if it is Complete?  What then?  I'm not sure it should reset
         but currently it does.
         """
-        task = get_object_or_404(Paper, paper_number=paper_number).pdfhueytask
+        task = PDFHueyTask.objects.get(obsolete=False, paper__paper_number=paper_number)
         task.set_obsolete()
         if task.huey_id:
             queue = get_queue("tasks")
