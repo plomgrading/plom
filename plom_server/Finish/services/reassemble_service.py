@@ -29,6 +29,7 @@ from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
 from ..models import ReassembleHueyTaskTracker
+from ..models import ReassembleHueyTaskTracker as ReassemblePaperChore
 from Base.models import HueyTaskTracker
 
 
@@ -493,25 +494,35 @@ class ReassembleService:
                 paper=paper_obj, huey_id=None, status=HueyTaskTracker.TO_DO
             )
 
-    def queue_single_paper_reassembly(self, paper_number: int) -> None:
+    def queue_single_paper_reassembly(self, paper_num: int) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
         Args:
             paper_number (int): The paper number to re-assemble.
         """
         try:
-            paper_obj = Paper.objects.get(paper_number=paper_number)
+            paper = Paper.objects.get(paper_number=paper_num)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
         with transaction.atomic(durable=True):
-            tr = paper_obj.reassemblehueytasktracker
-            tr.reset_to_do()
-            tr.transition_to_starting()
-            tracker_pk = tr.pk
+            if ReassemblePaperChore.objects.filter(
+                paper=paper, obsolete=False
+            ).exists():
+                raise ValueError(
+                    f"There are non-obsolete ReassemblePaperChores for papernum {paper_num}:"
+                    " make them obsolete before creating another"
+                )
+            chore = ReassemblePaperChore.objects.create(
+                paper=paper,
+                huey_id=None,
+                status=ReassemblePaperChore.STARTING,
+            )
+            chore.save()
+            tracker_pk = chore.pk
 
         res = huey_reassemble_paper(
-            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=False
+            paper_num, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
 
@@ -780,16 +791,14 @@ def huey_reassemble_paper(
                     f"DEBUG: deliberately failing creation of reassembly {paper_number}"
                 )
 
-        with save_path.open("rb") as f:
-            with transaction.atomic():
-                # TODO: unclear to me if we need to re-get the task
-                tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
-                # TODO: IMHO, the pdf file does not belong in the Tracker obj
-                # TODO: I think we should have deleted it before restarting so this isn't needed
-                # delete any old file if it exists
-                if tr.pdf_file:
-                    tr.pdf_file.delete()
-                # save the new one.
-                tr.pdf_file = File(f, name=save_path.name)
+        with transaction.atomic():
+            tr = ReassemblePaperChore.objects.get(pk=tracker_pk)
+            if tr.obsolete:
+                # if result no longer needed, no need to keep the PDF
                 tr.transition_to_complete()
+            else:
+                with save_path.open("rb") as f:
+                    tr.pdf_file = File(f, name=save_path.name)
+                    tr.transition_to_complete()
+
     return True

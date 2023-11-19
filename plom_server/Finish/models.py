@@ -10,8 +10,8 @@ from Papers.models import Paper
 
 
 class ReassembleHueyTaskTracker(HueyTaskTracker):
-    # OneToOneField makes a field called "reassemblehueytasktracker" in the Paper table
-    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+
     # TODO: I'm not convinced this should have a PDF file in it... TBD
     pdf_file = models.FileField(upload_to="reassemble/", null=True)
 
