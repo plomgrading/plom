@@ -46,32 +46,32 @@
                 </div>
             </div>
         </div>
-	
         <div class="col-5">
-          <div class="card w-auto my-2">
-            <div class="card-body">
-              <h5 class="card-title">Upload bundle PDF</h5>
-              <ul>
-                <li>Upload scanned tests here.</li>
-                <li>Plom will read the QR codes and find problems if there are any.</li>
-              </ul>
-              {% if preparation_finished %}
-              <form enctype="multipart/form-data"
-                    method="post"
-                    action="{% url 'scan_home' %}">
-                {% csrf_token %}
-		<input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
-                <input type="submit" class="btn btn-secondary" value="Upload">
-              </form>
-              {% else %}
-              <a disabled>No bundles to upload - test preparation is still in progress.</a>
-              {% endif %}
+            <div class="card w-auto my-2">
+                <div class="card-body">
+                    <h5 class="card-title">Upload bundle PDF</h5>
+                    <ul>
+                        <li>The images will be placed in a staging area where QR codes will be read.</li>
+                        <li>Then fix any issues such as extra page information, or illegible QR codes</li>
+                        <li>
+                            When there are no issues the bundle can be <q>pushed</q> and marking can begin.
+                        </li>
+                    </ul>
+                    {% if preparation_finished %}
+                        <form enctype="multipart/form-data"
+                              method="post"
+                              action="{% url 'scan_home' %}">
+                            {% csrf_token %}
+                            <input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
+                            <input type="submit" class="btn btn-secondary" value="Upload">
+                        </form>
+                    {% else %}
+                        <a disabled>No bundles to upload - test preparation is still in progress.</a>
+                    {% endif %}
+                </div>
             </div>
-          </div>
         </div>
     </div>
-
-    
     <div class="card my-2 w-75">
         <div class="card-body">
             <h5 class="card-title">{{ staged_bundles|length }} staged bundles:</h5>
@@ -98,8 +98,6 @@
             {% endif %}
         </div>
     </div>
-
-    
     <div class="card my-2 w-75">
         <div class="card-body">
             <h5 class="card-title">{{ pushed_bundles|length }} pushed bundles:</h5>
