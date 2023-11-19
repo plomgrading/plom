@@ -17,6 +17,7 @@ import os
 import re
 import sys
 from textwrap import dedent
+from typing import Any, Dict
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -117,6 +118,8 @@ class Annotator(QWidget):
         # Show warnings or not
         self.markWarn = True
         self.rubricWarn = True
+        # a key-value store for local config
+        self._config: Dict[str, Any] = {}
 
         # a solution view / previous annotation pop-up window - initially set to None
         self.solutionView = None
@@ -1495,10 +1498,14 @@ class Annotator(QWidget):
         rubrics = self.scene.get_rubrics()
         ok, code, msg = check_for_illadvised(rubrics, self.maxMark)
         if not ok:
-            # TODO: some more serious than others, may want to add
-            # "don't ask me again" for only some.  For now, none.
-            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
-                return False
+            if not self._config.get("dama-" + code):
+                d = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
+                if d.exec() == QMessageBox.StandardButton.No:
+                    return False
+                if d.cb.isChecked():
+                    self._config["dama-" + code] = True
 
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()
@@ -1520,14 +1527,12 @@ class Annotator(QWidget):
         return True
 
     def _zeroMarksWarn(self):
-        """
-        A helper method for saveAnnotations.
+        """A helper method for saveAnnotations.
 
         Controls warnings for when paper has 0 marks. If there are only-ticks or some-ticks then warns user.
 
         Returns:
             False if user cancels, True otherwise.
-
         """
         warn = False
         forceWarn = False
