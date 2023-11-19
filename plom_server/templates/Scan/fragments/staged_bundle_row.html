@@ -1,0 +1,148 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% load static %}
+<td>
+  <div class="zoom-thumb">
+    {% if has_been_processed %}
+    <img src="{% url 'scan_get_thumbnail' timestamp 1 %}" />
+    {% else %}
+    <img src="{% static 'ball_triangle.svg' %}"
+         hx-get="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+         hw-swap="innerHTML"
+         hx-trigger="load delay:2s"
+         hx-target="#bundle{{ slug }}" />
+    {% endif %}
+  </div>
+</td>
+<td>
+  {{ slug }}.pdf
+</td>
+<td>
+  {{ when }}
+</td>
+<td class="text-start">
+  <ul>
+    <li>
+      Total pages: {{ number_of_pages }}
+      {% if has_been_processed %}
+      {% else %}
+      Processing pages:
+      <div class="progress" role="progressbar">
+        <div class="progress-bar progress-bar-striped bg-success"
+             style="width: {{ percent_split }}%">{{ number_of_split_pages }}</div>
+      </div>
+      {% endif %}
+    </li>
+    {% if has_been_processed %}
+    {% if has_qr_codes %}
+    
+    {% if n_known == number_of_pages %}
+    <li>
+      Known pages: <i class="bi bi-check-circle text-success"> all</i>
+    </li>
+    {% else %}
+    <li>Known pages: {{ n_known }}</li>
+    
+    {% if n_extra %}
+    <li>
+      Extra pages:
+      {% if n_extra == n_extra_w_data %}
+      {{ n_extra }} - all processed <i class="bi bi-check-circle text-success"></i>
+      {% else %}
+      <i class="bi bi-dash-circle-fill text-warning"></i> {{ n_extra_w_data }} of {{ n_extra }} processed
+      {% endif %}
+    </li>
+    {% else %}
+    {% endif %}
+
+    {% if n_unknown %}
+    <li>
+      Unknown pages:
+      {{ n_unknown }} <i class="bi bi-question-circle-fill text-warning"></i>
+    </li>
+    {% else %}
+    {% endif %}
+    
+      {% if n_discard %}
+    <li>
+      Discard pages:
+      {{ n_discard }}
+    </li>
+      {% else %}
+      {% endif %}
+
+    {% if n_errors %}
+    <li>
+      Error pages:
+      {{ n_errors }} <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+    </li>
+      {% else %}
+      {% endif %}
+
+      {% if n_incomplete %}
+    <li>
+      Incomplete papers: {{ n_incomplete }} <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+    </li>
+      {% endif %}
+    {% endif %}
+    {% else %}
+    {% if is_mid_qr_read %}
+    <li>
+      Reading qr-codes:
+      <div class="text-center">
+	<img class="shadow-sm p-3 border rounded-start my-2"
+             src="{% static 'ball_triangle.svg' %}"
+             hx-get="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+             hw-swap="innerHTML"
+             hx-trigger="load delay:2s"
+             hx-target="#bundle{{ slug }}" />
+	<div class="progress" role="progressbar">
+          <div class="progress-bar progress-bar-striped bg-success"
+               style="width: {{ percent_read }}%">{{ number_of_read_pages }}</div>
+	</div>
+      </div>
+    </li>
+    {% else %}
+    <li>QR codes not yet scanned</li>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+  </ul>
+</td>
+<td>
+  <div class="d-flex justify-content-evenly my-2">
+  {% if has_been_processed %}
+  <a class="btn"
+     href="{% url 'scan_bundle_thumbnails' timestamp %}"
+     style="background-color: #0F984F;
+            color: white">View</a>
+  {% if has_qr_codes %}
+  {% if is_perfect %}
+  {% if n_incomplete == 0 %}
+  <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
+  {% else %}
+  <button hx-post="push/{{ timestamp }}/all/"
+          class="btn btn-danger"
+          hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
+    Push!
+  </button>
+  {% endif %}
+  {% else %}
+    <button class="btn btn-warning" disabled>Push</button>
+  {% endif %}
+  {% elif is_mid_qr_read %}
+  {% else %}
+  <button class="btn btn-info"
+          hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
+  {% endif %}
+  {% endif %}
+  <a class="btn btn-secondary"
+     target="_"
+     href="{% url 'scan_get_bundle' timestamp %}">Download</a>
+  <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+     hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+     hx-confirm="Are you sure?">Remove</a>
+  </div>
+</td>

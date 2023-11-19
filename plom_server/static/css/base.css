@@ -84,3 +84,22 @@ img.thumbnail270 {
     width: 100%;
     height: 100%;
 }
+
+.zoom-thumb {
+    height: 10vh;
+    width: auto;
+}
+
+.zoom-thumb > img {
+    border: 1px solid grey;
+    border-radius: 2px;
+    object-fit: cover;
+    width: auto;
+    height: 100%;
+    transition: all .2s ease-in-out;
+}
+
+.zoom-thumb > img:hover {
+  transform: scale(4);
+}
+

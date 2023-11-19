@@ -14,121 +14,127 @@
     Scan bundles
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="d-grid gap-2">
-        <div class="card w-50">
-            <div class="card-body">
-                <h5>Summary of pushed papers:</h5>
-                <div class="row">
-                    <div class="col">
-                        <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete test papers</p>
-                    </div>
-                    <div class="col">
-                        <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused test papers</p>
-                    </div>
-                    <div class="col">
-                        {% if incomplete_test_papers == 0 %}
-                            <p class="text-success">all used papers complete</p>
-                        {% else %}
-                            <p class="text-danger">
-                                <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                                {{ incomplete_test_papers }} incomplete test paper(s)
-                                <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <a class="btn btn-success" href="{% url 'scan_summary' %}">View Details</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card w-50">
-            <div class="card-body">
-                <h5 class="card-title">Upload bundle PDF</h5>
-                <details style="margin-bottom: 10px;">
-                    <ul>
-                        <li>Upload scanned tests here.</li>
-                        <li>Plom will read the QR codes and find problems if there are any.</li>
-                    </ul>
-                </details>
-                {% if preparation_finished %}
-                    <form enctype="multipart/form-data"
-                          method="post"
-                          action="{% url 'scan_home' %}">
-                        {% csrf_token %}
-                        {{ form }}
-                        <input type="submit"
-                               class="btn"
-                               value="Upload"
-                               style="background-color: #0F984F;
-                                      color: white">
-                    </form>
-                {% else %}
-                    <a disabled>No bundles to upload - test preparation is still in progress.</a>
-                {% endif %}
-            </div>
-        </div>
-        <br>
-        <div>
-            <div class="row" style="margin-right: 0.1px;">
-                <div class="col border">
-                    <div>
-                        <h5>{{ staged_bundles|length }} Staged Bundles</h5>
-                        <div class="d-grid gap-2">
-                            {% if staged_bundles %}
-                                {% for bundle in staged_bundles %}
-                                    <div hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
-                                         hw-swap="innerHTML"
-                                         hx-trigger="load"
-                                         id="bundle{{ bundle.slug }}"></div>
-                                {% endfor %}
+    <div class="row d-flex align-items-stretch">
+        <div class="col-5">
+            <div class="card w-auto my-2">
+                <div class="card-body">
+                    <h5>Summary of pushed papers:</h5>
+                    <div class="row">
+                        <div class="col">
+                            <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete test papers</p>
+                        </div>
+                        <div class="col">
+                            <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused test papers</p>
+                        </div>
+                        <div class="col">
+                            {% if incomplete_test_papers == 0 %}
+                                <p class="text-success">all used papers complete</p>
                             {% else %}
-                                <h6>No bundles uploaded yet.</h6>
+                                <p class="text-danger">
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    {{ incomplete_test_papers }} incomplete test paper(s)
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                </p>
                             {% endif %}
                         </div>
                     </div>
-                </div>
-                <div class="col border">
-                    <div>
-                        <h5>{{ pushed_bundles|length }} Pushed Bundles</h5>
-                        {% if pushed_bundles %}
-                            <div class="d-grid gap-2">
-                                {% for bundle in pushed_bundles %}
-                                    <div class="card"
-                                         style="min-width: fit-content;
-                                                max-width: 90%;
-                                                height:100%">
-                                        <div class="card-body d-flex flex-row p-0">
-                                            <img src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}"
-                                                 class="border rounded-start"
-                                                 style="max-height: 16em;
-                                                        transform:rotate(calc(-1 * {{ bundle.cover_angle|default_if_none:0 }}deg))" />
-                                            <div class="p-2">
-                                                <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
-                                                <ul class="list-unstyled">
-                                                    <li>Total pages: {{ bundle.pages }}</li>
-                                                </ul>
-                                                <a class="btn"
-                                                   href="{% url 'scan_bundle_thumbnails' bundle.timestamp %}"
-                                                   style="background-color: #0F984F;
-                                                          color: white">View</a>
-                                                <a class="btn btn-secondary"
-                                                   target="_"
-                                                   href="{% url 'scan_get_bundle' bundle.timestamp %}">Download</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="d-grid gap-2">
-                                <h6>No bundles pushed yet.</h6>
-                            </div>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col">
+                            <a class="btn btn-success" href="{% url 'scan_summary' %}">View Details</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    {% endblock main_content %}
+	
+        <div class="col-5">
+          <div class="card w-auto my-2">
+            <div class="card-body">
+              <h5 class="card-title">Upload bundle PDF</h5>
+              <ul>
+                <li>Upload scanned tests here.</li>
+                <li>Plom will read the QR codes and find problems if there are any.</li>
+              </ul>
+              {% if preparation_finished %}
+              <form enctype="multipart/form-data"
+                    method="post"
+                    action="{% url 'scan_home' %}">
+                {% csrf_token %}
+		<input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
+                <input type="submit" class="btn btn-secondary" value="Upload">
+              </form>
+              {% else %}
+              <a disabled>No bundles to upload - test preparation is still in progress.</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+    </div>
+
+    
+    <div class="card my-2 w-75">
+        <div class="card-body">
+            <h5 class="card-title">{{ staged_bundles|length }} staged bundles:</h5>
+            {% if staged_bundles %}
+                <table class="table table-sm table-bordered text-center sortable">
+                    <thead>
+                        <th>Thumbnail</th>
+                        <th>Bundle name</th>
+                        <th>Upload time</th>
+                        <th>Pages</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody>
+                        {% for bundle in staged_bundles %}
+                            <tr hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
+                                hw-swap="innerHTML"
+                                hx-trigger="load"
+                                id="bundle{{ bundle.slug }}"></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h6>No staged bundles</h6>
+            {% endif %}
+        </div>
+    </div>
+
+    
+    <div class="card my-2 w-75">
+        <div class="card-body">
+            <h5 class="card-title">{{ pushed_bundles|length }} pushed bundles:</h5>
+            {% if pushed_bundles %}
+                <table class="table table-sm table-bordered text-center sortable">
+                    <thead>
+                        <th>Thumbnail</th>
+                        <th>Bundle name</th>
+                        <th>Pages</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody>
+                        {% for bundle in pushed_bundles %}
+                            <tr>
+                                <td>
+                                    <div class="zoom-thumb">
+                                        <img src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}" />
+                                    </div>
+                                </td>
+                                <td>{{ bundle.slug }}.pdf</td>
+                                <td>{{ bundle.pages }}</td>
+                                <td>
+                                    <a class="btn btn-success"
+                                       href="{% url 'scan_bundle_thumbnails' bundle.timestamp %}">View</a>
+                                    <a class="btn btn-secondary"
+                                       target="_"
+                                       href="{% url 'scan_get_bundle' bundle.timestamp %}">Download</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h6>No pushed bundles</h6>
+            {% endif %}
+        </div>
+    </div>
+{% endblock main_content %}
