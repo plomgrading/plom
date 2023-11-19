@@ -153,7 +153,6 @@ correct number of points.  **Publish the column** but set to manual release
 (if you don't publish, you may get confusing error messages such
 as "user not authorized to perform that action").
 
-
 Run ``./plom-push-to-canvas.py --help`` for instructions.
 Use the ``--dry-run`` mode first!
 You almost certainly want ``--no-section`` unless you are doing something
