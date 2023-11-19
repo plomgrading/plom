@@ -412,6 +412,7 @@ class ReassembleService:
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
+                "test_num": paper.paper_number,
                 "scanned": False,
                 "identified": False,
                 "marked": False,
