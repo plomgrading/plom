@@ -1514,8 +1514,7 @@ class Annotator(QWidget):
         if self._config.get("dama-" + code):
             return True
         if force:
-            d = SimpleQuestion(self, msg)
-            if d.exec() == QMessageBox.StandardButton.No:
+            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
             return True
         d = SimpleQuestionCheckBox(self, msg, "Don't ask me again this session.")
