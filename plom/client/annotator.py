@@ -1510,7 +1510,9 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
-    def _continue_after_warning(self, code, msg, *, force: bool = False) -> bool:
+    def _continue_after_warning(
+        self, code: str, msg: str, *, force: bool = False
+    ) -> bool:
         if self._config.get("dama-" + code):
             return True
         if force:
