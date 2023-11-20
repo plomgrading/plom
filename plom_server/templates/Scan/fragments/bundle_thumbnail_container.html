@@ -6,33 +6,10 @@
 -->
 <div class="card-body">
     <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
-        <div style="height: 16vh;
-                    width: 16vh;
-                    justify-content: center;
-                    display:flex;
-                    align-items:center">
-            {% if not pg.rotation %}
-                <img class="img-thumbnail thumbnail0"
-                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
-            {% elif pg.rotation == 180 %}
-                <img class="img-thumbnail thumbnail180"
-                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
-            {% elif pg.rotation == 90 %}
-                <img class="img-thumbnail thumbnail90"
-                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
-            {% elif pg.rotation == -90 or pg.rotation == 270 %}
-                <img class="img-thumbnail thumbnail270"
-                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
-            {% else %}
-                <p>Oh snap, rotation code broke&mdash;report a bug!</p>
-            {% endif %}
+        <div class="bundle-thumb">
+            <img class="img"
+                 src="{% url 'scan_get_rotated_thumbnail' timestamp pg.order %}" />
         </div>
     </a>
 </div>
-<div class="card-footer">
-    {% if pg.rotation is None %}
-        {{ pg.order }}: no rotation
-    {% else %}
-        {{ pg.order }}
-    {% endif %}
-</div>
+<div class="card-footer">{{ pg.order }}</div>

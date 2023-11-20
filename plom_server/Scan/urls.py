@@ -33,6 +33,8 @@ from .views import (
     UnknowifyImageView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
+    GetRotatedThumbnailView,
+    GetRotatedBundleImageView,
 )
 
 
@@ -52,6 +54,11 @@ urlpatterns = [
         "thumbnails/<timestamp>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
+    ),
+    path(
+        "thumbnail_rot/<timestamp>/<int:index>",
+        GetRotatedThumbnailView.as_view(),
+        name="scan_get_rotated_thumbnail",
     ),
     path(
         "thumbnails/<timestamp>",
@@ -82,6 +89,11 @@ urlpatterns = [
         "bundle/<timestamp>/<int:index>/",
         GetBundleImageView.as_view(),
         name="scan_get_image",
+    ),
+    path(
+        "bundle_rot/<timestamp>/<int:index>/",
+        GetRotatedBundleImageView.as_view(),
+        name="scan_get_rotated_image",
     ),
     path(
         "delete/<timestamp>/",

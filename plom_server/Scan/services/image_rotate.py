@@ -90,3 +90,5 @@ class ImageRotateService:
         staging_img.rotation %= 360
 
         staging_img.save()
+
+        # now rebuild the thumbnail
