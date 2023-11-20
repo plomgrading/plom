@@ -508,7 +508,7 @@ class ReassembleService:
             tracker_pk = tr.pk
 
         res = huey_reassemble_paper(
-            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=True
+            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
 
@@ -767,8 +767,8 @@ def huey_reassemble_paper(
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
 
         if _debug_be_flaky:
-            for i in range(10):
-                print(f"Huey sleep i={i}/10: {task.id}")
+            for i in range(5):
+                print(f"Huey sleep i={i}/4: {task.id}")
                 time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
