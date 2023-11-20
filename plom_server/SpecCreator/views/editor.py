@@ -88,7 +88,7 @@ class SpecTemplateView(ManagerRequiredView):
         context.update(
             {
                 "generated_toml": generated_toml,
-                "toml_lines": generated_toml.count("\n") + 1,
+                "toml_line_by_line": generated_toml.split("\n"),
                 "longName": longName,
                 "shortName": shortName,
                 "pages": pages,

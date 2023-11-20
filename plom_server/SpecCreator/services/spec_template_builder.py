@@ -42,20 +42,19 @@ doNotMarkPages = []
 
         score_per_question = score // questions
         pages_per_question = (pages - 1) // questions
-        page_numbers = [pn for pn in range(2, pages + 1)]
+        question_scores = [score_per_question for qi in range(questions)]
+        question_pages = [
+            [2 + qi * pages_per_question + pn for pn in range(pages_per_question)]
+            for qi in range(questions)
+        ]
+        # fix up score and pages for last question
+        question_scores[-1] += score - sum(question_scores)
+        question_pages[-1] += [pn + 1 for pn in range(question_pages[-1][-1], pages)]
 
-        for qi in range(questions - 1):
+        for k in range(questions):
             spec_toml += f"""
 [[question]]
-"pages" = {page_numbers[:pages_per_question]}
-"mark"=  {score_per_question}
+# "pages" = {question_pages[k]}   # <<<<< This needs editing
+# "mark"=  {question_scores[k]}   # <<<<< This needs editing
 """
-            page_numbers = page_numbers[pages_per_question:]
-
-        spec_toml += f"""
-[[question]]
-"pages" = {page_numbers}
-"mark"= {score - score_per_question*(questions-1)}
-"""
-
         return spec_toml

@@ -140,7 +140,7 @@
                             </ul>
                         </p>
                         <p>
-                            <button class="btn btn-primary m-2" @click="downtoml(the_toml)">
+                            <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
                                 download toml
                                 <icon class="bi bi-file-earmark-arrow-down"></icon>
                             </button>
@@ -152,15 +152,23 @@
                             <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
                         </p>
                     </div>
-                    <div class="card-text">
-                        <pre class="p-4 border rounded fs-6 bg-success-subtle" x-model="the_toml">{{ generated_toml }}</pre>
+                    <div class="card-text p-4 border rounded font-monospace">
+                        {% for line in toml_line_by_line %}
+                            {% if line.0 == '#' %}
+                                <span class="text-primary fw-medium">{{ line }}</span>
+                                <br>
+                            {% else %}
+                                <span>{{ line }}</span>
+                                <br>
+                            {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         {% endif %}
     </div>
     <script>
-      function downtoml(stuff) {
+      function downloadtoml(stuff) {
 	  let filename = 'template_test_specification.toml';
 	  let element = document.createElement('a');
 	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
