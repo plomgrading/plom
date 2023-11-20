@@ -1341,7 +1341,7 @@ class Annotator(QWidget):
 
         # remember the "don't ask me again" checks
         # but note that Marker is not supposed to be saving these globally to disc
-        if self.parentMarkerUI.annotatorSettings["_config"] is not None:
+        if self.parentMarkerUI.annotatorSettings.get("_config"):
             self._config = self.parentMarkerUI.annotatorSettings["_config"].copy()
 
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
