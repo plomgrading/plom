@@ -4,16 +4,11 @@
 -->
 <div class="container w-100 p-0 m-3" id="navFragment">
     <div class="row p-2">
-        <div style="height: 50vw;
-                    width: 50vw;
-                    justify-content: center;
-                    display:flex;
-                    align-items:center">
+        <div style="height: 50vw; width: 50vw;">
             <img class="shadow rounded"
-                 src="{% url 'scan_get_image' timestamp index %}"
+                 src="{% url 'scan_get_rotated_image' timestamp index %}"
                  style="max-height:100%;
-                        max-width: 100%;
-                        transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
+                        max-width: 100%" />
         </div>
         <div class="col-lg-3">
             <div class="card h-100">

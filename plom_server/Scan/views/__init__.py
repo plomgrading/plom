@@ -57,4 +57,5 @@ from .rotate_images import (
     RotateImageCounterClockwise,
     GetRotatedThumbnailView,
     GetRotatedBundleImageView,
+    GetRotatedPushedImageView,
 )

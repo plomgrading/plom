@@ -13,6 +13,7 @@ from django_htmx.http import HttpResponseClientRefresh
 from Base.base_group_views import ScannerRequiredView
 
 from ..services import ImageRotateService, ScanService
+from Progress.services import ManageScanService
 
 
 class RotateImageClockwise(ScannerRequiredView):
@@ -89,6 +90,35 @@ class GetRotatedThumbnailView(ScannerRequiredView):
         img_obj = scanner.get_thumbnail_image(timestamp, request.user, index)
 
         theta = img_obj.staging_image.rotation
+        if theta is None or theta == 0:
+            return FileResponse(img_obj.image_file)
+        else:
+            fh = BytesIO()
+            with Image.open(img_obj.image_file) as tmp_img:
+                exif_orient = tmp_img.getexif().get(274, 1)
+                if exif_orient == 1:
+                    pass
+                elif exif_orient == 3:
+                    theta += 180
+                elif exif_orient == 6:
+                    theta -= 90
+                elif exif_orient == 8:
+                    theta += 90
+                else:
+                    raise ValueError(
+                        f"Do not recognise this exif orientation value {exif_orient}"
+                    )
+                tmp_img.rotate(theta, expand=True).save(fh, "png")
+                return HttpResponse(fh.getvalue(), content_type="image/png")
+
+
+class GetRotatedPushedImageView(ScannerRequiredView):
+    """Return an image from a pushed bundle."""
+
+    def get(self, request, img_pk):
+        img_obj = ManageScanService().get_pushed_image(img_pk)
+
+        theta = img_obj.rotation
         if theta is None or theta == 0:
             return FileResponse(img_obj.image_file)
         else:

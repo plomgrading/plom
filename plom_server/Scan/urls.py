@@ -35,6 +35,7 @@ from .views import (
     RotateImageCounterClockwise,
     GetRotatedThumbnailView,
     GetRotatedBundleImageView,
+    GetRotatedPushedImageView,
 )
 
 
@@ -145,6 +146,11 @@ urlpatterns = [
         "summary/pushed_img/<int:img_pk>",
         ScannerPushedImageView.as_view(),
         name="scan_pushed_img",
+    ),
+    path(
+        "summary/rotated_pushed_img/<int:img_pk>",
+        GetRotatedPushedImageView.as_view(),
+        name="scan_rotated_pushed_img",
     ),
     path(
         "summary/pushed_img_wrap/<int:img_pk>",
