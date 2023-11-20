@@ -1339,15 +1339,10 @@ class Annotator(QWidget):
         else:
             self.showMaximized()
 
-        # remember the "do not show again" checks
-        if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:
-            _ = self.parentMarkerUI.annotatorSettings["markWarnings"]
-            self._config["dama-zero-marks-but-has-ticks"] = not _
-            self._config["dama-full-marks-but-has-crosses"] = not _
-        if self.parentMarkerUI.annotatorSettings["rubricWarnings"] is not None:
-            # TODO: considering storing on server for something between session
-            _ = not self.parentMarkerUI.annotatorSettings["rubricWarnings"]
-            self._config["dama-lost-marks-but-insufficient-feedback"] = _
+        # remember the "don't ask me again" checks
+        # but note that Marker is not supposed to be saving these globally to disc
+        if self.parentMarkerUI.annotatorSettings["_config"] is not None:
+            self._config = self.parentMarkerUI.annotatorSettings["_config"].copy()
 
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parentMarkerUI.annotatorSettings["zoomState"] is None:
@@ -1387,13 +1382,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.annotatorSettings[
             "viewRectangle"
         ] = self.view.getCurrentViewRect()
-        # TODO: conflating two things with "or", but maybe not for long if we store on server?
-        self.parentMarkerUI.annotatorSettings["markWarnings"] = (
-            not self._config.get("dama-zero-marks-but-has-ticks")
-        ) or (not self._config.get("dama-ull-marks-but-has-crosses"))
-        self.parentMarkerUI.annotatorSettings["rubricWarnings"] = not self._config.get(
-            "dama-lost-marks-but-insufficient-feedback"
-        )
+        self.parentMarkerUI.annotatorSettings["_config"] = self._config.copy()
         self.parentMarkerUI.annotatorSettings[
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
