@@ -96,10 +96,8 @@
 <td>
     <div class="d-flex justify-content-evenly my-2">
         {% if has_been_processed %}
-            <a class="btn"
-               href="{% url 'scan_bundle_thumbnails' timestamp %}"
-               style="background-color: #0F984F;
-                      color: white">View</a>
+            <a class="btn btn-success"
+               href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
             {% if has_qr_codes %}
                 {% if is_perfect %}
                     {% if n_incomplete == 0 %}
