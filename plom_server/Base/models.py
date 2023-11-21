@@ -4,12 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from huey.signals import (
-    SIGNAL_EXECUTING,
-    SIGNAL_ERROR,
-    SIGNAL_COMPLETE,
-    SIGNAL_INTERRUPTED,
-)
+from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
 from django.db import models
 from django.db import transaction
