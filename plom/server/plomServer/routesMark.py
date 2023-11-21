@@ -170,7 +170,6 @@ class MarkHandler:
             other or authentication problems.  Also 417 when the version
             requested does not match the version of the task.
         """
-
         task_code = request.match_info["task"]
         # returns either
         #   [True, image_metadata, [tag text list], integrity_check]
@@ -215,7 +214,6 @@ class MarkHandler:
             aiohttp.web_response.Response: Responses with a list including
             the number of graded tasks and the overall number of tasks.
         """
-
         log_request("MreturnMarkedTask", request)
 
         reader = MultipartReader.from_response(request)
@@ -646,7 +644,7 @@ class MarkHandler:
     # @routes.get("/pagedata/{number}")
     @authenticate_by_token_required_fields([])
     def get_pagedata(self, data, request):
-        """Return the metadata for all images associated with a paper
+        """Return the metadata for all images associated with a paper.
 
         Respond with status 200/409.
 
@@ -743,7 +741,7 @@ class MarkHandler:
     # @routes.get("/pagedata/{number}/{question}")
     @authenticate_by_token_required_fields([])
     def get_pagedata_question(self, data, request):
-        """Return the metadata for all images associated with a paper
+        """Return the metadata for all images associated with a paper.
 
         Respond with status 200/409.
 

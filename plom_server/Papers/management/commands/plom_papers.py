@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperCreatorService, PaperInfoService
 from Preparation.services import PQVMappingService, StagingStudentService
