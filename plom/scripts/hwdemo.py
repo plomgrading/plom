@@ -157,7 +157,7 @@ def main():
             subprocess.check_call(split(f"plom-hwscan process {C} 11015491 -q all"))
             doc = fitz.open(D)
             qstr = "[[1,2,3],"
-            qstr += ",".join(f"[{randint(1,3)}]" for q in range(2, len(doc) + 1))
+            qstr += ",".join(f"[{randint(1, 3)}]" for q in range(2, len(doc) + 1))
             qstr += "]"
             doc.close()
             print(f'Using a randomish page->question mapping of "{qstr}"')

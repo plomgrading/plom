@@ -5,7 +5,6 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 import logging
-import random
 
 from plom import check_version_map, make_random_version_map
 
