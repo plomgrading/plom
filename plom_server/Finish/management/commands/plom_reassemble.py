@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 
-from tqdm import trange
 from pathlib import Path
+
+from tabulate import tabulate
+from tqdm import trange
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -17,6 +19,11 @@ class Command(BaseCommand):
     help = "Create PDFs to return to students"
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--status",
+            action="store_true",
+            help="Show status of all papers w.r.t. reassembly",
+        )
         parser.add_argument(
             "--testnum",
             type=int,
@@ -75,11 +82,26 @@ class Command(BaseCommand):
             for chunk in zipper:
                 fh.write(chunk)
 
+    def show_status(self):
+        reas = ReassembleService()
+        tab = reas.get_all_paper_status_for_reassembly()
+        # TODO: port view to IMHO nicer list-of-dicts
+        rows = []
+        for k, v in tab.items():
+            row = v.copy()
+            # keep the humanized ones
+            row.pop("last_update")
+            row.pop("reassembled_time")
+            rows.append(row)
+        self.stdout.write(tabulate(rows, headers="keys", tablefmt="simple_outline"))
+
     def handle(self, *args, **options):
         save_path = options["save_path"]
         test_num = options["testnum"]
         zip_path = options["zip"]
-        if zip_path:
+        if options["status"]:
+            self.show_status()
+        elif zip_path:
             self.stdout.write("Downloading zip of reassembled papers")
             self.download_zip(Path(zip_path))
         elif test_num:

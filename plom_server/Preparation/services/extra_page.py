@@ -20,13 +20,17 @@ log = logging.getLogger("ExtraPageService")
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
-def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
+def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> bool:
     """Build a single test-paper.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     from plom.create import build_extra_page_pdf
 
@@ -49,6 +53,8 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> None:
                 task_obj = ExtraPagePDFTask.load()
                 task_obj.extra_page_pdf = File(fh, name=epp_path.name)
                 task_obj.transition_to_complete()
+
+    return True
 
 
 class ExtraPageService:

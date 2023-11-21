@@ -5,7 +5,7 @@
 
 from django.contrib import admin
 
-from .models import PDFHueyTask
+from .models import BuildPaperPDFChore
 
 # This makes models appear in the admin interface
-admin.site.register(PDFHueyTask)
+admin.site.register(BuildPaperPDFChore)

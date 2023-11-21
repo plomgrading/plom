@@ -4,12 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from huey.signals import (
-    SIGNAL_EXECUTING,
-    SIGNAL_ERROR,
-    SIGNAL_COMPLETE,
-    SIGNAL_INTERRUPTED,
-)
+from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
 from django.db import models
 from django.db import transaction
@@ -52,9 +47,14 @@ class HueyTaskTracker(models.Model):
 
     .. caution:: These statuses are not just symbolic constants; they
         also appear as strings through the code as
-        "To do", "Starting", "Queued", "Running", "Error", "Complete".
+        "To Do", "Starting", "Queued", "Running", "Error", "Complete".
         Note the difference in cases.  They are displayed to users.
         They are also used in logic tests.
+
+    ``obsolete=True`` is a "light deletion; no one cares for the result
+    and it should not be used.  It is ok to change status (e.g., a
+    background task finishes a chore that no one cares about anymore is
+    free to complete the chore---or not!)
     """
 
     StatusChoices = models.IntegerChoices(
@@ -74,6 +74,7 @@ class HueyTaskTracker(models.Model):
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
+    obsolete = models.BooleanField(default=False)
 
     def transition_back_to_todo(self):
         # TODO: which states are allowed to transition here?
@@ -131,6 +132,11 @@ class HueyTaskTracker(models.Model):
         # TODO?  is this the place to set to None?
         self.huey_id = None
         self.status = self.COMPLETE
+        self.save()
+
+    def set_as_obsolete(self):
+        """Move to the obsolete state and save, a sort of "light deletion"."""
+        self.obsolete = True
         self.save()
 
 

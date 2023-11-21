@@ -34,7 +34,7 @@ def huey_create_paper_with_qvmapping(
     *,
     tracker_pk: int,
     task=None,
-) -> None:
+) -> bool:
     """Creates a paper with the given paper number and the given question-version mapping.
 
     Also initializes prename ID predictions in DB, if applicable.
@@ -50,7 +50,8 @@ def huey_create_paper_with_qvmapping(
         task: includes our ID in the Huey process queue.
 
     Returns:
-        None
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
     with transaction.atomic(durable=True):
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
@@ -59,6 +60,8 @@ def huey_create_paper_with_qvmapping(
 
     with transaction.atomic(durable=True):
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
+
+    return True
 
 
 class PaperCreatorService:

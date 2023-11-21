@@ -25,6 +25,7 @@ class CreateTestPapers(ManagerRequiredView):
     """
 
     def post(self, request):
+        # TODO: I hope/think this is dead code?  Issue #3162
         pcs = PaperCreatorService()
         qvs = PQVMappingService()
 
@@ -40,8 +41,8 @@ class CreateTestPapers(ManagerRequiredView):
             print(err)
         # note that adding the papers does not automatically create the associated pdf build tasks
         # for that we need the classlist, hence the following.
-        classdict = StagingStudentService().get_classdict()
-        BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
+        # classdict = StagingStudentService().get_classdict()
+        # BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
         # also create all the reassemble tasks
         ReassembleService().create_all_reassembly_tasks()
 
