@@ -201,7 +201,7 @@ class BuildPapersService:
             else:
                 if existing_task.status == BuildPaperPDFChore.ERROR:
                     _do_build = True
-                    existing_task.set_obsolete()
+                    existing_task.set_as_obsolete()
             if _do_build:
                 paper_num = paper.paper_number
                 self.send_single_task(paper_num)
@@ -302,7 +302,7 @@ class BuildPapersService:
                 | Q(status=BuildPaperPDFChore.QUEUED)
             )
             for task in queue_tasks:
-                task.set_obsolete()
+                task.set_as_obsolete()
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
                 N += 1
@@ -325,7 +325,7 @@ class BuildPapersService:
         task = BuildPaperPDFChore.objects.get(
             obsolete=False, paper__paper_number=paper_number
         )
-        task.set_obsolete()
+        task.set_as_obsolete()
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
@@ -343,7 +343,7 @@ class BuildPapersService:
         """Reset all tasks, discarding all in-progress and complete PDF files."""
         self.try_to_cancel_all_queued_tasks()
         for task in BuildPaperPDFChore.objects.all():
-            task.set_obsolete()
+            task.set_as_obsolete()
 
     @transaction.atomic
     def get_all_task_status(self) -> Dict[int, str]:

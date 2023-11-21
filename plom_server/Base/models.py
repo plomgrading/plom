@@ -139,8 +139,8 @@ class HueyTaskTracker(models.Model):
         self.status = self.COMPLETE
         self.save()
 
-    def set_obsolete(self):
-        """Move to the obsolete state, a "light deletion" if you will."""
+    def set_as_obsolete(self):
+        """Move to the obsolete state and save, a sort of "light deletion"."""
         self.obsolete = True
         self.save()
 
