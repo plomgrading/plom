@@ -11,8 +11,6 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
-import fitz
-
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
