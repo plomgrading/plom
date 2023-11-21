@@ -376,6 +376,12 @@ flake8:
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
+    # also the number of errors should decrease over time
+    - NUMERR=`flake8 --count | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 155 ]]"
+
   allow_failure: true
 
 
