@@ -20,6 +20,7 @@ class BuildPaperPDFChore(HueyTaskTracker):
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
+    # only used for UI display, but also a record of what was on the PDF file
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 

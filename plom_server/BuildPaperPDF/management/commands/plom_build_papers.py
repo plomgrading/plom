@@ -105,6 +105,7 @@ class Command(BaseCommand):
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
         N = bp_service.get_n_obsolete_tasks()
         print(f"There are also {N} obsolete PDF building chores")
+        print("(left-over from previous runs, etc; don't worry about these)")
 
     def list_tasks(self):
         bp_service = BuildPapersService()
