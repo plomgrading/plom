@@ -25,22 +25,22 @@ class Command(BaseCommand):
             "--start",
             type=int,
             metavar="N",
-            help="Start building a specific paper",
+            help="Start building a PDF file for a specific paper",
         )
         grp.add_argument(
             "--start-all",
             action="store_true",
-            help="Start building all papers that need built",
+            help="Start building all PDF files for all papers that need it",
         )
         grp.add_argument(
             "--status",
             action="store_true",
-            help="Show status of all paper build tasks",
+            help="Show status of all PDF paper build chores",
         )
         grp.add_argument(
             "--list",
             action="store_true",
-            help="List each paper build chore and its status",
+            help="List each paper PDF build chore and its status",
         )
         grp.add_argument(
             "--delete-all",
@@ -50,7 +50,7 @@ class Command(BaseCommand):
         grp.add_argument(
             "--cancel-all",
             action="store_true",
-            help="Cancel any incomplete but queued build tasks",
+            help="Cancel any incomplete but queued PDF build chores",
         )
         grp.add_argument(
             "--download",
