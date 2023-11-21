@@ -380,7 +380,7 @@ flake8:
     - NUMERR=`flake8 --count | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 155 ]]"
+    - bash -c "[[ $NUMERR -le 130 ]]"
 
   allow_failure: true
 
