@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Duplicated paper numbers in question-version map input will now be detected.
+* Fix some version clashes between old pyOpenSSL and cryptography by forcing users to update both.
 
 
 ## [0.14.6] - 2023-11-02
