@@ -27,7 +27,6 @@ class Paper(models.Model):
         this Paper, then this link will be here.  Not sure what status
         is has when no assembly is currently running or if one has never
         been run.
-    pdfhueytask (PDFHueyTask):
     """
 
     paper_number = models.PositiveIntegerField(null=False, unique=True)

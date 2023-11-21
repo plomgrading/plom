@@ -8,24 +8,26 @@ from pathlib import Path
 from typing import Union
 
 from django.db import models
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
+
+# from django.db.models.signals import pre_delete
 
 from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class PDFHueyTask(HueyTaskTracker):
-    # OneToOneField makes a field called "pdfhueytask" in the Paper table
-    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
+class BuildPaperPDFChore(HueyTaskTracker):
+    """Represents the chore of building a PDF file for each paper."""
+
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
+    # only used for UI display, but also a record of what was on the PDF file
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 
-    # Note that the cascade-delete does not call PDFHueyTask's delete
-    # function, instead use the pre_delete signal to call a function
-    # to unlink the associated file
+    # Note that the cascade-delete does not call our delete
+    # function, instead use the pre_delete signal to unlink the associated file
     # See - https://docs.djangoproject.com/en/4.1/ref/models/fields/#django.db.models.CASCADE
+    # TODO: we removed this.
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""
@@ -57,11 +59,3 @@ class PDFHueyTask(HueyTaskTracker):
             return f"exam_{self.paper.paper_number:04}_{self.student_id}.pdf"
         else:
             return f"exam_{self.paper.paper_number:04}.pdf"
-
-
-@receiver(pre_delete, sender=Paper)
-def PDFHueyTask_delete_associated_file(sender, instance, using, **kwargs):
-    # if the paper has a pdf task then delete it.
-    # we need this check or a try-except - see https://docs.djangoproject.com/en/4.1/topics/db/examples/one_to_one/
-    if hasattr(instance, "pdfhueytask"):
-        instance.pdfhueytask.unlink_associated_pdf()
