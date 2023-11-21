@@ -31,7 +31,7 @@ from ..models import PDFHueyTask
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
-@db_task(queue="tasks", context=True, preserve=True)
+@db_task(queue="tasks", context=True)
 def huey_build_single_paper(
     papernum: int,
     spec: dict,

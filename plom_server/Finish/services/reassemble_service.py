@@ -734,6 +734,7 @@ class ReassembleService:
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
+# TODO: investigate "preserver=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
