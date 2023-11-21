@@ -16,8 +16,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(dest="command")
-        sub_b = sub.add_parser("build", help="Queue the building of the extra page pdf")
-        sub_del = sub.add_parser("delete", help="Delete the extra page pdf")
+        sub.add_parser("build", help="Queue the building of the extra page pdf")
+        sub.add_parser("delete", help="Delete the extra page pdf")
         sub_dwn = sub.add_parser("download", help="Download the extra page pdf")
         sub_dwn.add_argument(
             "dest",

@@ -12,7 +12,6 @@ from plom import get_question_label
 from plom.finish import with_finish_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
-from plom.plom_exceptions import PlomSeriousException
 
 
 def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):

@@ -9,7 +9,6 @@ else:
     import importlib_resources as resources
 
 from django.test import TestCase
-from django.conf import settings
 
 from Base.tests import config_test
 from ..services import PQVMappingService

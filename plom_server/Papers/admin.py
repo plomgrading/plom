@@ -6,7 +6,7 @@
 
 from django.contrib import admin
 
-from Papers.models.paper_structure import (
+from .models.paper_structure import (
     Paper,
     MobilePage,
     FixedPage,
@@ -14,10 +14,11 @@ from Papers.models.paper_structure import (
     DNMPage,
     QuestionPage,
 )
-from Papers.models.specifications import Specification
-from Papers.models.background_tasks import CreateImageHueyTask
-from Papers.models.image_bundle import Image, DiscardPage, Bundle
+from .models.specifications import Specification
+from .models.background_tasks import CreateImageHueyTask
+from .models.image_bundle import Image, DiscardPage, Bundle
 
+# This makes models appear in the admin interface
 admin.site.register(Paper)
 admin.site.register(Specification)
 admin.site.register(MobilePage)
