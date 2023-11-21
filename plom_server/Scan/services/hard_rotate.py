@@ -17,11 +17,14 @@ def hard_rotate_image_from_file_by_exif_and_angle(
     """Construct an image hard-rotated by the given angle and any exif.
 
     Args:
-        image_file = the Django image field file to be rotated
+        image_file: the Django image field file to be rotated
 
     Keyword Args:
-        theta = the angle to rotate (not inc any exif rotations) - default 0
-        save_format = the format in which to save - default is png
+        theta: the angle to rotate (not inc any exif rotations) - default 0.
+        save_format: the format in which to save - default is png.
+
+    Returns:
+        (bytes) bytes of the image
     """
     if theta is None:
         theta = 0
