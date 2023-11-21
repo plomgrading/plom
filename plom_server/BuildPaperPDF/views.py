@@ -160,6 +160,7 @@ class GetPDFFile(ManagerRequiredView):
                 paper_number
             )
         except ValueError:
+            # TODO: Issue #3157 why do we need this?  Can we just 404?
             return render(request, "BuildPaperPDF/cannot_find_pdf.html")
 
         pdf = SimpleUploadedFile(
