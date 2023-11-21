@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 
-class SpecTemplateBuilderService:
+class TemplateSpecBuilderService:
     def build_template_toml(
         self, longName=None, shortName=None, pages=2, questions=1, versions=1, score=5
     ):

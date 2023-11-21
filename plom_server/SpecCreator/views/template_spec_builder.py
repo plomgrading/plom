@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
 
-from ..services import SpecTemplateBuilderService
+from ..services import TemplateSpecBuilderService
 
 
 class TemplateSpecBuilderView(ManagerRequiredView):
@@ -41,7 +41,7 @@ class TemplateSpecBuilderView(ManagerRequiredView):
             return redirect(".")
 
         generated_toml = (
-            SpecTemplateBuilderService()
+            TemplateSpecBuilderService()
             .build_template_toml(
                 longName=longName,
                 shortName=shortName,

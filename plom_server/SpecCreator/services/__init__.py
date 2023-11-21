@@ -4,4 +4,4 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from .spec_upload import SpecificationUploadService
-from .spec_template_builder import SpecTemplateBuilderService
+from .template_spec_builder import TemplateSpecBuilderService
