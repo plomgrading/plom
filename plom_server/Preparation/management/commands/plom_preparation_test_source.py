@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import TestSourceService
+from ...services import TestSourceService, TestPreparedSetting
 
 
 class Command(BaseCommand):
@@ -77,6 +77,11 @@ class Command(BaseCommand):
             )
 
     def remove_source(self, version=None, all=False):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot change the sources."
+            )
+
         tss = TestSourceService()
         up_list = tss.get_list_of_uploaded_sources()
         if len(up_list) == 0:
@@ -100,6 +105,11 @@ class Command(BaseCommand):
             )
 
     def upload_source(self, version=None, source_pdf=None):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot change the sources."
+            )
+
         if not SpecificationService.is_there_a_spec():
             raise CommandError(
                 "There is not a valid test specification on the server. Cannot upload."

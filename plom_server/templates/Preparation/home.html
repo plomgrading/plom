@@ -6,6 +6,9 @@
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% block title %}
+    Prepare assessment
+{% endblock title %}
 {% block page_heading %}
     Prepare assessment
     {% if is_test_prepared %}
@@ -95,29 +98,6 @@
         </li>
         <li class="list-group-item list-group-item-action">
             <div class="d-flex align-items-center gap-1">
-                {% if prename_enabled %}
-                    <div class="flex-fill">
-                        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
-                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
-                    </div>
-                    <a disabled>Prenaming enabled</a>
-                    {% if not papers_staged %}
-                        <a class="btn btn-danger" hx-post="{% url 'prep_prename_toggle' %}">Disable</a>
-                    {% endif %}
-                {% else %}
-                    <div class="flex-fill">
-                        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
-                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
-                    </div>
-                    <a disabled>Prenaming disabled</a>
-                    {% if not papers_staged %}
-                        <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">Enable</a>
-                    {% endif %}
-                {% endif %}
-            </div>
-        </li>
-        <li class="list-group-item list-group-item-action">
-            <div class="d-flex align-items-center gap-1">
                 <div class="flex-fill">
                     <p class="fs-4 mb-0">
                         3. Upload classlist
@@ -148,6 +128,27 @@
                         Test-papers in database
                         <i class="bi bi-chevron-down"></i>
                     </a>
+                {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                {% if prename_enabled %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">&emsp;Manage prenaming (optional)</p>
+                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+                    </div>
+                    <a disabled>Prenaming enabled</a>
+                    {% if not papers_staged %}
+                        <a class="btn btn-danger" hx-post="{% url 'prep_prename_toggle' %}">Disable</a>
+                    {% endif %}
+                {% else %}
+                    <div class="flex-fill">
+                        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
+                        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+                    </div>
+                    <a disabled>Prenaming disabled</a>
+                    {% if not papers_staged %}
+                        <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">Enable</a>
+                    {% endif %}
                 {% endif %}
             </div>
         </li>
@@ -243,6 +244,7 @@
             <div class="d-flex align-items-center">
                 <div class="flex-fill">
                     <p class="fs-4 mb-0">7. Miscellaneous other things</p>
+                    <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
                     <p class="fs-7">
                         &emsp;&ensp; Create extra-page pdf.
                         {% if extra_page_status == "Complete" %}

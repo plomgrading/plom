@@ -314,11 +314,12 @@
              hx-get="{% url 'scan_nav_bundle' timestamp index %}"
              hx-swap="outerHTML"
              hx-trigger="load"></div>
-        <script>
+    </div>
+    <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 
-        </script>
-    {% endblock main_content %}
+    </script>
+{% endblock main_content %}

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
@@ -8,13 +8,19 @@ import csv
 import json
 from pathlib import Path
 import random
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
 
-def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
+def check_version_map(
+    vm: Dict[Any, Any],
+    spec=None,
+    *,
+    legacy: Optional[bool] = False,
+    required_papers: Optional[List[int]] = None,
+) -> None:
     """Correctness checks of a version maps.
 
     Args:
@@ -26,6 +32,7 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
     Keyword Args:
         legacy: True if this version map is for a legacy server, which
             is more strict about contiguous range of papers for example.
+        required_papers: A list of paper_numbers that the qv map must have.
 
     Return:
         None
@@ -68,6 +75,14 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
     if not len(rowlens) <= 1:
         raise ValueError("Inconsistency in version map: not all rows had same length")
 
+    # check if required papers are all present
+    if required_papers:
+        missing_papers = [X for X in required_papers if X not in vm]
+        if missing_papers:
+            raise ValueError(
+                f"Map is missing required papers: {missing_papers}. These were likely prenamed papers"
+            )
+
     if not legacy:
         return
     # remaining checks should matter only for legacy servers
@@ -85,7 +100,9 @@ def check_version_map(vm, spec=None, *, legacy: Optional[bool] = False) -> None:
             raise ValueError(f"No gaps allowed in test_num: got {list(vm.keys())}")
 
 
-def make_random_version_map(spec):
+def make_random_version_map(
+    spec, *, seed: Optional[str] = None
+) -> Dict[int, Dict[int, int]]:
     """Build a random version map.
 
     Args:
@@ -93,6 +110,11 @@ def make_random_version_map(spec):
             underlying dict.  See :func:`plom.SpecVerifier`.  The most
             important properties are the `numberToProduce`, the
             `numberOfQuestions`, and the `select` of each question.
+
+    Keyword Args:
+        seed: to get a reproducible version map, we can seed the
+            pseudo-random number generator.  Unknown how portable this
+            is between Python versions or OSes.
 
     Return:
         dict: a dict-of-dicts keyed by paper number (int) and then
@@ -102,6 +124,9 @@ def make_random_version_map(spec):
     Raises:
         KeyError: invalid question selection scheme in spec.
     """
+    if seed is not None:
+        random.seed(seed)
+
     # we want to have nearly equal numbers of each version - issue #1470
     # first make a list which cycles through versions
     vlist = [(x % spec["numberOfVersions"]) + 1 for x in range(spec["numberToProduce"])]
@@ -111,7 +136,7 @@ def make_random_version_map(spec):
     ]
     # we use the above when a question is shuffled, else we just use v=1.
 
-    vmap = {}
+    vmap: Dict[int, Dict[int, int]] = {}
     for t in range(1, spec["numberToProduce"] + 1):
         vmap[t] = {}
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
@@ -147,7 +172,9 @@ def make_random_version_map(spec):
     return vmap
 
 
-def undo_json_packing_of_version_map(vermap_in):
+def undo_json_packing_of_version_map(
+    vermap_in: Dict[str, Dict[str, int]]
+) -> Dict[int, Dict[int, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
     Both the test number and the question number have likely been
@@ -163,15 +190,19 @@ def undo_json_packing_of_version_map(vermap_in):
     return vmap
 
 
-def _version_map_from_json(f: Path) -> Dict:
+def _version_map_from_json(
+    f: Path, *, required_papers: Optional[List[int]] = None
+) -> Dict:
     with open(f, "r") as fh:
         qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
-    check_version_map(qvmap)
+    check_version_map(qvmap, required_papers=required_papers)
     return qvmap
 
 
-def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
+def _version_map_from_csv(
+    f: Path, *, required_papers: Optional[List[int]] = None
+) -> Dict[int, Dict[int, int]]:
     """Extract the version map from a csv file.
 
     Args:
@@ -179,6 +210,9 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
             and some `q{n}.version` columns.  The number of such columns
             is autodetected.  For example, this could be output of
             :func:`save_question_version_map`.
+
+    Keyword Args:
+        required_papers: A list of paper_numbers that the qv map must have.
 
     Returns:
         dict: keys are the paper numbers (`int`) and each value is a row
@@ -190,20 +224,43 @@ def _version_map_from_csv(f: Path) -> Dict[int, Dict[int, int]]:
             other errors in the version map.
         KeyError: wrong column header names.
     """
-    qvmap = {}
+    qvmap: Dict[int, Dict[int, int]] = {}
+
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
         N = len(reader.fieldnames) - 1
-        for row in reader:
-            testnum = int(row["test_number"])
-            qvmap[testnum] = {n: int(row[f"q{n}.version"]) for n in range(1, N + 1)}
-    check_version_map(qvmap)
+        for line, row in enumerate(reader):
+            # Its called "test_number" on legacy and "paper_number" on webplom
+            # raise a value error if you cannot find either.
+            if "paper_number" in row:
+                papernum = int(row["paper_number"])
+            elif "test_number" in row:
+                papernum = int(row["test_number"])
+            else:
+                raise ValueError("Cannot find paper_number column")
+
+            if papernum in qvmap.keys():
+                raise ValueError(
+                    f"In line {line} Duplicate paper number detected: {papernum}"
+                )
+            try:
+                qvmap[papernum] = {
+                    n: int(row[f"q{n}.version"]) for n in range(1, N + 1)
+                }
+            except KeyError as err:
+                raise KeyError(f"Missing column header {err}")
+            except ValueError as err:
+                raise ValueError(f"In line {line}: {err}")
+
+    check_version_map(qvmap, required_papers=required_papers)
     return qvmap
 
 
-def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
+def version_map_from_file(
+    f: Union[Path, str], *, required_papers: Optional[List[int]] = None
+) -> Dict[int, Dict[int, int]]:
     """Extract the version map from a csv or json file.
 
     Args:
@@ -212,6 +269,9 @@ def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
             columns is autodetected.  If ``.json`` file, its a dict of
             dicts.  Either case could, for example, be the output of
             :func:`save_question_version_map`.
+
+    Keyword Args:
+        required_papers: A list of paper_numbers that the qv map must have.
 
     Returns:
         keys are the paper numbers (`int`) and each value is a row
@@ -229,19 +289,25 @@ def version_map_from_file(f: Union[Path, str]) -> Dict[int, Dict[int, int]]:
     suffix = f.suffix
 
     if suffix.casefold() == ".json":
-        return _version_map_from_json(f)
+        return _version_map_from_json(f, required_papers=required_papers)
     elif suffix.casefold() == ".csv":
-        return _version_map_from_csv(f)
+        return _version_map_from_csv(f, required_papers=required_papers)
     else:
         raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
 
 
-def version_map_to_csv(qvmap: Dict, filename: Path) -> None:
+def version_map_to_csv(
+    qvmap: Dict[int, Dict[int, int]], filename: Path, *, _legacy: bool = True
+) -> None:
     """Output a csv of the question-version map.
 
     Arguments:
         qvmap: the question-version map, documented elsewhere.
         filename: where to save.
+
+    Keyword Args:
+        _legacy: if True, we call the column "test_number" else "paper_number".
+            Currently the default is True but this is expected to change.
 
     Raises:
         ValueError: some rows have differing numbers of questions.
@@ -249,7 +315,10 @@ def version_map_to_csv(qvmap: Dict, filename: Path) -> None:
     # all rows should have same length: get than length or fail
     (N,) = {len(v) for v in qvmap.values()}
 
-    header = ["test_number"]
+    if _legacy:
+        header = ["test_number"]
+    else:
+        header = ["paper_number"]
     for q in range(1, N + 1):
         header.append(f"q{q}.version")
     with open(filename, "w") as csvfile:

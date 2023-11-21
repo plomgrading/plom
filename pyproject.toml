@@ -193,7 +193,7 @@ plom-solutions = "plom.solutions.__main__:main"
 # You can run `black plom` or `black plom --verbose`
 [tool.black]
 line-length = 88
-target-version = ['py37']
+target-version = ["py38"]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
@@ -218,8 +218,7 @@ qt_api = "pyqt6"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
-# TODO: think about: H020, H025, H030, H031
-ignore="H006,H013,H020,H021,H023,H025,H030,H031"
+ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
 [tool.pydocstyle]

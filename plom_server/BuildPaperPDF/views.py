@@ -4,8 +4,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-import pathlib
-
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
@@ -16,11 +14,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import PQVMappingService, StagingStudentService
-from SpecCreator.services import StagingSpecificationService
+from Preparation.services import PQVMappingService
 
-from .models import PDFTask
-from .services import BuildPapersService, RenamePDFFile
+
+from .services import BuildPapersService
 
 
 class BuildPaperPDFs(ManagerRequiredView):
@@ -31,13 +28,13 @@ class BuildPaperPDFs(ManagerRequiredView):
         bps = BuildPapersService()
         task_context = bps.get_task_context()
 
-        running_tasks = bps.get_n_running_tasks()
+        running_tasks = bps.get_n_tasks_started_but_not_complete()
         if running_tasks > 0:
             poll = True
         else:
             poll = False
 
-        if bps.get_n_complete_tasks() == bps.get_n_tasks():
+        if bps.are_all_papers_built():
             zip_disabled = False
         else:
             zip_disabled = True
@@ -56,8 +53,11 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def get(self, request):
         bps = BuildPapersService()
-        pqvs = PQVMappingService()
         pinfo = PaperInfoService()
+
+        # TODO: find a simpler way to get this!
+        # TODO: also a better name like "max_num_pdfs" or something unambiguous
+        pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
 
@@ -90,11 +90,7 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def post(self, request):
         bps = BuildPapersService()
-        sstu = StagingStudentService()
-        classdict = sstu.get_classdict()
 
-        # bps.clear_tasks()
-        bps.stage_all_pdf_jobs(classdict=classdict)
         task_context = bps.get_task_context()
 
         table_fragment = self.table_fragment(request)
@@ -131,7 +127,7 @@ class PDFTableView(ManagerRequiredView):
             status = 286
             zip_disabled = False
 
-        n_running = bps.get_n_running_tasks()
+        n_running = bps.get_n_tasks_started_but_not_complete()
         poll = n_running > 0
 
         context = self.build_context()
@@ -164,6 +160,7 @@ class GetPDFFile(ManagerRequiredView):
                 paper_number
             )
         except ValueError:
+            # TODO: Issue #3157 why do we need this?  Can we just 404?
             return render(request, "BuildPaperPDF/cannot_find_pdf.html")
 
         pdf = SimpleUploadedFile(
@@ -179,7 +176,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
     def get(self, request):
-        short_name = StagingSpecificationService().get_short_name_slug()
+        short_name = SpecificationService.get_short_name_slug()
         zgen = BuildPapersService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = f"attachment; filename={short_name}.zip"
@@ -189,51 +186,35 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 class StartAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-
-        bps.send_all_tasks(spec, qvmap)
-
+        bps.send_all_tasks()
         return self.render_pdf_table(request)
 
 
 class StartOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-
-        bps.send_single_task(paper_number, spec, qvmap[paper_number])
+        bps.send_single_task(paper_number)
         return self.render_pdf_table(request)
 
 
-class CancelAllPDf(PDFTableView):
+class CancelAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        bps.cancel_all_task()
-
+        bps.try_to_cancel_all_queued_tasks()
         return self.render_pdf_table(request)
 
 
 class CancelOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
-        bps.cancel_single_task(paper_number)
-
+        bps.try_to_cancel_single_queued_task(paper_number)
         return self.render_pdf_table(request)
 
 
 class RetryAllPDF(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-
-        bps.retry_all_task(spec, qvmap)
-
+        bps.retry_all_task()
         return self.render_pdf_table(request)
 
 

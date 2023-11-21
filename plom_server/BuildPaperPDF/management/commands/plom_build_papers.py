@@ -5,12 +5,13 @@
 
 from pathlib import Path
 
+from tabulate import tabulate
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
 from BuildPaperPDF.services import BuildPapersService
-from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
-from SpecCreator.services import StagingSpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
 
@@ -24,17 +25,22 @@ class Command(BaseCommand):
             "--start",
             type=int,
             metavar="N",
-            help="Start building a specific test paper in the queue",
+            help="Start building a PDF file for a specific paper",
         )
         grp.add_argument(
             "--start-all",
             action="store_true",
-            help="Start building all papers in the queue",
+            help="Start building all PDF files for all papers that need it",
         )
         grp.add_argument(
             "--status",
             action="store_true",
-            help="Show status of all test paper build tasks",
+            help="Show status of all PDF paper build chores",
+        )
+        grp.add_argument(
+            "--list",
+            action="store_true",
+            help="List each paper PDF build chore and its status",
         )
         grp.add_argument(
             "--delete-all",
@@ -44,13 +50,13 @@ class Command(BaseCommand):
         grp.add_argument(
             "--cancel-all",
             action="store_true",
-            help="Cancel any incomplete but queued build tasks",
+            help="Cancel any incomplete but queued PDF build chores",
         )
         grp.add_argument(
             "--download",
             type=int,
             metavar="N",
-            help="Download a specific test paper as a PDF file",
+            help="Download a specific paper as a PDF file",
         )
         grp.add_argument(
             "--download-all",
@@ -60,48 +66,51 @@ class Command(BaseCommand):
 
     def start_all_tasks(self):
         bp_service = BuildPapersService()
-        if bp_service.get_n_tasks() == 0:
+        if bp_service.get_n_papers() == 0:
             self.stdout.write(
-                "There are no tasks to start. Check that DB is populated."
+                "There are no papers to start. Check that DB is populated?"
             )
             return
 
-        spec = SpecificationService.get_the_spec()
-        pqv_service = PQVMappingService()
-        qvmap = pqv_service.get_pqv_map_dict()
-
-        bp_service.send_all_tasks(spec, qvmap)
-        self.stdout.write(f"Started building {len(qvmap)} papers.")
+        try:
+            N = bp_service.send_all_tasks()
+        except ValueError as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Started building {N} papers.")
 
     def start_specific_task(self, paper_number):
         bp_service = BuildPapersService()
-        spec = SpecificationService.get_the_spec()
-        pqv_service = PQVMappingService()
-        qvmap = pqv_service.get_pqv_map_dict()
 
-        if paper_number in qvmap:
-            bp_service.send_single_task(paper_number, spec, qvmap[paper_number])
-            self.stdout.write(f"Started building paper number {paper_number}.")
-        else:
-            self.stderr.write(
-                f"Paper number {paper_number} is not in the question-version map."
-            )
+        try:
+            bp_service.send_single_task(paper_number)
+        except (ValueError, ObjectDoesNotExist) as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Started building paper number {paper_number}.")
 
     def show_task_status(self):
         bp_service = BuildPapersService()
-        # is a list of (paper_number, status)
+        if bp_service.are_all_papers_built():
+            self.stdout.write("All papers are now built")
+        else:
+            self.stdout.write("Not all papers are built")
         stats = bp_service.get_all_task_status()
-        if len(stats):
-            self.stdout.write(f"{len(stats)} tasks total:")
+        if not stats:
+            self.stdout.write("No current chores.")
+        else:
+            self.stdout.write(f"{len(stats)} chores total:")
             rev_stat = {}
             for n, state in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
-            if len(rev_stat.get("Complete", [])) == len(stats):
-                self.stdout.write("All papers are now built")
-        else:
-            self.stdout.write("No queued tasks.")
+        N = bp_service.get_n_obsolete_tasks()
+        print(f"There are also {N} obsolete PDF building chores")
+        print("(left-over from previous runs, etc; don't worry about these)")
+
+    def list_tasks(self):
+        bp_service = BuildPapersService()
+        tab = bp_service.get_task_context(include_obsolete=True)
+        self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
 
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
@@ -109,14 +118,14 @@ class Command(BaseCommand):
 
     def cancel_all_tasks(self):
         bp_service = BuildPapersService()
-        bp_service.cancel_all_task()
+        N = bp_service.try_to_cancel_all_queued_tasks()
+        self.stdout.write(f"Revoked {N} build paper PDF chores")
 
     def download_specific_paper(self, paper_number):
         bp_service = BuildPapersService()
         try:
             (name, b) = bp_service.get_paper_path_and_bytes(paper_number)
         except ValueError as err:
-            self.stderr.write(f"Error - {err}")
             raise CommandError(err)
 
         with open(Path(name), "wb") as fh:
@@ -125,7 +134,7 @@ class Command(BaseCommand):
 
     def download_all_papers(self):
         bps = BuildPapersService()
-        short_name = StagingSpecificationService().get_short_name_slug()
+        short_name = SpecificationService.get_short_name_slug()
         zgen = bps.get_zipfly_generator(short_name)
         with open(f"{short_name}.zip", "wb") as fh:
             self.stdout.write(f"Opening {short_name}.zip to write the zip-file")
@@ -153,5 +162,7 @@ class Command(BaseCommand):
             self.cancel_all_tasks()
         elif options["status"]:
             self.show_task_status()
+        elif options["list"]:
+            self.list_tasks()
         else:
             self.print_help("manage.py", "plom_build_papers")

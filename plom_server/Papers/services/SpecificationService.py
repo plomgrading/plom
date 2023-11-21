@@ -6,8 +6,10 @@
 
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
+from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Max
 
@@ -28,7 +30,6 @@ log = logging.getLogger("ValidatedSpecService")
 def load_spec_from_dict(
     spec_dict: Dict[str, Any],
     *,
-    update_staging: bool = False,
     public_code: Optional[str] = None,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
@@ -39,14 +40,16 @@ def load_spec_from_dict(
         spec_dict:
 
     Keyword Args:
-        update_staging: if true, update the staging specification (mainly for UI purposes)
         public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
         Specification: saved test spec instance.
     """
-    # TODO: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
-    spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    # Also, this function does not care if there are no questions in the spec dictionary. It assumes
+    # the serializer/SpecVerifier will catch it.
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
     serializer = SpecSerializer(data=spec_dict)
     serializer.is_valid()
     valid_data = serializer.validated_data
@@ -54,25 +57,17 @@ def load_spec_from_dict(
     if public_code:
         valid_data["publicCode"] = public_code
 
-    if update_staging:
-        from SpecCreator.services import StagingSpecificationService
-
-        StagingSpecificationService().create_from_dict(serializer.validated_data)
-
     return serializer.create(serializer.validated_data)
 
 
 @transaction.atomic
 def load_spec_from_toml(
     pathname,
-    update_staging=False,
     public_code=None,
 ) -> Specification:
     """Load a test spec from a TOML file and save it to the database."""
     data = load_toml_from_path(pathname)
-    return load_spec_from_dict(
-        data, update_staging=update_staging, public_code=public_code
-    )
+    return load_spec_from_dict(data, public_code=public_code)
 
 
 @transaction.atomic
@@ -109,9 +104,23 @@ def get_the_spec_as_toml():
     is included (if present).
     """
     spec = get_the_spec()
+    spec.pop("id", None)
     spec.pop("privateSeed", None)
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     sv = SpecVerifier(spec)
     return sv.as_toml_string()
+
+
+@transaction.atomic
+def get_private_seed() -> str:
+    """Return the private seed."""
+    spec = Specification.objects.get()
+    return spec.privateSeed
 
 
 @transaction.atomic
@@ -125,6 +134,12 @@ def get_the_spec_as_toml_with_codes():
         is calling this.
     """
     sv = SpecVerifier(get_the_spec())
+
+    for idx, question in spec["question"].items():
+        for key, val in deepcopy(question).items():
+            if val is None or key == "id":
+                question.pop(key, None)
+
     return sv.as_toml_string()
 
 
@@ -182,6 +197,16 @@ def get_shortname() -> str:
     """
     spec = Specification.objects.get()
     return spec.name
+
+
+@transaction.atomic
+def get_short_name_slug() -> str:
+    """Get the short name of the exam, slugified.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    return slugify(get_shortname())
 
 
 @transaction.atomic

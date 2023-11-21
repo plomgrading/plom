@@ -8,7 +8,12 @@ from .scan_overview import (
     ScanBundlesView,
 )
 
-from .scan_complete import ScanCompleteView, PushedImageView, PushedImageWrapView
+from .scan_complete import (
+    ScanCompleteView,
+    PushedImageView,
+    PushedImageRotatedView,
+    PushedImageWrapView,
+)
 from .scan_incomplete import ScanIncompleteView
 from .scan_discards import ScanDiscardView, ScanReassignView
 
@@ -29,8 +34,8 @@ from .progress_mark import (
 )
 
 from .progress_task_annot import (
-    ProgressTaskAnnotationFilterView,
-    ProgressTaskAnnotationView,
+    ProgressMarkingTaskFilterView,
+    ProgressMarkingTaskDetailsView,
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,

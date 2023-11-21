@@ -2,8 +2,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 
-import csv
-from io import StringIO
 from typing import Dict, Union
 
 from Mark.models import MarkingTask

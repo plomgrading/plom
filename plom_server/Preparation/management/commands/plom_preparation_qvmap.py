@@ -9,7 +9,9 @@ from django.core.management.base import BaseCommand, CommandError
 from plom.misc_utils import format_int_list_with_runs
 from Papers.services import SpecificationService
 
-from ...services import PQVMappingService
+from ...services import PQVMappingService, TestPreparedSetting
+
+from plom.version_maps import version_map_from_file
 
 
 class Command(BaseCommand):
@@ -25,6 +27,9 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
+            if TestPreparedSetting.is_test_prepared():
+                print("Exam preparation is locked: cannot change qvmap.")
+
         else:
             self.stdout.write("There is no question-version mapping.")
             self.stdout.write(
@@ -32,6 +37,9 @@ class Command(BaseCommand):
             )
 
     def generate_pqv_map(self, number_to_produce=None):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
         if not SpecificationService.is_there_a_spec():
             raise CommandError("There no valid test specification.")
         pqvms = PQVMappingService()
@@ -60,26 +68,46 @@ class Command(BaseCommand):
     def download_pqv_map(self):
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
-            self.stderr.write(
+            raise CommandError(
                 "There is no a question-version mapping on the server. Stopping"
             )
-            return
 
         save_path = Path("question_version_map.csv")
         if save_path.exists():
-            self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
-            choice = input().lower()
+            s = f"A file exists at {save_path} - overwrite it? [y/N] "
+            choice = input(s).lower()
             if choice != "y":
                 self.stdout.write("Skipping.")
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
-        csv_text = pqvms.get_pqv_map_as_csv()
-        with open(save_path, "w") as fh:
-            fh.write(csv_text)
+        pqvms.pqv_map_to_csv(save_path)
         self.stdout.write(f"Wrote {save_path}")
 
+    def upload_pqv_map(self, f: Path) -> None:
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+
+        pqvms = PQVMappingService()
+        if pqvms.is_there_a_pqv_map():
+            raise CommandError("Already has a question-version map - remove it first")
+
+        self.stdout.write(f"Reading qvmap from {f}")
+        try:
+            vm = version_map_from_file(f)
+        except ValueError as e:
+            raise CommandError(e)
+
+        try:
+            pqvms.use_pqv_map(vm)
+        except ValueError as e:
+            raise CommandError(e)
+        self.stdout.write(f"Uploaded qvmap from {f}")
+
     def remove_pqv_map(self):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError("Exam preparation is locked: cannot change qvmap.")
+
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
             self.stderr.write(
@@ -95,16 +123,20 @@ class Command(BaseCommand):
             description="Perform tasks related to generating/downloading/deleting the question-version map.",
         )
         sub.add_parser("status", help="Show details of the question-version map")
-        sp_G = sub.add_parser("generate", help="Generate the question-version map")
-        sub.add_parser("download", help="Download the question-version map")
-        sub.add_parser("remove", help="Remove the question-version map")
-
-        sp_G.add_argument(
+        p = sub.add_parser("generate", help="Generate the question-version map")
+        p.add_argument(
             "-n",
             "--number_to_produce",
             type=int,
-            help="The number of papers to produce. If not present, then system will compute this for you (not recommended).",
+            help="""
+                The number of papers to produce.  If not present, the system will
+                compute this for you (not recommended).
+            """,
         )
+        sub.add_parser("download", help="Download the question-version map")
+        p = sub.add_parser("upload", help="Upload a question-version map")
+        p.add_argument("csv_or_json_file")
+        sub.add_parser("remove", help="Remove the question-version map")
 
     def handle(self, *args, **options):
         if options["command"] == "status":
@@ -114,6 +146,8 @@ class Command(BaseCommand):
 
         elif options["command"] == "download":
             self.download_pqv_map()
+        elif options["command"] == "upload":
+            self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "remove":
             self.remove_pqv_map()
         else:

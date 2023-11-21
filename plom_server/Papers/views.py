@@ -12,9 +12,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import (
     PaperCreatorService,
     PaperInfoService,
-    SpecificationService,
 )
-from Papers.models import CreatePaperTask
 from Preparation.services import PQVMappingService, StagingStudentService
 from BuildPaperPDF.services import BuildPapersService
 from Finish.services import ReassembleService
@@ -27,7 +25,7 @@ class CreateTestPapers(ManagerRequiredView):
     """
 
     def post(self, request):
-        print("v" * 40)
+        # TODO: I hope/think this is dead code?  Issue #3162
         pcs = PaperCreatorService()
         qvs = PQVMappingService()
 
@@ -43,8 +41,8 @@ class CreateTestPapers(ManagerRequiredView):
             print(err)
         # note that adding the papers does not automatically create the associated pdf build tasks
         # for that we need the classlist, hence the following.
-        classdict = StagingStudentService().get_classdict()
-        BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
+        # classdict = StagingStudentService().get_classdict()
+        # BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
         # also create all the reassemble tasks
         ReassembleService().create_all_reassembly_tasks()
 
