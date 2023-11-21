@@ -5,5 +5,6 @@
 
 from .base import *
 from .summary import SpecSummaryView, HTMXSummaryQuestion
-from .editor import SpecEditorView, SpecTemplateView
+from .editor import SpecEditorView
 from .toml_textarea import SpecEditorTextArea
+from .template_spec_builder import TemplateSpecBuilderView

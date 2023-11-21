@@ -29,15 +29,18 @@ doNotMarkPages = []
 
 # The information for each question starts with '[[question]]'.
 # For each we must give the list of pages and the maximum mark.
+# We have given some default values, but these must be edited
+# and then uncomment them by removing the leading #'s.
 #
-# Then optionally a specific label for the question, such as
+# Then, optionally, give a label for the question, such as
 # 'label = "Ex3"
+# By default Plom generates labels for you.
 #
-# And also optionally tell Plom how to select the question from the
+# Then, also optionally, tell Plom how to select the question from the
 # available versions - either
 #    'select = "shuffle"' - take randomly from any version, or
 #    'select = "fix"' - always take from version 1
-# Note that by default, Plom uses "shuffle"
+# By default Plom will use "shuffle"
 """
 
         score_per_question = score // questions
@@ -54,7 +57,7 @@ doNotMarkPages = []
         for k in range(questions):
             spec_toml += f"""
 [[question]]
-# "pages" = {question_pages[k]}   # <<<<< This needs editing
-# "mark"=  {question_scores[k]}   # <<<<< This needs editing
+## "pages" = {question_pages[k]}  ## <<<<< This needs editing
+## "mark"= {question_scores[k]}  ## <<<<< This needs editing
 """
         return spec_toml

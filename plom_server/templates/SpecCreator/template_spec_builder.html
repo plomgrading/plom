@@ -21,7 +21,7 @@
                 <form enctype="multipart/form-data"
                       id="form"
                       method="post"
-                      action="{% url 'spec_template_build' %}">
+                      action="{% url 'template_spec_builder' %}">
                     {% csrf_token %}
                     <div class="row my-2">
                         <div class="col-4">
@@ -155,12 +155,15 @@
                     <div class="card-text p-4 border rounded font-monospace">
                         {% for line in toml_line_by_line %}
                             {% if line.0 == '#' %}
-                                <span class="text-primary fw-medium">{{ line }}</span>
-                                <br>
+                                {% if line.1 == '#' %}
+                                    <span class="text-danger fw-medium">{{ line }}</span>
+                                {% else %}
+                                    <span class="text-primary fw-medium">{{ line }}</span>
+                                {% endif %}
                             {% else %}
                                 <span>{{ line }}</span>
-                                <br>
                             {% endif %}
+                            <br>
                         {% endfor %}
                     </div>
                 </div>

@@ -19,5 +19,9 @@ urlpatterns = [
         views.HTMXSummaryQuestion.as_view(),
         name="spec_summary_q",
     ),
-    path("template", views.SpecTemplateView.as_view(), name="spec_template_build"),
+    path(
+        "template",
+        views.TemplateSpecBuilderView.as_view(),
+        name="template_spec_builder",
+    ),
 ]
