@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
--->
+  -->
 {% extends "base/base.html" %}
 {% block title %}
     Browse marking
@@ -36,7 +36,7 @@
         {% if warning %}<div class="alert alert-info w-25 my-2">Please set at least one  filter.</div>{% endif %}
         <div class="row border rounded my-4">
             <form class="p-4 mb-2 w-75"
-                  action="{% url 'progress_task_annotation_filter' %}"
+                  action="{% url 'progress_marking_task_filter' %}"
                   method="get">
                 <div class="row my-2">
                     <label class="col-sm-1 col-form-label" for="paper">Paper:</label>
@@ -79,7 +79,7 @@
                     </div>
                 </div>
                 <div class="row my-2">
-                    <label class="col-sm-1 col-form-label" for="username">User:</label>
+                    <label class="col-sm-1 col-form-label" for="username">Marker:</label>
                     <div class="col-sm-4">
                         <select name="username" class="form-select">
                             <option>*</option>
@@ -96,68 +96,72 @@
         </div>
         {% if not warning %}
             <div class="row">
-                <div class="card col">
-                    <div class="card-header">
-                        <h5>Tasks list</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-text  overflow-y-scroll"  style="max-height:66vh;">
-                            <table class="table table-sm table-bordered text-center sortable">
-                                <thead>
-                                    <tr>
-                                        <th>Paper</th>
-                                        <th>Question</th>
-                                        <th>Version</th>
-                                        <th>Status</th>
-                                        <th>Last update</th>
-                                        <th>Username</th>
-                                        <th>Score</th>
-                                        <th>View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for pn, task_data in task_info.items %}
+                <div class="col-5">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Marking tasks:</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-text  overflow-y-scroll"  style="max-height:55vh;">
+                                <table class="table table-sm table-bordered text-center sortable">
+                                    <thead>
                                         <tr>
-                                            <td>{{ pn }}</td>
-                                            <td>{{ task_data.question }}</td>
-                                            <td>{{ task_data.version }}</td>
-                                            {% if task_data.status == "Complete" %}
-                                                <td class="bg-success">{{ task_data.status }}</td>
-                                            {% elif task_data.status == "To Do" %}
-                                                <td class="bg-warning">{{ task_data.status }}</td>
-                                            {% elif task_data.status == "Out" %}
-                                                <td class="bg-info">{{ task_data.status }}</td>
-                                            {% else %}
-                                                <td>{{ task_data.status }}</td>
-                                            {% endif %}
-                                            <td>{{ task_data.last_update }}</td>
-                                            <td>{{ task_data.username }}</td>
-                                            <td>{{ task_data.score }}</td>
-                                            <td class="text-start">
-                                                {% if task_data.status %}
-                                                    <button hx-get="{% url 'progress_original_img_wrap' pn task_data.question %}"
-                                                            hx-target="#imageHere"
-                                                            hx-replace="innerHTML"
-                                                            class="btn btn-outline-info">orig</button>
-                                                {% endif %}
-                                                {% if task_data.status == "Complete" %}
-                                                    <button hx-get="{% url 'progress_annotation_img_wrap' pn task_data.question %}"
-                                                            hx-target="#imageHere"
-                                                            hx-replace="innerHTML"
-                                                            class="btn btn-outline-success">annot</button>
-                                                {% endif %}
-                                            </td>
+                                            <th>P</th>
+                                            <th>Q</th>
+                                            <th>V</th>
+                                            <th>Status</th>
+                                            <th>Last update</th>
+                                            <th>Marker</th>
+                                            <th>Score</th>
+                                            <th>Show</th>
                                         </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {% for task_data in task_info %}
+                                            <tr>
+                                                <td>{{ task_data.paper_number }}</td>
+                                                <td>{{ task_data.question }}</td>
+                                                <td>{{ task_data.version }}</td>
+                                                {% if task_data.status == "Complete" %}
+                                                    <td class="bg-success-subtle">{{ task_data.status }}</td>
+                                                {% elif task_data.status == "To Do" %}
+                                                    <td class="bg-warning-subtle">{{ task_data.status }}</td>
+                                                {% elif task_data.status == "Out" %}
+                                                    <td class="bg-info-subtle">{{ task_data.status }}</td>
+                                                {% else %}
+                                                    <td>{{ task_data.status }}</td>
+                                                {% endif %}
+                                                <td>{{ task_data.last_update }}</td>
+                                                <td>{{ task_data.username }}</td>
+                                                <td>{{ task_data.score }}</td>
+                                                <td class="text-start">
+                                                    <a class="btn btn-outline-primary"
+                                                       href="{% url 'progress_marking_task_details' task_data.task_pk %}">details</a>
+                                                    {% if task_data.status %}
+                                                        <button hx-get="{% url 'progress_original_img_wrap' task_data.paper_number task_data.question %}"
+                                                                hx-target="#imageHere"
+                                                                hx-replace="innerHTML"
+                                                                class="btn btn-outline-info">orig</button>
+                                                    {% endif %}
+                                                    {% if task_data.status == "Complete" %}
+                                                        <button hx-get="{% url 'progress_annotation_img_wrap' task_data.paper_number task_data.question %}"
+                                                                hx-target="#imageHere"
+                                                                hx-replace="innerHTML"
+                                                                class="btn btn-outline-success">annot</button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endif %}
             {% if not warning %}
-                <div class="card col" style="height: auto; width: 40vw;">
-                    <div id="imageHere"></div>
+                <div class="col-auto">
+                    <div class="card" id="imageHere"></div>
                 </div>
             {% endif %}
         </div>

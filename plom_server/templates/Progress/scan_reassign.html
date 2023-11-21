@@ -8,16 +8,10 @@
     <div class="row">
         <h5>Reassign discarded image</h5>
         <div class="col">
-            <div style="height: 30vw;
-                        width: 30vw;
-                        justify-content: center;
-                        display:flex;
-                        align-items:center">
+            <div style="justify-content: center; display:flex; align-items:center">
                 <img class="shadow-sm"
-                     src="{% url 'progress_pushed_img' image_pk %}"
-                     style="max-height: 100%;
-                            max-width: 100%;
-                            transform: rotate({{ angle }}deg)" />
+                     src="{% url 'progress_pushed_img_rot' image_pk %}"
+                     style="height: 55vh" />
             </div>
         </div>
         <div class="col p-2 border">
@@ -27,14 +21,14 @@
                 <form hx-post="{% url 'progress_reassign_discard' image_pk %}"
                       hx-target="#invalidmessage"
                       hx-swap="innerHTML">
-                    <div x-data={"assignment_type":"fixed"}>
+                    <div x-data="{assignment_type: 'fixed'}">
                         <div class="form-radio">
                             <p>
                                 <input class="form-check-input"
                                        type="radio"
                                        id="fixed"
                                        value="fixed"
-                                       x-model="assignment_type">
+                                       x-model="assignment_type" />
                                 <label class="form-check-label" for="fixed">missing fixed page from an incomplete paper</label>
                             </p>
                             <p>
@@ -42,7 +36,7 @@
                                        type="radio"
                                        id="mobile"
                                        value="mobile"
-                                       x-model="assignment_type">
+                                       x-model="assignment_type" />
                                 <label class="form-check-label" for="mobile">mobile page in an existing paper</label>
                             </p>
                         </div>
@@ -70,7 +64,7 @@
                                                class="form-check-input"
                                                type="checkbox"
                                                id="questionall"
-                                               x-model="allq">
+                                               x-model="allq" />
                                         <label class="form-check-label" for="questionall">all questions</label>
                                     </div>
                                     <div x-show="!allq" x-transition>
@@ -80,7 +74,7 @@
                                                        class="form-check-input"
                                                        type="checkbox"
                                                        value="{{ forloop.counter }}"
-                                                       id="{{ ql }}">
+                                                       id="{{ ql }}" />
                                                 <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
                                             </div>
                                         {% endfor %}

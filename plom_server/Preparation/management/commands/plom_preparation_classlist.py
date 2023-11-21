@@ -5,12 +5,12 @@
 
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from ...services import (
-    StagingClasslistCSVService,
     StagingStudentService,
     PrenameSettingService,
+    TestPreparedSetting,
 )
 
 
@@ -26,6 +26,11 @@ class Command(BaseCommand):
             self.stdout.write("There is no classlist on the server.")
 
     def upload_classlist(self, source_csv, ignore_warnings=False):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot change the classlist."
+            )
+
         sss = StagingStudentService()
 
         if sss.are_there_students():
@@ -35,12 +40,13 @@ class Command(BaseCommand):
         if not source_path.exists():
             self.stderr.write(f"Cannot open {source_csv}. Stopping.")
 
-        scsv = StagingClasslistCSVService()
         with open(source_path, "rb") as fh:
-            success, warnings = scsv.take_classlist_from_upload(fh)
+            success, warnings = sss.validate_and_use_classlist_csv(
+                fh, ignore_warnings=ignore_warnings
+            )
+
         if success and not warnings:
             self.stdout.write("Upload has no warnings.")
-            sss.use_classlist_csv()
             self.stdout.write("CSV processed.")
             return
         elif success and warnings:
@@ -53,7 +59,6 @@ class Command(BaseCommand):
                 self.stdout.write(
                     "Ignoring these warnings and using this classlist csv."
                 )
-                sss.use_classlist_csv()
                 self.stdout.write("CSV processed.")
                 return
             else:
@@ -97,6 +102,11 @@ class Command(BaseCommand):
             fh.write(csv_text)
 
     def remove_classlist(self):
+        if TestPreparedSetting.is_test_prepared():
+            raise CommandError(
+                "Test is marked as prepared. You cannot remove the classlist."
+            )
+
         sss = StagingStudentService()
         if sss.are_there_students():
             self.stdout.write("Removing classlist from the server")

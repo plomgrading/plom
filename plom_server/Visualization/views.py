@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 
-import json
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView

@@ -6,7 +6,9 @@
 import arrow
 from datetime import datetime
 from pathlib import Path
+import random
 import tempfile
+import time
 from typing import Any, Dict, List, Optional
 import zipfly
 
@@ -26,7 +28,8 @@ from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
-from ..models import ReassembleTask
+from ..models import ReassembleHueyTaskTracker
+from Base.models import HueyTaskTracker
 
 
 class ReassembleService:
@@ -409,6 +412,7 @@ class ReassembleService:
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
+                "test_num": paper.paper_number,
                 "scanned": False,
                 "identified": False,
                 "marked": False,
@@ -455,11 +459,11 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassembleTask.objects.all().prefetch_related("paper"):
+        for task in ReassembleHueyTaskTracker.objects.all().prefetch_related("paper"):
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
-            if task.status == ReassembleTask.COMPLETE:
+            if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
                     "reassembled_time_humanised"
@@ -479,14 +483,13 @@ class ReassembleService:
         return status
 
     def create_all_reassembly_tasks(self):
-        """Create all the ReassembleTasks, and save to the database without sending them to Huey."""
+        """Create all the ReassembleHueyTaskTrackers, and save to the database without sending them to Huey."""
         self.reassemble_dir.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
-            ReassembleTask.objects.create(
-                paper=paper_obj, huey_id=None, status=ReassembleTask.TO_DO
+            ReassembleHueyTaskTracker.objects.create(
+                paper=paper_obj, huey_id=None, status=HueyTaskTracker.TO_DO
             )
 
-    @transaction.atomic
     def queue_single_paper_reassembly(self, paper_number: int) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
@@ -498,11 +501,20 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassembletask
-        pdf_build = huey_reassemble_paper(paper_number)
-        task.huey_id = pdf_build.id
-        task.status = ReassembleTask.QUEUED
-        task.save()
+        with transaction.atomic(durable=True):
+            tr = paper_obj.reassemblehueytasktracker
+            tr.reset_to_do()
+            tr.transition_to_starting()
+            tracker_pk = tr.pk
+
+        res = huey_reassemble_paper(
+            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=False
+        )
+        print(f"Just enqueued Huey reassembly task id={res.id}")
+
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -518,50 +530,163 @@ class ReassembleService:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
-        task = paper_obj.reassembletask
+        task = paper_obj.reassemblehueytasktracker
         return task.pdf_file
 
-    @transaction.atomic
     def reset_single_paper_reassembly(self, paper_number: int) -> None:
-        """Reset to TODO the reassembly task of the given paper and remove pdf if it exists.
+        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
 
         Args:
-            paper_number (int): The paper number of the reassembly task to reset.
+            paper_number: The paper number of the reassembly task to reset.
+
+        Raises:
+            RuntimeError: any running tasks.  For now, just wait before
+                clicking the "reset all" button!
+
+        This is a "best-attempt" at catching reassembly chores while they
+        are queued.
+
+        TODO: this may be susceptible to race conditions, so I do not think
+        it is guaranteed to block a huey task from running.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        task = paper_obj.reassembletask
-        # if the task is queued then remove it from the queue
-        if task.status == ReassembleTask.QUEUED:
-            queue = get_queue("tasks")
-            queue.revoke_by_id(task.huey_id)
-        # if there is a file then remove it
-        if task.pdf_file:
-            task.pdf_file.delete()
-
-        task.huey_id = None
-        task.status = ReassembleTask.TO_DO
-        task.save()
-
-    @transaction.atomic
-    def reset_all_paper_reassembly(self) -> None:
-        """Reset to TODO all reassembly tasks and remove any associated pdfs."""
         queue = get_queue("tasks")
-        for task in ReassembleTask.objects.exclude(status=ReassembleTask.TO_DO).all():
-            # if the task is queued then remove it from the queue
-            if task.status == ReassembleTask.QUEUED:
-                queue.revoke_by_id(task.huey_id)
-            # if there is a file then delete it.
-            if task.pdf_file:
-                task.pdf_file.delete()
-            task.huey_id = None
-            task.status = ReassembleTask.TO_DO
-            task.save()
+        task = paper_obj.reassemblehueytasktracker
+        if task.status == HueyTaskTracker.QUEUED:
+            queue.revoke_by_id(str(task.huey_id))
+        if task.status == HueyTaskTracker.RUNNING:
+            raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
+            return
+        task.reset_to_do()
 
-    @transaction.atomic
+    def reset_all_paper_reassembly(self) -> None:
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
+
+        This tries to somewhat gracefully ("like an eagle...piloting a blimp")
+        revoke queued tasks, wait for running tasks, etc.
+
+        Raises:
+            RuntimeError: any running tasks.  For now, just wait before
+                clicking the "reset all" button!
+        """
+        queue = get_queue("tasks")
+
+        for task in ReassembleHueyTaskTracker.objects.exclude(
+            status=HueyTaskTracker.TO_DO,
+        ).all():
+            if task.status == HueyTaskTracker.QUEUED:
+                queue.revoke_by_id(str(task.huey_id))
+            if task.status == HueyTaskTracker.RUNNING:
+                raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
+            task.reset_to_do()
+
+    def WIP_reset_single_paper_reassembly(
+        self, paper_number: int, *, wait: int = 10
+    ) -> None:
+        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
+
+        Args:
+            paper_number: The paper number of the reassembly task to reset.
+
+        Keyword Args:
+            wait: how many seconds to wait before timing out for running
+                tasks (default 10 seconds).
+
+        Raises:
+            HueyException: timed out waiting for result.
+
+        TODO: this may be susceptible to race conditions, so I do not think
+        it is guaranteed to block a huey task from running.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number") from None
+
+        queue = get_queue("tasks")
+        task = paper_obj.reassemblehueytasktracker
+        # if the task is queued then remove it from the queue
+        if task.status == HueyTaskTracker.QUEUED:
+            queue.revoke_by_id(str(task.huey_id))
+        if task.status == HueyTaskTracker.RUNNING:
+            print(f"Task running: {task.huey_id}, we will wait for {wait}s...")
+            r = queue.result(
+                str(task.huey_id), blocking=True, timeout=wait, preserve=True
+            )
+            print(f"The running task {task.huey_id} has finished, and returned {r}")
+        task.reset_to_do()
+
+    def WIP_reset_all_paper_reassembly(self) -> None:
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
+
+        This tries to somewhat gracefully ("like an eagle...piloting a blimp")
+        revoke queued tasks, wait for running tasks, etc.
+
+        Raises:
+            HueyException: timed out waiting for result, if we had to
+                wait more than around (at least) 15 seconds total.
+                The total time we could wait for success in unlikely
+                worst case is ``10 + (5-epsilon)(# of running tasks)``.
+        """
+        total_wait = 15
+        tries = 10
+        blocking_wait = total_wait - tries * 1
+
+        queue = get_queue("tasks")
+
+        # I believe all this is racey and we cannot prevent something from slipping
+        # between cases: we do multiple passes through to hopefully resolve that but
+        # it still feels sloppy.  Perhaps this code should be looking on the queue,
+        # talking to Huey rather than the Tracker's 2nd source of truth.
+
+        # Regarding cost: b/c we filter excluding TO_DO, only the first loop is likely
+        # to be significant (in the common case when many things are QUEUED or STARTING).
+        while tries > 0:
+            how_many_running = 0
+            for task in ReassembleHueyTaskTracker.objects.exclude(
+                status=HueyTaskTracker.TO_DO
+            ).all():
+                if task.status == HueyTaskTracker.QUEUED:
+                    queue.revoke_by_id(str(task.huey_id))
+                elif task.status == HueyTaskTracker.RUNNING:
+                    how_many_running += 1
+                    print(f"There is a running task: {task.huey_id}")
+                else:
+                    task.reset_to_do()
+            if how_many_running > 0:
+                print(
+                    f"There are {how_many_running} running task(s): "
+                    f"waiting for {tries} more seconds..."
+                )
+                time.sleep(0.95)
+            time.sleep(0.05)
+            tries -= 1
+            # in principle, we could leave the loop early whenever
+            # how_many_running = 0 but I worry about race from STARTING
+            # to QUEUED and others I haven't thought of.
+
+        # Finally, blocking wait on any running, HueyException on timeout
+        for task in ReassembleHueyTaskTracker.objects.exclude(
+            status=HueyTaskTracker.TO_DO
+        ).all():
+            if task.status == HueyTaskTracker.RUNNING:
+                print(
+                    f"There is STILL a running task: {task.huey_id}, "
+                    f"blocking wait for {blocking_wait}s before exception!"
+                )
+                r = queue.result(
+                    str(task.huey_id),
+                    blocking=True,
+                    timeout=blocking_wait,
+                    preserve=True,
+                )
+                print(f"The running task {task.huey_id} has finished, and returned {r}")
+            task.reset_to_do()
+
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
         # first work out which papers are ready
@@ -570,28 +695,27 @@ class ReassembleService:
             if not data["identified"] or not data["marked"]:
                 continue
             # check if already queued or complete
+            # TODO: "Queued" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Queued":
                 continue
+            # TODO: "Complete" is really `get_status_display` of HueyTaskTracker enum
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            # otherwise build it!
-            task = ReassembleTask.objects.get(paper__paper_number=pn)
-            pdf_build = huey_reassemble_paper(pn)
-            task.huey_id = pdf_build.id
-            task.status = ReassembleTask.QUEUED
-            task.save()
+            self.queue_single_paper_reassembly(int(pn))
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
         """Get list of paths of pdf-files of completed (built) tests papers.
 
         Returns:
-            list(File): a list of django-Files of the reassembled pdf.
+            A list of django-Files of the reassembled pdf.
         """
         return [
             task.pdf_file
-            for task in ReassembleTask.objects.filter(status=ReassembleTask.COMPLETE)
+            for task in ReassembleHueyTaskTracker.objects.filter(
+                status=HueyTaskTracker.COMPLETE
+            )
         ]
 
     @transaction.atomic
@@ -608,21 +732,61 @@ class ReassembleService:
         return zfly.generator()
 
 
-@db_task(queue="tasks")
-def huey_reassemble_paper(paper_number: int) -> None:
+# The decorated function returns a ``huey.api.Result``
+# ``context=True`` so that the task knows its ID etc.
+# TODO: investigate "preserver=True" here if we want to wait on them?
+@db_task(queue="tasks", context=True)
+def huey_reassemble_paper(
+    paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
+) -> bool:
+    """Reassemble a single paper, updating the database with progress and resulting PDF.
+
+    Args:
+        paper_number: which paper to reassemble.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
-    task = paper_obj.reassembletask
+
+    with transaction.atomic():
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
+
+        if _debug_be_flaky:
+            for i in range(5):
+                print(f"Huey sleep i={i}/4: {task.id}")
+                time.sleep(1)
+            roll = random.randint(1, 10)
+            if roll % 5 == 0:
+                raise ValueError(
+                    f"DEBUG: deliberately failing creation of reassembly {paper_number}"
+                )
+
         with save_path.open("rb") as f:
-            # delete any old file if it exists
-            if task.pdf_file:
-                task.pdf_file.delete()
-            # save the new one.
-            task.pdf_file = File(f, name=save_path.name)
-            task.save()
+            with transaction.atomic():
+                # TODO: unclear to me if we need to re-get the task
+                tr = ReassembleHueyTaskTracker.objects.get(pk=tracker_pk)
+                # TODO: IMHO, the pdf file does not belong in the Tracker obj
+                # TODO: I think we should have deleted it before restarting so this isn't needed
+                # delete any old file if it exists
+                if tr.pdf_file:
+                    tr.pdf_file.delete()
+                # save the new one.
+                tr.pdf_file = File(f, name=save_path.name)
+                tr.transition_to_complete()
+    return True

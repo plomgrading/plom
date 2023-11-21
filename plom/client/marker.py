@@ -958,8 +958,6 @@ class MarkerClient(QWidget):
                    {
                      "POWERUSER"
                      "FOREGROUND"
-                     "CommentsWarnings"
-                     "MarkWarnings"
                      "KeyBinding"
                    }
 
@@ -1039,8 +1037,6 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
-        self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
         # TODO: some error handling here for users who hack their config?
         self.annotatorSettings["keybinding_name"] = lastTime.get("KeyBinding")
         self.annotatorSettings["keybinding_custom_overlay"] = lastTime.get("CustomKeys")

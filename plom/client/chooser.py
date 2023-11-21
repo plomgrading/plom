@@ -82,8 +82,6 @@ def readLastTime():
     lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
-    lastTime["CommentsWarnings"] = True
-    lastTime["MarkWarnings"] = True
     lastTime["KeyBinding"] = "default"
     # update default from config file
     if cfgfile.exists():
@@ -186,8 +184,6 @@ class Chooser(QDialog):
         self.lastTime["FOREGROUND"] = opt["FOREGROUND"]
         self.lastTime["LogLevel"] = opt["LogLevel"]
         self.lastTime["LogToFile"] = opt["LogToFile"]
-        self.lastTime["CommentsWarnings"] = opt["CommentsWarning"]
-        self.lastTime["MarkWarnings"] = opt["MarkWarnings"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def launch_task(self, which_subapp: str):

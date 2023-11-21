@@ -1,6 +1,9 @@
-<!-- Copyright (C) 2023 Julian Lapenna -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% block title %}
     Overview of current marking and identifying
@@ -32,7 +35,7 @@
     <div class="card p-2 m-2">
         <div class="card-body">
             <a class="btn btn-primary"
-               href="{% url 'progress_task_annotation_filter' %}">Browse marking</a>
+               href="{% url 'progress_marking_task_filter' %}">Browse marking</a>
             <ul>
                 <li>Shows table of marking tasks</li>
                 <li>Can view original page images and the annotations</li>

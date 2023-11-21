@@ -15,7 +15,6 @@ from ..services import (
     TestSourceService,
     PrenameSettingService,
     StagingStudentService,
-    StagingClasslistCSVService,
     PQVMappingService,
     ExtraPageService,
     ScrapPaperService,
@@ -136,8 +135,6 @@ class LandingResetClasslist(ManagerRequiredView):
     def delete(self, request):
         students = StagingStudentService()
         students.remove_all_students()
-        scsv = StagingClasslistCSVService()
-        scsv.delete_classlist_csv()
         return HttpResponseClientRefresh()
 
 

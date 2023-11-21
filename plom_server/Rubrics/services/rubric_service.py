@@ -26,9 +26,7 @@ from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
 from Papers.services import SpecificationService
-from ..serializers import (
-    RubricSerializer,
-)
+from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
 
@@ -172,9 +170,7 @@ class RubricService:
             ValueError: username does not exist or is not part of the manager group.
         """
         try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="manager"
-            )
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
@@ -335,6 +331,25 @@ class RubricService:
             A query of Annotation instances
         """
         return rubric.annotations.all()
+
+    def get_marking_tasks_with_rubric_in_latest_annotation(
+        self, rubric: Rubric
+    ) -> QuerySet[MarkingTask]:
+        """Get the queryset of marking tasks that use this rubric in their latest annotations.
+
+        Args:
+            Rubric instance
+
+        Returns:
+            A query of MarkingTask instances
+        """
+        return (
+            MarkingTask.objects.filter(
+                status=MarkingTask.COMPLETE, latest_annotation__rubric__id=rubric.pk
+            )
+            .order_by("paper__paper_number")
+            .prefetch_related("paper", "assigned_user", "latest_annotation")
+        )
 
     def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
         """Get the queryset of rubrics that are used by this annotation.

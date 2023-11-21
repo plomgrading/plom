@@ -1,6 +1,3 @@
-{% extends "base/base.html" %}
-{% load static %}
-<!DOCTYPE html>
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
@@ -8,31 +5,22 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>
-            {% block title %}
-                Something has gone wrong
-            {% endblock title %}
-        </title>
-    </head>
-    <body>
-        {% block page_heading %}
-            Something has gone wrong
-        {% endblock page_heading %}
-        {% block main_content %}
-            <div class="d-grid gap-2" id="top">
-                <div class="card w-50">
-                    <div class="card-body">
-                        <img class="rounded mx-auto d-block"
-                             style="width: 75%"
-                             src="https://httpcats.com/204.jpg" />
-                    </div>
-                    <div class="card-footer">We cannot find that pdf. Please close this tab and refresh the previous page.</div>
-                    <div class="card-footer">(this is a placeholder page until we make a better one)</div>
-                </div>
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Something has gone wrong
+{% endblock title %}
+{% block page_heading %}
+    Something has gone wrong
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2" id="top">
+        <div class="card w-50">
+            <div class="card-body">
+                <img class="rounded mx-auto d-block" src="https://httpcats.com/204.jpg" />
             </div>
-        {% endblock main_content %}
-    </body>
-</html>
+            <div class="card-footer">We cannot find that pdf. Please close this tab and refresh the previous page.</div>
+            <div class="card-footer">(this is a placeholder page until we make a better one)</div>
+        </div>
+    </div>
+{% endblock main_content %}
