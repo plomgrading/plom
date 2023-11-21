@@ -289,23 +289,6 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
 
-        self.checkWarnCom = QCheckBox(
-            "Warn on insufficient feedback (e.g., no comments)"
-        )
-        self.checkWarnMark = QCheckBox("Warn if score is inconsistent with annotations")
-        flay.addWidget(self.checkWarnCom)
-        flay.addWidget(self.checkWarnMark)
-        self.checkWarnCom.setChecked(s.get("CommentsWarnings", False))
-
-        self.checkWarnMark.setChecked(s.get("MarkWarnings", False))
-        if not s.get("POWERUSER"):
-            self.checkWarnCom.setEnabled(False)
-            self.checkWarnMark.setEnabled(False)
-
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        flay.addRow(line)
         flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
         tempdir_prefix = "plom_"
         q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
@@ -330,8 +313,6 @@ class ClientSettingsDialog(QDialog):
             "FOREGROUND": self.checkFore.isChecked(),
             "LogLevel": self.comboLog.currentText(),
             "LogToFile": self.checkLogFile.isChecked(),
-            "CommentsWarning": self.checkWarnCom.isChecked(),
-            "MarkWarnings": self.checkWarnMark.isChecked(),
         }
 
 

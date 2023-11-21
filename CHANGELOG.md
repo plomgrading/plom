@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Clients: more dialogs have "Don't ask me again" checkboxes but.
+* "Don't ask me again" settings are stored only in the current session (for now).
 
 ### Fixed
 * Duplicated paper numbers in question-version map input will now be detected.
