@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -17,5 +18,10 @@ urlpatterns = [
         "summary/<int:question_number>",
         views.HTMXSummaryQuestion.as_view(),
         name="spec_summary_q",
+    ),
+    path(
+        "template",
+        views.TemplateSpecBuilderView.as_view(),
+        name="template_spec_builder",
     ),
 ]

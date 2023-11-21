@@ -23,7 +23,8 @@
         <div class="card">
             <div class="card-body">
                 <p>
-                    Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam.
+                    Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam, or
+                    <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">build a template toml</a>
                 </p>
                 <div class="mb-3" hx-get="{% url 'spec_text_edit' %}" hx-trigger="load"></div>
             </div>
