@@ -85,15 +85,11 @@ class Command(BaseCommand):
     def show_status(self):
         reas = ReassembleService()
         tab = reas.get_all_paper_status_for_reassembly()
-        # TODO: port view to IMHO nicer list-of-dicts
-        rows = []
-        for k, v in tab.items():
-            row = v.copy()
+        for row in tab:
             # keep the humanized ones
             row.pop("last_update")
             row.pop("reassembled_time")
-            rows.append(row)
-        self.stdout.write(tabulate(rows, headers="keys", tablefmt="simple_outline"))
+        self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
 
     def handle(self, *args, **options):
         save_path = options["save_path"]
