@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 
-
 from django.db import models
 
 from Base.models import HueyTaskTracker

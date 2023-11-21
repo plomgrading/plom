@@ -233,7 +233,7 @@ class BuildPapersService:
             qv_row,
             student_info=student_info,
             tracker_pk=tracker_pk,
-            _debug_be_flaky=True,
+            _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
         with transaction.atomic(durable=True):

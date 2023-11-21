@@ -412,6 +412,7 @@ class ReassembleService:
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
+                "test_num": paper.paper_number,
                 "scanned": False,
                 "identified": False,
                 "marked": False,
@@ -507,7 +508,7 @@ class ReassembleService:
             tracker_pk = tr.pk
 
         res = huey_reassemble_paper(
-            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=True
+            paper_number, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
 
@@ -532,7 +533,58 @@ class ReassembleService:
         task = paper_obj.reassemblehueytasktracker
         return task.pdf_file
 
-    def reset_single_paper_reassembly(
+    def reset_single_paper_reassembly(self, paper_number: int) -> None:
+        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
+
+        Args:
+            paper_number: The paper number of the reassembly task to reset.
+
+        Raises:
+            RuntimeError: any running tasks.  For now, just wait before
+                clicking the "reset all" button!
+
+        This is a "best-attempt" at catching reassembly chores while they
+        are queued.
+
+        TODO: this may be susceptible to race conditions, so I do not think
+        it is guaranteed to block a huey task from running.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number") from None
+
+        queue = get_queue("tasks")
+        task = paper_obj.reassemblehueytasktracker
+        if task.status == HueyTaskTracker.QUEUED:
+            queue.revoke_by_id(str(task.huey_id))
+        if task.status == HueyTaskTracker.RUNNING:
+            raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
+            return
+        task.reset_to_do()
+
+    def reset_all_paper_reassembly(self) -> None:
+        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
+
+        This tries to somewhat gracefully ("like an eagle...piloting a blimp")
+        revoke queued tasks, wait for running tasks, etc.
+
+        Raises:
+            RuntimeError: any running tasks.  For now, just wait before
+                clicking the "reset all" button!
+        """
+        queue = get_queue("tasks")
+
+        for task in ReassembleHueyTaskTracker.objects.exclude(
+            status=HueyTaskTracker.TO_DO,
+        ).all():
+            if task.status == HueyTaskTracker.QUEUED:
+                queue.revoke_by_id(str(task.huey_id))
+            if task.status == HueyTaskTracker.RUNNING:
+                raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
+            task.reset_to_do()
+
+    def WIP_reset_single_paper_reassembly(
         self, paper_number: int, *, wait: int = 10
     ) -> None:
         """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
@@ -568,7 +620,7 @@ class ReassembleService:
             print(f"The running task {task.huey_id} has finished, and returned {r}")
         task.reset_to_do()
 
-    def reset_all_paper_reassembly(self) -> None:
+    def WIP_reset_all_paper_reassembly(self) -> None:
         """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
 
         This tries to somewhat gracefully ("like an eagle...piloting a blimp")
@@ -715,8 +767,8 @@ def huey_reassemble_paper(
         save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
 
         if _debug_be_flaky:
-            for i in range(10):
-                print(f"Huey sleep i={i}/10: {task.id}")
+            for i in range(5):
+                print(f"Huey sleep i={i}/4: {task.id}")
                 time.sleep(1)
             roll = random.randint(1, 10)
             if roll % 5 == 0:
