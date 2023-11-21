@@ -17,7 +17,7 @@ from .models import (
     DiscardStagingImage,
 )
 
-# This has something to do with the models appearing in an admin interface
+# This makes models appear in the admin interface
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
 admin.site.register(KnownStagingImage)
