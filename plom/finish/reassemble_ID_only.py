@@ -81,7 +81,7 @@ def main(server=None, pwd=None):
         N = len(pagelists)
         print("Reassembling {} papers...".format(N))
         with Pool() as p:
-            r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
+            _ = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
 
         print(">>> Warning <<<")
         print(

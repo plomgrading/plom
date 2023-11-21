@@ -24,7 +24,7 @@ from Papers.models import (
     Bundle,
     Image,
     DiscardPage,
-    CreateImageTask,
+    CreateImageHueyTask,
     FixedPage,
     MobilePage,
     QuestionPage,
@@ -62,25 +62,25 @@ class ImageBundleService:
 
     @transaction.atomic
     def get_image_pushing_status(self, staged_image) -> Union[str, None]:
-        """Return the status of a staged image's associated CreateImageTask instance."""
+        """Return the status of a staged image's associated CreateImageHueyTask instance."""
         try:
-            task_obj = CreateImageTask.objects.get(staging_image=staged_image)
+            task_obj = CreateImageHueyTask.objects.get(staging_image=staged_image)
             return task_obj.status
-        except CreateImageTask.DoesNotExist:
+        except CreateImageHueyTask.DoesNotExist:
             return None
 
     @transaction.atomic
     def get_image_pushing_message(self, staged_image) -> Union[str, None]:
-        """Return the error message of a staged image's CreateImageTask instance."""
+        """Return the error message of a staged image's CreateImageHueyTask instance."""
         try:
-            task_obj = CreateImageTask.objects.get(staging_image=staged_image)
+            task_obj = CreateImageHueyTask.objects.get(staging_image=staged_image)
             return task_obj.message
-        except CreateImageTask.DoesNotExist:
+        except CreateImageHueyTask.DoesNotExist:
             return None
 
     @transaction.atomic
     def is_image_pushing_in_progress(self, completed_images) -> bool:
-        """Return True if at least one CreateImageTask for a bundle has the status 'queued' or 'running'."""
+        """Return True if at least one CreateImageHueyTask for a bundle has the status 'queued' or 'running'."""
         for img in completed_images:
             status = self.get_image_pushing_status(img)
             if status == "queued" or status == "running":

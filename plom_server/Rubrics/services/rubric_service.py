@@ -26,9 +26,7 @@ from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
 from Papers.services import SpecificationService
-from ..serializers import (
-    RubricSerializer,
-)
+from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
 
@@ -172,9 +170,7 @@ class RubricService:
             ValueError: username does not exist or is not part of the manager group.
         """
         try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="manager"
-            )
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"

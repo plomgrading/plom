@@ -4,14 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from huey.signals import (
-    SIGNAL_EXECUTING,
-    SIGNAL_ERROR,
-    SIGNAL_COMPLETE,
-    SIGNAL_INTERRUPTED,
-)
+from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
 from django.db import models
+from django.db import transaction
 from django.contrib.auth.models import User
 from django_huey import get_queue
 from django.utils import timezone
@@ -19,23 +15,55 @@ from polymorphic.models import PolymorphicModel
 
 import logging
 
+# TODO: what is this?  It is happening at import-time... scary
+# It comes from Django-Huey project and allows you to have multiple
+# task queues
+# TODO: this is used for the decorators to define the signal handlers
+# below, so it must presumably somehow be lazy...  but this :-(
 queue = get_queue("tasks")
 
 
-class HueyTask(PolymorphicModel):
-    """A general-purpose model for handling Huey tasks.
+class HueyTaskTracker(models.Model):
+    """A general-purpose model for tracking Huey tasks.
 
-    It keeps track of a huey task's ID, the time created, and the
+    It keeps track of a Huey task's ID, the time created, and the
     status. Also, this is where we define the functions for handling
     signals sent from the huey consumer.
+
+    TODO: well we don't actually define those here, they are in global
+    scope outside this class.  See TODO above.
+
+    When you create one of these, set status to ``TO_DO`` or ``STARTING``,
+    choosing ``STARTING`` if just about to enqueue a Huey task.
+    The Huey task should (eventually) update the status to ``RUNNING``.
+    In the meantime, you can change status to ``QUEUED`` (provided you
+    are careful not to overwrite ``RUNNING``!)
+    Generally the Huey task itself should set status ``COMPLETE``.
+    TODO: ``ERROR`` is still in-flux.
+
+    The difference between STARTING, QUEUED, and RUNNING is rather
+    sensitive to timing.  Caller can set STARTING and try to set
+    QUEUED (but must defer to the Huey task itself about RUNNING.
+
+    .. caution:: These statuses are not just symbolic constants; they
+        also appear as strings through the code as
+        "To Do", "Starting", "Queued", "Running", "Error", "Complete".
+        Note the difference in cases.  They are displayed to users.
+        They are also used in logic tests.
+
+    ``obsolete=True`` is a "light deletion; no one cares for the result
+    and it should not be used.  It is ok to change status (e.g., a
+    background task finishes a chore that no one cares about anymore is
+    free to complete the chore---or not!)
     """
 
     StatusChoices = models.IntegerChoices(
-        "status", "TO_DO STARTED QUEUED COMPLETE ERROR"
+        "status", "TO_DO STARTING QUEUED RUNNING COMPLETE ERROR"
     )
     TO_DO = StatusChoices.TO_DO
+    STARTING = StatusChoices.STARTING
     QUEUED = StatusChoices.QUEUED
-    STARTED = StatusChoices.STARTED
+    RUNNING = StatusChoices.RUNNING
     COMPLETE = StatusChoices.COMPLETE
     ERROR = StatusChoices.ERROR
 
@@ -46,6 +74,70 @@ class HueyTask(PolymorphicModel):
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
     last_update = models.DateTimeField(auto_now=True)
+    obsolete = models.BooleanField(default=False)
+
+    def transition_back_to_todo(self):
+        # TODO: which states are allowed to transition here?
+        self.huey_id = None
+        self.status = self.TO_DO
+        self.save()
+
+    def reset_to_do(self):
+        # subclasses might subclass to do more
+        self.transition_back_to_todo()
+
+    def transition_to_starting(self):
+        assert self.status == self.TO_DO, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Starting (only from To_Do state)"
+        )
+        assert self.huey_id is None, (
+            "Tracker must have id None to transition to Starting"
+            f" but we have id={self.huey_id}"
+        )
+        self.status = self.STARTING
+        self.save()
+
+    def transition_to_running(self, huey_id):
+        assert self.status in (self.STARTING, self.QUEUED), (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Running (only from Starting or Queued)"
+        )
+        self.huey_id = huey_id
+        self.status = self.RUNNING
+        self.save()
+
+    def transition_to_queued_or_running(self, huey_id):
+        """Move to the queued state or a no-op if we're already in the running state."""
+        if self.status == self.RUNNING:
+            assert self.huey_id == huey_id, (
+                f"We were already in the RUNNING state with huey id {self.huey_id} when "
+                f"you tried to enqueue us with a different huey id {huey_id}"
+            )
+            return
+        assert self.status == self.STARTING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Queued (only from Starting)"
+        )
+        self.huey_id = huey_id
+        self.status = self.QUEUED
+        self.save()
+
+    def transition_to_complete(self):
+        """Move to the complete state."""
+        assert self.status == self.RUNNING, (
+            f"Tracker cannot transition from {self.get_status_display()}"
+            " to Complete (only from Running)"
+        )
+        # TODO?  is this the place to set to None?
+        self.huey_id = None
+        self.status = self.COMPLETE
+        self.save()
+
+    def set_as_obsolete(self):
+        """Move to the obsolete state and save, a sort of "light deletion"."""
+        self.obsolete = True
+        self.save()
 
 
 # ---------------------------------
@@ -130,28 +222,6 @@ class BaseAction(PolymorphicModel):
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
 
 
-class SingletonHueyTask(HueyTask):
-    """We define a singleton model for singleton huey tasks.
-
-    This will be used for jobs such as extra-page production.
-    """
-
-    class Meta:
-        abstract = True
-
-    def save(self, *args, **kwargs):
-        SingletonHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = cls.objects.get_or_create()
-        return obj
-
-
 class Tag(models.Model):
     """Represents a text entry that can have a many-to-one relationship with another table.
 
@@ -176,62 +246,35 @@ class Tag(models.Model):
 
 # ---------------------------------
 # Define the signal handlers for huey tasks.
-# if the task has the kwarg "quiet=True" then
-# we ignore the signals
-# otherwise we use the signals to update information
-# in the database.
 # ---------------------------------
 
-
-@queue.signal(SIGNAL_EXECUTING)
-def start_task(signal, task):
-    if task.kwargs.get("quiet", False):
-        return
-
-    try:
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = HueyTask.STARTED
-        task_obj.save()
-    except HueyTask.DoesNotExist:
-        # task has been deleted from underneath us.
-        print(
-            f"(Started) Task {task.id} = {task.name} {task.args} = is no longer in the database."
-        )
-
-
-@queue.signal(SIGNAL_COMPLETE)
-def end_task(signal, task):
-    if task.kwargs.get("quiet", False):
-        return
-    try:
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = HueyTask.COMPLETE
-        task_obj.save()
-    except HueyTask.DoesNotExist:
-        # task has been deleted from underneath us.
-        print(
-            f"(Completed) Task {task.id} = {task.name} {task.args} = is no longer in the database."
-        )
+# TODO: I am concerned that these receive signals from unrelated Huey tasks
+# on the same computer, such as our test suite Issue #2800.
 
 
 @queue.signal(SIGNAL_ERROR)
-def error_task(signal, task, exc):
+def on_huey_task_error(signal, task, exc):
+    """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
-    if task.kwargs.get("quiet", False):
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
+        # task has been deleted from underneath us, or did not exist yet b/c of race conditions
+        print(
+            f"(Error) Task {task.id} {task.name} with args {task.args}"
+            " is no longer (or not yet) in the database."
+        )
         return
-    try:
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = HueyTask.ERROR
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
         task_obj.message = exc
         task_obj.save()
-    except HueyTask.DoesNotExist:
-        # task has been deleted from underneath us.
-        print(
-            f"(Error) Task {task.id} = {task.name} {task.args} = is no longer in the database."
-        )
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
-def interrupt_task(signal, task):
-    print(f"Interrupt sent to task {task.id} - {task.name} {task.args}")
+def on_huey_task_interrupted(signal, task):
+    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
