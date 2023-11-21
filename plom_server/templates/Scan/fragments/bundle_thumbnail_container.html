@@ -7,8 +7,7 @@
 <div class="card-body">
     <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
         <div class="bundle-thumb">
-            <img class="img"
-                 src="{% url 'scan_get_rotated_thumbnail' timestamp pg.order %}" />
+            <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
         </div>
     </a>
 </div>

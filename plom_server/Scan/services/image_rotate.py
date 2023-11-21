@@ -2,12 +2,18 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Andrew Rechnitzer
+
+from io import BytesIO
+from pathlib import Path
+from PIL import Image
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
 
-from ..models import StagingBundle, StagingImage
+from ..models import StagingBundle, StagingImage, StagingThumbnail
 
 
 class ImageRotateService:
@@ -44,7 +50,7 @@ class ImageRotateService:
     @transaction.atomic
     def rotate_image_cmd(self, username, bundle_name, bundle_order):
         try:
-            user_obj = User.objects.get(
+            User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
             )
         except ObjectDoesNotExist:
@@ -88,5 +94,15 @@ class ImageRotateService:
 
         # keep it in [0, 360)
         staging_img.rotation %= 360
-
         staging_img.save()
+
+        thumb_obj = staging_img.stagingthumbnail
+        thumb_name = Path(thumb_obj.image_file.path).name
+
+        with Image.open(thumb_obj.image_file) as tmp_img:
+            fh = BytesIO()
+            tmp_img.rotate(angle, expand=True).save(fh, "png")
+            thumb_obj.delete()
+            StagingThumbnail.objects.create(
+                staging_image=staging_img, image_file=File(fh, thumb_name)
+            )
