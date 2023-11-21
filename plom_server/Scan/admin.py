@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib import admin
+
 from .models import (
     StagingBundle,
     StagingImage,
