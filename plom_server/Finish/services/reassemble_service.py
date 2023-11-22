@@ -601,92 +601,70 @@ class ReassembleService:
                 queue = get_queue("tasks")
                 queue.revoke_by_id(str(chore.huey_id))
 
-    def reset_single_paper_reassembly(self, paper_num: int) -> None:
-        """Obsolete the reassembly of a paper and remove pdf if it exists.
+    def reset_single_paper_reassembly(
+        self, paper_num: int, *, wait: Optional[int] = None
+    ) -> None:
+        """Obsolete the reassembly of a paper.
 
         Args:
             paper_num: The paper number of the reassembly task to reset.
 
+        Keyword Args:
+            wait: how long to wait on running chores.  ``None`` is the
+                default which means don't wait.  If you specify an integer,
+                we will wait for that many seconds; raise a HueyException
+                if the chore has not finished in time.  Note ``0`` is not
+                quite the same as ``None`` because ``None`` will not cause
+                an exception.
+
         Raises:
             ObjectDoesNotExist: no such paper number or not chore for paper.
-            RuntimeError: any running tasks.  For now, just wait before
-                clicking the "reset all" button!
-
-        This is a "best-attempt" at catching reassembly chores while they
-        are queued.
-
-        TODO: this may be susceptible to race conditions, so I do not think
-        it is guaranteed to block a huey task from running.
+            HueyException: timed out waiting for result.
         """
         chore = ReassemblePaperChore.objects.filter(
             obsolete=False, paper__paper_number=paper_num
         ).get()
+        chore.set_as_obsolete()
         if chore.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
-        # TODO: should we overload this to remove the file?
-        chore.set_as_obsolete()
         if chore.status == HueyTaskTracker.RUNNING:
-            # TODO: should we wait a few seconds?
-            raise RuntimeError(f"Task running {chore.huey_id}, cannot reset")
+            if wait is None:
+                print(
+                    f"Note: Chore running: {chore.huey_id};"
+                    " we marked it obsolete but otherwise ignoring"
+                )
+            else:
+                print(f"Chore running: {chore.huey_id}, we will wait for {wait}s...")
+                r = queue.result(
+                    str(chore.huey_id), blocking=True, timeout=wait, preserve=True
+                )
+                print(
+                    f"The running task {chore.huey_id} has finished, and returned {r}"
+                )
 
     def reset_all_paper_reassembly(self) -> None:
-        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
-
-        This tries to somewhat gracefully ("like an eagle...piloting a blimp")
-        revoke queued tasks, wait for running tasks, etc.
-
-        Raises:
-            RuntimeError: any running tasks.  For now, just wait before
-                clicking the "reset all" button!
-        """
+        """Reset all reassembly chores, including completed ones."""
+        # TODO: future work for a waiting version, see WIP below?
+        wait = None
         queue = get_queue("tasks")
-
-        for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
-            if task.status == HueyTaskTracker.QUEUED:
-                queue.revoke_by_id(str(task.huey_id))
-            if task.status == HueyTaskTracker.RUNNING:
-                raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
-            task.set_as_obsolete()
-
-    def WIP_reset_single_paper_reassembly(
-        self, paper_number: int, *, wait: int = 10
-    ) -> None:
-        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
-
-        Args:
-            paper_number: The paper number of the reassembly task to reset.
-
-        Keyword Args:
-            wait: how many seconds to wait before timing out for running
-                tasks (default 10 seconds).
-
-        Raises:
-            HueyException: timed out waiting for result.
-
-        TODO: this may be susceptible to race conditions, so I do not think
-        it is guaranteed to block a huey task from running.
-        """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_number)
-        except Paper.DoesNotExist:
-            raise ValueError("No paper with that number") from None
-
-        queue = get_queue("tasks")
-        task = paper_obj.reassemblehueytasktracker
-        # if the task is queued then remove it from the queue
-        if task.status == HueyTaskTracker.QUEUED:
-            queue.revoke_by_id(str(task.huey_id))
-        if task.status == HueyTaskTracker.RUNNING:
-            print(f"Task running: {task.huey_id}, we will wait for {wait}s...")
-            r = queue.result(
-                str(task.huey_id), blocking=True, timeout=wait, preserve=True
-            )
-            print(f"The running task {task.huey_id} has finished, and returned {r}")
-        task.reset_to_do()
+        for chore in ReassemblePaperChore.objects.filter(obsolete=False).all():
+            chore.set_as_obsolete()
+            if chore.status == HueyTaskTracker.QUEUED:
+                queue.revoke_by_id(str(chore.huey_id))
+            if chore.status == HueyTaskTracker.RUNNING:
+                if wait is None:
+                    print(
+                        f"Note: Chore running: {chore.huey_id};"
+                        " we marked it obsolete but otherwise ignoring"
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"waiting on the chore running: {chore.huey_id}"
+                    )
 
     def WIP_reset_all_paper_reassembly(self) -> None:
-        """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
+        """Reset all reassembly tasks and remove any associated pdfs.
 
         This tries to somewhat gracefully ("like an eagle...piloting a blimp")
         revoke queued tasks, wait for running tasks, etc.
@@ -717,7 +695,7 @@ class ReassembleService:
                     how_many_running += 1
                     print(f"There is a running task: {task.huey_id}")
                 else:
-                    task.reset_to_do()
+                    task.set_as_obsolete()
             if how_many_running > 0:
                 print(
                     f"There are {how_many_running} running task(s): "
@@ -732,6 +710,7 @@ class ReassembleService:
 
         # Finally, blocking wait on any running, HueyException on timeout
         for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
+            task.set_as_obsolete()
             if task.status == HueyTaskTracker.RUNNING:
                 print(
                     f"There is STILL a running task: {task.huey_id}, "
@@ -744,7 +723,6 @@ class ReassembleService:
                     preserve=True,
                 )
                 print(f"The running task {task.huey_id} has finished, and returned {r}")
-            task.reset_to_do()
 
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
