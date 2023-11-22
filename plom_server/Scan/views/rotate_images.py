@@ -45,6 +45,20 @@ class RotateImageCounterClockwise(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
+class RotateImageAround(ScannerRequiredView):
+    def post(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+
+        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+            request.user, timestamp, index, angle=180
+        )
+
+        return HttpResponseClientRefresh()
+
+
 class GetRotatedBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 

@@ -16,6 +16,22 @@ from django.core.files import File
 from ..models import StagingBundle, StagingImage, StagingThumbnail
 
 
+def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
+    """Once staging image has been rotated by angle, update the corresponding thumbnail."""
+
+    thumb_obj = staging_img.stagingthumbnail
+    thumb_name = Path(thumb_obj.image_file.path).name
+    # read in the thumbnail image
+    # delete old thumbnail and replace with rotated thumbnail.
+    with Image.open(thumb_obj.image_file) as tmp_img:
+        fh = BytesIO()
+        tmp_img.rotate(angle, expand=True).save(fh, "png")
+        thumb_obj.delete()
+        StagingThumbnail.objects.create(
+            staging_image=staging_img, image_file=File(fh, thumb_name)
+        )
+
+
 class ImageRotateService:
     @transaction.atomic
     def rotate_image_from_bundle_timestamp_and_order(
@@ -96,13 +112,4 @@ class ImageRotateService:
         staging_img.rotation %= 360
         staging_img.save()
 
-        thumb_obj = staging_img.stagingthumbnail
-        thumb_name = Path(thumb_obj.image_file.path).name
-
-        with Image.open(thumb_obj.image_file) as tmp_img:
-            fh = BytesIO()
-            tmp_img.rotate(angle, expand=True).save(fh, "png")
-            thumb_obj.delete()
-            StagingThumbnail.objects.create(
-                staging_image=staging_img, image_file=File(fh, thumb_name)
-            )
+        update_thumbnail_after_rotation(staging_img, angle)
