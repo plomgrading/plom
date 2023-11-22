@@ -426,6 +426,7 @@ class ReassembleService:
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
+                "obsolete": None,
             }
         mss = ManageScanService()
         number_of_questions = SpecificationService.get_n_questions()
@@ -461,10 +462,11 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassembleHueyTaskTracker.objects.all().prefetch_related("paper"):
+        for task in ReassemblePaperChore.objects.all().prefetch_related("paper"):
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
+            status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
                 status[task.paper.paper_number][
