@@ -655,11 +655,11 @@ class ReassembleService:
         """Reset all reassembly chores, including completed ones."""
         # TODO: future work for a waiting version, see WIP below?
         wait = None
-        queue = get_queue("tasks")
+        # first cancel all queued chores
+        self.try_to_cancel_all_queued_chores()
+        # any ones that we did not obsolete, we'll get 'em now:
         for chore in ReassemblePaperChore.objects.filter(obsolete=False).all():
             chore.set_as_obsolete()
-            if chore.status == HueyTaskTracker.QUEUED:
-                queue.revoke_by_id(str(chore.huey_id))
             if chore.status == HueyTaskTracker.RUNNING:
                 if wait is None:
                     print(
