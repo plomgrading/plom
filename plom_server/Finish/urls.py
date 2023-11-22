@@ -9,6 +9,7 @@ from .views import (
     ReassemblePapersView,
     StartOneReassembly,
     StartAllReassembly,
+    CancelQueuedReassembly,
 )
 
 
@@ -36,4 +37,9 @@ urlpatterns = [
         name="reassemble_one_paper",
     ),
     path("reassemble/all", StartAllReassembly.as_view(), name="reassemble_all_pdfs"),
+    path(
+        "reassemble/queued",
+        CancelQueuedReassembly.as_view(),
+        name="reassemble_cancel_queued",
+    ),
 ]

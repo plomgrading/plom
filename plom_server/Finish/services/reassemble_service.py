@@ -558,6 +558,49 @@ class ReassembleService:
         )
         return chore.pdf_file
 
+    def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
+        """Mark a reassembly chore as obsolete and try to cancel it if queued in Huey.
+
+        Args:
+            paper_num: The paper number of the chore to cancel.
+
+        Raises:
+            ObjectDoesNotExist: no such paper number or not chore for paper.
+
+        This is a "best-attempt" at catching reassembly chores while they
+        are queued.  It might be possible for a Chore to sneak past from the
+        "Starting" state.  Already "Running" chores are not effected, although
+        they ARE marked as obsolete.
+        """
+        chore = ReassemblePaperChore.objects.get(
+            obsolete=False, paper__paper_number=paper_num
+        )
+        chore.set_as_obsolete()
+        # if chore.status == HueyTaskTracker.QUEUED:
+        if chore.huey_id:
+            queue = get_queue("tasks")
+            queue.revoke_by_id(str(chore.huey_id))
+
+    def try_to_cancel_all_queued_chores(self) -> None:
+        """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
+
+        This is a "best-attempt" at catching reassembly chores while they
+        are queued.  It might be possible for a Chore to sneak past from the
+        "Starting" state.  Already "Running" chores are not effected, although
+        they ARE marked as obsolete.
+
+        Completed chores are uneffected.
+        """
+        for chore in (
+            ReassemblePaperChore.objects.filter(obsolete=False)
+            .exclude(status=ReassemblePaperChore.COMPLETE)
+            .all()
+        ):
+            chore.set_as_obsolete()
+            if chore.huey_id:
+                queue = get_queue("tasks")
+                queue.revoke_by_id(str(chore.huey_id))
+
     def reset_single_paper_reassembly(self, paper_num: int) -> None:
         """Obsolete the reassembly of a paper and remove pdf if it exists.
 
@@ -581,11 +624,11 @@ class ReassembleService:
         if chore.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
+        # TODO: should we overload this to remove the file?
+        chore.set_as_obsolete()
         if chore.status == HueyTaskTracker.RUNNING:
             # TODO: should we wait a few seconds?
             raise RuntimeError(f"Task running {chore.huey_id}, cannot reset")
-        # TODO: should we overload this to remove the file?
-        chore.set_as_obsolete()
 
     def reset_all_paper_reassembly(self) -> None:
         """Reset to TO_DO all reassembly tasks and remove any associated pdfs.

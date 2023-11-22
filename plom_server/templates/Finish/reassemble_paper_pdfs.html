@@ -19,6 +19,8 @@
             <button hx-post="{% url 'reassemble_all_pdfs' %}"
                     href=""
                     class="btn btn-success m-2">Reassemble all (incl. outdated)</button>
+            <button hx-delete="{% url 'reassemble_cancel_queued' %}"
+                    class="btn btn-warning m-2">Cancel queued</button>
             <button hx-delete="{% url 'reassemble_all_pdfs' %}"
                     class="btn btn-danger m-2">Delete all</button>
         </div>
