@@ -9,7 +9,7 @@ from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class ReassembleHueyTaskTracker(HueyTaskTracker):
+class ReassemblePaperChore(HueyTaskTracker):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
 
     # TODO: I'm not convinced this should have a PDF file in it... TBD
@@ -17,10 +17,13 @@ class ReassembleHueyTaskTracker(HueyTaskTracker):
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""
-        return "Task Object " + str(self.paper.paper_number)
+        return "Reassemble Paper Chore " + str(self.paper.paper_number)
 
     def reset_to_do(self):
-        """Delete the PDF and go back the TO_DO state."""
+        """Delete the PDF and go back the TO_DO state.
+
+        DEPRECATED?
+        """
         if self.pdf_file:
             self.pdf_file.delete()
         super().reset_to_do()

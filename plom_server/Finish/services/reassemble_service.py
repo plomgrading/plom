@@ -28,8 +28,7 @@ from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService, PaperInfoService
 from Progress.services import ManageScanService
 
-from ..models import ReassembleHueyTaskTracker
-from ..models import ReassembleHueyTaskTracker as ReassemblePaperChore
+from ..models import ReassemblePaperChore
 from Base.models import HueyTaskTracker
 
 
@@ -588,9 +587,7 @@ class ReassembleService:
         """
         queue = get_queue("tasks")
 
-        for task in ReassembleHueyTaskTracker.objects.exclude(
-            status=HueyTaskTracker.TO_DO,
-        ).all():
+        for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
             if task.status == HueyTaskTracker.QUEUED:
                 queue.revoke_by_id(str(task.huey_id))
             if task.status == HueyTaskTracker.RUNNING:
@@ -656,13 +653,9 @@ class ReassembleService:
         # it still feels sloppy.  Perhaps this code should be looking on the queue,
         # talking to Huey rather than the Tracker's 2nd source of truth.
 
-        # Regarding cost: b/c we filter excluding TO_DO, only the first loop is likely
-        # to be significant (in the common case when many things are QUEUED or STARTING).
         while tries > 0:
             how_many_running = 0
-            for task in ReassembleHueyTaskTracker.objects.exclude(
-                status=HueyTaskTracker.TO_DO
-            ).all():
+            for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
                 if task.status == HueyTaskTracker.QUEUED:
                     queue.revoke_by_id(str(task.huey_id))
                 elif task.status == HueyTaskTracker.RUNNING:
@@ -683,9 +676,7 @@ class ReassembleService:
             # to QUEUED and others I haven't thought of.
 
         # Finally, blocking wait on any running, HueyException on timeout
-        for task in ReassembleHueyTaskTracker.objects.exclude(
-            status=HueyTaskTracker.TO_DO
-        ).all():
+        for task in ReassemblePaperChore.objects.filter(obsolete=False).all():
             if task.status == HueyTaskTracker.RUNNING:
                 print(
                     f"There is STILL a running task: {task.huey_id}, "

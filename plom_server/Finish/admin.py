@@ -6,7 +6,7 @@
 
 from django.contrib import admin
 
-from .models import ReassembleHueyTaskTracker
+from .models import ReassemblePaperChore
 
 # This makes models appear in the admin interface
-admin.site.register(ReassembleHueyTaskTracker)
+admin.site.register(ReassemblePaperChore)
