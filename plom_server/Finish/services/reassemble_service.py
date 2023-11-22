@@ -545,13 +545,14 @@ class ReassembleService:
         )
         return chore.pdf_file
 
-    def reset_single_paper_reassembly(self, paper_number: int) -> None:
-        """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
+    def reset_single_paper_reassembly(self, paper_num: int) -> None:
+        """Obsolete the reassembly of a paper and remove pdf if it exists.
 
         Args:
-            paper_number: The paper number of the reassembly task to reset.
+            paper_num: The paper number of the reassembly task to reset.
 
         Raises:
+            ObjectDoesNotExist: no such paper number or not chore for paper.
             RuntimeError: any running tasks.  For now, just wait before
                 clicking the "reset all" button!
 
@@ -561,19 +562,17 @@ class ReassembleService:
         TODO: this may be susceptible to race conditions, so I do not think
         it is guaranteed to block a huey task from running.
         """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_number)
-        except Paper.DoesNotExist:
-            raise ValueError("No paper with that number") from None
-
-        queue = get_queue("tasks")
-        task = paper_obj.reassemblehueytasktracker
-        if task.status == HueyTaskTracker.QUEUED:
-            queue.revoke_by_id(str(task.huey_id))
-        if task.status == HueyTaskTracker.RUNNING:
-            raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
-            return
-        task.reset_to_do()
+        chore = ReassemblePaperChore.objects.filter(
+            obsolete=False, paper__paper_number=paper_num
+        ).get()
+        if chore.status == HueyTaskTracker.QUEUED:
+            queue = get_queue("tasks")
+            queue.revoke_by_id(str(chore.huey_id))
+        if chore.status == HueyTaskTracker.RUNNING:
+            # TODO: should we wait a few seconds?
+            raise RuntimeError(f"Task running {chore.huey_id}, cannot reset")
+        # TODO: should we overload this to remove the file?
+        chore.set_as_obsolete()
 
     def reset_all_paper_reassembly(self) -> None:
         """Reset to TO_DO all reassembly tasks and remove any associated pdfs.
