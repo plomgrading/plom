@@ -224,7 +224,6 @@ class IDHandler:
             the users who already have confirmed predictions.
             Each list in the response is of the format: `[task_number, task_status, student_id, student_name]`.
         """
-
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
@@ -669,7 +668,6 @@ class IDHandler:
         Args:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
-
         # router.add_routes(self.local_route_table)
         # But see above: doesn't work with auth deco
         router.add_get("/ID/progress", self.IDprogressCount)

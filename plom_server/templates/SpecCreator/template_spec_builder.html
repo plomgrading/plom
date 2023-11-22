@@ -1,0 +1,182 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Build a template specification
+{% endblock title %}
+{% block page_heading %}
+    Build a template test specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary mb-3" href="{% url 'creator_launch' %}">Return to specification page</a>
+        </div>
+        <div class="card"
+             x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }}, shortName: '{{ shortName }}' }">
+            <div class="card-body">
+                <h4 class="card-title">Enter information about your test</h4>
+                <form enctype="multipart/form-data"
+                      id="form"
+                      method="post"
+                      action="{% url 'template_spec_builder' %}">
+                    {% csrf_token %}
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="text"
+                                       class="form-control"
+                                       id="longName"
+                                       value="{{ longName }}"
+                                       name="longName">
+                                <label for="longName">Test long name</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="text"
+                                       class="form-control"
+                                       id="shortName"
+                                       x-model="shortName"
+                                       name="shortName">
+                                <label for="shortName">Test short name</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="pages"
+                                       required
+                                       min="2"
+                                       x-model.number="pages"
+                                       name="pages">
+                                <label for="pages">Number of pages</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="questions"
+                                       required
+                                       min="1"
+                                       x-model.number="questions"
+                                       name="questions">
+                                <label for="questions">Number of questions</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="versions"
+                                       required
+                                       min="1"
+                                       value="1"
+                                       name="versions">
+                                <label for="versions">Number of versions</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row my-2">
+                        <div class="col-4">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="score"
+                                       required
+                                       min="1"
+                                       x-model.number="score"
+                                       name="score">
+                                <label for="score">Total score</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit"
+                            class="btn btn-primary"
+                            x-bind:disabled="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
+                        Generate template toml
+                    </button>
+                </form>
+            </div>
+            <template x-if="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
+                <span class="alert alert-danger m-2 w-50">
+                    <template x-if="pages%2==1">
+                        <p>The number of pages should be even.</p>
+                    </template>
+                    <template x-if="pages <= questions">
+                        <p>You should have at least one page per question, plus one for the ID page.</p>
+                    </template>
+                    <template x-if="score < questions">
+                        <p>
+                            The total score, <q x-text="score"></q> , should not be less than the number of questions, <q x-text="questions"></q>.
+                        </p>
+                    </template>
+                    <template x-if="!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName)">
+                        <p>The short name can only contain letters, numbers, underscores, hyphens and periods. No spaces.</p>
+                    </template>
+                </span>
+            </template>
+        </div>
+        {% if generated_toml %}
+            <div class="card" x-data="{the_toml: `{{ generated_toml }}` }">
+                <h5 class="card-header">Generated toml template</h5>
+                <div class="card-body">
+                    <div class="card-title">
+                        <p>
+                            <ul>
+                                <li>
+                                    Download the generated toml and open in your favourite editor, or simply copy-paste the generated toml into your editor.
+                                </li>
+                                <li>Carefully check the the pages and marks for each question.</li>
+                                <li>Once you have made your changes go back to the specification page and paste in your toml.</li>
+                            </ul>
+                        </p>
+                        <p>
+                            <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
+                                download toml
+                                <icon class="bi bi-file-earmark-arrow-down"></icon>
+                            </button>
+                            <button class="btn btn-primary m-2"
+                                    @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                                copy to clipboard
+                                <icon class="bi bi-clipboard2-plus"></icon>
+                            </button>
+                            <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
+                        </p>
+                    </div>
+                    <div class="card-text p-4 border rounded font-monospace">
+                        {% for line in toml_line_by_line %}
+                            {% if line.0 == '#' %}
+                                {% if line.1 == '#' %}
+                                    <span class="text-danger fw-medium">{{ line }}</span>
+                                {% else %}
+                                    <span class="text-primary fw-medium">{{ line }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span>{{ line }}</span>
+                            {% endif %}
+                            <br>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+      function downloadtoml(stuff) {
+	  let filename = 'template_test_specification.toml';
+	  let element = document.createElement('a');
+	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+	  element.setAttribute('download', filename);
+	  element.click();
+    }
+    </script>
+{% endblock main_content %}

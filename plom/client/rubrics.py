@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
 import html
+from typing import Any, Dict, List, Optional, Tuple
 
 import arrow
 
@@ -316,20 +317,27 @@ def diff_rubric(p, r):
     return rval, out
 
 
-def check_for_illadvised(rubrics, maxscore):
+def check_for_illadvised(
+    rubrics: List[Dict[str, Any]], maxscore: int
+) -> Tuple[bool, Optional[str], Optional[str]]:
     """Certain combinations of rubrics are legal but not a good idea.
 
+    Args:
+        rubrics: the list of rubrics that are currently used on
+            this question.
+        maxscore: the maximum score for this question.
+
     Return:
-        tuple: if there are no concerns, return `(True, None, None)`.
-        Otherwise, ``[False, code, msg]``, where ``code`` is a short
-        string for programmitically tracking what happened and ``msg``
+        If there are no concerns, return tuple `(True, None, None)`.
+        Otherwise, ``(False, code, msg)``, where ``code`` is a short
+        string for machines and ``msg``
         is some html appropriate to show to the user, e.g., as part of
         a dialog questioning if they really wish to continue.
 
     Raises:
-        KeyError: rubric must have at least "kind", "value", "out_of"
-            keys.  In some cases, also "display_delta" and "text"  which
-            are used to render error messages.
+        KeyError: invalid rubrics.  Rubric must have at least "kind",
+            "value", "out_of" keys.  In some cases, also "display_delta"
+            and "text" which are used here to render error messages.
     """
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     uppers = [r for r in rubrics if r["kind"] == "relative" and r["value"] > 0]

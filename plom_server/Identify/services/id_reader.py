@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 from warnings import warn
 
 from django.conf import settings

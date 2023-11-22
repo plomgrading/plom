@@ -39,13 +39,18 @@
         </tr>
     </thead>
     {% for task in tasks %}
-        <tr>
+        <tr style="{% if task.obsolete %} text-decoration: line-through;
+                   {% endif %}">
+            <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
             <td>{{ task.paper_number }}</td>
             {% if task.status == 'Complete' %}
                 <td>
                     <a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ task.pdf_filename }}</a>
                 </td>
-                <td>{{ task.status }}</td>
+                <td>
+                    {% if task.obsolete %}Obsolete:&nbsp;{% endif %}
+                    {{ task.status }}
+                </td>
                 <td></td>
             {% elif task.status == 'Error' %}
                 <td>{{ task.pdf_filename }}</td>
@@ -53,11 +58,13 @@
                     <p class="text-danger">{{ task.message }}</p>
                 </td>
                 <td>
-                    <a class="btn btn-warning"
-                       hx-post="{% url 'start_one_PDF' task.paper_number %}"
-                       hx-target="#pdf_table">Retry</a>
+                    {% if not task.obsolete %}
+                        <a class="btn btn-warning"
+                           hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                           hx-target="#pdf_table">Retry</a>
+                    {% endif %}
                 </td>
-            {% elif task.status == 'Queued' %}
+            {% elif task.status == 'Queued' or ask.status == "Starting" %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}
@@ -68,7 +75,7 @@
                        hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
                        hx-target="#pdf_table">Cancel</a>
                 </td>
-            {% elif task.status == 'Started' %}
+            {% elif task.status == 'Running' %}
                 <td>{{ task.pdf_filename }}</td>
                 <td>
                     {{ task.status }}
@@ -101,4 +108,3 @@
         <i class="bi bi-chevron-up"></i>
     </a>
 </div>
-</class>

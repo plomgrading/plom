@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, FileResponse, StreamingHttpResponse
+from django.http import FileResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -15,6 +16,7 @@ from Papers.services import SpecificationService
 
 class ReassemblePapersView(ManagerRequiredView):
     def get(self, request):
+        # Note: uses the symbolic constants defined in HueyTaskTracker
         reas = ReassembleService()
         context = self.build_context()
         all_paper_status = reas.get_all_paper_status_for_reassembly()
@@ -41,7 +43,7 @@ class ReassemblePapersView(ManagerRequiredView):
             [
                 1
                 for n, x in all_paper_status.items()
-                if x["reassembled_status"] in ["Queued", "Started"]
+                if x["reassembled_status"] in ("Starting", "Queued", "Running")
             ]
         )  # for display purposes started === queued
         n_errors = sum(

@@ -864,14 +864,14 @@ def checkSolutionSpec(testSpec, solutionSpec):
     if len(solutionSpec["solution"]) != solutionSpec["numberOfQuestions"]:
         return (
             False,
-            f"Question keys incorrect = {list(solutionSpec['solution'].keys() )}",
+            f"Question keys incorrect = {list(solutionSpec['solution'].keys())}",
         )
     # make sure each pagelist is contiguous an in range
     for q in range(1, solutionSpec["numberOfQuestions"] + 1):
         if str(q) not in solutionSpec["solution"]:
             return (
                 False,
-                f"Question keys incorrect = {list(solutionSpec['solution'].keys() )}",
+                f"Question keys incorrect = {list(solutionSpec['solution'].keys())}",
             )
         if (isinstance(solutionSpec["solution"][str(q)]["pages"], list) is False) or (
             len(solutionSpec["solution"][str(q)]["pages"]) == 0

@@ -4,8 +4,6 @@
 
 from typing import Any
 
-from django.db import transaction
-
 from Mark.models import MarkingTaskTag
 
 

@@ -5,13 +5,13 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
 
+from Base.models import HueyTaskTracker
 from ..models import (
     Specification,
     Paper,
@@ -20,61 +20,48 @@ from ..models import (
     IDPage,
     DNMPage,
     QuestionPage,
-    CreatePaperTask,
 )
 
 
 log = logging.getLogger("PaperCreatorService")
 
 
-@db_task(queue="tasks")
-@transaction.atomic
-def _create_paper_with_qvmapping(
-    spec_obj: Specification, paper_number: int, qv_mapping: Dict
-) -> None:
+# The decorated function returns a ``huey.api.Result``
+@db_task(queue="tasks", context=True)
+def huey_create_paper_with_qvmapping(
+    paper_number: int,
+    qv_mapping: Dict[int, int],
+    *,
+    tracker_pk: int,
+    task=None,
+) -> bool:
     """Creates a paper with the given paper number and the given question-version mapping.
 
     Also initializes prename ID predictions in DB, if applicable.
 
     Args:
-        spec_obj: The test specification
         paper_number: The number of the paper being created
         qv_mapping: Mapping from each question-number to
-            version for this particular paper. Of the form {q: v}
+            version for this particular paper. Of the form ``{q: v}``.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
     """
-    paper_obj = Paper(paper_number=paper_number)
-    try:
-        paper_obj.save()
-    except IntegrityError as err:
-        log.warn(f"Cannot create Paper {paper_number}: {err}")
-        raise IntegrityError(
-            f"An entry paper {paper_number} already exists in the database"
-        )
-    # TODO - idpage and dnmpage versions might be not one in future.
-    # For time being assume that IDpage and DNMPage are always version 1.
-    id_page = IDPage(
-        paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
-    )
-    id_page.save()
+    with transaction.atomic(durable=True):
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
-    for dnm_idx in spec_obj.doNotMarkPages:
-        dnm_page = DNMPage(
-            paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
-        )
-        dnm_page.save()
+    PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 
-    for index, question in spec_obj.question.items():
-        index = int(index)
-        version = qv_mapping[index]
-        for q_page in question.pages:
-            question_page = QuestionPage(
-                paper=paper_obj,
-                image=None,
-                page_number=int(q_page),
-                question_number=index,
-                version=version,  # I don't like having to double-up here, but....
-            )
-            question_page.save()
+    with transaction.atomic(durable=True):
+        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
+
+    return True
 
 
 class PaperCreatorService:
@@ -85,28 +72,87 @@ class PaperCreatorService:
 
     def __init__(self):
         try:
-            self.spec_obj = Specification.load()
-            # want the db object not the spec as a dict
+            _ = Specification.load()
         except Specification.DoesNotExist as e:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             ) from e
 
-    @transaction.atomic
-    def create_paper_with_qvmapping(self, paper_number: int, qv_mapping: Dict) -> None:
-        paper_task = _create_paper_with_qvmapping(
-            self.spec_obj, paper_number, qv_mapping
+    def _create_paper_with_qvmapping(
+        self,
+        paper_number: int,
+        qv_mapping: Dict[int, int],
+    ) -> None:
+        """Creates tables for the given paper number and the given question-version mapping.
+
+        Also initializes prename ID predictions in DB, if applicable.
+
+        Args:
+            paper_number: The number of the paper being created
+            qv_mapping: Mapping from each question-number to
+                version for this particular paper. Of the form ``{q: v}``.
+
+        Returns:
+            None
+        """
+        spec_obj = Specification.load()
+        paper_obj = Paper(paper_number=paper_number)
+        try:
+            paper_obj.save()
+        except IntegrityError as err:
+            log.warn(f"Cannot create Paper {paper_number}: {err}")
+            raise IntegrityError(
+                f"An entry paper {paper_number} already exists in the database"
+            )
+        # TODO - idpage and dnmpage versions might be not one in future.
+        # For time being assume that IDpage and DNMPage are always version 1.
+        id_page = IDPage(
+            paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
         )
-        paper_task_obj = CreatePaperTask(
-            huey_id=paper_task.id, paper_number=paper_number
+        id_page.save()
+
+        for dnm_idx in spec_obj.doNotMarkPages:
+            dnm_page = DNMPage(
+                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
+            )
+            dnm_page.save()
+
+        for index, question in spec_obj.question.items():
+            index = int(index)
+            version = qv_mapping[index]
+            for q_page in question.pages:
+                question_page = QuestionPage(
+                    paper=paper_obj,
+                    image=None,
+                    page_number=int(q_page),
+                    question_number=index,
+                    version=version,  # I don't like having to double-up here, but....
+                )
+                question_page.save()
+
+    def create_paper_with_qvmapping_huey_wrapper(
+        self, paper_number: int, qv_mapping: Dict[int, int]
+    ) -> None:
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.create(
+                huey_id=None, status=HueyTaskTracker.TO_DO
+            )
+            tr.transition_to_starting()
+            tracker_pk = tr.pk
+
+        res = huey_create_paper_with_qvmapping(
+            paper_number, qv_mapping, tracker_pk=tracker_pk
         )
-        paper_task_obj.status = "queued"
-        paper_task_obj.save()
+        print(f"Just enqueued Huey create paper task id={res.id}")
+
+        with transaction.atomic(durable=True):
+            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
+            tr.transition_to_queued_or_running(res.id)
 
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict, *, background: bool = True
-    ) -> Tuple[bool, List]:
-        """Build all the papers given by the qv-map.
+        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+    ) -> Tuple[bool, List[Tuple[int, Any]]]:
+        """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
         Args:
             qv_map: For each paper give the question-version map.
@@ -114,7 +160,9 @@ class PaperCreatorService:
 
         Keyword Args:
             background (optional, bool): Run in the background. If false,
-                run with `call_local`.
+                run with `call_local`.  This is currently never passed as True
+                as of November 2023.  Presumably its here in case we later have
+                a bottle-neck in Paper table creation...
 
         Returns:
             A pair such that if all papers added to DB without errors then
@@ -125,11 +173,11 @@ class PaperCreatorService:
         for paper_number, qv_mapping in qv_map.items():
             try:
                 if background:
-                    self.create_paper_with_qvmapping(paper_number, qv_mapping)
-                else:
-                    _create_paper_with_qvmapping.call_local(
-                        self.spec_obj, paper_number, qv_mapping
+                    self.create_paper_with_qvmapping_huey_wrapper(
+                        paper_number, qv_mapping
                     )
+                else:
+                    self._create_paper_with_qvmapping(paper_number, qv_mapping)
             except ValueError as err:
                 errors.append((paper_number, err))
         if errors:

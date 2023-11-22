@@ -72,7 +72,6 @@ from .reviewview import ReviewViewWindow, ReviewViewWindowID
 from .reviewview import review_beta_warning, revert_beta_warning
 from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
-    PlomSeriousException,
     PlomAPIException,
     PlomAuthenticationException,
     PlomBadTagError,
@@ -89,7 +88,6 @@ from plom.plom_exceptions import (
     PlomNoPaper,
     PlomNoSolutionException,
 )
-from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
