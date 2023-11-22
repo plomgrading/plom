@@ -488,14 +488,6 @@ class ReassembleService:
         # we used the keys of paper number to build it but now keep only the rows
         return list(status.values())
 
-    def create_all_reassembly_tasks(self):
-        """Create all the ReassembleHueyTaskTrackers, and save to the database without sending them to Huey."""
-        self.reassemble_dir.mkdir(exist_ok=True)
-        for paper_obj in Paper.objects.all():
-            ReassembleHueyTaskTracker.objects.create(
-                paper=paper_obj, huey_id=None, status=HueyTaskTracker.TO_DO
-            )
-
     def queue_single_paper_reassembly(self, paper_num: int) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
