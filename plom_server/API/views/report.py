@@ -44,10 +44,10 @@ class REPcoverPageInfo(APIView):
     def get(self, request, papernum):
         # Return value looks like this:
         # [["10130103", "Vandeventer, Irene"], [1, 1, 0], [2, 1, 1], [3, 2, 5]]
-        reasseble = ReassembleService()
+        service = ReassembleService()
         paper = get_object_or_404(Paper, paper_number=papernum)
-        cover_page_info = reasseble.get_cover_page_info(paper)
-        student_info = reasseble.get_paper_id_or_none(paper)
+        cover_page_info = service.get_cover_page_info(paper)
+        student_info = service.get_paper_id_or_none(paper)
         if student_info:
             student_id, student_name = student_info
         else:

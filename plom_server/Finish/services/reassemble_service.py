@@ -86,6 +86,7 @@ class ReassembleService:
 
         Args:
             paper: a reference to a Paper instance
+
         Returns:
             datetime: the time of the latest update to any task in the paper.
             WARNING: If paper is not id'd and not marked then returns the current
