@@ -421,7 +421,7 @@ class ReassembleService:
                 "student_id": "",
                 "last_update": None,
                 "last_update_humanised": None,
-                "reassembled_status": None,
+                "reassembled_status": "",
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
@@ -461,10 +461,14 @@ class ReassembleService:
                 status[task.paper.paper_number]["last_update"], task.last_update
             )
 
-        for task in ReassemblePaperChore.objects.all().prefetch_related("paper"):
+        # TODO: the status will be "" if no Chore or only obsolete Chores
+        for task in ReassemblePaperChore.objects.filter(
+            obsolete=False
+        ).prefetch_related("paper"):
             status[task.paper.paper_number][
                 "reassembled_status"
             ] = task.get_status_display()
+            # TODO: is always True
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
