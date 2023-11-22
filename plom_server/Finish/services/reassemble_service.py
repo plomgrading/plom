@@ -719,15 +719,15 @@ class ReassembleService:
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
-        """Get list of paths of pdf-files of completed (built) tests papers.
+        """Get list of paths of pdf-files of reassembled papers that are not obsolete.
 
         Returns:
             A list of django-Files of the reassembled pdf.
         """
         return [
             task.pdf_file
-            for task in ReassembleHueyTaskTracker.objects.filter(
-                status=HueyTaskTracker.COMPLETE
+            for task in ReassemblePaperChore.objects.filter(
+                obsolete=False, status=HueyTaskTracker.COMPLETE
             )
         ]
 
