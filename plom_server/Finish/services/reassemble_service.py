@@ -533,13 +533,18 @@ class ReassembleService:
 
         Returns:
             File: the django-File of the reassembled pdf.
+
+        Raises:
+            ObjectDoesNotExist: no such paper or reassembly chore, or if
+                the reassembly is still in-progress.  TODO: maybe we'd
+                like a different exception for the in-progress case.
         """
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_number)
-        except Paper.DoesNotExist:
-            raise ValueError("No paper with that number") from None
-        task = paper_obj.reassemblehueytasktracker
-        return task.pdf_file
+        chore = ReassemblePaperChore.objects.get(
+            paper__paper_number=paper_number,
+            obsolete=False,
+            status=ReassemblePaperChore.COMPLETE,
+        )
+        return chore.pdf_file
 
     def reset_single_paper_reassembly(self, paper_number: int) -> None:
         """Reset to TO_DO the reassembly task of the given paper and remove pdf if it exists.
@@ -590,7 +595,7 @@ class ReassembleService:
                 queue.revoke_by_id(str(task.huey_id))
             if task.status == HueyTaskTracker.RUNNING:
                 raise RuntimeError(f"Task running {task.huey_id}, cannot reset")
-            task.reset_to_do()
+            task.set_as_obsolete()
 
     def WIP_reset_single_paper_reassembly(
         self, paper_number: int, *, wait: int = 10
