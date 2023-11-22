@@ -25,10 +25,16 @@ def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
     with Image.open(thumb_obj.image_file) as tmp_img:
         fh = BytesIO()
         tmp_img.rotate(angle, expand=True).save(fh, "png")
-        thumb_obj.delete()
-        StagingThumbnail.objects.create(
+        # build the new db row but don't save **yet**
+        # need to do this since one-to-one mapping between thumbnails and images
+        # cannot have old thumbnail and new one in db at the same time.
+        rot_thumb_obj = StagingThumbnail(
             staging_image=staging_img, image_file=File(fh, thumb_name)
         )
+    # delete the old one
+    thumb_obj.delete()  # TODO - decide if we want to delete the old thumbnail file automatically.
+    # now safe to save the new one
+    rot_thumb_obj.save()
 
 
 class ImageRotateService:
