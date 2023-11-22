@@ -113,10 +113,9 @@ class Command(BaseCommand):
         service.reset_all_paper_reassembly()
 
     def cancel_all_tasks(self):
-        # service = ReassembleService()
-        print("TODO")
-        # N = service.try_to_cancel_all_queued_tasks()
-        # self.stdout.write(f"Revoked {N} build paper PDF chores")
+        service = ReassembleService()
+        N = service.try_to_cancel_all_queued_chores()
+        self.stdout.write(f"Revoked {N} reassemble PDF chores")
 
     def handle(self, *args, **options):
         save_path = options["save_path"]

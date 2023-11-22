@@ -15,6 +15,7 @@ import zipfly
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django_huey import db_task, get_queue
@@ -591,15 +592,18 @@ class ReassembleService:
 
         Completed chores are uneffected.
         """
-        for chore in (
-            ReassemblePaperChore.objects.filter(obsolete=False)
-            .exclude(status=ReassemblePaperChore.COMPLETE)
-            .all()
-        ):
-            chore.set_as_obsolete()
-            if chore.huey_id:
-                queue = get_queue("tasks")
-                queue.revoke_by_id(str(chore.huey_id))
+        N = 0
+        queue = get_queue("tasks")
+        with transaction.atomic(durable=True):
+            for chore in ReassemblePaperChore.objects.filter(
+                Q(status=ReassemblePaperChore.STARTING)
+                | Q(status=ReassemblePaperChore.QUEUED)
+            ):
+                chore.set_as_obsolete()
+                if chore.huey_id:
+                    queue.revoke_by_id(str(chore.huey_id))
+                N += 1
+        return N
 
     def reset_single_paper_reassembly(
         self, paper_num: int, *, wait: Optional[int] = None
@@ -663,7 +667,7 @@ class ReassembleService:
                         f"waiting on the chore running: {chore.huey_id}"
                     )
 
-    def WIP_reset_all_paper_reassembly(self) -> None:
+    def _WIP_reset_all_paper_reassembly(self) -> None:
         """Reset all reassembly tasks and remove any associated pdfs.
 
         This tries to somewhat gracefully ("like an eagle...piloting a blimp")
