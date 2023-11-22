@@ -302,9 +302,9 @@ class BuildPapersService:
                 | Q(status=BuildPaperPDFChore.QUEUED)
             )
             for task in queue_tasks:
-                task.set_as_obsolete()
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
+                task.set_as_obsolete_with_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
@@ -329,6 +329,8 @@ class BuildPapersService:
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
+        if task.status in (BuildPaperPDFChore.STARTING, BuildPaperPDFChore.QUEUED):
+            task.set_as_obsolete_with_error("never ran: forcibly dequeued")
 
     def retry_all_task(self) -> None:
         """Retry all non-obsolete tasks that have error status."""

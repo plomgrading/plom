@@ -139,6 +139,13 @@ class HueyTaskTracker(models.Model):
         self.obsolete = True
         self.save()
 
+    def set_as_obsolete_with_error(self, errmsg: str) -> None:
+        """Move to the error state and set obsolete."""
+        self.huey_id = None
+        self.status = self.ERROR
+        self.message = errmsg
+        self.save()
+
 
 # ---------------------------------
 # Define a singleton model as per

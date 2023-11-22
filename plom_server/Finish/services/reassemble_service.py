@@ -577,10 +577,11 @@ class ReassembleService:
             obsolete=False, paper__paper_number=paper_num
         )
         chore.set_as_obsolete()
-        # if chore.status == HueyTaskTracker.QUEUED:
         if chore.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
+        if chore.status in (ReassemblePaperChore.STARTING, ReassemblePaperChore.QUEUED):
+            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
 
     def try_to_cancel_all_queued_chores(self) -> int:
         """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
@@ -602,9 +603,9 @@ class ReassembleService:
                 Q(status=ReassemblePaperChore.STARTING)
                 | Q(status=ReassemblePaperChore.QUEUED)
             ):
-                chore.set_as_obsolete()
                 if chore.huey_id:
                     queue.revoke_by_id(str(chore.huey_id))
+                chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
