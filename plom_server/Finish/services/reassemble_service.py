@@ -499,7 +499,7 @@ class ReassembleService:
         If the PDF was already reassembled, it will be first made obsolete.
 
         Args:
-            paper_number: The paper number to re-assemble.
+            paper_num: The paper number to re-assemble.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_num)
