@@ -18,7 +18,6 @@ from ..models import StagingBundle, StagingImage, StagingThumbnail
 
 def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
     """Once staging image has been rotated by angle, update the corresponding thumbnail."""
-
     thumb_obj = staging_img.stagingthumbnail
     thumb_name = Path(thumb_obj.image_file.path).name
     # read in the thumbnail image
