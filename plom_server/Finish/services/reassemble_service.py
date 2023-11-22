@@ -15,6 +15,7 @@ import zipfly
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django_huey import db_task, get_queue
 
@@ -494,13 +495,21 @@ class ReassembleService:
     def queue_single_paper_reassembly(self, paper_num: int) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
+        If the PDF was already reassembled, it will be first made obsolete.
+
         Args:
-            paper_number (int): The paper number to re-assemble.
+            paper_number: The paper number to re-assemble.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_num)
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
+
+        # mark any existing ones obsolete
+        try:
+            self.reset_single_paper_reassembly(paper_num)
+        except ObjectDoesNotExist:
+            pass
 
         with transaction.atomic(durable=True):
             if ReassemblePaperChore.objects.filter(
