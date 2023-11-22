@@ -7,4 +7,5 @@ from .marking_info import (
 )
 from .reassembly import ReassemblePapersView, StartOneReassembly, StartAllReassembly
 
-from .solutions_home import SolutionsHomeView
+from .soln_home import SolnHomeView
+from .soln_spec import SolnSpecView, TemplateSolnSpecView

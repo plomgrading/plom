@@ -9,7 +9,9 @@ from .views import (
     ReassemblePapersView,
     StartOneReassembly,
     StartAllReassembly,
-    SolutionsHomeView,
+    SolnHomeView,
+    SolnSpecView,
+    TemplateSolnSpecView,
 )
 
 
@@ -37,5 +39,11 @@ urlpatterns = [
         name="reassemble_one_paper",
     ),
     path("reassemble/all", StartAllReassembly.as_view(), name="reassemble_all_pdfs"),
-    path("solutions/home", SolutionsHomeView.as_view(), name="solutions_home"),
+    path("solutions/home", SolnHomeView.as_view(), name="soln_home"),
+    path("solutions/spec", SolnSpecView.as_view(), name="soln_spec"),
+    path(
+        "solutions/spec/template",
+        TemplateSolnSpecView.as_view(),
+        name="template_soln_spec",
+    ),
 ]

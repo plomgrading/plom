@@ -1,0 +1,23 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Solution Specification
+{% endblock title %}
+{% block page_heading %}
+    Solution Specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <h4>VERY EARLY DAYS</h4>
+        <div>
+            <a class="btn btn-primary mb-3" href="{% url 'soln_home' %}">Return to solutions page</a>
+        </div>
+        <div>
+            <a class="btn btn-primary mb-3" href="{% url 'template_soln_spec' %}">Generate a template solution specification</a>
+        </div>
+    </div>
+{% endblock main_content %}
