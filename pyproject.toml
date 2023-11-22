@@ -38,13 +38,15 @@ dynamic = ['version']
 requires-python = '>=3.8'
 # note aiohttp and peewee are legacy deps only
 # Note: importlib_resources for < 3.10 in plom_server, not sure why
+# pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "aiohttp>=3.7.2",
     "appdirs>=1.4.3",
     "arrow>=1.1.1",
     "beautifulsoup4>=4.12.2",
     "canvasapi>=3.0.0",
-    "cryptography>=37.0.2",
+    "cryptography>=41.0.3",
+    "pyOpenSSL>=23.2.0",
     "debugpy>=1.6.7",
     "django>=4.0.10",
     "django-braces>=1.15.0",
@@ -216,8 +218,7 @@ qt_api = "pyqt6"
 
 [tool.djlint]
 # TODO: fix then remove from ignore list: H006, H013
-# TODO: think about: H020, H025, H030, H031
-ignore="H006,H013,H020,H021,H023,H025,H030,H031"
+ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
 [tool.pydocstyle]

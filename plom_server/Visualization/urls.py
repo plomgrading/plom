@@ -3,7 +3,7 @@
 
 from django.urls import path
 
-from Visualization.views import *
+from Visualization.views import HistogramView, HeatMapView
 
 
 urlpatterns = [

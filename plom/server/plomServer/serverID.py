@@ -47,7 +47,6 @@ def IDgetDoneTasks(self, username):
         list: A list of list with sublists of the form
         `[paper_number, user_ID, username]`.
     """
-
     return self.DB.IDgetDoneTasks(username)
 
 
@@ -110,7 +109,6 @@ def IDgetImageFromATest(self):
     Returns:
         list: True/False plus a list of the images' paths.
     """
-
     return self.DB.IDgetImageFromATest()
 
 
@@ -123,7 +121,7 @@ def ID_delete_predictions(self, *args, **kwargs):
 
 
 def ID_put_predictions(self, predictions, predictor):
-    """Push predictions to the database
+    """Push predictions to the database.
 
     Args:
         predictions (list): A list of pairs of (testnumber, student id)
@@ -149,8 +147,7 @@ def IDreviewID(self, *args, **kwargs):
 
 
 def get_sids_and_probabilities():
-    """Retrieve student ID numbers from `classlist.csv` and
-       probability data from `id_prob_heatmaps.json`
+    """Retrieve student ID numbers from `classlist.csv` and probability data from `id_prob_heatmaps.json`.
 
     Returns:
         tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers

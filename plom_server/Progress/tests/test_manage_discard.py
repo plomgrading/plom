@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 
 from model_bakery import baker
 
@@ -22,9 +22,7 @@ from Progress.services import ManageDiscardService
 
 
 class ManageScanTests(TestCase):
-    """
-    Tests for Progress.services.ManageScanService()
-    """
+    """Tests for Progress.services.ManageScanService"""
 
     def setUp(self):
         self.user0 = baker.make(User, username="user0")
@@ -92,9 +90,9 @@ class ManageScanTests(TestCase):
 
     def test_discard_image_from_pk(self):
         mds = ManageDiscardService()
-        fp1 = baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
+        baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
         img1 = baker.make(Image)
-        fp2 = baker.make(FixedPage, paper=self.paper1, page_number=2, image=img1)
+        baker.make(FixedPage, paper=self.paper1, page_number=2, image=img1)
         # test when no such image
         self.assertRaises(ValueError, mds.discard_pushed_image_from_pk, self.user0, 17)
         # test when fixed page is not dnm, id or question page
@@ -104,18 +102,16 @@ class ManageScanTests(TestCase):
 
         # test when fixed page is an dnm page
         img2 = baker.make(Image)
-        dnm3 = baker.make(DNMPage, paper=self.paper1, page_number=3, image=img2)
+        baker.make(DNMPage, paper=self.paper1, page_number=3, image=img2)
         mds.discard_pushed_image_from_pk(self.user0, img2.pk)
         # test when mobile page (need an associate question page)
         img3 = baker.make(Image)
-        qp4 = baker.make(
-            QuestionPage, paper=self.paper1, page_number=4, question_number=1
-        )
-        mp4 = baker.make(MobilePage, paper=self.paper1, question_number=1, image=img3)
+        baker.make(QuestionPage, paper=self.paper1, page_number=4, question_number=1)
+        baker.make(MobilePage, paper=self.paper1, question_number=1, image=img3)
         mds.discard_pushed_image_from_pk(self.user0, img3.pk)
         # test when discard page (no action required)
         img4 = baker.make(Image)
-        dp = baker.make(DiscardPage, image=img4)
+        baker.make(DiscardPage, image=img4)
         mds.discard_pushed_image_from_pk(self.user0, img4.pk)
 
     def test_reassign_discard_to_mobile(self):
@@ -123,15 +119,15 @@ class ManageScanTests(TestCase):
 
         img1 = baker.make(Image)
         img2 = baker.make(Image)
-        dp1 = baker.make(DiscardPage, image=img1)
-        qp1 = baker.make(
+        baker.make(DiscardPage, image=img1)
+        baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=2,
             question_number=1,
             image=None,
         )
-        qp2 = baker.make(
+        baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=3,
@@ -169,39 +165,39 @@ class ManageScanTests(TestCase):
         img3 = baker.make(Image)
         img4 = baker.make(Image)
         img5 = baker.make(Image)
-        dp1 = baker.make(DiscardPage, image=img1)
-        dp2 = baker.make(DiscardPage, image=img2)
-        dp3 = baker.make(DiscardPage, image=img3)
-        dp4 = baker.make(DiscardPage, image=img4)
+        baker.make(DiscardPage, image=img1)
+        baker.make(DiscardPage, image=img2)
+        baker.make(DiscardPage, image=img3)
+        baker.make(DiscardPage, image=img4)
 
         img0 = baker.make(Image)
-        id1 = baker.make(
+        baker.make(
             IDPage,
             paper=self.paper1,
             page_number=1,
             image=None,
         )
-        qp1 = baker.make(
+        baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=2,
             question_number=1,
             image=img0,
         )
-        qp2 = baker.make(
+        baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=3,
             question_number=2,
             image=None,
         )
-        dnm1 = baker.make(
+        baker.make(
             DNMPage,
             paper=self.paper1,
             page_number=4,
             image=None,
         )
-        fp0 = baker.make(FixedPage, paper=self.paper1, page_number=5, image=None)
+        baker.make(FixedPage, paper=self.paper1, page_number=5, image=None)
 
         # try with non-existent image pk
         self.assertRaises(

@@ -2,12 +2,14 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib import admin
+
 from .models import (
     StagingBundle,
     StagingImage,
-    PageToImage,
+    PagesToImagesHueyTask,
     ParseQR,
     KnownStagingImage,
     UnknownStagingImage,
@@ -16,12 +18,13 @@ from .models import (
     DiscardStagingImage,
 )
 
-# Register your models here.
+# This makes models appear in the admin interface
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
 admin.site.register(KnownStagingImage)
 admin.site.register(ExtraStagingImage)
+admin.site.register(ErrorStagingImage)
 admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
-admin.site.register(PageToImage)
+admin.site.register(PagesToImagesHueyTask)
 admin.site.register(ParseQR)

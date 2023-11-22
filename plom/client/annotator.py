@@ -17,6 +17,7 @@ import os
 import re
 import sys
 from textwrap import dedent
+from typing import Any, Dict
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -114,9 +115,8 @@ class Annotator(QWidget):
         self.parentMarkerUI = parentMarkerUI
         self.tgvID = None
 
-        # Show warnings or not
-        self.markWarn = True
-        self.rubricWarn = True
+        # a key-value store for local config, including "don't ask me again"
+        self._config: Dict[str, Any] = {}
 
         # a solution view / previous annotation pop-up window - initially set to None
         self.solutionView = None
@@ -1339,11 +1339,10 @@ class Annotator(QWidget):
         else:
             self.showMaximized()
 
-        # remember the "do not show again" checks
-        if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:
-            self.markWarn = self.parentMarkerUI.annotatorSettings["markWarnings"]
-        if self.parentMarkerUI.annotatorSettings["rubricWarnings"] is not None:
-            self.rubricWarn = self.parentMarkerUI.annotatorSettings["rubricWarnings"]
+        # remember the "don't ask me again" checks
+        # but note that Marker is not supposed to be saving these globally to disc
+        if self.parentMarkerUI.annotatorSettings.get("_config"):
+            self._config = self.parentMarkerUI.annotatorSettings["_config"].copy()
 
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parentMarkerUI.annotatorSettings["zoomState"] is None:
@@ -1383,8 +1382,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.annotatorSettings[
             "viewRectangle"
         ] = self.view.getCurrentViewRect()
-        self.parentMarkerUI.annotatorSettings["markWarnings"] = self.markWarn
-        self.parentMarkerUI.annotatorSettings["rubricWarnings"] = self.rubricWarn
+        self.parentMarkerUI.annotatorSettings["_config"] = self._config.copy()
         self.parentMarkerUI.annotatorSettings[
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
@@ -1471,33 +1469,26 @@ class Annotator(QWidget):
                 return False
 
         # warn if points where lost but insufficient annotations
+        # note spatial annotations (drag-box) is enough to sneak past this
         if (
-            self.rubricWarn
-            and (0 < self.getScore() < self.maxMark)
-            and self.scene.hasOnlyTicksCrossesDeltas()
-        ):
-            msg = SimpleQuestionCheckBox(
-                self,
-                "<p>You have given neither comments nor detailed annotations "
-                "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
-                "<p>This may make it difficult for students to learn from this "
-                "feedback.</p>\n"
-                "<p>Are you sure you wish to continue?</p>",
-                "Don't ask me again this session.",
-            )
-            if msg.exec() == QMessageBox.StandardButton.No:
+            0 < self.getScore() < self.maxMark
+        ) and self.scene.hasOnlyTicksCrossesDeltas():
+            msg = """
+                <p>You have given neither comments nor detailed annotations
+                (other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>
+                <p>This may make it difficult for students to learn from this
+                feedback.</p>
+                <p>Are you sure you wish to continue?</p>
+            """
+            code = "lost-marks-but-insufficient-feedback"
+            if not self._continue_after_warning(code, msg):
                 return False
-            if msg.cb.isChecked():
-                # Note: these are only saved if we ultimately accept
-                self.rubricWarn = False
 
         # some combinations of rubrics may seem ambiguous or potentially confusing
         rubrics = self.scene.get_rubrics()
         ok, code, msg = check_for_illadvised(rubrics, self.maxMark)
         if not ok:
-            # TODO: some more serious than others, may want to add
-            # "don't ask me again" for only some.  For now, none.
-            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
+            if not self._continue_after_warning(code, msg):
                 return False
 
         aname, plomfile = self.pickleIt()
@@ -1519,86 +1510,80 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
+    def _continue_after_warning(
+        self, code: str, msg: str, *, force: bool = False
+    ) -> bool:
+        if self._config.get("dama-" + code):
+            return True
+        if force:
+            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
+                return False
+            return True
+        d = SimpleQuestionCheckBox(self, msg, "Don't ask me again this session.")
+        if d.exec() == QMessageBox.StandardButton.No:
+            return False
+        if d.cb.isChecked():
+            self._config["dama-" + code] = True
+        return True
+
     def _zeroMarksWarn(self):
-        """
-        A helper method for saveAnnotations.
+        """A helper method for saveAnnotations.
 
         Controls warnings for when paper has 0 marks. If there are only-ticks or some-ticks then warns user.
 
         Returns:
             False if user cancels, True otherwise.
-
         """
         warn = False
         forceWarn = False
-        msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
+        msg = f"<p>You have given <b>0/{self.maxMark}</b>,"
         if self.scene.hasOnlyTicks():
             warn = True
             forceWarn = True
             msg += " but there are <em>only ticks on the page!</em>"
+            code = "zero-marks-but-has-only-ticks"
         elif self.scene.hasAnyTicks():
-            # forceWarn = True
             warn = True
             msg += " but there are some ticks on the page."
+            code = "zero-marks-but-has-ticks"
         if warn:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
-            if forceWarn:
-                msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.StandardButton.No:
-                    return False
-            elif self.markWarn:
-                msg = SimpleQuestionCheckBox(
-                    self, msg, "Don't ask me again this session."
-                )
-                if msg.exec() == QMessageBox.StandardButton.No:
-                    return False
-                if msg.cb.isChecked():
-                    self.markWarn = False
+            if not self._continue_after_warning(code, msg, force=forceWarn):
+                return False
         return True
 
     def _fullMarksWarn(self):
-        """
-        A helper method for saveAnnotations.
+        """A helper method for saveAnnotations.
 
         Controls warnings for when paper has full marks. If there are some crosses or only crosses then warns user.
 
         Returns:
             False if user cancels, True otherwise.
-
         """
-        msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+        msg = f"<p>You have given full {self.maxMark}/{self.maxMark},"
         warn = False
         forceWarn = False
         if self.scene.hasOnlyCrosses():
             warn = True
             forceWarn = True
             msg += " <em>but there are only crosses on the page!</em>"
+            code = "full-marks-but-has-only-crosses"
         elif self.scene.hasAnyCrosses():
             warn = True
-            # forceWarn = True
             msg += " but there are crosses on the page."
+            code = "full-marks-but-has-crosses"
         elif self.scene.hasAnyComments():
             warn = False
         else:
             warn = True
             msg += " but there are other annotations on the page which might be contradictory."
+            code = "full-marks-but-other-annotations-contradictory"
         if warn:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
-            if forceWarn:
-                msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.StandardButton.No:
-                    return False
-            elif self.markWarn:
-                msg = SimpleQuestionCheckBox(
-                    self, msg, "Don't ask me again this session."
-                )
-                if msg.exec() == QMessageBox.StandardButton.No:
-                    return False
-                if msg.cb.isChecked():
-                    self.markWarn = False
-
+            if not self._continue_after_warning(code, msg, force=forceWarn):
+                return False
         return True
 
     def closeEvent(self, event):

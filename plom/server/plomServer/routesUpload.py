@@ -28,7 +28,7 @@ class UploadHandler:
         self.server = plomServer
 
     async def doesBundleExist(self, request):
-        """Returns whether given bundle/md5sum known to database
+        """Returns whether given bundle/md5sum known to database.
 
         Checks both bundle's name and md5sum
 
@@ -660,7 +660,7 @@ class UploadHandler:
     def removeUnknownImage(self, data, request):
         """The unknown page is to be discarded.
 
-        args:
+        Args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
 
@@ -669,7 +669,7 @@ class UploadHandler:
                   free-form from the user.  If the empty string, then a default
                   message may be substituted.
 
-        returns:
+        Returns:
             web.Response: 200 if all went well.
             400 for incorrect fields,
             401 for authentication, or 403 is not manager.
@@ -704,7 +704,7 @@ class UploadHandler:
         The minimal set of groups are reset when this happens
         - namely the group containing the new tpage.
 
-        args:
+        Args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
 
@@ -714,7 +714,7 @@ class UploadHandler:
                 - rotation (str): an integer, presumably a multiple of 90
                   0, 90, -90, 180, 270, etc.
 
-        returns:
+        Returns:
             web.Response: 200 if all went well, with a string in JSON which
             can be "collision" if a collision was created or "testPage" in
             the usual successful case.
@@ -742,7 +742,7 @@ class UploadHandler:
     def unknownToHWPage(self, data, request):
         """Map an unknown page onto one or more HomeworkPages.
 
-        args:
+        Args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
 
@@ -752,7 +752,7 @@ class UploadHandler:
                 - rotation (str): an integer, presumably a multiple of 90
                   0, 90, -90, 180, 270, etc.
 
-        returns:
+        Returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
             401 for authentication, or 403 is not manager. 409 if paper
             number or question number do not exist (e.g., out of range).
@@ -775,7 +775,7 @@ class UploadHandler:
     def unknownToExtraPage(self, data, request):
         """Map an unknown page onto one or more extra pages.
 
-        args:
+        Args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
 
@@ -785,7 +785,7 @@ class UploadHandler:
                 - rotation (str): an integer, presumably a multiple of 90
                   0, 90, -90, 180, 270, etc.
 
-        returns:
+        Returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
             401 for authentication, or 403 is not manager. 409 if paper
             number or question number do not exist (e.g., out of range).

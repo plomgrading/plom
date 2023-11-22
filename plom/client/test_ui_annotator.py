@@ -12,8 +12,6 @@ class MockMarker:
     annotatorSettings = {
         "keybinding_name": None,
         "geometry": None,
-        "markWarnings": None,
-        "rubricWarnings": None,
         "zoomState": None,
         "compact": None,
         "keybinding_custom_overlay": None,

@@ -23,7 +23,6 @@ def MgetAllMax(self):
         dict: A dictionary of the form {key: question_number, value: question_max_grade}
         for the exam questions.
     """
-
     max_grades = {}
     for q_number in range(1, self.testSpec["numberOfQuestions"] + 1):
         max_grades[q_number] = self.testSpec["question"][str(q_number)]["mark"]
@@ -65,7 +64,6 @@ def MgetDoneTasks(self, username, question_number, version_number):
         list: Respond with a list of done tasks, each list includes
         `[question_code string, maximum_mark, question_grade, [list of tag_texts]]`.
     """
-
     version_number = int(version_number)
     question_number = int(question_number)
     return self.DB.MgetDoneTasks(username, question_number, version_number)
