@@ -582,7 +582,7 @@ class ReassembleService:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
 
-    def try_to_cancel_all_queued_chores(self) -> None:
+    def try_to_cancel_all_queued_chores(self) -> int:
         """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
 
         This is a "best-attempt" at catching reassembly chores while they
@@ -591,6 +591,9 @@ class ReassembleService:
         they ARE marked as obsolete.
 
         Completed chores are uneffected.
+
+        Returns:
+            The number of chores that we actually tried to revoke.
         """
         N = 0
         queue = get_queue("tasks")
