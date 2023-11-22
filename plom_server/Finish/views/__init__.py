@@ -6,3 +6,5 @@ from .marking_info import (
     MarkingInformationView,
 )
 from .reassembly import ReassemblePapersView, StartOneReassembly, StartAllReassembly
+
+from .solutions_home import SolutionsHomeView
