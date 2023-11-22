@@ -45,7 +45,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class RotateImageAround(ScannerRequiredView):
+class RotateImageOneEighty(ScannerRequiredView):
     def post(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)

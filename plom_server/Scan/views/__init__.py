@@ -53,7 +53,7 @@ from .cast_image_state import (
 )
 
 from .rotate_images import (
-    RotateImageAround,
+    RotateImageOneEighty,
     RotateImageClockwise,
     RotateImageCounterClockwise,
     GetRotatedThumbnailView,
