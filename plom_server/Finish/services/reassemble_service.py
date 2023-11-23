@@ -86,6 +86,7 @@ class ReassembleService:
 
         Args:
             paper: a reference to a Paper instance
+
         Returns:
             datetime: the time of the latest update to any task in the paper.
             WARNING: If paper is not id'd and not marked then returns the current
@@ -402,17 +403,17 @@ class ReassembleService:
             )
         return outname
 
-    def get_all_paper_status_for_reassembly(self) -> Dict[str, Any]:
+    def get_all_paper_status_for_reassembly(self) -> List[Dict[str, Any]]:
         """Get the status information for all papers for reassembly.
 
         Returns:
-           Dict: paper_number
+            List of dicts representing each row of the data.
         """
         status: Dict[str, Any] = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
-                "test_num": paper.paper_number,
+                "paper_num": int(paper.paper_number),
                 "scanned": False,
                 "identified": False,
                 "marked": False,
@@ -480,7 +481,9 @@ class ReassembleService:
             if status[pn]["reassembled_time"]:
                 if status[pn]["reassembled_time"] < status[pn]["last_update"]:
                     status[pn]["outdated"] = True
-        return status
+
+        # we used the keys of paper number to build it but now keep only the rows
+        return list(status.values())
 
     def create_all_reassembly_tasks(self):
         """Create all the ReassembleHueyTaskTrackers, and save to the database without sending them to Huey."""
@@ -690,7 +693,7 @@ class ReassembleService:
     def queue_all_paper_reassembly(self) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked)."""
         # first work out which papers are ready
-        for pn, data in self.get_all_paper_status_for_reassembly().items():
+        for data in self.get_all_paper_status_for_reassembly():
             # check if both id'd and marked
             if not data["identified"] or not data["marked"]:
                 continue
@@ -702,7 +705,7 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            self.queue_single_paper_reassembly(int(pn))
+            self.queue_single_paper_reassembly(data["paper_num"])
 
     @transaction.atomic
     def get_completed_pdf_files(self) -> List[File]:
