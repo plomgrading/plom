@@ -69,7 +69,7 @@ def huey_build_single_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    with transaction.atomic():
+    with transaction.atomic(durable=True):
         HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
 
     with TemporaryDirectory() as tempdir:
@@ -92,7 +92,7 @@ def huey_build_single_paper(
                     f"DEBUG: deliberately failing creating papernum={papernum}"
                 )
 
-        with transaction.atomic():
+        with transaction.atomic(durable=True):
             tr = BuildPaperPDFChore.objects.get(pk=tracker_pk)
             if tr.obsolete:
                 # if result no longer needed, no need to keep the PDF
