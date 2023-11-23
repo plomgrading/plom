@@ -2,12 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import hashlib
 import pathlib
 
 import fitz
-from fitz import FileDataError
 
 from django.utils import timezone
 from django import forms
@@ -62,5 +62,5 @@ class BundleUploadForm(forms.Form):
                 }
             )
             return data
-        except (FileDataError, KeyError):
+        except (fitz.FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
