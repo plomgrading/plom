@@ -92,8 +92,12 @@ class ScrapPaperService:
         # print(f"Just enqueued Huey scrap paper builder id={res.id}")
 
         with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+            # We are racing with Huey: it will try to update to RUNNING,
+            # we try to update to QUEUED, but only if Huey doesn't get
+            # there first.  If Huey updated already, we want a no-op.
+            HueyTaskTracker.objects.filter(
+                pk=tracker_pk, status=HueyTaskTracker.STARTING
+            ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
 
     @transaction.atomic
     def get_scrap_paper_pdf_as_bytes(self):
