@@ -3,7 +3,6 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<img src="pushed_img/{{ image_pk }}"
+<img src="{% url 'scan_rotated_pushed_img' image_pk %} "
      style="max-height: 100%;
-            max-width: 100%;
-            transform: rotate({{ angle }}deg)" />
+            max-width: 100%" />
