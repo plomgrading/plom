@@ -25,7 +25,7 @@ class ExifNumbers:
     TWELVE_OCLOCK = 1  # is sometimes called "top left"
     SIX_OCLOCK = 3  # is sometimes "bottom right" - repair by 180 rotation
     NINE_OCLOCK = 6  # is sometimes "left bottom" - repair by minus-90 ccw rot
-    THREE_OCLOCK = 8  # is somtimes "right top" - repair by plus-90 ccw rot
+    THREE_OCLOCK = 8  # is sometimes "right top" - repair by plus-90 ccw rot
 
 
 def hard_rotate_image_from_file_by_exif_and_angle(
