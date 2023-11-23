@@ -107,6 +107,7 @@ class ScannerHomeView(ScannerRequiredView):
 
             return HttpResponseRedirect(reverse("scan_home"))
         else:
+            # TODO - fix this error handling
             # context.update({"form": form})
             return render(request, "Scan/home.html", context)
 
