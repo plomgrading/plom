@@ -12,125 +12,158 @@
     Bundle thumbnails
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="m-2">
-        <a class="btn btn-success" href="{% url 'scan_home' %}">
-            <i class="bi bi-chevron-left"></i>
-            Return to upload
-        </a>
-    </div>
-    <div class="container-xlg px-4 py-2">
-        <div class="card">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-4">
-                        <h5>
-                            Bundle <q>{{ slug }}</q> summary
-                        </h5>
-                        <div class="alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
-                            {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
-                            <ul>
-                                <li>{{ known_pages }} / {{ total_pages }} known pages</li>
-                                {% if known_pages != total_pages %}
-                                    <li>{{ unknown_pages }} unknown pages</li>
-                                    <li>{{ extra_pages }} extra pages</li>
-                                    <li>{{ discard_pages }} discard pages</li>
-                                    <li>{{ error_pages }} error pages</li>
-                                {% endif %}
-                            </ul>
+    <div x-ref="meh" x-data="{modal_order: 1}">
+        <div class="m-2">
+            <a class="btn btn-success" href="{% url 'scan_home' %}">
+                <i class="bi bi-chevron-left"></i>
+                Return to upload
+            </a>
+        </div>
+        <div class="container-xlg px-4 py-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4">
+                            <h5>
+                                Bundle <q>{{ slug }}</q> summary
+                            </h5>
+                            <div class="alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
+                                {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
+                                <ul>
+                                    <li>{{ known_pages }} / {{ total_pages }} known pages</li>
+                                    {% if known_pages != total_pages %}
+                                        <li>{{ unknown_pages }} unknown pages</li>
+                                        <li>{{ extra_pages }} extra pages</li>
+                                        <li>{{ discard_pages }} discard pages</li>
+                                        <li>{{ error_pages }} error pages</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <h5>Bundle Contains:</h5>
+                            {% for paper,pages in papers_pages_list %}
+                                {% with pg=pages|dictsort:"order"|first %}
+                                    <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
+                                        <button class="btn m-1 btn-outline-success" type="button">paper {{ paper }}</button>
+                                    </a>
+                                {% endwith %}
+                            {% endfor %}
                         </div>
                     </div>
-                    <div class="col-8">
-                        <h5>Bundle Contains:</h5>
-                        {% for paper,pages in papers_pages_list %}
-                            {% with pg=pages|dictsort:"order"|first %}
-                                <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
-                                    <button class="btn m-1 btn-outline-success" type="button">paper {{ paper }}</button>
-                                </a>
-                            {% endwith %}
+                </div>
+            </div>
+        </div>
+        <div class="container-xlg px-4">
+            <div class="card">
+                <div class="card-body"
+                     x-data="{ show_unknown: true, show_known: true, show_extra: true, show_discard: true, show_error: true, }">
+                    <h5 class="card-title">Page images</h5>
+                    <div class="row">
+                        <div class="col p-2">
+                            <input type="checkbox" id="check_known" x-model="show_known">
+                            <label for="check_known">Show knowns</label>
+                        </div>
+                        <div class="col">
+                            <input type="checkbox" id="check_extra" x-model="show_extra">
+                            <label for="check_extra">Show extras</label>
+                        </div>
+                        <div class="col">
+                            <input type="checkbox" id="check_discard" x-model="show_discard">
+                            <label for="check_discard">Show discards</label>
+                        </div>
+                        <div class="col">
+                            <input type="checkbox" id="check_unknown" x-model="show_unknown">
+                            <label for="check_unknown">Show unknowns</label>
+                        </div>
+                        <div class="col">
+                            <input type="checkbox" id="check_error" x-model="show_error">
+                            <label for="check_error">Show errors</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        {% for pg in pages %}
+                            {% if pg.status == "known" %}
+                                <div class="card m-1 text-center bg-success-subtle col-sm-auto py-1"
+                                     x-show="show_known"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% elif pg.status == "unknown" %}
+                                <div class="card m-1 text-center bg-warning-subtle col-sm-auto py-1"
+                                     x-show="show_unknown"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="Unknown page">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% elif pg.status == "extra" %}
+                                <div class="card m-1 text-center bg-info-subtle col-sm-auto py-1"
+                                     x-show="show_extra"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% elif pg.status == "error" %}
+                                <div class="card m-1 text-center bg-danger-subtle col-sm-auto py-1"
+                                     x-show="show_error"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="error: {{ pg.info.reason }}">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% elif pg.status == "unread" %}
+                                <div class="card m-1 text-center bg-dark-subtle col-sm-auto py-1"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="qr-unread">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% elif pg.status == "discard" %}
+                                <div class="card m-1 text-center bg-dark-subtle col-sm-auto py-1"
+                                     x-show="show_discard"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="discard: {{ pg.info.reason }}">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="container-xlg px-4">
-        <div class="card">
-            <div class="card-body"
-                 x-data="{ show_unknown: true, show_known: true, show_extra: true, show_discard: true, show_error: true, }">
-                <h5 class="card-title">Page images</h5>
-                <div class="row">
-                    <div class="col p-2">
-                        <input type="checkbox" id="check_known" x-model="show_known">
-                        <label for="check_known">Show knowns</label>
+        <!-- Modal -->
+        <div class="modal fade"
+             id="pageShowModal"
+             tabindex="-1"
+             aria-labelledby="pageShowModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="pageShowModalLabel">
+                            Page <span x-text="modal_order"></span>
+                        </h5>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                     </div>
-                    <div class="col">
-                        <input type="checkbox" id="check_extra" x-model="show_extra">
-                        <label for="check_extra">Show extras</label>
+                    <div class="modal-body w-50">
+                        <div class="w-50">
+                            <img class="shadow rounded p-2"
+                                 x-bind:src="'/scan/bundle_rot/{{ timestamp }}/'+ modal_order"
+                                 style="heigth:auto;
+                                        width:33vw" />
+                        </div>
                     </div>
-                    <div class="col">
-                        <input type="checkbox" id="check_discard" x-model="show_discard">
-                        <label for="check_discard">Show discards</label>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
-                    <div class="col">
-                        <input type="checkbox" id="check_unknown" x-model="show_unknown">
-                        <label for="check_unknown">Show unknowns</label>
-                    </div>
-                    <div class="col">
-                        <input type="checkbox" id="check_error" x-model="show_error">
-                        <label for="check_error">Show errors</label>
-                    </div>
-                </div>
-                <div class="row">
-                    {% for pg in pages %}
-                        {% if pg.status == "known" %}
-                            <div class="card m-1 text-center bg-success-subtle col-sm-auto py-1"
-                                 x-show="show_known"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% elif pg.status == "unknown" %}
-                            <div class="card m-1 text-center bg-warning-subtle col-sm-auto py-1"
-                                 x-show="show_unknown"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 data-bs-title="Unknown page">
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% elif pg.status == "extra" %}
-                            <div class="card m-1 text-center bg-info-subtle col-sm-auto py-1"
-                                 x-show="show_extra"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% elif pg.status == "error" %}
-                            <div class="card m-1 text-center bg-danger-subtle col-sm-auto py-1"
-                                 x-show="show_error"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 data-bs-title="error: {{ pg.info.reason }}">
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% elif pg.status == "unread" %}
-                            <div class="card m-1 text-center bg-dark-subtle col-sm-auto py-1"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 data-bs-title="qr-unread">
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% elif pg.status == "discard" %}
-                            <div class="card m-1 text-center bg-dark-subtle col-sm-auto py-1"
-                                 x-show="show_discard"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="top"
-                                 data-bs-title="discard: {{ pg.info.reason }}">
-                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
                 </div>
             </div>
         </div>
