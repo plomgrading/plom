@@ -20,21 +20,18 @@ def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
     """Once staging image has been rotated by angle, update the corresponding thumbnail."""
     thumb_obj = staging_img.stagingthumbnail
     thumb_name = Path(thumb_obj.image_file.path).name
-    # read in the thumbnail image
-    # delete old thumbnail and replace with rotated thumbnail.
+    # read in the thumbnail image, rotate it and save to this bytestream
+    fh = BytesIO()
     with Image.open(thumb_obj.image_file) as tmp_img:
-        fh = BytesIO()
         tmp_img.rotate(angle, expand=True).save(fh, "png")
-        # build the new db row but don't save **yet**
-        # need to do this since one-to-one mapping between thumbnails and images
-        # cannot have old thumbnail and new one in db at the same time.
-        rot_thumb_obj = StagingThumbnail(
-            staging_image=staging_img, image_file=File(fh, thumb_name)
-        )
-    # delete the old one
-    thumb_obj.delete()  # TODO - decide if we want to delete the old thumbnail file automatically.
-    # now safe to save the new one
-    rot_thumb_obj.save()
+
+    # cannot have new thumbnail and old thumbnail both pointing at the staging image
+    # since it is a one-to-one mapping, so delete old before creating (and auto-saving)
+    # the new one.
+    thumb_obj.delete()
+    StagingThumbnail.objects.create(
+        staging_image=staging_img, image_file=File(fh, thumb_name)
+    )
 
 
 class ImageRotateService:
