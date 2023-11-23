@@ -33,6 +33,7 @@ from .views import (
     UnknowifyImageView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
+    RotateImageOneEighty,
     GetRotatedThumbnailView,
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
@@ -186,5 +187,10 @@ urlpatterns = [
         "rotate/counterclockwise/<timestamp>/<int:index>/",
         RotateImageCounterClockwise.as_view(),
         name="rotate_img_ccw",
+    ),
+    path(
+        "rotate/oneeighty/<timestamp>/<int:index>/",
+        RotateImageOneEighty.as_view(),
+        name="rotate_img_one_eighty",
     ),
 ]
