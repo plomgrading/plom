@@ -636,6 +636,7 @@ class ReassembleService:
         if chore.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
+            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
             if wait is None:
                 print(
