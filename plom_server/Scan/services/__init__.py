@@ -8,3 +8,4 @@ from .cast_service import ScanCastService
 from .image_process import PageImageProcessor
 from .qr_validators import QRErrorService
 from .image_rotate import ImageRotateService
+from .hard_rotate import hard_rotate_image_from_file_by_exif_and_angle

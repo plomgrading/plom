@@ -53,6 +53,10 @@ from .cast_image_state import (
 )
 
 from .rotate_images import (
+    RotateImageOneEighty,
     RotateImageClockwise,
     RotateImageCounterClockwise,
+    GetRotatedThumbnailView,
+    GetRotatedBundleImageView,
+    GetRotatedPushedImageView,
 )

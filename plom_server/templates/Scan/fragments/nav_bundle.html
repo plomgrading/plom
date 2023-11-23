@@ -10,15 +10,11 @@
         <div class="col-8">
             {% include "Scan/fragments/nav_bundle_left_right.html" %}
             <div class="row p-2 justify-content-center">
-                <div style="aspect-ratio: 1 / 1;
-                            justify-content: center;
-                            display:flex;
-                            align-items:center">
+                <div>
                     <img class="shadow rounded"
-                         src="{% url 'scan_get_image' timestamp index %}"
-                         style="max-height:100%;
-                                max-width: 100%;
-                                transform:rotate(calc(-1 * {{ current_page.rotation }}deg))" />
+                         src="{% url 'scan_get_rotated_image' timestamp index %}"
+                         style="max-height: 100%;
+                                max-width: 100%" />
                 </div>
             </div>
             {% include "Scan/fragments/nav_bundle_left_right.html" %}

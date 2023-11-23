@@ -33,6 +33,10 @@ from .views import (
     UnknowifyImageView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
+    RotateImageOneEighty,
+    GetRotatedThumbnailView,
+    GetRotatedBundleImageView,
+    GetRotatedPushedImageView,
 )
 
 
@@ -52,6 +56,11 @@ urlpatterns = [
         "thumbnails/<timestamp>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
+    ),
+    path(
+        "thumbnail_rot/<timestamp>/<int:index>",
+        GetRotatedThumbnailView.as_view(),
+        name="scan_get_rotated_thumbnail",
     ),
     path(
         "thumbnails/<timestamp>",
@@ -82,6 +91,11 @@ urlpatterns = [
         "bundle/<timestamp>/<int:index>/",
         GetBundleImageView.as_view(),
         name="scan_get_image",
+    ),
+    path(
+        "bundle_rot/<timestamp>/<int:index>/",
+        GetRotatedBundleImageView.as_view(),
+        name="scan_get_rotated_image",
     ),
     path(
         "delete/<timestamp>/",
@@ -135,6 +149,11 @@ urlpatterns = [
         name="scan_pushed_img",
     ),
     path(
+        "summary/rotated_pushed_img/<int:img_pk>",
+        GetRotatedPushedImageView.as_view(),
+        name="scan_rotated_pushed_img",
+    ),
+    path(
         "summary/pushed_img_wrap/<int:img_pk>",
         ScannerPushedImageWrapView.as_view(),
         name="scan_pushed_img_wrap",
@@ -168,5 +187,10 @@ urlpatterns = [
         "rotate/counterclockwise/<timestamp>/<int:index>/",
         RotateImageCounterClockwise.as_view(),
         name="rotate_img_ccw",
+    ),
+    path(
+        "rotate/oneeighty/<timestamp>/<int:index>/",
+        RotateImageOneEighty.as_view(),
+        name="rotate_img_one_eighty",
     ),
 ]

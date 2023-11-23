@@ -107,7 +107,7 @@ class ScannerHomeView(ScannerRequiredView):
 
             return HttpResponseRedirect(reverse("scan_home"))
         else:
-            context.update({"form": form})
+            # context.update({"form": form})
             return render(request, "Scan/home.html", context)
 
 
@@ -204,7 +204,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 }
             )
 
-        return render(request, "Scan/fragments/staged_bundle_card.html", context)
+        return render(request, "Scan/fragments/staged_bundle_row.html", context)
 
     def post(self, request, timestamp):
         try:
