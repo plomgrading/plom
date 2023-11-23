@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import arrow
 import datetime as dt
 from typing import Union, List
 
 from django.db.models import Sum, Avg, StdDev
-from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from ..services import StudentMarkService

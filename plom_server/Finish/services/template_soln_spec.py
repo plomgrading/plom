@@ -18,7 +18,7 @@ class TemplateSolnSpecService:
 
 numberOfQuestions = {spec_dict['numberOfQuestions']}   # do not change
 numberOfVersions = {spec_dict['numberOfVersions']}   # do not change
-        
+
 # The pages are allowed to be different from the test - both the total
 # number of pages, and the pages in each question.
 
