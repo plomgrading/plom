@@ -20,7 +20,8 @@ from .paper_structure import (
 from .specifications import (
     SpecQuestion,
     Specification,
-    SolutionSpecification,
+    SolnSpecification,
+    SolnSpecQuestion,
 )
 
 # TODO: Issue #3140

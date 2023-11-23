@@ -11,7 +11,7 @@ from rest_framework.exceptions import ValidationError
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
 
-from .models import SpecQuestion, Specification
+from .models import SpecQuestion, Specification, SolnSpecification, SolnSpecQuestion
 
 
 class SpecQuestionSerializer(serializers.ModelSerializer):
@@ -83,3 +83,77 @@ class SpecSerializer(serializers.ModelSerializer):
             question["question_number"] = int(idx)
             SpecQuestion.objects.create(**question)
         return Specification.objects.create(**validated_data)
+
+
+class SolnSpecQuestionSerializer(serializers.ModelSerializer):
+    """Handle serializing question-solutions in the soln specification."""
+
+    pages = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), allow_empty=False, min_length=1
+    )
+
+    class Meta:
+        model = SolnSpecQuestion
+        fields = ["pages"]
+
+
+class SolnSpecSerializer(serializers.ModelSerializer):
+    """Handle serializing a solution specification."""
+
+    numberOfPages = serializers.IntegerField(min_value=1)
+    solution = serializers.DictField(child=SolnSpecQuestionSerializer())
+
+    class Meta:
+        model = SolnSpecification
+        fields = ["numberOfPages", "solution"]
+
+    def is_valid(self, raise_exception=True):
+        """Perform additional soundness checks on the test spec."""
+        is_valid = super().is_valid(raise_exception=raise_exception)
+
+        try:
+            spec = Specification.objects.get()
+        except ObjectDoesNotExist:
+            raise ValueError("Cannot validate solution spec without a test spec")
+        # check that there is a solution for each question
+        if len(self.data["solution"]) != spec.numberOfQuestions:
+            raise ValueError(
+                "Number of solutions {len(solution)} does not match number of questions {spec.numberOfQuestions}"
+            )
+        # check that the solution numbers match question-numbers
+        for sn in range(1, spec.numberOfQuestions + 1):
+            if str(sn) not in self.data["solution"]:
+                raise ValueError(f"Cannot find solution for question {sn}")
+            # check that the page numbers for each solution are in range.
+            for pg in self.data["solution"][f"{sn}"]["pages"]:
+                if pg < 1:
+                    raise ValueError(f"Page {pg} in solution {sn} is not positive")
+                elif pg > self.data["numberOfPages"]:
+                    raise ValueError(
+                        f"Page {pg} in solution {sn} is larger than the number of pages {self.data['numberOfPages']}"
+                    )
+            # check that the page numbers for each soln are contiguous
+            # is sufficient to check that the number of pages = max-min+1.
+            min_pg = min(self.data["solution"][f"{sn}"]["pages"])
+            max_pg = max(self.data["solution"][f"{sn}"]["pages"])
+            if len(self.data["solution"][f"{sn}"]["pages"]) != max_pg - min_pg + 1:
+                raise ValueError(
+                    f"The list of pages for solution {sn} is not contiguous - {self.data['solution'][f'{sn}']['pages']}"
+                )
+
+        return True
+
+    @transaction.atomic
+    def create(self, validated_data):
+        """Create a Specification instance and SpecQuestion instances.
+
+        If a spec instance already exists, this method overwrites the old spec.
+        """
+        SolnSpecification.objects.all().delete()
+        SolnSpecQuestion.objects.all().delete()
+
+        solution_dict = validated_data.pop("solution")
+        for idx, soln in solution_dict.items():
+            soln["solution_number"] = int(idx)
+            SolnSpecQuestion.objects.create(**soln)
+        return SolnSpecification.objects.create(**validated_data)
