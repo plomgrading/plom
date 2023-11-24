@@ -7,7 +7,9 @@
 <div class="card-body"
      data-bs-toggle="modal"
      data-bs-target="#pageShowModal"
-     @click="modal_order={{ pg.order }};">
+     hx-get="{% url 'scan_modal_bundle' timestamp pg.order %}"
+     hx-target="#updateModal"
+     hx-swap="innerHTML">
     <div class="bundle-thumb">
         <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
     </div>

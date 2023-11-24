@@ -13,6 +13,7 @@ from .views import (
     UpdateQRProgressView,
     GetBundleView,
     GetBundleNavFragmentView,
+    GetBundleModalFragmentView,
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
@@ -51,6 +52,11 @@ urlpatterns = [
         "nav/<timestamp>/<int:index>/",
         GetBundleNavFragmentView.as_view(),
         name="scan_nav_bundle",
+    ),
+    path(
+        "modal/<timestamp>/<int:index>/",
+        GetBundleModalFragmentView.as_view(),
+        name="scan_modal_bundle",
     ),
     path(
         "thumbnails/<timestamp>/<int:index>",
