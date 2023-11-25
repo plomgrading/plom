@@ -6,6 +6,10 @@
 
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
+from django.urls import reverse
+
+from django.contrib.auth.views import redirect_to_login
+from django_htmx.http import HttpResponseClientRedirect
 
 
 class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
@@ -18,6 +22,28 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def build_context(self):
         return {}
+
+    # this is adapted from the django braces source code for access-required-mixin
+    def no_permissions_fail(self, request=None):
+        """
+        Called when the user has no permissions and no exception was raised.
+        This should only return a valid HTTP response.
+
+        Redirects to login using normal django calls unless HTMX headers present
+        and then redirect via an htmx redirect call.
+        """
+        # check if request is from htmx by checking the meta info
+        # https://stackoverflow.com/questions/70510216/how-can-i-check-if-the-current-request-is-from-htmx
+        if request.META.get("HTTP_HX_REQUEST"):
+            # is htmx so send a htmx redirect to the login url
+            return HttpResponseClientRedirect(reverse(self.login_url))
+        else:
+            # send a normal redirect
+            return redirect_to_login(
+                request.get_full_path(),
+                self.get_login_url(),
+                self.get_redirect_field_name(),
+            )
 
 
 class AdminRequiredView(RoleRequiredView):
