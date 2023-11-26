@@ -34,8 +34,7 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> bool:
     """
     from plom.create import build_extra_page_pdf
 
-    with transaction.atomic():
-        ExtraPagePDFTask.load().transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_extra_page_pdf does already...

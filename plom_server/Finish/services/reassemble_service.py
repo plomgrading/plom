@@ -803,8 +803,7 @@ def huey_reassemble_paper(
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
-    with transaction.atomic():
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:

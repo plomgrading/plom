@@ -98,14 +98,17 @@ class HueyTaskTracker(models.Model):
         self.status = self.STARTING
         self.save()
 
-    def transition_to_running(self, huey_id):
-        assert self.status in (self.STARTING, self.QUEUED), (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Running (only from Starting or Queued)"
-        )
-        self.huey_id = huey_id
-        self.status = self.RUNNING
-        self.save()
+    @classmethod
+    def transition_to_running(cls, pk, huey_id):
+        with transaction.atomic(durable=True):
+            tr = cls.objects.select_for_update().get(pk=pk)
+            assert tr.status in (cls.STARTING, cls.QUEUED), (
+                f"Tracker cannot transition from {tr.get_status_display()}"
+                " to Running (only from Starting or Queued)"
+            )
+            tr.huey_id = huey_id
+            tr.status = cls.RUNNING
+            tr.save()
 
     @classmethod
     def transition_to_queued_or_running(cls, pk, huey_id):

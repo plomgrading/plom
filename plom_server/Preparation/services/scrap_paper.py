@@ -34,8 +34,7 @@ def huey_build_the_scrap_paper_pdf(*, tracker_pk: int, task=None) -> bool:
     """
     from plom.create import build_scrap_paper_pdf
 
-    with transaction.atomic():
-        task_obj = ScrapPaperPDFTask.load().transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_scrap_page_pdf does already...

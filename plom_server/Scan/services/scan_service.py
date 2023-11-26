@@ -1231,8 +1231,7 @@ def huey_parent_split_bundle_task(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1316,8 +1315,7 @@ def huey_parent_read_qr_codes_task(
     """
     from time import sleep
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 

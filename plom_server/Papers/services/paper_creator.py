@@ -53,8 +53,7 @@ def huey_create_paper_with_qvmapping(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 

@@ -69,8 +69,7 @@ def huey_build_single_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
