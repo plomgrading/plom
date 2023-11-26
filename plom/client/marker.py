@@ -1651,7 +1651,7 @@ class MarkerClient(QWidget):
         # processEvents() so we can receive the downloader-finished signal.
         task = self.prxM.getPrefix(pr)
         count = 0
-        placeholder = self.downloader.get_placeholder_path()
+        # placeholder = self.downloader.get_placeholder_path()
         while True:
             src_img_data = self.examModel.get_source_image_data(task)
             if self.get_downloads_for_src_img_data(src_img_data):
