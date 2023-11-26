@@ -97,8 +97,8 @@ def huey_build_single_paper(
                 with save_path.open("rb") as f:
                     chore.pdf_file = File(f, name=save_path.name)
                     chore.save()
-        HueyTaskTracker.transition_to_complete(tracker_pk)
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
