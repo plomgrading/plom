@@ -7,7 +7,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperCreatorService, PaperInfoService
-from Preparation.services import PQVMappingService, StagingStudentService
+from Preparation.services import PQVMappingService
 from Finish.services import ReassembleService
 
 

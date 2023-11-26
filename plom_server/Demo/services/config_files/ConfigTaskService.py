@@ -13,7 +13,7 @@ from Papers.services import SpecificationService
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
 
-from . import PlomServerConfig, PlomConfigCreationError
+from . import PlomServerConfig
 
 
 def init_all_marking_tasks():

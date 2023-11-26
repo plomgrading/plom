@@ -4,8 +4,6 @@
 # Copyright (C) 2023 Divy Patel
 
 import arrow
-import numpy as np
-import statistics
 
 # Yuck, replace this below when we drop Python 3.8 support
 from typing import Any, Dict, Union
