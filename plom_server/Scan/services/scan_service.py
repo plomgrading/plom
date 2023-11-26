@@ -19,7 +19,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
-from django.utils import timezone
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -177,7 +176,6 @@ class ScanService:
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
                 status=PagesToImagesHueyTask.STARTING,
-                created=timezone.now(),
             )
             tracker_pk = x.pk
 
@@ -468,7 +466,6 @@ class ScanService:
             x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
                 status=ManageParseQR.STARTING,
-                created=timezone.now(),
             )
             tracker_pk = x.pk
 
