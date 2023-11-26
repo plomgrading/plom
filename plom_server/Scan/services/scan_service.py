@@ -176,10 +176,9 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.TO_DO,
+                status=PagesToImagesHueyTask.STARTING,
                 created=timezone.now(),
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_split_bundle_task(
@@ -468,10 +467,9 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.TO_DO,
+                status=ManageParseQR.STARTING,
                 created=timezone.now(),
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
