@@ -149,7 +149,7 @@ class PaperCreatorService:
             # We are racing with Huey: it will try to update to RUNNING,
             # we try to update to QUEUED, but only if Huey doesn't get
             # there first.  If Huey updated already, we want a no-op.
-            HueyTaskTracker.objects.filter(
+            HueyTaskTracker.objects.select_for_update(
                 pk=tracker_pk, status=HueyTaskTracker.STARTING
             ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
 
