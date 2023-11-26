@@ -140,6 +140,8 @@ def extractSolutionImages(solution_spec_filename=None, *, msgr):
                     if not f.is_file():
                         if f.with_suffix(".jpg").is_file():
                             image_list[i] = f.with_suffix(".jpg")
+                        if f.with_suffix(".jpeg").is_file():
+                            image_list[i] = f.with_suffix(".jpeg")
                 # check the image list - make sure they exist
                 for fn in image_list:
                     if not fn.is_file():
