@@ -820,13 +820,11 @@ def huey_reassemble_paper(
                 )
 
         with transaction.atomic():
-            tr = ReassemblePaperChore.objects.get(pk=tracker_pk)
-            if tr.obsolete:
-                # if result no longer needed, no need to keep the PDF
-                tr.transition_to_complete()
-            else:
+            chore = ReassemblePaperChore.objects.get(pk=tracker_pk)
+            if not chore.obsolete:
                 with save_path.open("rb") as f:
-                    tr.pdf_file = File(f, name=save_path.name)
-                    tr.transition_to_complete()
+                    chore.pdf_file = File(f, name=save_path.name)
+                    chore.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

@@ -57,9 +57,7 @@ def huey_create_paper_with_qvmapping(
 
     PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
-
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 

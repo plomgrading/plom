@@ -137,16 +137,20 @@ class HueyTaskTracker(models.Model):
             # tr.status = cls.QUEUED
             # tr.save()
 
-    def transition_to_complete(self):
+    @classmethod
+    def transition_to_complete(cls, pk):
         """Move to the complete state."""
-        assert self.status == self.RUNNING, (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Complete (only from Running)"
-        )
-        # TODO?  is this the place to set to None?
-        self.huey_id = None
-        self.status = self.COMPLETE
-        self.save()
+        # TODO: should we interact with other non-Obsolete chores?
+        # Currently we prevent multiple non-Obsolete Chores at creation
+        with transaction.atomic(durable=True):
+            tr = cls.objects.select_for_update().get(pk=pk)
+            assert tr.status == cls.RUNNING, (
+                f"Tracker cannot transition from {tr.get_status_display()}"
+                " to Complete (only from Running)"
+            )
+            tr.huey_id = None
+            tr.status = cls.COMPLETE
+            tr.save()
 
     def set_as_obsolete(self):
         """Move to the obsolete state and save, a sort of "light deletion"."""

@@ -1283,8 +1283,8 @@ def huey_parent_split_bundle_task(
 
             bundle_obj.has_page_images = True
             bundle_obj.save()
-            HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -1353,8 +1353,7 @@ def huey_parent_read_qr_codes_task(
 
     QRErrorService().check_read_qr_codes(bundle_obj)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 

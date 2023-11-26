@@ -48,11 +48,11 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> bool:
         epp_path = Path(tmpdirname) / "extra_page.pdf"
         with epp_path.open(mode="rb") as fh:
             with transaction.atomic():
-                # TODO: unclear to me if we need to re-get the task
                 task_obj = ExtraPagePDFTask.load()
                 task_obj.extra_page_pdf = File(fh, name=epp_path.name)
-                task_obj.transition_to_complete()
+                task_obj.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 

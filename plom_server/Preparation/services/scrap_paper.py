@@ -48,11 +48,11 @@ def huey_build_the_scrap_paper_pdf(*, tracker_pk: int, task=None) -> bool:
         scp_path = Path(tmpdirname) / "scrap_paper.pdf"
         with scp_path.open(mode="rb") as fh:
             with transaction.atomic():
-                # TODO: unclear to me if we need to re-get the task
                 task_obj = ScrapPaperPDFTask.load()
                 task_obj.scrap_paper_pdf = File(fh, name=scp_path.name)
-                task_obj.transition_to_complete()
+                task_obj.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
