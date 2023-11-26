@@ -131,10 +131,7 @@ class PaperCreatorService:
         self, paper_number: int, qv_mapping: Dict[int, int]
     ) -> None:
         with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.create(
-                huey_id=None, status=HueyTaskTracker.TO_DO
-            )
-            tr.transition_to_starting()
+            tr = HueyTaskTracker.objects.create(status=HueyTaskTracker.STARTING)
             tracker_pk = tr.pk
 
         res = huey_create_paper_with_qvmapping(

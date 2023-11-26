@@ -19,7 +19,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
-from django.utils import timezone
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -176,10 +175,8 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.TO_DO,
-                created=timezone.now(),
+                status=PagesToImagesHueyTask.STARTING,
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_split_bundle_task(
@@ -468,10 +465,8 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.TO_DO,
-                created=timezone.now(),
+                status=ManageParseQR.STARTING,
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
