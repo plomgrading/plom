@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 # Copyright (C) 2021 Jenny Li
 
 """
@@ -25,17 +25,16 @@ New columns:
     "test_notes": a blank column for other notes to transmit to students.
 """
 
-
 from pathlib import Path
 from math import nan
-import random
+
 import pandas as pd
+
 
 where_csv = Path(".")
 canvas_csv = where_csv / "Canvas_classlist_01_cleaned.csv"
 out_csv = where_csv / "Canvas_classlist_02_with_rooms.csv"
 manual_csv = where_csv / "Canvas_classlist_02_with_rooms_edited.csv"
-
 
 df = pd.read_csv(canvas_csv, dtype="object")
 
