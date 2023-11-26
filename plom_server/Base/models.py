@@ -107,21 +107,32 @@ class HueyTaskTracker(models.Model):
         self.status = self.RUNNING
         self.save()
 
-    def transition_to_queued_or_running(self, huey_id):
+    @classmethod
+    def transition_to_queued_or_running(cls, pk, huey_id):
         """Move to the queued state or a no-op if we're already in the running state."""
-        if self.status == self.RUNNING:
-            assert self.huey_id == huey_id, (
-                f"We were already in the RUNNING state with huey id {self.huey_id} when "
-                f"you tried to enqueue us with a different huey id {huey_id}"
+        with transaction.atomic(durable=True):
+            # We are racing with Huey: it will try to update to RUNNING,
+            # we try to update to QUEUED, but only if Huey doesn't get
+            # there first.  If Huey updated already, we want a no-op.
+            cls.objects.select_for_update().filter(pk=pk, status=cls.STARTING).update(
+                huey_id=huey_id, status=cls.QUEUED
             )
-            return
-        assert self.status == self.STARTING, (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Queued (only from Starting)"
-        )
-        self.huey_id = huey_id
-        self.status = self.QUEUED
-        self.save()
+
+            # # a slightly stricter implementation:
+            # tr = cls.objects.select_for_update().get(pk=pk)
+            # if tr.status == cls.RUNNING:
+            #     assert tr.huey_id == huey_id, (
+            #         f"We were already in the RUNNING state with huey id {tr.huey_id} "
+            #         f"when you tried to enqueue with a different huey id {huey_id}"
+            #     )
+            #     return
+            # assert tr.status == cls.STARTING, (
+            #     f"Tracker cannot transition from {tr.get_status_display()}"
+            #     " to Queued (only from Starting)"
+            # )
+            # tr.huey_id = huey_id
+            # tr.status = cls.QUEUED
+            # tr.save()
 
     def transition_to_complete(self):
         """Move to the complete state."""

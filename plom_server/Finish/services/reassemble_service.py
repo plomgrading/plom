@@ -532,14 +532,7 @@ class ReassembleService:
             paper_num, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            # We are racing with Huey: it will try to update to RUNNING,
-            # we try to update to QUEUED, but only if Huey doesn't get
-            # there first.  If Huey updated already, we want a no-op.
-            HueyTaskTracker.objects.select_for_update().filter(
-                pk=tracker_pk, status=HueyTaskTracker.STARTING
-            ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:

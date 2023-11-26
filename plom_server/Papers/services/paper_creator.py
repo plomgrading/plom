@@ -144,14 +144,7 @@ class PaperCreatorService:
             paper_number, qv_mapping, tracker_pk=tracker_pk
         )
         print(f"Just enqueued Huey create paper task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            # We are racing with Huey: it will try to update to RUNNING,
-            # we try to update to QUEUED, but only if Huey doesn't get
-            # there first.  If Huey updated already, we want a no-op.
-            HueyTaskTracker.objects.select_for_update(
-                pk=tracker_pk, status=HueyTaskTracker.STARTING
-            ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def add_all_papers_in_qv_map(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True

@@ -186,14 +186,7 @@ class ScanService:
             bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            # We are racing with Huey: it will try to update to RUNNING,
-            # we try to update to QUEUED, but only if Huey doesn't get
-            # there first.  If Huey updated already, we want a no-op.
-            HueyTaskTracker.objects.select_for_update().filter(
-                pk=tracker_pk, status=HueyTaskTracker.STARTING
-            ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
@@ -483,14 +476,7 @@ class ScanService:
 
         res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            # We are racing with Huey: it will try to update to RUNNING,
-            # we try to update to QUEUED, but only if Huey doesn't get
-            # there first.  If Huey updated already, we want a no-op.
-            HueyTaskTracker.objects.select_for_update().filter(
-                pk=tracker_pk, status=HueyTaskTracker.STARTING
-            ).update(huey_id=res.id, status=HueyTaskTracker.QUEUED)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def map_bundle_pages(self, bundle_pk, *, papernum, questions):
         """WIP support for hwscan.
