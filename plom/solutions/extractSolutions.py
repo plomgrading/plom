@@ -117,40 +117,28 @@ def extractSolutionImages(solution_spec_filename=None, *, msgr):
     with tempfile.TemporaryDirectory() as _td:
         tmp = Path(_td)
 
-        # split sources pdf into page images
-        for v in range(1, testSpec["numberOfVersions"] + 1):
-            # TODO: Issue #1744: this function returns the filenames...
-            processFileToBitmaps(source_path / f"solutions{v}.pdf", tmp)
-
         # time to combine things and save in solution_path
         solution_path.mkdir(exist_ok=True)
-        for q in range(1, testSpec["numberOfQuestions"] + 1):
-            sq = str(q)
-            mxv = testSpec["numberOfVersions"]
-            if testSpec["question"][sq]["select"] == "fix":
-                mxv = 1  # only do version 1 if 'fix'
-            for v in range(1, mxv + 1):
-                print(f"Processing solutions for Q{q} V{v}")
-                image_list = [
-                    tmp / f"solutions{v}-{p:05}.png"
-                    for p in solutionSpec["solution"][sq]["pages"]
-                ]
-                # maybe processing made jpegs
-                for i, f in enumerate(image_list):
-                    if not f.is_file():
-                        if f.with_suffix(".jpg").is_file():
-                            image_list[i] = f.with_suffix(".jpg")
-                        if f.with_suffix(".jpeg").is_file():
-                            image_list[i] = f.with_suffix(".jpeg")
-                # check the image list - make sure they exist
-                for fn in image_list:
-                    if not fn.is_file():
-                        print(
-                            "Make sure structure of solution pdf matches your test pdf."
-                        )
-                        raise RuntimeError(
-                            f"Error - could not find solution image = {fn.name}"
-                        )
+
+        # split sources pdf into page images
+        for v in range(1, testSpec["numberOfVersions"] + 1):
+            bitmaps = processFileToBitmaps(source_path / f"solutions{v}.pdf", tmp)
+            for q in range(1, testSpec["numberOfQuestions"] + 1):
+                sq = str(q)
+                if testSpec["question"][sq]["select"] == "fix":
+                    if v != 1:
+                        continue
+                pages = solutionSpec["solution"][sq]["pages"]
+                print(f"Processing solutions for Q{q} V{v}: getting pages {pages}")
+                try:
+                    # note `pages` assumes indexed from 1
+                    image_list = [bitmaps[p - 1] for p in pages]
+                except IndexError as e:
+                    raise RuntimeError(
+                        f"Could not find solution image for a page: {e}\n"
+                        "Make sure structure of solution pdf matches your test pdf"
+                        " or that you provide a custom solution specification."
+                    ) from e
                 destination = solution_path / f"solution.q{q}.v{v}.png"
                 glueImages(image_list, destination)
 
