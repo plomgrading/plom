@@ -387,7 +387,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 61 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 49 ]]"
 
   allow_failure: true
 
