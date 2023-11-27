@@ -1224,7 +1224,7 @@ def huey_parent_split_bundle_task(
     """
     from time import sleep
 
-    bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
@@ -1275,6 +1275,8 @@ def huey_parent_split_bundle_task(
                         staging_image=img, image_file=File(fh, X["thumb_name"])
                     )
 
+            # get a new reference for updating the bundle itself
+            bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
             bundle_obj.has_page_images = True
             bundle_obj.save()
 
@@ -1311,7 +1313,7 @@ def huey_parent_read_qr_codes_task(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
         huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
@@ -1342,9 +1344,12 @@ def huey_parent_read_qr_codes_task(
             img.rotation = X["rotation"]
             img.save()
 
-        bundle_obj.has_qr_codes = True
-        bundle_obj.save()
+        # get a new reference for updating the bundle itself
+        _write_bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+        _write_bundle_obj.has_qr_codes = True
+        _write_bundle_obj.save()
 
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
     QRErrorService().check_read_qr_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
