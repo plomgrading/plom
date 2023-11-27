@@ -20,7 +20,8 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+# from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger

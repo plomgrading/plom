@@ -133,13 +133,14 @@ def get_the_spec_as_toml_with_codes():
         you need the private seed.  At the time of writing, no one
         is calling this.
     """
-    sv = SpecVerifier(get_the_spec())
+    spec = get_the_spec()
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
             if val is None or key == "id":
                 question.pop(key, None)
 
+    sv = SpecVerifier(spec)
     return sv.as_toml_string()
 
 

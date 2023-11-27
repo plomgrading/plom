@@ -376,11 +376,18 @@ flake8:
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
-    # also the number of errors should decrease over time
-    - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count | tail -n 1 || true`
+    # Non-plom_server: the number of errors should decrease over time
+    - flake8 --extend-exclude plom_server --exit-zero
+    - NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER=`flake8 --count --extend-exclude plom_server | tail -n 1 || true`
+    - echo $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 14 ]]"
+    # Special case for plom_server
+    - flake8 plom_server --exit-zero
+    - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 92 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 48 ]]"
 
   allow_failure: true
 
@@ -399,7 +406,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 449 ]]"
+    - bash -c "[[ $NUMERR -le 441 ]]"
   allow_failure: true
 
 

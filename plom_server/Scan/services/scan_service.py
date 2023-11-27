@@ -48,6 +48,7 @@ from ..models import (
     ManageParseQR,
 )
 from ..services.qr_validators import QRErrorService
+from ..services.image_rotate import update_thumbnail_after_rotation
 from .image_process import PageImageProcessor
 
 
@@ -1342,6 +1343,9 @@ def huey_parent_read_qr_codes_task(
             img.parsed_qr = X["parsed_qr"]
             img.rotation = X["rotation"]
             img.save()
+            # the thumbnail may need rotation.
+            if img.rotation:
+                update_thumbnail_after_rotation(img, img.rotation)
 
         bundle_obj.has_qr_codes = True
         bundle_obj.save()

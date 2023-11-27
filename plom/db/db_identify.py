@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from datetime import datetime, timezone
 import logging
@@ -86,8 +86,7 @@ def IDgetUnidentifiedTests(self):
 
 
 def IDgetNextTask(self):
-    """Find unid'd test and send test_number to client"""
-
+    """Find unid'd test and send test_number to client."""
     # priority given to tests without prediction
     # then tests with prediction - low certainty before high certainty.
 
@@ -179,7 +178,10 @@ def IDgiveTaskToClient(self, user_name, test_number):
 
 def IDgetDoneTasks(self, user_name):
     """When a id-client logs on they request a list of papers they have already IDd.
-    Send back the list."""
+
+    Returns:
+        list: send back the list.
+    """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
@@ -194,7 +196,7 @@ def IDgetDoneTasks(self, user_name):
 def IDgetImage(self, user_name, test_number):
     """Return ID page image of a paper.
 
-    args:
+    Args:
         user_name (str)
         test_number (int)
 
@@ -262,8 +264,9 @@ def ID_get_donotmark_images(self, test_number):
 
 
 def IDgetImagesOfUnidentified(self):
-    """
-    For every used but un-identified test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+    """For every used but un-identified test, find the filename of its idpage.
+
+    So gives returns a dictionary of testNumber -> filename.
 
     TODO: add an optional flag to drop those with high (prenamed) level of
     prediction confidence?
@@ -424,8 +427,9 @@ def IDreviewID(self, test_number):
 
 def ID_get_predictions(self, *, predictor=None):
     """Return a dict of predicted test to student_ids.
-       If all predictions are returned, each dict value contains a list of prediction dicts.
-       If predictions for a specified predictor are returned, each dict value contains a single prediction dict.
+
+    If all predictions are returned, each dict value contains a list of prediction dicts.
+    If predictions for a specified predictor are returned, each dict value contains a single prediction dict.
 
     Keyword Args:
         predictor (str/None): which predictor.  If not specified,

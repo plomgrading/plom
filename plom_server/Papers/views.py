@@ -13,8 +13,7 @@ from Papers.services import (
     PaperCreatorService,
     PaperInfoService,
 )
-from Preparation.services import PQVMappingService, StagingStudentService
-from BuildPaperPDF.services import BuildPapersService
+from Preparation.services import PQVMappingService
 
 
 class CreateTestPapers(ManagerRequiredView):

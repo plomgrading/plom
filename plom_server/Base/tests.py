@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.test import TestCase
 
-from typing import Optional, Callable, Union
+from typing import Optional, Union
 from functools import wraps
 from pathlib import Path
 import pydoc
