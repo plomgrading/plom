@@ -84,7 +84,7 @@ class ScrapPaperService:
         if task_obj.status == HueyTaskTracker.COMPLETE:
             return
         with transaction.atomic(durable=True):
-            task_obj.transition_to_starting()
+            task_obj._transition_to_starting()
             tracker_pk = task_obj.pk
 
         res = huey_build_the_scrap_paper_pdf(tracker_pk=tracker_pk)
