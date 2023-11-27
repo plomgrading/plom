@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Support for Python 3.12.
 
 ### Changed
-* Clients: more dialogs have "Don't ask me again" checkboxes but.
+* Clients: more dialogs have "Don't ask me again" checkboxes.
 * "Don't ask me again" settings are stored only in the current session (for now).
 
 ### Fixed
