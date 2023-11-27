@@ -50,11 +50,16 @@ def huey_build_single_paper(
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
+    The implementation starts with a "transition to running" and ends
+    with an "transition to complete": one needs to be a bit careful about
+    these to avoid race conditions with the caller.  In the future we
+    might consider using a decorator for this pattern instead.
 
     Args:
-        papernum:
-        spec:
-        question_versions:
+        papernum: which paper to assemble
+        spec: the specification of the assessment.
+        question_versions: which version to use for each question.
+            A row of the "qvmap".
 
     Keyword Args:
         student_info: None for a regular blank paper or a dict with
