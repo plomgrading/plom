@@ -1224,7 +1224,7 @@ def huey_parent_split_bundle_task(
     """
     from time import sleep
 
-    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+    bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
@@ -1250,10 +1250,9 @@ def huey_parent_split_bundle_task(
             # TODO - check for error status here.
 
             with transaction.atomic():
-                # TODO: note get the tracker object by its bundle not its ID
-                # avoiding a race condition: its possible the tracker itself
-                # still says "TO_DO" rather than "ENQUEUED"; that's ok from our PoV.
-                task_obj = PagesToImagesHueyTask.objects.get(bundle=bundle_obj)
+                task_obj = PagesToImagesHueyTask.objects.select_for_update().get(
+                    bundle=bundle_obj
+                )
                 task_obj.completed_pages = count
                 task_obj.save()
 
@@ -1312,7 +1311,7 @@ def huey_parent_read_qr_codes_task(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+    bundle_obj = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
 
     task_list = [
         huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
@@ -1326,7 +1325,7 @@ def huey_parent_read_qr_codes_task(
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
-            task_obj = ManageParseQR.objects.get(bundle=bundle_obj)
+            task_obj = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
             task_obj.completed_pages = count
             task_obj.save()
 
@@ -1338,7 +1337,7 @@ def huey_parent_read_qr_codes_task(
     with transaction.atomic():
         for X in results:
             # TODO - check for error status here.
-            img = StagingImage.objects.get(pk=X["image_pk"])
+            img = StagingImage.objects.select_for_update().get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
             img.rotation = X["rotation"]
             img.save()
