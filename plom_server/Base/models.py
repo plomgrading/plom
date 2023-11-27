@@ -100,19 +100,31 @@ class HueyTaskTracker(models.Model):
 
     @classmethod
     def transition_to_running(cls, pk, huey_id):
+        """Move to the Running state in a safe way using locking.
+
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
         with transaction.atomic(durable=True):
+            # Get a lock with select_for_update; this is important b/c this code
+            # is used in a race with Queued.
             tr = cls.objects.select_for_update().get(pk=pk)
             assert tr.status in (cls.STARTING, cls.QUEUED), (
                 f"Tracker cannot transition from {tr.get_status_display()}"
                 " to Running (only from Starting or Queued)"
             )
+            # Note: could use an inline update if we didn't have the assert
             tr.huey_id = huey_id
             tr.status = cls.RUNNING
             tr.save()
 
     @classmethod
     def transition_to_queued_or_running(cls, pk, huey_id):
-        """Move to the queued state or a no-op if we're already in the running state."""
+        """Move to the Queued state using locking, or a no-op if we're already Running.
+
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
         with transaction.atomic(durable=True):
             # We are racing with Huey: it will try to update to RUNNING,
             # we try to update to QUEUED, but only if Huey doesn't get
@@ -139,7 +151,11 @@ class HueyTaskTracker(models.Model):
 
     @classmethod
     def transition_to_complete(cls, pk):
-        """Move to the complete state."""
+        """Move to the complete state.
+
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
         # TODO: should we interact with other non-Obsolete chores?
         # Currently we prevent multiple non-Obsolete Chores at creation
         with transaction.atomic(durable=True):
