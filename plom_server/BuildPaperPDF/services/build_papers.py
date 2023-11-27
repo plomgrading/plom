@@ -97,7 +97,7 @@ def huey_build_single_paper(
                 )
 
         with transaction.atomic(durable=True):
-            chore = BuildPaperPDFChore.objects.get(pk=tracker_pk)
+            chore = BuildPaperPDFChore.objects.select_for_update().get(pk=tracker_pk)
             if not chore.obsolete:
                 with save_path.open("rb") as f:
                     chore.pdf_file = File(f, name=save_path.name)
