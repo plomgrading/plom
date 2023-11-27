@@ -532,10 +532,7 @@ class ReassembleService:
             paper_num, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_single_reassembled_file(self, paper_number: int) -> File:
@@ -806,8 +803,7 @@ def huey_reassemble_paper(
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
-    with transaction.atomic():
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
@@ -824,13 +820,11 @@ def huey_reassemble_paper(
                 )
 
         with transaction.atomic():
-            tr = ReassemblePaperChore.objects.get(pk=tracker_pk)
-            if tr.obsolete:
-                # if result no longer needed, no need to keep the PDF
-                tr.transition_to_complete()
-            else:
+            chore = ReassemblePaperChore.objects.get(pk=tracker_pk)
+            if not chore.obsolete:
                 with save_path.open("rb") as f:
-                    tr.pdf_file = File(f, name=save_path.name)
-                    tr.transition_to_complete()
+                    chore.pdf_file = File(f, name=save_path.name)
+                    chore.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

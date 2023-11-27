@@ -86,7 +86,7 @@ class HueyTaskTracker(models.Model):
         # subclasses might subclass to do more
         self.transition_back_to_todo()
 
-    def transition_to_starting(self):
+    def _transition_to_starting(self):
         assert self.status == self.TO_DO, (
             f"Tracker cannot transition from {self.get_status_display()}"
             " to Starting (only from To_Do state)"
@@ -98,41 +98,75 @@ class HueyTaskTracker(models.Model):
         self.status = self.STARTING
         self.save()
 
-    def transition_to_running(self, huey_id):
-        assert self.status in (self.STARTING, self.QUEUED), (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Running (only from Starting or Queued)"
-        )
-        self.huey_id = huey_id
-        self.status = self.RUNNING
-        self.save()
+    @classmethod
+    def transition_to_running(cls, pk, huey_id):
+        """Move to the Running state in a safe way using locking.
 
-    def transition_to_queued_or_running(self, huey_id):
-        """Move to the queued state or a no-op if we're already in the running state."""
-        if self.status == self.RUNNING:
-            assert self.huey_id == huey_id, (
-                f"We were already in the RUNNING state with huey id {self.huey_id} when "
-                f"you tried to enqueue us with a different huey id {huey_id}"
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
+        with transaction.atomic(durable=True):
+            # Get a lock with select_for_update; this is important b/c this code
+            # is used in a race with Queued.
+            tr = cls.objects.select_for_update().get(pk=pk)
+            assert tr.status in (cls.STARTING, cls.QUEUED), (
+                f"Tracker cannot transition from {tr.get_status_display()}"
+                " to Running (only from Starting or Queued)"
             )
-            return
-        assert self.status == self.STARTING, (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Queued (only from Starting)"
-        )
-        self.huey_id = huey_id
-        self.status = self.QUEUED
-        self.save()
+            # Note: could use an inline update if we didn't have the assert
+            tr.huey_id = huey_id
+            tr.status = cls.RUNNING
+            tr.save()
 
-    def transition_to_complete(self):
-        """Move to the complete state."""
-        assert self.status == self.RUNNING, (
-            f"Tracker cannot transition from {self.get_status_display()}"
-            " to Complete (only from Running)"
-        )
-        # TODO?  is this the place to set to None?
-        self.huey_id = None
-        self.status = self.COMPLETE
-        self.save()
+    @classmethod
+    def transition_to_queued_or_running(cls, pk, huey_id):
+        """Move to the Queued state using locking, or a no-op if we're already Running.
+
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
+        with transaction.atomic(durable=True):
+            # We are racing with Huey: it will try to update to RUNNING,
+            # we try to update to QUEUED, but only if Huey doesn't get
+            # there first.  If Huey updated already, we want a no-op.
+            cls.objects.select_for_update().filter(pk=pk, status=cls.STARTING).update(
+                huey_id=huey_id, status=cls.QUEUED
+            )
+
+            # # a slightly stricter implementation:
+            # tr = cls.objects.select_for_update().get(pk=pk)
+            # if tr.status == cls.RUNNING:
+            #     assert tr.huey_id == huey_id, (
+            #         f"We were already in the RUNNING state with huey id {tr.huey_id} "
+            #         f"when you tried to enqueue with a different huey id {huey_id}"
+            #     )
+            #     return
+            # assert tr.status == cls.STARTING, (
+            #     f"Tracker cannot transition from {tr.get_status_display()}"
+            #     " to Queued (only from Starting)"
+            # )
+            # tr.huey_id = huey_id
+            # tr.status = cls.QUEUED
+            # tr.save()
+
+    @classmethod
+    def transition_to_complete(cls, pk):
+        """Move to the complete state.
+
+        We don't care if the tracker is obsolete or not; that is the
+        callers concern.
+        """
+        # TODO: should we interact with other non-Obsolete chores?
+        # Currently we prevent multiple non-Obsolete Chores at creation
+        with transaction.atomic(durable=True):
+            tr = cls.objects.select_for_update().get(pk=pk)
+            assert tr.status == cls.RUNNING, (
+                f"Tracker cannot transition from {tr.get_status_display()}"
+                " to Complete (only from Running)"
+            )
+            tr.huey_id = None
+            tr.status = cls.COMPLETE
+            tr.save()
 
     def set_as_obsolete(self):
         """Move to the obsolete state and save, a sort of "light deletion"."""

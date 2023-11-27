@@ -53,14 +53,11 @@ def huey_create_paper_with_qvmapping(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
-
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -134,20 +131,14 @@ class PaperCreatorService:
         self, paper_number: int, qv_mapping: Dict[int, int]
     ) -> None:
         with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.create(
-                huey_id=None, status=HueyTaskTracker.TO_DO
-            )
-            tr.transition_to_starting()
+            tr = HueyTaskTracker.objects.create(status=HueyTaskTracker.STARTING)
             tracker_pk = tr.pk
 
         res = huey_create_paper_with_qvmapping(
             paper_number, qv_mapping, tracker_pk=tracker_pk
         )
         print(f"Just enqueued Huey create paper task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def add_all_papers_in_qv_map(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
