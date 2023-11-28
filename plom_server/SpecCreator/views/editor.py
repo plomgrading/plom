@@ -31,13 +31,14 @@ class SpecEditorView(ManagerRequiredView):
         """Create or replace the test specification using a TOML sent from the browser."""
         context: Dict[str, Any] = {"success": False}
         data = request.POST
-        if "spec" in data.keys():
-            spec = data["spec"]
-
-            try:
-                service = SpecificationUploadService(toml_string=spec)
-                service.save_spec()
-                context["success"] = True
-            except (ValueError, RuntimeError) as e:
-                context.update({"error": str(e)})
+        spec = data.get("spec")
+        if not spec:
+            context.update({"error": "No spec provided"})
+            return render(request, "SpecCreator/validation.html", context)
+        try:
+            service = SpecificationUploadService(toml_string=spec)
+            service.save_spec()
+            context["success"] = True
+        except (ValueError, RuntimeError) as e:
+            context.update({"error": str(e)})
         return render(request, "SpecCreator/validation.html", context)
