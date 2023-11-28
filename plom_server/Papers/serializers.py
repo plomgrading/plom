@@ -69,6 +69,8 @@ class SpecSerializer(serializers.ModelSerializer):
         """
         try:
             is_valid = super().is_valid(raise_exception=raise_exception)
+            if not is_valid:
+                return False
         except ValidationError as e:
             raise ValueError(e)
 
