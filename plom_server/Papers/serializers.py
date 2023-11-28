@@ -51,8 +51,22 @@ class SpecSerializer(serializers.ModelSerializer):
         model = Specification
         fields = "__all__"
 
-    def is_valid(self, raise_exception=True):
-        """Perform additional soundness checks on the test spec."""
+    def is_valid(self, *, raise_exception: bool = True) -> bool:
+        """Perform additional soundness checks on the test spec.
+
+        Keyword Args:
+            raise_exception: Default True, else just return False
+                without explanation.
+                TODO: if the superclass validator fails, is this respected?
+                TODO: and `is_valid` seems unused in the raise_exception=False
+                case.
+
+        Returns:
+            Whether the spec is valid.
+
+        Raises:
+            ValueError: explaining what is invalid.
+        """
         try:
             is_valid = super().is_valid(raise_exception=raise_exception)
         except ValidationError as e:
