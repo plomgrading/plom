@@ -67,12 +67,12 @@ class SpecificationUploadService:
             try:
                 self.spec_dict = load_toml_from_path(toml_file_path)
             except TOMLDecodeError as e:
-                raise ValueError("Unable to read TOML file.") from e
+                raise ValueError(f"Unable to read TOML file: {e}") from e
         elif toml_string:
             try:
                 self.spec_dict = load_toml_from_string(toml_string)
             except TOMLDecodeError as e:
-                raise ValueError("Unable to parse TOML file from string.") from e
+                raise ValueError(f"Unable to parse TOML: {e}") from e
 
     @transaction.atomic
     def save_spec(
