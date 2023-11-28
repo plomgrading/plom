@@ -26,23 +26,21 @@ from ..serializers import SpecSerializer
 log = logging.getLogger("ValidatedSpecService")
 
 
-def validate_spec_from_dict(
-    spec_dict: Dict[str, Any],
-    *,
-    public_code: Optional[str] = None,
-) -> bool:
+def validate_spec_from_dict(spec_dict: Dict[str, Any]) -> bool:
     """Load a test spec from a dictionary and validate it.
 
-    Will call the SpecSerializer on the loaded TOML string and validate.
+    Will call the SpecSerializer on the proposed spec dict and validate.
 
     Args:
-        spec_dict:
-
-    Keyword Args:
-        public_code: optionally pass a manually specified public code (mainly for unit testing)
+        spec_dict: a dictionary of the proposed spec.
 
     Returns:
-        Specification: saved test spec instance.
+        True if the spec seems valid.
+
+    Raises:
+        ValueError: explaining what is invalid.
+        ValidationError: in this case the ``.detail`` field will contain
+            a list of what is wrong.
     """
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
