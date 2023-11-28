@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import random
 from copy import deepcopy
 from rest_framework import serializers
 
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
 
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
