@@ -57,9 +57,6 @@ class SpecSerializer(serializers.ModelSerializer):
         Keyword Args:
             raise_exception: Default True, else just return False
                 without explanation.
-                TODO: if the superclass validator fails, is this respected?
-                TODO: and `is_valid` seems unused in the raise_exception=False
-                case.
 
         Returns:
             Whether the spec is valid.
