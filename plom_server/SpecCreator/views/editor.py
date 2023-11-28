@@ -35,7 +35,6 @@ class SpecEditorView(ManagerRequiredView):
         spec = data.get("spec")
         if not spec:
             context["error_list"] = ["No spec provided"]
-            context["error"] = "No spec provided"
             return render(request, "SpecCreator/validation.html", context)
         try:
             service = SpecificationUploadService(toml_string=spec)
@@ -50,8 +49,6 @@ class SpecEditorView(ManagerRequiredView):
                     errstr = str(v)
                 errlist.append(errstr)
             context["error_list"] = errlist
-            context["error"] = ";  ".join(errlist)
         except (ValueError, RuntimeError) as e:
             context["error_list"] = [str(e)]
-            context["error"] = str(e)
         return render(request, "SpecCreator/validation.html", context)
