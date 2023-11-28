@@ -42,10 +42,15 @@ class SpecEditorView(ManagerRequiredView):
             service.save_spec()
             context["success"] = True
         except ValidationError as e:
-            # v[0] is to unpack the ErrorDetail object which then prints correctly
-            # TODO: not sure there is always exactly one ErrorDetail in the list?
-            context["error_list"] = [f"{k}: {v[0]}" for k, v in e.detail.items()]
-            context["error"] = ";  ".join(context["error_list"])
+            errlist = []
+            for k, v in e.detail.items():
+                if isinstance(v, list) and len(v) == 1:
+                    errstr = f"{k}: {v[0]}"
+                else:
+                    errstr = str(v)
+                errlist.append(errstr)
+            context["error_list"] = errlist
+            context["error"] = ";  ".join(errlist)
         except (ValueError, RuntimeError) as e:
             context["error_list"] = [str(e)]
             context["error"] = str(e)
