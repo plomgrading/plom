@@ -7,5 +7,5 @@
         Specification saved! <a href="{% url 'spec_summary' %}">View here</a>
     </p>
 {% else %}
-    <p class="text-danger">{{ error }}</p>
+    {% for err in error_list %}<p class="text-danger">{{ err }}</p>{% endfor %}
 {% endif %}
