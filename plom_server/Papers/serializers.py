@@ -66,13 +66,12 @@ class SpecSerializer(serializers.ModelSerializer):
 
         Raises:
             ValueError: explaining what is invalid.
+            ValidationError: in this case the ``.detail`` field will contain
+                a list of what is wrong.
         """
-        try:
-            is_valid = super().is_valid(raise_exception=raise_exception)
-            if not is_valid:
-                return False
-        except ValidationError as e:
-            raise ValueError(e)
+        is_valid = super().is_valid(raise_exception=raise_exception)
+        if not is_valid:
+            return False
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
@@ -81,9 +80,8 @@ class SpecSerializer(serializers.ModelSerializer):
             return True
         except ValueError as e:
             if raise_exception:
-                raise e from None  # TODO: Best practice for re-raising exceptions?
-            else:
-                return False
+                raise e from None
+            return False
 
     @transaction.atomic
     def create(self, validated_data):

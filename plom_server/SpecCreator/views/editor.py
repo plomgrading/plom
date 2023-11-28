@@ -7,6 +7,7 @@ from typing import Dict, Any
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from rest_framework.exceptions import ValidationError
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -33,12 +34,19 @@ class SpecEditorView(ManagerRequiredView):
         data = request.POST
         spec = data.get("spec")
         if not spec:
-            context.update({"error": "No spec provided"})
+            context["error_list"] = ["No spec provided"]
+            context["error"] = "No spec provided"
             return render(request, "SpecCreator/validation.html", context)
         try:
             service = SpecificationUploadService(toml_string=spec)
             service.save_spec()
             context["success"] = True
+        except ValidationError as e:
+            # v[0] is to unpack the ErrorDetail object which then prints correctly
+            # TODO: not sure there is always exactly one ErrorDetail in the list?
+            context["error_list"] = [f"{k}: {v[0]}" for k, v in e.detail.items()]
+            context["error"] = ";  ".join(context["error_list"])
         except (ValueError, RuntimeError) as e:
-            context.update({"error": str(e)})
+            context["error_list"] = [str(e)]
+            context["error"] = str(e)
         return render(request, "SpecCreator/validation.html", context)
