@@ -26,6 +26,33 @@ from ..serializers import SpecSerializer
 log = logging.getLogger("ValidatedSpecService")
 
 
+def validate_spec_from_dict(
+    spec_dict: Dict[str, Any],
+    *,
+    public_code: Optional[str] = None,
+) -> bool:
+    """Load a test spec from a dictionary and validate it.
+
+    Will call the SpecSerializer on the loaded TOML string and validate.
+
+    Args:
+        spec_dict:
+
+    Keyword Args:
+        public_code: optionally pass a manually specified public code (mainly for unit testing)
+
+    Returns:
+        Specification: saved test spec instance.
+    """
+    # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    # Also, this function does not care if there are no questions in the spec dictionary. It assumes
+    # the serializer/SpecVerifier will catch it.
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
+    return serializer.is_valid()
+
+
 @transaction.atomic
 def load_spec_from_dict(
     spec_dict: Dict[str, Any],

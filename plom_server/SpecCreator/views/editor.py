@@ -36,9 +36,13 @@ class SpecEditorView(ManagerRequiredView):
         if not spec:
             context["error_list"] = ["No spec provided"]
             return render(request, "SpecCreator/validation.html", context)
+        only_validate = data.get("which_action") == "validate"
         try:
             service = SpecificationUploadService(toml_string=spec)
-            service.save_spec()
+            if only_validate:
+                service.validate_spec()
+            else:
+                service.save_spec()
             context["success"] = True
         except ValidationError as e:
             errlist = []
