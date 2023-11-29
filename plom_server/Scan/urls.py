@@ -7,25 +7,16 @@ from django.urls import path
 
 from .views import (
     ScannerHomeView,
-    BundleSplittingProgressView,
-    BundleSplittingUpdateView,
     ManageBundleView,
     BundleThumbnailView,
-    UpdateQRProgressView,
     GetBundleView,
-    GetBundleNavFragmentView,
     GetBundleModalFragmentView,
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     RemoveBundleView,
     ReadQRcodesView,
-    QRParsingProgressAlert,
-    BundleTableView,
-    PushPageImage,
     PushAllPageImages,
-    PagePushingUpdateView,
-    FlagPageImage,
     ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
@@ -49,11 +40,6 @@ urlpatterns = [
         name="scan_manage_bundle",
     ),
     path(
-        "nav/<timestamp>/<int:index>/",
-        GetBundleNavFragmentView.as_view(),
-        name="scan_nav_bundle",
-    ),
-    path(
         "modal/<timestamp>/<int:index>/",
         GetBundleModalFragmentView.as_view(),
         name="scan_modal_bundle",
@@ -67,16 +53,6 @@ urlpatterns = [
         "thumbnails/<timestamp>",
         BundleThumbnailView.as_view(),
         name="scan_bundle_thumbnails",
-    ),
-    path(
-        "split/<timestamp>/",
-        BundleSplittingProgressView.as_view(),
-        name="scan_image_progress",
-    ),
-    path(
-        "split/<timestamp>/update/",
-        BundleSplittingUpdateView.as_view(),
-        name="scan_image_update",
     ),
     path(
         "bundle/<timestamp>/",
@@ -108,37 +84,7 @@ urlpatterns = [
         ReadQRcodesView.as_view(),
         name="scan_read_qr",
     ),
-    path(
-        "read/<timestamp>/<int:index>/",
-        UpdateQRProgressView.as_view(),
-        name="scan_qr_progress",
-    ),
-    path(
-        "read/<timestamp>/alert/",
-        QRParsingProgressAlert.as_view(),
-        name="scan_qr_alert",
-    ),
-    path(
-        "read/table/<timestamp>/<int:index>/",
-        BundleTableView.as_view(),
-        name="scan_bundle_table",
-    ),
-    path(
-        "push/<timestamp>/<int:index>/",
-        PushPageImage.as_view(),
-        name="scan_push_img",
-    ),
     path("push/<timestamp>/all/", PushAllPageImages.as_view(), name="scan_push_all"),
-    path(
-        "push_update/<timestamp>/<int:index>/",
-        PagePushingUpdateView.as_view(),
-        name="scan_push_update",
-    ),
-    path(
-        "flag/<timestamp>/<int:index>/",
-        FlagPageImage.as_view(),
-        name="scan_flag_img",
-    ),
     path(
         "summary/",
         ScannerSummaryView.as_view(),
