@@ -2,30 +2,30 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
 -->
-<div class="card p-2">
+<div class="card p-2" id="modalFragment">
     <!-- HEADER STUFF -->
     <div class="card-header">
-      <div class="row">
-        {% if index == 1 %}
-            <button type="button" class="col-auto btn btn-secondary mx-2" disabled>previous</button>
-        {% else %}
-            <button type="button"
-                    class="col-auto btn btn-secondary mx-2"
-                    hx-get="{% url 'scan_modal_bundle' timestamp prev_idx %}"
-                    hx-target="#updatePage"
-                    hx-swap="innerHTML">previous</button>
-        {% endif %}
-        <h5 class="col-9 text-center" id="pageShowModalLabel">Page {{ index }} of {{ total_pages }}</h5>
-        {% if index == total_pages %}
-            <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button>
-        {% else %}
-            <button type="button"
-                    class="col-auto btn btn-secondary mx-2"
-                    hx-get="{% url 'scan_modal_bundle' timestamp next_idx %}"
-                    hx-target="#updatePage"
-                    hx-swap="innerHTML">next</button>
+        <div class="row d-flex justify-content-between">
+            {% if index == 1 %}
+                <button type="button" class="col-auto btn btn-secondary mx-2" disabled>previous</button>
+            {% else %}
+                <button type="button"
+                        class="col-auto btn btn-secondary mx-2"
+                        hx-get="{% url 'scan_modal_bundle' timestamp prev_idx %}"
+                        hx-target="#updatePage"
+                        hx-swap="innerHTML">previous</button>
             {% endif %}
-      </div>
+            <h5 class="col-9 text-center" id="pageShowModalLabel">Page {{ index }} of {{ total_pages }}</h5>
+            {% if index == total_pages %}
+                <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button>
+            {% else %}
+                <button type="button"
+                        class="col-auto btn btn-secondary mx-2"
+                        hx-get="{% url 'scan_modal_bundle' timestamp next_idx %}"
+                        hx-target="#updatePage"
+                        hx-swap="innerHTML">next</button>
+            {% endif %}
+        </div>
     </div>
     <!-- MAIN STUFF -->
     <!-- MAIN STUFF -->
@@ -45,10 +45,6 @@
                     <div class="card-body">
                         <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
                         <p class="card-text">
-			  {% if not is_pushed %}
-                          {% include "Scan/fragments/rotate_image.html" %}
-			  {% endif %}
-
                             {% if current_page.status == 'known' %}
                                 <div class="alert alert-success">
                                     <h6 class="alert-heading">Known</h6>
@@ -120,6 +116,148 @@
                                         <li>Have not read qr-codes yet</li>
                                     </ul>
                                 </div>
+                            {% endif %}
+                            {% if not is_pushed %}
+                                <!-- add in the stuff we can do before pushing -->
+                                <!-- rotation stuff -->
+                                {% include "Scan/fragments/rotate_image.html" %}
+                                <!-- what we can do depends on the status -->
+                                {% if current_page.status == 'known' %}
+                                    <!-- known page can discard -->
+                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                       hx-post="{% url 'discard_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
+                                {% elif current_page.status == 'error' %}
+                                    <!-- error page can discard but not recommended -->
+                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                       hx-post="{% url 'discard_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                                        Discard
+                                    </a>
+                                {% elif current_page.status == 'unread' %}
+                                    <!-- cannot do anything with an unread page -->
+                                {% elif current_page.status == 'discard' %}
+                                    <!-- discard can cast to known, extra, unknown -->
+                                    <div>
+                                        <a class="btn btn-warning text-center w-100 mb-3"
+                                           hx-put="{% url 'extralise_image' timestamp index %}"
+                                           hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
+                                            Cast to extra page
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a class="btn btn-outline-success text-center w-100 mb-3"
+                                           hx-get="{% url 'knowify_image' timestamp index %}"
+                                           hx-target="#modalFragment">Cast to known page</a>
+                                    </div>
+                                    <div>
+                                        <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                           hx-post="{% url 'unknowify_image' timestamp index %}"
+                                           hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                            Cast to unknown page
+                                        </a>
+                                    </div>
+                                    {% include "Scan/fragments/rotate_image.html" %}
+                                {% elif current_page.status == 'unknown' %}
+                                    <!-- unknown page can discard, extralise, knowify-->
+                                    <div>
+                                        <a class="btn btn-danger text-center w-100 mb-3"
+                                           hx-post="{% url 'discard_image' timestamp index %}"
+                                           hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
+                                    </div>
+                                    <div>
+                                        <a class="btn btn-warning text-center w-100 mb-3"
+                                           hx-put="{% url 'extralise_image' timestamp index %}"
+                                           hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+                                            Cast to extra page
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a class="btn btn-outline-success text-center w-100 mb-3"
+                                           hx-get="{% url 'knowify_image' timestamp index %}"
+                                           hx-target="#modalFragment">Cast to known page</a>
+                                    </div>
+                                {% elif current_page.status == 'extra' %}
+                                    <!-- can discard  -->
+                                    <div>
+                                        <a class="btn btn-danger text-center w-100 mb-3"
+                                           hx-post="{% url 'discard_image' timestamp index %}"
+                                           hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
+                                    </div>
+                                    {% if current_page.info.paper_number and current_page.info.question_list %}
+                                        <div>
+                                            <a class="btn btn-danger text-center w-100 mb-3"
+                                               hx-delete="{% url 'extralise_image' timestamp index %}"
+                                               hx-confirm="Are you sure you wish to clear the extra page information?">
+                                                Clear information
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-secondary">
+                                            <h6>Set extra page information</h6>
+                                            <form hx-post="{% url 'extralise_image' timestamp index %}"
+                                                  hx-target="#invalidmessage"
+                                                  hx-swap="innerHTML">
+                                                <div class="input-group p-3">
+                                                    <div x-data="{bundlepapers: true}">
+                                                        Paper:
+                                                        <div class="form-check">
+                                                            <input name="bundleOrArbitrary"
+                                                                   class="form-check-input"
+                                                                   type="checkbox"
+                                                                   x-bind:value="bundlepapers"
+                                                                   id="bundlepapers"
+                                                                   x-model="bundlepapers">
+                                                            <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                                                        </div>
+                                                        <div x-show="bundlepapers">
+                                                            <select name="bundlePaper"
+                                                                    class="form-select"
+                                                                    aria-label="Default select example">
+                                                                <option selected>Paper from bundle</option>
+                                                                {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div x-show="!bundlepapers">
+                                                            <select name="arbitraryPaper"
+                                                                    class="form-select"
+                                                                    aria-label="Default select example">
+                                                                <option selected>any produced paper</option>
+                                                                {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        Questions:
+                                                        <div x-data="{allq: false}">
+                                                            <div class="form-check">
+                                                                <input name="questionAll"
+                                                                       value="all"
+                                                                       class="form-check-input"
+                                                                       type="checkbox"
+                                                                       id="questionall"
+                                                                       x-model="allq">
+                                                                <label class="form-check-label" for="questionall">all questions</label>
+                                                            </div>
+                                                            <div x-show="!allq" x-transition>
+                                                                {% for ql in question_labels %}
+                                                                    <div class="form-check">
+                                                                        <input name="questions"
+                                                                               class="form-check-input"
+                                                                               type="checkbox"
+                                                                               value="{{ forloop.counter }}"
+                                                                               id="{{ ql }}">
+                                                                        <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-primary" type="submit">Set data</button>
+                                            </form>
+                                        </div>
+                                        <div class="py-4" id="invalidmessage"></div>
+                                    {% endif %}
+                                {% endif %}
                             {% endif %}
                         </p>
                     </div>

@@ -2,9 +2,10 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechntizer
 
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
+from django.urls import reverse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -20,7 +21,9 @@ class DiscardImageView(ScannerRequiredView):
             request.user, timestamp, index
         )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class UnknowifyImageView(ScannerRequiredView):
@@ -31,7 +34,9 @@ class UnknowifyImageView(ScannerRequiredView):
             request.user, timestamp, index
         )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class KnowifyImageView(ScannerRequiredView):
@@ -90,6 +95,7 @@ class KnowifyImageView(ScannerRequiredView):
                 )
         else:
             paper_number = knowify_page_data.get("arbitraryPaper", None)
+            page_number = knowify_page_data.get("pageSelect", None)
 
         try:
             paper_number = int(paper_number)
@@ -112,7 +118,9 @@ class KnowifyImageView(ScannerRequiredView):
         except ValueError as err:
             return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class ExtraliseImageView(ScannerRequiredView):
@@ -142,7 +150,8 @@ class ExtraliseImageView(ScannerRequiredView):
             ]
         else:
             if len(extra_page_data.get("questions", [])):
-                question_list = [int(q) for q in extra_page_data["questions"]]
+                # NOTE - must use getlist here instead of a simple get so that return is a list
+                question_list = [int(q) for q in extra_page_data.getlist("questions")]
             else:
                 return HttpResponse(
                     """<span class="alert alert-danger">At least one question</span>"""
@@ -152,18 +161,24 @@ class ExtraliseImageView(ScannerRequiredView):
             request.user, timestamp, index, paper_number, question_list
         )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
     def put(self, request, timestamp, index):
         ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
             request.user, timestamp, index
         )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
     def delete(self, request, timestamp, index):
         ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
             request.user, timestamp, index
         )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )

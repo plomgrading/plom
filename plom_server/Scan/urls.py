@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -35,7 +36,6 @@ from .views import (
     RotateImageClockwise,
     RotateImageCounterClockwise,
     RotateImageOneEighty,
-    GetRotatedThumbnailView,
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
 )
@@ -62,11 +62,6 @@ urlpatterns = [
         "thumbnails/<timestamp>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
-    ),
-    path(
-        "thumbnail_rot/<timestamp>/<int:index>",
-        GetRotatedThumbnailView.as_view(),
-        name="scan_get_rotated_thumbnail",
     ),
     path(
         "thumbnails/<timestamp>",

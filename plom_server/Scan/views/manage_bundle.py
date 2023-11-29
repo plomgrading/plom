@@ -196,6 +196,8 @@ class BundleThumbnailView(ScannerRequiredView):
             raise Http404()
 
         context = self.build_context(timestamp, request.user)
+        # to pop up the same image we were just at
+        context.update({"pop": request.GET.get("pop", None)})
 
         return render(request, "Scan/bundle_thumbnails.html", context)
 

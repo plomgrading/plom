@@ -4,14 +4,14 @@
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
 -->
-<div class="card-body"
-     data-bs-toggle="modal"
-     data-bs-target="#pageShowModal"
+<div class="card-body p-0 d-flex align-items-center"
      hx-get="{% url 'scan_modal_bundle' timestamp pg.order %}"
-     hx-target="#updateModal"
-     hx-swap="innerHTML">
+     hx-swap="innerHTML"
+     hx-target="#updatePage">
     <div class="bundle-thumb">
-        <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
+        <img class="img"
+             src="{% url 'scan_get_thumbnail' timestamp pg.order %}"
+             loading="lazy" />
     </div>
 </div>
-<div class="card-footer">{{ pg.order }}</div>
+<div class="card-footer p-1">{{ pg.order }}</div>

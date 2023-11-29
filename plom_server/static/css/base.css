@@ -67,7 +67,7 @@ a.btn.btn-primary.btn-lg {
 }
 
 .bundle-thumb {
-    height: 16vh;
+    height: auto;
     width: auto;
 }
 
@@ -75,6 +75,6 @@ a.btn.btn-primary.btn-lg {
     border: 1px solid grey;
     border-radius: 2px;
     object-fit: cover;
-    width: auto;
-    height: 100%;
+    height: auto;
+    width: 100%;
 }
