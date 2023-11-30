@@ -1349,7 +1349,7 @@ def huey_parent_read_qr_codes_task(
         _write_bundle.has_qr_codes = True
         _write_bundle.save()
 
-    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+    bundle_obj.refresh_from_db()
     QRErrorService().check_read_qr_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
