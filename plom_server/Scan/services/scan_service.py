@@ -10,6 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
+from time import sleep
 from typing import Any, Dict, Optional
 
 from django.conf import settings
@@ -820,12 +821,15 @@ class ScanService:
             )
             bundle_obj.save()
 
+        sleep(10)
+
         # the bundle is valid so we can push it.
         with transaction.atomic():
             bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
             )
             try:
+                # This call can be slow.
                 ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
                 bundle_obj.stagingimage_set.update(

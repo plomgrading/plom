@@ -112,16 +112,21 @@
                     <a class="btn btn-success"
                        href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
                     {% if has_qr_codes %}
-                        {% if is_perfect %}
-                            {% if n_incomplete == 0 %}
-                                <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
-                            {% else %}
-                                <button hx-post="push/{{ timestamp }}/all/"
-                                        class="btn btn-danger"
-                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
-                                    Push!
+                        <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                        <span x-data="{midPush: false}">
+                            {% if is_perfect %}
+                                <button {% if n_incomplete == 0 %} class="btn btn-warning" hx-confirm="Are you sure?" {% else %} class="btn btn-danger" hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?" {% endif %}
+                                        hx-post="push/{{ timestamp }}/all/"
+                                        x-bind:disabled="midPush"
+                                        @htmx:before-send="midPush=true;">
+                                    <span x-show="!midPush;">Push!</span>
+                                    <span x-show="midPush">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Push!</span>
+                                        </div>
+                                    </span>
                                 </button>
-                            {% endif %}
+                            </span>
                         {% else %}
                             <button class="btn btn-warning" disabled>Push</button>
                         {% endif %}
