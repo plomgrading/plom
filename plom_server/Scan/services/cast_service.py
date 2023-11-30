@@ -44,6 +44,13 @@ class ScanCastService:
         else:
             raise ValueError(f"Unrecognisable image type '{img_str}'")
 
+    def check_bundle_object_is_neither_locked_nor_pushed(self, bundle_obj):
+        """Raise PermissionDenied exception if bundle is locked or pushed."""
+        if bundle_obj.is_locked:
+            raise PermissionDenied("Bundle is locked - it cannot be modified")
+        if bundle_obj.pushed:
+            raise PermissionDenied("Bundle is pushed - it cannot be modified")
+
     # ----------------------------------------
     # Page casting
     # ----------------------------------------
@@ -82,8 +89,7 @@ class ScanCastService:
     def discard_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -189,8 +195,8 @@ class ScanCastService:
     def unknowify_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
@@ -287,8 +293,8 @@ class ScanCastService:
             ValueError: can't find things.
 
         """
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
         # make sure paper_number in db
         try:
             paper = Paper.objects.get(paper_number=paper_number)
@@ -394,8 +400,7 @@ class ScanCastService:
 
     @transaction.atomic
     def clear_extra_page(self, user_obj, bundle_obj, bundle_order):
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(
@@ -461,8 +466,8 @@ class ScanCastService:
     def extralise_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
@@ -578,8 +583,7 @@ class ScanCastService:
         paper_number,
         page_number,
     ):
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)

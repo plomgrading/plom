@@ -10,7 +10,7 @@ from PIL import Image
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.files import File
 
 from ..models import StagingBundle, StagingImage, StagingThumbnail
@@ -52,11 +52,18 @@ class ImageRotateService:
 
         Returns:
             None.
+        Raises:
+            PermissionDenied: when the bundle is pushed or locked
+            ValueError: when no image at that order in the bundle
         """
         bundle_obj = StagingBundle.objects.get(timestamp=bundle_timestamp)
 
         if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+            raise PermissionDenied(
+                "This bundle has been pushed - it cannot be modified."
+            )
+        if bundle_obj.is_locked:
+            raise PermissionDenied("This bundle is locked - it cannot be modified.")
 
         try:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)

@@ -6,6 +6,9 @@
 from django.shortcuts import render
 from django.http import Http404, FileResponse
 
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect
+
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
@@ -117,6 +120,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         context.update(
             {
                 "is_pushed": bundle.pushed,
+                "is_locked": bundle.is_locked,
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,
@@ -145,3 +149,18 @@ class GetBundlePageFragmentView(ScannerRequiredView):
             )
 
         return render(request, "Scan/fragments/bundle_page_view.html", context)
+
+
+class BundleLockView(ScannerRequiredView):
+    """Toggle the lock status of a bundle --- debugging only."""
+
+    def post(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        bundle_pk = scanner.get_bundle_pk(timestamp, request.user)
+        scanner.toggle_bundle_lock(bundle_pk)
+        return HttpResponseClientRedirect(reverse("scan_home"))

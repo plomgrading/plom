@@ -95,34 +95,49 @@
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">
-        {% if has_been_processed %}
-            <a class="btn btn-success"
-               href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
-            {% if has_qr_codes %}
-                {% if is_perfect %}
-                    {% if n_incomplete == 0 %}
-                        <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
+        {% if is_locked %}
+            <div>
+                Bundle is locked - push in progress
+                <button class="btn btn-danger" hx-post="lock/{{ timestamp }}">unlock</button>
+            </div>
+            <a class="btn btn-secondary"
+               target="_"
+               href="{% url 'scan_get_bundle' timestamp %}">Download</a>
+        {% else %}
+            <div>
+                <button class="btn btn-danger" hx-post="lock/{{ timestamp }}">lock</button>
+            </div>
+            <div>
+                {% if has_been_processed %}
+                    <a class="btn btn-success"
+                       href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
+                    {% if has_qr_codes %}
+                        {% if is_perfect %}
+                            {% if n_incomplete == 0 %}
+                                <button hx-post="push/{{ timestamp }}/all/" class="btn btn-warning">Push!</button>
+                            {% else %}
+                                <button hx-post="push/{{ timestamp }}/all/"
+                                        class="btn btn-danger"
+                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
+                                    Push!
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <button class="btn btn-warning" disabled>Push</button>
+                        {% endif %}
+                    {% elif is_mid_qr_read %}
                     {% else %}
-                        <button hx-post="push/{{ timestamp }}/all/"
-                                class="btn btn-danger"
-                                hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?">
-                            Push!
-                        </button>
+                        <button class="btn btn-info"
+                                hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
                     {% endif %}
-                {% else %}
-                    <button class="btn btn-warning" disabled>Push</button>
                 {% endif %}
-            {% elif is_mid_qr_read %}
-            {% else %}
-                <button class="btn btn-info"
-                        hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
-            {% endif %}
+                <a class="btn btn-secondary"
+                   target="_"
+                   href="{% url 'scan_get_bundle' timestamp %}">Download</a>
+                <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                   hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+                   hx-confirm="Are you sure?">Remove</a>
+            </div>
         {% endif %}
-        <a class="btn btn-secondary"
-           target="_"
-           href="{% url 'scan_get_bundle' timestamp %}">Download</a>
-        <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-           hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
-           hx-confirm="Are you sure?">Remove</a>
     </div>
 </td>

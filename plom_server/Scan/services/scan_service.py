@@ -766,7 +766,17 @@ class ScanService:
 
         return True
 
+    def is_bundle_locked(self, timestamp):
+        return StagingBundle.objects.get(timestamp=timestamp).is_locked
+
     @transaction.atomic
+    def toggle_bundle_lock(self, bundle_pk):
+        bundle_obj = (
+            StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
+        )
+        bundle_obj.is_locked = not (bundle_obj.is_locked)
+        bundle_obj.save()
+
     def push_bundle_to_server(self, bundle_obj_pk: int, user_obj: User):
         """Push a legal bundle from staging to the core server.
 
@@ -784,49 +794,52 @@ class ScanService:
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
             RuntimeError: When something very strange happens!!
         """
-        try:
+        # first try to grab the bundle to set lock and check stuff
+        with transaction.atomic():
             bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
             )
-        except DatabaseError as err:
-            raise ValueError(f"Another process has locked the bundle. {err}")
 
-        if bundle_obj.is_mid_push:
-            raise ValueError(
-                "Bundle is currently being pushed. Please wait for that to finish"
+            if bundle_obj.is_locked:
+                raise ValueError(
+                    "Bundle is currently locked. Please wait for that process to finish"
+                )
+            if bundle_obj.pushed:
+                raise ValueError("Bundle has already been pushed. Cannot push again.")
+
+            if not bundle_obj.has_qr_codes:
+                raise ValueError("QR codes are not all read - cannot push bundle.")
+
+            # make sure bundle is "perfect"
+            # note function takes a bundle-pk as argument
+            if not self.is_bundle_perfect(bundle_obj.pk):
+                raise ValueError("The bundle is imperfect, cannot push.")
+            # the bundle is valid so we can push it --- set the lock.
+            bundle_obj.is_locked = (
+                True  # must make sure we unlock the bundle when we are done
             )
-
-        if bundle_obj.pushed:
-            raise ValueError("Bundle has already been pushed. Cannot push again.")
-
-        if not bundle_obj.has_qr_codes:
-            raise ValueError("QR codes are not all read - cannot push bundle.")
-
-        images = bundle_obj.stagingimage_set
-
-        # make sure bundle is "perfect"
-        # note function takes a bundle-pk as argument
-        if not self.is_bundle_perfect(bundle_obj.pk):
-            raise ValueError("The bundle is imperfect, cannot push.")
-
-        img_service = ImageBundleService()
+            bundle_obj.save()
 
         # the bundle is valid so we can push it.
-        try:
-            bundle_obj.is_mid_push = True
-            bundle_obj.save()
-            img_service.upload_valid_bundle(bundle_obj, user_obj)
-            # now update the bundle and its images to say "pushed"
-            bundle_obj.pushed = True
-            bundle_obj.save()
-            images.update(pushed=True)  # note that this also saves the objects.
-        except RuntimeError as err:
-            # todo - consider capturing this error in the future
-            # so that we can display it to the user.
-            raise err
-        finally:
-            bundle_obj.is_mid_push = False
-            bundle_obj.save()
+        with transaction.atomic():
+            bundle_obj = (
+                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
+            )
+            try:
+                ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
+                # now update the bundle and its images to say "pushed"
+                bundle_obj.stagingimage_set.update(
+                    pushed=True
+                )  # this saves the updated objects
+                bundle_obj.pushed = True
+                bundle_obj.save()
+            except RuntimeError as err:
+                # todo - consider capturing this error in the future
+                # so that we can display it to the user.
+                raise err
+            finally:  # make sure we unlock the bundle when we are done.
+                bundle_obj.is_locked = False
+                bundle_obj.save()
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str):

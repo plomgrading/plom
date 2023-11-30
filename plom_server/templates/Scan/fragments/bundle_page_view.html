@@ -3,33 +3,6 @@
     Copyright (C) 2023 Andrew Rechnitzer
 -->
 <div class="card p-2" id="bundlePageFragment">
-    <!-- HEADER STUFF -->
-    <!-- <div class="card-header"> -->
-    <!--     <div class="row d-flex justify-content-between"> -->
-    <!--         {% if index == 1 %} -->
-    <!--             <button type="button" class="col-auto btn btn-secondary mx-2" disabled>previous</button> -->
-    <!--         {% else %} -->
-    <!--             <button type="button" -->
-    <!--                     class="col-auto btn btn-secondary mx-2" -->
-    <!--                     hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}" -->
-    <!--                     hx-target="#updatePage" -->
-    <!--                     hx-swap="innerHTML">previous</button> -->
-    <!--         {% endif %} -->
-    <!--         <h5 class="col-9 text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h5> -->
-    <!--         {% if index == total_pages %} -->
-    <!--             <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button> -->
-    <!--         {% else %} -->
-    <!--             <button type="button" -->
-    <!--                     class="col-auto btn btn-secondary mx-2" -->
-    <!--                     hx-get="{% url 'scan_bundle_page' timestamp next_idx %}" -->
-    <!--                     hx-target="#updatePage" -->
-    <!--                     hx-swap="innerHTML">next</button> -->
-    <!--         {% endif %} -->
-    <!--     </div> -->
-    <!-- </div> -->
-    <!-- MAIN STUFF -->
-    <!-- MAIN STUFF -->
-    <!-- MAIN STUFF -->
     <div class="card-body">
         <div class="row">
             <div class="col-8">
@@ -145,7 +118,8 @@
                                     </ul>
                                 </div>
                             {% endif %}
-                            {% if not is_pushed %}
+                            {% if is_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
+                            {% if not is_pushed and not is_locked %}
                                 <!-- add in the stuff we can do before pushing -->
                                 <!-- rotation stuff -->
                                 {% include "Scan/fragments/rotate_image.html" %}

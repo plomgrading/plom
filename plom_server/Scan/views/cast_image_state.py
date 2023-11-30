@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechntizer
 
+from django.core.exceptions import PermissionDenied
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -17,9 +18,12 @@ class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -30,9 +34,12 @@ class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -47,6 +54,10 @@ class KnowifyImageView(ScannerRequiredView):
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle(timestamp, request.user)
+        if bundle.is_locked or bundle.pushed:
+            # bounce user back to scanner home page if not allowed to change things
+            return HttpResponseClientRedirect(reverse("scan_home"))
+
         n_pages = scanner.get_n_images(bundle)
 
         if index < 0 or index > n_pages:
@@ -117,6 +128,8 @@ class KnowifyImageView(ScannerRequiredView):
             )
         except ValueError as err:
             return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -157,27 +170,36 @@ class ExtraliseImageView(ScannerRequiredView):
                     """<span class="alert alert-danger">At least one question</span>"""
                 )
 
-        ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, paper_number, question_list
-        )
+        try:
+            ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, paper_number, question_list
+            )
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
         )
 
     def put(self, request, timestamp, index):
-        ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
         )
 
     def delete(self, request, timestamp, index):
-        ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PermissionDenied:
+            return HttpResponseClientRedirect(reverse("scan_home"))
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
