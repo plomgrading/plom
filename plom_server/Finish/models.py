@@ -9,18 +9,11 @@ from Base.models import HueyTaskTracker
 from Papers.models import Paper
 
 
-class ReassembleHueyTaskTracker(HueyTaskTracker):
-    # OneToOneField makes a field called "reassemblehueytasktracker" in the Paper table
-    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
-    # TODO: I'm not convinced this should have a PDF file in it... TBD
+class ReassemblePaperChore(HueyTaskTracker):
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+
     pdf_file = models.FileField(upload_to="reassemble/", null=True)
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""
-        return "Task Object " + str(self.paper.paper_number)
-
-    def reset_to_do(self):
-        """Delete the PDF and go back the TO_DO state."""
-        if self.pdf_file:
-            self.pdf_file.delete()
-        super().reset_to_do()
+        return "Reassemble Paper Chore " + str(self.paper.paper_number)

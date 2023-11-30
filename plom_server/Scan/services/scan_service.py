@@ -19,7 +19,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, DatabaseError
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
-from django.utils import timezone
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -177,20 +176,15 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.TO_DO,
-                created=timezone.now(),
+                status=PagesToImagesHueyTask.STARTING,
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_split_bundle_task(
             bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk):
@@ -478,18 +472,13 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = ManageParseQR.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.TO_DO,
-                created=timezone.now(),
+                status=ManageParseQR.STARTING,
             )
-            x.transition_to_starting()
             tracker_pk = x.pk
 
         res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
-
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def map_bundle_pages(self, bundle_pk, *, papernum, questions):
         """WIP support for hwscan.
@@ -1262,8 +1251,7 @@ def huey_parent_split_bundle_task(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1315,8 +1303,8 @@ def huey_parent_split_bundle_task(
 
             bundle_obj.has_page_images = True
             bundle_obj.save()
-            HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -1347,8 +1335,7 @@ def huey_parent_read_qr_codes_task(
     """
     from time import sleep
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
@@ -1389,8 +1376,7 @@ def huey_parent_read_qr_codes_task(
 
     QRErrorService().check_read_qr_codes(bundle_obj)
 
-    with transaction.atomic(durable=True):
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_complete()
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
