@@ -1251,12 +1251,11 @@ def huey_parent_split_bundle_task(
             # TODO - check for error status here.
 
             with transaction.atomic():
-                # TODO: note get the tracker object by its bundle not its ID
-                # avoiding a race condition: its possible the tracker itself
-                # still says "TO_DO" rather than "ENQUEUED"; that's ok from our PoV.
-                task_obj = PagesToImagesHueyTask.objects.get(bundle=bundle_obj)
-                task_obj.completed_pages = count
-                task_obj.save()
+                _task = PagesToImagesHueyTask.objects.select_for_update().get(
+                    bundle=bundle_obj
+                )
+                _task.completed_pages = count
+                _task.save()
 
             if count == n_tasks:
                 break
@@ -1277,8 +1276,10 @@ def huey_parent_split_bundle_task(
                         staging_image=img, image_file=File(fh, X["thumb_name"])
                     )
 
-            bundle_obj.has_page_images = True
-            bundle_obj.save()
+            # get a new reference for updating the bundle itself
+            _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+            _write_bundle.has_page_images = True
+            _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
@@ -1327,9 +1328,9 @@ def huey_parent_read_qr_codes_task(
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
-            task_obj = ManageParseQR.objects.get(bundle=bundle_obj)
-            task_obj.completed_pages = count
-            task_obj.save()
+            _task = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
+            _task.completed_pages = count
+            _task.save()
 
         if count == n_tasks:
             break
@@ -1339,7 +1340,7 @@ def huey_parent_read_qr_codes_task(
     with transaction.atomic():
         for X in results:
             # TODO - check for error status here.
-            img = StagingImage.objects.get(pk=X["image_pk"])
+            img = StagingImage.objects.select_for_update().get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
             img.rotation = X["rotation"]
             img.save()
@@ -1347,9 +1348,12 @@ def huey_parent_read_qr_codes_task(
             if img.rotation:
                 update_thumbnail_after_rotation(img, img.rotation)
 
-        bundle_obj.has_qr_codes = True
-        bundle_obj.save()
+        # get a new reference for updating the bundle itself
+        _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+        _write_bundle.has_qr_codes = True
+        _write_bundle.save()
 
+    bundle_obj.refresh_from_db()
     QRErrorService().check_read_qr_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
