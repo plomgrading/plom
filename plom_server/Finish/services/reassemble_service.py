@@ -777,7 +777,7 @@ class ReassembleService:
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
-# TODO: investigate "preserver=True" here if we want to wait on them?
+# TODO: investigate "preserve=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
@@ -820,7 +820,7 @@ def huey_reassemble_paper(
                 )
 
         with transaction.atomic():
-            chore = ReassemblePaperChore.objects.get(pk=tracker_pk)
+            chore = ReassemblePaperChore.objects.select_for_update().get(pk=tracker_pk)
             if not chore.obsolete:
                 with save_path.open("rb") as f:
                     chore.pdf_file = File(f, name=save_path.name)
