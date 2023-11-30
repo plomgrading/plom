@@ -4,29 +4,29 @@
 -->
 <div class="card p-2" id="bundlePageFragment">
     <!-- HEADER STUFF -->
-    <div class="card-header">
-        <div class="row d-flex justify-content-between">
-            {% if index == 1 %}
-                <button type="button" class="col-auto btn btn-secondary mx-2" disabled>previous</button>
-            {% else %}
-                <button type="button"
-                        class="col-auto btn btn-secondary mx-2"
-                        hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}"
-                        hx-target="#updatePage"
-                        hx-swap="innerHTML">previous</button>
-            {% endif %}
-            <h5 class="col-9 text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h5>
-            {% if index == total_pages %}
-                <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button>
-            {% else %}
-                <button type="button"
-                        class="col-auto btn btn-secondary mx-2"
-                        hx-get="{% url 'scan_bundle_page' timestamp next_idx %}"
-                        hx-target="#updatePage"
-                        hx-swap="innerHTML">next</button>
-            {% endif %}
-        </div>
-    </div>
+    <!-- <div class="card-header"> -->
+    <!--     <div class="row d-flex justify-content-between"> -->
+    <!--         {% if index == 1 %} -->
+    <!--             <button type="button" class="col-auto btn btn-secondary mx-2" disabled>previous</button> -->
+    <!--         {% else %} -->
+    <!--             <button type="button" -->
+    <!--                     class="col-auto btn btn-secondary mx-2" -->
+    <!--                     hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}" -->
+    <!--                     hx-target="#updatePage" -->
+    <!--                     hx-swap="innerHTML">previous</button> -->
+    <!--         {% endif %} -->
+    <!--         <h5 class="col-9 text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h5> -->
+    <!--         {% if index == total_pages %} -->
+    <!--             <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button> -->
+    <!--         {% else %} -->
+    <!--             <button type="button" -->
+    <!--                     class="col-auto btn btn-secondary mx-2" -->
+    <!--                     hx-get="{% url 'scan_bundle_page' timestamp next_idx %}" -->
+    <!--                     hx-target="#updatePage" -->
+    <!--                     hx-swap="innerHTML">next</button> -->
+    <!--         {% endif %} -->
+    <!--     </div> -->
+    <!-- </div> -->
     <!-- MAIN STUFF -->
     <!-- MAIN STUFF -->
     <!-- MAIN STUFF -->
@@ -42,8 +42,36 @@
             </div>
             <div class="col-4">
                 <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        {% if index == 1 %}
+                            <button type="button" class="btn btn-secondary mx-2" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        {% else %}
+                            <button type="button"
+                                    class="btn btn-secondary mx-2"
+                                    hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}"
+                                    hx-target="#updatePage"
+                                    hx-swap="innerHTML">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        {% endif %}
+                        <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
+                        {% if index == total_pages %}
+                            <button type="button" class="btn btn-secondary mx-2" disabled>
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        {% else %}
+                            <button type="button"
+                                    class="btn btn-secondary mx-2"
+                                    hx-get="{% url 'scan_bundle_page' timestamp next_idx %}"
+                                    hx-target="#updatePage"
+                                    hx-swap="innerHTML">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        {% endif %}
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
                         <p class="card-text">
                             {% if current_page.status == 'known' %}
                                 <div class="alert alert-success">
