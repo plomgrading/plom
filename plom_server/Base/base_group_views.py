@@ -25,10 +25,9 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     # this is adapted from the django braces source code for access-required-mixin
     def no_permissions_fail(self, request=None):
-        """
-        Called when the user has no permissions and no exception was raised.
-        This should only return a valid HTTP response.
+        """Called when the user has no permissions and no exception was raised.
 
+        This should only return a valid HTTP response.
         Redirects to login using normal django calls unless HTMX headers present
         and then redirect via an htmx redirect call.
         """
