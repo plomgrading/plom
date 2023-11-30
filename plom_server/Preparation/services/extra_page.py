@@ -34,8 +34,7 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> bool:
     """
     from plom.create import build_extra_page_pdf
 
-    with transaction.atomic():
-        ExtraPagePDFTask.load().transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_extra_page_pdf does already...
@@ -49,11 +48,11 @@ def huey_build_the_extra_page_pdf(*, tracker_pk: int, task=None) -> bool:
         epp_path = Path(tmpdirname) / "extra_page.pdf"
         with epp_path.open(mode="rb") as fh:
             with transaction.atomic():
-                # TODO: unclear to me if we need to re-get the task
                 task_obj = ExtraPagePDFTask.load()
                 task_obj.extra_page_pdf = File(fh, name=epp_path.name)
-                task_obj.transition_to_complete()
+                task_obj.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -85,15 +84,12 @@ class ExtraPageService:
         if task_obj.status == HueyTaskTracker.COMPLETE:
             return
         with transaction.atomic(durable=True):
-            task_obj.transition_to_starting()
+            task_obj._transition_to_starting()
             tracker_pk = task_obj.pk
 
         res = huey_build_the_extra_page_pdf(tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey extra page builder id={res.id}")
-
-        with transaction.atomic(durable=True):
-            task = HueyTaskTracker.objects.get(pk=tracker_pk)
-            task.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_extra_page_pdf_as_bytes(self):

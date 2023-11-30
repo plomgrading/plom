@@ -6,3 +6,4 @@ from .marking_info import (
     MarkingInformationView,
 )
 from .reassembly import ReassemblePapersView, StartOneReassembly, StartAllReassembly
+from .reassembly import CancelQueuedReassembly

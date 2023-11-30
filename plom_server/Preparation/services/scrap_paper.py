@@ -34,8 +34,7 @@ def huey_build_the_scrap_paper_pdf(*, tracker_pk: int, task=None) -> bool:
     """
     from plom.create import build_scrap_paper_pdf
 
-    with transaction.atomic():
-        task_obj = ScrapPaperPDFTask.load().transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # build the pdf in a tempdirectory
     # there is redundancy here because that is what build_scrap_page_pdf does already...
@@ -49,11 +48,11 @@ def huey_build_the_scrap_paper_pdf(*, tracker_pk: int, task=None) -> bool:
         scp_path = Path(tmpdirname) / "scrap_paper.pdf"
         with scp_path.open(mode="rb") as fh:
             with transaction.atomic():
-                # TODO: unclear to me if we need to re-get the task
                 task_obj = ScrapPaperPDFTask.load()
                 task_obj.scrap_paper_pdf = File(fh, name=scp_path.name)
-                task_obj.transition_to_complete()
+                task_obj.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -85,15 +84,12 @@ class ScrapPaperService:
         if task_obj.status == HueyTaskTracker.COMPLETE:
             return
         with transaction.atomic(durable=True):
-            task_obj.transition_to_starting()
+            task_obj._transition_to_starting()
             tracker_pk = task_obj.pk
 
         res = huey_build_the_scrap_paper_pdf(tracker_pk=tracker_pk)
         # print(f"Just enqueued Huey scrap paper builder id={res.id}")
-
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     @transaction.atomic
     def get_scrap_paper_pdf_as_bytes(self):
