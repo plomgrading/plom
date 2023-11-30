@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
 -->
-<div class="card p-2" id="modalFragment">
+<div class="card p-2" id="bundlePageFragment">
     <!-- HEADER STUFF -->
     <div class="card-header">
         <div class="row d-flex justify-content-between">
@@ -11,17 +11,17 @@
             {% else %}
                 <button type="button"
                         class="col-auto btn btn-secondary mx-2"
-                        hx-get="{% url 'scan_modal_bundle' timestamp prev_idx %}"
+                        hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}"
                         hx-target="#updatePage"
                         hx-swap="innerHTML">previous</button>
             {% endif %}
-            <h5 class="col-9 text-center" id="pageShowModalLabel">Page {{ index }} of {{ total_pages }}</h5>
+            <h5 class="col-9 text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h5>
             {% if index == total_pages %}
                 <button type="button" class="col-auto btn btn-secondary mx-2" disabled>next</button>
             {% else %}
                 <button type="button"
                         class="col-auto btn btn-secondary mx-2"
-                        hx-get="{% url 'scan_modal_bundle' timestamp next_idx %}"
+                        hx-get="{% url 'scan_bundle_page' timestamp next_idx %}"
                         hx-target="#updatePage"
                         hx-swap="innerHTML">next</button>
             {% endif %}
@@ -148,7 +148,7 @@
                                     <div>
                                         <a class="btn btn-outline-success text-center w-100 mb-3"
                                            hx-get="{% url 'knowify_image' timestamp index %}"
-                                           hx-target="#modalFragment">Cast to known page</a>
+                                           hx-target="#bundlePageFragment">Cast to known page</a>
                                     </div>
                                     <div>
                                         <a class="btn btn-outline-warning text-center w-100 mb-3"
@@ -175,7 +175,7 @@
                                     <div>
                                         <a class="btn btn-outline-success text-center w-100 mb-3"
                                            hx-get="{% url 'knowify_image' timestamp index %}"
-                                           hx-target="#modalFragment">Cast to known page</a>
+                                           hx-target="#bundlePageFragment">Cast to known page</a>
                                     </div>
                                 {% elif current_page.status == 'extra' %}
                                     <!-- can discard  -->
@@ -264,10 +264,5 @@
                 </div>
             </div>
         </div>
-    </div>
-    <!-- FOOTER STUFF -->
-    <!-- FOOTER STUFF -->
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
     </div>
 </div>
