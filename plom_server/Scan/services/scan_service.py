@@ -1250,11 +1250,11 @@ def huey_parent_split_bundle_task(
             # TODO - check for error status here.
 
             with transaction.atomic():
-                task_obj = PagesToImagesHueyTask.objects.select_for_update().get(
+                _task = PagesToImagesHueyTask.objects.select_for_update().get(
                     bundle=bundle_obj
                 )
-                task_obj.completed_pages = count
-                task_obj.save()
+                _task.completed_pages = count
+                _task.save()
 
             if count == n_tasks:
                 break
@@ -1327,9 +1327,9 @@ def huey_parent_read_qr_codes_task(
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
-            task_obj = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
-            task_obj.completed_pages = count
-            task_obj.save()
+            _task = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
+            _task.completed_pages = count
+            _task.save()
 
         if count == n_tasks:
             break
