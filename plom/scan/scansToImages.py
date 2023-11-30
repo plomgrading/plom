@@ -160,8 +160,8 @@ def processFileToBitmaps(
             database/client issues.
 
     Returns:
-        list: an ordered list of the images of each page.  Each entry
-        is a `pathlib.Path`.
+        list: an list of the images of each page, ordered as in the input
+        file.  Each entry is a `pathlib.Path`.
 
     Raises:
         RuntimeError: not a PDF and not something PyMuPDF can open.

@@ -4,8 +4,6 @@
 from django.test import TestCase
 
 from Demo.services import (
-    ConfigFileService,
-    PlomConfigError,
     PlomServerConfig,
     DemoBundleConfig,
     DemoHWBundleConfig,
