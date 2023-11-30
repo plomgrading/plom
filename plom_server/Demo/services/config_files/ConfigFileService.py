@@ -4,10 +4,10 @@
 
 """Handle building a server database from a config file."""
 
-from typing import Union, Optional, NewType, List
+from dataclasses import dataclass, asdict
 from pathlib import Path
 import sys
-from dataclasses import dataclass, asdict
+from typing import Union, Optional, List
 
 if sys.version_info < (3, 11):
     import tomli as tomllib

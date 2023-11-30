@@ -76,7 +76,7 @@ def build_papers(
         # TODO: Issue #1745?
         if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
             raise ValueError(
-                f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
+                f"Index out of range: must be in [1, {spec['numberToProduce']}]"
             )
 
     # do sanity checks on the paper_number data in the classlist.
