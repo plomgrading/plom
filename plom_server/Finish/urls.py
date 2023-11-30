@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
 
@@ -9,6 +10,7 @@ from .views import (
     ReassemblePapersView,
     StartOneReassembly,
     StartAllReassembly,
+    CancelQueuedReassembly,
 )
 
 
@@ -36,4 +38,9 @@ urlpatterns = [
         name="reassemble_one_paper",
     ),
     path("reassemble/all", StartAllReassembly.as_view(), name="reassemble_all_pdfs"),
+    path(
+        "reassemble/queued",
+        CancelQueuedReassembly.as_view(),
+        name="reassemble_cancel_queued",
+    ),
 ]

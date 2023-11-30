@@ -106,3 +106,9 @@ class StartAllReassembly(ManagerRequiredView):
             "Content-Disposition"
         ] = f"attachment; filename={short_name}_reassembled.zip"
         return response
+
+
+class CancelQueuedReassembly(ManagerRequiredView):
+    def delete(self, request):
+        ReassembleService().try_to_cancel_all_queued_chores()
+        return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
