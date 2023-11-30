@@ -10,12 +10,6 @@ from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
-# from ..models import StagingImage
-# from Progress.services import ManageScanService
-
-# change to valid page
-# overlay for valid or discard
-
 
 class GetBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""

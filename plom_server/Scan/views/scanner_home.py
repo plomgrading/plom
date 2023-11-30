@@ -74,6 +74,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
                         "cover_angle": cover_img_rotation,
+                        "is_mid_push": bundle.is_mid_push,
                     }
                 )
 

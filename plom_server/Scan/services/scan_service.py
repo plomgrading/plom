@@ -16,7 +16,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, DatabaseError
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 from django.utils import timezone
@@ -269,6 +269,12 @@ class ScanService:
             user=user,
             timestamp=timestamp,
         )
+
+    def get_bundle_pk(self, timestamp, user):
+        return StagingBundle.objects.get(
+            user=user,
+            timestamp=timestamp,
+        ).pk
 
     @transaction.atomic
     def get_image(self, timestamp, user, index):
@@ -772,22 +778,35 @@ class ScanService:
         return True
 
     @transaction.atomic
-    def push_bundle_to_server(self, bundle_obj: StagingBundle, user_obj: User):
+    def push_bundle_to_server(self, bundle_obj_pk: int, user_obj: User):
         """Push a legal bundle from staging to the core server.
 
         Args:
-            bundle_obj: The StagingBundle object to be pushed to the core server
+            bundle_obj_pk: The pk of the stagingBundle object to be pushed to the core server
             user_obj: The (django) User object that is doing the pushing
 
         Returns:
             None
 
         Exceptions:
+            ValueError: When the bundle is currently being pushed
             ValueError: When the bundle has already been pushed,
             ValueError: When the qr codes have not all been read,
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
             RuntimeError: When something very strange happens!!
         """
+        try:
+            bundle_obj = (
+                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
+            )
+        except DatabaseError as err:
+            raise ValueError(f"Another process has locked the bundle. {err}")
+
+        if bundle_obj.is_mid_push:
+            raise ValueError(
+                "Bundle is currently being pushed. Please wait for that to finish"
+            )
+
         if bundle_obj.pushed:
             raise ValueError("Bundle has already been pushed. Cannot push again.")
 
@@ -805,6 +824,8 @@ class ScanService:
 
         # the bundle is valid so we can push it.
         try:
+            bundle_obj.is_mid_push = True
+            bundle_obj.save()
             img_service.upload_valid_bundle(bundle_obj, user_obj)
             # now update the bundle and its images to say "pushed"
             bundle_obj.pushed = True
@@ -814,6 +835,9 @@ class ScanService:
             # todo - consider capturing this error in the future
             # so that we can display it to the user.
             raise err
+        finally:
+            bundle_obj.is_mid_push = False
+            bundle_obj.save()
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str):
@@ -831,7 +855,7 @@ class ScanService:
             ValueError: When the user does not exist or has wrong permissions
         """
         try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+            bundle_obj_pk = StagingBundle.objects.get(slug=bundle_name).pk
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
@@ -845,7 +869,7 @@ class ScanService:
                 f"User '{username}' does not exist or has wrong permissions!"
             )
 
-        self.push_bundle_to_server(bundle_obj, user_obj)
+        self.push_bundle_to_server(bundle_obj_pk, user_obj)
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):
