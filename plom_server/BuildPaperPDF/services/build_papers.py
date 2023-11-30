@@ -97,11 +97,11 @@ def huey_build_single_paper(
                 )
 
         with transaction.atomic(durable=True):
-            chore = BuildPaperPDFChore.objects.select_for_update().get(pk=tracker_pk)
-            if not chore.obsolete:
+            _chore = BuildPaperPDFChore.objects.select_for_update().get(pk=tracker_pk)
+            if not _chore.obsolete:
                 with save_path.open("rb") as f:
-                    chore.pdf_file = File(f, name=save_path.name)
-                    chore.save()
+                    _chore.pdf_file = File(f, name=save_path.name)
+                    _chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
