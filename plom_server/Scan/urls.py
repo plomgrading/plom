@@ -7,10 +7,9 @@ from django.urls import path
 
 from .views import (
     ScannerHomeView,
-    ManageBundleView,
     BundleThumbnailView,
     GetBundleView,
-    GetBundleModalFragmentView,
+    GetBundlePageFragmentView,
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
@@ -35,14 +34,9 @@ from .views import (
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
-        "<timestamp>/<int:index>/",
-        ManageBundleView.as_view(),
-        name="scan_manage_bundle",
-    ),
-    path(
-        "modal/<timestamp>/<int:index>/",
-        GetBundleModalFragmentView.as_view(),
-        name="scan_modal_bundle",
+        "bundlepage/<timestamp>/<int:index>/",
+        GetBundlePageFragmentView.as_view(),
+        name="scan_bundle_page",
     ),
     path(
         "thumbnails/<timestamp>/<int:index>",

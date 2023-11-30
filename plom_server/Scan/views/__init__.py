@@ -11,8 +11,7 @@ from .scanner_home import (
 )
 
 from .manage_bundle import (
-    ManageBundleView,
-    GetBundleModalFragmentView,
+    GetBundlePageFragmentView,
     GetBundleImageView,
     BundleThumbnailView,
     GetBundleThumbnailView,
