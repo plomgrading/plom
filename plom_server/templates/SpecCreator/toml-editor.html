@@ -1,24 +1,18 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
 -->
-<html lang="en">
-    <head>
-        <title>specification text editor</title>
-    </head>
-    <body>
-        <form hx-post="{% url 'creator_launch' %}"
-              hx-include="[name='spec']"
-              hx-target="#saving-status">
-            {% csrf_token %}
-            <label for="spec-toml-input" class="form-label">Test specification</label>
-            <textarea class="form-control mb-3"
-                      id="spec-toml-input"
-                      name="spec"
-                      rows="20"
-                      spellcheck="false">{% if is_there_a_spec %}{{ spec_toml }}{% endif %}</textarea>
-            <div id="saving-status"></div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-    </body>
-</html>
+<form hx-post="{% url 'creator_launch' %}"
+      hx-include="[name='spec']"
+      hx-target="#saving-status">
+    {% csrf_token %}
+    <label for="spec-toml-input" class="form-label">Test specification</label>
+    <textarea class="form-control mb-3"
+              id="spec-toml-input"
+              name="spec"
+              rows="20"
+              spellcheck="false">{% if is_there_a_spec %}{{ spec_toml }}{% endif %}</textarea>
+    <div id="saving-status"></div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
