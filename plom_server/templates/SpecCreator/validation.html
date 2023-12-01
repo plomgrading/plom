@@ -3,7 +3,11 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<h4>{{ msg }}</h4>
+{% if success %}
+    <h4 class="text-success">{{ msg }}</h4>
+{% else %}
+    <h4 class="text-danger">{{ msg }}</h4>
+{% endif %}
 {% if not success %}
     {% for err in error_list %}<p class="text-danger">{{ err }}</p>{% endfor %}
 {% endif %}
