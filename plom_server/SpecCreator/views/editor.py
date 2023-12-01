@@ -55,7 +55,7 @@ class SpecEditorView(ManagerRequiredView):
                 if isinstance(v, list) and len(v) == 1:
                     errstr = f"{k}: {v[0]}"
                 else:
-                    errstr = str(v)
+                    errstr = f"{k}: {str(v)}"
                 errlist.append(errstr)
             context["error_list"] = errlist
         except (ValueError, RuntimeError) as e:
