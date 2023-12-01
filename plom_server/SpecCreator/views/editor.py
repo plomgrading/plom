@@ -30,7 +30,10 @@ class SpecEditorView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
-        context: Dict[str, Any] = {"success": False}
+        context: Dict[str, Any] = {
+            "success": False,
+            "msg": "Not able to accept that specification",
+        }
         data = request.POST
         spec = data.get("spec")
         if not spec:
@@ -41,8 +44,10 @@ class SpecEditorView(ManagerRequiredView):
             service = SpecificationUploadService(toml_string=spec)
             if only_validate:
                 service.validate_spec()
+                context["msg"] = "That specification seems to be valid"
             else:
                 service.save_spec()
+                context["msg"] = "Specification saved!"
             context["success"] = True
         except ValidationError as e:
             errlist = []
