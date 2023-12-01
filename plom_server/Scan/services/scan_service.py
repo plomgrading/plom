@@ -17,7 +17,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, DatabaseError
+from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 
@@ -49,8 +49,10 @@ from ..models import (
     ManageParseQR,
 )
 from ..services.qr_validators import QRErrorService
-from ..services.image_rotate import update_thumbnail_after_rotation
 from .image_process import PageImageProcessor
+from ..services.util import update_thumbnail_after_rotation
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScanService:

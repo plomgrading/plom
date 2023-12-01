@@ -158,3 +158,8 @@ class PlomNoPaper(PlomBenignException):
     """Plom doesn't have a paper"""
 
     pass
+
+
+class PlomBundleLockedException(PlomBenignException):
+    """For when a bundle is locked or pushed"""
+    pass

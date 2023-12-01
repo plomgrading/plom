@@ -18,6 +18,8 @@ from ..models import (
     KnownStagingImage,
 )
 
+from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
+
 
 class ScanCastService:
     """Functions for casting staging images to different types."""
@@ -43,13 +45,6 @@ class ScanCastService:
             return StagingImage.UNREAD
         else:
             raise ValueError(f"Unrecognisable image type '{img_str}'")
-
-    def check_bundle_object_is_neither_locked_nor_pushed(self, bundle_obj):
-        """Raise PermissionDenied exception if bundle is locked or pushed."""
-        if bundle_obj.is_locked:
-            raise PermissionDenied("Bundle is locked - it cannot be modified")
-        if bundle_obj.pushed:
-            raise PermissionDenied("Bundle is pushed - it cannot be modified")
 
     # ----------------------------------------
     # Page casting
@@ -89,7 +84,7 @@ class ScanCastService:
     def discard_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -195,7 +190,7 @@ class ScanCastService:
     def unknowify_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -293,7 +288,7 @@ class ScanCastService:
             ValueError: can't find things.
 
         """
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         # make sure paper_number in db
         try:
@@ -400,7 +395,7 @@ class ScanCastService:
 
     @transaction.atomic
     def clear_extra_page(self, user_obj, bundle_obj, bundle_order):
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(
@@ -466,7 +461,7 @@ class ScanCastService:
     def extralise_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -583,7 +578,7 @@ class ScanCastService:
         paper_number,
         page_number,
     ):
-        self.check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)

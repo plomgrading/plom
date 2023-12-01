@@ -152,9 +152,14 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
-    """Toggle the lock status of a bundle --- debugging only."""
+    def get(self, request, timestamp):
+        context = self.build_context()
+        bundle = ScanService().get_bundle(timestamp, request.user)
+        context.update({"slug": bundle.slug})
+        return render(request, "Scan/bundle_is_locked.html", context)
 
     def post(self, request, timestamp):
+        """Toggle the lock status of a bundle --- debugging only."""
         try:
             timestamp = float(timestamp)
         except ValueError:

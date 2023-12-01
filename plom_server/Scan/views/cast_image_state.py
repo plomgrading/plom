@@ -2,8 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechntizer
 
-from django.core.exceptions import PermissionDenied
-from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
+from django_htmx.http import HttpResponseClientRedirect
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
 from django.urls import reverse
@@ -11,7 +10,13 @@ from django.urls import reverse
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
-from ..services import ScanCastService, ScanService
+from Scan.services import (
+    ScanCastService,
+    ScanService,
+    check_bundle_object_is_neither_locked_nor_pushed,
+)
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class DiscardImageView(ScannerRequiredView):
@@ -22,8 +27,10 @@ class DiscardImageView(ScannerRequiredView):
             ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
             )
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -38,8 +45,10 @@ class UnknowifyImageView(ScannerRequiredView):
             ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
             )
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -54,9 +63,14 @@ class KnowifyImageView(ScannerRequiredView):
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        if bundle.is_locked or bundle.pushed:
+
+        try:
+            check_bundle_object_is_neither_locked_nor_pushed(bundle)
+        except PlomBundleLockedException:
             # bounce user back to scanner home page if not allowed to change things
-            return HttpResponseClientRedirect(reverse("scan_home"))
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         n_pages = scanner.get_n_images(bundle)
 
@@ -128,8 +142,10 @@ class KnowifyImageView(ScannerRequiredView):
             )
         except ValueError as err:
             return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -174,8 +190,10 @@ class ExtraliseImageView(ScannerRequiredView):
             ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
                 request.user, timestamp, index, paper_number, question_list
             )
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -186,8 +204,10 @@ class ExtraliseImageView(ScannerRequiredView):
             ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
             )
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -198,8 +218,10 @@ class ExtraliseImageView(ScannerRequiredView):
             ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
             )
-        except PermissionDenied:
-            return HttpResponseClientRedirect(reverse("scan_home"))
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
