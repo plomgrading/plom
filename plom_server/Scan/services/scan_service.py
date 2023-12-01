@@ -52,8 +52,6 @@ from ..services.qr_validators import QRErrorService
 from .image_process import PageImageProcessor
 from ..services.util import update_thumbnail_after_rotation
 
-from plom.plom_exceptions import PlomBundleLockedException
-
 
 class ScanService:
     """Functions for staging scanned test-papers."""

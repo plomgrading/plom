@@ -30,6 +30,7 @@ class ImageRotateService:
 
         Returns:
             None.
+
         Raises:
             PlomBundleLockedException: when the bundle is pushed or locked
             ValueError: when no image at that order in the bundle

@@ -4,12 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.shortcuts import render
 from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
-from Papers.services import ImageBundleService
 from ..services import ScanService
 
 

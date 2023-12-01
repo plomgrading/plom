@@ -162,4 +162,5 @@ class PlomNoPaper(PlomBenignException):
 
 class PlomBundleLockedException(PlomBenignException):
     """For when a bundle is locked or pushed"""
+
     pass

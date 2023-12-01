@@ -3,7 +3,6 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from datetime import datetime
 import hashlib
 import pathlib
 
