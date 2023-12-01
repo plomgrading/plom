@@ -1,0 +1,33 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Bundle is locked
+{% endblock title %}
+{% block page_heading %}
+    Bundle is locked
+    <a class="btn btn-success" href="{% url 'scan_home' %}">
+        <i class="bi bi-chevron-left"></i>
+        Return to upload
+    </a>
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <p>
+                        If you are here then it is because the bundle <q>{{ slug }}</q> is locked or already pushed.
+                    </p>
+                    <p>
+                        You were likely trying to alter that bundle when another
+                        user was pushing it to the server.
+                    </p>
+                    <p>Please return to the main bundle upload page.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
