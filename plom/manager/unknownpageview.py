@@ -41,13 +41,12 @@ class DiscardTab(QWidget):
 
 
 class ExtraTab(QWidget):
-    def __init__(self, parent, maxT, questionLabels):
+    def __init__(self, parent, max_paper_num, questionLabels):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setMinimum(1)
-        self.tsb.setMaximum(maxT)
+        self.tsb.setRange(1, max_paper_num)
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb = QVBoxLayout()
@@ -147,16 +146,14 @@ class HWTab(QWidget):
 
 
 class TestTab(QWidget):
-    def __init__(self, parent, maxT, maxP):
+    def __init__(self, parent, max_paper_num, max_page_num):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
         self.tsb = QSpinBox()
         self.psb = QSpinBox()
-        self.tsb.setMinimum(1)
-        self.tsb.setMaximum(maxT)
-        self.psb.setMinimum(1)
-        self.psb.setMaximum(maxP)
+        self.tsb.setRange(1, max_paper_num)
+        self.psb.setRange(1, max_page_num)
         cb = QPushButton("Click to co&nfirm")
         cpb = QPushButton("Check that page")
         vwb = QPushButton("&View whole test")
