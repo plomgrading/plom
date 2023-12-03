@@ -47,7 +47,7 @@ class ExtraTab(QWidget):
         fl = QFormLayout()
         self.tsb = QSpinBox()
         self.tsb.setRange(1, max_paper_num)
-        # Issue #3127, but careful the default is still 1
+        # Initially blank for Issue #3127, but careful the default is still 1
         self.tsb.clear()
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
@@ -159,6 +159,9 @@ class TestTab(QWidget):
         self.psb = QSpinBox()
         self.tsb.setRange(1, max_paper_num)
         self.psb.setRange(1, max_page_num)
+        # Initially blank for Issue #3127
+        self.tsb.clear()
+        self.psb.clear()
         cb = QPushButton("Click to co&nfirm")
         cpb = QPushButton("Check that page")
         vwb = QPushButton("&View whole test")
@@ -173,6 +176,12 @@ class TestTab(QWidget):
         cb.clicked.connect(self.confirm)
 
     def confirm(self):
+        if not self.tsb.text():
+            WarnMsg(self, "You must choose a paper number.").exec()
+            return
+        if not self.psb.text():
+            WarnMsg(self, "You must choose a page number.").exec()
+            return
         self._parent.action = "test"
         self._parent.test = self.tsb.value()
         self._parent.pq = f"{self.psb.value()}"
