@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Clients: more dialogs have "Don't ask me again" checkboxes.
 * "Don't ask me again" settings are stored only in the current session (for now).
+* Don't show default "1" paper and page when assigning unknown pages.
 
 ### Fixed
 * Duplicated paper numbers in question-version map input will now be detected.
