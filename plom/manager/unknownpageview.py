@@ -47,6 +47,8 @@ class ExtraTab(QWidget):
         fl = QFormLayout()
         self.tsb = QSpinBox()
         self.tsb.setRange(1, max_paper_num)
+        # Issue #3127, but unfortunately, if you press "ok" it still defaults to "1"
+        self.tsb.clear()
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb = QVBoxLayout()
