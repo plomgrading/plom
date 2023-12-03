@@ -335,7 +335,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         solutioner = SolutionHandler(peon)
 
         # override max upload size for Issue #3199
-        app = web.Application(client_max_size=10 * 1024**2)
+        app = web.Application(client_max_size=5 * 1024**2)
         log.info("Setting up routes")
         userIniter.setUpRoutes(app.router)
         uploader.setUpRoutes(app.router)
