@@ -47,7 +47,7 @@ class ExtraTab(QWidget):
         fl = QFormLayout()
         self.tsb = QSpinBox()
         self.tsb.setRange(1, max_paper_num)
-        # Issue #3127, but unfortunately, if you press "ok" it still defaults to "1"
+        # Issue #3127, but careful the default is still 1
         self.tsb.clear()
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
@@ -67,6 +67,9 @@ class ExtraTab(QWidget):
         cb.clicked.connect(self.confirm)
 
     def confirm(self):
+        if not self.tsb.text():
+            WarnMsg(self, "You must choose a paper number.").exec()
+            return
         checked = [i for i, x in enumerate(self.questionCheckBoxes) if x.isChecked()]
         if not checked:
             WarnMsg(self, "You must select at least one question.").exec()
