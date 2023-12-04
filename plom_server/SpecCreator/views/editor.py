@@ -44,7 +44,7 @@ class SpecEditorView(ManagerRequiredView):
             service = SpecificationUploadService(toml_string=spec)
             if only_validate:
                 service.validate_spec()
-                context["msg"] = "That specification seems to be valid"
+                context["msg"] = "Tests passed: specification appears to be valid"
             else:
                 service.save_spec()
                 context["msg"] = "Specification saved!"
