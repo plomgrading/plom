@@ -55,7 +55,7 @@ class SpecEditorView(ManagerRequiredView):
                 if isinstance(v, list) and len(v) == 1:
                     errstr = f"{k}: {v[0]}"
                     errlist.append(errstr)
-                if isinstance(v, dict):
+                elif isinstance(v, dict):
                     # this big ol pile of spaghetti renders errors within questions
                     for kk, vv in v.items():
                         if isinstance(vv, dict):
