@@ -774,6 +774,58 @@ class ScanService:
         return StagingBundle.objects.get(timestamp=timestamp).is_push_locked
 
     @transaction.atomic
+    def get_bundle_push_lock_information(self, include_pushed=False):
+        info = [("name", "push-locked", "pushed")]
+        if include_pushed:
+            for bundle_obj in StagingBundle.objects.all().order_by("slug"):
+                info.append(
+                    (bundle_obj.slug, bundle_obj.is_push_locked, bundle_obj.pushed)
+                )
+        else:
+            for bundle_obj in StagingBundle.objects.filter(pushed=False).order_by(
+                "slug"
+            ):
+                info.append(
+                    (bundle_obj.slug, bundle_obj.is_push_locked, bundle_obj.pushed)
+                )
+
+        return info
+
+    @transaction.atomic
+    def push_lock_bundle_cmd(self, bundle_name: str):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        if bundle_obj.pushed:
+            raise ValueError(f"Bundle '{bundle_name}' has been pushed. Cannot modify.")
+
+        if bundle_obj.is_push_locked:
+            raise ValueError(f"Bundle '{bundle_name}' is already push-locked.")
+
+        bundle_obj.is_push_locked = True
+        bundle_obj.save()
+
+    @transaction.atomic
+    def push_unlock_bundle_cmd(self, bundle_name: str):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        if bundle_obj.pushed:
+            raise ValueError(f"Bundle '{bundle_name}' has been pushed. Cannot modify.")
+
+        if not bundle_obj.is_push_locked:
+            raise ValueError(
+                f"Bundle '{bundle_name}' is not push-locked. No unlock required."
+            )
+
+        bundle_obj.is_push_locked = False
+        bundle_obj.save()
+
+    @transaction.atomic
     def toggle_bundle_push_lock(self, bundle_pk):
         bundle_obj = (
             StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
