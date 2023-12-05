@@ -118,8 +118,8 @@
                                     </ul>
                                 </div>
                             {% endif %}
-                            {% if is_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
-                            {% if not is_pushed and not is_locked %}
+                            {% if is_push_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
+                            {% if not is_pushed and not is_push_locked %}
                                 <!-- add in the stuff we can do before pushing -->
                                 <!-- rotation stuff -->
                                 {% include "Scan/fragments/rotate_image.html" %}

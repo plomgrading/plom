@@ -767,15 +767,15 @@ class ScanService:
 
         return True
 
-    def is_bundle_locked(self, timestamp):
-        return StagingBundle.objects.get(timestamp=timestamp).is_locked
+    def is_bundle_push_locked(self, timestamp):
+        return StagingBundle.objects.get(timestamp=timestamp).is_push_locked
 
     @transaction.atomic
-    def toggle_bundle_lock(self, bundle_pk):
+    def toggle_bundle_push_lock(self, bundle_pk):
         bundle_obj = (
             StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
         )
-        bundle_obj.is_locked = not (bundle_obj.is_locked)
+        bundle_obj.is_push_locked = not (bundle_obj.is_push_locked)
         bundle_obj.save()
 
     def push_bundle_to_server(self, bundle_obj_pk: int, user_obj: User):
@@ -801,9 +801,9 @@ class ScanService:
                 StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
             )
 
-            if bundle_obj.is_locked:
+            if bundle_obj.is_push_locked:
                 raise ValueError(
-                    "Bundle is currently locked. Please wait for that process to finish"
+                    "Bundle is currently push-locked. Please wait for that process to finish"
                 )
             if bundle_obj.pushed:
                 raise ValueError("Bundle has already been pushed. Cannot push again.")
@@ -816,7 +816,7 @@ class ScanService:
             if not self.is_bundle_perfect(bundle_obj.pk):
                 raise ValueError("The bundle is imperfect, cannot push.")
             # the bundle is valid so we can push it --- set the lock.
-            bundle_obj.is_locked = (
+            bundle_obj.is_push_locked = (
                 True  # must make sure we unlock the bundle when we are done
             )
             bundle_obj.save()
@@ -842,7 +842,7 @@ class ScanService:
                 # so that we can display it to the user.
                 raise err
             finally:  # make sure we unlock the bundle when we are done.
-                bundle_obj.is_locked = False
+                bundle_obj.is_push_locked = False
                 bundle_obj.save()
 
     @transaction.atomic

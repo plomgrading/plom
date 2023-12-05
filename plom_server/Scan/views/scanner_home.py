@@ -74,7 +74,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
                         "cover_angle": cover_img_rotation,
-                        "is_locked": bundle.is_locked,
+                        "is_push_locked": bundle.is_push_locked,
                     }
                 )
 
@@ -179,7 +179,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
-            "is_locked": bundle.is_locked,
+            "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
             "n_known": n_known,
             "n_unknown": n_unknown,

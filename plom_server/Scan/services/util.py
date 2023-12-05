@@ -13,9 +13,9 @@ from plom.plom_exceptions import PlomBundleLockedException
 
 
 def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj):
-    """Raise PlomBundleLockedException exception if bundle is locked or pushed."""
-    if bundle_obj.is_locked:
-        raise PlomBundleLockedException("Bundle is locked - it cannot be modified")
+    """Raise PlomBundleLockedException exception if bundle is push-locked or pushed."""
+    if bundle_obj.is_push_locked:
+        raise PlomBundleLockedException("Bundle is push-locked - it cannot be modified")
     if bundle_obj.pushed:
         raise PlomBundleLockedException("Bundle is pushed - it cannot be modified")
 

@@ -32,7 +32,7 @@ class ImageRotateService:
             None.
 
         Raises:
-            PlomBundleLockedException: when the bundle is pushed or locked
+            PlomBundleLockedException: when the bundle is pushed or push-locked
             ValueError: when no image at that order in the bundle
         """
         bundle_obj = StagingBundle.objects.get(timestamp=bundle_timestamp)

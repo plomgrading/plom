@@ -95,7 +95,7 @@
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">
-        {% if is_locked %}
+        {% if is_push_locked %}
             <div>
                 Bundle is locked - push in progress
                 <button class="btn btn-danger" hx-post="lock/{{ timestamp }}">unlock</button>

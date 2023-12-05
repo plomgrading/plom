@@ -19,6 +19,7 @@ from ..services import ScanCastService
 
 from plom.plom_exceptions import PlomBundleLockedException
 
+
 class ScanCastServiceTests(TestCase):
     def make_image(self, image_type):
         # put images into first available order

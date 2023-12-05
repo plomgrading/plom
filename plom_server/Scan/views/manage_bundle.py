@@ -120,7 +120,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         context.update(
             {
                 "is_pushed": bundle.pushed,
-                "is_locked": bundle.is_locked,
+                "is_push_locked": bundle.is_push_locked,
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,
