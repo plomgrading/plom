@@ -41,14 +41,11 @@ def test_no_ID_column_fails(tmpdir):
             _ = clean_non_canvas_csv(foo)
 
         success, warn_err = vlad.validate_csv(foo, spec=None)
-        expected = [
-            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing id column"}
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert warn_err[0]["werr_text"].startswith("Missing 'id' column")
 
 
 def test_two_ID_column_fails(tmpdir):
@@ -88,14 +85,11 @@ def test_no_name_column_fails(tmpdir):
             _ = clean_non_canvas_csv(foo)
 
         success, warn_err = vlad.validate_csv(foo, spec=None)
-        expected = [
-            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing name column"}
-        ]
         assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
+        assert len(warn_err) == 1
+        assert warn_err[0]["warn_or_err"] == "error"
+        assert warn_err[0]["werr_line"] == 0
+        assert warn_err[0]["werr_text"].startswith("Missing 'name' column")
 
 
 def test_two_name_column_fails(tmpdir):
