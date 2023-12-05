@@ -311,7 +311,7 @@ def get_parser():
         help="Make the PDFs",
         description="""
             Build papers (and if necessary the database) from the test
-            specification.  Based on the classlist "paper_num" column,
+            specification.  Based on the classlist "paper_number" column,
             some of the papers may have names printed on them from the
             classlist ("pre-named") and the remainder will be blank.
             As they are created, the prenamed papers will be inserted
