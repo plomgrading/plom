@@ -85,7 +85,8 @@
                         <th>Pages</th>
                         <th>Actions</th>
                     </thead>
-                    <tbody>
+                    <!-- put this alpine variable here, so that all push buttons in these fragments can be disabled when any bundle pushed -->
+                    <tbody x-data="{midPush: false}">
                         {% for bundle in staged_bundles %}
                             <tr hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
                                 hw-swap="innerHTML"

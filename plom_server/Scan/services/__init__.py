@@ -12,5 +12,6 @@ from .image_rotate import ImageRotateService
 from .hard_rotate import hard_rotate_image_from_file_by_exif_and_angle
 from .util import (
     check_bundle_object_is_neither_locked_nor_pushed,
+    check_any_bundle_push_locked,
     update_thumbnail_after_rotation,
 )

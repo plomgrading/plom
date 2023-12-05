@@ -50,7 +50,10 @@ from ..models import (
 )
 from ..services.qr_validators import QRErrorService
 from .image_process import PageImageProcessor
-from ..services.util import update_thumbnail_after_rotation
+from ..services.util import (
+    update_thumbnail_after_rotation,
+    check_any_bundle_push_locked,
+)
 
 
 class ScanService:
@@ -794,8 +797,13 @@ class ScanService:
             ValueError: When the qr codes have not all been read,
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
             RuntimeError: When something very strange happens!!
+            PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
         """
-        # first try to grab the bundle to set lock and check stuff
+        # check is *any* bundle is push-locked
+        # only allow one bundle at a time to be pushed.
+        check_any_bundle_push_locked()
+
+        # now try to grab the bundle to set lock and check stuff
         with transaction.atomic():
             bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()

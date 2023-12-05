@@ -7,7 +7,7 @@ from PIL import Image
 
 from django.core.files import File
 
-from ..models import StagingImage, StagingThumbnail
+from ..models import StagingImage, StagingThumbnail, StagingBundle
 
 from plom.plom_exceptions import PlomBundleLockedException
 
@@ -18,6 +18,14 @@ def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj):
         raise PlomBundleLockedException("Bundle is push-locked - it cannot be modified")
     if bundle_obj.pushed:
         raise PlomBundleLockedException("Bundle is pushed - it cannot be modified")
+
+
+def check_any_bundle_push_locked():
+    """Raise PlomBundleLockedException exception when **any** bundle is push-locked."""
+    if StagingBundle.objects.filter(is_push_locked=True).exists():
+        raise PlomBundleLockedException(
+            "Some bundle is push-locked. Please wait for it to finish."
+        )
 
 
 def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):

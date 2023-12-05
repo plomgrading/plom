@@ -112,10 +112,11 @@
                     <a class="btn btn-success"
                        href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
                     {% if has_qr_codes %}
-                        <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                        <span x-data="{midPush: false}">
+                        <span>
                             {% if is_perfect %}
                                 {% if n_incomplete == 0 %}
+                                    <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                                    <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
                                     <button class="btn btn-warning"
                                             hx-confirm="Are you sure?"
                                             hx-post="push/{{ timestamp }}/all/"
