@@ -152,6 +152,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
+    # This deprecated - was for debugging only.
     def get(self, request, timestamp):
         context = self.build_context()
         bundle = ScanService().get_bundle(timestamp, request.user)

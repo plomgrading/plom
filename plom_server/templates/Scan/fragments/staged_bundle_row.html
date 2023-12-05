@@ -96,17 +96,11 @@
 <td>
     <div class="d-flex justify-content-evenly my-2">
         {% if is_push_locked %}
-            <div>
-                Bundle is locked - push in progress
-                <button class="btn btn-danger" hx-post="lock/{{ timestamp }}">unlock</button>
-            </div>
+            <div>Bundle is locked - push in progress</div>
             <a class="btn btn-secondary"
                target="_"
                href="{% url 'scan_get_bundle' timestamp %}">Download</a>
         {% else %}
-            <div>
-                <button class="btn btn-danger" hx-post="lock/{{ timestamp }}">lock</button>
-            </div>
             <div>
                 {% if has_been_processed %}
                     <a class="btn btn-success"

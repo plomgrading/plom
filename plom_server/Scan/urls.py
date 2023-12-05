@@ -28,7 +28,6 @@ from .views import (
     RotateImageOneEighty,
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
-    BundleLockView,
 )
 
 
@@ -43,11 +42,6 @@ urlpatterns = [
         "thumbnails/<timestamp>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
-    ),
-    path(
-        "lock/<timestamp>",
-        BundleLockView.as_view(),
-        name="scan_bundle_lock",
     ),
     path(
         "thumbnails/<timestamp>",
