@@ -5,12 +5,15 @@ from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 
-from ..services import TemplateSolnSpecService
+from ..services import TemplateSolnSpecService, SolnSpecService
 
 
 class SolnSpecView(ManagerRequiredView):
     def get(self, request):
         context = self.build_context()
+        context.update(
+            {"is_there_a_soln_spec": SolnSpecService().is_there_a_soln_spec()}
+        )
         return render(request, "Finish/soln_spec.html", context=context)
 
 
