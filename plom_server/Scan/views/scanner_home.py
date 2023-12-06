@@ -13,13 +13,15 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
 from Preparation.services import TestPreparedSetting
 from Progress.services import ManageScanService
 from ..services import ScanService
 from ..forms import BundleUploadForm
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScannerHomeView(ScannerRequiredView):
@@ -231,5 +233,11 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        scanner._remove_bundle(bundle.pk)
+        try:
+            scanner._remove_bundle(bundle.pk)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
         return HttpResponseClientRefresh()

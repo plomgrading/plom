@@ -28,6 +28,7 @@ from .views import (
     RotateImageOneEighty,
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
+    BundleLockView,
 )
 
 
@@ -133,5 +134,10 @@ urlpatterns = [
         "rotate/oneeighty/<timestamp>/<int:index>/",
         RotateImageOneEighty.as_view(),
         name="rotate_img_one_eighty",
+    ),
+    path(
+        "bundle_lock/<timestamp>/",
+        BundleLockView.as_view(),
+        name="scan_bundle_lock",
     ),
 ]

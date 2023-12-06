@@ -152,21 +152,8 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
-    # This deprecated - was for debugging only.
     def get(self, request, timestamp):
         context = self.build_context()
         bundle = ScanService().get_bundle(timestamp, request.user)
         context.update({"slug": bundle.slug})
         return render(request, "Scan/bundle_is_locked.html", context)
-
-    def post(self, request, timestamp):
-        """Toggle the lock status of a bundle --- debugging only."""
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
-        scanner = ScanService()
-        bundle_pk = scanner.get_bundle_pk(timestamp, request.user)
-        scanner.toggle_bundle_lock(bundle_pk)
-        return HttpResponseClientRedirect(reverse("scan_home"))

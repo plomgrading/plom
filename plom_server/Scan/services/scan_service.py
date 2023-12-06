@@ -53,7 +53,9 @@ from .image_process import PageImageProcessor
 from ..services.util import (
     update_thumbnail_after_rotation,
     check_any_bundle_push_locked,
+    check_bundle_object_is_neither_locked_nor_pushed,
 )
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScanService:
@@ -235,16 +237,29 @@ class ScanService:
             bundle = StagingBundle.objects.get(slug=bundle_name)
         self._remove_bundle(bundle.pk)
 
-    @transaction.atomic
     def _remove_bundle(self, bundle_pk):
         """Remove a bundle PDF from the filesystem + database.
 
         Args:
             bundle_pk: the primary key for a particular bundle.
         """
-        bundle = StagingBundle.objects.get(pk=bundle_pk)
-        pathlib.Path(bundle.pdf_file.path).unlink()
-        bundle.delete()
+        with transaction.atomic():
+            _bundle_obj = (
+                StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
+            )
+
+            if self.is_bundle_mid_splitting(_bundle_obj.pk):
+                raise PlomBundleLockedException(
+                    "Bundle is upload / splitting. Wait until that is finished before removing it"
+                )
+            if self.is_bundle_mid_qr_read(_bundle_obj.pk):
+                raise PlomBundleLockedException(
+                    "Bundle is mid qr read. Wait until that is finished before removing it"
+                )
+            # will raise exception if the bundle is locked or push-locked - cannot remove it.
+            check_bundle_object_is_neither_locked_nor_pushed(_bundle_obj)
+            pathlib.Path(_bundle_obj.pdf_file.path).unlink()
+            _bundle_obj.delete()
 
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash):
@@ -788,39 +803,51 @@ class ScanService:
 
         return info
 
-    @transaction.atomic
     def push_lock_bundle_cmd(self, bundle_name: str):
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        with transaction.atomic():
+            try:
+                bundle_obj = (
+                    StagingBundle.objects.select_for_update()
+                    .filter(slug=bundle_name)
+                    .get()
+                )
+            except ObjectDoesNotExist:
+                raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        if bundle_obj.pushed:
-            raise ValueError(f"Bundle '{bundle_name}' has been pushed. Cannot modify.")
+            if bundle_obj.pushed:
+                raise ValueError(
+                    f"Bundle '{bundle_name}' has been pushed. Cannot modify."
+                )
 
-        if bundle_obj.is_push_locked:
-            raise ValueError(f"Bundle '{bundle_name}' is already push-locked.")
+            if bundle_obj.is_push_locked:
+                raise ValueError(f"Bundle '{bundle_name}' is already push-locked.")
 
-        bundle_obj.is_push_locked = True
-        bundle_obj.save()
+            bundle_obj.is_push_locked = True
+            bundle_obj.save()
 
     @transaction.atomic
     def push_unlock_bundle_cmd(self, bundle_name: str):
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        with transaction.atomic():
+            try:
+                bundle_obj = (
+                    StagingBundle.objects.select_for_update()
+                    .filter(slug=bundle_name)
+                    .get()
+                )
+            except ObjectDoesNotExist:
+                raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        if bundle_obj.pushed:
-            raise ValueError(f"Bundle '{bundle_name}' has been pushed. Cannot modify.")
+            if bundle_obj.pushed:
+                raise ValueError(
+                    f"Bundle '{bundle_name}' has been pushed. Cannot modify."
+                )
 
-        if not bundle_obj.is_push_locked:
-            raise ValueError(
-                f"Bundle '{bundle_name}' is not push-locked. No unlock required."
-            )
-
-        bundle_obj.is_push_locked = False
-        bundle_obj.save()
+            if not bundle_obj.is_push_locked:
+                raise ValueError(
+                    f"Bundle '{bundle_name}' is not push-locked. No unlock required."
+                )
+            bundle_obj.is_push_locked = False
+            bundle_obj.save()
 
     @transaction.atomic
     def toggle_bundle_push_lock(self, bundle_pk):
@@ -873,10 +900,9 @@ class ScanService:
             if not self.is_bundle_perfect(bundle_obj.pk):
                 raise ValueError("The bundle is imperfect, cannot push.")
             # the bundle is valid so we can push it --- set the lock.
-            bundle_obj.is_push_locked = (
-                True  # must make sure we unlock the bundle when we are done
-            )
+            bundle_obj.is_push_locked = True
             bundle_obj.save()
+            # must make sure we unlock the bundle when we are done
 
         sleep(10)
 
