@@ -19,6 +19,8 @@
             <button hx-post="{% url 'reassemble_all_pdfs' %}"
                     href=""
                     class="btn btn-success m-2">Reassemble all (incl. outdated)</button>
+            <button hx-delete="{% url 'reassemble_cancel_queued' %}"
+                    class="btn btn-warning m-2">Cancel queued</button>
             <button hx-delete="{% url 'reassemble_all_pdfs' %}"
                     class="btn btn-danger m-2">Delete all</button>
         </div>
@@ -81,79 +83,80 @@
                     <th scope="col">When reassembled</th>
                     <th scope="col">Action</th>
                 </tr>
-                {% for paper, val in papers.items %}
-                    {% if val.scanned %}
-                        <tr>
-                            <td>{{ paper }}</td>
+                {% for row in papers %}
+                    {% if row.scanned %}
+                        <tr style="{% if row.obsolete %} text-decoration: line-through;
+                                   {% endif %}">
+                            <td>{{ row.paper_num }}</td>
                             <td>
-                                {% if val.identified %}
-                                    <i class="bi bi-check-circle text-success"></i> {{ val.student_id }}
+                                {% if row.identified %}
+                                    <i class="bi bi-check-circle text-success"></i> {{ row.student_id }}
                                 {% else %}
                                     <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if val.marked %}
+                                {% if row.marked %}
                                     <i class="bi bi-check-circle text-success"></i> all
                                 {% else %}
-                                    {% if val.number_marked == 0 %}
+                                    {% if row.number_marked == 0 %}
                                         <i class="bi bi-exclamation-diamond-fill text-danger"></i> none
                                     {% else %}
-                                        <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ val.number_marked }}
+                                        <i class="bi bi-exclamation-diamond-fill text-warning"></i> {{ row.number_marked }}
                                     {% endif %}
                                 {% endif %}
                             </td>
-                            <td>{{ val.last_update_humanised }}</td>
+                            <td>{{ row.last_update_humanised }}</td>
                             <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
                             <td>
-                                {% if val.identified and val.marked %}
-                                    {% if val.reassembled_status == "Starting" or val.reassembled_status == "Queued" or val.reassembled_status == "Running" %}
+                                {% if row.identified and row.marked %}
+                                    {% if row.reassembled_status == "Starting" or row.reassembled_status == "Queued" or row.reassembled_status == "Running" %}
                                         <i class="bi bi-clock-history text-info"></i>
-                                    {% elif val.reassembled_status == "Error" %}
+                                    {% elif row.reassembled_status == "Error" %}
                                         <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                                    {% elif val.reassembled_status == "Complete" %}
+                                    {% elif row.reassembled_status == "Complete" %}
                                         <i class="bi bi-check-circle text-success"></i>
                                     {% endif %}
-                                    {{ val.reassembled_status }}
+                                    {{ row.reassembled_status }}
                                 {% else %}
                                     <i class="bi bi-exclamation-diamond-fill text-warning"></i> not ready
                                 {% endif %}
                             </td>
                             <td>
-                                {% if val.reassembled_time %}
-                                    {% if val.outdated %}
+                                {% if row.reassembled_time %}
+                                    {% if row.outdated %}
                                         <i class="bi bi-exclamation-diamond-fill text-danger"> outdated </i>
                                     {% else %}
-                                        {{ val.reassembled_time_humanised }}
+                                        {{ row.reassembled_time_humanised }}
                                     {% endif %}
                                 {% else %}
                                     <!-- n/a -->
                                 {% endif %}
                             </td>
                             <td>
-                                {% if val.reassembled_time %}
-                                    {% if val.outdated %}
-                                        <a href="{% url 'reassemble_one_paper' paper %}"
+                                {% if row.reassembled_time %}
+                                    {% if row.outdated %}
+                                        <a href="{% url 'reassemble_one_paper' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
-                                        <button hx-put="{% url 'reassemble_one_paper' paper %}"
+                                        <button hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">
                                             <i class="bi bi-exclamation-diamond-fill">
                                                 re-reassemble
                                             </i>
                                         </button>
-                                        <button hx-delete="{% url 'reassemble_one_paper' paper %}"
+                                        <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-success">delete</button>
                                     {% else %}
-                                        <a href="{% url 'reassemble_one_paper' paper %}"
+                                        <a href="{% url 'reassemble_one_paper' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-success">view</a>
-                                        <button hx-delete="{% url 'reassemble_one_paper' paper %}"
+                                        <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">delete</button>
                                     {% endif %}
                                 {% else %}
-                                    {% if val.identified and val.marked and val.reassembled_status != "Starting" and val.reassembled_status != "Queued" and val.reassembled_status != "Running" %}
-                                        <button hx-post="{% url 'reassemble_one_paper' paper %}"
+                                    {% if row.identified and row.marked and row.reassembled_status != "Starting" and row.reassembled_status != "Queued" and row.reassembled_status != "Running" %}
+                                        <button hx-post="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-success">reassemble</button>
                                     {% else %}
                                         <!-- n/a -->

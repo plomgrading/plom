@@ -21,44 +21,36 @@ class ReassemblePapersView(ManagerRequiredView):
         context = self.build_context()
         all_paper_status = reas.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
-        n_papers = sum([1 for n, x in all_paper_status.items() if x["scanned"]])
+        n_papers = sum([1 for x in all_paper_status if x["scanned"]])
         n_not_ready = sum(
             [
                 1
-                for n, x in all_paper_status.items()
+                for x in all_paper_status
                 if x["scanned"] and not (x["identified"] and x["marked"])
             ]
         )
         n_ready = sum(
             [
                 1
-                for n, x in all_paper_status.items()
+                for x in all_paper_status
                 if x["identified"]
                 and x["marked"]
                 and x["reassembled_status"] == "To Do"
             ]
         )
-        n_outdated = sum([1 for n, x in all_paper_status.items() if x["outdated"]])
+        n_outdated = sum([1 for x in all_paper_status if x["outdated"]])
         n_queued = sum(
             [
                 1
-                for n, x in all_paper_status.items()
+                for x in all_paper_status
                 if x["reassembled_status"] in ("Starting", "Queued", "Running")
             ]
         )  # for display purposes started === queued
         n_errors = sum(
-            [
-                1
-                for n, x in all_paper_status.items()
-                if x["reassembled_status"] == "Error"
-            ]
+            [1 for x in all_paper_status if x["reassembled_status"] == "Error"]
         )
         n_complete = sum(
-            [
-                1
-                for n, x in all_paper_status.items()
-                if x["reassembled_status"] == "Complete"
-            ]
+            [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
 
         context.update(
@@ -114,3 +106,9 @@ class StartAllReassembly(ManagerRequiredView):
             "Content-Disposition"
         ] = f"attachment; filename={short_name}_reassembled.zip"
         return response
+
+
+class CancelQueuedReassembly(ManagerRequiredView):
+    def delete(self, request):
+        ReassembleService().try_to_cancel_all_queued_chores()
+        return HttpResponseClientRedirect(reverse("reassemble_pdfs"))

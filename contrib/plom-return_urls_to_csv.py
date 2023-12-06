@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020, 2023 Colin B. Macdonald
 
 """Put Plom's return codes into a Canvas sheet for use with [1]
 
@@ -19,7 +19,6 @@ TODO: could be modified so input doesn't need to be a Canvas sheet.
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from plom.finish.return_tools import import_canvas_csv

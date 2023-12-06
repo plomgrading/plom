@@ -7,6 +7,7 @@ from typing import Dict, Any
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from rest_framework.exceptions import ValidationError
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -31,13 +32,23 @@ class SpecEditorView(ManagerRequiredView):
         """Create or replace the test specification using a TOML sent from the browser."""
         context: Dict[str, Any] = {"success": False}
         data = request.POST
-        if "spec" in data.keys():
-            spec = data["spec"]
-
-            try:
-                service = SpecificationUploadService(toml_string=spec)
-                service.save_spec()
-                context["success"] = True
-            except (ValueError, RuntimeError) as e:
-                context.update({"error": str(e)})
+        spec = data.get("spec")
+        if not spec:
+            context["error_list"] = ["No spec provided"]
+            return render(request, "SpecCreator/validation.html", context)
+        try:
+            service = SpecificationUploadService(toml_string=spec)
+            service.save_spec()
+            context["success"] = True
+        except ValidationError as e:
+            errlist = []
+            for k, v in e.detail.items():
+                if isinstance(v, list) and len(v) == 1:
+                    errstr = f"{k}: {v[0]}"
+                else:
+                    errstr = str(v)
+                errlist.append(errstr)
+            context["error_list"] = errlist
+        except (ValueError, RuntimeError) as e:
+            context["error_list"] = [str(e)]
         return render(request, "SpecCreator/validation.html", context)

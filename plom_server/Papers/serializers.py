@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import random
 from copy import deepcopy
 from rest_framework import serializers
 
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
 
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
@@ -51,12 +51,24 @@ class SpecSerializer(serializers.ModelSerializer):
         model = Specification
         fields = "__all__"
 
-    def is_valid(self, raise_exception=True):
-        """Perform additional soundness checks on the test spec."""
-        try:
-            is_valid = super().is_valid(raise_exception=raise_exception)
-        except ValidationError as e:
-            raise ValueError(e)
+    def is_valid(self, *, raise_exception: bool = True) -> bool:
+        """Perform additional soundness checks on the test spec.
+
+        Keyword Args:
+            raise_exception: Default True, else just return False
+                without explanation.
+
+        Returns:
+            Whether the spec is valid.
+
+        Raises:
+            ValueError: explaining what is invalid.
+            ValidationError: in this case the ``.detail`` field will contain
+                a list of what is wrong.
+        """
+        is_valid = super().is_valid(raise_exception=raise_exception)
+        if not is_valid:
+            return False
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
@@ -65,9 +77,8 @@ class SpecSerializer(serializers.ModelSerializer):
             return True
         except ValueError as e:
             if raise_exception:
-                raise e from None  # TODO: Best practice for re-raising exceptions?
-            else:
-                return False
+                raise e from None
+            return False
 
     @transaction.atomic
     def create(self, validated_data):

@@ -60,7 +60,7 @@ from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
 from .downloader import Downloader
 from .about_dialog import show_about_dialog
-from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
 

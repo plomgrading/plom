@@ -7,8 +7,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperCreatorService, PaperInfoService
-from Preparation.services import PQVMappingService, StagingStudentService
-from Finish.services import ReassembleService
+from Preparation.services import PQVMappingService
 
 
 class Command(BaseCommand):
@@ -69,9 +68,6 @@ class Command(BaseCommand):
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
-
-        self.stdout.write("Creating associated reassembly tasks.")
-        ReassembleService().create_all_reassembly_tasks()
 
     def clear_papers(self):
         """Remove all test-papers from the database."""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2021 Jenny Li
 
 """
@@ -23,8 +23,7 @@ reproduciblilty (e.g., in case one has to rebuild files.)
 """
 
 from pathlib import Path
-import os
-import binascii
+
 import pandas as pd
 
 from plom.finish import salted_hex_hash_from_str, rand_hex

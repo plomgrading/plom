@@ -50,11 +50,16 @@ def huey_build_single_paper(
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
+    The implementation starts with a "transition to running" and ends
+    with an "transition to complete": one needs to be a bit careful about
+    these to avoid race conditions with the caller.  In the future we
+    might consider using a decorator for this pattern instead.
 
     Args:
-        papernum:
-        spec:
-        question_versions:
+        papernum: which paper to assemble
+        spec: the specification of the assessment.
+        question_versions: which version to use for each question.
+            A row of the "qvmap".
 
     Keyword Args:
         student_info: None for a regular blank paper or a dict with
@@ -69,8 +74,7 @@ def huey_build_single_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    with transaction.atomic():
-        HueyTaskTracker.objects.get(pk=tracker_pk).transition_to_running(task.id)
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
@@ -92,18 +96,14 @@ def huey_build_single_paper(
                     f"DEBUG: deliberately failing creating papernum={papernum}"
                 )
 
-        with transaction.atomic():
-            tr = BuildPaperPDFChore.objects.get(pk=tracker_pk)
-            if tr.obsolete:
-                # if result no longer needed, no need to keep the PDF
-                tr.transition_to_complete()
-            else:
+        with transaction.atomic(durable=True):
+            _chore = BuildPaperPDFChore.objects.select_for_update().get(pk=tracker_pk)
+            if not _chore.obsolete:
                 with save_path.open("rb") as f:
-                    tr.pdf_file = File(f, name=save_path.name)
-                    tr.transition_to_complete()
-            # TODO: should we interact with other non-Obsolete chores?
-            # Currently we prevent multiple non-Obsolete Chores at creation
+                    _chore.pdf_file = File(f, name=save_path.name)
+                    _chore.save()
 
+    HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
 
 
@@ -274,9 +274,7 @@ class BuildPapersService:
             _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.get(pk=tracker_pk)
-            tr.transition_to_queued_or_running(res.id)
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def try_to_cancel_all_queued_tasks(self) -> int:
         """Try to cancel all the queued tasks in the Huey queue.
@@ -302,9 +300,9 @@ class BuildPapersService:
                 | Q(status=BuildPaperPDFChore.QUEUED)
             )
             for task in queue_tasks:
-                task.set_as_obsolete()
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
+                task.set_as_obsolete_with_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
@@ -329,6 +327,8 @@ class BuildPapersService:
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
+        if task.status in (BuildPaperPDFChore.STARTING, BuildPaperPDFChore.QUEUED):
+            task.set_as_obsolete_with_error("never ran: forcibly dequeued")
 
     def retry_all_task(self) -> None:
         """Retry all non-obsolete tasks that have error status."""

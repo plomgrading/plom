@@ -5,7 +5,6 @@ from .marking_info import (
     MarkingInformationPaperView,
     MarkingInformationView,
 )
-from .reassembly import ReassemblePapersView, StartOneReassembly, StartAllReassembly
-
+from .reassembly import ReassemblePapersView, StartOneReassembly, StartAllReassembly, CancelQueuedReassembly
 from .soln_home import SolnHomeView
 from .soln_spec import SolnSpecView, TemplateSolnSpecView

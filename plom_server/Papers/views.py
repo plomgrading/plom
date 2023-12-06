@@ -13,9 +13,7 @@ from Papers.services import (
     PaperCreatorService,
     PaperInfoService,
 )
-from Preparation.services import PQVMappingService, StagingStudentService
-from BuildPaperPDF.services import BuildPapersService
-from Finish.services import ReassembleService
+from Preparation.services import PQVMappingService
 
 
 class CreateTestPapers(ManagerRequiredView):
@@ -43,8 +41,6 @@ class CreateTestPapers(ManagerRequiredView):
         # for that we need the classlist, hence the following.
         # classdict = StagingStudentService().get_classdict()
         # BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
-        # also create all the reassemble tasks
-        ReassembleService().create_all_reassembly_tasks()
 
         progress_url = reverse("papers_progress")
         return HttpResponse(
