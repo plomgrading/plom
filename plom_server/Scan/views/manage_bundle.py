@@ -6,9 +6,6 @@
 from django.shortcuts import render
 from django.http import Http404, FileResponse
 
-from django.urls import reverse
-from django_htmx.http import HttpResponseClientRedirect
-
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
