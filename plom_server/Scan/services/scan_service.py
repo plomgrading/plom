@@ -770,9 +770,6 @@ class ScanService:
 
         return True
 
-    def is_bundle_push_locked(self, timestamp):
-        return StagingBundle.objects.get(timestamp=timestamp).is_push_locked
-
     @transaction.atomic
     def get_bundle_push_lock_information(self, include_pushed=False):
         info = [("name", "push-locked", "pushed")]

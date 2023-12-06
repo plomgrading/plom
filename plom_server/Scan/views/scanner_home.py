@@ -42,7 +42,7 @@ class ScannerHomeView(ScannerRequiredView):
                 "unused_test_papers": unused_papers,
                 "total_papers": total_papers,
                 "form": BundleUploadForm(),
-                "bundle_splitting": False,
+                "is_any_bundle_push_locked": False,
                 "preparation_finished": TestPreparedSetting.is_test_prepared(),
             }
         )
@@ -77,6 +77,9 @@ class ScannerHomeView(ScannerRequiredView):
                         "is_push_locked": bundle.is_push_locked,
                     }
                 )
+                # flag if any bundle is push-locked
+                if bundle.is_push_locked:
+                    context["is_any_bundle_push_locked"] = True
 
         context.update(
             {"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles}

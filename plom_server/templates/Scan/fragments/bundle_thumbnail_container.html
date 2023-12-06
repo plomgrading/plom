@@ -9,9 +9,13 @@
      hx-swap="innerHTML"
      hx-target="#updatePage">
     <div class="bundle-thumb">
-        <img class="img"
-             src="{% url 'scan_get_thumbnail' timestamp pg.order %}"
-             loading="lazy" />
+        {% if grab_speed %}
+            <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" fetchpriority={{ grab_speed }} loading="lazy" />
+        {% else %}
+            <img class="img"
+                 src="{% url 'scan_get_thumbnail' timestamp pg.order %}"
+                 loading="lazy" />
+        {% endif %}
     </div>
 </div>
 <div class="card-footer p-1">{{ pg.order }}</div>
