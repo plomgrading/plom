@@ -95,65 +95,54 @@
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">
-        {% if is_push_locked %}
-            <div>Bundle is locked - push in progress</div>
+        <div>
+            <!-- {% if is_push_locked %} -->
+            <!--     <span class="" disabled>IMPUSHING</span> -->
+            <!-- {% else %} -->
+            <!--     <span class="">NOTBUSY</span> -->
+            <!-- 	{% endif %} -->
+            <span x-show="midPush">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">BUSY</span>
+                </div>
+            </span>
+            {% if has_been_processed %}
+                <a class="btn btn-success"
+                   href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
+                {% if has_qr_codes %}
+                    <span>
+                        {% if is_perfect %}
+                            {% if n_incomplete == 0 %}
+                                <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                                <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
+                                <button class="btn btn-warning"
+                                        hx-confirm="Are you sure?"
+                                        hx-post="push/{{ timestamp }}/all/"
+                                        x-bind:disabled="midPush"
+                                        @htmx:before-send="midPush=true;">Push</button>
+                            {% else %}
+                                <button class="btn btn-danger"
+                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
+                                        hx-post="push/{{ timestamp }}/all/"
+                                        x-bind:disabled="midPush"
+                                        @htmx:before-send="midPush=true;">Push</button>
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <button class="btn btn-warning" disabled>Push</button>
+                    {% endif %}
+                {% elif is_mid_qr_read %}
+                {% else %}
+                    <button class="btn btn-info"
+                            hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
+                {% endif %}
+            {% endif %}
             <a class="btn btn-secondary"
                target="_"
                href="{% url 'scan_get_bundle' timestamp %}">Download</a>
-        {% else %}
-            <div>
-                {% if has_been_processed %}
-                    <a class="btn btn-success"
-                       href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
-                    {% if has_qr_codes %}
-                        <span>
-                            {% if is_perfect %}
-                                {% if n_incomplete == 0 %}
-                                    <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                                    <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                                    <button class="btn btn-warning"
-                                            hx-confirm="Are you sure?"
-                                            hx-post="push/{{ timestamp }}/all/"
-                                            x-bind:disabled="midPush"
-                                            @htmx:before-send="midPush=true;">
-                                        <span x-show="!midPush;">Push!</span>
-                                        <span x-show="midPush">
-                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                                <span class="visually-hidden">Push!</span>
-                                            </div>
-                                        </span>
-                                    </button>
-                                {% else %}
-                                    <button class="btn btn-danger"
-                                            hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
-                                            hx-post="push/{{ timestamp }}/all/"
-                                            x-bind:disabled="midPush"
-                                            @htmx:before-send="midPush=true;">
-                                        <span x-show="!midPush;">Push!</span>
-                                        <span x-show="midPush">
-                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                                <span class="visually-hidden">Push!</span>
-                                            </div>
-                                        </span>
-                                    </button>
-                                {% endif %}
-                            </span>
-                        {% else %}
-                            <button class="btn btn-warning" disabled>Push</button>
-                        {% endif %}
-                    {% elif is_mid_qr_read %}
-                    {% else %}
-                        <button class="btn btn-info"
-                                hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
-                    {% endif %}
-                {% endif %}
-                <a class="btn btn-secondary"
-                   target="_"
-                   href="{% url 'scan_get_bundle' timestamp %}">Download</a>
-                <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-                   hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
-                   hx-confirm="Are you sure?">Remove</a>
-            </div>
-        {% endif %}
+            <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+               hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+               hx-confirm="Are you sure?">Remove</a>
+        </div>
     </div>
 </td>
