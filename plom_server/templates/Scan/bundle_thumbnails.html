@@ -71,7 +71,7 @@
                          x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true' }"
                          x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val));">
                         <div class="card-body pe-0">
-                            <div class="row border rounded me-1 py-1 my-2">
+                            <div class="row me-1 py-1 my-2">
                                 <div class="col-auto">
                                     <input type="checkbox" id="check_known" x-model="show_known">
                                     <label for="check_known">Show knowns</label>
