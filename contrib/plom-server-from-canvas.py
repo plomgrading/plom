@@ -242,8 +242,32 @@ def configure_running_server(
         else:
             print("Trying plom-create uploadspec ...")
             subprocess.check_call(["plom-create", "uploadspec", "canvasSpec.toml"])
-        print("Listing current users: will warn about scanner: ok, we will make")
-        subprocess.check_call(["plom-create", "users"])
+
+    if dry_run:
+        print("This is a DRY RUN so not pushing classlist nor building database")
+        return
+
+    # TODO: these had capture_output=True but this hides errors
+    print("Building classlist...")
+    subprocess.check_call(["plom-create", "class", work_dir / "classlist.csv"])
+    print("Building the database...")
+    subprocess.check_call(["plom-create", "make-db"])
+
+
+def add_users_to_server(*, work_dir=".", dry_run: bool = False):
+    """Optionally add users to a running server.
+
+    Server info is taken from the environment variables PLOM_SERVER
+    and PLOM_MANAGER_PASSWORD.
+
+    Keyword Args:
+        work_dir: the ``userListRaw.csv`` will be left in this directory.
+        dry_run: download stuff but don't actually configure the server.
+    """
+    print("Listing current users: will warn about scanner: ok, we will make")
+    subprocess.check_call(["plom-create", "users"])
+
+    with working_directory(work_dir):
         print("Autogenerating users...")
         subprocess.check_call(
             ["plom-create", "users", "--no-upload", "--auto", "12", "--numbered"]
@@ -261,16 +285,6 @@ def configure_running_server(
             pwds[row[0]] = row[1]
     os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
     del pwds
-
-    if dry_run:
-        print("This is a DRY RUN so not pushing classlist nor building database")
-        return
-
-    # TODO: these had capture_output=True but this hides errors
-    print("Building classlist...")
-    subprocess.check_call(["plom-create", "class", work_dir / "classlist.csv"])
-    print("Building the database...")
-    subprocess.check_call(["plom-create", "make-db"])
 
 
 def get_submissions(
@@ -686,12 +700,22 @@ parser.add_argument(
     action="store_false",
     dest="init",
     help="""
-        Do not initialize the plom server.  Assume there is one running
+        Do not initialize the Plom server.  Assume there is one running
         elsewhere and the user has provided appropriate environment
         variables, namely PLOM_MANAGER_PASSWORD and PLOM_SERVER to access
         it.  The server must be in a fresh raw state and will be configured
         by this script.  Due to legacy server limitations, this process
         cannot be easily undone.
+    """,
+)
+parser.add_argument(
+    "--no-make-users",
+    action="store_false",
+    dest="make_users",
+    help="""
+        Do mess around with user accounts on the Plom server.  Assume
+        someone has done that already and is providing PLOM_SCAN_PASSWORD
+        via the environment variable.
     """,
 )
 parser.add_argument(
@@ -835,6 +859,8 @@ if __name__ == "__main__":
     configure_running_server(
         course, section, assignment, args.marks, work_dir=basedir, dry_run=args.dry_run
     )
+    if args.make_users:
+        add_users_to_server(work_dir=basedir, dry_run=args.dry_run)
 
     if args.upload:
         print("\n\ngetting submissions from canvas...")
