@@ -61,15 +61,15 @@
             </div>
         </div>
     </div>
-    <div class="row gx-1 pt-2">
+    <div class="row pt-3">
         <div class="col-4">
             <!-- some hackery here to persist the val of show_known, show_completed_extras in local storage -->
             <!-- see https://stackoverflow.com/questions/66838886/alpine-js-with-local-storage-x-data-showing-old-wrong-value-after-page-refresh -->
             <div class="card"
                  x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true' }"
                  x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val));">
-                <div class="card-body pe-0">
-                    <div class="row me-1 py-1 my-2">
+                <div class="card-header">
+                    <div class="row">
                         <div class="col-auto">
                             <input type="checkbox" id="check_known" x-model="show_known">
                             <label for="check_known">Show knowns</label>
@@ -81,6 +81,8 @@
                             <label for="check_completed_extras">Show completed extras</label>
                         </div>
                     </div>
+                </div>
+                <div class="card-body p-2 pe-0">
                     <div class="container overflow-y-scroll ps-0" style="max-height:80vh;">
                         <div class="row row-cols-6 gy-1 gx-1">
                             {% for pg in pages %}
