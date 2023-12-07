@@ -78,13 +78,16 @@
             {% if staged_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
-                        <th>Thumbnail</th>
+                        <!-- make sure thumbnail not too wide -->
+                        <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
                         <th>Upload time</th>
                         <th>Pages</th>
                         <th>Actions</th>
                     </thead>
-                    <tbody>
+                    <!-- put this alpine variable here, so that all push buttons in these fragments can be disabled when any bundle pushed -->
+                    <!-- annoyingly there is a case difference between js and python true/false, hence the string hacks -->
+                    <tbody x-data="{midPush: '{{ is_any_bundle_push_locked }}'=='True' }">
                         {% for bundle in staged_bundles %}
                             <tr hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
                                 hw-swap="innerHTML"
@@ -104,7 +107,8 @@
             {% if pushed_bundles %}
                 <table class="table table-sm table-bordered text-center sortable">
                     <thead>
-                        <th>Thumbnail</th>
+                        <!-- make sure thumbnail not too wide -->
+                        <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
                         <th>Pages</th>
                         <th>Actions</th>

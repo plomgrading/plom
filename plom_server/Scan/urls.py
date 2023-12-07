@@ -1,29 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.urls import path
 
 from .views import (
     ScannerHomeView,
-    BundleSplittingProgressView,
-    BundleSplittingUpdateView,
-    ManageBundleView,
     BundleThumbnailView,
-    UpdateQRProgressView,
     GetBundleView,
-    GetBundleNavFragmentView,
+    GetBundlePageFragmentView,
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     RemoveBundleView,
     ReadQRcodesView,
-    QRParsingProgressAlert,
-    BundleTableView,
-    PushPageImage,
     PushAllPageImages,
-    PagePushingUpdateView,
-    FlagPageImage,
     ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
@@ -34,23 +26,18 @@ from .views import (
     RotateImageClockwise,
     RotateImageCounterClockwise,
     RotateImageOneEighty,
-    GetRotatedThumbnailView,
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
+    BundleLockView,
 )
 
 
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
-        "<timestamp>/<int:index>/",
-        ManageBundleView.as_view(),
-        name="scan_manage_bundle",
-    ),
-    path(
-        "nav/<timestamp>/<int:index>/",
-        GetBundleNavFragmentView.as_view(),
-        name="scan_nav_bundle",
+        "bundlepage/<timestamp>/<int:index>/",
+        GetBundlePageFragmentView.as_view(),
+        name="scan_bundle_page",
     ),
     path(
         "thumbnails/<timestamp>/<int:index>",
@@ -58,24 +45,9 @@ urlpatterns = [
         name="scan_get_thumbnail",
     ),
     path(
-        "thumbnail_rot/<timestamp>/<int:index>",
-        GetRotatedThumbnailView.as_view(),
-        name="scan_get_rotated_thumbnail",
-    ),
-    path(
         "thumbnails/<timestamp>",
         BundleThumbnailView.as_view(),
         name="scan_bundle_thumbnails",
-    ),
-    path(
-        "split/<timestamp>/",
-        BundleSplittingProgressView.as_view(),
-        name="scan_image_progress",
-    ),
-    path(
-        "split/<timestamp>/update/",
-        BundleSplittingUpdateView.as_view(),
-        name="scan_image_update",
     ),
     path(
         "bundle/<timestamp>/",
@@ -107,37 +79,7 @@ urlpatterns = [
         ReadQRcodesView.as_view(),
         name="scan_read_qr",
     ),
-    path(
-        "read/<timestamp>/<int:index>/",
-        UpdateQRProgressView.as_view(),
-        name="scan_qr_progress",
-    ),
-    path(
-        "read/<timestamp>/alert/",
-        QRParsingProgressAlert.as_view(),
-        name="scan_qr_alert",
-    ),
-    path(
-        "read/table/<timestamp>/<int:index>/",
-        BundleTableView.as_view(),
-        name="scan_bundle_table",
-    ),
-    path(
-        "push/<timestamp>/<int:index>/",
-        PushPageImage.as_view(),
-        name="scan_push_img",
-    ),
     path("push/<timestamp>/all/", PushAllPageImages.as_view(), name="scan_push_all"),
-    path(
-        "push_update/<timestamp>/<int:index>/",
-        PagePushingUpdateView.as_view(),
-        name="scan_push_update",
-    ),
-    path(
-        "flag/<timestamp>/<int:index>/",
-        FlagPageImage.as_view(),
-        name="scan_flag_img",
-    ),
     path(
         "summary/",
         ScannerSummaryView.as_view(),
@@ -192,5 +134,10 @@ urlpatterns = [
         "rotate/oneeighty/<timestamp>/<int:index>/",
         RotateImageOneEighty.as_view(),
         name="rotate_img_one_eighty",
+    ),
+    path(
+        "bundle_lock/<timestamp>/",
+        BundleLockView.as_view(),
+        name="scan_bundle_lock",
     ),
 ]

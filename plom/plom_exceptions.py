@@ -119,8 +119,7 @@ class PlomTaskDeletedError(PlomBenignException):
 
 
 class PlomForceLogoutException(PlomSeriousException):
-    """We call this when the server has changed or deleted
-    a task out from under the client."""
+    """We call this when the server has changed or deleted a task out from under the client."""
 
     pass
 
@@ -130,7 +129,7 @@ class PlomNoSolutionException(PlomBenignException):
 
 
 class PlomServerNotReady(PlomBenignException):
-    """For example if it has no spec"""
+    """For example if it has no spec."""
 
     pass
 
@@ -151,10 +150,19 @@ class PlomTimeoutError(PlomSeriousException):
     """Some message failed due to network trouble such as a timeout.
 
     TODO: currently a PlomSeriousException but consider making this
-    a PlomBenignException later."""
+    a PlomBenignException later.
+    """
+
+    pass
 
 
 class PlomNoPaper(PlomBenignException):
-    """Plom doesn't have a paper"""
+    """Plom doesn't have a paper."""
+
+    pass
+
+
+class PlomBundleLockedException(PlomBenignException):
+    """For when a bundle is locked or pushed."""
 
     pass
