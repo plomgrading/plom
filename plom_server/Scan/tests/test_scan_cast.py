@@ -17,6 +17,8 @@ from ..models import (
 )
 from ..services import ScanCastService
 
+from plom.plom_exceptions import PlomBundleLockedException
+
 
 class ScanCastServiceTests(TestCase):
     def make_image(self, image_type):
@@ -224,11 +226,11 @@ class ScanCastServiceTests(TestCase):
             .first()
             .bundle_order
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PlomBundleLockedException):
             ScanCastService().discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PlomBundleLockedException):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )

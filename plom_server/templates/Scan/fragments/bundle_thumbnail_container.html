@@ -4,11 +4,18 @@
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
 -->
-<div class="card-body">
-    <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
-        <div class="bundle-thumb">
-            <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" />
-        </div>
-    </a>
+<div class="card-body p-0 d-flex align-items-center"
+     hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
+     hx-swap="innerHTML"
+     hx-target="#updatePage">
+    <div class="bundle-thumb">
+        {% if grab_speed %}
+            <img class="img" src="{% url 'scan_get_thumbnail' timestamp pg.order %}" fetchpriority={{ grab_speed }} loading="lazy" />
+        {% else %}
+            <img class="img"
+                 src="{% url 'scan_get_thumbnail' timestamp pg.order %}"
+                 loading="lazy" />
+        {% endif %}
+    </div>
 </div>
-<div class="card-footer">{{ pg.order }}</div>
+<div class="card-footer p-1">{{ pg.order }}</div>

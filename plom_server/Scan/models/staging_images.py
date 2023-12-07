@@ -55,6 +55,7 @@ class StagingThumbnail(models.Model):
         StagingImage, on_delete=models.CASCADE, primary_key=True
     )
     image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)
+    time_of_last_update = models.DateTimeField(auto_now=True)
 
 
 class KnownStagingImage(models.Model):

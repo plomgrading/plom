@@ -273,7 +273,7 @@ class BuildPapersService:
             tracker_pk=tracker_pk,
             _debug_be_flaky=False,
         )
-        print(f"Just enqueued Huey reassembly task id={res.id}")
+        print(f"Just enqueued Huey paper build task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def try_to_cancel_all_queued_tasks(self) -> int:

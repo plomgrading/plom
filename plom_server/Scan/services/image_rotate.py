@@ -4,34 +4,12 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from io import BytesIO
-from pathlib import Path
-from PIL import Image
-
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 
-from ..models import StagingBundle, StagingImage, StagingThumbnail
-
-
-def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
-    """Once staging image has been rotated by angle, update the corresponding thumbnail."""
-    thumb_obj = staging_img.stagingthumbnail
-    thumb_name = Path(thumb_obj.image_file.path).name
-    # read in the thumbnail image, rotate it and save to this bytestream
-    fh = BytesIO()
-    with Image.open(thumb_obj.image_file) as tmp_img:
-        tmp_img.rotate(angle, expand=True).save(fh, "png")
-
-    # cannot have new thumbnail and old thumbnail both pointing at the staging image
-    # since it is a one-to-one mapping, so delete old before creating (and auto-saving)
-    # the new one.
-    thumb_obj.delete()
-    StagingThumbnail.objects.create(
-        staging_image=staging_img, image_file=File(fh, thumb_name)
-    )
+from ..models import StagingBundle, StagingImage
+from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
 
 
 class ImageRotateService:
@@ -52,11 +30,14 @@ class ImageRotateService:
 
         Returns:
             None.
+
+        Raises:
+            PlomBundleLockedException: when the bundle is pushed or push-locked
+            ValueError: when no image at that order in the bundle
         """
         bundle_obj = StagingBundle.objects.get(timestamp=bundle_timestamp)
 
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -81,8 +62,7 @@ class ImageRotateService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
@@ -114,4 +94,4 @@ class ImageRotateService:
         staging_img.rotation %= 360
         staging_img.save()
 
-        update_thumbnail_after_rotation(staging_img, angle)
+        self.update_thumbnail_after_rotation(staging_img, angle)

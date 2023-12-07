@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...services import ImageRotateService
 
+from plom.plom_exceptions import PlomBundleLockedException
+
 
 class Command(BaseCommand):
     """python3 manage.py plom_staging_rotate (username) (bundle name) (bundle_order)."""
@@ -15,7 +17,7 @@ class Command(BaseCommand):
     def rotate_image_from_bundle(self, username, bundle_name, bundle_order):
         try:
             ImageRotateService().rotate_image_cmd(username, bundle_name, bundle_order)
-        except (ValueError, PermissionError) as e:
+        except (ValueError, PermissionError, PlomBundleLockedException) as e:
             raise CommandError(e)
         self.stdout.write(
             f"Bundle '{bundle_name}' page {bundle_order} has been rotated."

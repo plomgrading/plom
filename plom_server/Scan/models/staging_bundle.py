@@ -24,5 +24,6 @@ class StagingBundle(models.Model):
     number_of_pages = models.PositiveIntegerField(null=True)
     has_page_images = models.BooleanField(default=False)
     has_qr_codes = models.BooleanField(default=False)
+    is_push_locked = models.BooleanField(default=False)
     pushed = models.BooleanField(default=False)
     time_of_last_update = models.DateTimeField(auto_now=True)

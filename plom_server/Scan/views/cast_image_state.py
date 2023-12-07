@@ -2,36 +2,57 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechntizer
 
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRedirect
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
+from django.urls import reverse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
-from ..services import ScanCastService, ScanService
+from Scan.services import (
+    ScanCastService,
+    ScanService,
+    check_bundle_object_is_neither_locked_nor_pushed,
+)
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class KnowifyImageView(ScannerRequiredView):
@@ -42,6 +63,15 @@ class KnowifyImageView(ScannerRequiredView):
         scanner = ScanService()
         paper_info = PaperInfoService()
         bundle = scanner.get_bundle(timestamp, request.user)
+
+        try:
+            check_bundle_object_is_neither_locked_nor_pushed(bundle)
+        except PlomBundleLockedException:
+            # bounce user back to scanner home page if not allowed to change things
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
         n_pages = scanner.get_n_images(bundle)
 
         if index < 0 or index > n_pages:
@@ -90,6 +120,7 @@ class KnowifyImageView(ScannerRequiredView):
                 )
         else:
             paper_number = knowify_page_data.get("arbitraryPaper", None)
+            page_number = knowify_page_data.get("pageSelect", None)
 
         try:
             paper_number = int(paper_number)
@@ -111,8 +142,14 @@ class KnowifyImageView(ScannerRequiredView):
             )
         except ValueError as err:
             return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
 
 class ExtraliseImageView(ScannerRequiredView):
@@ -142,28 +179,50 @@ class ExtraliseImageView(ScannerRequiredView):
             ]
         else:
             if len(extra_page_data.get("questions", [])):
-                question_list = [int(q) for q in extra_page_data["questions"]]
+                # NOTE - must use getlist here instead of a simple get so that return is a list
+                question_list = [int(q) for q in extra_page_data.getlist("questions")]
             else:
                 return HttpResponse(
                     """<span class="alert alert-danger">At least one question</span>"""
                 )
 
-        ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, paper_number, question_list
-        )
+        try:
+            ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, paper_number, question_list
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
     def put(self, request, timestamp, index):
-        ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
 
     def delete(self, request, timestamp, index):
-        ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
-            request.user, timestamp, index
-        )
+        try:
+            ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
+                request.user, timestamp, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+        )
