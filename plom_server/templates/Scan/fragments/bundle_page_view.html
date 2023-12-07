@@ -3,265 +3,265 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
-<div class="card p-2" id="bundlePageFragment">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-8">
-                <div>
-                    <img class="shadow rounded"
-                         src="{% url 'scan_get_rotated_image' timestamp index %}"
-                         style="max-height: 100%;
-                                max-width: 100%" />
-                </div>
+<div id="bundlePageFragment">
+    <!-- TODO: I would like to use the containers "class col" in the containing file. -->
+    <!-- this way feels repetitive but if I try to flatten they don't stay on one row -->
+    <div class="row">
+        <div class="col-8">
+            <div>
+                <img class="shadow rounded"
+                     src="{% url 'scan_get_rotated_image' timestamp index %}"
+                     style="max-height: 100%;
+                            max-width: 100%" />
             </div>
-            <div class="col-4">
-                <div class="card">
-                    <div class="card-header ps-0 pe-0 d-flex justify-content-between align-items-center">
-                        {% if index == 1 %}
-                            <button type="button" class="btn btn-secondary mx-2" disabled>
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                        {% else %}
-                            <button type="button"
-                                    class="btn btn-secondary mx-2"
-                                    hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}"
-                                    hx-target="#updatePage"
-                                    hx-swap="innerHTML">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                        {% endif %}
-                        <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
-                        {% if index == total_pages %}
-                            <button type="button" class="btn btn-secondary mx-2" disabled>
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        {% else %}
-                            <button type="button"
-                                    class="btn btn-secondary mx-2"
-                                    hx-get="{% url 'scan_bundle_page' timestamp next_idx %}"
-                                    hx-target="#updatePage"
-                                    hx-swap="innerHTML">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        {% endif %}
-                    </div>
-                    <div class="card-body p-2">
-                        {% if current_page.status == 'known' %}
-                            <div class="alert alert-success">
-                                <h6 class="alert-heading">Known</h6>
-                                <ul>
-                                    <li>paper: {{ current_page.info.paper_number }}</li>
-                                    <li>page: {{ current_page.info.page_number }}</li>
-                                    <li>version: {{ current_page.info.version }}</li>
-                                    <li>rotation: {{ current_page.rotation }}</li>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header ps-0 pe-0 d-flex justify-content-between align-items-center">
+                    {% if index == 1 %}
+                        <button type="button" class="btn btn-secondary mx-2" disabled>
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                    {% else %}
+                        <button type="button"
+                                class="btn btn-secondary mx-2"
+                                hx-get="{% url 'scan_bundle_page' timestamp prev_idx %}"
+                                hx-target="#updatePage"
+                                hx-swap="innerHTML">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                    {% endif %}
+                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
+                    {% if index == total_pages %}
+                        <button type="button" class="btn btn-secondary mx-2" disabled>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    {% else %}
+                        <button type="button"
+                                class="btn btn-secondary mx-2"
+                                hx-get="{% url 'scan_bundle_page' timestamp next_idx %}"
+                                hx-target="#updatePage"
+                                hx-swap="innerHTML">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-2">
+                    {% if current_page.status == 'known' %}
+                        <div class="alert alert-success">
+                            <h6 class="alert-heading">Known</h6>
+                            <ul>
+                                <li>paper: {{ current_page.info.paper_number }}</li>
+                                <li>page: {{ current_page.info.page_number }}</li>
+                                <li>version: {{ current_page.info.version }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                <li>
+                                    {{ current_page.qr_codes|length }} qr-codes read:
+                                    <ul>
+                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'extra' %}
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">Extra</h6>
+                            <ul>
+                                <li>paper: {{ current_page.info.paper_number }}</li>
+                                <li>question(s): {{ current_page.info.question_list }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                {% if current_page.qr_codes %}
                                     <li>
                                         {{ current_page.qr_codes|length }} qr-codes read:
                                         <ul>
                                             {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
                                     </li>
-                                </ul>
+                                {% else %}
+                                    <li>No qr-codes read</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'unknown' %}
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">Unknown</h6>
+                            <ul>
+                                <li>No qr-codes could be read</li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'discard' %}
+                        <div class="alert alert-dark">
+                            <h6 class="alert-heading">Discard</h6>
+                            <ul>
+                                <li>{{ current_page.info.reason }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'error' %}
+                        <div class="alert alert-danger">
+                            <h6 class="alert-heading">Error</h6>
+                            <ul>
+                                <li>{{ current_page.info.reason }}</li>
+                                <li>rotation: {{ current_page.rotation }}</li>
+                                <li>
+                                    {{ current_page.qr_codes|length }} qr-codes read:
+                                    <ul>
+                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    {% elif current_page.status == 'unread' %}
+                        <div class="alert alert-dark">
+                            <h6 class="alert-heading">Unread</h6>
+                            <ul>
+                                <li>Have not read qr-codes yet</li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% if is_push_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
+                    {% if not is_pushed and not is_push_locked %}
+                        <!-- add in the stuff we can do before pushing -->
+                        <!-- rotation stuff -->
+                        {% include "Scan/fragments/rotate_image.html" %}
+                        <!-- what we can do depends on the status -->
+                        {% if current_page.status == 'known' %}
+                            <!-- known page can discard -->
+                            <a class="btn btn-danger text-center w-100 mb-3"
+                               hx-post="{% url 'discard_image' timestamp index %}"
+                               hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
+                        {% elif current_page.status == 'error' %}
+                            <!-- error page can discard but not recommended -->
+                            <a class="btn btn-danger text-center w-100 mb-3"
+                               hx-post="{% url 'discard_image' timestamp index %}"
+                               hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                                Discard
+                            </a>
+                        {% elif current_page.status == 'unread' %}
+                            <!-- cannot do anything with an unread page -->
+                        {% elif current_page.status == 'discard' %}
+                            <!-- discard can cast to known, extra, unknown -->
+                            <div>
+                                <a class="btn btn-warning text-center w-100 mb-3"
+                                   hx-put="{% url 'extralise_image' timestamp index %}"
+                                   hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
+                                    Cast to extra page
+                                </a>
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-success text-center w-100 mb-3"
+                                   hx-get="{% url 'knowify_image' timestamp index %}"
+                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_image' timestamp index %}"
+                                   hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                    Cast to unknown page
+                                </a>
+                            </div>
+                            {% include "Scan/fragments/rotate_image.html" %}
+                        {% elif current_page.status == 'unknown' %}
+                            <!-- unknown page can discard, extralise, knowify-->
+                            <div>
+                                <a class="btn btn-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'discard_image' timestamp index %}"
+                                   hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
+                            </div>
+                            <div>
+                                <a class="btn btn-warning text-center w-100 mb-3"
+                                   hx-put="{% url 'extralise_image' timestamp index %}"
+                                   hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+                                    Cast to extra page
+                                </a>
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-success text-center w-100 mb-3"
+                                   hx-get="{% url 'knowify_image' timestamp index %}"
+                                   hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                         {% elif current_page.status == 'extra' %}
-                            <div class="alert alert-info">
-                                <h6 class="alert-heading">Extra</h6>
-                                <ul>
-                                    <li>paper: {{ current_page.info.paper_number }}</li>
-                                    <li>question(s): {{ current_page.info.question_list }}</li>
-                                    <li>rotation: {{ current_page.rotation }}</li>
-                                    {% if current_page.qr_codes %}
-                                        <li>
-                                            {{ current_page.qr_codes|length }} qr-codes read:
-                                            <ul>
-                                                {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                            </ul>
-                                        </li>
-                                    {% else %}
-                                        <li>No qr-codes read</li>
-                                    {% endif %}
-                                </ul>
-                            </div>
-                        {% elif current_page.status == 'unknown' %}
-                            <div class="alert alert-warning">
-                                <h6 class="alert-heading">Unknown</h6>
-                                <ul>
-                                    <li>No qr-codes could be read</li>
-                                </ul>
-                            </div>
-                        {% elif current_page.status == 'discard' %}
-                            <div class="alert alert-dark">
-                                <h6 class="alert-heading">Discard</h6>
-                                <ul>
-                                    <li>{{ current_page.info.reason }}</li>
-                                    <li>rotation: {{ current_page.rotation }}</li>
-                                </ul>
-                            </div>
-                        {% elif current_page.status == 'error' %}
-                            <div class="alert alert-danger">
-                                <h6 class="alert-heading">Error</h6>
-                                <ul>
-                                    <li>{{ current_page.info.reason }}</li>
-                                    <li>rotation: {{ current_page.rotation }}</li>
-                                    <li>
-                                        {{ current_page.qr_codes|length }} qr-codes read:
-                                        <ul>
-                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </div>
-                        {% elif current_page.status == 'unread' %}
-                            <div class="alert alert-dark">
-                                <h6 class="alert-heading">Unread</h6>
-                                <ul>
-                                    <li>Have not read qr-codes yet</li>
-                                </ul>
-                            </div>
-                        {% endif %}
-                        {% if is_push_locked %}<div class="alert alert-warning text-center">Bundle is locked</div>{% endif %}
-                        {% if not is_pushed and not is_push_locked %}
-                            <!-- add in the stuff we can do before pushing -->
-                            <!-- rotation stuff -->
-                            {% include "Scan/fragments/rotate_image.html" %}
-                            <!-- what we can do depends on the status -->
-                            {% if current_page.status == 'known' %}
-                                <!-- known page can discard -->
+                            <!-- can discard  -->
+                            <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
                                    hx-post="{% url 'discard_image' timestamp index %}"
-                                   hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
-                            {% elif current_page.status == 'error' %}
-                                <!-- error page can discard but not recommended -->
-                                <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' timestamp index %}"
-                                   hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
-                                    Discard
-                                </a>
-                            {% elif current_page.status == 'unread' %}
-                                <!-- cannot do anything with an unread page -->
-                            {% elif current_page.status == 'discard' %}
-                                <!-- discard can cast to known, extra, unknown -->
-                                <div>
-                                    <a class="btn btn-warning text-center w-100 mb-3"
-                                       hx-put="{% url 'extralise_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
-                                        Cast to extra page
-                                    </a>
-                                </div>
-                                <div>
-                                    <a class="btn btn-outline-success text-center w-100 mb-3"
-                                       hx-get="{% url 'knowify_image' timestamp index %}"
-                                       hx-target="#bundlePageFragment">Cast to known page</a>
-                                </div>
-                                <div>
-                                    <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                       hx-post="{% url 'unknowify_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
-                                        Cast to unknown page
-                                    </a>
-                                </div>
-                                {% include "Scan/fragments/rotate_image.html" %}
-                            {% elif current_page.status == 'unknown' %}
-                                <!-- unknown page can discard, extralise, knowify-->
+                                   hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
+                            </div>
+                            {% if current_page.info.paper_number and current_page.info.question_list %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-post="{% url 'discard_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
-                                </div>
-                                <div>
-                                    <a class="btn btn-warning text-center w-100 mb-3"
-                                       hx-put="{% url 'extralise_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
-                                        Cast to extra page
+                                       hx-delete="{% url 'extralise_image' timestamp index %}"
+                                       hx-confirm="Are you sure you wish to clear the extra page information?">
+                                        Clear information
                                     </a>
                                 </div>
-                                <div>
-                                    <a class="btn btn-outline-success text-center w-100 mb-3"
-                                       hx-get="{% url 'knowify_image' timestamp index %}"
-                                       hx-target="#bundlePageFragment">Cast to known page</a>
-                                </div>
-                            {% elif current_page.status == 'extra' %}
-                                <!-- can discard  -->
-                                <div>
-                                    <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-post="{% url 'discard_image' timestamp index %}"
-                                       hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
-                                </div>
-                                {% if current_page.info.paper_number and current_page.info.question_list %}
-                                    <div>
-                                        <a class="btn btn-danger text-center w-100 mb-3"
-                                           hx-delete="{% url 'extralise_image' timestamp index %}"
-                                           hx-confirm="Are you sure you wish to clear the extra page information?">
-                                            Clear information
-                                        </a>
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-secondary">
-                                        <h6>Set extra page information</h6>
-                                        <form hx-post="{% url 'extralise_image' timestamp index %}"
-                                              hx-target="#invalidmessage"
-                                              hx-swap="innerHTML">
-                                            <div class="input-group p-3">
-                                                <div x-data="{bundlepapers: true}">
-                                                    Paper:
+                            {% else %}
+                                <div class="alert alert-secondary">
+                                    <h6>Set extra page information</h6>
+                                    <form hx-post="{% url 'extralise_image' timestamp index %}"
+                                          hx-target="#invalidmessage"
+                                          hx-swap="innerHTML">
+                                        <div class="input-group p-3">
+                                            <div x-data="{bundlepapers: true}">
+                                                Paper:
+                                                <div class="form-check">
+                                                    <input name="bundleOrArbitrary"
+                                                           class="form-check-input"
+                                                           type="checkbox"
+                                                           x-bind:value="bundlepapers"
+                                                           id="bundlepapers"
+                                                           x-model="bundlepapers">
+                                                    <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                                                </div>
+                                                <div x-show="bundlepapers">
+                                                    <select name="bundlePaper"
+                                                            class="form-select"
+                                                            aria-label="Default select example">
+                                                        <option selected>Paper from bundle</option>
+                                                        {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div x-show="!bundlepapers">
+                                                    <select name="arbitraryPaper"
+                                                            class="form-select"
+                                                            aria-label="Default select example">
+                                                        <option selected>any produced paper</option>
+                                                        {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
+                                                    </select>
+                                                </div>
+                                                Questions:
+                                                <div x-data="{allq: false}">
                                                     <div class="form-check">
-                                                        <input name="bundleOrArbitrary"
+                                                        <input name="questionAll"
+                                                               value="all"
                                                                class="form-check-input"
                                                                type="checkbox"
-                                                               x-bind:value="bundlepapers"
-                                                               id="bundlepapers"
-                                                               x-model="bundlepapers">
-                                                        <label class="form-check-label" for="bundlepapers">from this bundle</label>
+                                                               id="questionall"
+                                                               x-model="allq">
+                                                        <label class="form-check-label" for="questionall">all questions</label>
                                                     </div>
-                                                    <div x-show="bundlepapers">
-                                                        <select name="bundlePaper"
-                                                                class="form-select"
-                                                                aria-label="Default select example">
-                                                            <option selected>Paper from bundle</option>
-                                                            {% for pn in bundle_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
-                                                        </select>
-                                                    </div>
-                                                    <div x-show="!bundlepapers">
-                                                        <select name="arbitraryPaper"
-                                                                class="form-select"
-                                                                aria-label="Default select example">
-                                                            <option selected>any produced paper</option>
-                                                            {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
-                                                        </select>
-                                                    </div>
-                                                    Questions:
-                                                    <div x-data="{allq: false}">
-                                                        <div class="form-check">
-                                                            <input name="questionAll"
-                                                                   value="all"
-                                                                   class="form-check-input"
-                                                                   type="checkbox"
-                                                                   id="questionall"
-                                                                   x-model="allq">
-                                                            <label class="form-check-label" for="questionall">all questions</label>
-                                                        </div>
-                                                        <div x-show="!allq" x-transition>
-                                                            {% for ql in question_labels %}
-                                                                <div class="form-check">
-                                                                    <input name="questions"
-                                                                           class="form-check-input"
-                                                                           type="checkbox"
-                                                                           value="{{ forloop.counter }}"
-                                                                           id="{{ ql }}">
-                                                                    <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
-                                                                </div>
-                                                            {% endfor %}
-                                                        </div>
+                                                    <div x-show="!allq" x-transition>
+                                                        {% for ql in question_labels %}
+                                                            <div class="form-check">
+                                                                <input name="questions"
+                                                                       class="form-check-input"
+                                                                       type="checkbox"
+                                                                       value="{{ forloop.counter }}"
+                                                                       id="{{ ql }}">
+                                                                <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
+                                                            </div>
+                                                        {% endfor %}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-primary" type="submit">Set data</button>
-                                        </form>
-                                    </div>
-                                    <div class="py-4" id="invalidmessage"></div>
-                                {% endif %}
+                                        </div>
+                                        <button class="btn btn-primary" type="submit">Set data</button>
+                                    </form>
+                                </div>
+                                <div class="py-4" id="invalidmessage"></div>
                             {% endif %}
                         {% endif %}
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
