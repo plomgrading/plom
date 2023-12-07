@@ -10,7 +10,6 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from time import sleep
 from typing import Any, Dict, Optional
 
 from django.conf import settings
@@ -903,8 +902,6 @@ class ScanService:
             bundle_obj.is_push_locked = True
             bundle_obj.save()
             # must make sure we unlock the bundle when we are done
-
-        sleep(10)
 
         # the bundle is valid so we can push it.
         with transaction.atomic():
