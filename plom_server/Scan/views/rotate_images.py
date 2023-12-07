@@ -16,6 +16,8 @@ from ..services import (
 )
 from Progress.services import ManageScanService
 
+from plom.plom_exceptions import PlomBundleLockedException
+
 
 class RotateImageClockwise(ScannerRequiredView):
     def post(self, request, timestamp, index):
@@ -24,9 +26,14 @@ class RotateImageClockwise(ScannerRequiredView):
         except ValueError:
             return Http404()
 
-        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, angle=-90
-        )
+        try:
+            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, angle=-90
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -40,9 +47,14 @@ class RotateImageCounterClockwise(ScannerRequiredView):
         except ValueError:
             return Http404()
 
-        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, angle=90
-        )
+        try:
+            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, angle=90
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
@@ -56,9 +68,14 @@ class RotateImageOneEighty(ScannerRequiredView):
         except ValueError:
             return Http404()
 
-        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, angle=180
-        )
+        try:
+            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+                request.user, timestamp, index, angle=180
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"

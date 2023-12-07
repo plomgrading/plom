@@ -13,13 +13,15 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
 from Preparation.services import TestPreparedSetting
 from Progress.services import ManageScanService
 from ..services import ScanService
 from ..forms import BundleUploadForm
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class ScannerHomeView(ScannerRequiredView):
@@ -42,7 +44,7 @@ class ScannerHomeView(ScannerRequiredView):
                 "unused_test_papers": unused_papers,
                 "total_papers": total_papers,
                 "form": BundleUploadForm(),
-                "bundle_splitting": False,
+                "is_any_bundle_push_locked": False,
                 "preparation_finished": TestPreparedSetting.is_test_prepared(),
             }
         )
@@ -74,8 +76,12 @@ class ScannerHomeView(ScannerRequiredView):
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
                         "cover_angle": cover_img_rotation,
+                        "is_push_locked": bundle.is_push_locked,
                     }
                 )
+                # flag if any bundle is push-locked
+                if bundle.is_push_locked:
+                    context["is_any_bundle_push_locked"] = True
 
         context.update(
             {"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles}
@@ -178,6 +184,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
+            "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
             "n_known": n_known,
             "n_unknown": n_unknown,
@@ -226,5 +233,11 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        scanner._remove_bundle(bundle.pk)
+        try:
+            scanner._remove_bundle(bundle.pk)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
         return HttpResponseClientRefresh()

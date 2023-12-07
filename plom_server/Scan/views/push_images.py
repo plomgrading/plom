@@ -5,11 +5,13 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.http import Http404
-from django_htmx.http import HttpResponseClientRefresh
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
+from django.urls import reverse
 
 from Base.base_group_views import ScannerRequiredView
 
 from ..services import ScanService
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class PushAllPageImages(ScannerRequiredView):
@@ -22,7 +24,12 @@ class PushAllPageImages(ScannerRequiredView):
             return Http404()
 
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, request.user)
-        scanner.push_bundle_to_server(bundle, request.user)
+        bundle_pk = scanner.get_bundle_pk(timestamp, request.user)
+        try:
+            scanner.push_bundle_to_server(bundle_pk, request.user)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
 
         return HttpResponseClientRefresh()

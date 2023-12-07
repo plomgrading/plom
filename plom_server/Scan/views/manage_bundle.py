@@ -10,12 +10,6 @@ from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
-# from ..models import StagingImage
-# from Progress.services import ManageScanService
-
-# change to valid page
-# overlay for valid or discard
-
 
 class GetBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
@@ -123,6 +117,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         context.update(
             {
                 "is_pushed": bundle.pushed,
+                "is_push_locked": bundle.is_push_locked,
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,
@@ -151,3 +146,11 @@ class GetBundlePageFragmentView(ScannerRequiredView):
             )
 
         return render(request, "Scan/fragments/bundle_page_view.html", context)
+
+
+class BundleLockView(ScannerRequiredView):
+    def get(self, request, timestamp):
+        context = self.build_context()
+        bundle = ScanService().get_bundle(timestamp, request.user)
+        context.update({"slug": bundle.slug})
+        return render(request, "Scan/bundle_is_locked.html", context)

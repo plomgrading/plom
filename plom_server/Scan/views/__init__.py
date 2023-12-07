@@ -15,6 +15,7 @@ from .manage_bundle import (
     GetBundleImageView,
     BundleThumbnailView,
     GetBundleThumbnailView,
+    BundleLockView,
 )
 
 from .qr_codes import (
