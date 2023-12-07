@@ -17,7 +17,8 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card">
-        <div class="card-body"
+        <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
+        <div class="card-body pb-0"
              x-data="{show_summary: false}"
              x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
             <div class="d-flex justify-content-start">
@@ -32,7 +33,7 @@
             <div class="card-text" x-show="show_summary" x-transition>
                 <div class="row">
                     <div class="col-4">
-                        <div class="alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
+                        <div class="pb-0 alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
                             {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
                             <ul>
                                 <li>{{ known_pages }} / {{ total_pages }} known pages</li>
@@ -45,7 +46,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="col-8">
+                    <div class="col-8 pb-1">
                         <h5>Bundle Contains:</h5>
                         {% for paper,pages in papers_pages_list %}
                             {% with pg=pages|dictsort:"order"|first %}
