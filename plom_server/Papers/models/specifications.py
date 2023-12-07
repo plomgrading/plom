@@ -75,16 +75,16 @@ class SolnSpecification(SingletonBaseModel):
     numberOfPages = models.PositiveIntegerField(null=False)
 
     def __getattr__(self, name):
-        """If querying for questions, return a dictionary of all the soln-spec questions."""
-        if name == "question":
-            return self.get_question_dict()
+        """If querying for solution, return a dictionary of all the soln-spec solutions."""
+        if name == "solution":
+            return self.get_solution_dict()
         else:
             raise AttributeError(f"Member {name} not found in solution Specification.")
 
-    def get_question_dict(self):
+    def get_solution_dict(self):
         """Return all the solution questions in the form of a dictionary, where keys are question numbers."""
-        return {str(q.question_number): q for q in SolnSpecQuestion.objects.all()}
+        return {str(s.solution_number): s for s in SolnSpecQuestion.objects.all()}
 
-    def get_question_list(self):
+    def get_soltion_list(self):
         """Return the solution questions in the form of a list."""
         return list(SolnSpecQuestion.objects.all())

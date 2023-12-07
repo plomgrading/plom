@@ -14,17 +14,15 @@ class TemplateSolnSpecService:
 #
 # In general we expect that this should closely match the information
 # in the test specification. The number of questions and versions must match
-# the test.
-
-numberOfQuestions = {spec_dict['numberOfQuestions']}   # do not change
-numberOfVersions = {spec_dict['numberOfVersions']}   # do not change
+# the test. The test spec indicates {spec_dict['numberOfQuestions']} questions and {spec_dict['numberOfVersions']} versions.
+# This template has been generated with {spec_dict['numberOfQuestions']} solutions - one for each question.
+# Since plom knows the number of versions, we don't need it again in this template.
 
 # The pages are allowed to be different from the test - both the total
 # number of pages, and the pages in each question.
 
 ## numberOfPages = 6  ## <<<<< This needs editing
 """
-        print(spec_dict)
 
         for q, dat in spec_dict["question"].items():
             soln_toml += f"""

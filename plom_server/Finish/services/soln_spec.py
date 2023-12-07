@@ -11,7 +11,7 @@ from Papers.serializers import SolnSpecSerializer
 
 
 class SolnSpecService:
-    def is_there_a_soln_spec(self):
+    def is_there_a_solution_spec(self):
         """Has a soln-specification been uploaded to the database."""
         return SolnSpecification.objects.count() == 1
 
@@ -26,8 +26,15 @@ class SolnSpecService:
         return SolnSpecQuestion.objects.get(solution_number=solution_number).pages
 
     def load_spec_from_dict(self, spec_dict: Dict):
+        # convert the list of solns to a dict of soln with soln-numbers as keys
+        spec_dict["solution"] = {
+            str(i + 1): q for i, q in enumerate(spec_dict["solution"])
+        }
+
         serializer = SolnSpecSerializer(data=spec_dict)
+        print("v" * 20)
         serializer.is_valid()
+        print("^" * 20)
 
         return serializer.create(serializer.validated_data)
 

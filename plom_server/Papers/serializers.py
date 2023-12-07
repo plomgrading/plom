@@ -7,6 +7,7 @@ from copy import deepcopy
 from rest_framework import serializers
 
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 
 from plom import SpecVerifier
 from plom.tpv_utils import new_magic_code
@@ -116,7 +117,7 @@ class SolnSpecSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SolnSpecification
-        fields = ["numberOfPages", "solution"]
+        fields = "__all__"
 
     def is_valid(self, raise_exception=True):
         """Perform additional soundness checks on the test spec."""
@@ -126,6 +127,7 @@ class SolnSpecSerializer(serializers.ModelSerializer):
             spec = Specification.objects.get()
         except ObjectDoesNotExist:
             raise ValueError("Cannot validate solution spec without a test spec")
+
         # check that there is a solution for each question
         if len(self.data["solution"]) != spec.numberOfQuestions:
             raise ValueError(
