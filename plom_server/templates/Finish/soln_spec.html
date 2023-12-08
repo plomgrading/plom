@@ -36,13 +36,14 @@
                         <br>
                     {% endfor %}
                 </div>
-		{% if unused_pages %}
-		<div class="mt-2"><p>
-		    Notice that the solution spec does not use pages {{unused_pages}}. Please double-check that those pages in your solutions are
-		    not required.
-		  </p>
-		</div>
-		{% endif %}
+                {% if unused_pages %}
+                    <div class="mt-2">
+                        <p>
+                            Notice that the solution spec does not use pages {{ unused_pages }}. Please double-check that those pages in your solutions are
+                            not required.
+                        </p>
+                    </div>
+                {% endif %}
             </div>
             <div class="card-footer" x-data="{the_toml: `{{ soln_toml }}` }">
                 <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
@@ -93,13 +94,14 @@
                             {% endif %}
                             <i class="bi bi-check-circle"></i>
                         </div>
-			{% if unused_pages %}
-			<div class="mt-2"><p>
-			    Notice that the solution spec does not use pages {{unused_pages}}. Please double-check that those pages in your solutions are
-			    not required.
-			  </p>
-			</div>
-		{% endif %}
+                        {% if unused_pages %}
+                            <div class="mt-2">
+                                <p>
+                                    Notice that the solution spec does not use pages {{ unused_pages }}. Please double-check that those pages in your solutions are
+                                    not required.
+                                </p>
+                            </div>
+                        {% endif %}
                     {% else %}
                         <div class="alert alert-warning">
                             <span class="fs-5">

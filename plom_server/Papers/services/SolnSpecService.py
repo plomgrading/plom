@@ -115,7 +115,7 @@ def get_the_soln_spec_as_toml() -> str:
 
 numberOfPages = {soln_spec["numberOfPages"]}
     """
-    # Now insert a commend after after each "[[solution]]"
+    # Now insert a comment after after each "[[solution]]"
     for n, dat in soln_spec["solution"].items():
         toml_string += f"""
 # for question {int(n)}

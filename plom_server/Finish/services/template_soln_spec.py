@@ -24,6 +24,6 @@ class TemplateSolnSpecService:
         for q, dat in spec_dict["question"].items():
             soln_toml += f"""
 [[solution]]
-## pages = {dat['pages']}  ## <<<<< This needs editing 
+## pages = {dat['pages']}  ## <<<<< This needs editing
 """
         return soln_toml
