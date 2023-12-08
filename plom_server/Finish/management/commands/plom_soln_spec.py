@@ -32,7 +32,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("There is no solution specification")
 
-    def create_template_spec(self, destination):
+    def create_template_spec(self, destination: str):
         soln_spec_toml = TemplateSolnSpecService().build_template_soln_toml()
 
         dest_path = Path(destination)
@@ -43,7 +43,7 @@ class Command(BaseCommand):
             fh.write(soln_spec_toml)
         self.stdout.write(f"Wrote draft solution spec to {dest_path}")
 
-    def upload_spec(self, soln_spec_file):
+    def upload_spec(self, soln_spec_file: str):
         if SolnSpecService.is_there_a_soln_spec():
             raise CommandError("The server already has a solution specification")
 
@@ -78,7 +78,7 @@ class Command(BaseCommand):
         except ObjectDoesNotExist as err:
             raise CommandError(err)
 
-    def download_spec(self, destination):
+    def download_spec(self, destination: str):
         if not SolnSpecService.is_there_a_soln_spec():
             self.stdout.write("There is no solution specification")
         soln_spec_toml = SolnSpecService.get_the_soln_spec_as_toml()
@@ -96,7 +96,7 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to uploading/downloading/deleting of a solution specification.",
         )
-        sp_S = sub.add_parser("status", help="Show details of current solution spec")
+        sub.add_parser("status", help="Show details of current solution spec")
         sp_C = sub.add_parser(
             "create",
             help="Create a template solution spec from the test spec and (by default) save as 'draft_soln_spec.toml'",
@@ -124,7 +124,7 @@ class Command(BaseCommand):
             help="Where to download the solution spec toml",
             default="soln_spec.toml",
         )
-        sp_R = sub.add_parser(
+        sub.add_parser(
             "remove", help="Remove the current solution spec from the server"
         )
 

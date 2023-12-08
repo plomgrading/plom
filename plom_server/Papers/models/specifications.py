@@ -64,6 +64,7 @@ class SolnSpecQuestion(models.Model):
 
 class SolnSpecification(SingletonBaseModel):
     """Store the json of the solution specification dictionary.
+
     Note that
       * There can be at most one SolutionSpecification entry
       * The number of versions is given by the test spec - so not in soln spec

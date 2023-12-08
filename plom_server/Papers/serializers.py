@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import random
 from copy import deepcopy
+
 from rest_framework import serializers
 
 from django.db import transaction
@@ -117,11 +119,11 @@ class SolnSpecSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SolnSpecification
-        fields = "__all__"
+        fields = ["numberOfPages", "solution"]
 
     def is_valid(self, raise_exception=True):
-        """Perform additional soundness checks on the test spec."""
-        is_valid = super().is_valid(raise_exception=raise_exception)
+        """Perform additional soundness checks on the solution spec."""
+        super().is_valid(raise_exception=raise_exception)
 
         try:
             spec = Specification.objects.get()

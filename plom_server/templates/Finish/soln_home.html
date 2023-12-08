@@ -15,7 +15,13 @@
         <div class="card-body">
             <a class="btn btn-primary" href="{% url 'soln_spec' %}">Solution specification</a>
             <ul>
-                <li>Create and validate a solution specification</li>
+              <li>Create and validate a solution specification
+		{% if is_there_a_soln_spec %}
+		<i class="bi bi-check-circle text-success fs-4"></i>
+		{% else %}
+		<i class="bi bi-exclamation-diamond-fill text-warning fs-4"></i>
+		{% endif %}
+	      </li>
             </ul>
         </div>
     </div>
