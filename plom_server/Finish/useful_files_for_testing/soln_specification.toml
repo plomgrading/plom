@@ -1,0 +1,16 @@
+# Solution spec for 'Midterm Demo using Plom'
+
+numberOfPages = 5
+    
+# for question 1
+[[solution]]
+pages = [3]
+        
+# for question 2
+[[solution]]
+pages = [4]
+        
+# for question 3
+[[solution]]
+pages = [5]
+        

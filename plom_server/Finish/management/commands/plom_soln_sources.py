@@ -8,7 +8,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, SolnSpecService
 from Finish.services import SolnSourceService
 
 
@@ -21,23 +21,34 @@ class Command(BaseCommand):
             self.stdout.write(f"Version {v}: {h}")
 
     def upload_source(self, version: int, source_pdf_path: str):
-        if version < 1 or version > SpecificationService.get_n_versions():
-            self.stderr.write("Version is out of range.")
+        nv = SpecificationService.get_n_versions()
+        if version < 1 or version > nv:
+            self.stderr.write(
+                f"Version is out of range - must be between [1, {nv}] inclusive according to the spec."
+            )
+            return
 
         pdf_path = Path(source_pdf_path)
 
         if not pdf_path.exists():
             self.stderr.write(f"Cannot open {source_pdf_path}.")
+            return
 
-        # make sure we can actually open the pdf.
+        # make sure we can actually open the pdf and check pages
+        np = SolnSpecService.get_n_pages()
         try:
-            fitz.open(pdf_path)
+            doc = fitz.open(pdf_path)
+            if len(doc) != np:
+                self.stderr.write(
+                    f"Solution source pdf must have {np} pages according to the soln spec; supplied file has {len(doc)} pages."
+                )
+                return
         except fitz.FileDataError as err:
             raise CommandError(err)
 
         try:
             with pdf_path.open("rb") as fh:
-                SolnSourceService.take_solution_pdf_from_upload(version, fh)
+                SolnSourceService().take_solution_source_pdf_from_upload(version, fh)
         except ValueError as err:
             raise CommandError(err)
 
@@ -84,7 +95,7 @@ class Command(BaseCommand):
             self.show_status()
         elif options["command"] == "upload":
             self.upload_source(
-                version=options["version"], source_pdf=options["source_pdf"]
+                version=options["version"], source_pdf_path=options["source_pdf"]
             )
         elif options["command"] == "download":
             self.download_source(version=options["version"], all=options["all"])

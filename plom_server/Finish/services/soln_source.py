@@ -35,7 +35,7 @@ class SolnSourceService:
             v: None for v in range(1, SpecificationService.get_n_versions() + 1)
         }
         for spdf in SolutionSourcePDF.objects.all():
-            soln_pdfs[spdf.version] = spdf.hash
+            soln_pdfs[spdf.version] = spdf.pdf_hash
 
         return soln_pdfs
 
@@ -90,7 +90,7 @@ class SolnSourceService:
 
         doc_hash = hashlib.sha256(file_bytes).hexdigest()
         # check if there is an existing soluion with that has
-        if SolutionSourcePDF.objects.filter(hash=doc_hash).exists():
+        if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
             raise ValueError(
                 f"Another solution pdf with hash {doc_hash} has already been uploaded."
             )
@@ -98,7 +98,7 @@ class SolnSourceService:
         SolutionSourcePDF.objects.create(
             version=version,
             source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),
-            hash=doc_hash,
+            pdf_hash=doc_hash,
         )
         # We need to create solution images for display in the client
         # Assembly of solutions for each paper will use the source pdfs, not these images.
