@@ -66,6 +66,17 @@ class SolnSourceService:
                 si_obj.image.delete()
             si_obj.delete()
 
+    def get_soln_pdf_for_download(self, version: int) -> bytes:
+        if version < 1 or version > SpecificationService.get_n_versions():
+            raise ValueError(f"Version {version} is out of range")
+        try:
+            soln_pdf_obj = SolutionSourcePDF.objects.get(version=version)
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"The solution source pdf for version {version} has not yet been uploaded."
+            )
+        return soln_pdf_obj.source_pdf.read()
+
     @transaction.atomic
     def take_solution_source_pdf_from_upload(self, version, in_memory_file):
         """Take the given solution source pdf and save it to the DB."""

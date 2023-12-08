@@ -63,6 +63,18 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
+    def download_source(self, version):
+        try:
+            soln_pdf_bytes = SolnSourceService().get_soln_pdf_for_download(version)
+        except ValueError as err:
+            raise CommandError(err)
+        fname = f"solution{version}.pdf"
+        with open(fname, "wb") as fh:
+            fh.write(soln_pdf_bytes)
+        self.stdout.write(
+            f"Wrote solution source pdf for version {version} to {fname}."
+        )
+
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
             dest="command",
@@ -80,9 +92,6 @@ class Command(BaseCommand):
 
         grp_D = sp_D.add_mutually_exclusive_group(required=True)
         grp_D.add_argument("-v", "--version", type=int, help="The version to download")
-        grp_D.add_argument(
-            "-a", "--all", action="store_true", help="Download all versions"
-        )
 
         grp_R = sp_R.add_mutually_exclusive_group(required=True)
         grp_R.add_argument("-v", "--version", type=int, help="The version to remove")
@@ -98,7 +107,7 @@ class Command(BaseCommand):
                 version=options["version"], source_pdf_path=options["source_pdf"]
             )
         elif options["command"] == "download":
-            self.download_source(version=options["version"], all=options["all"])
+            self.download_source(version=options["version"])
         elif options["command"] == "remove":
             self.remove_source(version=options["version"], all=options["all"])
         else:
