@@ -156,7 +156,7 @@ class PQVMappingView(ManagerRequiredView):
             return HttpResponseRedirect(".")
 
         pqvs = PQVMappingService()
-        pqvs.generate_and_set_pqvmap(number_to_produce)
+        pqvs.generate_and_set_pqvmap(number_to_produce, first=first)
         return HttpResponseRedirect(".")
 
 

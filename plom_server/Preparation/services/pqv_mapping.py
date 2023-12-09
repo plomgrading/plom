@@ -132,10 +132,24 @@ class PQVMappingService:
         seed = SpecificationService.get_private_seed()
         return make_random_version_map(speck, seed=seed)
 
-    def generate_and_set_pqvmap(self, numberToProduce):
-        # delete old map, build a new one, and then use it.
+    def generate_and_set_pqvmap(
+        self, number_to_produce: int, *, first: int = 1
+    ) -> None:
+        """Remove any existing question-version map, generate a new map and set it in the database.
+
+        Args:
+            number_to_produce: how many items in the version map.
+
+        Keyword Args:
+            first: the starting paper number.
+
+        Returns:
+            None
+        """
         self.remove_pqv_map()
-        pqvmap = self.make_version_map(numberToProduce)
+        pqvmap = self.make_version_map(number_to_produce)
+        # kind of hacky: we just increase/decrease the keys
+        pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
         self.use_pqv_map(pqvmap)
 
     def get_minimum_number_to_produce(self):
