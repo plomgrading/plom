@@ -53,8 +53,7 @@ class SpecEditorView(ManagerRequiredView):
             errlist = []
             for k, v in e.detail.items():
                 if isinstance(v, list) and len(v) == 1:
-                    errstr = f"{k}: {v[0]}"
-                    errlist.append(errstr)
+                    errlist.append(f"{k}: {v[0]}")
                     continue
                 if isinstance(v, dict):
                     # this big ol pile of spaghetti renders errors within questions
@@ -67,12 +66,10 @@ class SpecEditorView(ManagerRequiredView):
                                     errstr = f"{k}: {kk}: {kkk}: {str(vvv)}"
                                 errlist.append(errstr)
                         else:
-                            errstr = f"{k}: {kk}: {vv}"
-                            errlist.append(errstr)
+                            errlist.append(f"{k}: {kk}: {str(vv)}")
                     continue
                 # last ditch effort if neither of the above: make 'em into strings
-                errstr = f"{k}: {str(v)}"
-                errlist.append(errstr)
+                errlist.append(f"{k}: {str(v)}")
             context["error_list"] = errlist
         except (ValueError, RuntimeError) as e:
             context["error_list"] = [str(e)]
