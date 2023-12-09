@@ -28,18 +28,35 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <a class="btn btn-primary" href="">Solution source pdfs</a>
-            <ul>
-                <li>Manage solution source pdfs</li>
-            </ul>
+            {% if is_there_a_soln_spec %}
+                <a class="btn btn-primary" href="{% url 'soln_sources' %}">Solution source pdfs</a>
+                <ul>
+                    <li>
+                        Manage solution source pdfs
+                        {% if all_soln_pdf_present %}
+                            <i class="bi bi-check-circle text-success fs-4"></i> all are present.
+                        {% else %}
+                            &mdash; {{ number_of_soln_source_pdfs }} of {{ versions }} present <i class="bi bi-exclamation-diamond-fill text-warning fs-4"></i>
+                        {% endif %}
+                    </li>
+                </ul>
+            {% else %}
+                <i class="bi bi-exclamation-diamond-fill text-warning fs-4">
+                    Cannot upload source pdfs until you have a solution specification.
+                {% endif %}
+            </div>
         </div>
-    </div>
-    <div class="card m-2">
-        <div class="card-body">
-            <a class="btn btn-primary" href="">Build solutions</a>
-            <ul>
-                <li>Build individual solution pdfs for each paper</li>
-            </ul>
+        <div class="card m-2">
+            <div class="card-body">
+                {% if all_soln_pdf_present %}
+                    <a class="btn btn-primary" href="">Build solutions</a>
+                    <ul>
+                        <li>Build individual solution pdfs for each paper</li>
+                    </ul>
+                {% else %}
+                    <i class="bi bi-exclamation-diamond-fill text-warning fs-4"></i>
+                    Cannot build individual solution pdfs until all solution sources are uploaded.
+                {% endif %}
+            </div>
         </div>
-    </div>
-{% endblock main_content %}
+    {% endblock main_content %}

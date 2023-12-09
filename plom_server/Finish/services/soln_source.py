@@ -24,6 +24,9 @@ class SolnSourceService:
     def are_there_any_solution_pdf(self) -> bool:
         return SolutionSourcePDF.objects.exists()
 
+    def get_number_of_solution_pdf(self) -> int:
+        return SolutionSourcePDF.objects.count()
+
     def are_all_solution_pdf_present(self) -> bool:
         return (
             SolutionSourcePDF.objects.all().count()
@@ -40,6 +43,17 @@ class SolnSourceService:
         return soln_pdfs
 
     @transaction.atomic
+    def get_list_of_sources(self):
+        """Return a dict of all versions, uploaded or not."""
+        status = {(v + 1): None for v in range(SpecificationService.get_n_versions())}
+        for soln_pdf_obj in SolutionSourcePDF.objects.all():
+            status[soln_pdf_obj.version] = (
+                soln_pdf_obj.source_pdf.url,
+                soln_pdf_obj.pdf_hash,
+            )
+        return status
+
+    @transaction.atomic
     def remove_solution_pdf(self, version: int):
         # remove the PDF if it is there
         try:
@@ -51,7 +65,7 @@ class SolnSourceService:
             raise ValueError(f"There is no solution pdf for version {version}")
         # remove any associated images
         for img_obj in SolutionImage.objects.filter(version=version):
-            if soln_source_obj.image:
+            if img_obj.image:
                 img_obj.image.delete()  # delete the underlying file
             img_obj.delete()  # now delete the db row
 
@@ -66,7 +80,7 @@ class SolnSourceService:
                 si_obj.image.delete()
             si_obj.delete()
 
-    def get_soln_pdf_for_download(self, version: int) -> bytes:
+    def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
         if version < 1 or version > SpecificationService.get_n_versions():
             raise ValueError(f"Version {version} is out of range")
         try:
@@ -75,7 +89,7 @@ class SolnSourceService:
             raise ValueError(
                 f"The solution source pdf for version {version} has not yet been uploaded."
             )
-        return soln_pdf_obj.source_pdf.read()
+        return io.BytesIO(soln_pdf_obj.source_pdf.read())
 
     @transaction.atomic
     def take_solution_source_pdf_from_upload(self, version, in_memory_file):
