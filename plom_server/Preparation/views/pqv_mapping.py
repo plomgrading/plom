@@ -137,10 +137,21 @@ class PQVMappingView(ManagerRequiredView):
 
     def post(self, request):
         ntp = request.POST.get("number_to_produce", None)
+        first = request.POST.get("first_paper_num", None)
         if not ntp:
             return HttpResponseRedirect(".")
+        if not first:
+            first = 1
+        if first == "n":
+            first = request.POST.get("startn_value", None)
+
+        # TODO neither of these error cases gives a meaningful error message?
         try:
             number_to_produce = int(ntp)
+        except ValueError:
+            return HttpResponseRedirect(".")
+        try:
+            first = int(first)
         except ValueError:
             return HttpResponseRedirect(".")
 
