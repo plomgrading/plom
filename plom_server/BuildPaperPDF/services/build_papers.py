@@ -97,11 +97,11 @@ def huey_build_single_paper(
                 )
 
         with transaction.atomic(durable=True):
-            chore = BuildPaperPDFChore.objects.get(pk=tracker_pk)
-            if not chore.obsolete:
+            _chore = BuildPaperPDFChore.objects.select_for_update().get(pk=tracker_pk)
+            if not _chore.obsolete:
                 with save_path.open("rb") as f:
-                    chore.pdf_file = File(f, name=save_path.name)
-                    chore.save()
+                    _chore.pdf_file = File(f, name=save_path.name)
+                    _chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
@@ -273,7 +273,7 @@ class BuildPapersService:
             tracker_pk=tracker_pk,
             _debug_be_flaky=False,
         )
-        print(f"Just enqueued Huey reassembly task id={res.id}")
+        print(f"Just enqueued Huey paper build task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def try_to_cancel_all_queued_tasks(self) -> int:

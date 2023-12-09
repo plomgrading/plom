@@ -9,16 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+
+## [0.14.7] - 2023-12-03
+
+### Added
 * Support for Python 3.12.
 
 ### Changed
 * Clients: more dialogs have "Don't ask me again" checkboxes.
 * "Don't ask me again" settings are stored only in the current session (for now).
+* Don't show default "1" paper and page when assigning unknown pages.
 
 ### Fixed
 * Duplicated paper numbers in question-version map input will now be detected.
 * Correctly handle solutions that encode to jpeg.
 * Fix some version clashes between old pyOpenSSL and cryptography by forcing users to update both.
+* Legacy server: increase json upload limit to 5MiB to accept larger question-version maps.
 
 
 ## [0.14.6] - 2023-11-02
@@ -1081,7 +1093,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.6...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.7...main
+[0.14.7]: https://gitlab.com/plom/plom/-/compare/v0.14.6...v0.14.7
 [0.14.6]: https://gitlab.com/plom/plom/-/compare/v0.14.5...v0.14.6
 [0.14.5]: https://gitlab.com/plom/plom/-/compare/v0.14.4...v0.14.5
 [0.14.4]: https://gitlab.com/plom/plom/-/compare/v0.14.3...v0.14.4

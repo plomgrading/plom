@@ -88,7 +88,8 @@ class PlomClasslistValidator:
         id_keys = []
         fullname_keys = []
         papernumber_keys = []
-        for x in rowFromDict.keys():
+        headers = list(rowFromDict.keys())
+        for x in headers:
             cfx = x.casefold()
             if cfx == sid_field:
                 id_keys.append(x)
@@ -107,9 +108,9 @@ class PlomClasslistValidator:
             err.append("Cannot have multiple paper number columns")
         # Must have an id, name and paper_number columns
         if not id_keys:
-            err.append("Missing id column")
+            err.append(f"Missing 'id' column in columns {headers}")
         if not fullname_keys:
-            err.append("Missing name column")
+            err.append(f"Missing 'name' column in columns {headers}")
         if not papernumber_keys:
             # Issue #2273
             # err.append("Missing paper number column")
