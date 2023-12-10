@@ -462,6 +462,7 @@ class DemoBundleService:
         number_prenamed = sum(1 for X in assigned_papers_ids if X["prenamed"])
 
         print("v" * 40)
+        # TODO: is this comment wrong?  making multiple bundles usually?
         print(
             f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
         )
