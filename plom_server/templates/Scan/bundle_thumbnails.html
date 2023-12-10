@@ -17,7 +17,8 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card">
-        <div class="card-body"
+        <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
+        <div class="card-body pb-0"
              x-data="{show_summary: false}"
              x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
             <div class="d-flex justify-content-start">
@@ -32,7 +33,7 @@
             <div class="card-text" x-show="show_summary" x-transition>
                 <div class="row">
                     <div class="col-4">
-                        <div class="alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
+                        <div class="pb-0 alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
                             {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
                             <ul>
                                 <li>{{ known_pages }} / {{ total_pages }} known pages</li>
@@ -45,7 +46,7 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="col-8">
+                    <div class="col-8 pb-1">
                         <h5>Bundle Contains:</h5>
                         {% for paper,pages in papers_pages_list %}
                             {% with pg=pages|dictsort:"order"|first %}
@@ -60,116 +61,115 @@
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="row gx-1">
-                <div class="col-4">
-                    <!-- some hackery here to persist the val of show_known, show_completed_extras in local storage -->
-                    <!-- see https://stackoverflow.com/questions/66838886/alpine-js-with-local-storage-x-data-showing-old-wrong-value-after-page-refresh -->
-                    <div class="card"
-                         x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true' }"
-                         x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val));">
-                        <div class="card-body pe-0">
-                            <div class="row border rounded me-1 py-1 my-2">
-                                <div class="col-auto">
-                                    <input type="checkbox" id="check_known" x-model="show_known">
-                                    <label for="check_known">Show knowns</label>
-                                </div>
-                                <div class="col-auto">
-                                    <input type="checkbox"
-                                           id="check_completed_extras"
-                                           x-model="show_completed_extras">
-                                    <label for="check_completed_extras">Show completed extras</label>
-                                </div>
-                            </div>
-                            <div class="container overflow-y-scroll ps-0" style="max-height:80vh;">
-                                <div class="row row-cols-6 gy-1 gx-1">
-                                    {% for pg in pages %}
-                                        {% if pg.status == "known" %}
-                                            <div class="col" x-show="show_known">
-                                                <div class="card text-center bg-success-subtle p-1"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
-                                                    {% include "Scan/fragments/bundle_thumbnail_container.html" with grab_speed="low" %}
-                                                </div>
-                                            </div>
-                                        {% elif pg.status == "unknown" %}
-                                            <div class="col">
-                                                <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="Unknown page">
-                                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                </div>
-                                            </div>
-                                        {% elif pg.status == "extra" %}
-                                            <!-- check if it has paper+question info -->
-                                            {% if pg.info.paper_number %}
-                                                <!-- extra page info is complete -->
-                                                <div class="col" x-show="show_completed_extras">
-                                                    <div class="card text-center bg-primary-subtle col p-1"
-                                                         data-bs-toggle="tooltip"
-                                                         data-bs-placement="top"
-                                                         data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
-                                                        {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <div class="col">
-                                                    <!-- extra page info required -->
-                                                    <div class="card text-center bg-info-subtle col p-1  border-info border-2"
-                                                         data-bs-toggle="tooltip"
-                                                         data-bs-placement="top"
-                                                         data-bs-title="Extra page - no data">
-                                                        {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                        {% elif pg.status == "error" %}
-                                            <div class="col">
-                                                <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="error: {{ pg.info.reason }}">
-                                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                </div>
-                                            </div>
-                                        {% elif pg.status == "unread" %}
-                                            <div class="col">
-                                                <div class="card text-center bg-dark-subtle col p-1"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="qr-unread">
-                                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                </div>
-                                            </div>
-                                        {% elif pg.status == "discard" %}
-                                            <div class="col">
-                                                <div class="card text-center bg-dark-subtle col p-1"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="discard: {{ pg.info.reason }}">
-                                                    {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
+    <div class="row pt-3">
+        <div class="col-4">
+            <!-- some hackery here to persist the val of show_known, show_completed_extras in local storage -->
+            <!-- see https://stackoverflow.com/questions/66838886/alpine-js-with-local-storage-x-data-showing-old-wrong-value-after-page-refresh -->
+            <div class="card"
+                 x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true' }"
+                 x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val));">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-auto">
+                            <input type="checkbox" id="check_known" x-model="show_known">
+                            <label for="check_known">Show knowns</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="checkbox"
+                                   id="check_completed_extras"
+                                   x-model="show_completed_extras">
+                            <label for="check_completed_extras">Show completed extras</label>
                         </div>
                     </div>
                 </div>
-                <div class="col-8" id="updatePage">
-                    {% if pop %}
-                        <div hx-get="{% url 'scan_bundle_page' timestamp pop %}"
-                             hx-swap="innerHTML"
-                             hx-target="#updatePage"
-                             hx-trigger="load"></div>
-                    {% endif %}
-                    <!-- HTMX will fill this in -->
+                <div class="card-body p-2 pe-0">
+                    <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
+                    <div class="container overflow-y-scroll ps-0" style="max-height:78vh;">
+                        <div class="row row-cols-6 gy-1 gx-1">
+                            {% for pg in pages %}
+                                {% if pg.status == "known" %}
+                                    <div class="col" x-show="show_known">
+                                        <div class="card text-center bg-success-subtle p-1"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
+                                            {% include "Scan/fragments/bundle_thumbnail_container.html" with grab_speed="low" %}
+                                        </div>
+                                    </div>
+                                {% elif pg.status == "unknown" %}
+                                    <div class="col">
+                                        <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="Unknown page">
+                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                        </div>
+                                    </div>
+                                {% elif pg.status == "extra" %}
+                                    <!-- check if it has paper+question info -->
+                                    {% if pg.info.paper_number %}
+                                        <!-- extra page info is complete -->
+                                        <div class="col" x-show="show_completed_extras">
+                                            <div class="card text-center bg-primary-subtle col p-1"
+                                                 data-bs-toggle="tooltip"
+                                                 data-bs-placement="top"
+                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
+                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="col">
+                                            <!-- extra page info required -->
+                                            <div class="card text-center bg-info-subtle col p-1  border-info border-2"
+                                                 data-bs-toggle="tooltip"
+                                                 data-bs-placement="top"
+                                                 data-bs-title="Extra page - no data">
+                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% elif pg.status == "error" %}
+                                    <div class="col">
+                                        <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="error: {{ pg.info.reason }}">
+                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                        </div>
+                                    </div>
+                                {% elif pg.status == "unread" %}
+                                    <div class="col">
+                                        <div class="card text-center bg-dark-subtle col p-1"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="qr-unread">
+                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                        </div>
+                                    </div>
+                                {% elif pg.status == "discard" %}
+                                    <div class="col">
+                                        <div class="card text-center bg-dark-subtle col p-1"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="discard: {{ pg.info.reason }}">
+                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="col-8" id="updatePage">
+            {% if pop %}
+                <div hx-get="{% url 'scan_bundle_page' timestamp pop %}"
+                     hx-swap="innerHTML"
+                     hx-target="#updatePage"
+                     hx-trigger="load"></div>
+            {% endif %}
+            <!-- HTMX will fill this in -->
         </div>
     </div>
     <script>
