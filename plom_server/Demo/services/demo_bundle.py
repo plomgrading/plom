@@ -363,7 +363,7 @@ class DemoBundleService:
             duplicates_dict[paper] = -1
         return duplicates_dict
 
-    def scribble_bundle(
+    def scribble_to_create_bundle(
         self,
         assigned_papers_ids,
         extra_page_path,
@@ -377,6 +377,7 @@ class DemoBundleService:
         duplicate_qr=[],
         wrong_version=[],
     ):
+        """Scribble on some of the papers to create a bundle, along with various others inclusions."""
         # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
         # scrap_page_papers = list of paper_numbers to which we append a couple of scrap-paper pages
         # garbage_page_papers = list of paper_numbers to which we append a garbage page
@@ -462,21 +463,21 @@ class DemoBundleService:
         number_prenamed = sum(1 for X in assigned_papers_ids if X["prenamed"])
 
         print("v" * 40)
-        # TODO: is this comment wrong?  making multiple bundles usually?
         print(
-            f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
+            f"Making bundles from {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
         )
-        print("^" * 40)
-
         for i in range(n_bundles):
             bundle = defaultdict(list, bundles[i])
             bundle_path = Path(f"fake_bundle{i + 1}.pdf")
-
+            print(
+                f'  - creating bundle "{bundle_path.name}" from papers '
+                f'{bundle["first_paper"]} to {bundle["last_paper"]}'
+            )
             first_idx = bundle["first_paper"] - 1
             last_idx = bundle["last_paper"]
             papers_in_bundle = assigned_papers_ids[first_idx:last_idx]
 
-            self.scribble_bundle(
+            self.scribble_to_create_bundle(
                 papers_in_bundle,
                 extra_page_path,
                 scrap_paper_path,
@@ -488,3 +489,4 @@ class DemoBundleService:
                 duplicate_qr=bundle["duplicate_qr"],
                 wrong_version=bundle["wrong_version"],
             )
+        print("^" * 40)
