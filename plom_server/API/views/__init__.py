@@ -31,6 +31,7 @@ from .mark import (
     MgetDoneTasks,
     TagsFromCodeView,
     GetAllTags,
+    GetSolutionImage,
 )
 
 from .report import (

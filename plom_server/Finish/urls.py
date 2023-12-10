@@ -13,6 +13,7 @@ from .views import (
     CancelQueuedReassembly,
     SolnHomeView,
     SolnSpecView,
+    SolnSourcesView,
     TemplateSolnSpecView,
 )
 
@@ -53,4 +54,10 @@ urlpatterns = [
         TemplateSolnSpecView.as_view(),
         name="template_soln_spec",
     ),
+    path(
+        "solutions/sources/<int:version>",
+        SolnSourcesView.as_view(),
+        name="soln_source_upload",
+    ),
+    path("solutions/sources", SolnSourcesView.as_view(), name="soln_sources"),
 ]

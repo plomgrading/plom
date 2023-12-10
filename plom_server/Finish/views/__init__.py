@@ -13,3 +13,4 @@ from .reassembly import (
 )
 from .soln_home import SolnHomeView
 from .soln_spec import SolnSpecView, TemplateSolnSpecView
+from .soln_sources import SolnSourcesView
