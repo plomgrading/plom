@@ -27,3 +27,21 @@ class TemplateSolnSpecService:
 ## pages = {dat['pages']}  ## <<<<< This needs editing
 """
         return soln_toml
+
+    def build_soln_toml_from_test_spec(self):
+        spec_dict = SpecificationService.get_the_spec()
+        """Builds a solution spec toml string from the test spec with comments."""
+        soln_toml = f"""# Information about the solutions:
+# This toml has been generated from the test-specification with  {spec_dict['numberOfQuestions']} questions and {spec_dict['numberOfVersions']} versions.
+# We assume that the number of pages, {spec_dict['numberOfPages']}, is the same as the original test
+# and that the pages for each question are the same as those of the original test.
+
+numberOfPages = 6  # Taken from the test specification
+"""
+
+        for q, dat in spec_dict["question"].items():
+            soln_toml += f"""
+[[solution]]
+pages = {dat['pages']}  # Taken from the test specification.
+"""
+        return soln_toml

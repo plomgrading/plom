@@ -40,6 +40,20 @@ class SolnSpecView(ManagerRequiredView):
         SolnSpecService.remove_soln_spec()
         return HttpResponseClientRedirect(reverse("soln_spec"))
 
+    def patch(self, request: HttpRequest) -> HttpResponse:
+        spec = TemplateSolnSpecService().build_soln_toml_from_test_spec()
+
+        context: Dict[str, Any] = {
+            "just_submitted": True,
+            "action": "validate",
+            "is_there_a_soln_spec": False,
+            "soln_toml": spec,
+            "error_list": [],
+            "valid": True,
+            "unused_pages": SolnSpecService.get_unused_pages_in_toml_string(spec),
+        }
+        return render(request, "Finish/soln_spec.html", context=context)
+
     def post(self, request: HttpRequest) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
         data = request.POST

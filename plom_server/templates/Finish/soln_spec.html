@@ -62,10 +62,18 @@
             </div>
             <div class="card-body">
                 <div>
-                    <a class="btn btn-primary mb-3" href="{% url 'template_soln_spec' %}">Generate a template solution specification</a>
-                </div>
-                <div>
-                    <p>or</p>
+                    <ul>
+                        <li>
+                            If your solutions have the same format as your test (same questions on same pages), then click
+                            <button hx-patch="{% url 'soln_spec' %}"
+                                    hx-target="body"
+                                    class="btn btn-primary">this button</button>
+                            to insert appropriate toml into the text-box below.
+                        </li>
+                        <li>
+                            If your solutions have a different format, then click <a class="btn btn-warning" href="{% url 'template_soln_spec' %}">this button</a> to generate a template solution specification; please edit it carefully before pasting it into the text-box below.
+                        </li>
+                    </ul>
                 </div>
                 <form hx-post="{% url 'soln_spec' %}" hx-target="body">
                     {% csrf_token %}
