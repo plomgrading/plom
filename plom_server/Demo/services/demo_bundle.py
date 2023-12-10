@@ -110,8 +110,10 @@ class DemoBundleService:
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
         # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
-        all_sid = [row["id"] for row in classlist]
         id_to_name = {X["id"]: X["name"] for X in classlist}
+        sids_not_in_prename = [
+            row["id"] for row in classlist if row["paper_number"] == ""
+        ]
 
         assignment = []
 
@@ -119,7 +121,6 @@ class DemoBundleService:
             paper_number = path.stem.split("_")[1]
             if len(path.stem.split("_")) == 3:  # paper is prenamed
                 sid = path.stem.split("_")[2]
-                all_sid.remove(sid)
                 assignment.append(
                     {
                         "path": path,
@@ -130,7 +131,7 @@ class DemoBundleService:
                     }
                 )
             else:
-                sid = all_sid.pop(0)
+                sid = sids_not_in_prename.pop(0)
 
                 assignment.append(
                     {
