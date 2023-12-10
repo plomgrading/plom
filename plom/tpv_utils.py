@@ -202,18 +202,17 @@ def getCode(tpv):
 
 
 def encodePaperPageVersion(paper_number, p, v):
-    """Encode some values as the short paper-page-version code - used
-    typically for collision detection.
+    """Encode some values as the short paper-page-version code - used typically for collision detection.
 
     Args:
-       test (int/str): the test number, 1 ≤ test ≤ 99999
+       test (int/str): the test number, 0 ≤ test ≤ 99999
        p (int/str): page number, 1 ≤ p ≤ 990
        v (int/str): version number, 1 ≤ v ≤ 909
 
     Returns:
        str: the short page-paper-version code
     """
-    assert int(paper_number) >= 1
+    assert int(paper_number) >= 0
     assert int(v) >= 1
     assert int(p) >= 1
     paper_number = str(paper_number).zfill(5)
@@ -234,7 +233,7 @@ def encodeTPV(test, p, v, o, code):
     """Encode some values as a TPV code.
 
     Args:
-       test (int/str): the test number, 1 ≤ test ≤ 99999
+       test (int/str): the test number, 0 ≤ test ≤ 99999
        p (int/str): page number, 1 ≤ p ≤ 990
        v (int/str): version number, 1 ≤ v ≤ 909
        o (int/str): position code, 0 ≤ code ≤ 4
@@ -243,7 +242,7 @@ def encodeTPV(test, p, v, o, code):
     Returns:
        str: the tpv code
     """
-    assert int(test) >= 1
+    assert int(test) >= 0
     assert int(v) >= 1
     assert int(p) >= 1
     assert int(o) >= 0 and int(o) <= 4
