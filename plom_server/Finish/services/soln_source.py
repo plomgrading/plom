@@ -94,7 +94,6 @@ class SolnSourceService:
     @transaction.atomic
     def take_solution_source_pdf_from_upload(self, version, in_memory_file):
         """Take the given solution source pdf and save it to the DB."""
-
         if version < 1 or version > SpecificationService.get_n_versions():
             raise ValueError(f"Version {version} is out of range")
         if not SolnSpecService.is_there_a_soln_spec():
@@ -131,7 +130,6 @@ class SolnSourceService:
 
     def _create_solution_images(self, version, doc):
         """Create one solution image for each question of the given version, for client."""
-
         # for each solution, glue the corresponding page images into a single row.
         for sqs_obj in SolnSpecQuestion.objects.all():
             # see https://pymupdf.readthedocs.io/en/latest/recipes-images.html#how-to-use-pixmaps-gluing-images

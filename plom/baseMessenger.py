@@ -1270,15 +1270,23 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
-                response = self.get(
-                    "/MK/solution",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "question": question,
-                        "version": version,
-                    },
-                )
+                # note - slightly different API call for legacy vs webplom
+                if self.is_legacy_server():
+                    response = self.get(
+                        "/MK/solution",
+                        json={
+                            "user": self.user,
+                            "token": self.token,
+                            "question": question,
+                            "version": version,
+                        },
+                    )
+                else:
+                    response = self.get(
+                        f"/MK/solution/{question}/{version}",
+                        json={"user": self.user, "token": self.token},
+                    )
+
                 response.raise_for_status()
                 # deprecated: new servers will 404
                 if response.status_code == 204:
