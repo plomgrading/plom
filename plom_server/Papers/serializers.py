@@ -133,7 +133,8 @@ class SolnSpecSerializer(serializers.ModelSerializer):
         # check that there is a solution for each question
         if len(self.data["solution"]) != spec.numberOfQuestions:
             raise ValueError(
-                "Number of solutions {len(solution)} does not match number of questions {spec.numberOfQuestions}"
+                f"Number of solutions {len(self.data['solution'])} does not match "
+                f"number of questions {spec.numberOfQuestions}"
             )
         # check that the solution numbers match question-numbers
         for sn in range(1, spec.numberOfQuestions + 1):
