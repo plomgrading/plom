@@ -9,7 +9,8 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 from ..models import StagingBundle, StagingImage
-from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
+from .util import check_bundle_object_is_neither_locked_nor_pushed
+from .util import update_thumbnail_after_rotation
 
 
 class ImageRotateService:
@@ -94,4 +95,4 @@ class ImageRotateService:
         staging_img.rotation %= 360
         staging_img.save()
 
-        self.update_thumbnail_after_rotation(staging_img, angle)
+        update_thumbnail_after_rotation(staging_img, angle)

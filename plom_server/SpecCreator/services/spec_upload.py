@@ -74,6 +74,11 @@ class SpecificationUploadService:
             except TOMLDecodeError as e:
                 raise ValueError(f"Unable to parse TOML: {e}") from e
 
+    def validate_spec(self):
+        SpecificationService.validate_spec_from_dict(
+            self.spec_dict,
+        )
+
     @transaction.atomic
     def save_spec(
         self,

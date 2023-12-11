@@ -30,24 +30,46 @@ class SpecEditorView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
-        context: Dict[str, Any] = {"success": False}
+        context: Dict[str, Any] = {
+            "success": False,
+            "msg": "Not able to accept that specification",
+        }
         data = request.POST
         spec = data.get("spec")
         if not spec:
             context["error_list"] = ["No spec provided"]
             return render(request, "SpecCreator/validation.html", context)
+        only_validate = data.get("which_action") == "validate"
         try:
             service = SpecificationUploadService(toml_string=spec)
-            service.save_spec()
+            if only_validate:
+                service.validate_spec()
+                context["msg"] = "Specification passes validity checks."
+            else:
+                service.save_spec()
+                context["msg"] = "Specification saved!"
             context["success"] = True
         except ValidationError as e:
             errlist = []
             for k, v in e.detail.items():
                 if isinstance(v, list) and len(v) == 1:
-                    errstr = f"{k}: {v[0]}"
-                else:
-                    errstr = str(v)
-                errlist.append(errstr)
+                    errlist.append(f"{k}: {v[0]}")
+                    continue
+                if isinstance(v, dict):
+                    # this big ol pile of spaghetti renders errors within questions
+                    for kk, vv in v.items():
+                        if isinstance(vv, dict):
+                            for kkk, vvv in vv.items():
+                                if isinstance(vvv, list) and len(vvv) == 1:
+                                    errstr = f"{k}: {kk}: {kkk}: {vvv[0]}"
+                                else:
+                                    errstr = f"{k}: {kk}: {kkk}: {str(vvv)}"
+                                errlist.append(errstr)
+                        else:
+                            errlist.append(f"{k}: {kk}: {str(vv)}")
+                    continue
+                # last ditch effort if neither of the above: make 'em into strings
+                errlist.append(f"{k}: {str(v)}")
             context["error_list"] = errlist
         except (ValueError, RuntimeError) as e:
             context["error_list"] = [str(e)]

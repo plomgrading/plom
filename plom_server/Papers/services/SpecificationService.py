@@ -26,6 +26,31 @@ from ..serializers import SpecSerializer
 log = logging.getLogger("ValidatedSpecService")
 
 
+def validate_spec_from_dict(spec_dict: Dict[str, Any]) -> bool:
+    """Load a test spec from a dictionary and validate it.
+
+    Will call the SpecSerializer on the proposed spec dict and validate.
+
+    Args:
+        spec_dict: a dictionary of the proposed spec.
+
+    Returns:
+        True if the spec seems valid.
+
+    Raises:
+        ValueError: explaining what is invalid.
+        ValidationError: in this case the ``.detail`` field will contain
+            a list of what is wrong.
+    """
+    # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
+    # Also, this function does not care if there are no questions in the spec dictionary. It assumes
+    # the serializer/SpecVerifier will catch it.
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
+    return serializer.is_valid()
+
+
 @transaction.atomic
 def load_spec_from_dict(
     spec_dict: Dict[str, Any],

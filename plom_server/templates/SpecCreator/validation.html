@@ -1,11 +1,13 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% if success %}
-    <p>
-        Specification saved! <a href="{% url 'spec_summary' %}">View here</a>
-    </p>
+    <h4 class="text-success">{{ msg }}</h4>
 {% else %}
+    <h4 class="text-danger">{{ msg }}</h4>
+{% endif %}
+{% if not success %}
     {% for err in error_list %}<p class="text-danger">{{ err }}</p>{% endfor %}
 {% endif %}
