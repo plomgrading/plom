@@ -89,9 +89,19 @@ class SolnSpecView(ManagerRequiredView):
                 context["error_list"].append(f"{e}")
             except ValidationError as errs:
                 for k, v in errs.detail.items():
+                    if isinstance(v, list) and len(v) == 1:
+                        context["error_list"].append(f"{k}: {v[0]}")
+                        continue
                     if k == "solution" and isinstance(v, dict):
+                        # this big ol pile of spaghetti renders errors within questions
                         for j, u in v.items():
-                            context["error_list"].append(f"solution {j}: {u}")
+                            if isinstance(u, dict):
+                                for i, w in u.items():
+                                    if isinstance(w, list) and len(w) == 1:
+                                        (w,) = w
+                                    context["error_list"].append(f"{k} {j}: {i}: {w}")
+                            else:
+                                context["error_list"].append(f"{k} {j}: {u}")
                     else:
                         context["error_list"].append(f"{k}: {v}")
 
