@@ -6,8 +6,14 @@
 {% if success %}
     <h4 class="text-success">{{ msg }}</h4>
 {% else %}
-    <h4 class="text-danger">{{ msg }}</h4>
-{% endif %}
-{% if not success %}
-    {% for err in error_list %}<p class="text-danger">{{ err }}</p>{% endfor %}
+    <div class="alert alert-warning">
+        <h4 class="text-danger">{{ msg }}</h4>
+        <ul class="list-group">
+            {% for err in error_list %}
+                <li class="list-group-item">
+                    <span class="text-warning"><i class="bi bi-exclamation-diamond-fill"></i></span> {{ err }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 {% endif %}
