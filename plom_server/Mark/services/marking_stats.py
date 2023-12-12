@@ -124,7 +124,7 @@ class MarkingStatsService:
                 question_number=question,
             ).prefetch_related("latest_annotation")
             if version:
-                completed_tasks.filter(question_version=version)
+                completed_tasks = completed_tasks.filter(question_version=version)
         except MarkingTask.DoesNotExist:
             return hist
         for X in completed_tasks:
