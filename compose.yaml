@@ -28,6 +28,7 @@ services:
       - postgres
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
+      - "PLOM_DATABASE_HOSTNAME=postgres"
   postgres:
     image: postgres:13
     volumes:
