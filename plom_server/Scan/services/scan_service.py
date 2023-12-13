@@ -1005,6 +1005,7 @@ class ScanService:
                 "info": {},
                 "order": f"{img.bundle_order}".zfill(n_digits),  # order is 1-indexed
                 "rotation": img.rotation,
+                "n_qr_read": len(img.parsed_qr),
             }
 
         for img in bundle_obj.stagingimage_set.filter(

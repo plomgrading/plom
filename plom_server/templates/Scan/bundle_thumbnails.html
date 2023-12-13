@@ -66,8 +66,8 @@
             <!-- some hackery here to persist the val of show_known, show_completed_extras in local storage -->
             <!-- see https://stackoverflow.com/questions/66838886/alpine-js-with-local-storage-x-data-showing-old-wrong-value-after-page-refresh -->
             <div class="card"
-                 x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true' }"
-                 x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val));">
+                 x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true', show_high_qr: localStorage.getItem('show_high_qr')=='true', }"
+                 x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val)); $watch('show_high_qr', val => localStorage.setItem('show_high_qr', val)); ">
                 <div class="card-header">
                     <div class="row">
                         <div class="col-auto">
@@ -80,6 +80,10 @@
                                    x-model="show_completed_extras">
                             <label for="check_completed_extras">Show completed extras</label>
                         </div>
+                        <div class="col-auto">
+                            <input type="checkbox" id="check_hide_high_qr" x-model="show_high_qr">
+                            <label for="check_hide_high_qr">Show 3+ qr</label>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-2 pe-0">
@@ -88,7 +92,8 @@
                         <div class="row row-cols-6 gy-1 gx-1">
                             {% for pg in pages %}
                                 {% if pg.status == "known" %}
-                                    <div class="col" x-show="show_known">
+                                    <div class="col"
+                                         x-show="show_known & ( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                         <div class="card text-center bg-success-subtle p-1"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -109,7 +114,8 @@
                                     <!-- check if it has paper+question info -->
                                     {% if pg.info.paper_number %}
                                         <!-- extra page info is complete -->
-                                        <div class="col" x-show="show_completed_extras">
+                                        <div class="col"
+                                             x-show="show_completed_extras & ( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                             <div class="card text-center bg-primary-subtle col p-1"
                                                  data-bs-toggle="tooltip"
                                                  data-bs-placement="top"
@@ -118,7 +124,7 @@
                                             </div>
                                         </div>
                                     {% else %}
-                                        <div class="col">
+                                        <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                             <!-- extra page info required -->
                                             <div class="card text-center bg-info-subtle col p-1  border-info border-2"
                                                  data-bs-toggle="tooltip"
@@ -147,7 +153,7 @@
                                         </div>
                                     </div>
                                 {% elif pg.status == "discard" %}
-                                    <div class="col">
+                                    <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                         <div class="card text-center bg-dark-subtle col p-1"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
