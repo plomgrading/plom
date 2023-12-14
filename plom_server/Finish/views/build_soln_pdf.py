@@ -23,16 +23,11 @@ class BuildSolutionsView(ManagerRequiredView):
 
         # Compute some counts required for the page
         n_papers = sum([1 for x in all_paper_status if x["scanned"]])
-        n_not_ready = sum(
-            [1 for x in all_paper_status if x["scanned"] and not x["identified"]]
-        )
         n_ready = sum(
             [
                 1
                 for x in all_paper_status
-                if x["scanned"]
-                and x["identified"]
-                and x["build_soln_status"] != "Complete"
+                if x["scanned"] and x["build_soln_status"] != "Complete"
             ]
         )
         n_outdated = sum([1 for x in all_paper_status if x["outdated"]])
@@ -54,7 +49,6 @@ class BuildSolutionsView(ManagerRequiredView):
             {
                 "papers": all_paper_status,
                 "n_papers": n_papers,
-                "n_not_ready": n_not_ready,
                 "n_ready": n_ready,
                 "n_outdated": n_outdated,
                 "n_errors": n_errors,

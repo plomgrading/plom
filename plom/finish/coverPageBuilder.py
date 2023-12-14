@@ -89,6 +89,10 @@ def makeCover(
     bullet = "\N{Bullet}"
     if info:
         sname, sid = info
+        if sname == None:
+            sname = "Not ID'd yet"
+        if sid == None:
+            sid = "Not ID'd yet"
         tw.append((m + 100, vpos), f"{bullet} Name: {sname}", fontsize=big_font)
         vpos += deltav
         tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
