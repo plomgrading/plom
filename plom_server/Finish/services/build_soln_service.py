@@ -415,7 +415,7 @@ def huey_build_soln_for_paper(
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bss = BuildSolutionService()
-    pdf_as_bytes = bss.assemble_solution_for_paper(paper_number)
+    pdf_as_bytes = bss.assemble_solution_for_paper(paper_number, watermark=True)
     soln_pdf_name = f"solution_{paper_number}.pdf"
 
     if _debug_be_flaky:
