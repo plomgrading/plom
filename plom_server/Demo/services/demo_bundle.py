@@ -145,6 +145,67 @@ class DemoBundleService:
 
         return assignment
 
+    def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
+        """Hide qr-codes for demo purposes.
+
+        On last page put black square at bottom of page to hide 2
+        qr-codes, and on second-last page, put black squares at the
+        top of the page to hide 1 qr-code.
+
+        Args:
+            pdf_doc (fitz.Document): a pdf document of a test-paper.
+
+        Returns:
+            None, but modifies ``pdf_doc``  as a side effect.
+
+        """
+        # magic numbers for obscuring the qr-codes
+        left = 15
+        right = 90
+        # grab the bounding box of the page to get its height/width
+        bnd = pdf_doc[-1].bound()
+        pdf_doc[-1].draw_rect(
+            fitz.Rect(left, bnd.height - right, right, bnd.height - left),
+            color=(0, 0, 0),
+            fill=(0.2, 0.2, 0.75),
+            radius=0.05,
+        )
+        pdf_doc[-1].draw_rect(
+            fitz.Rect(
+                bnd.width - right,
+                bnd.height - right,
+                bnd.width - left,
+                bnd.height - left,
+            ),
+            color=(0, 0, 0),
+            fill=(0.2, 0.2, 0.75),
+            radius=0.05,
+        )
+
+        bnd = pdf_doc[-2].bound()
+        pdf_doc[-2].draw_rect(
+            fitz.Rect(
+                bnd.width - right,
+                left,
+                bnd.width - left,
+                right,
+            ),
+            color=(0, 0, 0),
+            fill=(0.2, 0.2, 0.75),
+            radius=0.05,
+        )
+        pdf_doc[-2].draw_rect(
+            fitz.Rect(
+                left,
+                left,
+                right,
+                right,
+            ),
+            color=(0, 0, 0),
+            fill=(0.2, 0.2, 0.75),
+            radius=0.05,
+        )
+
     def make_last_page_with_wrong_version(
         self, pdf_doc: fitz.Document, paper_number: int
     ) -> None:
@@ -272,7 +333,7 @@ class DemoBundleService:
             # make a qr-code for this paper, but for second-last page.
             qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
             pdf_doc[-1].insert_text(
-                (120, 200),
+                (120, 50),
                 text="This is a page has a qr-code from the previous page",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
@@ -286,7 +347,7 @@ class DemoBundleService:
             -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
         )
 
-    def insert_page_from_another_assessment(self, pdf_doc):
+    def append_page_from_another_assessment(self, pdf_doc):
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -303,7 +364,7 @@ class DemoBundleService:
             # these are called "qr_0001_pg1_4.png" etc.
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
-                (120, 200),
+                (120, 50),
                 text="This is a page from a different assessment",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
@@ -376,6 +437,9 @@ class DemoBundleService:
         duplicate_pages=[],
         duplicate_qr=[],
         wrong_version=[],
+        wrong_assessment=[],
+        out_of_range_papers=[],
+        obscure_qr_papers=[],
     ):
         """Scribble on some of the papers to create a bundle, along with various others inclusions."""
         # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
@@ -383,6 +447,7 @@ class DemoBundleService:
         # garbage_page_papers = list of paper_numbers to which we append a garbage page
         # duplicate_pages = a list of papers to have their final page duplicated.
         # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
+        # wrong_assessment = list of paper_numbers to which we append a page from a different assessment.
 
         # A complete collection of the pdfs created
         with fitz.open() as all_pdf_documents:
@@ -392,6 +457,9 @@ class DemoBundleService:
                     if not paper["prenamed"]:
                         scribble_name_and_id(pdf_document, paper["id"], paper["name"])
                     paper_number = int(paper["paper_number"])
+
+                    if paper_number in obscure_qr_papers:
+                        self.obscure_qr_codes_in_paper(pdf_document)
 
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
@@ -427,6 +495,10 @@ class DemoBundleService:
                         self.append_garbage_page(pdf_document)
 
                     # TODO: Append out-of-range papers and wrong public codes to some bundles
+                    if paper_number in wrong_assessment:
+                        self.append_page_from_another_assessment(pdf_document)
+                    if paper_number in out_of_range_papers:
+                        self.append_out_of_range_paper_and_page(pdf_document)
 
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
@@ -486,7 +558,10 @@ class DemoBundleService:
                 scrap_page_papers=bundle["scrap_page_papers"],
                 garbage_page_papers=bundle["garbage_page_papers"],
                 duplicate_pages=bundle["duplicate_pages"],
-                duplicate_qr=bundle["duplicate_qr"],
-                wrong_version=bundle["wrong_version"],
+                duplicate_qr=bundle["duplicate_qr_papers"],
+                wrong_version=bundle["wrong_version_papers"],
+                wrong_assessment=bundle["wrong_assessment_papers"],
+                out_of_range_papers=bundle["out_of_range_papers"],
+                obscure_qr_papers=bundle["obscure_qr_papers"],
             )
         print("^" * 40)

@@ -17,7 +17,9 @@ duplicate_qr_papers = [3, 4]
 wrong_version_papers = [5, 6]
 duplicate_page_papers = [7, 8]
 scrap_page_papers = [7, 8]
-
+wrong_assessment_papers = [1,2]
+out_of_range_papers=[5]
+obscure_qr_papers=[1,2,3]
 
 # bundle 2
 [[bundles]]
@@ -26,7 +28,7 @@ last_paper = 20
 extra_page_papers = [19, 20]
 scrap_page_papers = [19, 20]
 discard_pages=[51, 54, 60, 64]
-
+obscure_qr_papers=[11,12,13]
 
 # bundle 3
 [[bundles]]
@@ -45,7 +47,9 @@ extra_page_papers = [31, 32]
 # bundle 5
 [[bundles]]
 first_paper = 41
-last_paper = 70
+last_paper = 50
+wrong_assessment_papers = [49,50]
+out_of_range_papers=[45]
 
 
 # HW bundle 1
