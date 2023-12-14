@@ -30,7 +30,9 @@ class BuildSolutionsView(ManagerRequiredView):
             [
                 1
                 for x in all_paper_status
-                if x["identified"] and x["build_soln_status"] == "To Do"
+                if x["scanned"]
+                and x["identified"]
+                and x["build_soln_status"] != "Complete"
             ]
         )
         n_outdated = sum([1 for x in all_paper_status if x["outdated"]])

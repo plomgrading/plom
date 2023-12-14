@@ -64,6 +64,8 @@
             {% elif n_complete %}
                 <a href="{% url 'build_all_soln' %}" class="btn btn-warning">Download zip of solutions</a>
                 warning - not all solutions built
+            {% else %}
+                <a href="{% url 'build_all_soln' %}" class="btn btn-warning disabled">Download zip of solutions</a>
             {% endif %}
         </div>
     </div>
