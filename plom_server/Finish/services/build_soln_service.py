@@ -175,7 +175,7 @@ class BuildSolutionService:
                             dest_doc, f"Solutions for {sid_sname_pair[0]}"
                         )
                 else:
-                    fname = f"{shortname}_solution_{paper_number}.pdf"
+                    fname = f"{shortname}_solution_{paper_number:04}.pdf"
 
                 return (dest_doc.tobytes(), fname)
 
