@@ -98,7 +98,10 @@ def makeCover(
         tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
         vpos += deltav
     if test_num:
-        text = f"{bullet} Test number: {test_num:04}"
+        if isinstance(test_num, int):
+            text = f"{bullet} Test number: {test_num:04}"
+        else:
+            text = f"{bullet} Test number: {test_num}"
         tw.append((m + 100, vpos), text, fontsize=big_font)
         vpos += deltav
 
