@@ -29,16 +29,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            soln_pdf_bytes = BuildSolutionService().assemble_solution_for_paper(
+            pdf_bytes, fname = BuildSolutionService().assemble_solution_for_paper(
                 options["paper"], watermark=options["watermark"]
             )
         except ValueError as err:
             raise CommandError(err)
 
-        fname = f"solution_for_paper_{options['paper']}.pdf"
         dest_dir = Path(options["directory"])
         dest_dir.mkdir(exist_ok=True)
         f_path = dest_dir / fname
 
         with f_path.open("wb") as fh:
-            fh.write(soln_pdf_bytes)
+            fh.write(pdf_bytes)

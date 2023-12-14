@@ -9,7 +9,7 @@ from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import zipfly
 
 
@@ -31,6 +31,7 @@ from Papers.models import (
     Paper,
     QuestionPage,
 )
+from Papers.services import SpecificationService
 from Finish.models import SolutionSourcePDF, BuildSolutionPDFChore
 
 
@@ -119,7 +120,20 @@ class BuildSolutionService:
             ), f"Text didn't fit: is SID label too long? {watermark_text}"
             pg.draw_rect(wm_rect, color=[0, 0, 0], stroke_opacity=0.25)
 
-    def assemble_solution_for_paper(self, paper_number: int, watermark=False) -> bytes:
+    def assemble_solution_for_paper(
+        self, paper_number: int, *, watermark: Optional[bool] = False
+    ) -> Tuple[bytes, Path]:
+        """Reassemble the solutions for a particular question into a PDF file, returning bytes.
+
+        Args:
+            paper_number: which paper to build solutions for.
+
+        Keyword Args:
+            watermark: whether to paint watermarked student numbers.
+
+        Returns:
+            A tuple of the bytes for a PDF file and a suggested filename.
+        """
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist:
@@ -152,14 +166,18 @@ class BuildSolutionService:
                     # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
                     dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
 
-                if watermark:
-                    sid_sname_pair = reas.get_paper_id_or_none(paper_obj)
-                    if sid_sname_pair:
+                shortname = SpecificationService.get_shortname()
+                sid_sname_pair = reas.get_paper_id_or_none(paper_obj)
+                if sid_sname_pair:
+                    fname = f"{shortname}_solution_{sid_sname_pair[0]}.pdf"
+                    if watermark:
                         self.watermark_pages(
                             dest_doc, f"Solutions for {sid_sname_pair[0]}"
                         )
+                else:
+                    fname = f"{shortname}_solution_{paper_number}.pdf"
 
-                return dest_doc.tobytes()
+                return (dest_doc.tobytes(), fname)
 
     def reset_single_solution_build(
         self, paper_num: int, *, wait: Optional[int] = None
@@ -416,8 +434,9 @@ def huey_build_soln_for_paper(
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bss = BuildSolutionService()
-    pdf_as_bytes = bss.assemble_solution_for_paper(paper_number, watermark=True)
-    soln_pdf_name = f"solution_{paper_number}.pdf"
+    pdf_bytes, soln_pdf_name = bss.assemble_solution_for_paper(
+        paper_number, watermark=True
+    )
 
     if _debug_be_flaky:
         for i in range(5):
@@ -432,7 +451,7 @@ def huey_build_soln_for_paper(
     with transaction.atomic():
         chore = BuildSolutionPDFChore.objects.select_for_update().get(pk=tracker_pk)
         if not chore.obsolete:
-            chore.pdf_file = File(io.BytesIO(pdf_as_bytes), name=soln_pdf_name)
+            chore.pdf_file = File(io.BytesIO(pdf_bytes), name=soln_pdf_name)
             chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
