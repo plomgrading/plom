@@ -2,16 +2,16 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import arrow
-import fitz
 import io
 from pathlib import Path
 import random
 import tempfile
 import time
 from typing import Any, Dict, List, Optional, Tuple
-import zipfly
 
+import arrow
+import fitz
+import zipfly
 
 from django_huey import db_task, get_queue
 
@@ -38,7 +38,7 @@ from Finish.models import SolutionSourcePDF, BuildSolutionPDFChore
 class BuildSolutionService:
     """Class that contains helper functions for sending data to plom-finish."""
 
-    def get_all_paper_status_for_solution_build(self):
+    def get_all_paper_status_for_solution_build(self) -> List[Dict[str, any]]:
         """Get the status information for all papers for solution build.
 
         Returns:
