@@ -50,10 +50,23 @@
                         <h5>Bundle Contains:</h5>
                         {% for paper,pages in papers_pages_list %}
                             {% with pg=pages|dictsort:"order"|first %}
-                                <button class="btn m-1 btn-outline-success"
-                                        hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
-                                        hx-swap="innerHTML"
-                                        hx-target="#updatePage">paper {{ paper }}</button>
+                                {% if paper in incomplete_papers_list %}
+                                    <button class="btn m-1 btn-warning"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            data-bs-title="Is missing pages"
+                                            hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
+                                            hx-swap="innerHTML"
+                                            hx-target="#updatePage">paper {{ paper }}</button>
+                                {% else %}
+                                    <button class="btn m-1 btn-success"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            data-bs-title="Is complete"
+                                            hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
+                                            hx-swap="innerHTML"
+                                            hx-target="#updatePage">paper {{ paper }}</button>
+                                {% endif %}
                             {% endwith %}
                         {% endfor %}
                     </div>
