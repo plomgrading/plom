@@ -122,7 +122,7 @@ class BuildSolutionService:
 
     def assemble_solution_for_paper(
         self, paper_number: int, *, watermark: Optional[bool] = False
-    ) -> Tuple[bytes, Path]:
+    ) -> Tuple[bytes, str]:
         """Reassemble the solutions for a particular question into a PDF file, returning bytes.
 
         Args:
