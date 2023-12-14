@@ -145,20 +145,21 @@ class BuildSolutionService:
             cp_path = reas.build_paper_cover_page(
                 Path(tmpdir), paper_obj, solution=True
             )
-            dest_doc = fitz.open(cp_path)
-        # now append required soln pages.
-        for qn, v in qv_map.items():
-            pg_list = SolnSpecQuestion.objects.get(solution_number=qn).pages
-            dest_doc.insert_pdf(
-                soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1
-            )  # pymupdf pages are 0-indexed
+            with fitz.open(cp_path) as dest_doc:
+                # now append required soln pages.
+                for qn, v in qv_map.items():
+                    pg_list = SolnSpecQuestion.objects.get(solution_number=qn).pages
+                    # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
+                    dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
 
-        if watermark:
-            sid_sname_pair = reas.get_paper_id_or_none(paper_obj)
-            if sid_sname_pair:
-                self.watermark_pages(dest_doc, f"Solutions for {sid_sname_pair[0]}")
+                if watermark:
+                    sid_sname_pair = reas.get_paper_id_or_none(paper_obj)
+                    if sid_sname_pair:
+                        self.watermark_pages(
+                            dest_doc, f"Solutions for {sid_sname_pair[0]}"
+                        )
 
-        return dest_doc.tobytes()
+                return dest_doc.tobytes()
 
     def reset_single_solution_build(
         self, paper_num: int, *, wait: Optional[int] = None
