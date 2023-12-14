@@ -49,7 +49,7 @@
     <div class="card m-2">
         <div class="card-body">
             {% if all_soln_pdf_present %}
-                <button class="btn btn-primary" href="" disabled>Build solutions</button>
+                <a class="btn btn-primary" href="{% url 'build_soln' %}">Build solutions</a>
                 <ul>
                     <li>Build individual solution pdfs for each paper &mdash; not yet working</li>
                 </ul>

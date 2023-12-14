@@ -1,0 +1,160 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Build solution pdfs
+{% endblock title %}
+{% block page_heading %}
+    Build solution pdfs
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-75">
+        <div class="card-title">
+            <button hx-post="{% url 'build_all_soln' %}"
+                    href=""
+                    class="btn btn-success m-2">Build all solutions (incl. outdated)</button>
+            <button hx-delete="{% url 'build_soln_cancel_queued' %}"
+                    class="btn btn-warning m-2">Cancel queued</button>
+            <button hx-delete="{% url 'build_all_soln' %}" class="btn btn-danger m-2">Delete all</button>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>{{ n_papers }} scanned papers</li>
+                {% if n_not_ready %}
+                    <li>
+                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>{{ n_not_ready }} scanned papers not yet ready for solution-build
+                    </li>
+                {% endif %}
+                <li>{{ n_ready }} papers ready for solution-build (identified but solution not yet built)</li>
+                {% if n_complete == n_papers %}
+                    <li>
+                        <i class="bi bi-check-circle text-success"></i> all solutions built
+                    </li>
+                {% else %}
+                    <li>{{ n_complete }} solutions built</li>
+                {% endif %}
+                {% if n_outdated %}
+                    <li>
+                        <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                        {{ n_outdated }} solutions are out of date (paper identified since solution-build)
+                    </li>
+                {% endif %}
+                {% if n_queued %}
+                    <li>
+                        <i class="bi bi-clock-history text-info"></i>{{ n_queued }} papers queued for solution-build
+                        <a href="{% url 'build_soln' %}"
+                           class="btn btn-info m-4"
+                           id="reload_button">reload page</a>
+                        (page will auto-reload after 30s)
+                    </li>
+                {% endif %}
+                {% if n_errors %}
+                    <li>
+                        <i class="bi bi-exclamation-diamond-fill text-danger"></i> {{ n_errors }} errors in solution-build
+                    </li>
+                {% endif %}
+            </ul>
+            {% if n_outdated %}
+                <a href="{% url 'build_all_soln' %}" class="btn btn-danger">Download zip of solutions</a> some papers outdated
+            {% elif n_complete == n_papers %}
+                <a href="{% url 'build_all_soln' %}" class="btn btn-success">Download zip of solutions</a>
+            {% elif n_complete %}
+                <a href="{% url 'build_all_soln' %}" class="btn btn-warning">Download zip of solutions</a>
+                warning - not all solutions built
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Identified</th>
+                    <th scope="col">When ID'd</th>
+                    <th scope="col">Build Status</th>
+                    <th scope="col">When built</th>
+                    <th scope="col">Action</th>
+                </tr>
+                {% for row in papers %}
+                    {% if row.scanned %}
+                        <tr style="{% if row.obsolete %} text-decoration: line-through;
+                                   {% endif %}">
+                            <td>{{ row.paper_num }}</td>
+                            <td>
+                                {% if row.identified %}
+                                    <i class="bi bi-check-circle text-success"></i> {{ row.student_id }}
+                                {% else %}
+                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.when_id_done_humanised }}</td>
+                            <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
+                            <td>
+                                {% if row.identified %}
+                                    {% if row.build_soln_status == "Starting" or row.build_soln_status == "Queued" or row.build_soln_status == "Running" %}
+                                        <i class="bi bi-clock-history text-info"></i>
+                                    {% elif row.build_soln_status == "Error" %}
+                                        <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    {% elif row.build_soln_status == "Complete" %}
+                                        <i class="bi bi-check-circle text-success"></i>
+                                    {% endif %}
+                                    {{ row.build_soln_status }}
+                                {% else %}
+                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> not ready
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.build_soln_time %}
+                                    {% if row.outdated %}
+                                        <i class="bi bi-exclamation-diamond-fill text-danger"> outdated </i>
+                                    {% else %}
+                                        {{ row.build_soln_time_humanised }}
+                                    {% endif %}
+                                {% else %}
+                                    <!-- n/a -->
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.build_soln_time %}
+                                    {% if row.outdated %}
+                                        <a href="{% url 'build_one_soln' row.paper_num %}"
+                                           target="_blank"
+                                           class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
+                                        <button hx-put="{% url 'build_one_soln' row.paper_num %}"
+                                                class="btn btn-warning">
+                                            <i class="bi bi-exclamation-diamond-fill">
+                                                re-build soln
+                                            </i>
+                                        </button>
+                                        <button hx-delete="{% url 'build_one_soln' row.paper_num %}"
+                                                class="btn btn-success">delete</button>
+                                    {% else %}
+                                        <a href="{% url 'build_one_soln' row.paper_num %}"
+                                           target="_blank"
+                                           class="btn btn-success">view</a>
+                                        <button hx-delete="{% url 'build_one_soln' row.paper_num %}"
+                                                class="btn btn-warning">delete</button>
+                                    {% endif %}
+                                {% else %}
+                                    {% if row.identified and row.build_soln_status != "Starting" and row.build_soln_status != "Queued" and row.build_soln_status != "Running" %}
+                                        <button hx-post="{% url 'build_one_soln' row.paper_num %}"
+                                                class="btn btn-success">build soln</button>
+                                    {% else %}
+                                        <!-- n/a -->
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    {% if n_queued %}
+        <!-- reload page after 30s if any queued papers -->
+        <script>setTimeout("location.reload(true);",30000);</script>
+    {% endif %}
+{% endblock main_content %}
