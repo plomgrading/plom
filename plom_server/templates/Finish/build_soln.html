@@ -23,12 +23,6 @@
         <div class="card-body">
             <ul>
                 <li>{{ n_papers }} scanned papers</li>
-                {% if n_not_ready %}
-                    <li>
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>{{ n_not_ready }} scanned papers not yet ready for solution-build
-                    </li>
-                {% endif %}
-                <li>{{ n_ready }} papers ready for solution-build (identified but solution not yet built)</li>
                 {% if n_complete == n_papers %}
                     <li>
                         <i class="bi bi-check-circle text-success"></i> all solutions built
@@ -95,7 +89,7 @@
                             <td>{{ row.when_id_done_humanised }}</td>
                             <!-- Note: uses the symbolic constants defined in HueyTaskTracker -->
                             <td>
-                                {% if row.identified %}
+                                {% if row.scanned %}
                                     {% if row.build_soln_status == "Starting" or row.build_soln_status == "Queued" or row.build_soln_status == "Running" %}
                                         <i class="bi bi-clock-history text-info"></i>
                                     {% elif row.build_soln_status == "Error" %}

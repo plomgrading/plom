@@ -269,9 +269,7 @@ class BuildSolutionService:
         """Queue the solution build for all all papers that have been used."""
         # first work out which papers have been used (ie have any pages)
         for data in self.get_all_paper_status_for_solution_build():
-            # must be ID'd and scanned to be ready for solution build
-            if not data["identified"]:
-                continue
+            # must be scanned to be ready for solution build
             if not data["scanned"]:
                 continue
             # check if already queued or complete
