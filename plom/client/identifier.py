@@ -209,6 +209,8 @@ class IDClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "identifier.ui", self)
         # TODO: temporary workaround
         self.ui = self
+        self.ui.explainButton0.setText("FAQ:\nwhy confirm\nprenames?")
+        self.ui.explainButton0.clicked.connect(self.prenamed_help)
 
         # instance vars that get initialized later
         # Save the local temp directory for image files and the class list.
@@ -474,6 +476,7 @@ class IDClient(QWidget):
         self.ui.predictionBox1.setStyleSheet(no_style)
         self.ui.predButton1.hide()
         self.ui.predictionBox1.hide()
+        self.ui.explainButton0.hide()
 
         # Handle case-by-case: no predictions, one prediction or two predictions
         if not all_predictions_for_paper:
@@ -495,6 +498,7 @@ class IDClient(QWidget):
                 )
                 self.ui.predButton0.setText("Confirm\n&Prename")
                 self.ui.predictionBox0.setStyleSheet(notice_blue_style)
+                self.ui.explainButton0.show()
             elif pred["predictor"] in ("MLLAP", "MLGreedy"):
                 self.ui.predictionBox0.setTitle(
                     f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
@@ -937,3 +941,17 @@ class IDClient(QWidget):
             self.moveToNextUnID()  # doesn't
             self.updateProgress()
         return
+
+    def prenamed_help(self):
+        InfoMsg(
+            self,
+            "<p>It might seem unnecessary to confirm the prenamed papers "
+            "but there are several situations to watch out for:</p>"
+            "<ul>"
+            "<li>Student X wrote paper N: they likely scratched out the "
+            "name and substituted their own.</li>"
+            "<li>Student X did not sit the assessment, but the prenamed "
+            "paper was accidentally scanned: it will be "
+            "unsigned&mdash;click the &ldquo;Blank&rdquo; button.</li>"
+            "</ul>",
+        ).exec()
