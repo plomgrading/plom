@@ -38,7 +38,7 @@ from Finish.models import SolutionSourcePDF, BuildSolutionPDFChore
 class BuildSolutionService:
     """Class that contains helper functions for sending data to plom-finish."""
 
-    def get_all_paper_status_for_solution_build(self) -> List[Dict[str, any]]:
+    def get_all_paper_status_for_solution_build(self) -> List[Dict[str, Any]]:
         """Get the status information for all papers for solution build.
 
         Returns:
