@@ -486,7 +486,7 @@ class ReassembleService:
                 status[pn]["last_update_humanised"] = arrow.get(
                     status[pn]["last_update"]
                 ).humanize()
-            if status[pn]["reassembled_time"]:
+            if status[pn]["reassembled_time"] and status[pn]["last_update"]:
                 if status[pn]["reassembled_time"] < status[pn]["last_update"]:
                     status[pn]["outdated"] = True
 

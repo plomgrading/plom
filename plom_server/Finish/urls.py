@@ -15,6 +15,10 @@ from .views import (
     SolnSpecView,
     SolnSourcesView,
     TemplateSolnSpecView,
+    BuildSolutionsView,
+    StartAllBuildSoln,
+    StartOneBuildSoln,
+    CancelQueuedBuildSoln,
 )
 
 
@@ -60,4 +64,16 @@ urlpatterns = [
         name="soln_source_upload",
     ),
     path("solutions/sources", SolnSourcesView.as_view(), name="soln_sources"),
+    path("build_soln/", BuildSolutionsView.as_view(), name="build_soln"),
+    path(
+        "build_soln/<int:paper_number>",
+        StartOneBuildSoln.as_view(),
+        name="build_one_soln",
+    ),
+    path("build_soln/all", StartAllBuildSoln.as_view(), name="build_all_soln"),
+    path(
+        "build_soln/queued",
+        CancelQueuedBuildSoln.as_view(),
+        name="build_soln_cancel_queued",
+    ),
 ]

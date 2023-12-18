@@ -165,6 +165,12 @@ class Command(BaseCommand):
     def run_randomarker(self, *, port):
         # TODO: hardcoded http://
         srv = f"http://localhost:{port}"
+
+        # rando-id and then rando-mark
+        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
+        print(f"RandoIDing!  calling: {cmd}")
+        subprocess.check_call(split(cmd))
+
         cmds = (
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker1 -w demoMarker1 --partial 25",
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
@@ -173,10 +179,6 @@ class Command(BaseCommand):
         for cmd in cmds:
             print(f"RandoMarking!  calling: {cmd}")
             subprocess.check_call(split(cmd))
-
-        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
-        print(f"RandoIDing!  calling: {cmd}")
-        subprocess.check_call(split(cmd))
 
     def upload_solutions(self):
         from Finish import useful_files_for_testing as useful_files
