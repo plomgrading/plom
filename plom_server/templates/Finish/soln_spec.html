@@ -53,6 +53,9 @@
                 <button class="btn btn-danger"
                         hx-delete="{% url 'soln_spec' %}"
                         hx-confirm="Are you sure?">remove solution spec</button>
+                <p>
+                    Note that removing the solution spec will remove any solution source pdfs you have uploaded and render any built solution pdfs obsolete.
+                </p>
             </div>
         </div>
     {% else %}

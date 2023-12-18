@@ -23,6 +23,7 @@
                 You have uploaded {{ number_of_soln_pdfs }} of {{ versions }} source pdfs
                 {% if number_of_soln_pdfs == versions %}<i class="bi bi-check-circle text-success fs-4"></i>{% endif %}
             </p>
+            <p>Note that deleting a solution source pdf will invalidate any built solution pdfs.</p>
         </div>
     </div>
     {% for version,soln_source in uploaded_soln_sources.items %}

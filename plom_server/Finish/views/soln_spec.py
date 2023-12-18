@@ -15,7 +15,7 @@ from rest_framework.serializers import ValidationError
 
 from Base.base_group_views import ManagerRequiredView
 
-from ..services import TemplateSolnSpecService
+from ..services import TemplateSolnSpecService, BuildSolutionService, SolnSourceService
 from Papers.services import SolnSpecService
 
 
@@ -38,6 +38,9 @@ class SolnSpecView(ManagerRequiredView):
         return render(request, "Finish/soln_spec.html", context=context)
 
     def delete(self, request):
+        # remove any uploaded sources, and make any built soln pdfs obsolete.
+        BuildSolutionService().reset_all_soln_build()
+        SolnSourceService().remove_all_solution_pdf()
         SolnSpecService.remove_soln_spec()
         return HttpResponseClientRedirect(reverse("soln_spec"))
 
