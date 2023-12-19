@@ -10,8 +10,8 @@ from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
+    MarkingTaskTagService,
     page_data,
-    mark_task_tags,
 )
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
@@ -188,11 +188,11 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
         # these are index by the tag_pk and the user_pk respectively
         # hence there is a little bit of work to check if a given user is already "attn"
         # consequently make a list of all the markers and all the attn-tags they would get
-        all_tags = mark_task_tags.get_all_marking_task_tags()
+        all_tags = MarkingTaskTagService().get_all_marking_task_tags()
         all_markers = User.objects.filter(groups__name="marker")
         all_attn_marker_tag_text = [f"@{X.username}" for X in all_markers]
         # all the current tags for this task, and those that are attn_marker and otherwise
-        task_tags = mark_task_tags.get_tags_for_task(task_obj)
+        task_tags = MarkingTaskTagService().get_tags_for_task(task_obj)
         # list of tags
         tags_attn_marker = [X for X in task_tags if X.text in all_attn_marker_tag_text]
         # list of tags
@@ -231,11 +231,11 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
 class MarkingTaskTagView(LeadMarkerOrManagerView):
     def patch(self, request, task_pk: int, tag_pk: int):
-        mark_task_tags.add_tag_to_task(tag_pk, task_pk)
+        MarkingTaskTagService().add_tag_to_task(tag_pk, task_pk)
         return HttpResponseClientRefresh()
 
     def delete(self, request, task_pk: int, tag_pk: int):
-        mark_task_tags.remove_tag_from_task(tag_pk, task_pk)
+        MarkingTaskTagService().remove_tag_from_task(tag_pk, task_pk)
         return HttpResponseClientRefresh()
 
     def post(self, request, task_pk: int):
@@ -251,5 +251,5 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         if tag_obj is None:  # no such tag exists, so create one
             tag_obj = mts.create_tag(request.user, tag_text)
 
-        mark_task_tags.add_tag_to_task(tag_obj.pk, task_pk)
+        MarkingTaskTagService().add_tag_to_task(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()

@@ -6,3 +6,4 @@ from .marking_task_service import MarkingTaskService
 from .page_data import PageDataService
 from .question_marking import QuestionMarkingService
 from .marking_stats import MarkingStatsService
+from .mark_task_tags import MarkingTaskTagService
