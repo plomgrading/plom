@@ -40,6 +40,7 @@ from .progress_task_annot import (
     AnnotationImageView,
     OriginalImageWrapView,
     AllTaskOverviewView,
+    MarkingTaskTagView,
 )
 
 from .progress_userinfo import (

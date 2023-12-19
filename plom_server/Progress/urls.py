@@ -24,6 +24,7 @@ from Progress.views import (
     ProgressMarkingTaskDetailsView,
     AnnotationImageWrapView,
     AnnotationImageView,
+    MarkingTaskTagView,
     OriginalImageWrapView,
     ProgressUserInfoHome,
     AllTaskOverviewView,
@@ -146,5 +147,15 @@ urlpatterns = [
         "overview_landing/",
         OverviewLandingView.as_view(),
         name="overview_landing",
+    ),
+    path(
+        "task_tag/<int:task_pk>/<int:tag_pk>",
+        MarkingTaskTagView.as_view(),
+        name="marking_task_tag",
+    ),
+    path(
+        "new_task_tag/<int:task_pk>",
+        MarkingTaskTagView.as_view(),
+        name="create_marking_task_tag",
     ),
 ]
