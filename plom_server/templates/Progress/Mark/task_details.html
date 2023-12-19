@@ -104,6 +104,33 @@
                     </span>
                 {% endfor %}
             </div>
+            <div class="mx-2 mb-2 px-2">
+                <button class="btn btn-info"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#newTagForm"
+                        aria-expanded="false"
+                        aria-controls="newTagForm">create and add new tag</button>
+                <div class="collapse border my-2 p-3 w-25" id="newTagForm">
+                    <form class="form validation was-validated"
+                          hx-post="{% url 'create_marking_task_tag' task_pk %}">
+                        <div class="form-floating m-2">
+                            <input type="text"
+                                   name="newTagText"
+                                   oninput="this.reportValidity()"
+                                   class="form-control"
+                                   pattern="{{ valid_tag_pattern }}"
+                                   id="floatingInput"
+                                   placeholder="New tag text"
+                                   title="Tag characters must consist of {{ valid_tag_description }}"
+                                   required>
+                            <label for="floatingInput">New tag text</label>
+                        </div>
+                        <p class="invalid-feedback">Tag characters must consist of {{ valid_tag_description }}</p>
+                        <button class="btn btn-primary" type="submit">create and add tag</button>
+                    </form>
+                </div>
+            </div>
             <h4>Attention user tags</h4>
             <div class="m-2 p-2">
                 <span class="dropdown">

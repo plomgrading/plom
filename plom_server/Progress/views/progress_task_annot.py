@@ -5,7 +5,9 @@ from django.contrib.auth.models import User
 from django.http import FileResponse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
+from rest_framework.exceptions import ValidationError
 
+from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
@@ -223,6 +225,9 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
                 # the tags / users we might add
                 "addable_attn_markers": addable_attn_marker,
                 "addable_tags_not_attn": addable_tags_not_attn,
+                # get simple form validation pattern from here rather than hard coding into html
+                "valid_tag_pattern": plom_valid_tag_text_pattern,
+                "valid_tag_description": plom_valid_tag_text_description,
             }
         )
 
@@ -249,7 +254,13 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
 
         tag_obj = mts.get_tag_from_text(tag_text)
         if tag_obj is None:  # no such tag exists, so create one
-            tag_obj = mts.create_tag(request.user, tag_text)
+            try:
+                tag_obj = mts.create_tag(request.user, tag_text)
+            except ValidationError:
+                # the form *should* catch validation errors.
+                # we don't throw an explicit error here
+                # instead just refresh the page.
+                return HttpResponseClientRefresh()
 
         MarkingTaskTagService().add_tag_to_task(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
