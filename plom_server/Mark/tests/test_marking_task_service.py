@@ -110,15 +110,11 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(task.assigned_user, user1)
 
     def test_surrender_task(self):
-        """
-        Test MarkingTaskService.surrender_task()
-        """
-
         user = baker.make(User)
         task = baker.make(MarkingTask, status=MarkingTask.OUT)
         mts = MarkingTaskService()
 
-        mts.surrender_task(user, task)
+        mts._surrender_task(user, task)
         task.refresh_from_db()
         self.assertEqual(task.status, MarkingTask.TO_DO)
 

@@ -210,7 +210,7 @@ class MarkingTaskService:
         task.status = MarkingTask.OUT
         task.save()
 
-    def surrender_task(self, user, task):
+    def _surrender_task(self, user, task):
         """Remove a user from a marking task, set its status to 'todo', and save the action to the database.
 
         Args:
@@ -221,18 +221,17 @@ class MarkingTaskService:
         task.status = MarkingTask.TO_DO
         task.save()
 
-    def surrender_all_tasks(self, user):
+    def surrender_all_tasks(self, user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
             user: reference to a User instance
         """
-        user_tasks = MarkingTask.objects.filter(
-            assigned_user=user, status=MarkingTask.OUT
-        )
         with transaction.atomic():
-            for task in user_tasks:
-                self.surrender_task(user, task)
+            for task in MarkingTask.objects.filter(
+                assigned_user=user, status=MarkingTask.OUT
+            ).select_for_update():
+                self._surrender_task(user, task)
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
