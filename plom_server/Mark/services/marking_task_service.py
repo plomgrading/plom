@@ -216,13 +216,9 @@ class MarkingTaskService:
         Args:
             user: reference to a User instance
         """
-        with transaction.atomic():
-            for task in MarkingTask.objects.filter(
-                assigned_user=user, status=MarkingTask.OUT
-            ).select_for_update():
-                task.assigned_user = None
-                task.status = MarkingTask.TO_DO
-                task.save()
+        MarkingTask.objects.filter(assigned_user=user, status=MarkingTask.OUT).update(
+            assigned_user=None, status=MarkingTask.TO_DO
+        )
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
