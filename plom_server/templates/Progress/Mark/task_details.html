@@ -74,7 +74,7 @@
                         <p>
                             <ul>
                                 <li>Reset: invalidates any existing marking and creates a new marking task.</li>
-                                <li>Reset and attn: does the same thing, but tags for the attension of the given user.</li>
+                                <li>Reset and attn: does the same thing, but tags for the attention of the given user.</li>
                             </ul>
                         </p>
                     </div>
@@ -86,37 +86,41 @@
         </div>
         <div class="row m-2">
             <h3>Tags</h3>
-            <div class="m-2 p-2">
+            <div class="mx-2 py-1">
                 <span class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle"
+                    <button class="btn btn-success dropdown-toggle"
                             type="button"
                             data-bs-toggle="dropdown"
-                            aria-expanded="false">add tag</button>
+                            aria-expanded="false">Add tag</button>
                     <ul class="dropdown-menu">
+                        <li class="p-2">
+                            <button class="btn btn-info"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#newTagForm"
+                                    aria-expanded="false"
+                                    aria-controls="newTagForm">
+                                <i class="bi bi-plus-circle-dotted"></i>
+                                new tag
+                            </button>
+                        </li>
                         {% for tag in addable_tags_not_attn %}
                             <li class="p-2">
                                 <span hx-patch="{% url 'marking_task_tag' task_pk tag.pk %}"
-                                      class="badge bg-success fs-6 align-middle rounded-pill dropdown-item py-2"><i class="bi bi-plus-square pe-2"></i>{{ tag.text }}</span>
+                                      class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-1"></i>{{ tag.text }}</span>
                             </li>
                         {% endfor %}
                     </ul>
                 </span>
                 {% for tag in tags_not_attn_marker %}
-                    <span class="badge bg-primary fs-6 align-middle rounded-pill">{{ tag.text }}
+                    <span class="badge bg-primary align-middle">{{ tag.text }}
                         <button hx-delete="{% url 'marking_task_tag' task_pk tag.pk %}"
-                                class="btn btn-primary p-1">
+                                class="btn btn-primary p-0">
                             <i class="bi bi-backspace"></i>
                         </button>
                     </span>
                 {% endfor %}
             </div>
-            <div class="mx-2 mb-2 px-2">
-                <button class="btn btn-info"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#newTagForm"
-                        aria-expanded="false"
-                        aria-controls="newTagForm">create and add new tag</button>
+            <div class="mx-2">
                 <div class="collapse border my-2 p-3 w-25" id="newTagForm">
                     <form class="form validation was-validated"
                           hx-post="{% url 'create_marking_task_tag' task_pk %}">
@@ -137,28 +141,27 @@
                     </form>
                 </div>
             </div>
-            <h4>Attention user tags</h4>
-            <div class="m-2 p-2">
+            <div class="mx-2 py-1">
                 <span class="dropdown">
                     <button class="btn btn-warning dropdown-toggle"
                             type="button"
                             data-bs-toggle="dropdown"
-                            aria-expanded="false">flag to user</button>
+                            aria-expanded="false">Flag to user</button>
                     <ul class="dropdown-menu">
                         {% for user in addable_attn_markers %}
                             <li class="p-2">
                                 <!-- we add the vars here to get this hx-post to look like a form post -->
                                 <span hx-post="{% url 'create_marking_task_tag' task_pk %}"
                                       hx-vars="newTagText: '@{{ user.username }}'"
-                                      class="badge text-bg-warning fs-6 align-middle rounded-pill dropdown-item py-2"><i class="bi bi-plus-square pe-2"></i>@{{ user.username }}</span>
+                                      class="badge text-bg-warning fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-2"></i>@{{ user.username }}</span>
                             </li>
                         {% endfor %}
                     </ul>
                 </span>
                 {% for tag in tags_attn_marker %}
-                    <span class="badge text-bg-warning fs-6 align-middle rounded-pill">{{ tag.text }}
+                    <span class="badge text-bg-warning align-middle">{{ tag.text }}
                         <button hx-delete="{% url 'marking_task_tag' task_pk tag.pk %}"
-                                class="btn btn-warning p-1">
+                                class="btn btn-warning p-0">
                             <i class="bi bi-backspace"></i>
                         </button>
                     </span>
