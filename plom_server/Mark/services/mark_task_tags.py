@@ -37,22 +37,20 @@ class MarkingTaskTagService:
     def add_tag_to_task(self, tag_pk: int, task_pk: int):
         """Add existing tag with given pk to the marking task with given pk."""
         try:
-            the_task = MarkingTask.objects.get(pk=task_pk)
+            the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-
-        the_tag.task.add(the_task)
-        the_tag.save()
+        the_task.markingtasktag_set.add(the_tag)
+        the_task.save()
 
     @transaction.atomic
     def remove_tag_from_task(self, tag_pk: int, task_pk: int):
         """Add existing tag with given pk to the marking task with given pk."""
         try:
-            the_task = MarkingTask.objects.get(pk=task_pk)
+            the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-
-        the_tag.task.remove(the_task)
-        the_tag.save()
+        the_task.markingtasktag_set.remove(the_tag)
+        the_task.save()
