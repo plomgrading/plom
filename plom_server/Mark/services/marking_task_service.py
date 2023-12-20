@@ -83,7 +83,7 @@ class MarkingTaskService:
             else:
                 priority = random.randint(0, 1000)
 
-        the_task = MarkingTask(
+        the_task = MarkingTask.objects.create(
             assigned_user=user,
             code=task_code,
             paper=paper,
@@ -91,7 +91,6 @@ class MarkingTaskService:
             question_version=question_version,
             marking_priority=priority,
         )
-        the_task.save()
         return the_task
 
     def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
