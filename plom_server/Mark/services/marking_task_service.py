@@ -8,7 +8,7 @@
 import json
 import pathlib
 import random
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 from rest_framework.exceptions import ValidationError
 
@@ -37,13 +37,20 @@ class MarkingTaskService:
     """Functions for creating and modifying marking tasks."""
 
     @transaction.atomic
-    def create_task(self, paper, question_number, user=None):
+    def create_task(
+        self, paper: Paper, question_number: int, *, user: Optional[User] = None
+    ) -> MarkingTask:
         """Create a marking task.
 
         Args:
-            paper: a Paper instance, the test paper of the task
-            question_number: int, the question of the task
-            user: optional, User instance: user assigned to the task
+            paper: a Paper instance, the test paper of the task.
+            question_number: the question of the task.
+
+        Keyword Args
+            user: optional, User instance of user assigned to the task.
+
+        Returns:
+            The newly created marking task object.
         """
         pqvs = PQVMappingService()
         if not pqvs.is_there_a_pqv_map():
