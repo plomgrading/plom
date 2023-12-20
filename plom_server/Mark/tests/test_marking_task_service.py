@@ -109,18 +109,17 @@ class MarkingTaskServiceTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task.assigned_user, user1)
 
-    def test_surrender_task(self):
-        """
-        Test MarkingTaskService.surrender_task()
-        """
-
+    def test_surrender_all_tasks(self):
         user = baker.make(User)
-        task = baker.make(MarkingTask, status=MarkingTask.OUT)
+        task1 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
+        task2 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
         mts = MarkingTaskService()
 
-        mts.surrender_task(user, task)
-        task.refresh_from_db()
-        self.assertEqual(task.status, MarkingTask.TO_DO)
+        mts.surrender_all_tasks(user)
+        task1.refresh_from_db()
+        task2.refresh_from_db()
+        self.assertEqual(task1.status, MarkingTask.TO_DO)
+        self.assertEqual(task2.status, MarkingTask.TO_DO)
 
     def test_marking_outdated(self):
         mts = MarkingTaskService()
