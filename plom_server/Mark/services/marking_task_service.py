@@ -61,15 +61,10 @@ class MarkingTaskService:
 
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
-        # mark other tasks with this code as 'out of date'
-        # and set the assigned user to None
-        previous_tasks = MarkingTask.objects.filter(code=task_code)
-        for old_task in previous_tasks.select_for_update().exclude(
+        # other tasks with this code are now 'out of date'
+        MarkingTask.objects.filter(code=task_code).exclude(
             status=MarkingTask.OUT_OF_DATE
-        ):
-            old_task.status = MarkingTask.OUT_OF_DATE
-            old_task.assigned_user = None
-            old_task.save()
+        ).update(status=MarkingTask.OUT_OF_DATE, assigned_user=None)
 
         # get priority of latest old task to assign to new task, but
         # if no previous priority exists, set a new value based on the current strategy
