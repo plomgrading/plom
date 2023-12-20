@@ -38,7 +38,12 @@ class MarkingTaskService:
 
     @transaction.atomic
     def create_task(
-        self, paper: Paper, question_number: int, *, user: Optional[User] = None
+        self,
+        paper: Paper,
+        question_number: int,
+        *,
+        user: Optional[User] = None,
+        copy_old_tags: bool = True,
     ) -> MarkingTask:
         """Create a marking task.
 
@@ -48,6 +53,7 @@ class MarkingTaskService:
 
         Keyword Args
             user: optional, User instance of user assigned to the task.
+            copy_old_tags: copy any tags from the latest old task to the new task.
 
         Returns:
             The newly created marking task object.
@@ -88,6 +94,11 @@ class MarkingTaskService:
             question_version=question_version,
             marking_priority=priority,
         )
+        # if there is an older task and we are instructed to copy any old tags, then do so.
+        if copy_old_tags and latest_old_task:
+            for tag_obj in latest_old_task.markingtasktag_set.all():
+                the_task.markingtasktag_set.add(tag_obj)
+            the_task.save()
         return the_task
 
     def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
