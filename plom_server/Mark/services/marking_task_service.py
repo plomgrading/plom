@@ -8,7 +8,7 @@
 import json
 import pathlib
 import random
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 from rest_framework.exceptions import ValidationError
 
@@ -37,13 +37,20 @@ class MarkingTaskService:
     """Functions for creating and modifying marking tasks."""
 
     @transaction.atomic
-    def create_task(self, paper, question_number, user=None):
+    def create_task(
+        self, paper: Paper, question_number: int, *, user: Optional[User] = None
+    ) -> MarkingTask:
         """Create a marking task.
 
         Args:
-            paper: a Paper instance, the test paper of the task
-            question_number: int, the question of the task
-            user: optional, User instance: user assigned to the task
+            paper: a Paper instance, the test paper of the task.
+            question_number: the question of the task.
+
+        Keyword Args
+            user: optional, User instance of user assigned to the task.
+
+        Returns:
+            The newly created marking task object.
         """
         pqvs = PQVMappingService()
         if not pqvs.is_there_a_pqv_map():
@@ -54,17 +61,16 @@ class MarkingTaskService:
 
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
-        # mark other tasks with this code as 'out of date'
-        # and set the assigned user to None
-        previous_tasks = MarkingTask.objects.filter(code=task_code)
-        for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
-            old_task.status = MarkingTask.OUT_OF_DATE
-            old_task.assigned_user = None
-            old_task.save()
+        # other tasks with this code are now 'out of date'
+        MarkingTask.objects.filter(code=task_code).exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ).update(status=MarkingTask.OUT_OF_DATE, assigned_user=None)
 
         # get priority of latest old task to assign to new task, but
         # if no previous priority exists, set a new value based on the current strategy
-        latest_old_task = previous_tasks.order_by("-time").first()
+        latest_old_task = (
+            MarkingTask.objects.filter(code=task_code).order_by("-time").first()
+        )
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
@@ -74,7 +80,7 @@ class MarkingTaskService:
             else:
                 priority = random.randint(0, 1000)
 
-        the_task = MarkingTask(
+        the_task = MarkingTask.objects.create(
             assigned_user=user,
             code=task_code,
             paper=paper,
@@ -82,7 +88,6 @@ class MarkingTaskService:
             question_version=question_version,
             marking_priority=priority,
         )
-        the_task.save()
         return the_task
 
     def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
@@ -205,29 +210,15 @@ class MarkingTaskService:
         task.status = MarkingTask.OUT
         task.save()
 
-    def surrender_task(self, user, task):
-        """Remove a user from a marking task, set its status to 'todo', and save the action to the database.
-
-        Args:
-            user: reference to a User instance
-            task: reference to a MarkingTask instance
-        """
-        task.assigned_user = None
-        task.status = MarkingTask.TO_DO
-        task.save()
-
-    def surrender_all_tasks(self, user):
+    def surrender_all_tasks(self, user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
             user: reference to a User instance
         """
-        user_tasks = MarkingTask.objects.filter(
-            assigned_user=user, status=MarkingTask.OUT
+        MarkingTask.objects.filter(assigned_user=user, status=MarkingTask.OUT).update(
+            assigned_user=None, status=MarkingTask.TO_DO
         )
-        with transaction.atomic():
-            for task in user_tasks:
-                self.surrender_task(user, task)
 
     def user_can_update_task(self, user, code):
         """Return true if a user is allowed to update a certain task, false otherwise.
