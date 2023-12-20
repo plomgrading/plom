@@ -68,7 +68,9 @@ class MarkingTaskService:
 
         # get priority of latest old task to assign to new task, but
         # if no previous priority exists, set a new value based on the current strategy
-        latest_old_task = previous_tasks.order_by("-time").first()
+        latest_old_task = (
+            MarkingTask.objects.filter(code=task_code).order_by("-time").first()
+        )
         if latest_old_task:
             priority = latest_old_task.marking_priority
         else:
