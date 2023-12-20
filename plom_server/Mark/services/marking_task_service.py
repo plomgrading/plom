@@ -64,7 +64,9 @@ class MarkingTaskService:
         # mark other tasks with this code as 'out of date'
         # and set the assigned user to None
         previous_tasks = MarkingTask.objects.filter(code=task_code)
-        for old_task in previous_tasks.exclude(status=MarkingTask.OUT_OF_DATE):
+        for old_task in previous_tasks.select_for_update().exclude(
+            status=MarkingTask.OUT_OF_DATE
+        ):
             old_task.status = MarkingTask.OUT_OF_DATE
             old_task.assigned_user = None
             old_task.save()
