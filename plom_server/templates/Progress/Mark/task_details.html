@@ -22,7 +22,13 @@
                 <p>Paper: {{ paper_number }}</p>
                 <p>Question: {{ question }}</p>
                 <p>Version: {{ version }}</p>
-                <p>Status: {{ status }}</p>
+                <p>
+                    Status: {{ status }}
+                    {% if status == "Out Of Date" %}
+                        <a href="{% url 'progress_newest_marking_task_details' task_pk %}"
+                           class="btn btn-success">show newest</a>
+                    {% endif %}
+                </p>
                 {% if status == "Complete" %}
                     <p>Score: {{ score }}</p>
                     <p>Edition: {{ edition }}</p>
@@ -48,27 +54,27 @@
                 </p>
                 {% if user_is_manager %}
                     <div>
+                        <button class="btn btn-danger"
+                                hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
+                                hx-put="{% url 'marking_reset_task' task_pk %}">reset</button>
                         <span class="dropdown">
-                            <button class="btn btn-warning dropdown-toggle"
+                            <button class="btn btn-danger dropdown-toggle"
                                     data-bs-toggle="dropdown"
-                                    aria-expanded="false">reassign</button>
+                                    aria-expanded="false">reset and attn</button>
                             <ul class="dropdown-menu">
                                 {% for user in lead_markers %}
                                     <li class="p-2">
                                         <span hx-confirm="This will reassign the task and latest annotations to the given user. Are you sure you wish to proceed?"
-                                              hx-patch=""
-                                              class="badge text-bg-warning fs-6 align-middle rounded dropdown-item py-2"><i class="bi bi-arrow-right-square pe-2"></i>{{ user.username }}</span>
+                                              hx-put="{% url 'marking_reassign_task' task_pk user.pk %}"
+                                              class="badge text-bg-danger fs-6 align-middle rounded dropdown-item py-2"><i class="bi bi-arrow-right-square pe-2"></i>{{ user.username }}</span>
                                     </li>
                                 {% endfor %}
                             </ul>
                         </span>
-                        <button class="btn btn-danger disabled">reset</button>
                         <p>
-                            <b>NOTE</b>:
                             <ul>
-                                <li>
-                                    The reset and reassign buttons are currently disabled. We don't have code to do this yet. We need to decide some stuff first.
-                                </li>
+                                <li>Reset: invalidates any existing marking and creates a new marking task.</li>
+                                <li>Reset and attn: does the same thing, but tags for the attension of the given user.</li>
                             </ul>
                         </p>
                     </div>

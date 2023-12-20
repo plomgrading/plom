@@ -3,17 +3,18 @@
 
 from django.contrib.auth.models import User
 from django.http import FileResponse
-from django.shortcuts import render
-from django_htmx.http import HttpResponseClientRefresh
+from django.shortcuts import render, reverse, redirect
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
-from Base.base_group_views import LeadMarkerOrManagerView
+from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
     MarkingTaskTagService,
     page_data,
+    mark_task,
 )
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
@@ -264,3 +265,52 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
 
         MarkingTaskTagService().add_tag_to_task(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
+
+
+class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
+    def get(self, request, task_pk):
+        # get the pn and qn from the given task
+        # then find the latest task for that pn, qn.
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        pn = task_obj.paper.paper_number
+        qn = task_obj.question_number
+        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        return redirect("progress_marking_task_details", task_pk=new_task_pk)
+
+
+class MarkingTaskResetView(ManagerRequiredView):
+    def put(self, request, task_pk: int):
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        pn = task_obj.paper.paper_number
+        qn = task_obj.question_number
+        MarkingTaskService().set_paper_marking_task_outdated(
+            paper_number=pn, question_number=qn
+        )
+        # now grab the pk of the new task with that paper,question and redirect the user there.
+        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[new_task_pk])
+        )
+
+
+class MarkingTaskReassignView(ManagerRequiredView):
+    def put(self, request, task_pk: int, user_pk: int):
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        pn = task_obj.paper.paper_number
+        qn = task_obj.question_number
+        mts = MarkingTaskService()
+        mts.set_paper_marking_task_outdated(paper_number=pn, question_number=qn)
+        # now grab the pk of the new task with that paper,question, we'll redirect the user there.
+        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        # now build an attn-user tag.
+        user_name = User.objects.get(pk=user_pk).username
+        tag_text = f"@{user_name}"
+        tag_obj = mts.get_tag_from_text(tag_text)
+        if tag_obj is None:  # no such tag exists, so create one
+            tag_obj = mts.create_tag(request.user, tag_text)
+        # apply the tag to the new task.
+        MarkingTaskTagService().add_tag_to_task(tag_obj.pk, new_task_pk)
+        # finally bounce the client to the new task.
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[new_task_pk])
+        )
