@@ -13,6 +13,7 @@ if sys.version_info >= (3, 10):
 else:
     import importlib_resources as resources
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from ...services import (
@@ -164,6 +165,12 @@ class Command(BaseCommand):
     def run_randomarker(self, *, port):
         # TODO: hardcoded http://
         srv = f"http://localhost:{port}"
+
+        # rando-id and then rando-mark
+        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
+        print(f"RandoIDing!  calling: {cmd}")
+        subprocess.check_call(split(cmd))
+
         cmds = (
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker1 -w demoMarker1 --partial 25",
             f"python3 -m plom.client.randoMarker -s {srv} -u demoMarker2 -w demoMarker2 --partial 33",
@@ -173,9 +180,17 @@ class Command(BaseCommand):
             print(f"RandoMarking!  calling: {cmd}")
             subprocess.check_call(split(cmd))
 
-        cmd = f"python3 -m plom.client.randoIDer -s {srv} -u demoMarker1 -w demoMarker1"
-        print(f"RandoIDing!  calling: {cmd}")
-        subprocess.check_call(split(cmd))
+    def upload_solutions(self):
+        from Finish import useful_files_for_testing as useful_files
+
+        print("*" * 40)
+        print(" Uploading solutions spec and source pdfs")
+
+        soln_spec_path = resources.files(useful_files) / "soln_specification.toml"
+        call_command("plom_soln_spec", "upload", soln_spec_path)
+        for v in [1, 2]:
+            soln_pdf_path = resources.files(useful_files) / f"solutions{v}.pdf"
+            call_command("plom_soln_sources", "upload", "-v", v, soln_pdf_path)
 
     def wait_for_exit(self):
         while True:
@@ -221,6 +236,11 @@ class Command(BaseCommand):
             "--randomarker",
             action="store_true",
             help="Run the plom-client randomarker.",
+        )
+        parser.add_argument(
+            "--solutions",
+            action="store_true",
+            help="Build demo solutions.",
         )
         parser.add_argument(
             "--quick",
@@ -290,6 +310,9 @@ class Command(BaseCommand):
         # TODO: I get errors if I move this after launching the server...
         print("*" * 40)
         creation_service.prepare_assessment(config)
+
+        if options["solutions"]:
+            self.upload_solutions()
 
         if stop_at == "preparation" or not config.num_to_produce:
             huey_worker_proc.terminate()

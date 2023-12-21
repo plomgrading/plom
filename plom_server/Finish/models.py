@@ -17,3 +17,25 @@ class ReassemblePaperChore(HueyTaskTracker):
     def __str__(self):
         """Stringify task using its related test-paper's number."""
         return "Reassemble Paper Chore " + str(self.paper.paper_number)
+
+
+class BuildSolutionPDFChore(HueyTaskTracker):
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+
+    pdf_file = models.FileField(upload_to="solutions/", null=True)
+
+    def __str__(self):
+        """Stringify task using its related test-paper's number."""
+        return "Build Solution PDF Chore " + str(self.paper.paper_number)
+
+
+class SolutionSourcePDF(models.Model):
+    version = models.PositiveIntegerField(unique=True)
+    source_pdf = models.FileField(upload_to="sourceVersions")
+    pdf_hash = models.CharField(null=False, max_length=64)
+
+
+class SolutionImage(models.Model):
+    version = models.PositiveIntegerField(null=False)
+    solution_number = models.PositiveIntegerField(null=False)
+    image = models.ImageField(upload_to="sourceVersions")

@@ -1,0 +1,147 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Solution Specification
+{% endblock title %}
+{% block page_heading %}
+    Solution Specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary mb-3" href="{% url 'soln_home' %}">Return to solutions page</a>
+        </div>
+    </div>
+    {% if is_there_a_soln_spec %}
+        <div class="card">
+            <div class="card-header">
+                <h5>Solution spec present</h5>
+            </div>
+            <div class="card-body">
+                <div class="card-text p-4 border rounded font-monospace">
+                    {% for line in toml_line_by_line %}
+                        {% if line.0 == '#' %}
+                            {% if line.1 == '#' %}
+                                <span class="text-danger fw-medium">{{ line }}</span>
+                            {% else %}
+                                <span class="text-primary fw-medium">{{ line }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span>{{ line }}</span>
+                        {% endif %}
+                        <br>
+                    {% endfor %}
+                </div>
+                {% if unused_pages %}
+                    <div class="mt-2">
+                        <p>
+                            Notice that the solution spec does not use pages {{ unused_pages }}. Please double-check that those pages in your solutions are
+                            not required.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer" x-data="{the_toml: `{{ soln_toml }}` }">
+                <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
+                    download toml
+                    <icon class="bi bi-file-earmark-arrow-down"></icon>
+                </button>
+                <button class="btn btn-danger"
+                        hx-delete="{% url 'soln_spec' %}"
+                        hx-confirm="Are you sure?">remove solution spec</button>
+                <p>
+                    Note that removing the solution spec will remove any solution source pdfs you have uploaded and render any built solution pdfs obsolete.
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-header">
+                <h5>No solution spec (yet)</h5>
+            </div>
+            <div class="card-body">
+                <div>
+                    <ul>
+                        <li>
+                            If your solutions have the same format as your test (same questions on same pages), then
+                            <button hx-patch="{% url 'soln_spec' %}"
+                                    hx-target="body"
+                                    class="btn btn-primary">insert similar toml</button>
+                            into the text-box below.
+                        </li>
+                        <li>
+                            If your solutions have a different format, then <a class="btn btn-warning" href="{% url 'template_soln_spec' %}">generate a template solution specification</a> please edit it carefully before pasting it into the text-box below.
+                        </li>
+                    </ul>
+                </div>
+                <form hx-post="{% url 'soln_spec' %}" hx-target="body">
+                    {% csrf_token %}
+                    <label for="spec-toml-input" class="form-label h5">Edit solution specification</label>
+                    <textarea class="form-control mb-3"
+                              id="spec-toml-input"
+                              name="spec"
+                              rows="16"
+                              spellcheck="false">{{ soln_toml }}</textarea>
+                    <div id="saving-status"></div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit"
+                            class="btn btn-secondary"
+                            name="which_action"
+                            value="validate">Validate</button>
+                </form>
+            </div>
+            {% if just_submitted %}
+                <div class="card-footer">
+                    {% if valid %}
+                        <div class="alert alert-success fs-5">
+                            {% if action == "validate" %}
+                                Spec is valid - it passes basic checks.
+                            {% else %}
+                                Spec is valid and has been submitted.
+                            {% endif %}
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        {% if unused_pages %}
+                            <div class="mt-2">
+                                <p>
+                                    Notice that the solution spec does not use pages {{ unused_pages }}. Please double-check that those pages in your solutions are
+                                    not required.
+                                </p>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <span class="fs-5">
+                                {% if action == "validate" %}
+                                    There were validation errors:
+                                {% else %}
+                                    There were submission errors:
+                                {% endif %}
+                            </span>
+                            <ul class="list-group">
+                                {% for err in error_list %}
+                                    <li class="list-group-item">
+                                        <span class="text-warning"><i class="bi bi-exclamation-diamond-fill"></i></span> {{ err }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    <script>
+      function downloadtoml(stuff) {
+	  let filename = 'soln_specification.toml';
+	  let element = document.createElement('a');
+	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+	  element.setAttribute('download', filename);
+	  element.click();
+    }
+    </script>
+{% endblock main_content %}

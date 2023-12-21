@@ -3,12 +3,11 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.services import PaperInfoService, SpecificationService
+from Papers.services import PaperInfoService
 
 
 class SpecBaseView(ManagerRequiredView):

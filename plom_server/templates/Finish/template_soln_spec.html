@@ -1,0 +1,70 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Template Solution Specification
+{% endblock title %}
+{% block page_heading %}
+    Template Solution Specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div class="card" x-data="{the_toml: `{{ soln_toml }}` }">
+            <h5 class="card-header">Generated solution toml template</h5>
+            <div class="card-body">
+                <div class="card-title">
+                    <p>
+                        <ul>
+                            <li>
+                                Download the generated toml and open in your favourite editor, or simply copy-paste the generated toml into your editor.
+                            </li>
+                            <li>
+                                This template assumes that the structure of your solutions is similar to your original test. So carefully
+                                check the the pages of the solution of each question.
+                            </li>
+                            <li>Once you have made your changes go back to the solutions specification page and paste in your toml.</li>
+                        </ul>
+                    </p>
+                    <p>
+                        <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
+                            download toml
+                            <icon class="bi bi-file-earmark-arrow-down"></icon>
+                        </button>
+                        <button class="btn btn-primary m-2"
+                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                            copy to clipboard
+                            <icon class="bi bi-clipboard2-plus"></icon>
+                        </button>
+                        <a class="btn btn-primary m-2" href="{% url 'soln_spec' %}">Return to solution specification page</a>
+                    </p>
+                </div>
+                <div class="card-text p-4 border rounded font-monospace">
+                    {% for line in toml_line_by_line %}
+                        {% if line.0 == '#' %}
+                            {% if line.1 == '#' %}
+                                <span class="text-danger fw-medium">{{ line }}</span>
+                            {% else %}
+                                <span class="text-primary fw-medium">{{ line }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span>{{ line }}</span>
+                        {% endif %}
+                        <br>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      function downloadtoml(stuff) {
+	  let filename = 'template_soln_specification.toml';
+	  let element = document.createElement('a');
+	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+	  element.setAttribute('download', filename);
+	  element.click();
+    }
+    </script>
+{% endblock main_content %}

@@ -12,10 +12,8 @@ else:
     import importlib_resources as resources
 
 from django.core.management.base import BaseCommand, CommandError
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Papers.services import SpecificationService
-from Papers.serializers import SpecSerializer
 from Preparation import useful_files_for_testing as useful_files
 
 

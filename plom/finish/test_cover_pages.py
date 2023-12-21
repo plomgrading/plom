@@ -10,20 +10,28 @@ from plom.finish.coverPageBuilder import makeCover
 def test_cover_page(tmp_path):
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
-    makeCover(data, f, test_num="0123", info=("Agnesi", 12345678))
-    doc = fitz.open(f)
-    assert len(doc) == 1
-    pg = doc[0]
-    text = pg.get_text()
-    assert "Agnesi" in text
-    assert "Test number: 0123" in text
-    assert "12345678" in text
+    makeCover(data, f, test_num=1234, info=("Agnesi", 12345678))
+    with fitz.open(f) as doc:
+        assert len(doc) == 1
+        pg = doc[0]
+        text = pg.get_text()
+        assert "Agnesi" in text
+        assert "Test number: 1234" in text
+        assert "12345678" in text
+
+
+def test_cover_page_test_num_leading_zero_pad(tmp_path):
+    f = tmp_path / "foo.pdf"
+    data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
+    makeCover(data, f, test_num=12, info=("Agnesi", 12345678))
+    with fitz.open(f) as doc:
+        assert "Test number: 0012" in doc[0].get_text()
 
 
 def test_cover_page_leading_zero_sid(tmp_path):
     f = tmp_path / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
-    makeCover(data, f, test_num="0123", info=("Someone", "00123400"))
+    makeCover(data, f, test_num=123, info=("Someone", "00123400"))
     with fitz.open(f) as doc:
         assert "00123400" in doc[0].get_text()
 
@@ -65,7 +73,7 @@ def test_cover_page_question_labels(tmp_path):
 def test_cover_page_non_ascii(tmp_path):
     f = tmp_path / "foo.pdf"
     data = [["№1", 1, 3, 4], ["Q二", 1, 4, 6]]
-    makeCover(data, f, test_num="0123", info=("我爱你", 12345678))
+    makeCover(data, f, test_num=123, info=("我爱你", 12345678))
     doc = fitz.open(f)
     pg = doc[0]
     text = pg.get_text()
@@ -78,12 +86,12 @@ def test_cover_page_at_least_20_questions_one_page_issue2519(tmp_path):
     f = tmp_path / "foo.pdf"
     N = 20
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
-    makeCover(data, f, test_num="0123", info=("A", 12345678))
+    makeCover(data, f, test_num=123, info=("A", 12345678))
     doc = fitz.open(f)
     assert len(doc) == 1
 
     data = [[f"Q{n}", 1, 3] for n in range(1, N + 1)]
-    makeCover(data, f, test_num="0123", info=("A", 12345678), solution=True)
+    makeCover(data, f, test_num=123, info=("A", 12345678), solution=True)
     doc = fitz.open(f)
     assert len(doc) == 1
 
@@ -168,7 +176,7 @@ def test_cover_page_title(tmp_path):
     f = tmp_path / "foo.pdf"
     s = "Math 947 Differential Sub-manifolds Quiz 7"
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6]]
-    makeCover(data, f, exam_name=s, test_num="0123", info=("A", 12345678))
+    makeCover(data, f, exam_name=s, test_num=123, info=("A", 12345678))
     doc = fitz.open(f)
     pg = doc[0]
     text = pg.get_text()

@@ -6,6 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Andrew Rechnitzer
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -387,7 +388,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 48 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 41 ]]"
 
   allow_failure: true
 
@@ -474,7 +475,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --solutions
     - popd
 
 

@@ -14,6 +14,7 @@ from API.views import (
     McreateRubric,
     MmodifyRubric,
     MlatexFragment,
+    GetSolutionImage,
 )
 
 
@@ -88,5 +89,15 @@ class MarkURLPatterns:
             ),
         ]
         mark_patterns += latex
+
+        # Get solution images
+        soln = [
+            path(
+                "solution/<int:question>/<int:version>",
+                GetSolutionImage.as_view(),
+                name="api_MK_solution",
+            ),
+        ]
+        mark_patterns += soln
 
         return mark_patterns

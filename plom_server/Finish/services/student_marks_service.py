@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import arrow
 

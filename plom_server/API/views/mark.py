@@ -11,6 +11,7 @@ from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
+from Finish.services import SolnImageService
 from Mark.services import mark_task
 from Mark.services import MarkingTaskService, PageDataService
 from Papers.services import SpecificationService
@@ -381,3 +382,13 @@ class GetAllTags(APIView):
     def get(self, request):
         mts = MarkingTaskService()
         return Response(mts.get_all_tags(), status=status.HTTP_200_OK)
+
+
+class GetSolutionImage(APIView):
+    """Get a solution image from the server."""
+
+    def get(self, request, question, version):
+        try:
+            return FileResponse(SolnImageService().get_soln_image(question, version))
+        except ObjectDoesNotExist:
+            return _error_response("Image does not exist.", status.HTTP_404_NOT_FOUND)

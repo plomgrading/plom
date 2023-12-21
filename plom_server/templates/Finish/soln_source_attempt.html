@@ -1,0 +1,21 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block page_heading %}
+    Manage solution source pdfs
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card">
+        <div class="card-body">
+            {% if success %}
+                <h4 class="card-title">Source PDF version {{ version }} uploaded successfully</h4>
+            {% else %}
+                <h4 class="card-title">Source PDF version {{ version }} upload failed</h4>
+                <p class="card-text">{{ message }}</p>
+            {% endif %}
+            <a href="{% url 'soln_sources' %}" class="btn btn-primary card-link">return</a>
+        </div>
+    </div>
+{% endblock main_content %}
