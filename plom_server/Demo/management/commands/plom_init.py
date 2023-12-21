@@ -5,7 +5,7 @@ from plom.aliceBob import simple_password
 
 from django.contrib.auth.models import User, Group
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 
 from ...services import DemoProcessesService
 
@@ -22,6 +22,13 @@ class Command(BaseCommand):
             x = input("Type 'quit' and press Enter to exit the demo: ")
             if x.casefold() == "quit":
                 break
+
+    def add_arguments(self, parser: CommandParser) -> None:
+        parser.add_argument(
+            "--no-waiting",
+            action="store_true",
+            help="Do not wait for user input at the end of the init sequence before stopping the development server.",
+        )
 
     def handle(self, *args, **options):
         # database and Huey
@@ -52,6 +59,9 @@ class Command(BaseCommand):
             f"Manager username: manager\nManager password: {manager_password}"
         )
         self.stdout.write("*" * 10)
+
+        if options["no_waiting"]:
+            return
 
         try:
             # launch Huey queue in the background
