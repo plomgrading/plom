@@ -12,7 +12,7 @@ from ...services import DemoProcessesService
 
 class Command(BaseCommand):
     """Initialize a plom server for production.
-    
+
     Creates a new database and tables, the Huey queue, user groups, and
     admin and manager users.
     """
@@ -33,20 +33,14 @@ class Command(BaseCommand):
 
         # make an admin user
         admin_password = simple_password(3)
-        admin = User.objects.create_superuser(
-            username="admin",
-            password=admin_password
-        )
+        admin = User.objects.create_superuser(username="admin", password=admin_password)
         admin_group = Group.objects.get(name="admin")
         admin.groups.add(admin_group)
         admin.save()
 
         # make a manager user
         manager_password = simple_password(3)
-        manager = User.objects.create(
-            username="manager",
-            password=manager_password
-        )
+        manager = User.objects.create(username="manager", password=manager_password)
         manager_group = Group.objects.get(name="manager")
         manager.groups.add(manager_group)
         manager.save()
@@ -54,7 +48,9 @@ class Command(BaseCommand):
         # TODO: Find an alternative to printing passwords to stdout. Log file instead?
         self.stdout.write("*" * 10)
         self.stdout.write(f"Admin username: admin\nAdmin password: {admin_password}\n")
-        self.stdout.write(f"Manager username: manager\nManager password: {manager_password}")
+        self.stdout.write(
+            f"Manager username: manager\nManager password: {manager_password}"
+        )
         self.stdout.write("*" * 10)
 
         try:
