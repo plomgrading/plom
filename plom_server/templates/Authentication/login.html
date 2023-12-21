@@ -54,7 +54,7 @@
                                         </div>
                                         <div class="medium mb-5 pb-lg-2">
                                             <input id="check-password" class="text-black-100" type="checkbox">
-                                            Show Password
+                                            <label class="form-label" for="check-password">Show Password</label>
                                         </div>
                                         {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
                                         <button class="btn btn-outline-dark btn-lg px-5" type="submit">
