@@ -255,7 +255,9 @@ def configure_running_server(
 
 
 def add_users_to_server(*, work_dir=".", dry_run: bool = False):
-    """Optionally add users to a running server.
+    """Add users to a running server that does not yet have user non-manager user accounts.
+
+    Creates the "scanner" account, and 12 numbered users.
 
     Server info is taken from the environment variables PLOM_SERVER
     and PLOM_MANAGER_PASSWORD.
