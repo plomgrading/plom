@@ -422,6 +422,11 @@ class MarkingTaskService:
         task = self.get_task_from_code(code)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
+    def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[Tuple[int, str]]:
+        """Get a list of tag (text and pk) assigned to this marking task."""
+        task = MarkingTask.objects.get(pk=task_pk)
+        return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
+
     def sanitize_tag_text(self, tag_text):
         """Return a sanitized text from client input. Currently only entails a call to tag_text.strip().
 
@@ -463,6 +468,16 @@ class MarkingTaskService:
         """
         tag.task.add(task)
         tag.save()
+
+    @transaction.atomic
+    def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int):
+        """Add existing tag with given pk to the marking task with given pk."""
+        try:
+            the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+            the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
+        except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
+            raise ValueError("Cannot find task or tag with given pk")
+        self.add_tag(the_tag, the_task)
 
     def get_tag_from_text(self, text: str) -> Union[MarkingTaskTag, None]:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
@@ -535,6 +550,16 @@ class MarkingTaskService:
             tag.save()
         except MarkingTask.DoesNotExist:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
+
+    @transaction.atomic
+    def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int):
+        """Add existing tag with given pk to the marking task with given pk."""
+        try:
+            the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+            the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
+        except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
+            raise ValueError("Cannot find task or tag with given pk")
+        self.remove_tag_from_task(the_tag, the_task)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):

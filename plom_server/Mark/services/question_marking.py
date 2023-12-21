@@ -12,7 +12,6 @@ from django.db import transaction
 
 from ..models import MarkingTask
 from . import mark_task, page_data, annotations
-from ..services.mark_task_tags import MarkingTaskTagService
 
 
 class QuestionMarkingService:
@@ -187,7 +186,9 @@ class QuestionMarkingService:
     def get_tags(self) -> List[str]:
         """Return all the tags for a task."""
         task = self.get_task()
-        return MarkingTaskTagService().get_tag_texts_for_task(task)
+        return list(
+            task.markingtasktag_set.order_by("text").values_list("text", flat=True)
+        )
 
     @transaction.atomic
     def mark_task(self):

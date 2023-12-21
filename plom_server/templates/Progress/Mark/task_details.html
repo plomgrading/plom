@@ -78,17 +78,17 @@
                                     new tag
                                 </button>
                             </li>
-                            {% for tag in addable_tags_not_attn %}
+                            {% for tag_pk, tag_text in addable_normal_tags.items %}
                                 <li class="p-2">
-                                    <span hx-patch="{% url 'marking_task_tag' task_pk tag.pk %}"
-                                          class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-1"></i>{{ tag.text }}</span>
+                                    <span hx-patch="{% url 'marking_task_tag' task_pk tag_pk %}"
+                                          class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"><i class="bi bi-plus-square pe-1"></i>{{ tag_text }}</span>
                                 </li>
                             {% endfor %}
                         </ul>
                     </span>
-                    {% for tag in tags_not_attn_marker %}
-                        <span class="badge bg-primary align-middle">{{ tag.text }}
-                            <button hx-delete="{% url 'marking_task_tag' task_pk tag.pk %}"
+                    {% for tag_pk, tag_text in current_normal_tags.items %}
+                        <span class="badge bg-primary align-middle">{{ tag_text }}
+                            <button hx-delete="{% url 'marking_task_tag' task_pk tag_pk %}"
                                     class="btn btn-primary p-0">
                                 <i class="bi bi-backspace"></i>
                             </button>
@@ -123,7 +123,7 @@
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Flag to user</button>
                         <ul class="dropdown-menu">
-                            {% for user in addable_attn_markers %}
+                            {% for user in addable_attn_marker %}
                                 <li class="p-2">
                                     <!-- we add the vars here to get this hx-post to look like a form post -->
                                     <span hx-post="{% url 'create_marking_task_tag' task_pk %}"
@@ -133,9 +133,9 @@
                             {% endfor %}
                         </ul>
                     </span>
-                    {% for tag in tags_attn_marker %}
-                        <span class="badge text-bg-warning align-middle">{{ tag.text }}
-                            <button hx-delete="{% url 'marking_task_tag' task_pk tag.pk %}"
+                    {% for tag_pk, tag_text in current_attn_tags.items %}
+                        <span class="badge text-bg-warning align-middle">{{ tag_text }}
+                            <button hx-delete="{% url 'marking_task_tag' task_pk tag_pk %}"
                                     class="btn btn-warning p-0">
                                 <i class="bi bi-backspace"></i>
                             </button>

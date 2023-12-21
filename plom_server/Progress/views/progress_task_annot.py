@@ -12,7 +12,6 @@ from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
-    MarkingTaskTagService,
     page_data,
     mark_task,
 )
@@ -159,7 +158,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
         context = self.build_context()
         context.update(
             {
-                "task_pk": task_obj.pk,
+                "task_pk": task_pk,
                 "paper_number": task_obj.paper.paper_number,
                 "question": task_obj.question_number,
                 "version": task_obj.question_version,
@@ -186,46 +185,43 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
         else:
             pass
 
-        # getting the current tags and addable tags is complicated because
-        # adr wants to separate them into 2 categories - normal tags and attn-user tags
-        # these are index by the tag_pk and the user_pk respectively
-        # hence there is a little bit of work to check if a given user is already "attn"
-        # consequently make a list of all the markers and all the attn-tags they would get
-        all_tags = MarkingTaskTagService().get_all_marking_task_tags()
+        mts = MarkingTaskService()
+        # get all the tags as a dict of {pk: text}, and those for attn-markers
+        all_tags = {X[0]: X[1] for X in mts.get_all_tags()}
+        # list of all the markers as Users
         all_markers = User.objects.filter(groups__name="marker")
-        all_attn_marker_tag_text = [f"@{X.username}" for X in all_markers]
-        # all the current tags for this task, and those that are attn_marker and otherwise
-        task_tags = MarkingTaskTagService().get_tags_for_task(task_obj)
-        # list of tags
-        tags_attn_marker = [X for X in task_tags if X.text in all_attn_marker_tag_text]
-        # list of tags
-        tags_not_attn_marker = [
-            X for X in task_tags if X.text not in all_attn_marker_tag_text
-        ]
-        # addable tags not_attn_marker
-        task_tags_text = [X.text for X in task_tags]  # text of all current tags
-        # list of tags that are not of the form "@<user>"
-        addable_tags_not_attn = [
-            X
-            for X in all_tags
-            if X not in task_tags
-            and X.text not in task_tags_text
-            and X.text not in all_attn_marker_tag_text
-        ]
+        # the corresponding attn user tag text
+        attn_marker_tag_text = [f"@{X.username}" for X in all_markers]
+        # tags for task at hand
+        current_tags = {X[0]: X[1] for X in mts.get_tags_text_and_pk_for_task(task_pk)}
+        # separate the current tags into 'normal' and 'attn' tags
+        current_normal_tags = {
+            X: Y for X, Y in current_tags.items() if Y not in attn_marker_tag_text
+        }
+        current_attn_user_tags = {
+            X: Y for X, Y in current_tags.items() if Y in attn_marker_tag_text
+        }
+        # separate the normal tags from all the missing tags
+        addable_normal_tags = {
+            X: Y
+            for X, Y in all_tags.items()
+            if X not in current_tags and Y not in attn_marker_tag_text
+        }
         # list of **users** that are not already present as a tag "@<user>"
         addable_attn_marker = [
-            X for X in all_markers if f"@{X.username}" not in task_tags_text
+            X
+            for X in all_markers
+            if f"@{X.username}" not in current_attn_user_tags.values()
         ]
 
         context.update(
             {
                 # the current tags, and then separated into normal and attn-marker
-                "tags": task_tags,
-                "tags_attn_marker": tags_attn_marker,
-                "tags_not_attn_marker": tags_not_attn_marker,
+                "current_normal_tags": current_normal_tags,
+                "current_attn_tags": current_attn_user_tags,
                 # the tags / users we might add
-                "addable_attn_markers": addable_attn_marker,
-                "addable_tags_not_attn": addable_tags_not_attn,
+                "addable_normal_tags": addable_normal_tags,
+                "addable_attn_marker": addable_attn_marker,
                 # get simple form validation pattern from here rather than hard coding into html
                 "valid_tag_pattern": plom_valid_tag_text_pattern,
                 "valid_tag_description": plom_valid_tag_text_description,
@@ -237,11 +233,11 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
 class MarkingTaskTagView(LeadMarkerOrManagerView):
     def patch(self, request, task_pk: int, tag_pk: int):
-        MarkingTaskTagService().add_tag_to_task(tag_pk, task_pk)
+        MarkingTaskService().add_tag_to_task_via_pks(tag_pk, task_pk)
         return HttpResponseClientRefresh()
 
     def delete(self, request, task_pk: int, tag_pk: int):
-        MarkingTaskTagService().remove_tag_from_task(tag_pk, task_pk)
+        MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
         return HttpResponseClientRefresh()
 
     def post(self, request, task_pk: int):
@@ -263,7 +259,7 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
                 # instead just refresh the page.
                 return HttpResponseClientRefresh()
 
-        MarkingTaskTagService().add_tag_to_task(tag_obj.pk, task_pk)
+        mts.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
 
 
