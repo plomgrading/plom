@@ -34,24 +34,32 @@ class ErrorMsg(QMessageBox):
     See also subclasses ``WarnMsg`` and ``InfoMsg``, in order of
     decreasing implied severity.
 
-    args:
+    Args:
         parent (QWidget): the parent of this dialog.  If you think you
             should pass ``None`` you should think again very carefully.
         txt (str): the main error message.
 
-    kw-args:
-        details (str/None): a potentially large amount of details.  Might
+    Keyword Args:
+        details: optionally a potentially large amount of details.  Might
             be hidden by default.  Should be copy-pastable.  Generally
             pre-formatted.
-        info (str/None): some more details, like an error message or part
+        info: optionally some more details, like an error message or part
             of an error message.  Will be presented smaller or otherwise
             deemphasized.
-        info_pre (bool): True by default which means the info text
+        info_pre: True by default which means the info text
             is assumed to be preformatted (whitespace, newlines etc will be
             preserved).  Long lines will be wrapped.
     """
 
-    def __init__(self, parent, txt, details=None, info=None, info_pre=True):
+    def __init__(
+        self,
+        parent: Union[QWidget, None],
+        txt: str,
+        *,
+        details: Optional[str] = None,
+        info: Optional[str] = None,
+        info_pre: bool = True,
+    ):
         super().__init__(parent)
         self.setText(txt)
         if details:
@@ -337,9 +345,15 @@ class BigMessageDialog(QDialog):
         summary (str): an text or html summary.
 
     Keyword Args:
-        details (str): HTML for some longer details.
-        show (bool): if True (default), the details will be shown
+        details: Optionally, provide some HTML for some longer details.
+        show: if True (default), the details will be shown
             else they will start hidden.
+        info: optionally some more details, like an error message or part
+            of an error message.  Will be presented smaller or otherwise
+            deemphasized.
+        info_pre: True by default which means the info text
+            is assumed to be preformatted (whitespace, newlines etc will be
+            preserved).  Long lines will be wrapped.
     """
 
     def __init__(
@@ -349,8 +363,17 @@ class BigMessageDialog(QDialog):
         *,
         details: Optional[str] = "",
         show: Optional[bool] = True,
+        info: Optional[str] = None,
+        info_pre: bool = True,
     ):
         super().__init__(parent)
+
+        if info:
+            if info_pre:
+                summary += f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
+            else:
+                summary += f"<small>{info}</small>"
+
         lay = QVBoxLayout()
 
         _ = BigTextEdit()

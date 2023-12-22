@@ -53,18 +53,16 @@ def add_popup_to_toplevel_exception_handler():
         A partial error message follows.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
         the text under &ldquo;Details&rdquo;.)</p>
-        <ul>
         <p>Plom v{__version__}<br />
         PyQt {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         Python {platform.python_version()},
         {platform.platform()}<br />
         Timestamp: {utc_now_to_string()}</p>
-          <pre>{abbrev}</pre>
-        </ul>
         """
         msg = BigMessageDialog(
             None,
             txt,
+            info=abbrev,
             details="<pre>" + "".join(rawlines) + "</pre",
             show=False,
         )
