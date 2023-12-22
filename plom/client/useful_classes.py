@@ -334,7 +334,7 @@ class BigMessageDialog(QDialog):
         summary (str): an text or html summary.
 
     Keyword Args:
-        detail (str): HTML for some longer details.
+        details (str): HTML for some longer details.
         show (bool): if True (default), the details will be shown
             else they will start hidden.
     """
@@ -369,19 +369,15 @@ class BigMessageDialog(QDialog):
         self.setLayout(lay)
 
         if show:
-            lay.addWidget(self._details)
+            lay.addWidget(self.details_TE)
+            self.details_TE.setVisible(True)
             lay.addWidget(buttons)
             b.setChecked(True)
-            self.details_TE.setVisible(True)
+            b.setArrowType(Qt.ArrowType.DownArrow)
+            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            self.toggle_button = b
         else:
             lay.addWidget(buttons)
-            # QMessageBox has a horizontal rule
-            line = QFrame()
-            line.setFrameShape(QFrame.Shape.HLine)
-            line.setFrameShadow(QFrame.Shadow.Sunken)
-            lay.addWidget(line)
-            self._line = line
-            line.setVisible(False)
             lay.addWidget(self.details_TE)
             b.setChecked(False)
             self.details_TE.setVisible(False)
@@ -394,12 +390,9 @@ class BigMessageDialog(QDialog):
 
     def toggle_details(self):
         if self.details_TE.isVisible():
-            self._line.setVisible(False)
             self.details_TE.setVisible(False)
             self.toggle_button.setArrowType(Qt.ArrowType.DownArrow)
-            self.adjustSize()
         else:
             self.details_TE.setVisible(True)
-            self._line.setVisible(True)
             self.toggle_button.setArrowType(Qt.ArrowType.UpArrow)
-            self.adjustSize()
+        self.adjustSize()

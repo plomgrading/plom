@@ -67,3 +67,23 @@ def test_BigMessageDialog_gets_big_then_small(qtbot):
     assert w3 == w
     assert h3 == h
     d.accept()
+
+
+def test_BigMessageDialog_starts_big_then_small(qtbot):
+    d = BigMessageDialog(None, "foo", details="<p>bar</p>", show=True)
+    d.show()
+    qtbot.addWidget(d)
+    w = d.geometry().width()
+    h = d.geometry().height()
+    qtbot.mouseClick(d.toggle_button, Qt.MouseButton.LeftButton)
+    w2 = d.geometry().width()
+    h2 = d.geometry().height()
+    # width is maintained
+    assert w2 == w
+    assert h2 < h
+    qtbot.mouseClick(d.toggle_button, Qt.MouseButton.LeftButton)
+    w3 = d.geometry().width()
+    h3 = d.geometry().height()
+    assert w3 == w
+    assert h3 == h
+    d.accept()
