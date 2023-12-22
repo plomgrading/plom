@@ -17,6 +17,7 @@ import signal
 import os
 import platform
 import sys
+from textwrap import shorten
 import traceback as tblib
 from multiprocessing import freeze_support
 
@@ -36,12 +37,17 @@ def add_popup_to_toplevel_exception_handler():
     sys._excepthook = sys.excepthook
 
     def exception_hook(exctype, value, traceback):
-        lines = tblib.format_exception(exctype, value, traceback)
-        if len(lines) >= 10:
-            abbrev = "".join(["\N{VERTICAL ELLIPSIS}\n", *lines[-8:]])
-        else:
-            abbrev = "".join(lines)
-        lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
+        rawlines = tblib.format_exception(exctype, value, traceback)
+        # docs say some of the lines may contain newlines so join and split again
+        lines = "".join(rawlines).splitlines()
+        # only last few lines
+        if len(lines) >= 9:
+            lines = ["\N{VERTICAL ELLIPSIS}", *lines[-7:]]
+        # no line too long
+        lines = [shorten(x, 80, placeholder="\N{Horizontal Ellipsis}") for x in lines]
+        abbrev = "\n".join(lines)
+
+        rawlines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
 
         txt = f"""<p><b>Something unexpected has happened!</b>
         A partial error message follows.</p>
@@ -50,13 +56,14 @@ def add_popup_to_toplevel_exception_handler():
         <p>Plom v{__version__}<br />
         PyQt {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         Python {platform.python_version()},
-        {platform.platform()}</p>
+        {platform.platform()}<br />
+        Timestamp: {utc_now_to_string()}</p>
         """
         msg = ErrorMsg(
             None,
             txt,
             info=abbrev,
-            details="".join(lines),
+            details="".join(rawlines),
         )
         msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
