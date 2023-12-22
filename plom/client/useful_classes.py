@@ -2,7 +2,8 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
-from typing import Optional, Union
+import platform
+from typing import Any, Optional, Union
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -28,7 +29,7 @@ from PyQt6.QtWidgets import (
 from plom import isValidStudentNumber
 
 
-class ErrorMsg(QMessageBox):
+class _ErrorMsg(QMessageBox):
     """A simple error message pop-up.
 
     See also subclasses ``WarnMsg`` and ``InfoMsg``, in order of
@@ -74,6 +75,99 @@ class ErrorMsg(QMessageBox):
         self.setStandardButtons(QMessageBox.StandardButton.Ok)
         self.setDefaultButton(QMessageBox.StandardButton.Ok)
         self.setIcon(QMessageBox.Icon.Critical)
+
+
+class CustomDetailsDialog(QDialog):
+    """A dialog with an expanding details field, instead of the Qt builtin options.
+
+    Args:
+        parent (QWidget): who should parent this modal dialog.
+        summary (str): an text or html summary.
+
+    Keyword Args:
+        details: Provide some string of longer details, which can be
+            hidden and scrolled.
+        details_html: Provide details in HTML instead.
+        info: optionally some more details, like an error message or part
+            of an error message.  Will be presented smaller or otherwise
+            deemphasized.
+        info_pre: True by default which means the info text
+            is assumed to be preformatted (whitespace, newlines etc will be
+            preserved).  Long lines will be wrapped.
+    """
+
+    def __init__(
+        self,
+        parent: Union[None, QWidget],
+        summary: str,
+        *,
+        details: Optional[str] = "",
+        details_html: Optional[str] = "",
+        info: Optional[str] = None,
+        info_pre: bool = True,
+    ):
+        super().__init__(parent)
+
+        if info:
+            if info_pre:
+                summary += f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
+            else:
+                summary += f"<small>{info}</small>"
+
+        lay = QVBoxLayout()
+
+        if details and details_html:
+            raise ValueError('Cannot provide both "details" and "details_html"')
+
+        self.details_TE = QTextEdit()
+        if details:
+            self.details_TE.setText(details)
+        if details_html:
+            self.details_TE.setHtml(details_html)
+        self.details_TE.setReadOnly(True)
+
+        s = QLabel(summary)
+        lay.addWidget(s)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        b = QToolButton(text="Details")  # type: ignore
+        b.setCheckable(True)
+        b.clicked.connect(self.toggle_details)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
+        lay.addWidget(buttons)
+        self.setLayout(lay)
+
+        lay.addWidget(buttons)
+        lay.addWidget(self.details_TE)
+        b.setChecked(False)
+        self.details_TE.setVisible(False)
+        b.setArrowType(Qt.ArrowType.RightArrow)
+        b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.toggle_button = b
+
+        buttons.accepted.connect(self.accept)
+        self.setSizeGripEnabled(True)
+
+    def setIcon(self, x):
+        # We're somewhat emulating QMessageBox which can set icons
+        # TODO: better yet, implement it!
+        pass
+
+    def toggle_details(self):
+        if self.details_TE.isVisible():
+            self.details_TE.setVisible(False)
+            self.toggle_button.setArrowType(Qt.ArrowType.RightArrow)
+        else:
+            self.details_TE.setVisible(True)
+            self.toggle_button.setArrowType(Qt.ArrowType.DownArrow)
+        self.adjustSize()
+
+
+if platform.system() == "Darwin":
+    # on macOS, detailedText of QMessageBox does not scroll (Issue #3217)
+    ErrorMsg: Any = CustomDetailsDialog  # type: ignore
+else:
+    ErrorMsg: Any = _ErrorMsg  # type: ignore
 
 
 class WarnMsg(ErrorMsg):

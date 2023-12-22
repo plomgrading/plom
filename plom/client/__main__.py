@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from plom import __version__
 from plom import Default_Port
 from plom.client import Chooser
-from plom.client.useful_classes import ErrorMsg, WarningQuestion, BigMessageDialog
+from plom.client.useful_classes import ErrorMsg, WarningQuestion
 from plom.misc_utils import utc_now_to_string
 
 
@@ -60,7 +60,7 @@ def add_popup_to_toplevel_exception_handler():
         {platform.platform()}<br />
         Timestamp: {utc_now_to_string()}</p>
         """
-        msg = BigMessageDialog(None, txt, info=abbrev, details=details, show=False)
+        msg = ErrorMsg(None, txt, info=abbrev, details=details)
         # msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
         # call the original hook after our dialog closes
