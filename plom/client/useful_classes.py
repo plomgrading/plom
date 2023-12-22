@@ -2,6 +2,8 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
+from typing import Optional, Union
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -20,6 +22,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QToolButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from plom import isValidStudentNumber
@@ -339,7 +342,14 @@ class BigMessageDialog(QDialog):
             else they will start hidden.
     """
 
-    def __init__(self, parent, summary, *, details="", show=True):
+    def __init__(
+        self,
+        parent: Union[None, QWidget],
+        summary: str,
+        *,
+        details: Optional[str] = "",
+        show: Optional[bool] = True,
+    ):
         super().__init__(parent)
         lay = QVBoxLayout()
 
@@ -361,7 +371,7 @@ class BigMessageDialog(QDialog):
         lay.addWidget(s)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        b = QToolButton(text="Details")
+        b = QToolButton(text="Details")  # type: ignore
         b.setCheckable(True)
         b.clicked.connect(self.toggle_details)
         buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
