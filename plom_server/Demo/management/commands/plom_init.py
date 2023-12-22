@@ -49,7 +49,6 @@ class Command(BaseCommand):
 
     def create_admin(self, username: str, password: str) -> None:
         """Create an admin user."""
-
         if User.objects.filter(is_superuser=True).count() > 0:
             raise CommandError("Cannot initialize server - superuser already exists.")
 
@@ -63,7 +62,6 @@ class Command(BaseCommand):
 
     def create_manager(self, username: str, password: str) -> None:
         """Create a manager user."""
-
         if not Group.objects.filter(name="manager").exists():
             raise CommandError("Cannot initialize server - manager group not created.")
 
