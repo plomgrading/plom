@@ -38,13 +38,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--admin-login",
             nargs=2,
-            help="Login details for the admin. Format: --admin-login USERNAME PASSWORD"
+            help="Login details for the admin. Format: --admin-login USERNAME PASSWORD",
         )
 
         parser.add_argument(
             "--manager-login",
             nargs=2,
-            help="Login details for the manager. Format: --manager-login USERNAME PASSWORD"
+            help="Login details for the manager. Format: --manager-login USERNAME PASSWORD",
         )
 
     def create_admin(self, username: str, password: str) -> None:
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
         if User.objects.filter(is_superuser=True).count() > 0:
             raise CommandError("Cannot initialize server - superuser already exists.")
-        
+
         if not Group.objects.filter(name="admin").exists():
             raise CommandError("Cannot initialize server - admin group not created.")
 
@@ -60,18 +60,20 @@ class Command(BaseCommand):
         admin_group = Group.objects.get(name="admin")
         admin.groups.add(admin_group)
         admin.save()
-    
+
     def create_manager(self, username: str, password: str) -> None:
         """Create a manager user."""
-        
+
         if not Group.objects.filter(name="manager").exists():
             raise CommandError("Cannot initialize server - manager group not created.")
-        
+
         # TODO: more efficient way to query?
         for user in User.objects.all():
             if user.groups.filter(name="manager").exists():
-                raise CommandError("Cannot initialize server - manager user already exists.")
-        
+                raise CommandError(
+                    "Cannot initialize server - manager user already exists."
+                )
+
         manager = User.objects.create_user(username=username, password=password)
         manager_group = Group.objects.get(name="manager")
         manager.groups.add(manager_group)
@@ -94,7 +96,7 @@ class Command(BaseCommand):
         else:
             admin_username, admin_password = options["admin_login"]
             self.create_admin(username=admin_username, password=admin_password)
-        
+
         if options["manager_login"] is None:
             manager_password = simple_password(3)
             print(f"No manager login details provided.")
