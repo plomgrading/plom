@@ -1137,7 +1137,7 @@ class RubricWidget(QWidget):
                 d += f"<li>{diff}</li>\n"
             d += "</ul>\n"
         if added or changed or deleted:
-            BigMessageDialog(self, msg, details=d, show=False).exec()
+            BigMessageDialog(self, msg, details_html=d, show=False).exec()
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
 

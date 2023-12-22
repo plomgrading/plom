@@ -345,7 +345,9 @@ class BigMessageDialog(QDialog):
         summary (str): an text or html summary.
 
     Keyword Args:
-        details: Optionally, provide some HTML for some longer details.
+        details: Provide some string of longer details, which can be
+            hidden and scrolled.
+        details_html: Provide details in HTML instead.
         show: if True (default), the details will be shown
             else they will start hidden.
         info: optionally some more details, like an error message or part
@@ -362,6 +364,7 @@ class BigMessageDialog(QDialog):
         summary: str,
         *,
         details: Optional[str] = "",
+        details_html: Optional[str] = "",
         show: Optional[bool] = True,
         info: Optional[str] = None,
         info_pre: bool = True,
@@ -376,8 +379,14 @@ class BigMessageDialog(QDialog):
 
         lay = QVBoxLayout()
 
+        if details and details_html:
+            raise ValueError('Cannot provide both "details" and "details_html"')
+
         _ = BigTextEdit()
-        _.setHtml(details)
+        if details:
+            _.setText(details)
+        if details_html:
+            _.setHtml(details_html)
         _.setReadOnly(True)
         self.details_TE = _
 

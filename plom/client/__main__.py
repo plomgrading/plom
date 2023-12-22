@@ -48,6 +48,7 @@ def add_popup_to_toplevel_exception_handler():
         abbrev = "\n".join(lines)
 
         rawlines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
+        details = "".join(rawlines)
 
         txt = f"""<p><b>Something unexpected has happened!</b>
         A partial error message follows.</p>
@@ -59,13 +60,7 @@ def add_popup_to_toplevel_exception_handler():
         {platform.platform()}<br />
         Timestamp: {utc_now_to_string()}</p>
         """
-        msg = BigMessageDialog(
-            None,
-            txt,
-            info=abbrev,
-            details="<pre>" + "".join(rawlines) + "</pre",
-            show=False,
-        )
+        msg = BigMessageDialog(None, txt, info=abbrev, details=details, show=False)
         # msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
         # call the original hook after our dialog closes

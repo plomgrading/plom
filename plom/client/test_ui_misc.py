@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020, 2023 Colin B. Macdonald
 
+from pytest import raises
+
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
+
 from plom.client.chooser import Chooser
 from plom.client.useful_classes import BlankIDBox
 from plom.client.useful_classes import BigMessageDialog
@@ -50,7 +53,7 @@ def DISABLE_test_Chooser_again(qtbot):
 
 
 def test_BigMessageDialog_gets_big_then_small(qtbot):
-    d = BigMessageDialog(None, "foo", details="<p>bar</p>", show=False)
+    d = BigMessageDialog(None, "foo", details="bar", show=False)
     d.show()
     qtbot.addWidget(d)
     w = d.geometry().width()
@@ -70,7 +73,7 @@ def test_BigMessageDialog_gets_big_then_small(qtbot):
 
 
 def test_BigMessageDialog_starts_big_then_small(qtbot):
-    d = BigMessageDialog(None, "foo", details="<p>bar</p>", show=True)
+    d = BigMessageDialog(None, "foo", details="bar", show=True)
     d.show()
     qtbot.addWidget(d)
     w = d.geometry().width()
@@ -87,3 +90,8 @@ def test_BigMessageDialog_starts_big_then_small(qtbot):
     assert w3 == w
     assert h3 == h
     d.accept()
+
+
+def test_BigMessageDialog_not_both(qtbot):
+    with raises(ValueError, match="Cannot.*both.*"):
+        BigMessageDialog(None, "foo", details="bar", details_html="<p>bar</p>")
