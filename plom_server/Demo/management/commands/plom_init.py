@@ -88,7 +88,7 @@ class Command(BaseCommand):
         # generate random passwords if no info is provided via the commandline
         if options["admin_login"] is None:
             admin_password = simple_password(3)
-            print(f"No admin login details provided.")
+            print("No admin login details provided.")
             print(f"Admin username: admin\nAdmin password: {admin_password}\n")
             self.create_admin(username="admin", password=admin_password)
         else:
@@ -97,7 +97,7 @@ class Command(BaseCommand):
 
         if options["manager_login"] is None:
             manager_password = simple_password(3)
-            print(f"No manager login details provided.")
+            print("No manager login details provided.")
             print(f"Manager username: manager\nManager password: {admin_password}\n")
             self.create_manager(username="manager", password=manager_password)
         else:
