@@ -19,6 +19,7 @@ import logging
 from math import ceil
 import os
 from pathlib import Path
+import platform
 import queue
 import random
 import sys
@@ -34,8 +35,6 @@ else:
 
 from packaging.version import Version
 
-# in order to get shortcuts under OSX this needs to set this.... but only osx.
-import platform
 
 from PyQt6 import uic
 from PyQt6.QtCore import (
@@ -85,9 +84,11 @@ from .tagging_range_dialog import TaggingAndRangeOptions
 
 
 if platform.system() == "Darwin":
+    # apparently neeed for shortcuts under macOS
     from PyQt6.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
+
 
 log = logging.getLogger("marker")
 
