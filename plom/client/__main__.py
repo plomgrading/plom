@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from plom import __version__
 from plom import Default_Port
 from plom.client import Chooser
-from plom.client.useful_classes import ErrorMsg, WarningQuestion
+from plom.client.useful_classes import ErrorMsg, WarningQuestion, BigMessageDialog
 from plom.misc_utils import utc_now_to_string
 
 
@@ -44,7 +44,7 @@ def add_popup_to_toplevel_exception_handler():
         if len(lines) >= 9:
             lines = ["\N{VERTICAL ELLIPSIS}", *lines[-7:]]
         # no line too long
-        lines = [shorten(x, 80, placeholder="\N{Horizontal Ellipsis}") for x in lines]
+        lines = [shorten(x, 88, placeholder="\N{Horizontal Ellipsis}") for x in lines]
         abbrev = "\n".join(lines)
 
         rawlines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
@@ -52,20 +52,23 @@ def add_popup_to_toplevel_exception_handler():
         txt = f"""<p><b>Something unexpected has happened!</b>
         A partial error message follows.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
-        the text under &ldquo;Show Details&rdquo;.)</p>
+        the text under &ldquo;Details&rdquo;.)</p>
+        <ul>
         <p>Plom v{__version__}<br />
         PyQt {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         Python {platform.python_version()},
         {platform.platform()}<br />
         Timestamp: {utc_now_to_string()}</p>
+          <pre>{abbrev}</pre>
+        </ul>
         """
-        msg = ErrorMsg(
+        msg = BigMessageDialog(
             None,
             txt,
-            info=abbrev,
-            details="".join(rawlines),
+            details="<pre>" + "".join(rawlines) + "</pre",
+            show=False,
         )
-        msg.setIcon(QMessageBox.Icon.Critical)
+        # msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
         # call the original hook after our dialog closes
         sys._excepthook(exctype, value, traceback)
