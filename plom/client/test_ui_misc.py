@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt
 
 from plom.client.chooser import Chooser
 from plom.client.useful_classes import BlankIDBox
+from plom.client.useful_classes import CustomDetailsDialog
 from plom.client.useful_classes import BigMessageDialog
 
 
@@ -52,8 +53,37 @@ def DISABLE_test_Chooser_again(qtbot):
     qtbot.mouseClick(window.ui.closeButton, Qt.MouseButton.LeftButton)
 
 
+def test_BigMessageDialog_no_details(qtbot):
+    d = BigMessageDialog(None, "foo")
+    d.show()
+    qtbot.addWidget(d)
+    assert not d.toggle_button.isVisible()
+
+
+def test_CustomDetailsDialog_not_both(qtbot):
+    with raises(ValueError, match="Cannot.*both.*"):
+        CustomDetailsDialog(None, "foo", details="bar", details_html="<p>bar</p>")
+
+
+def test_CustomDetailsDialog_gets_taller_then_shorter(qtbot):
+    d = CustomDetailsDialog(None, "foo", details="bar")
+    d.show()
+    qtbot.addWidget(d)
+    w = d.geometry().width()
+    h = d.geometry().height()
+    qtbot.mouseClick(d.toggle_button, Qt.MouseButton.LeftButton)
+    h2 = d.geometry().height()
+    assert h2 > h
+    qtbot.mouseClick(d.toggle_button, Qt.MouseButton.LeftButton)
+    w3 = d.geometry().width()
+    h3 = d.geometry().height()
+    assert w3 == w
+    assert h3 == h
+    d.accept()
+
+
 def test_BigMessageDialog_gets_big_then_small(qtbot):
-    d = BigMessageDialog(None, "foo", details="bar", show=False)
+    d = BigMessageDialog(None, "foo", details="bar")
     d.show()
     qtbot.addWidget(d)
     w = d.geometry().width()
@@ -90,8 +120,3 @@ def test_BigMessageDialog_starts_big_then_small(qtbot):
     assert w3 == w
     assert h3 == h
     d.accept()
-
-
-def test_BigMessageDialog_not_both(qtbot):
-    with raises(ValueError, match="Cannot.*both.*"):
-        BigMessageDialog(None, "foo", details="bar", details_html="<p>bar</p>")
