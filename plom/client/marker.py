@@ -27,6 +27,7 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
+from typing import Any, Dict
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -39,6 +40,7 @@ from packaging.version import Version
 from PyQt6 import uic
 from PyQt6.QtCore import (
     Qt,
+    QModelIndex,
     QSortFilterProxyModel,
     QTimer,
     QThread,
@@ -111,9 +113,9 @@ class BackgroundUploader(QThread):
     queue_status_changed = pyqtSignal(int, int, int, int)
 
     def __init__(self, msgr):
-        """Initialize a new uploader
+        """Initialize a new uploader.
 
-        args:
+        Args:
             msgr (Messenger):
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
@@ -140,9 +142,8 @@ class BackgroundUploader(QThread):
         log.info("fail mode disabled")
         self.simulate_failures = False
 
-    def enqueueNewUpload(self, *args):
-        """
-        Places something in the upload queue.
+    def enqueueNewUpload(self, *args) -> None:
+        """Places something in the upload queue.
 
         Note:
             If you call this from the main thread, this code runs in the
@@ -172,9 +173,8 @@ class BackgroundUploader(QThread):
             return self.q.qsize() + 1
         return self.q.qsize()
 
-    def isEmpty(self):
-        """
-        Checks if the upload queue is empty.
+    def isEmpty(self) -> None:
+        """Checks if the upload queue is empty.
 
         Returns:
             True if the upload queue is empty, false otherwise.
@@ -182,9 +182,8 @@ class BackgroundUploader(QThread):
         # return self.q.empty()
         return self.queue_size() == 0
 
-    def run(self):
-        """
-        Runs the uploader in background.
+    def run(self) -> None:
+        """Runs the uploader in background.
 
         Notes:
             Overrides run method of Qthread.
@@ -258,8 +257,7 @@ def upload(
     unknownFailCallback=None,
     successCallback=None,
 ):
-    """
-    Uploads a paper.
+    """Uploads a paper.
 
     Args:
         task (str): the Task ID for the page being uploaded. Takes the form
@@ -324,8 +322,7 @@ def upload(
 
 
 class ExamQuestion:
-    """
-    A class storing identifying information for one Exam Question.
+    """A class storing identifying information for one Exam Question.
 
     A simple container for storing a groupimage's task ID,
     number, group, version, status, the mark, the original image
@@ -344,8 +341,7 @@ class ExamQuestion:
         tags=[],
         integrity_check="",
     ):
-        """
-        Initializes an exam question.
+        """Initializes an exam question.
 
         Args:
             task (str): the Task ID for the page being uploaded. Takes the form
@@ -379,12 +375,10 @@ class MarkerExamModel(QStandardItemModel):
     """A tablemodel for handling the group image marking data."""
 
     def __init__(self, parent=None):
-        """
-        Initializes a new MarkerExamModel.
+        """Initializes a new MarkerExamModel.
 
         Args:
             parent (QStandardItemModel): MarkerExamModel's Parent.
-
         """
         super().__init__(parent)
         self.setHorizontalHeaderLabels(
@@ -403,16 +397,14 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
 
-    def addPaper(self, paper):
-        """
-        Adds a paper to self.
+    def addPaper(self, paper) -> int:
+        """Adds a paper to self.
 
         Args:
             paper (ExamQuestion): the paper to be added
 
         Returns:
-            int: the row identifier of the added paper.
-
+            The integer row identifier of the added paper.
         """
         # check if paper is already in model - if so, delete it and add it back with the new data.
         # **but** be careful - if annotation in progress then ??
@@ -453,95 +445,85 @@ class MarkerExamModel(QStandardItemModel):
         )
         return r
 
-    def _getPrefix(self, r):
-        """
-        Return the prefix of the image
+    def _getPrefix(self, r: int) -> str:
+        """Return the prefix of the image.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
-            str: the prefix of the image
-
+            the string prefix of the image
         """
         return self.data(self.index(r, 0))
 
-    def _getStatus(self, r):
-        """
-        Returns the status of the image.
+    def _getStatus(self, r: int) -> str:
+        """Returns the status of the image.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
-            str: the status of the image
-
+            The status of the image
         """
         return self.data(self.index(r, 1))
 
-    def _setStatus(self, r, stat):
-        """
-        Sets the status of the image.
+    def _setStatus(self, r: int, stat: str) -> None:
+        """Sets the status of the image.
 
         Args:
-            r (int): the row identifier of the paper.
-            stat (str): the new status of the image.
+            r: the row identifier of the paper.
+            stat: the new status string of the image.
 
         Returns:
             None
-
         """
         self.setData(self.index(r, 1), stat)
 
-    def _setAnnotatedFile(self, r, aname, pname):
-        """
-        Set the file name for the annotated image.
+    def _setAnnotatedFile(self, r: int, aname: str, pname: str) -> None:
+        """Set the file name for the annotated image.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
             aname (str): the name for the annotated file.
             pname (str): the name for the .plom file
 
         Returns:
             None
-
         """
         self.setData(self.index(r, 6), aname)
         self.setData(self.index(r, 7), pname)
 
-    def _setPaperDir(self, r, tdir):
-        """
-        Sets the paper directory for the given paper.
+    def _setPaperDir(self, r: int, tdir: str) -> None:
+        """Sets the paper directory for the given paper.
+
         Args:
-            r (int): the row identifier of the paper.
-            tdir (dir): a temporary directory for this paper.
+            r: the row identifier of the paper.
+            tdir: a name of a temporary directory for this paper.
 
         Returns:
             None
         """
         self.setData(self.index(r, 8), tdir)
 
-    def _clearPaperDir(self, r):
-        """
-        Clears the paper directory for the given paper.
+    def _clearPaperDir(self, r: int) -> None:
+        """Clears the paper directory for the given paper.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
             None
         """
         self._setPaperDir(r, None)
 
-    def _getPaperDir(self, r):
-        """
-        Returns the paper directory for the given paper.
+    def _getPaperDir(self, r: int) -> str:
+        """Returns the paper directory for the given paper.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
-            dir: a temporary directory for this paper.
+            Name of a temporary directory for this paper.
         """
         return self.data(self.index(r, 8))
 
@@ -552,13 +534,15 @@ class MarkerExamModel(QStandardItemModel):
     def _set_marking_time(self, r, marking_time):
         self.setData(self.index(r, 3), _marking_time_as_str(marking_time))
 
-    def _findTask(self, task):
-        """
-        Return the row index of this task.
+    def _findTask(self, task: str) -> int:
+        """Return the row index of this task.
 
         Args:
             task (str): the task for the image files to be loaded from.
                 Takes the form "q1234g9" = test 1234 question 9
+
+        Returns:
+            The row index of the task.
 
         Raises:
              ValueError if not found.
@@ -577,8 +561,7 @@ class MarkerExamModel(QStandardItemModel):
         return r0[0]
 
     def _setDataByTask(self, task, n, stuff):
-        """
-        Find the row identifier with `task` and sets `n`th column to `stuff`.
+        """Find the row identifier with `task` and sets `n`th column to `stuff`.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -592,8 +575,7 @@ class MarkerExamModel(QStandardItemModel):
         self.setData(self.index(r, n), stuff)
 
     def _getDataByTask(self, task, n):
-        """
-        Returns contents of task in `n`th column.
+        """Returns contents of task in `n`th column.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -606,11 +588,11 @@ class MarkerExamModel(QStandardItemModel):
         return self.data(self.index(r, n))
 
     def getStatusByTask(self, task):
-        """Return status for task (task(str) defined above.)"""
+        """Return status for task."""
         return self._getDataByTask(task, 1)
 
     def setStatusByTask(self, task, st):
-        """Set status for task, ((task(str) and st(str) defined above.)"""
+        """Set status for task."""
         self._setDataByTask(task, 1, st)
 
     def getTagsByTask(self, task):
@@ -622,6 +604,7 @@ class MarkerExamModel(QStandardItemModel):
 
     def setTagsByTask(self, task, tags):
         """Set a list of tags for task.
+
         Note: internally stored as flattened string.
         """
         return self._setDataByTask(task, 4, " ".join(tags))
@@ -640,12 +623,11 @@ class MarkerExamModel(QStandardItemModel):
         return Path(self._getDataByTask(task, 7))
 
     def getPaperDirByTask(self, task):
-        """Return temporary directory for this task, (task(str) defined above)"""
+        """Return temporary directory for this task."""
         return self._getDataByTask(task, 8)
 
     def setPaperDirByTask(self, task, tdir):
-        """
-        Set temporary directory for this grading.
+        """Set temporary directory for this grading.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -680,9 +662,8 @@ class MarkerExamModel(QStandardItemModel):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
-    def markPaperByTask(self, task, mrk, aname, pname, marking_time, tdir):
-        """
-        Add marking data for the given task.
+    def markPaperByTask(self, task, mrk, aname, pname, marking_time, tdir) -> None:
+        """Add marking data for the given task.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -694,7 +675,6 @@ class MarkerExamModel(QStandardItemModel):
 
         Returns:
             None
-
         """
         # There should be exactly one row with this Task
         r = self._findTask(task)
@@ -730,8 +710,7 @@ class ProxyModel(QSortFilterProxyModel):
     """A proxymodel wrapper to handle filtering and sorting of table model."""
 
     def __init__(self, parent=None):
-        """
-        Initializes a new ProxyModel object.
+        """Initializes a new ProxyModel object.
 
         Args:
             parent (QObject): self's parent.
@@ -741,9 +720,8 @@ class ProxyModel(QSortFilterProxyModel):
         self.filterString = ""
         self.invert = False
 
-    def lessThan(self, left, right):
-        """
-        Sees if left data is less than right data.
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        """Sees if left data is less than right data.
 
         Args:
             left (QModelIndex):
@@ -761,22 +739,19 @@ class ProxyModel(QSortFilterProxyModel):
         # else compare as strings
         return str(left.data()) < str(right.data())
 
-    def setFilterString(self, flt):
-        """
-        Sets the Filter String.
+    def setFilterString(self, flt: str) -> None:
+        """Sets the Filter String.
 
         Args:
-            flt (str): the string to filter by
+            flt: the string on which to filter.
 
         Returns:
             None
-
         """
         self.filterString = flt
 
     def filterTags(self, invert=False):
-        """
-        Sets the Filter Tags based on string.
+        """Sets the Filter Tags based on string.
 
         Args:
             invert (bool): True if looking for files that do not have given
@@ -784,14 +759,12 @@ class ProxyModel(QSortFilterProxyModel):
 
         Returns:
             None
-
         """
         self.invert = invert
         self.setFilterFixedString(self.filterString)
 
     def filterAcceptsRow(self, pos, index):
-        """
-        Checks if a row matches the current filter.
+        """Checks if a row matches the current filter.
 
         Notes:
             Overrides base method.
@@ -815,43 +788,37 @@ class ProxyModel(QSortFilterProxyModel):
             return not all_search_terms_in_tags
         return all_search_terms_in_tags
 
-    def getPrefix(self, r):
-        """
-        Returns the task code of inputted row index.
+    def getPrefix(self, r: int) -> str:
+        """Returns the task code of inputted row index.
 
         Args:
             r (int): the row identifier of the paper.
 
         Returns:
             str: the prefix of the paper indicated by r.
-
         """
         return self.data(self.index(r, 0))
 
-    def getStatus(self, r):
-        """
-        Returns the status of inputted row index.
+    def getStatus(self, r: int) -> str:
+        """Returns the status of inputted row index.
 
         Args:
             r (int): the row identifier of the paper.
 
         Returns:
             str: the status of the paper indicated by r.
-
         """
         # Return the status of the image
         return self.data(self.index(r, 1))
 
-    def getAnnotatedFile(self, r):
-        """
-        Returns the file names of the annotated image of r.
+    def getAnnotatedFile(self, r: int) -> str:
+        """Returns the file names of an annotated image.
 
         Args:
             r (int): the row identifier of the paper.
 
         Returns:
             str: the file name of the annotated image of the paper in r.
-
         """
         return self.data(self.index(r, 6))
 
@@ -872,8 +839,7 @@ class ProxyModel(QSortFilterProxyModel):
 
 
 class MarkerClient(QWidget):
-    """
-    Setup for marking client and annotator
+    """Setup for marking client and annotator.
 
     Notes:
         TODO: should be a QMainWindow but at any rate not a Dialog
@@ -883,8 +849,7 @@ class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int, list)
 
     def __init__(self, Qapp, tmpdir=None):
-        """
-        Initialize a new MarkerClient
+        """Initialize a new MarkerClient.
 
         Args:
             Qapp(QApplication): Main client application
@@ -1027,9 +992,8 @@ class MarkerClient(QWidget):
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
 
-    def applyLastTimeOptions(self, lastTime):
-        """
-        Applies all settings from previous client.
+    def applyLastTimeOptions(self, lastTime: Dict[str, Any]) -> None:
+        """Applies all settings from previous client.
 
         Args:
             lastTime (dict): information about settings, often from a
@@ -1057,9 +1021,8 @@ class MarkerClient(QWidget):
             log.info("Experimental/advanced mode disabled")
             self.annotatorSettings["experimental"] = False
 
-    def UIInitialization(self):
-        """
-        Startup procedure for the user interface
+    def UIInitialization(self) -> None:
+        """Startup procedure for the user interface.
 
         Returns:
             None: Modifies self.ui
@@ -1101,15 +1064,14 @@ class MarkerClient(QWidget):
         # self.force_update_technical_stats()
         self.update_technical_stats_upload(0, 0, 0, 0)
 
-    def connectGuiButtons(self):
-        """
-        Connect gui buttons to appropriate functions
+    def connectGuiButtons(self) -> None:
+        """Connect gui buttons to appropriate functions.
 
         Notes:
             TODO: remove the total-radiobutton
 
         Returns:
-            None - Modifies self.ui
+            None but modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu(self)
@@ -1199,9 +1161,8 @@ class MarkerClient(QWidget):
             )
             self.marking_history.append(x[0])
 
-    def get_files_for_previously_annotated(self, task):
-        """
-        Loads the annotated image, the plom file, and the original source images.
+    def get_files_for_previously_annotated(self, task: str) -> bool:
+        """Loads the annotated image, the plom file, and the original source images.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -1270,8 +1231,7 @@ class MarkerClient(QWidget):
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        paperdir = Path(paperdir)
+        paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
         aname = paperdir / "G{task[1:]}.{annot_img_info['extension']}"
@@ -1335,9 +1295,8 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         self._updateImage(pr)
 
-    def updateProgress(self, val=None, maxm=None):
-        """
-        Updates the progress bar.
+    def updateProgress(self, val=None, maxm=None) -> None:
+        """Updates the progress bar.
 
         Args:
             val (int): value for the progress bar
@@ -1607,25 +1566,22 @@ class MarkerClient(QWidget):
             if self.allowBackgroundOps:
                 self.backgroundUploader.disable_fail_mode()
 
-    def requestNextInBackgroundStart(self):
-        """
-        Requests the next TGV in the background.
+    def requestNextInBackgroundStart(self) -> None:
+        """Requests the next TGV in the background.
 
         Returns:
             None
-
         """
         self.requestNext(update_select=False)
 
-    def moveToNextUnmarkedTest(self, task=None):
-        """
-        Move the list to the next unmarked test, if possible.
+    def moveToNextUnmarkedTest(self, task=None) -> bool:
+        """Move the list to the next unmarked test, if possible.
 
         Args:
             task (str): the task number of the next unmarked test.
 
         Returns:
-             True if move was successful, False if not, for any reason.
+            True if move was successful, False if not, for any reason.
         """
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
@@ -1690,9 +1646,8 @@ class MarkerClient(QWidget):
             return
         self.examModel.deferPaper(task)
 
-    def startTheAnnotator(self, initialData):
-        """
-        This fires up the annotation window for user annotation + marking.
+    def startTheAnnotator(self, initialData) -> None:
+        """This fires up the annotation window for user annotation + marking.
 
         Args:
             initialData (list): containing things documented elsewhere
@@ -1700,7 +1655,6 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         annotator = Annotator(
             self.msgr.username,
@@ -1886,7 +1840,7 @@ class MarkerClient(QWidget):
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
-    def callbackAnnDoneCancel(self, task):
+    def callbackAnnDoneCancel(self, task: str) -> None:
         """Called when annotator is done grading.
 
         Args:
@@ -1905,25 +1859,22 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     @pyqtSlot(str)
-    def callbackAnnDoneClosing(self, task):
-        """
-        Called when annotator is done grading and is closing.
+    def callbackAnnDoneClosing(self, task: str) -> None:
+        """Called when annotator is done grading and is closing.
 
         Args:
             task (str): the task ID of the current test.
 
         Returns:
             None
-
         """
         self.setEnabled(True)
         # update image view b/c its image might have changed
         self._updateCurrentlySelectedRow()
 
     @pyqtSlot(str, list)
-    def callbackAnnWantsUsToUpload(self, task, stuff):
-        """
-        Called when annotator wants to upload.
+    def callbackAnnWantsUsToUpload(self, task, stuff) -> None:
+        """Called when annotator wants to upload.
 
         Args:
             task (str): the task ID of the current test.
@@ -1998,15 +1949,13 @@ class MarkerClient(QWidget):
         self.marking_history.append(task)
 
     def getMorePapers(self, oldtgvID):
-        """
-        Loads more tests.
+        """Loads more tests.
 
         Args:
             oldtgvID(str): the Test-Group-Version ID for the previous test.
 
         Returns:
             initialData: as described by getDataForAnnotator
-
         """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
@@ -2039,9 +1988,8 @@ class MarkerClient(QWidget):
 
         return data
 
-    def backgroundUploadFinished(self, task, numDone, numtotal):
-        """
-        An upload has finished, do appropriate UI updates
+    def backgroundUploadFinished(self, task, numDone, numtotal) -> None:
+        """An upload has finished, do appropriate UI updates.
 
         Args:
             task (str): the task ID of the current test.
@@ -2050,7 +1998,6 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         stat = self.examModel.getStatusByTask(task)
         # maybe it changed while we waited for the upload
@@ -2322,8 +2269,7 @@ class MarkerClient(QWidget):
     def latexAFragment(
         self, txt, *, quiet=False, cache_invalid=True, cache_invalid_tryagain=False
     ):
-        """
-        Run LaTeX on a fragment of text and return the file name of a png.
+        """Run LaTeX on a fragment of text and return the file name of a PNG.
 
         The files are cached for reuse if the same text is passed again.
 
@@ -2546,7 +2492,9 @@ class MarkerClient(QWidget):
         d.deleteLater()  # disconnects slots and signals
 
     def get_file_for_previous_viewer(self, task):
-        """Get the annotation file for the given task. Check to see if the
+        """Get the annotation file for the given task.
+
+        Check to see if the
         local system already has the files for that task and if not grab them
         from the server. Then pass the annotation-image-file back to the
         caller.
