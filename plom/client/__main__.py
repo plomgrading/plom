@@ -61,7 +61,7 @@ def add_popup_to_toplevel_exception_handler():
         Timestamp: {utc_now_to_string()}</p>
         """
         msg = ErrorMsg(None, txt, info=abbrev, details=details)
-        # msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
         # call the original hook after our dialog closes
         sys._excepthook(exctype, value, traceback)
