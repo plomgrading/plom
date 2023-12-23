@@ -89,7 +89,7 @@ class Downloader(QObject):
             basedir (pathlib.Path/str): a directory for the image cache.
 
         Keyword Args:
-            msgr (Messenger): used for communication wtih a Plom server.
+            msgr (Messenger): used for communication with a Plom server.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
