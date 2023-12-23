@@ -234,7 +234,7 @@ class BigMessageDialog(CustomDetailsDialog):
     """
 
     def __init__(self, *args, **kwargs):
-        show = kwargs.pop("show")
+        show = kwargs.pop("show", None)
         super().__init__(*args, **kwargs, _extra_big=True)
         if show:
             self.toggle_details()
