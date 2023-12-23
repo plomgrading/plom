@@ -193,6 +193,9 @@ class KeyEditDialog(QDialog):
             info (str): optional extra information to display.
             legal (str): keys that can entered.  If omitted/empty, use
                 a default.
+
+        Returns
+            None
         """
         super().__init__(parent)
         vb = QVBoxLayout()

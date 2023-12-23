@@ -54,7 +54,7 @@ def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
 
 
 def sqrDistance(vect):
-    """given a 2d-vector return l2 norm of that vector"""
+    """Return the l2 norm of a 2d-vector."""
     return vect.x() * vect.x() + vect.y() * vect.y()
 
 
@@ -81,11 +81,11 @@ def shortestLine(g_rect, b_rect):
 def which_classic_shortest_corner_side(ghost, r):
     """Get approximately shortest line between corners/midpoints of two rectangles.
 
-    args:
+    Args:
         ghost (QRect/QPointF): considers the midpoints only.
         r (QRect): uses the midpoints and corners.
 
-    returns:
+    Returns:
         QPainterPath
     """
     line = shortestLine(ghost, r)
@@ -117,11 +117,11 @@ def _get_intersection_bw_rect_line(rec, lin):
 def which_centre_to_centre(ghost, r):
     """Get approximately shortest line between two shapes "center-to-centre".
 
-    args:
+    Args:
         ghost (QRect/QPointF):
         r (QRect):
 
-    returns:
+    Returns:
         QPainterPath
     """
     if isinstance(ghost, QPointF):
@@ -148,11 +148,11 @@ def which_centre_to_centre(ghost, r):
 def which_sticky_corners(g, r):
     """Choose an aesthetically-pleasing (?) line between the rectangle and the ghost.
 
-    args:
+    Args:
         g (QRect/QPointF): The ghost, can be rect or a point.
         r (QRect):
 
-    returns:
+    Returns:
         QPainterPath
     """
     if isinstance(g, QPointF):
@@ -297,11 +297,11 @@ def which_sticky_corners(g, r):
 def which_horizontal_step(g_rect, b_rect):
     """WIP on a beautiful horizontally stepped labelling system.
 
-    args:
+    Args:
         g_rect (QRect/QPointF): The ghost, can be rect or a point.
         b_rect (QRect): the box on the page.
 
-    returns:
+    Returns:
         QPainterPath
     """
     # direct line from the box-rect to the ghost-rect
