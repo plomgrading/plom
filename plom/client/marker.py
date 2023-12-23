@@ -84,7 +84,7 @@ from .tagging_range_dialog import TaggingAndRangeOptions
 
 
 if platform.system() == "Darwin":
-    # apparently neeed for shortcuts under macOS
+    # apparently needed for shortcuts under macOS
     from PyQt6.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
