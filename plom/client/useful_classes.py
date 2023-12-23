@@ -132,9 +132,9 @@ class CustomDetailsDialog(QDialog):
             raise ValueError('Cannot provide both "details" and "details_html"')
 
         if _extra_big:
-            self.details_TE = BigTextEdit()
+            self.details_TE = BigTextEdit()  # type: ignore
         else:
-            self.details_TE = QTextEdit()
+            self.details_TE = QTextEdit()  # type: ignore
         if details:
             self.details_TE.setText(details)
         if details_html:
