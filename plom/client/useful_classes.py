@@ -77,6 +77,16 @@ class _ErrorMsg(QMessageBox):
         self.setIcon(QMessageBox.Icon.Critical)
 
 
+class BigTextEdit(QTextEdit):
+    """Just like QTextEdit but wants to be twice as big."""
+
+    def sizeHint(self):
+        sz = super().sizeHint()
+        sz.setWidth(sz.width() * 2)
+        sz.setHeight(sz.height() * 2)
+        return sz
+
+
 class CustomDetailsDialog(QDialog):
     """A dialog with an expanding details field, instead of the Qt builtin options.
 
@@ -94,6 +104,7 @@ class CustomDetailsDialog(QDialog):
         info_pre: True by default which means the info text
             is assumed to be preformatted (whitespace, newlines etc will be
             preserved).  Long lines will be wrapped.
+        _extra_big: generally be bigger, intended for private use.
     """
 
     def __init__(
@@ -105,6 +116,7 @@ class CustomDetailsDialog(QDialog):
         details_html: Optional[str] = "",
         info: Optional[str] = None,
         info_pre: bool = True,
+        _extra_big: Optional[bool] = None,
     ):
         super().__init__(parent)
 
@@ -119,7 +131,10 @@ class CustomDetailsDialog(QDialog):
         if details and details_html:
             raise ValueError('Cannot provide both "details" and "details_html"')
 
-        self.details_TE = QTextEdit()
+        if _extra_big:
+            self.details_TE = BigTextEdit()
+        else:
+            self.details_TE = QTextEdit()
         if details:
             self.details_TE.setText(details)
         if details_html:
@@ -127,6 +142,17 @@ class CustomDetailsDialog(QDialog):
         self.details_TE.setReadOnly(True)
 
         s = QLabel(summary)
+
+        if _extra_big:
+            # we monkey patch the size hint width from textedit
+            sz = self.details_TE.sizeHint()
+            sz.setHeight(1)
+
+            def _hack_sizeHint():
+                return sz
+
+            setattr(s, "sizeHint", _hack_sizeHint)
+
         lay.addWidget(s)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
@@ -184,6 +210,34 @@ class InfoMsg(ErrorMsg):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setIcon(QMessageBox.Icon.Information)
+
+
+class BigMessageDialog(CustomDetailsDialog):
+    """A dialog for showing lots of stuff, might need scrollbars.
+
+    Args:
+        parent (QWidget): who should parent this modal dialog.
+        summary (str): an text or html summary.
+
+    Keyword Args:
+        details: Provide some string of longer details, which can be
+            hidden and scrolled.
+        details_html: Provide details in HTML instead.
+        info: optionally some more details, like an error message or part
+            of an error message.  Will be presented smaller or otherwise
+            deemphasized.
+        info_pre: True by default which means the info text
+            is assumed to be preformatted (whitespace, newlines etc will be
+            preserved).  Long lines will be wrapped.
+        show: pass True to have the details initially shown.  By default
+            they will start hidden.
+    """
+
+    def __init__(self, *args, **kwargs):
+        show = kwargs.pop("show")
+        super().__init__(*args, **kwargs, _extra_big=True)
+        if show:
+            self.toggle_details()
 
 
 class SimpleQuestion(QMessageBox):
@@ -419,116 +473,3 @@ class ClientSettingsDialog(QDialog):
             "LogLevel": self.comboLog.currentText(),
             "LogToFile": self.checkLogFile.isChecked(),
         }
-
-
-class BigTextEdit(QTextEdit):
-    """Just like QTextEdit but wants to be twice as big."""
-
-    def sizeHint(self):
-        sz = super().sizeHint()
-        sz.setWidth(sz.width() * 2)
-        sz.setHeight(sz.height() * 2)
-        return sz
-
-
-class BigMessageDialog(QDialog):
-    """A dialog for showing lots of stuff, might need scrollbars.
-
-    Args:
-        parent (QWidget): who should parent this modal dialog.
-        summary (str): an text or html summary.
-
-    Keyword Args:
-        details: Provide some string of longer details, which can be
-            hidden and scrolled.
-        details_html: Provide details in HTML instead.
-        show: if True (default), the details will be shown
-            else they will start hidden.
-        info: optionally some more details, like an error message or part
-            of an error message.  Will be presented smaller or otherwise
-            deemphasized.
-        info_pre: True by default which means the info text
-            is assumed to be preformatted (whitespace, newlines etc will be
-            preserved).  Long lines will be wrapped.
-    """
-
-    def __init__(
-        self,
-        parent: Union[None, QWidget],
-        summary: str,
-        *,
-        details: Optional[str] = "",
-        details_html: Optional[str] = "",
-        show: Optional[bool] = True,
-        info: Optional[str] = None,
-        info_pre: bool = True,
-    ):
-        super().__init__(parent)
-
-        if info:
-            if info_pre:
-                summary += f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
-            else:
-                summary += f"<small>{info}</small>"
-
-        lay = QVBoxLayout()
-
-        if details and details_html:
-            raise ValueError('Cannot provide both "details" and "details_html"')
-
-        _ = BigTextEdit()
-        if details:
-            _.setText(details)
-        if details_html:
-            _.setHtml(details_html)
-        _.setReadOnly(True)
-        self.details_TE = _
-
-        # we monkey patch the size hint width from textedit
-        sz = self.details_TE.sizeHint()
-        sz.setHeight(1)
-
-        def _hack_sizeHint():
-            return sz
-
-        s = QLabel(summary)
-        setattr(s, "sizeHint", _hack_sizeHint)
-
-        lay.addWidget(s)
-
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        b = QToolButton(text="Details")  # type: ignore
-        b.setCheckable(True)
-        b.clicked.connect(self.toggle_details)
-        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
-        lay.addWidget(buttons)
-        self.setLayout(lay)
-
-        if show:
-            lay.addWidget(self.details_TE)
-            self.details_TE.setVisible(True)
-            lay.addWidget(buttons)
-            b.setChecked(True)
-            b.setArrowType(Qt.ArrowType.DownArrow)
-            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-            self.toggle_button = b
-        else:
-            lay.addWidget(buttons)
-            lay.addWidget(self.details_TE)
-            b.setChecked(False)
-            self.details_TE.setVisible(False)
-            b.setArrowType(Qt.ArrowType.DownArrow)
-            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-            self.toggle_button = b
-
-        buttons.accepted.connect(self.accept)
-        self.setSizeGripEnabled(True)
-
-    def toggle_details(self):
-        if self.details_TE.isVisible():
-            self.details_TE.setVisible(False)
-            self.toggle_button.setArrowType(Qt.ArrowType.DownArrow)
-        else:
-            self.details_TE.setVisible(True)
-            self.toggle_button.setArrowType(Qt.ArrowType.UpArrow)
-        self.adjustSize()
