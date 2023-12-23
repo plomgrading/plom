@@ -27,7 +27,7 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -493,12 +493,12 @@ class MarkerExamModel(QStandardItemModel):
         self.setData(self.index(r, 6), aname)
         self.setData(self.index(r, 7), pname)
 
-    def _setPaperDir(self, r: int, tdir: str) -> None:
+    def _setPaperDir(self, r: int, tdir: Optional[str]) -> None:
         """Sets the paper directory for the given paper.
 
         Args:
             r: the row identifier of the paper.
-            tdir: a name of a temporary directory for this paper.
+            tdir: None or the name of a temporary directory for this paper.
 
         Returns:
             None
