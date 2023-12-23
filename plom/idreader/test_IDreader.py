@@ -5,8 +5,6 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Sophia Vetrici
 
-from pathlib import Path
-
 import fitz
 import numpy as np
 import PIL.Image
@@ -132,7 +130,7 @@ def test_get_digit_box(tmp_path):
     ids = [x["id"] for x in miniclass]
     with working_directory(tmp_path):
         probs = compute_probabilities(id_imgs, 0.15, 0.9, 8)
-        cost_matrix = assemble_cost_matrix(test_nums, ids, probs)
+        _ = assemble_cost_matrix(test_nums, ids, probs)
         pred = lap_solver(test_nums, ids, probs)
 
     for P, S in zip(pred, miniclass):
