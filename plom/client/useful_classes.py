@@ -169,6 +169,8 @@ class CustomDetailsDialog(QDialog):
         self.details_TE.setVisible(False)
         b.setArrowType(Qt.ArrowType.RightArrow)
         b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if not details and not details_html:
+            b.setVisible(False)
         self.toggle_button = b
 
         buttons.accepted.connect(self.accept)
