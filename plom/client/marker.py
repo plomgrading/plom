@@ -2493,16 +2493,6 @@ class MarkerClient(QWidget):
 
     def view_other(self):
         """Shows a particular paper number and question."""
-        try:
-            raise ValueError("foo bar " * 80)
-        except ValueError:
-            raise PlomSeriousException(
-                "simulated unexpected crash\n"
-                + "long " * 12
-                + "\n"
-                + "longer longest " * 12
-                + "\n"
-            )
         max_question_idx = self.exam_spec["numberOfQuestions"]
         tgs = SelectTestQuestion(
             self, self.max_papernum, max_question_idx, self.question
