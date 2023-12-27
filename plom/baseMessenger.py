@@ -222,6 +222,14 @@ class BaseMessenger:
 
         return self.session.get(self.base + url, *args, **kwargs)
 
+    def get_auth(self, url, *args, **kwargs):
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        kwargs["headers"] = {"Authorization": f"Token {self.token['token']}"}
+        return self.session.get(self.base + url, *args, **kwargs)
+
     def post_raw(self, url, *args, **kwargs):
         """Perform a POST operation without tokens."""
         if "timeout" not in kwargs:
@@ -1270,7 +1278,6 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
-                # note - slightly different API call for legacy vs webplom
                 if self.is_legacy_server():
                     response = self.get(
                         "/MK/solution",
@@ -1282,10 +1289,7 @@ class BaseMessenger:
                         },
                     )
                 else:
-                    response = self.get(
-                        f"/MK/solution/{question}/{version}",
-                        json={"user": self.user, "token": self.token},
-                    )
+                    response = self.get_auth(f"/MK/solution/{question}/{version}")
 
                 response.raise_for_status()
                 # deprecated: new servers will 404
