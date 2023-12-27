@@ -1538,6 +1538,8 @@ macos_server_webplom:
   # brew update
   # brew --version
   - brew install cmake pango
+  - brew install gobject-introspection
+  - brew install cffi
   - brew install imagemagick
   - time brew install basictex
   - echo $PATH
