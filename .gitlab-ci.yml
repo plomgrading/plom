@@ -922,7 +922,7 @@ newOS_newdeps_legacy:
 # allowed to fail (some pip stuff might be new) but we want to know
 newOS_newdeps_webplom:
   services:
-    - postgres:12.2-alpine
+    - postgres
   variables:
     POSTGRES_DB: "plom_db"
     POSTGRES_USER: "postgres"
