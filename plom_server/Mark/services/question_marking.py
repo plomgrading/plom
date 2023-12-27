@@ -100,7 +100,8 @@ class QuestionMarkingService:
 
         Keyword Args:
             exclude_tagged_for_others: don't return papers that are
-                tagged for users other than the on in ``self.user``.
+                tagged for users other than the one in ``self.user``,
+                true by default.
 
         Returns:
             A reference to the first available task, or
