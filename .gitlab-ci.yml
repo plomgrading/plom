@@ -461,7 +461,7 @@ webplom_test:
 
 webplom_demo:
   services:
-    - postgres:12.2-alpine
+    - postgres
   variables:
     POSTGRES_DB: "plom_db"
     POSTGRES_USER: "postgres"
@@ -803,7 +803,7 @@ fedora_legacy:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_webplom:
   services:
-    - postgres:12.2-alpine
+    - postgres
   variables:
     POSTGRES_DB: "plom_db"
     POSTGRES_USER: "postgres"
@@ -1053,7 +1053,7 @@ minpy_mindeps:
 # Issue #2880: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
-    - postgres:12.2-alpine
+    - postgres
   variables:
     POSTGRES_DB: "plom_db"
     POSTGRES_USER: "postgres"
