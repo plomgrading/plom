@@ -724,7 +724,6 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-# TODO: likely python3-zxing-cpp is too old
 fedora_legacy:
   stage: alt_build
   needs: []
@@ -743,6 +742,7 @@ fedora_legacy:
           python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
           python3-aiohttp python3-peewee python3-cryptography
+          python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
@@ -801,7 +801,6 @@ fedora_legacy:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-# TODO: likely python3-zxing-cpp is too old
 fedora_webplom:
   services:
     - postgres:12.2-alpine
@@ -829,6 +828,7 @@ fedora_webplom:
           python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
           python3-aiohttp python3-peewee python3-cryptography
+          python3-zxing-cpp
           python3-pytest
           python3-scikit-learn python3-PyMySQL
           file python3-file-magic
