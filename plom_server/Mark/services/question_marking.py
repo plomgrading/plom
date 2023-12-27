@@ -47,7 +47,6 @@ class QuestionMarkingService:
         user: Optional[User] = None,
         min_paper_num: Optional[int] = None,
         max_paper_num: Optional[int] = None,
-        tag: Optional[str] = None,
         marking_data: Optional[dict] = None,
         annotation_data: Optional[dict] = None,
         annotation_image: Optional[InMemoryUploadedFile] = None,
@@ -55,7 +54,7 @@ class QuestionMarkingService:
     ):
         """Service constructor.
 
-        Args:
+        Keyword Args:
             task_pk: public key of a task instance
             code: string representing a paper number + question number pair
             question: question number of task
@@ -104,7 +103,7 @@ class QuestionMarkingService:
             exclude_tagged_for_others: don't return papers that are
                 tagged for users other than the one in ``self.user``,
                 true by default.  Note if a username is explicitly
-                listed in ``tags`` that takes precidence.
+                listed in ``tags`` that takes precedence.
 
         Returns:
             A reference to the first available task, or
