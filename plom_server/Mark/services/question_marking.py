@@ -63,7 +63,6 @@ class QuestionMarkingService:
             user: reference to a user instance
             min_paper_num: the minimum paper number of the task
             max_paper_num: the maximum paper number of the task
-            tag: the tag that the task must have
             marking_data: dict representing a mark, rubrics used, etc
             annotation_data: a dictionary representing an annotation SVG
             annotation_image: an in-memory raster representation of an annotation
@@ -76,7 +75,6 @@ class QuestionMarkingService:
         self.user = user
         self.min_paper_num = min_paper_num
         self.max_paper_num = max_paper_num
-        self.tag = tag
         self.marking_data = marking_data
         self.annotation_data = annotation_data
         self.annotation_image = annotation_image
@@ -84,7 +82,10 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def get_first_available_task(
-        self, *, exclude_tagged_for_others: bool = True
+        self,
+        *,
+        tags: Optional[List[str]] = None,
+        exclude_tagged_for_others: bool = True,
     ) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
@@ -99,6 +100,7 @@ class QuestionMarkingService:
         If the priority is the same, defer to paper number and then question number.
 
         Keyword Args:
+            tags: a list of tags that the task must match.
             exclude_tagged_for_others: don't return papers that are
                 tagged for users other than the one in ``self.user``,
                 true by default.
@@ -121,8 +123,8 @@ class QuestionMarkingService:
         if self.max_paper_num:
             available = available.filter(paper__paper_number__lte=self.max_paper_num)
 
-        if self.tag:
-            available = available.filter(markingtasktag__text__in=[self.tag])
+        if tags:
+            available = available.filter(markingtasktag__text__in=tags)
 
         if exclude_tagged_for_others:
             users = User.objects.all()

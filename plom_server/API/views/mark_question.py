@@ -49,6 +49,10 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
 
         tag: Optional[str] = data.get("tag")
+        if tag:
+            tags = [tag]
+        else:
+            tags = []
 
         task = QuestionMarkingService(
             question=question,
@@ -56,8 +60,7 @@ class QuestionMarkingViewSet(ViewSet):
             user=request.user,
             min_paper_num=min_paper_num,
             max_paper_num=max_paper_num,
-            tag=tag,
-        ).get_first_available_task()
+        ).get_first_available_task(tags=tags)
 
         if not task and tag:
             # didn't find anything tagged, so try again without
