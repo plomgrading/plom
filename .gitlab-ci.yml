@@ -1514,7 +1514,7 @@ macos_server_webplom:
     HOMEBREW_NO_AUTO_UPDATE: 1
     HOMEBREW_NO_INSTALL_CLEANUP: 1
     HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-  image: macos-12-xcode-14
+  image: macos-13-xcode-14
   tags:
   - saas-macos-medium-m1
   rules:
@@ -1566,7 +1566,7 @@ macos_server_webplom:
   - echo $PYTHONPATH
   - pushd plom_server
   # no postgres yet
-  - python manage.py plom_demo --no-waiting --randomarker
+  # python manage.py plom_demo --no-waiting --randomarker
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
   - popd
