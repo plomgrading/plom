@@ -1434,7 +1434,7 @@ class MarkerClient(QWidget):
                 task = self.msgr.MaskNextTask(
                     self.question,
                     self.version,
-                    tag=tag,
+                    tags=[tag],
                     min_paper_num=paper_range[0],
                     max_paper_num=paper_range[1],
                 )

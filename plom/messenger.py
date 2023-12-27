@@ -10,7 +10,7 @@ from io import BytesIO
 import json
 import logging
 import mimetypes
-from typing import Optional, Union, Tuple
+from typing import Optional, List, Tuple, Union
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -233,7 +233,7 @@ class Messenger(BaseMessenger):
         q: int,
         v: int,
         *,
-        tag: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         min_paper_num: Optional[int] = None,
         max_paper_num: Optional[int] = None,
     ) -> Union[str, None]:
@@ -244,9 +244,9 @@ class Messenger(BaseMessenger):
             v: version number.
 
         Keyword Args:
-            tag: if any tasks are available with this tag,
-                we have a preference for those.  (But we will still
-                accept tasks without the tag).
+            tags: if any tasks have ANY of these tags, then we have a
+                preference for those.  (But we will still accept tasks
+                without any of these tags).
             min_paper_num: paper number must be at least this value.
                 (Only a preference on legacy servers).
             max_paper_num: paper number must at most this value.
@@ -262,14 +262,19 @@ class Messenger(BaseMessenger):
         try:
             if not self.is_legacy_server():
                 url = f"/MK/tasks/available?q={q}&v={v}"
-                if tag:
-                    url += f"&tag={tag}"
+                if tags:
+                    url += f"&tags={','.join(tags)}"
                 if min_paper_num:
                     url += f"&min_paper_num={min_paper_num}"
                 if max_paper_num:
                     url += f"&max_paper_num={max_paper_num}"
                 response = self.get_auth(url)
             else:
+                tag = None
+                if tags:
+                    if len(tags) > 1:
+                        raise RuntimeError("Legacy servers accept at most one tag")
+                    (tag,) = tags
                 response = self.get(
                     "/MK/tasks/available",
                     json={
