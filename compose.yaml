@@ -11,6 +11,11 @@ services:
       - web
   web:
     image: "plomgrading/server"
+    # Use in-tree code by replacing image: with build:
+    # build:
+    #   context: .
+    #   dockerfile: Containerfile.bulk
+    # TODO: Support port from an env var
     # ports:
     #   - ${PORT}:8000
     # expose:
