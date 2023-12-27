@@ -90,8 +90,6 @@ class QuestionMarkingService:
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
 
-        If ``tag`` is set, we restrict to papers with matching tags.
-
         If ``min_paper_num`` and/or ``max_paper_num`` are set, paper numbers in this
         range (including end points) are required.
 
@@ -99,7 +97,8 @@ class QuestionMarkingService:
         If the priority is the same, defer to paper number and then question number.
 
         Keyword Args:
-            tags: a list of tags that the task must match.
+            tags: a task must match at least one of the strings in this
+                list.
             exclude_tagged_for_others: don't return papers that are
                 tagged for users other than the one in ``self.user``,
                 true by default.  Note if a username is explicitly
