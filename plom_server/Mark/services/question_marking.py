@@ -103,7 +103,8 @@ class QuestionMarkingService:
             tags: a list of tags that the task must match.
             exclude_tagged_for_others: don't return papers that are
                 tagged for users other than the one in ``self.user``,
-                true by default.
+                true by default.  Note if a username is explicitly
+                listed in ``tags`` that takes precidence.
 
         Returns:
             A reference to the first available task, or
@@ -129,6 +130,9 @@ class QuestionMarkingService:
         if exclude_tagged_for_others:
             users = User.objects.all()
             other_user_tags = [f"@{u}" for u in users if u != self.user]
+            # anything explicitly in tags should not be filtered here
+            if tags:
+                other_user_tags = [x for x in other_user_tags if x not in tags]
             available = available.exclude(markingtasktag__text__in=other_user_tags)
 
         if not available.exists():
