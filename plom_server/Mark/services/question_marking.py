@@ -185,9 +185,8 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def get_tags(self) -> List[str]:
-        """Return all the tags for a task."""
-        task = self.get_task()
-        return MarkingTaskService().get_tags_for_task(task)
+        """Return all the tags for this task."""
+        return MarkingTaskService().get_tags_for_task(self.code)
 
     @transaction.atomic
     def mark_task(self):
