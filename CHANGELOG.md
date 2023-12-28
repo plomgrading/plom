@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* The "new" `idBox3.pdf` was giving warnings in LaTeX: new `idBox4.pdf` is now a 1.5 PDF.
 
 ### Fixed
 
