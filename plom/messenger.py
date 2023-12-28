@@ -256,6 +256,12 @@ class Messenger(BaseMessenger):
             Either the task string or ``None`` indicated no
             more tasks available.
 
+        Raises:
+            RuntimeError: on legacy servers, can can pass at most
+                one tag.
+            PlomAuthenticationException: auth-related troubles.
+            PlomSeriousException: something unexpected happened.
+
         TODO: why are we using json for a string return?
         """
         self.SRmutex.acquire()
