@@ -184,11 +184,6 @@ class QuestionMarkingService:
         return page_data.get_question_pages_list(paper_number, question_number)
 
     @transaction.atomic
-    def get_tags(self) -> List[str]:
-        """Return all the tags for this task."""
-        return MarkingTaskService().get_tags_for_task(self.code)
-
-    @transaction.atomic
     def mark_task(self):
         """Accept a marker's annotation and grade for a task."""
         task = self.get_task()
