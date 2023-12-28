@@ -143,7 +143,7 @@ class MarkingTaskService:
         try:
             paper_number, question_number = mark_task.unpack_code(code)
         except AssertionError as e:
-            raise ValueError(f"{code} is not a valid task code.") from e
+            raise ValueError(f"{code} is not a valid task code: {e}") from e
         try:
             return mark_task.get_latest_task(paper_number, question_number)
         except ObjectDoesNotExist as e:
