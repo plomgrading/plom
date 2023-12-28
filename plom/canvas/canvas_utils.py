@@ -8,7 +8,7 @@ import csv
 from pathlib import Path
 import string
 from warnings import warn
-from typing import Union
+from typing import Any, Dict, Union
 
 from canvasapi import Canvas
 
@@ -77,7 +77,7 @@ def download_classlist(course, *, section=None, workdir: Union[Path, str] = ".")
 
     conversion = [("Internal Canvas ID", "Student", "SIS User ID")]
 
-    secnames = {}
+    secnames: Dict[Any, Any] = {}
 
     for stud in students:
         stud_name, stud_id, stud_sis_id, stud_sis_login_id = (
