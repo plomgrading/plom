@@ -8,13 +8,12 @@
 """Functions for setting and modifying priority for marking tasks."""
 
 import random
-from typing import Optional, Dict, List
+from typing import Dict, Tuple
 
 from django.db import transaction
 from django.db.models import QuerySet
 
 from Papers.models import Paper
-from Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskPriority
 
 
@@ -75,7 +74,7 @@ def set_marking_priority_paper_number():
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: Dict[tuple[int, int], int]):
+def set_marking_priority_custom(custom_order: Dict[Tuple[int, int], int]):
     """Set the priority to a custom ordering.
 
     Args:
@@ -84,12 +83,9 @@ def set_marking_priority_custom(custom_order: Dict[tuple[int, int], int]):
             in custom_order, it remains the same. If the key is valid, but the corresponding
             task doesn't exist, the entry is ignored.
     """
-    n_papers = Paper.objects.count()
-    n_questions = SpecificationService.get_n_questions()
-
     assert isinstance(
         custom_order, dict
-    ), "`custom_order` must be of type Dict[tuple[int, int], int]."
+    ), "`custom_order` must be of type dict[tuple[int, int], int]."
 
     tasks = get_tasks_to_update_priority()
     tasks_to_update = []
