@@ -36,10 +36,13 @@ from .progress_mark import (
 from .progress_task_annot import (
     ProgressMarkingTaskFilterView,
     ProgressMarkingTaskDetailsView,
+    ProgressNewestMarkingTaskDetailsView,
     AnnotationImageWrapView,
     AnnotationImageView,
     OriginalImageWrapView,
     AllTaskOverviewView,
+    MarkingTaskTagView,
+    MarkingTaskResetView,
 )
 
 from .progress_userinfo import (

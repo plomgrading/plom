@@ -107,7 +107,7 @@ class QuestionMarkingViewSet(ViewSet):
             with transaction.atomic():
                 service.assign_task_to_user()
                 question_data = service.get_page_data()
-                tags = service.get_tags()
+                tags = MarkingTaskService().get_tags_for_task(code)
 
             return Response([question_data, tags, service.task_pk])
         except (ValueError, ObjectDoesNotExist) as e:
