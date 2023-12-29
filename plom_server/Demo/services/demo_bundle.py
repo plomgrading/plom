@@ -157,7 +157,6 @@ class DemoBundleService:
 
         Returns:
             None, but modifies ``pdf_doc``  as a side effect.
-
         """
         # magic numbers for obscuring the qr-codes
         left = 15
