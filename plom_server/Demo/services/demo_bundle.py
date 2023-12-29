@@ -161,15 +161,16 @@ class DemoBundleService:
         # magic numbers for obscuring the qr-codes
         left = 15
         right = 90
+        page = pdf_doc[-1]
         # grab the bounding box of the page to get its height/width
-        bnd = pdf_doc[-1].bound()
-        pdf_doc[-1].draw_rect(
+        bnd = page.bound()
+        page.draw_rect(
             fitz.Rect(left, bnd.height - right, right, bnd.height - left),
             color=(0, 0, 0),
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
-        pdf_doc[-1].draw_rect(
+        page.draw_rect(
             fitz.Rect(
                 bnd.width - right,
                 bnd.height - right,
@@ -180,9 +181,17 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
+        tw = fitz.TextWriter(bnd)
+        tw.append(
+            fitz.Point(100, bnd.height - 20),
+            "Simulated page damage: unreadable bottom QR codes",
+            fontsize=14,
+        )
+        tw.write_text(page, color=(0, 0, 0.8))
 
-        bnd = pdf_doc[-2].bound()
-        pdf_doc[-2].draw_rect(
+        page = pdf_doc[-2]
+        bnd = page.bound()
+        page.draw_rect(
             fitz.Rect(
                 bnd.width - right,
                 left,
@@ -193,7 +202,7 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
-        pdf_doc[-2].draw_rect(
+        page.draw_rect(
             fitz.Rect(
                 left,
                 left,
@@ -204,6 +213,13 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
+        tw = fitz.TextWriter(bnd)
+        tw.append(
+            fitz.Point(100, 15),
+            "Simulated page damage: unreadable top QR code",
+            fontsize=14,
+        )
+        tw.write_text(page, color=(0, 0, 0.8))
 
     def make_last_page_with_wrong_version(
         self, pdf_doc: fitz.Document, paper_number: int
