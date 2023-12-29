@@ -4,21 +4,15 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.test import TestCase
-from django.conf import settings
 from model_bakery import baker
-from unittest import skip
-
 
 from Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
-from Scan.models import StagingImage, StagingBundle
 
 from Progress.services import ManageScanService
 
 
-class ManageScanTests(TestCase):
-    """
-    Tests for Progress.services.ManageScanService()
-    """
+class ManageScanServiceTests(TestCase):
+    """Tests for Progress.services.ManageScanService."""
 
     def setUp(self):
         self.bundle = baker.make(
@@ -111,7 +105,6 @@ class ManageScanTests(TestCase):
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
         # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
         mss = ManageScanService()
-        print(mss.get_total_test_papers())
         assert mss.get_total_test_papers() == 15
         assert mss.get_total_fixed_pages() == 15 * 6
         assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3
