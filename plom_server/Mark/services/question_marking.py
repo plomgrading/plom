@@ -215,6 +215,8 @@ class QuestionMarkingService:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
+        # Note: note following method also does task.save, assume that's ok
+        # but not sure what the transactions look like.  Also Issue #3231.
         annotations.save_annotation(
             task,
             self.marking_data["score"],
