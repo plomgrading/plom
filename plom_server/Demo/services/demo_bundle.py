@@ -257,7 +257,7 @@ class DemoBundleService:
             pdf_doc.new_page(-1)
 
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page has a qr-code with the wrong version",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
@@ -379,7 +379,7 @@ class DemoBundleService:
             # these are called "qr_0001_pg1_4.png" etc.
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page from a different assessment",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
