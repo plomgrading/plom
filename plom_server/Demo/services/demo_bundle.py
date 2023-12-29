@@ -148,8 +148,8 @@ class DemoBundleService:
     def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
         """Hide qr-codes for demo purposes.
 
-        On last page put black square at bottom of page to hide 2
-        qr-codes, and on second-last page, put black squares at the
+        On last page paint squares at bottom of page to hide 2
+        qr-codes, and on second-last page, paint squares at the
         top of the page to hide 1 qr-code.
 
         Args:
