@@ -145,7 +145,10 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def get_task(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk.
+        """Retrieve the relevant marking task using self.code or self.task_pk, should be used for readonly.
+
+        We don't `select_for_update` so the caller should not `.save`
+        the returned MarkingTask object.
 
         Raises:
             ObjectDoesNotExist: paper or paper with that question does not exist,
@@ -162,14 +165,32 @@ class QuestionMarkingService:
         else:
             raise ValueError("Cannot find task - no public key or code specified.")
 
+    def _get_task_for_update(self) -> MarkingTask:
+        """Retrieve the relevant marking task using self.code or self.task_pk, and select it for update.
+
+        Raises:
+            ObjectDoesNotExist: paper or paper with that question does not exist,
+                not raised directly but from ``get_latest_task``.
+            ValueError:
+        """
+        if self.task_pk:
+            return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
+        elif self.code:
+            paper_number, question_number = mark_task.unpack_code(self.code)
+            task_to_assign = mark_task.get_latest_task(paper_number, question_number)
+            self.task_pk = task_to_assign.pk
+            return self._get_task_for_update()
+        else:
+            raise ValueError("Cannot find task - no public key or code specified.")
+
     @transaction.atomic
-    def assign_task_to_user(self) -> MarkingTask:
+    def assign_task_to_user(self) -> None:
         """Assign a specific marking task to a user.
 
         Fails if the relevant task can't be found, or the task cannot be
         assigned to that user.
         """
-        task_to_assign = self.get_task()
+        task_to_assign = self._get_task_for_update()
 
         if task_to_assign.status != MarkingTask.TO_DO:
             raise ValueError("Task is currently assigned.")
@@ -180,9 +201,6 @@ class QuestionMarkingService:
         task_to_assign.assigned_user = self.user
         task_to_assign.status = MarkingTask.OUT
         task_to_assign.save()
-        self.task_pk = task_to_assign.pk
-
-        return task_to_assign
 
     @transaction.atomic
     def get_page_data(self) -> List[dict]:
@@ -201,7 +219,7 @@ class QuestionMarkingService:
     @transaction.atomic
     def mark_task(self):
         """Accept a marker's annotation and grade for a task."""
-        task = self.get_task()
+        task = self._get_task_for_update()
 
         # save annotation image
         if self.annotation_image is None:
@@ -227,4 +245,5 @@ class QuestionMarkingService:
             self.annotation_data,
         )
 
-        mark_task.update_task_status(task, MarkingTask.COMPLETE)
+        task.status = MarkingTask.COMPLETE
+        task.save()
