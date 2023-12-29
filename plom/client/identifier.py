@@ -3,9 +3,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
 
-"""
-The Plom Identifier client
-"""
+"""The Plom Identifier client."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -15,6 +13,7 @@ import logging
 from pathlib import Path
 import sys
 import tempfile
+from typing import Union
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -68,9 +67,9 @@ notice_blue_style = "background-color: #89CFF0; color: #000"
 
 
 class Paper:
-    """A simple container for storing a test's idgroup code (tgv) and
-    the associated filename for the image. Once identified also
-    store the studentName and ID-number.
+    """A simple container for storing a test's idgroup code (tgv) and associated filename for the image.
+
+    Once identified also store the studentName and ID-number.
     """
 
     def __init__(
@@ -288,7 +287,7 @@ class IDClient(QWidget):
         self.msgGeometry = None
 
     def skipOnClick(self):
-        """Skip the current, moving to the next or loading a new one"""
+        """Skip the current, moving to the next or loading a new one."""
         index = self.ui.tableView.selectedIndexes()
         if len(index) == 0:
             return
@@ -339,6 +338,7 @@ class IDClient(QWidget):
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
+
         Means that user can enter the first few numbers (or letters) and
         be prompted with little pop-up with list of possible completions.
         """
@@ -607,9 +607,7 @@ class IDClient(QWidget):
         self.ui.idProgressBar.setValue(v)
 
     def requestNext(self):
-        """Ask the server for an unID'd paper.   Get file, add to the
-        list of papers and update the image.
-        """
+        """Ask the server for an unID'd paper, get file, add to list, update image."""
         self.updateProgress()
 
         attempts = 0
@@ -629,7 +627,8 @@ class IDClient(QWidget):
                 log.exception("Unexpected error getting next task: %s", err)
                 ErrorMsg(
                     self,
-                    f"Unexpected error getting next task:\n{err}\nClient will now crash!",
+                    "Unexpected error getting next task:\n"
+                    f"{err}\nClient will now crash!",
                 ).exec()
                 raise
 
@@ -711,7 +710,9 @@ class IDClient(QWidget):
             self.updateProgress()
         return
 
-    def identifyStudent(self, index, sid, sname, blank=False, no_id=False):
+    def identifyStudent(
+        self, index, sid, sname, blank=False, no_id=False
+    ) -> Union[bool, None]:
         """Push identification of a paper to the server and misc UI table.
 
         User ID's the student of the current paper. Some care around whether
@@ -794,8 +795,9 @@ class IDClient(QWidget):
         self.ui.tableView.selectRow(r)
 
     def enterID(self):
-        """Triggered when user hits return in the ID-lineedit.. that is
-        when they have entered a full student ID.
+        """Triggered when user hits return in the ID-lineedit.
+
+        For example, when they have entered a full student ID.
         """
         # check that the student name / id line-edit has some text.
         if len(self.ui.idEdit.text()) == 0:
@@ -915,7 +917,7 @@ class IDClient(QWidget):
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
-    def blankPaper(self):
+    def blankPaper(self) -> None:
         # first check currently selected paper is unidentified - else do nothing
         index = self.ui.tableView.selectedIndexes()
         if len(index) == 0:
@@ -942,7 +944,7 @@ class IDClient(QWidget):
             self.updateProgress()
         return
 
-    def prenamed_help(self):
+    def prenamed_help(self) -> None:
         InfoMsg(
             self,
             "<p>It might seem unnecessary to confirm the prenamed papers "

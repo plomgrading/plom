@@ -300,9 +300,7 @@ class SimpleQuestionCheckBox(QMessageBox):
 
 
 class SimpleTableView(QTableView):
-    """A table-view widget that emits annotateSignal when
-    the user hits enter or return.
-    """
+    """A table-view widget that emits annotateSignal when the user hits enter or return."""
 
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
@@ -378,7 +376,11 @@ class SNIDBox(QDialog):
         self.sname = ""
 
     def guessInput(self, id_name_text):
-        """Extract the digits from id_name_text and use it to fill the sid-entry, and then extract alphabetic from id_name_text and use it to fill the sname-entry"""
+        """Extract both digits and alphabetic bits from input to guess name and student ID.
+
+        Extract the digits from id_name_text and use it to fill the sid-entry.
+        Then extract alphabetic from id_name_text and use it to fill the sname-entry.
+        """
         sid = ""
         sname = ""
         for c in id_name_text:

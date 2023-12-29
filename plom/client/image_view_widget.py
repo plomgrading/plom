@@ -53,7 +53,7 @@ def mousewheel_delta_to_scale(d):
 class ImageViewWidget(QWidget):
     """Simple view widget for pageimages to be embedded in other windows.
 
-    args:
+    Args:
         parent (QWidget): the parent container for this widget.
         image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
             each dict has keys 'filename' and 'orientation' (and
@@ -147,12 +147,12 @@ class ImageViewWidget(QWidget):
         self.setLayout(grid)
 
     def updateImage(self, image_data, keep_zoom=False):
-        """Pass file(s) to the view to update the image
+        """Pass file(s) to the view to update the image.
 
-        args:
+        Args:
             image_data: documented elsewhere
 
-        keyword args:
+        Keyword Args:
             keep_zoom (bool): by default (when `False`) we reset the
                 view to the default on new images.  Pass `True` if you
                 want to instead try to maintain the current zoom and
@@ -160,6 +160,9 @@ class ImageViewWidget(QWidget):
                 number or in resolution, then the result may be
                 poor or ill-defined.  If there was no previous image
                 the underlying view will ignore our request.
+
+        Returns:
+            None
         """
         self.view.updateImages(image_data, keep_zoom)
         if not keep_zoom:
@@ -221,9 +224,7 @@ class ImageViewWidget(QWidget):
 
 
 class _ExamScene(QGraphicsScene):
-    """Subclass the qgraphicsscene to override the wheel-event and so
-    trigger nice scroll-to-zoom behaviour.
-    """
+    """Subclass the qgraphicsscene to override the wheel-event and so trigger nice scroll-to-zoom behaviour."""
 
     def wheelEvent(self, event):
         if (
@@ -238,9 +239,9 @@ class _ExamScene(QGraphicsScene):
 
 
 class _ExamView(QGraphicsView):
-    """Display images with some interaction: click-to-zoom/unzoom
+    """Display images with some interaction: click-to-zoom/unzoom.
 
-    args:
+    Args:
         image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
             each dict has keys 'filename' and 'orientation' (and
             possibly others).
@@ -364,7 +365,7 @@ class _ExamView(QGraphicsView):
         self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
-        """Left/right click to zoom in and out"""
+        """Left/right click to zoom in and out."""
         if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers()
             == Qt.KeyboardModifier.ShiftModifier

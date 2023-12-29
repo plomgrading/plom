@@ -101,8 +101,7 @@ class Annotator(QWidget):
     annotator_done_reject = pyqtSignal(str)
 
     def __init__(self, username, parentMarkerUI=None, initialData=None):
-        """
-        Initializes a new annotator window.
+        """Initializes a new annotator window.
 
         Args:
             username (str): username of Marker
@@ -461,7 +460,6 @@ class Annotator(QWidget):
 
         Returns:
             None: Modifies many instance vars.
-
         """
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
@@ -528,7 +526,7 @@ class Annotator(QWidget):
     def change_annot_scale(self, scale=None):
         """Change the scale of the annotations.
 
-        args:
+        Args:
             scale (float/None): if None reset the scale to the default.
                 If any floating point number, multiple the scale by that
                 value.
@@ -565,12 +563,10 @@ class Annotator(QWidget):
         # TODO: save to settings
 
     def refreshDisplayedMark(self, score):
-        """
-        Update the marklabel (and narrow one) with the current score - triggered by pagescene
+        """Update the marklabel (and narrow one) with the current score - triggered by pagescene.
 
         Returns:
             None
-
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
@@ -618,12 +614,11 @@ class Annotator(QWidget):
 
         self.cursor = cursor
 
-    def toggleTools(self):
-        """
-        Shows/Hides tools making more space to view the group-image.
+    def toggleTools(self) -> None:
+        """Shows/Hides tools making more space to view the group-image.
 
         Returns:
-            None: modifies self.ui.hideableBox
+            None but modifies self.ui.hideableBox
         """
         # All tools in gui inside 'hideablebox' - so easily shown/hidden
         if self.ui.hideableBox.isHidden():
@@ -631,23 +626,20 @@ class Annotator(QWidget):
         else:
             self.narrowLayout()
 
-    def narrowLayout(self):
-        """
-        Changes view to narrow Layout style.
+    def narrowLayout(self) -> None:
+        """Changes view to narrow Layout style.
 
         Returns:
-            None: modifies self.ui
-
+            None but modifies self.ui
         """
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
 
-    def wideLayout(self):
-        """
-        Changes view to Wide Layout style.
+    def wideLayout(self) -> None:
+        """Changes view to Wide Layout style.
 
         Returns:
-            None: modifies self.ui
+            None but modifies self.ui
         """
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
@@ -667,7 +659,7 @@ class Annotator(QWidget):
     def next_minor_tool(self, dir=1, always_move=False):
         """Switch to current minor tool or advance to next minor tool.
 
-        args:
+        Args:
             dir (int): +1 for next (default), -1 for previous.
             always_move (bool): the minor tools keep track of the
                 last-used tool.  Often, but not always, we want to
@@ -689,14 +681,10 @@ class Annotator(QWidget):
         """Switch backward to the previous minor tool."""
         self.next_minor_tool(dir=-1, always_move=True)
 
-    def viewWholePaper(self):
-        """
-        Popup a dialog showing the entire paper.
+    def viewWholePaper(self) -> None:
+        """Popup a dialog showing the entire paper.
 
         TODO: this has significant duplication with RearrangePages.
-
-        Returns:
-            None
         """
         if not self.tgvID:
             return
@@ -888,8 +876,7 @@ class Annotator(QWidget):
         self.setToolShortCuts()
 
     def setViewAndScene(self, src_img_data):
-        """
-        Makes a new scene (pagescene object) and connects it to the view (pageview object).
+        """Makes a new scene (pagescene object) and connects it to the view (pageview object).
 
         The pageview (which is a qgraphicsview) which is (mostly) a layer
         between the annotation widget and the graphics scene which
@@ -911,10 +898,8 @@ class Annotator(QWidget):
         # scene knows which views are connected via self.views()
         log.debug("Scene has this list of views: {}".format(self.scene.views()))
 
-    def keyToChangeRubric(self, keyNumber):
-        """
-        Translates a the numerical key into a selection of that visible
-        row of the current rubric tab.
+    def keyToChangeRubric(self, keyNumber) -> None:
+        """Translates a the numerical key into a selection of that visible row of the current rubric tab.
 
         Returns:
             None: modifies self.rubric_widget
@@ -923,8 +908,7 @@ class Annotator(QWidget):
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
     def setToolMode(self, newMode, *, cursor=None, imagePath=None):
-        """
-        Changes the current tool mode and cursor.
+        """Changes the current tool mode and cursor.
 
         Args:
             newMode (str): ``"move"``, ``"rubric"`` etc.
@@ -941,7 +925,7 @@ class Annotator(QWidget):
             reasons: could probably still use some refactoring.
 
         Returns:
-            None: Modifies self
+            None but modifies self.
         """
         if cursor is None:
             cursor = self.cursor[newMode]
@@ -975,9 +959,8 @@ class Annotator(QWidget):
             self.ui.narrowModeLabel.setText(" {} ".format(mode))
             self.ui.wideModeLabel.setText(" {} ".format(mode))
 
-    def setIcon(self, toolButton, name, iconfile):
-        """
-        Sets a name and svg icon for a given QToolButton.
+    def setIcon(self, toolButton, name, iconfile) -> None:
+        """Sets a name and svg icon for a given QToolButton.
 
         Args:
             toolButton (QToolButton): the ui Tool Button for a name and icon to be added to.
@@ -986,7 +969,7 @@ class Annotator(QWidget):
                 `plom.client.icons`.
 
         Returns:
-            None: alters toolButton
+            None but alters toolButton.
         """
         toolButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
@@ -996,12 +979,11 @@ class Annotator(QWidget):
         toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
 
-    def setAllIcons(self):
-        """
-        Sets all icons for the ui Tool Buttons.
+    def setAllIcons(self) -> None:
+        """Sets all icons for the ui Tool Buttons.
 
         Returns:
-            None: Modifies ui Tool Buttons.
+            None but modifies ui Tool Buttons.
         """
         self.setIcon(self.ui.boxButton, "box", "rectangle_highlight.svg")
         self.setIcon(self.ui.crossButton, "cross", "cross.svg")
@@ -1017,7 +999,7 @@ class Annotator(QWidget):
         self.setIcon(self.ui.zoomButton, "zoom", "zoom.svg")
 
     @pyqtSlot()
-    def saveAndGetNext(self):
+    def saveAndGetNext(self) -> None:
         """Saves the current annotations, and moves on to the next paper."""
         if self.scene:
             if not self.saveAnnotations():
@@ -1051,9 +1033,8 @@ class Annotator(QWidget):
         self.load_new_question(*stuff)
 
     @pyqtSlot()
-    def saveAndClose(self):
-        """
-        Save the current annotations, and then close.
+    def saveAndClose(self) -> None:
+        """Save the current annotations, and then close.
 
         Returns:
             None: alters self.scene
@@ -1221,9 +1202,9 @@ class Annotator(QWidget):
         self.ui.zoomButton.animateClick()
 
     def addImageMode(self):
-        """
-        Opens a file dialog for images, shows a message box if the image is
-        too large, otherwise continues to image mode.
+        """Opens a file dialog to choose an image.
+
+        Shows a message box if the image is too large, otherwise continues to image mode.
 
         Notes:
             If the Image is greater than 200kb, will return an error.
@@ -1391,9 +1372,8 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-    def saveAnnotations(self):
-        """
-        Try to save the annotations and signal Marker to upload them.
+    def saveAnnotations(self) -> bool:
+        """Try to save the annotations and signal Marker to upload them.
 
         Notes:
             There are various sanity checks and user interaction to be
@@ -1407,14 +1387,12 @@ class Annotator(QWidget):
 
         Returns:
             False if user cancels, True if annotator is closed successfully.
-
         """
         # do some checks before accepting things
         if not self.scene.hasAnnotations():
-            msg = InfoMsg(
+            InfoMsg(
                 self, "Please make an annotation, even if there is no answer."
-            )
-            msg.exec()
+            ).exec()
             return False
 
         # check annotations are inside the margins
@@ -1452,8 +1430,7 @@ class Annotator(QWidget):
             return False
 
         if self.scene.is_neutral_state():
-            msg = InfoMsg(self, "You have not yet set a score.")
-            msg.exec()
+            InfoMsg(self, "You have not yet set a score.").exec()
             return False
 
         assert self.getScore() is not None
@@ -1486,9 +1463,11 @@ class Annotator(QWidget):
 
         # some combinations of rubrics may seem ambiguous or potentially confusing
         rubrics = self.scene.get_rubrics()
-        ok, code, msg = check_for_illadvised(rubrics, self.maxMark)
+        ok, _code, _msg = check_for_illadvised(rubrics, self.maxMark)
         if not ok:
-            if not self._continue_after_warning(code, msg):
+            assert isinstance(_code, str)
+            assert isinstance(_msg, str)
+            if not self._continue_after_warning(_code, _msg):
                 return False
 
         aname, plomfile = self.pickleIt()
@@ -1587,8 +1566,7 @@ class Annotator(QWidget):
         return True
 
     def closeEvent(self, event):
-        """
-        Overrides QWidget.closeEvent().
+        """Overrides the usual QWidget close event.
 
         Deal with various cases of window trying to close.
 
@@ -1709,18 +1687,15 @@ class Annotator(QWidget):
             fh.write("\n")
         return aname, plomfile
 
-    def unpickleIt(self, plomData):
-        """
-        Unpickles the page by calling scene.unpickleSceneItems and sets
-        the page's mark.
+    def unpickleIt(self, plomData) -> None:
+        """Unpickles the page by calling scene.unpickleSceneItems and sets the page's mark.
 
         Args:
             plomData (dict): a dictionary containing the data for the
-                                pickled .plom file.
+                pickled ``.plom`` file.
 
         Returns:
             None
-
         """
         self.view.setHidden(True)
         if plomData.get("sceneScale", None):
@@ -1738,13 +1713,11 @@ class Annotator(QWidget):
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
         self.view.setHidden(False)
 
-    def setZoomComboBox(self):
-        """
-        Sets the combo box for the zoom method.
+    def setZoomComboBox(self) -> None:
+        """Sets the combo box for the zoom method.
 
         Returns:
-            None: Modifies self.ui
-
+            None but modifies self.ui
         """
         self.ui.zoomCB.addItem("User")
         self.ui.zoomCB.addItem("Fit page")
@@ -1757,47 +1730,40 @@ class Annotator(QWidget):
         self.ui.zoomCB.addItem("33%")
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
-    def isZoomFitWidth(self):
-        """
-        Sets the zoom ui text when user has selected "Fit Width."
+    def isZoomFitWidth(self) -> None:
+        """Sets the zoom ui text when user has selected "Fit Width".
 
         Returns:
-            None: Modifies self.ui
+            None but modifies self.ui
         """
         return self.ui.zoomCB.currentText() == "Fit width"
 
-    def isZoomFitHeight(self):
-        """
-        Sets the zoom ui text when user has selected "Fit Height."
+    def isZoomFitHeight(self) -> None:
+        """Sets the zoom ui text when user has selected "Fit Height".
 
         Returns:
-            None: Modifies self.ui
-
+            None but modifies self.ui
         """
         return self.ui.zoomCB.currentText() == "Fit height"
 
-    def changeCBZoom(self, CBIndex):
-        """
-        Keeps zoom combo box at selected index.
+    def changeCBZoom(self, CBIndex: int) -> None:
+        """Keeps zoom combo box at selected index.
 
         Args:
-            CBIndex (int) : the current zoom Combo Box Index
+            CBIndex: the current zoom Combo Box Index
 
         Returns:
-            None: Modifies self.ui
-
+            None but modifies self.ui
         """
         old = self.ui.zoomCB.blockSignals(True)
         self.ui.zoomCB.setCurrentIndex(CBIndex)
         self.ui.zoomCB.blockSignals(old)
 
-    def zoomCBChanged(self):
-        """
-        Modifies the page view based on the selected zoom option.
+    def zoomCBChanged(self) -> None:
+        """Modifies the page view based on the selected zoom option.
 
         Returns:
-            None: Modifies self.ui
-
+            None but modifies self.ui
         """
         if not self.scene:
             return
@@ -1834,15 +1800,15 @@ class Annotator(QWidget):
         return self.parentMarkerUI.getTabStateFromServer()
 
     def refreshRubrics(self):
-        """ask the rubric widget to refresh rubrics"""
+        """Ask the rubric widget to refresh rubrics."""
         self.rubric_widget.refreshRubrics()
 
     def createNewRubric(self, new_rubric):
-        """Ask server to create a new rubric with data supplied"""
+        """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
     def modifyRubric(self, key, updated_rubric):
-        """Ask server to create a new rubric with data supplied"""
+        """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
 
     def viewSolutions(self):
@@ -1884,7 +1850,8 @@ class Annotator(QWidget):
         if not self.parentMarkerUI.marking_history:
             WarnMsg(
                 self,
-                "The client cannot determine the previous paper. Please cancel this annotation and select from the list.",
+                "The client cannot determine the previous paper. "
+                "Please cancel this annotation and select from the list.",
             ).exec()
             return
         keydata = self.get_key_bindings()
