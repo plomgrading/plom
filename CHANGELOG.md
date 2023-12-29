@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Temporary workaround for Qt bug resulting in overly long error dialogs on macOS.
 
 
 

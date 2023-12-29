@@ -191,6 +191,8 @@ class CustomDetailsDialog(QDialog):
         self.adjustSize()
 
 
+# TODO: Temporary workaround on macOS: after 6.5.4 or 6.6.1/6.6.2 we should
+# drop this and let QMessageBox do its job.  Issue #3217.
 if platform.system() == "Darwin":
     # on macOS, detailedText of QMessageBox does not scroll (Issue #3217)
     ErrorMsg: Any = CustomDetailsDialog  # type: ignore
