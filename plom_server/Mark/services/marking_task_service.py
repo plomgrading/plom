@@ -548,9 +548,9 @@ class MarkingTaskService:
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
         the_task = self.get_task_from_code(code)
-        self.remove_tag_from_task(the_tag, the_task)
+        self._remove_tag_from_task(the_tag, the_task)
 
-    def remove_tag_from_task(self, tag, task):
+    def _remove_tag_from_task(self, tag, task):
         """Backend to remove a tag from a marking task.
 
         Args:
@@ -571,7 +571,7 @@ class MarkingTaskService:
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-        self.remove_tag_from_task(the_tag, the_task)
+        self._remove_tag_from_task(the_tag, the_task)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):
