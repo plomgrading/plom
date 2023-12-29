@@ -348,7 +348,7 @@ class DemoBundleService:
             # make a qr-code for this paper, but for second-last page.
             qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page has a qr-code from the previous page",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
