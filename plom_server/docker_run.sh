@@ -4,7 +4,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 # A demo
-python3 manage.py plom_demo --no-waiting --quick
+# python3 manage.py plom_demo --no-waiting
+
+# A basic server
+python3 manage.py plom_init --no-waiting
 python3 manage.py runserver 0.0.0.0:8000
 
 # Some stuff for making a basic server
