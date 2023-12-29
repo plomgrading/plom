@@ -143,28 +143,6 @@ class QuestionMarkingService:
         self.task_pk = first_task.pk
         return first_task
 
-    @transaction.atomic
-    def get_task(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk, should be used for readonly.
-
-        We don't `select_for_update` so the caller should not `.save`
-        the returned MarkingTask object.
-
-        Raises:
-            ObjectDoesNotExist: paper or paper with that question does not exist,
-                not raised directly but from ``get_latest_task``.
-            ValueError:
-        """
-        if self.task_pk:
-            return MarkingTask.objects.get(pk=self.task_pk)
-        elif self.code:
-            paper_number, question_number = mark_task.unpack_code(self.code)
-            task_to_assign = mark_task.get_latest_task(paper_number, question_number)
-            self.task_pk = task_to_assign.pk
-            return task_to_assign
-        else:
-            raise ValueError("Cannot find task - no public key or code specified.")
-
     def _get_task_for_update(self) -> MarkingTask:
         """Retrieve the relevant marking task using self.code or self.task_pk, and select it for update.
 
