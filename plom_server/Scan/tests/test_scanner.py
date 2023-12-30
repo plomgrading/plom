@@ -26,8 +26,9 @@ from ..models import StagingBundle, StagingImage
 
 
 class ScanServiceTests(TestCase):
+    # This test does unpleasant things, see Issue #2925.
     def setUp(self):
-        self.user0 = baker.make(User, username="user0")
+        self.user = baker.make(User, username="__tests_user0")
         self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
         self.pdf = fitz.Document(self.pdf_path)
         assert len(self.pdf) == 28
@@ -36,9 +37,12 @@ class ScanServiceTests(TestCase):
         return super().setUp()
 
     def tearDown(self):
-        # TODO: if you have a real "user0" then I think this will destroy their files
+        # TODO: if you have a collision with a real user, this may destroy their files
         # If we don't do this, we leave some empty directories around after the test...
-        # shutil.rmtree(settings.MEDIA_ROOT / "staging/bundles/user0", ignore_errors=True)
+        shutil.rmtree(
+            settings.MEDIA_ROOT / "staging/bundles/" / self.user.username,
+            ignore_errors=True,
+        )
         return super().tearDown()
 
     def test_upload_bundle(self):
@@ -50,11 +54,10 @@ class ScanServiceTests(TestCase):
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        scanner.upload_bundle(
-            pdf_file_object, "test_bundle", self.user0, timestamp, "abcde", 28
-        )
+        slug = "_test_bundle"
+        scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
 
-        the_bundle = StagingBundle.objects.get(user=self.user0, slug="test_bundle")
+        the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = the_bundle.pdf_file.path
         self.assertEqual(
             bundle_path,
@@ -62,7 +65,7 @@ class ScanServiceTests(TestCase):
                 settings.MEDIA_ROOT
                 / "staging"
                 / "bundles"
-                / "user0"
+                / self.user.username
                 / str(timestamp)
                 / f"{timestamp}.pdf"
             ),
@@ -85,9 +88,9 @@ class ScanServiceTests(TestCase):
             # open that file to get django to save it to disk as per the models File("upload_to")
             with ntf:
                 bundle = StagingBundle(
-                    slug="test_bundle",
+                    slug="_test_bundle",
                     pdf_file=File(ntf, name=f"{timestamp}.pdf"),
-                    user=self.user0,
+                    user=self.user,
                     timestamp=timestamp,
                     pdf_hash="abcde",
                     has_page_images=False,
@@ -98,7 +101,7 @@ class ScanServiceTests(TestCase):
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
         scanner = ScanService()
-        scanner.remove_bundle("test_bundle", user=self.user0)
+        scanner.remove_bundle("_test_bundle", user=self.user)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
