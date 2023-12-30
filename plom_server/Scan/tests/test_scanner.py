@@ -76,10 +76,7 @@ class ScanServiceTests(TestCase):
         bundle_path.parent.rmdir()
 
     def test_remove_bundle(self):
-        """
-        Test ScanService.remove_bundle() and assert that the uploaded PDF file
-        has been removed from disk.
-        """
+        """Test ScanService.remove_bundle() and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
