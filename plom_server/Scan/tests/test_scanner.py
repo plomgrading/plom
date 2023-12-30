@@ -97,6 +97,8 @@ class ScanServiceTests(TestCase):
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
 
+
+class MoreScanServiceTests(TestCase):
     def test_duplicate_hash(self):
         """
         Test ScanService.check_for_duplicate_hash()
@@ -414,9 +416,10 @@ class ScanServiceTests(TestCase):
         """
         Test ScanService.get_all_known_images()
         """
+        user = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(
-            StagingBundle, user=self.user0, timestamp=timezone.now().timestamp()
+            StagingBundle, user=user, timestamp=timezone.now().timestamp()
         )
         # there are no images in the bundle
         imgs = scanner.get_all_known_images(bundle)
