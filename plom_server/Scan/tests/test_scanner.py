@@ -29,7 +29,8 @@ class ScanServiceTests(TestCase):
     def setUp(self):
         self.user0 = baker.make(User, username="user0")
         self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
-        self.pdf = fitz.Document(self.pdf_path)  # has 28 pages
+        self.pdf = fitz.Document(self.pdf_path)
+        assert len(self.pdf) == 28
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
         return super().setUp()
