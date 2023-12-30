@@ -37,7 +37,8 @@ class ScanServiceTests(TestCase):
 
     def tearDown(self):
         # TODO: if you have a real "user0" then I think this will destroy their files
-        shutil.rmtree(settings.MEDIA_ROOT / "staging/bundles/user0", ignore_errors=True)
+        # If we don't do this, we leave some empty directories around after the test...
+        # shutil.rmtree(settings.MEDIA_ROOT / "staging/bundles/user0", ignore_errors=True)
         return super().tearDown()
 
     def test_upload_bundle(self):
@@ -67,6 +68,9 @@ class ScanServiceTests(TestCase):
             ),
         )
         self.assertTrue(pathlib.Path(bundle_path).exists())
+        # TODO: is this an appropriate way to cleanup?
+        the_bundle.delete()
+        pathlib.Path(bundle_path).unlink()
 
     def test_remove_bundle(self):
         """
