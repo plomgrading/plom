@@ -53,13 +53,13 @@ class ScanServiceTests(TestCase):
 
         the_bundle = StagingBundle.objects.get(user=self.user0, slug="test_bundle")
         bundle_path = the_bundle.pdf_file.path
-        self.assertTrue(
+        self.assertEqual(
             bundle_path,
             str(
-                settings.BASE_DIR
-                / "media"
-                / "user0"
+                settings.MEDIA_ROOT
+                / "staging"
                 / "bundles"
+                / "user0"
                 / str(timestamp)
                 / f"{timestamp}.pdf"
             ),
