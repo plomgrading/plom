@@ -35,7 +35,8 @@ class ScanServiceTests(TestCase):
         return super().setUp()
 
     def tearDown(self):
-        shutil.rmtree(settings.MEDIA_ROOT / "user0", ignore_errors=True)
+        # TODO: if you have a real "user0" then I think this will destroy their files
+        shutil.rmtree(settings.MEDIA_ROOT / "staging/bundles/user0", ignore_errors=True)
         return super().tearDown()
 
     def test_upload_bundle(self):
