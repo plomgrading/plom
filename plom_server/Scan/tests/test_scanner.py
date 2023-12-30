@@ -33,8 +33,8 @@ class ScanServiceTests(TestCase):
         random_user_name = f"__tests_user{random.randint(0, 99999)}"
         self.user = baker.make(User, username=random_user_name)
         self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
-        self.pdf = fitz.Document(self.pdf_path)
-        assert len(self.pdf) == 28
+        with fitz.Document(self.pdf_path) as pdf:
+            assert len(pdf) == 28
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
         return super().setUp()
@@ -82,7 +82,8 @@ class ScanServiceTests(TestCase):
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
-            self.pdf.save(ntf.name)
+            with fitz.Document(self.pdf_path) as pdf:
+                pdf.save(ntf.name)
 
             # open that file to get django to save it to disk as per the models File("upload_to")
             with ntf:
