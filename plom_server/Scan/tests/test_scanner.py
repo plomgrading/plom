@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
+import random
 import tempfile
 
 # import shutil
@@ -29,7 +30,8 @@ from ..models import StagingBundle, StagingImage
 class ScanServiceTests(TestCase):
     # This test does unpleasant things, see Issue #2925.
     def setUp(self):
-        self.user = baker.make(User, username="__tests_user0")
+        random_user_name = f"__tests_user{random.randint(0, 99999)}"
+        self.user = baker.make(User, username=random_user_name)
         self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
         self.pdf = fitz.Document(self.pdf_path)
         assert len(self.pdf) == 28
