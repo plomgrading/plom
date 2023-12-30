@@ -5,8 +5,9 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
-import shutil
 import tempfile
+
+# import shutil
 
 import exif
 import fitz
@@ -38,11 +39,11 @@ class ScanServiceTests(TestCase):
 
     def tearDown(self):
         # TODO: if you have a collision with a real user, this may destroy their files
-        # If we don't do this, we leave some empty directories around after the test...
-        shutil.rmtree(
-            settings.MEDIA_ROOT / "staging/bundles/" / self.user.username,
-            ignore_errors=True,
-        )
+        # shutil.rmtree(
+        #     settings.MEDIA_ROOT / "staging/bundles/" / self.user.username,
+        #     ignore_errors=True,
+        # )
+        (settings.MEDIA_ROOT / "staging/bundles/" / self.user.username).rmdir()
         return super().tearDown()
 
     def test_upload_bundle(self):
@@ -58,22 +59,21 @@ class ScanServiceTests(TestCase):
         scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
-        bundle_path = the_bundle.pdf_file.path
+        bundle_path = pathlib.Path(the_bundle.pdf_file.path)
         self.assertEqual(
             bundle_path,
-            str(
-                settings.MEDIA_ROOT
-                / "staging"
-                / "bundles"
-                / self.user.username
-                / str(timestamp)
-                / f"{timestamp}.pdf"
-            ),
+            settings.MEDIA_ROOT
+            / "staging"
+            / "bundles"
+            / self.user.username
+            / str(timestamp)
+            / f"{timestamp}.pdf",
         )
-        self.assertTrue(pathlib.Path(bundle_path).exists())
+        self.assertTrue(bundle_path.exists())
         # TODO: is this an appropriate way to cleanup?
         the_bundle.delete()
-        pathlib.Path(bundle_path).unlink()
+        bundle_path.unlink()
+        bundle_path.parent.rmdir()
 
     def test_remove_bundle(self):
         """
@@ -105,6 +105,7 @@ class ScanServiceTests(TestCase):
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
+        bundle_path.parent.rmdir()
 
 
 class MoreScanServiceTests(TestCase):
