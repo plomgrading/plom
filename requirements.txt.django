@@ -63,7 +63,7 @@ tomli==2.0.1
 tomlkit==0.12.3
 tqdm==4.66.1
 urllib3==2.1.0
-weasyprint==60.1
+weasyprint==60.2
 whitenoise==6.6.0
 zipfly==6.0.5
 zxing-cpp==2.1.0
