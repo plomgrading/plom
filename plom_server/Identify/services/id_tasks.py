@@ -130,12 +130,16 @@ class IdentifyTaskService:
                 paper__paper_number=paper_number
             )
         except PaperIDTask.DoesNotExist:
-            raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
+            raise RuntimeError(
+                f"ID Task with paper number {paper_number} does not exist."
+            )
 
         if task.status == PaperIDTask.OUT:
-            raise RuntimeError("Task is currently assigned.")
+            raise RuntimeError(f"ID task {paper_number} is currently assigned.")
         elif task.status == PaperIDTask.COMPLETE:
-            raise RuntimeError("Task has already been identified.")
+            raise RuntimeError(
+                f"ID task {paper_number} is complete, already identified."
+            )
 
         task.assigned_user = user
         task.status = PaperIDTask.OUT
