@@ -1315,7 +1315,10 @@ class MarkerClient(QWidget):
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            qlabel = get_question_label(self.exam_spec, self.question)
+            try:
+                qlabel = get_question_label(self.exam_spec, self.question)
+            except (ValueError, KeyError):
+                qlabel = "???"
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
             if qlabel == f"Q{self.question}":
                 msg += f" of {qlabel}.</p>"
