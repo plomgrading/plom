@@ -53,8 +53,8 @@ class PaperIDAction(BaseAction):
     """
 
     is_valid = models.BooleanField(default=True)
-    student_name = models.TextField(default="")
-    student_id = models.TextField(default="")
+    student_name = models.TextField(null=True, default="")
+    student_id = models.TextField(null=True, default="")
 
 
 class IDPrediction(models.Model):
