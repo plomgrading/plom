@@ -181,7 +181,8 @@ class IdentifyTaskService:
             ).get()
             if prev_action_with_that_sid != task.latest_action:
                 raise IntegrityError(
-                    "Student ID {student_id} has already been used in paper {prev_action_with_that_sid.PaperIDTask.paper.paper_number}"
+                    f"Student ID {student_id} has already been used in paper "
+                    f"{prev_action_with_that_sid.paperidtask.paper.paper_number}"
                 )
         except PaperIDAction.DoesNotExist:
             # The SID has not been used previously.
