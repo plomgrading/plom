@@ -25,17 +25,16 @@ class QuestionMaxMark(APIView):
 
     Returns:
         (200): returns the maximum number of points for a question
-        (400): malformed, missing question, etc, TODO: not implemented
-        (416): question values out of range
+        (416): question value out of range
     """
 
     def get(self, request, *, question):
         try:
             max_mark = SpecificationService.get_question_mark(question)
             return Response(max_mark)
-        except KeyError:
+        except ObjectDoesNotExist as e:
             return _error_response(
-                "question out of range",
+                f"Question {question} out of range: {e}",
                 status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
             )
 
