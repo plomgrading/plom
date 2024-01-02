@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Temporary workaround for Qt bug resulting in overly long error dialogs on macOS.
-
+* Previous compiled clients `0.14.x` produced imperceptibly corrupted annotated images due to bugs in jpeg libraries, causing rare problems with some PDF viewers on the reassembled files.
 
 
 ## [0.14.7] - 2023-12-03
