@@ -148,8 +148,8 @@ class DemoBundleService:
     def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
         """Hide qr-codes for demo purposes.
 
-        On last page put black square at bottom of page to hide 2
-        qr-codes, and on second-last page, put black squares at the
+        On last page paint squares at bottom of page to hide 2
+        qr-codes, and on second-last page, paint squares at the
         top of the page to hide 1 qr-code.
 
         Args:
@@ -157,20 +157,20 @@ class DemoBundleService:
 
         Returns:
             None, but modifies ``pdf_doc``  as a side effect.
-
         """
         # magic numbers for obscuring the qr-codes
         left = 15
         right = 90
+        page = pdf_doc[-1]
         # grab the bounding box of the page to get its height/width
-        bnd = pdf_doc[-1].bound()
-        pdf_doc[-1].draw_rect(
+        bnd = page.bound()
+        page.draw_rect(
             fitz.Rect(left, bnd.height - right, right, bnd.height - left),
             color=(0, 0, 0),
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
-        pdf_doc[-1].draw_rect(
+        page.draw_rect(
             fitz.Rect(
                 bnd.width - right,
                 bnd.height - right,
@@ -181,9 +181,17 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
+        tw = fitz.TextWriter(bnd)
+        tw.append(
+            fitz.Point(100, bnd.height - 20),
+            "Simulated page damage: unreadable bottom QR codes",
+            fontsize=14,
+        )
+        tw.write_text(page, color=(0, 0, 0.8))
 
-        bnd = pdf_doc[-2].bound()
-        pdf_doc[-2].draw_rect(
+        page = pdf_doc[-2]
+        bnd = page.bound()
+        page.draw_rect(
             fitz.Rect(
                 bnd.width - right,
                 left,
@@ -194,7 +202,7 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
-        pdf_doc[-2].draw_rect(
+        page.draw_rect(
             fitz.Rect(
                 left,
                 left,
@@ -205,6 +213,13 @@ class DemoBundleService:
             fill=(0.2, 0.2, 0.75),
             radius=0.05,
         )
+        tw = fitz.TextWriter(bnd)
+        tw.append(
+            fitz.Point(100, 15),
+            "Simulated page damage: unreadable top QR code",
+            fontsize=14,
+        )
+        tw.write_text(page, color=(0, 0, 0.8))
 
     def make_last_page_with_wrong_version(
         self, pdf_doc: fitz.Document, paper_number: int
@@ -242,7 +257,7 @@ class DemoBundleService:
             pdf_doc.new_page(-1)
 
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page has a qr-code with the wrong version",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
@@ -333,7 +348,7 @@ class DemoBundleService:
             # make a qr-code for this paper, but for second-last page.
             qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page has a qr-code from the previous page",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
@@ -364,7 +379,7 @@ class DemoBundleService:
             # these are called "qr_0001_pg1_4.png" etc.
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
-                (120, 50),
+                (120, 60),
                 text="This is a page from a different assessment",
                 fontsize=18,
                 color=[0, 0.75, 0.75],
