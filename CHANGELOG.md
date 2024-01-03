@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Identifier: UI includes explanation of why we confirm prenamed papers.
 
 ### Changed
+* Client: experimental "view cat pic" feature removed; it was often offline and the content could be construed as endorsed by Plom.
 
 ### Fixed
-* Temporary workaround for Qt bug resulting in overly long error dialogs on macOS.
+* Client: temporary workaround for Qt bug resulting in overly-long error dialogs on macOS.
 * Previous compiled clients `0.14.x` produced imperceptibly corrupted annotated images due to bugs in jpeg libraries, causing rare problems with some PDF viewers on the reassembled files.
+* Client: crash when sorted columns in the rarely-used "filter/arrange" dialog.
+* Dependency and documentation updates.
 
 
 ## [0.14.7] - 2023-12-03
