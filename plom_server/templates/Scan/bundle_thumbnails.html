@@ -115,7 +115,7 @@
                                         </div>
                                     </div>
                                 {% elif pg.status == "unknown" %}
-                                    <div class="col">
+                                    <div class="col"  x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                         <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -148,7 +148,7 @@
                                         </div>
                                     {% endif %}
                                 {% elif pg.status == "error" %}
-                                    <div class="col">
+                                    <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
                                         <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
