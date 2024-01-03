@@ -44,11 +44,19 @@ def showRubricToUser(rubric):
 
 
 def deltaToInt(x):
-    """Since delta can just be a full stop."""
+    """Convert delta to an integer value, typically for sorting.
+
+    Complicated b/c delta can just be a full stop, as well as things
+    like "3 of 8", and who knows what in the future."""
     if x == ".":
         return 0
-    else:
+    # special cases for things like "3 of 8" or "3 / 8"
+    x = x.split("of")[0]
+    x = x.split("/")[0]
+    try:
         return int(x)
+    except ValueError:
+        return 0
 
 
 class DeleteIcon(QPushButton):
