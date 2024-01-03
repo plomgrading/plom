@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 import logging
@@ -47,7 +47,8 @@ def deltaToInt(x):
     """Convert delta to an integer value, typically for sorting.
 
     Complicated b/c delta can just be a full stop, as well as things
-    like "3 of 8", and who knows what in the future."""
+    like "3 of 8", and who knows what in the future.
+    """
     if x == ".":
         return 0
     # special cases for things like "3 of 8" or "3 / 8"
