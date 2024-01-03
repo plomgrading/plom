@@ -5,8 +5,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
-import shutil
+import random
 import tempfile
+
+# import shutil
 
 import exif
 import fitz
@@ -26,16 +28,24 @@ from ..models import StagingBundle, StagingImage
 
 
 class ScanServiceTests(TestCase):
+    # This test does unpleasant things, see Issue #2925.
     def setUp(self):
-        self.user0 = baker.make(User, username="user0")
+        random_user_name = f"__tests_user{random.randint(0, 99999)}"
+        self.user = baker.make(User, username=random_user_name)
         self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
-        self.pdf = fitz.Document(self.pdf_path)  # has 28 pages
+        with fitz.Document(self.pdf_path) as pdf:
+            assert len(pdf) == 28
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
         return super().setUp()
 
     def tearDown(self):
-        shutil.rmtree(settings.MEDIA_ROOT / "user0", ignore_errors=True)
+        # TODO: if you have a collision with a real user, this may destroy their files
+        # shutil.rmtree(
+        #     settings.MEDIA_ROOT / "staging/bundles/" / self.user.username,
+        #     ignore_errors=True,
+        # )
+        (settings.MEDIA_ROOT / "staging/bundles/" / self.user.username).rmdir()
         return super().tearDown()
 
     def test_upload_bundle(self):
@@ -47,41 +57,40 @@ class ScanServiceTests(TestCase):
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        scanner.upload_bundle(
-            pdf_file_object, "test_bundle", self.user0, timestamp, "abcde", 28
-        )
+        slug = "_test_bundle"
+        scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
 
-        the_bundle = StagingBundle.objects.get(user=self.user0, slug="test_bundle")
-        bundle_path = the_bundle.pdf_file.path
-        self.assertTrue(
+        the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
+        bundle_path = pathlib.Path(the_bundle.pdf_file.path)
+        self.assertEqual(
             bundle_path,
-            str(
-                settings.BASE_DIR
-                / "media"
-                / "user0"
-                / "bundles"
-                / str(timestamp)
-                / f"{timestamp}.pdf"
-            ),
+            settings.MEDIA_ROOT
+            / "staging"
+            / "bundles"
+            / self.user.username
+            / str(timestamp)
+            / f"{timestamp}.pdf",
         )
-        self.assertTrue(pathlib.Path(bundle_path).exists())
+        self.assertTrue(bundle_path.exists())
+        # TODO: is this an appropriate way to cleanup?
+        the_bundle.delete()
+        bundle_path.unlink()
+        bundle_path.parent.rmdir()
 
     def test_remove_bundle(self):
-        """
-        Test ScanService.remove_bundle() and assert that the uploaded PDF file
-        has been removed from disk.
-        """
+        """Test ScanService.remove_bundle() and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
-            self.pdf.save(ntf.name)
+            with fitz.Document(self.pdf_path) as pdf:
+                pdf.save(ntf.name)
 
             # open that file to get django to save it to disk as per the models File("upload_to")
             with ntf:
                 bundle = StagingBundle(
-                    slug="test_bundle",
+                    slug="_test_bundle",
                     pdf_file=File(ntf, name=f"{timestamp}.pdf"),
-                    user=self.user0,
+                    user=self.user,
                     timestamp=timestamp,
                     pdf_hash="abcde",
                     has_page_images=False,
@@ -92,11 +101,14 @@ class ScanServiceTests(TestCase):
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
         scanner = ScanService()
-        scanner.remove_bundle("test_bundle", user=self.user0)
+        scanner.remove_bundle("_test_bundle", user=self.user)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
+        bundle_path.parent.rmdir()
 
+
+class MoreScanServiceTests(TestCase):
     def test_duplicate_hash(self):
         """
         Test ScanService.check_for_duplicate_hash()
@@ -414,9 +426,10 @@ class ScanServiceTests(TestCase):
         """
         Test ScanService.get_all_known_images()
         """
+        user = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(
-            StagingBundle, user=self.user0, timestamp=timezone.now().timestamp()
+            StagingBundle, user=user, timestamp=timezone.now().timestamp()
         )
         # there are no images in the bundle
         imgs = scanner.get_all_known_images(bundle)
