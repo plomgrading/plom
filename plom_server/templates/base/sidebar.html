@@ -36,34 +36,22 @@
         <li class="nav-item">
             <a class="nav-link" href="{% url 'prep_landing' %}">Create test</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
-        </li>
         <li class="nav-item accordion accordion-flush">
             <a class="nav-link" href="#progress">Progress</a>
+            <div id="progress">
+                <ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'overview_landing' %}">Task overview</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
+                    </li>
+                </ul>
+            </div>
         </li>
-        <div id="progress">
-            <ul>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'overview_landing' %}">Task overview</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
-                </li>
-            </ul>
-        </div>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'soln_home' %}">Solutions</a>
         </li>
@@ -71,7 +59,26 @@
             <a class="nav-link" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'reports_landing' %}">Reports</a>
+            <a class="nav-link" href="{% url 'reports_landing' %}">Spreadsheets & Reports</a>
+        </li>
+        <li class="nav-item accordion accordion-flush">
+            <a class="nav-link" href="#development">In development</a>
+            <div id="development">
+                <ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marking_info' %}">Marking Info</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'task_order_landing' %}">Task Ordering</a>
+                    </li>
+                </ul>
+            </div>
         </li>
     {% elif user_is_scanner %}
         <li class="nav-item">

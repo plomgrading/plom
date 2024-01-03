@@ -120,6 +120,7 @@
                                         {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
                                 </li>
+                                <li>{{ current_page.qr_codes }}</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'unread' %}

@@ -292,6 +292,10 @@ class MarkingTaskService:
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
 
+    def get_n_valid_tasks(self):
+        """Return the total number of tasks in the database, excluding out of date tasks."""
+        return MarkingTask.objects.filter(status=MarkingTask.OUT_OF_DATE).count()
+
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
         task = self.get_task_from_code(code)

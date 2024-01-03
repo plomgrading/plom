@@ -3,16 +3,57 @@
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Reports
+    Spreadsheets and Reports
 {% endblock title %}
 {% block page_heading %}
-    Reports
+    Spreadsheets and Reports
 {% endblock page_heading %}
 {% block main_content %}
+    {% if all_marked %}
+        <div class="alert alert-success">
+            All questions have been graded. Please confirm with your TAs that marking is complete.
+        </div>
+    {% else %}
+        <div class="alert alert-danger">
+            Marking is not complete. Any spreadsheet or report you download will be incomplete.
+        </div>
+    {% endif %}
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Download a .csv of student grades.</h5>
+            <form method="post" action="{% url 'marks_download' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-auto">
+                        {% if all_marked %}
+                            <button type="submit" class="btn btn-primary">Download Grades</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-warning">Download Grades</button>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <input type="checkbox" name="version_info" checked>
+                        <label for="check_versions">version info</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="checkbox" name="warning_info" checked>
+                        <label for="check_warnings">warning info</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="checkbox" name="timing_info">
+                        <label for="check_timing">timing info</label>
+                    </div>
+                </div>
+            </form>
+            <br>
+            <p>Note: download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</p>
+        </div>
+    </div>
     <h3>Main Report</h3>
     <p>Download the report with basic information and analysis.</p>
     <form method="post" action="{% url 'report_download' %}">

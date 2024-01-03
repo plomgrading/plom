@@ -101,6 +101,7 @@ class MarkingInformationView(ManagerRequiredView):
     def marks_download(request):
         """Download marks as a csv file."""
         sms = StudentMarkService()
+
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
