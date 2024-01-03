@@ -3,9 +3,7 @@
 # Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-"""
-The background downloader downloads images using threads.
-"""
+"""The background downloader downloads images using threads."""
 
 import logging
 import random
@@ -91,10 +89,13 @@ class Downloader(QObject):
             basedir (pathlib.Path/str): a directory for the image cache.
 
         Keyword Args:
-            msgr (Messenger):
+            msgr (Messenger): used for communication with a Plom server.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
+
+        Returns:
+            None.
         """
         super().__init__()
         # self.is_download_in_progress = False
@@ -161,12 +162,13 @@ class Downloader(QObject):
             fout.write(fin.read())
         self._placeholder_image = placeholder
 
-    def get_placeholder_path(self):
+    def get_placeholder_path(self) -> str:
         """A static image that can be used as a placeholder while images are downloading.
 
-        returns:
-            pathlib.Path: a real path on disc to the image, possibly a cached
-                copy.  But for now its a `str` (TODO?).
+        Returns:
+            A real path on disc to the image, possibly a cached copy.
+            TODO: might prefer a ``pathlib.Path`` but for now
+            its a `str`.
 
         Currently you may have to make a string (not an Path for example) b/c
         of some Qt limitations in the ExamModel and proxy stuff in Marker.
@@ -238,6 +240,9 @@ class Downloader(QObject):
             _is_retry (bool): default False.  If True, this signifies an
                 automatic retry.  Clients should probably not touch this.
 
+        Returns:
+            None
+
         Does not start a new download if the Page Cache already has that image.
         It also tries to avoid enquing another request for the same image.
         """
@@ -308,16 +313,17 @@ class Downloader(QObject):
         # TODO: did it though?  Maybe more when it returns?
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_delivers(self, img_id, md5, tmpfile, targetfile):
+    def _worker_delivers(self, img_id: int, md5: str, tmpfile, targetfile) -> None:
         """A worker has succeed and delivered a temp file to us.
 
         Args:
-             img_id (int):
-             md5 (str):
-             tmpfile (str/pathlib.Path): a temporary path and filename
-                 where the file is now.
-             targetfile (str/pathlib.Path): to where should we save
-                 (that is, rename) the file.
+            img_id: integer uniquely tied to an image, probably the
+                DB key or similar.
+            md5: the md5sum of the file.
+            tmpfile (str/pathlib.Path): a temporary path and filename
+                where the file is now.
+            targetfile (str/pathlib.Path): to where should we save
+                (that is, rename) the file.
 
         This will emit a signal that others can listen for.
         In some cases, the worker will deliver something that someone else

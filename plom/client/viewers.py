@@ -6,9 +6,6 @@
 
 import logging
 from pathlib import Path
-import random
-import tempfile
-import urllib.request
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -17,7 +14,6 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -28,7 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .image_view_widget import ImageViewWidget
-from .useful_classes import InfoMsg, WarnMsg
+from .useful_classes import WarnMsg
 
 
 log = logging.getLogger("viewerdialog")
@@ -258,95 +254,6 @@ class SolutionViewer(QWidget):
         self.sv.updateImage(solnfile)
         if solnfile is None:
             WarnMsg(self, "Server no longer has a solution.  Try again later?").exec()
-
-
-class CatViewer(QDialog):
-    def __init__(self, parent, dogAttempt=False):
-        self.msgs = [
-            "PLOM",
-            "I%20can%20haz%20more%20markingz",
-            "Insert%20meme%20here",
-            "Hello%20Omer",
-            "More%20patz%20pleeze",
-        ]
-
-        super().__init__(parent)
-        grid = QGridLayout()
-        self.count = 0
-        self.catz = None
-        if dogAttempt:
-            self.getNewImageFile(msg="No%20dogz.%20Only%20Catz%20and%20markingz")
-        else:
-            self.getNewImageFile()
-        self.img = ImageViewWidget(self, self.catz)
-
-        refreshButton = QPushButton("&Refresh")
-        closeButton = QPushButton("&Close")
-        grid.addWidget(self.img, 1, 1, 6, 7)
-        grid.addWidget(refreshButton, 7, 1)
-        grid.addWidget(closeButton, 7, 7)
-        self.setLayout(grid)
-        closeButton.clicked.connect(self.close)
-        refreshButton.clicked.connect(self.refresh)
-
-        self.setWindowTitle("Catz")
-
-        self.setMinimumSize(500, 500)
-
-    def closeEvent(self, event):
-        self.eraseImageFile()
-
-    def getNewImageFile(self, *, msg=None):
-        """Erase the current stored image and try to get a new one.
-
-        Keyword Args:
-            msg (None/str): something for the cat to say.
-
-        Returns:
-            None: but sets the `.catz` instance variable as a side effect.
-        """
-        self.eraseImageFile()
-        logging.debug("Trying to refresh cat image")
-
-        # Do we need to manage this tempfile in instance variable? Issue #1842
-        # with tempfile.NamedTemporaryFile() as f:
-        #     urllib.request.urlretrieve("https://cataas.com/cat", f)
-        #     self.img.updateImages(f)
-        self.catz = Path(tempfile.NamedTemporaryFile(delete=False).name)
-
-        try:
-            if msg is None:
-                urllib.request.urlretrieve("https://cataas.com/cat", self.catz)
-            else:
-                urllib.request.urlretrieve(
-                    f"https://cataas.com/cat/says/{msg}", self.catz
-                )
-            logging.debug("Cat image refreshed")
-        except Exception:
-            WarnMsg(self, "Cannot get cat picture.  Try again later?").exec()
-            self.catz = None
-
-    def eraseImageFile(self):
-        if self.catz is None:
-            return
-        try:
-            self.catz.unlink()
-        except OSError:
-            pass
-
-    def refresh(self):
-        self.count += 1
-        if self.count > 5:
-            msg = "Back%20to%20work"
-        elif random.choice([0, 1]):
-            msg = random.choice(self.msgs)
-        else:
-            msg = None
-        self.getNewImageFile(msg=msg)
-        self.img.updateImage(self.catz)
-        if self.count > 5:
-            InfoMsg(self, "Enough break time").exec()
-            self.close()
 
 
 class PreviousPaperViewer(QDialog):

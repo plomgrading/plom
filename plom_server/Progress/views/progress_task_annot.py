@@ -1,10 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-from django.shortcuts import render
-from django.http import FileResponse
 
-from Base.base_group_views import LeadMarkerOrManagerView
-from Mark.services import MarkingStatsService, MarkingTaskService, page_data
+from django.contrib.auth.models import User
+from django.http import FileResponse
+from django.shortcuts import render, reverse, redirect
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
+from rest_framework.exceptions import ValidationError
+
+from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
+from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
+from Mark.services import (
+    MarkingStatsService,
+    MarkingTaskService,
+    page_data,
+    mark_task,
+)
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
 from Rubrics.services import RubricService
@@ -148,10 +158,12 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
         context = self.build_context()
         context.update(
             {
+                "task_pk": task_pk,
                 "paper_number": task_obj.paper.paper_number,
                 "question": task_obj.question_number,
                 "version": task_obj.question_version,
                 "status": task_obj.get_status_display(),
+                "lead_markers": User.objects.filter(groups__name="lead_marker"),
             }
         )
         if task_obj.status == MarkingTask.COMPLETE:
@@ -173,4 +185,105 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
         else:
             pass
 
+        mts = MarkingTaskService()
+        # get all the tags as a dict of {pk: text}, and those for attn-markers
+        all_tags = {X[0]: X[1] for X in mts.get_all_tags()}
+        # list of all the markers as Users
+        all_markers = User.objects.filter(groups__name="marker")
+        # the corresponding attn user tag text
+        attn_marker_tag_text = [f"@{X.username}" for X in all_markers]
+        # tags for task at hand
+        current_tags = {X[0]: X[1] for X in mts.get_tags_text_and_pk_for_task(task_pk)}
+        # separate the current tags into 'normal' and 'attn' tags
+        current_normal_tags = {
+            X: Y for X, Y in current_tags.items() if Y not in attn_marker_tag_text
+        }
+        current_attn_user_tags = {
+            X: Y for X, Y in current_tags.items() if Y in attn_marker_tag_text
+        }
+        # separate the normal tags from all the missing tags
+        addable_normal_tags = {
+            X: Y
+            for X, Y in all_tags.items()
+            if X not in current_tags and Y not in attn_marker_tag_text
+        }
+        # list of **users** that are not already present as a tag "@<user>"
+        addable_attn_marker = [
+            X
+            for X in all_markers
+            if f"@{X.username}" not in current_attn_user_tags.values()
+        ]
+
+        context.update(
+            {
+                # the current tags, and then separated into normal and attn-marker
+                "current_normal_tags": current_normal_tags,
+                "current_attn_tags": current_attn_user_tags,
+                # the tags / users we might add
+                "addable_normal_tags": addable_normal_tags,
+                "addable_attn_marker": addable_attn_marker,
+                # get simple form validation pattern from here rather than hard coding into html
+                "valid_tag_pattern": plom_valid_tag_text_pattern,
+                "valid_tag_description": plom_valid_tag_text_description,
+            }
+        )
+
         return render(request, "Progress/Mark/task_details.html", context=context)
+
+
+class MarkingTaskTagView(LeadMarkerOrManagerView):
+    def patch(self, request, task_pk: int, tag_pk: int):
+        MarkingTaskService().add_tag_to_task_via_pks(tag_pk, task_pk)
+        return HttpResponseClientRefresh()
+
+    def delete(self, request, task_pk: int, tag_pk: int):
+        MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
+        return HttpResponseClientRefresh()
+
+    def post(self, request, task_pk: int):
+        # make sure have the correct field from the form
+        if "newTagText" not in request.POST:
+            return HttpResponseClientRefresh()
+        # sanitize the text, check if such a tag already exists
+        # (create it otherwise) then add to the task
+        mts = MarkingTaskService()
+        tag_text = mts.sanitize_tag_text(request.POST.get("newTagText"))
+
+        tag_obj = mts.get_tag_from_text(tag_text)
+        if tag_obj is None:  # no such tag exists, so create one
+            try:
+                tag_obj = mts.create_tag(request.user, tag_text)
+            except ValidationError:
+                # the form *should* catch validation errors.
+                # we don't throw an explicit error here
+                # instead just refresh the page.
+                return HttpResponseClientRefresh()
+
+        mts.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
+        return HttpResponseClientRefresh()
+
+
+class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
+    def get(self, request, task_pk):
+        # get the pn and qn from the given task
+        # then find the latest task for that pn, qn.
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        pn = task_obj.paper.paper_number
+        qn = task_obj.question_number
+        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        return redirect("progress_marking_task_details", task_pk=new_task_pk)
+
+
+class MarkingTaskResetView(ManagerRequiredView):
+    def put(self, request, task_pk: int):
+        task_obj = MarkingTask.objects.get(pk=task_pk)
+        pn = task_obj.paper.paper_number
+        qn = task_obj.question_number
+        MarkingTaskService().set_paper_marking_task_outdated(
+            paper_number=pn, question_number=qn
+        )
+        # now grab the pk of the new task with that paper,question and redirect the user there.
+        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[new_task_pk])
+        )

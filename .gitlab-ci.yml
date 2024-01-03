@@ -136,6 +136,7 @@ copyright_year:
     - echo "Considering the following commits to this branch (since main):"
     - git shortlog origin/main..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
+    # TODO: tried ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} instead of main?
     - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
     - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
@@ -382,13 +383,13 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER=`flake8 --count --extend-exclude plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 14 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 12 ]]"
     # Special case for plom_server
     - flake8 plom_server --exit-zero
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 41 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 30 ]]"
 
   allow_failure: true
 
@@ -407,7 +408,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 441 ]]"
+    - bash -c "[[ $NUMERR -le 258 ]]"
   allow_failure: true
 
 

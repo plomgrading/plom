@@ -5,9 +5,6 @@ from django.shortcuts import render
 from django.http import FileResponse, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 
-from io import BytesIO
-from PIL import Image
-
 from Base.base_group_views import ManagerRequiredView, LeadMarkerOrManagerView
 
 from Progress.services import ManageScanService, ManageDiscardService

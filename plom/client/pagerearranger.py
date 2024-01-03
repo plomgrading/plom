@@ -182,7 +182,7 @@ class SinkList(QListWidget):
         self.item_belongs[name] = belongs
 
     def removeSelectedItems(self):
-        """Remove the selected items and pass back a name list"""
+        """Remove the selected items and pass back a name list."""
         name_list = []
         # be careful removing things as list indices update as you delete.
         sel_rows = [x.row() for x in self.selectedIndexes()]
@@ -249,7 +249,7 @@ class SinkList(QListWidget):
             self.insertItem(rc - n - 1, li)
 
     def rotateSelectedImages(self, angle=90):
-        """Iterate over selection, rotating each image"""
+        """Iterate over selection, rotating each image."""
         for i in self.selectedIndexes():
             ci = self.item(i.row())
             name = ci.text()
@@ -270,23 +270,23 @@ class SinkList(QListWidget):
         log.info("Forcing orientation to %s", format(angle))
         self.rotateItemTo(name, angle)
 
-    def rotateItemBy(self, name, delta_angle):
+    def rotateItemBy(self, name: str, delta_angle: int):
         """Rotate image by an angle relative to its current state.
 
-        args:
-            name (str)
-            delta_angle (int)
+        Args:
+            name: name of an image, used as a key.
+            delta_angle: rotate by this angle.
         """
         angle = self.item_orientation[name]
         angle = (angle + delta_angle) % 360
         self.rotateItemTo(name, angle)
 
-    def rotateItemTo(self, name, angle):
+    def rotateItemTo(self, name: str, angle: int):
         """Rotate image to a particular orientation.
 
-        args:
-            name (str)
-            angle (int)
+        Args:
+            name: name of an image, used as a key.
+            angle: rotate to this angle.
         """
         self.item_orientation[name] = angle
         # TODO: instead of loading pixmap again, can we transform the QIcon?
@@ -306,8 +306,10 @@ class SinkList(QListWidget):
         # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):
             ci = self.item(i)
+            assert ci is not None
             if ci.text() == name:
                 break
+        assert ci is not None
         ci.setIcon(QIcon(pix))
         # rotpixmap = ci.getIcon().pixmap().transformed(rot)
         # ci.setIcon(QIcon(rotpixmap))
@@ -348,8 +350,7 @@ class RearrangementViewer(QDialog):
             self.populateListOriginal()
 
     def _setupUI(self):
-        """
-        Sets up thee UI for the rearrangement Viewer.
+        """Sets up thee UI for the rearrangement Viewer.
 
         Notes:
              helper method for __init__
@@ -634,8 +635,7 @@ class RearrangementViewer(QDialog):
             self.appendB.setEnabled(False)
 
     def populateListOriginal(self):
-        """
-        Populates the QListWidgets with exam pages, using original server view.
+        """Populates the QListWidgets with exam pages, using original server view.
 
         Returns:
             None: but changes the state of self.
@@ -668,8 +668,7 @@ class RearrangementViewer(QDialog):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
     def populateListWithCurrent(self, current):
-        """
-        Populates the QListWidgets with pages, with current state highlighted.
+        """Populates the QListWidgets with pages, with current state highlighted.
 
         Args:
             current (list): dicts with 'md5' and 'orientation' keys.
@@ -745,8 +744,7 @@ class RearrangementViewer(QDialog):
         self.sinkToSource()
 
     def shuffleLeft(self):
-        """
-        Shuffles currently selected page to the left one position.
+        """Shuffles currently selected page to the left one position.
 
         Notes:
             If currently selected page isn't in current question,
@@ -761,8 +759,7 @@ class RearrangementViewer(QDialog):
             pass
 
     def shuffleRight(self):
-        """
-        Shuffles currently selected page to the left one position.
+        """Shuffles currently selected page to the left one position.
 
         Notes:
             If currently selected page isn't in current question,
@@ -793,8 +790,7 @@ class RearrangementViewer(QDialog):
         GroupView(self, image_data, bigger=True).exec()
 
     def doShuffle(self):
-        """
-        Reorders and saves pages according to user's selections.
+        """Reorders and saves pages according to user's selections.
 
         Returns:
             Doesn't return anything directly but sets `permute` instance
@@ -823,8 +819,7 @@ class RearrangementViewer(QDialog):
         self.accept()
 
     def singleSelect(self, currentList, allPages):
-        """
-        If item selected by user isn't in currentList, deselects currentList.
+        """If item selected by user isn't in currentList, deselects currentList.
 
         Args:
             currentList (QListWidget): the list being checked.
@@ -835,7 +830,6 @@ class RearrangementViewer(QDialog):
 
         Returns:
             None
-
         """
         for lstViewI in allPages:
             if lstViewI == currentList:

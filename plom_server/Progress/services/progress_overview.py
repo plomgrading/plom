@@ -48,7 +48,7 @@ class ProgressOverviewService:
                 dat["user"] = task.assigned_user.username
             if task.status == MarkingTask.COMPLETE:
                 dat["score"] = task.latest_annotation.score
-                dat["annotation_pk"] = task.latest_annotation.pk
+                dat["task_pk"] = task.pk
 
             marking_info.append(dat)
         return marking_info
@@ -67,7 +67,7 @@ class ProgressOverviewService:
         Marking-info dict is of the form {paper_number: {1: dat, 2:dat, ..., n: dat} } with data for each question. For each question we have
           * {status: 'To do'} or
           * {'status': 'Out', 'user': username} - the name of the user who has the task
-          * {status: 'Complete', 'user': username, 'score': score, 'annotation_pk: blah} - user who did the marking'ing, the score, and the pk of the corresponding annotaiton.
+          * {status: 'Complete', 'user': username, 'score': score, 'task_pk: blah} - user who did the marking'ing, the score, and the pk of the corresponding marking task.
         """
         id_task_overview: Dict[int, Optional[Dict[str, Any]]] = {}
         marking_task_overview: Dict[int, Dict[int, Optional[Dict[str, Any]]]] = {}

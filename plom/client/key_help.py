@@ -63,11 +63,14 @@ class KeyHelp(QDialog):
             parent (QWidget):
             keybinding_name (str): which keybinding to initially display.
 
-        Keyword args:
+        Keyword Args:
             custom_overlay (dict): if there was already a custom keybinding,
                pass its overlay here.  We will copy it, not change it.  This
                is because the user may make local changes and then cancel.
             initial_tab (int): index of the tab we'd like to open on.
+
+        Returns:
+            None
         """
         super().__init__(parent)
         self._custom_overlay = deepcopy(custom_overlay)

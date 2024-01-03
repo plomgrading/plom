@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from typing import Optional, List
 
@@ -10,7 +11,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from ..models import MarkingTask
-from . import mark_task, page_data, mark_tags, annotations
+from .marking_task_service import MarkingTaskService
+from . import mark_task, page_data, annotations
 
 
 class QuestionMarkingService:
@@ -180,12 +182,6 @@ class QuestionMarkingService:
             raise ValueError("Cannot find task to read from.")
 
         return page_data.get_question_pages_list(paper_number, question_number)
-
-    @transaction.atomic
-    def get_tags(self) -> List[str]:
-        """Return all the tags for a task."""
-        task = self.get_task()
-        return mark_tags.get_tag_texts_for_task(task)
 
     @transaction.atomic
     def mark_task(self):

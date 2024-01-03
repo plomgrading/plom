@@ -66,7 +66,7 @@
                                     {% if dat.status == "Complete" %}
                                         <td class="table-success">
                                             <a class="btn btn-sm py-0 btn-success-subtle w-100"
-                                               href="{% url 'annotation_item' dat.annotation_pk %}"
+                                               href="{% url 'progress_marking_task_details' dat.task_pk %}"
                                                data-bs-toggle="tooltip"
                                                data-bs-placement="bottom"
                                                data-bs-title="v.{{ dat.version }} by {{ dat.user }}">{{ dat.score }}</a>

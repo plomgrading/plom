@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
@@ -43,7 +43,11 @@ from .version_maps import undo_json_packing_of_version_map
 from .version_maps import make_random_version_map, check_version_map
 from .version_maps import version_map_from_file, version_map_to_csv
 
-from .tagging import is_valid_tag_text
+from .tagging import (
+    is_valid_tag_text,
+    plom_valid_tag_text_pattern,
+    plom_valid_tag_text_description,
+)
 
 # TODO: what you get from "from plom import *"
 # __all__ = ["client", "server", "produce", "scan", "finish", "manager"]

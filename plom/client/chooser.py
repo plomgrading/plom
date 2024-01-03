@@ -7,7 +7,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Edith Coates
 
-"""Chooser dialog"""
+"""Plom's Chooser dialog."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -71,9 +71,7 @@ cfgfile = cfgdir / "plomConfig.toml"
 
 
 def readLastTime():
-    """Read the login + server options that were used on
-    the last run of the client.
-    """
+    """Read the login + server options that were used on the last run of the client."""
     lastTime = {}
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
@@ -140,7 +138,7 @@ class Chooser(QDialog):
         self.ui.manageButton.setVisible(False)
         self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.closeButton.clicked.connect(self.close)
-        self.ui.fontSB.valueChanged.connect(self.setFont)
+        self.ui.fontSB.valueChanged.connect(self.setFontSize)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.logoutButton.setVisible(False)
@@ -293,18 +291,18 @@ class Chooser(QDialog):
             dl.stop(-1)
         self.logout()
 
-    def setFont(self, n):
+    def setFontSize(self, n: int) -> None:
         """Adjust font size of user interface.
 
-        args:
-            n (int): the desired font size in points.
+        Args:
+            n: the desired font size in points.
         """
         fnt = self.Qapp.font()
         fnt.setPointSize(n)
         self.Qapp.setFont(fnt)
 
     def getQuestion(self):
-        """Return the integer question or None"""
+        """Return the integer question or None."""
         if self.ui.pgDrop.isVisible():
             question = self.ui.pgDrop.currentIndex() + 1
         else:
@@ -315,7 +313,7 @@ class Chooser(QDialog):
             return None
 
     def getv(self):
-        """Return the integer version or None"""
+        """Return the integer version or None."""
         if self.ui.vDrop.isVisible():
             v = self.ui.vDrop.currentText()
         else:

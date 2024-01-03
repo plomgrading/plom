@@ -30,14 +30,10 @@ class PageCache:
         return len(self._image_paths)
 
     def page_image_path(self, img_id):
-        """
-
-        TODO: document what happens if it doesn't exist?  Exception or None?
-        """
+        # TODO: document what happens if it doesn't exist?  Exception or None?
         return self._image_paths[img_id]
 
     def set_page_image_path(self, img_id, f):
-        """TODO"""
         self._image_paths[img_id] = f
 
     def update_from_someone_elses_downloads(self, pagedata):

@@ -80,8 +80,8 @@ class GetIDPredictions(APIView):
             try:
                 id_reader_service.delete_ID_predictions(predictor)
                 return Response(status=status.HTTP_200_OK)
-            except RuntimeError:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+            except RuntimeError as e:
+                return _error_response(e, status.HTTP_400_BAD_REQUEST)
         else:
             for predictor_name in ("MLLAP", "MLGreedy"):
                 id_reader_service.delete_ID_predictions(predictor_name)
@@ -140,12 +140,11 @@ class IDclaimThisTask(APIView):
         try:
             its.claim_task(request.user, paper_id)
             return Response(status=status.HTTP_200_OK)
-        except RuntimeError:
-            return _error_response(
-                f"ID task {paper_id} already claimed", status.HTTP_409_CONFLICT
-            )
+        except RuntimeError as e:
+            # TODO: legacy server and client all conflate various errors to 409
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
-    def put(self, request, paper_id):
+    def put(self, request, paper_id: int) -> Response:
         """Assigns a name and a student ID to the paper.
 
         Raises:
@@ -159,12 +158,10 @@ class IDclaimThisTask(APIView):
         try:
             its.identify_paper(user, paper_id, data["sid"], data["sname"])
         except PermissionDenied as err:  # task not assigned to that user
-            return Response(f"{err}", status=status.HTTP_403_FORBIDDEN)
+            return _error_response(err, status=status.HTTP_403_FORBIDDEN)
         except ObjectDoesNotExist as err:  # no valid task for that paper_id
-            return Response(f"{err}", status=status.HTTP_404_NOT_FOUND)
-        except (
-            IntegrityError
-        ) as err:  # attempting to assign an SID that is already used
-            return Response(f"{err}", status=status.HTTP_409_CONFLICT)
+            return _error_response(err, status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as err:  # attempt to assign SID already used
+            return _error_response(err, status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_200_OK)
