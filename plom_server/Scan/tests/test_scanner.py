@@ -6,9 +6,13 @@
 
 import pathlib
 import random
+import sys
 import tempfile
 
-# import shutil
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 import exif
 import fitz
@@ -25,6 +29,7 @@ from plom.scan import QRextract, rotate
 
 from ..services import ScanService, PageImageProcessor
 from ..models import StagingBundle, StagingImage
+from .. import tests as _Scan_tests
 
 
 class ScanServiceTests(TestCase):
@@ -32,7 +37,7 @@ class ScanServiceTests(TestCase):
     def setUp(self):
         random_user_name = f"__tests_user{random.randint(0, 99999)}"
         self.user = baker.make(User, username=random_user_name)
-        self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
+        self.pdf_path = resources.files(_Scan_tests) / "test_bundle.pdf"
         with fitz.Document(self.pdf_path) as pdf:
             assert len(pdf) == 28
         media_folder = settings.MEDIA_ROOT
@@ -123,7 +128,7 @@ class MoreScanServiceTests(TestCase):
         Test ScanService.parse_qr_code() and assert that the test QR codes
         have been successfully read and parsed into the correct format.
         """
-        img_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        img_path = resources.files(_Scan_tests) / "page_img_good.png"
         codes = QRextract(img_path)
         scanner = ScanService()
         parsed_codes = scanner.parse_qr_code([codes])
@@ -206,7 +211,7 @@ class MoreScanServiceTests(TestCase):
         """
         scanner = ScanService()
 
-        image_upright_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        image_upright_path = resources.files(_Scan_tests) / "page_img_good.png"
 
         qrs_upright = QRextract(image_upright_path)
         codes_upright = scanner.parse_qr_code([qrs_upright])
@@ -251,7 +256,7 @@ class MoreScanServiceTests(TestCase):
         """
         scanner = ScanService()
 
-        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
 
@@ -302,7 +307,7 @@ class MoreScanServiceTests(TestCase):
         """
         scanner = ScanService()
 
-        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
 
         image_original = Image.open(image_original_path)
 
@@ -331,7 +336,7 @@ class MoreScanServiceTests(TestCase):
         """
         scanner = ScanService()
 
-        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
 
@@ -378,7 +383,7 @@ class MoreScanServiceTests(TestCase):
         """
         scanner = ScanService()
 
-        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
 

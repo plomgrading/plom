@@ -3,13 +3,14 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import arrow
 from datetime import datetime
 from pathlib import Path
 import random
 import tempfile
 import time
 from typing import Any, Dict, List, Optional
+
+import arrow
 import zipfly
 
 from django.conf import settings
@@ -37,8 +38,7 @@ from Base.models import HueyTaskTracker
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
 
-    base_dir = settings.MEDIA_ROOT
-    reassemble_dir = base_dir / "reassemble"
+    reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
     def is_paper_marked(self, paper: Paper) -> bool:
         """Return True if all of the marking tasks are completed.
