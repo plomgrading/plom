@@ -105,13 +105,14 @@ class MarkingTaskService:
         """Send back current marking progress counts to the client.
 
         Args:
-            question (int)
-            version (int)
+            question: which question index.
+            version: which version.
 
         Returns:
             two integers, first the number of marked papers for
             this question/version and the total number of papers for
-            this question/version.
+            this question/version.  Note: if question or version are
+            invalid we return a pair of zeros.
         """
         try:
             completed = MarkingTask.objects.filter(
