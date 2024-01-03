@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020, 2022 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022, 2024 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -35,7 +35,7 @@ Orientation code:
 TODO: might encapsulate position code, have ``getPosition`` return
 e.g., the string `"NE"`
 
-Also handles plom extra page codes. These are alphanumeric stored in micro-qr codes
+Also handles Plom extra page codes. These are alphanumeric stored in micro-qr codes
 and are of the form
 
   sssssO
@@ -50,7 +50,7 @@ with the orientation code being similar to that used for the TPV
   * 3,7 SW
   * 4,8 SE
 
-Also handles plom scrap-paper codes. These are alphanumeric stored in micro-qr codes
+Also handles Plom scrap-paper codes. These are alphanumeric stored in micro-qr codes
 and are of the form
 
   sssssO
@@ -64,13 +64,13 @@ with the orientation code being similar to that used for the TPV
   * 2,6 NW
   * 3,7 SW
   * 4,8 SE
-
 """
 
 import random
+from typing import Tuple, Union
 
 
-def isValidTPV(tpv):
+def isValidTPV(tpv: str) -> bool:
     """Is this a valid TPV code?
 
     Note that the pyzbar module gives codes with the prefix 'QR-Code:',
@@ -83,7 +83,7 @@ def isValidTPV(tpv):
     return tpv.isnumeric()
 
 
-def isValidExtraPage(tpv):
+def isValidExtraPage(tpv: str) -> bool:
     """Is this a valid Extra page code?
 
     Note that the pyzbar module gives codes with the prefix 'QR-Code:',
@@ -98,18 +98,19 @@ def isValidExtraPage(tpv):
     return False
 
 
-def parseTPV(tpv):
+def parseTPV(tpv: str) -> Tuple[int, int, int, str, str]:
     """Parse a TPV string (typically from a QR-code).
 
-    Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
-       typically from a QR-code, possibly with the prefix "QR-Code:".
+    Args:
+        tpv: a TPV string of the form "TTTTTPPPVVVOCCCCC",
+            typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
-       tn (int): test number, up to 5 digits
-       pn (int): page group number, up to 3 digits
-       vn (int): version number, up to 3 digits
-       cn (str): the "magic code", 5 digits zero padded
-       o (str): the orientation code, TODO
+        tn (int): test number, up to 5 digits
+        pn (int): page group number, up to 3 digits
+        vn (int): version number, up to 3 digits
+        cn (str): the "magic code", 5 digits zero padded
+        o (str): the orientation code, TODO
     """
     # strip prefix is needed for pyzbar but not zxingcpp
     tpv = tpv.lstrip("QR-Code:")  # todo = remove in future.
@@ -121,14 +122,15 @@ def parseTPV(tpv):
     return tn, pn, vn, cn, o
 
 
-def parseExtraPageCode(expc):
+def parseExtraPageCode(expc: str) -> str:
     """Parse an extra page code string (typically from a QR-code).
 
-    Args: expc (str): an extra page code string of the form "plomXO",
-       typically from a QR-code, possibly with the prefix "QR-Code:".
+    Args:
+        expc: an extra page code string of the form "plomXO",
+            typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
-       o (str): the orientation code, TODO
+        o: the orientation code, TODO
     """
     # strip prefix is needed for pyzbar but not zxingcpp
     expc = expc.lstrip("QR-Code:")  # todo = remove in future.
@@ -139,14 +141,15 @@ def parseExtraPageCode(expc):
         return str(o)
 
 
-def parseScrapPaperCode(scpc):
+def parseScrapPaperCode(scpc: str) -> str:
     """Parse an scrap-paper code string (typically from a QR-code).
 
-    Args: scpc (str): a scrap-paper code string of the form "plomSO",
-       typically from a QR-code, possibly with the prefix "QR-Code:".
+    Args:
+        scpc: a scrap-paper code string of the form "plomSO",
+            typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
-       o (str): the orientation code, TODO
+        o: the orientation code, TODO
     """
     # strip prefix is needed for pyzbar but not zxingcpp
     scpc = scpc.lstrip("QR-Code:")  # todo = remove in future.
@@ -157,60 +160,64 @@ def parseScrapPaperCode(scpc):
         return str(o)
 
 
-def getPaperPageVersion(tpv):
+def getPaperPageVersion(tpv: str) -> str:
     """Return the paper, page, version substring of a TPV string.
 
-    Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
-       typically from a QR-code
+    Args:
+        tpv: a TPV string of the form "TTTTTPPPVVVOCCCCC",
+            typically from a QR-code
 
     Returns:
-       (str): a substring of the original TPV string,
-       containing the paper number, page number and version number.
+        A substring of the original TPV string,
+        containing the paper number, page number and version number.
     """
     return tpv[0:11]
 
 
-def parse_paper_page_version(ppv_key):
-    """Parse the paper-page-version string "TTTTTPPPVVV" and return a
-    triple of the the paper-number, page-number and version.
+def parse_paper_page_version(ppv: str) -> Tuple[int, int, int]:
+    """Parse string "TTTTTPPPVVV" into paper-number, page-number, version triple.
 
-    Args:  (str): a string of the form "TTTTTPPPVVV"
+    Args:
+        tpv: a string of the form "TTTTTPPPVVV".
 
     Returns:
-       tn (int): test number, up to 5 digits
-       pn (int): page group number, up to 3 digits
-       vn (int): version number, up to 3 digits
+        A triple of integers,
+        tn: test number, up to 5 digits,
+        pn: page group number, up to 3 digits, and
+        vn: version number, up to 3 digits.
     """
-    assert len(ppv_key) == len("TTTTTPPPVVV")
+    assert len(ppv) == len("TTTTTPPPVVV")
     return (
-        int(ppv_key[:5]),
-        int(ppv_key[5:8]),
-        int(ppv_key[8:11]),
+        int(ppv[:5]),
+        int(ppv[5:8]),
+        int(ppv[8:11]),
     )
 
 
-def getPosition(tpv):
+def getPosition(tpv: str) -> int:
+    """Return the orientation/position code, which corner the QR code should be located."""
     return int(parseTPV(tpv)[4])
 
 
-def getCode(tpv):
-    """Return the magic code for tpv.
-
-    Args: tpv (str): a TPV string.
-    """
+def getCode(tpv: str) -> str:
+    """Return the magic code from a TPV string."""
     return parseTPV(tpv)[3]
 
 
-def encodePaperPageVersion(paper_number, p, v):
-    """Encode some values as the short paper-page-version code - used typically for collision detection.
+def encodePaperPageVersion(
+    paper_number: Union[str, int], p: Union[str, int], v: Union[str, int]
+) -> str:
+    """Encode three values as the short paper-page-version code.
+
+    Typically used for collision detection.
 
     Args:
-       test (int/str): the test number, 0 ≤ test ≤ 99999
-       p (int/str): page number, 1 ≤ p ≤ 990
-       v (int/str): version number, 1 ≤ v ≤ 909
+        test: the test number, 0 ≤ test ≤ 99999
+        p: page number, 1 ≤ p ≤ 990
+        v: version number, 1 ≤ v ≤ 909
 
     Returns:
-       str: the short page-paper-version code
+        A string of the short page-paper-version code
     """
     assert int(paper_number) >= 0
     assert int(v) >= 1
@@ -229,18 +236,24 @@ def encodePaperPageVersion(paper_number, p, v):
     return tpv
 
 
-def encodeTPV(test, p, v, o, code):
+def encodeTPV(
+    test: Union[int, str],
+    p: Union[int, str],
+    v: Union[int, str],
+    o: Union[int, str],
+    code: Union[int, str],
+) -> str:
     """Encode some values as a TPV code.
 
     Args:
-       test (int/str): the test number, 0 ≤ test ≤ 99999
-       p (int/str): page number, 1 ≤ p ≤ 990
-       v (int/str): version number, 1 ≤ v ≤ 909
-       o (int/str): position code, 0 ≤ code ≤ 4
-       code (int/str): magic code, 0 ≤ code ≤ 99999
+        test: the test number, 0 ≤ test ≤ 99999
+        p: page number, 1 ≤ p ≤ 990
+        v: version number, 1 ≤ v ≤ 909
+        o: position code, 0 ≤ code ≤ 4
+        code: magic code, 0 ≤ code ≤ 99999
 
     Returns:
-       str: the tpv code
+        A string of the full TPV code.
     """
     assert int(test) >= 0
     assert int(v) >= 1
@@ -266,15 +279,15 @@ def encodeTPV(test, p, v, o, code):
     return tpv
 
 
-def new_magic_code(seed=None):
+def new_magic_code(seed=None) -> str:
     """Generate a new random magic code.
 
     Args:
-       seed: seed for the random number generator, or ``None`` for
-             something reasonable (i.e.., current time).
+        seed: seed for the random number generator, or ``None`` for
+            something reasonable (i.e., current time).
 
     Returns:
-       str: the magic code
+        The magic code, a 5-digit string of digits.
     """
     random.seed(seed)
     magic = str(random.randrange(0, 10**5)).zfill(5)
@@ -282,15 +295,14 @@ def new_magic_code(seed=None):
     return magic
 
 
-def isValidExtraPageCode(code):
-    """Is this a valid plom-extra-page code?
+def isValidExtraPageCode(code: str) -> bool:
+    """Is this a valid Plom-extra-page code?
 
     Args:
-       code (str): a plom extra page code
+        code: a string to check.
 
     Returns:
-       bool: the validity of the extra page code.
-
+        The validity of the extra page code.
     """
     code = code.lstrip("plomX")
     if len(code) != len("O"):
@@ -302,15 +314,14 @@ def isValidExtraPageCode(code):
     return False
 
 
-def isValidScrapPaperCode(code):
-    """Is this a valid plom-scrap-paper code?
+def isValidScrapPaperCode(code: str) -> bool:
+    """Is this a valid Plom-scrap-paper code?
 
     Args:
-       code (str): a plom extra page code
+        code: a string to check.
 
     Returns:
-       bool: the validity of the extra page code.
-
+        The validity of the scrap page code.
     """
     code = code.lstrip("plomS")
     if len(code) != len("O"):
@@ -322,37 +333,37 @@ def isValidScrapPaperCode(code):
     return False
 
 
-def encodeExtraPageCode(orientation):
+def encodeExtraPageCode(orientation: Union[str, int]) -> str:
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomX{orientation}"
 
 
-def encodeScrapPaperCode(orientation):
+def encodeScrapPaperCode(orientation: Union[str, int]) -> str:
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomS{orientation}"
 
 
-def getExtraPageOrientation(code):
-    """Extra the orientation digit from a valid plom extra page code.
+def getExtraPageOrientation(code: str) -> int:
+    """Extra the orientation digit from a valid Plom extra page code.
 
     Args:
-       code (str): a plom extra page code
+        code: a Plom extra page code.
 
     Returns:
-       int: the orientation
+        The orientation as a small integer.
     """
     return int(code[5])
 
 
-def getScrapPaperOrientation(code):
-    """Extra the orientation digit from a valid plom scrap-paper code.
+def getScrapPaperOrientation(code: str) -> int:
+    """Extra the orientation digit from a valid Plom scrap-paper code.
 
     Args:
-       code (str): a plom scrap-paper code
+        code: a Plom scrap-paper code.
 
     Returns:
-       int: the orientation
+        The orientation as a small integer.
     """
     return int(code[5])
