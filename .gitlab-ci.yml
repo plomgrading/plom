@@ -406,7 +406,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 258 ]]"
+    - bash -c "[[ $NUMERR -le 254 ]]"
   allow_failure: true
 
 
