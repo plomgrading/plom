@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.14.8] - 2024-01-04
 
 ### Added
 * Identifier: UI includes explanation of why we confirm prenamed papers.
@@ -1099,7 +1099,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.7...main
+[0.14.8]: https://gitlab.com/plom/plom/-/compare/v0.14.7...v0.14.8
 [0.14.7]: https://gitlab.com/plom/plom/-/compare/v0.14.6...v0.14.7
 [0.14.6]: https://gitlab.com/plom/plom/-/compare/v0.14.5...v0.14.6
 [0.14.5]: https://gitlab.com/plom/plom/-/compare/v0.14.4...v0.14.5
