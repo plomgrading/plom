@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
 from typing import Dict, Union
 
@@ -21,6 +22,7 @@ class TaskOrderService:
         if order == "shuffle":
             marking_priority.set_marking_piority_shuffle()
         elif order == "custom":
+            assert custom_order is not None, "must provide custom_order kwarg"
             marking_priority.set_marking_priority_custom(custom_order=custom_order)
         else:
             marking_priority.set_marking_priority_paper_number()
