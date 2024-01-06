@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import pathlib
 from typing import Dict, List, Optional, Union
@@ -23,21 +23,22 @@ class IDReaderService:
     @transaction.atomic
     def get_id_box_cmd(
         self,
-        box: tuple[float, float, float, float],
+        box: Union[None, tuple[float, float, float, float]],
         *,
-        dur: Union[pathlib.Path, None] = None,
-    ) -> Dict:
+        dur: Optional[pathlib.Path] = None,
+    ) -> Dict[int, pathlib.Path]:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
-            box (None/list): the box to extract or a default if empty/None.
+            box: A list of the box to extract or a default if ``None``.
+                This is of the form "top bottom left right", each how
+                much of the page as a float ``[0.0, 1.0]``.
 
         Keyword Args:
-            dur (None/pathlib.Path): what directory to save to, or choose
-                a internal default if omitted.
+            dur: what directory to save to, or a default if omitted.
 
         Returns:
-            dict: a dict of paper_number -> ID box filename (temporary)
+            dict: a dict of paper_number -> ID box path and filename (temporary)
         """
         if not dur:
             id_box_folder = settings.MEDIA_ROOT / "id_box_images"

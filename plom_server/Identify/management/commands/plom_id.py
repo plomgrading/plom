@@ -2,17 +2,18 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (c) 2022 Edith Coates
+# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+
+import json
+from pathlib import Path
+from typing import Union
 
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
-import json
 import numpy as np
-from pathlib import Path
-from typing import Union
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -81,11 +82,11 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_largest_box(self, filename) -> Union[np.ndarray, None]:
+    def get_largest_box(self, filename: Path) -> Union[np.ndarray, None]:
         """Helper function for extracting the largest box from an image.
 
         Args:
-            filename (str/pathlib.Path): the image where the largest box is extracted from.
+            filename: the image where the largest box is extracted from.
 
         Returns:
             The image, cropped to only include the contour region
@@ -104,6 +105,7 @@ class Command(BaseCommand):
         contour_lists = imutils.grab_contours(contours)
         sorted_contour_list = sorted(contour_lists, key=cv2.contourArea, reverse=True)
 
+        box_contour = None
         for contour in sorted_contour_list:
             perimeter = cv2.arcLength(contour, True)
             # Approximate the contour
@@ -116,9 +118,11 @@ class Command(BaseCommand):
             return four_point_transform(src_image, box_contour.reshape(4, 2))
         return None
 
-    def extract_and_resize_ID_box(self, filename):
+    def extract_and_resize_ID_box(self, filename: Path) -> Union[np.ndarray, None]:
         template_id_box_width = 1250
         id_box = self.get_largest_box(filename)
+        if id_box is None:
+            return None
         height, width, _ = id_box.shape
         if height < 32 or width < 32:  # check if id_box is too small
             return None
@@ -232,6 +236,7 @@ class Command(BaseCommand):
             that the digit is a 0, 1, 2, ..., 9.
             In case of errors it returns an empty list
         """
+        debugdir = None
         id_page_file = Path(id_page_file)
         ID_box = self.extract_and_resize_ID_box(id_page_file)
         if ID_box is None:
@@ -246,7 +251,7 @@ class Command(BaseCommand):
         if len(processed_digits_images) == 0:
             self.stdout.write("Trouble finding digits inside the ID box")
             return []
-        if debug:
+        if debugdir:
             for n, digit_image in enumerate(processed_digits_images):
                 p = debugdir / f"digit_{id_page_file.stem}-pos{n}.png"
                 cv2.imwrite(str(p), digit_image)
