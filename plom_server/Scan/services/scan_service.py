@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import hashlib
@@ -1578,7 +1578,7 @@ def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
 
     pipr = PageImageProcessor()
 
-    rotation = pipr.get_rotation_angle_from_QRs(page_data)
+    rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
