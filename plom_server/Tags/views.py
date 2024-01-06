@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.shortcuts import render, redirect
 
@@ -48,6 +49,7 @@ class TagLandingPageView(ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
+    @staticmethod
     def tag_filter(request):
         """Filter papers by tag."""
         request.session["tag_filter_text"] = request.POST.get("tag_filter_text", "")
@@ -71,17 +73,16 @@ class TagItemView(ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
+    @staticmethod
     def post(request, tag_id):
         form = TagEditForm(request.POST)
-        ts = TagService()
-
         if form.is_valid():
-            tag = TagItemView.ts.get_tag_from_id(tag_id=tag_id)
-            ts.update_tag_content(tag=tag, content=form.cleaned_data)
-
+            tag = TagService().get_tag_from_id(tag_id=tag_id)
+            TagService().update_tag_content(tag=tag, content=form.cleaned_data)
         return redirect("tag_item", tag_id=tag_id)
 
+    @staticmethod
     def tag_delete(request, tag_id):
         """Delete a tag."""
-        TagItemView.ts.delete_tag(tag_id=tag_id)
+        TagService().delete_tag(tag_id=tag_id)
         return redirect("tags_landing")
