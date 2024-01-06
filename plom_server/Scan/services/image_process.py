@@ -163,7 +163,7 @@ class PageImageProcessor:
             return "upside_down"
 
     def get_rotation_angle_from_QRs(self, qr_data: Dict[str, Dict[str, Any]]) -> int:
-        """Get the current orientation or None of a page-image using its parsed QR code data.
+        """Get the current orientation of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
         in degrees counter-clockwise.
@@ -195,7 +195,7 @@ class PageImageProcessor:
     def get_rotation_angle_or_None_from_QRs(
         self, qr_data: Dict[str, Dict[str, Any]]
     ) -> Union[None, int]:
-        """Get the current orientation of a page-image using its parsed QR code data.
+        """Get the current orientation or None of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
         in degrees counter-clockwise.
