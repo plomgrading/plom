@@ -1353,6 +1353,8 @@ def huey_parent_split_bundle_task(
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
+        n_pages = bundle_obj.number_of_pages
+        assert n_pages is not None
         task_list = [
             huey_child_get_page_image(
                 bundle_pk,
@@ -1361,7 +1363,7 @@ def huey_parent_split_bundle_task(
                 f"page{pg:05}",  # filename matches our 1-index
                 debug_jpeg=debug_jpeg,
             )
-            for pg in range(1, bundle_obj.number_of_pages + 1)
+            for pg in range(1, n_pages + 1)
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
