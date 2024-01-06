@@ -10,7 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -1324,7 +1324,7 @@ class ScanService:
 def huey_parent_split_bundle_task(
     bundle_pk,
     *,
-    debug_jpeg: Optional[bool] = False,
+    debug_jpeg: bool = False,
     tracker_pk: int,
     task=None,
 ) -> bool:
