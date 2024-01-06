@@ -593,15 +593,6 @@ class ScanService:
         return list(bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN))
 
     @transaction.atomic
-    def all_complete_images_pushed(self, bundle):
-        """Check if all of the completed images in a bundle have been pushed."""
-        completed_images = self.get_all_complete_images(bundle)
-        for img in completed_images:
-            if not img.pushed:
-                return False
-        return True
-
-    @transaction.atomic
     def get_n_pushed_bundles(self):
         pushed_bundles = StagingBundle.objects.filter(pushed=True)
         return len(pushed_bundles)
