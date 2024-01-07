@@ -3,10 +3,12 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from statistics import mean
-from typing import Any, Dict
+from typing import Any
 
 from PIL import Image
 
@@ -60,7 +62,7 @@ def findCorner(qr, dim):
 
 def QRextract(
     image, *, try_harder: bool = True, rotation: int = 0
-) -> Dict[str, Dict[str, Any]]:
+) -> dict[str, dict[str, Any]]:
     """Decode and return QR codes in an image.
 
     Args:
@@ -96,7 +98,7 @@ def QRextract(
     # hide import inside function to prevent PlomClient depending on it
     from zxingcpp import read_barcodes, BarcodeFormat
 
-    cornerQR: Dict[str, Dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
+    cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
