@@ -126,8 +126,13 @@ class Command(BaseCommand):
             return None
         height: int
         width: int
-        # third entry is probably 1 (grayscale) or 3 (colour)
-        height, width, _ = id_box.shape
+        if len(id_box.shape) == 2:
+            height, width = id_box.shape
+        elif len(id_box.shape) == 3:
+            # third entry 1 (grayscale) or 3 (colour)
+            height, width, _ = id_box.shape
+        else:
+            raise RuntimeError(f"Unexpected numpy shape: {id_box.shape}")
         if height < 32 or width < 32:  # check if id_box is too small
             return None
         # scale height to retain aspect ratio of image
