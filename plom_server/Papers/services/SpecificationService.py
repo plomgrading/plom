@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple
 from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -26,7 +28,7 @@ from ..serializers import SpecSerializer
 log = logging.getLogger("ValidatedSpecService")
 
 
-def validate_spec_from_dict(spec_dict: Dict[str, Any]) -> bool:
+def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
     """Load a test spec from a dictionary and validate it.
 
     Will call the SpecSerializer on the proposed spec dict and validate.
@@ -53,7 +55,7 @@ def validate_spec_from_dict(spec_dict: Dict[str, Any]) -> bool:
 
 @transaction.atomic
 def load_spec_from_dict(
-    spec_dict: Dict[str, Any],
+    spec_dict: dict[str, Any],
     *,
     public_code: Optional[str] = None,
 ) -> Specification:
@@ -102,7 +104,7 @@ def is_there_a_spec() -> bool:
 
 
 @transaction.atomic
-def get_the_spec() -> Dict:
+def get_the_spec() -> dict:
     """Return the test-specification from the database.
 
     Returns:
@@ -170,7 +172,7 @@ def get_the_spec_as_toml_with_codes():
 
 
 @transaction.atomic
-def store_validated_spec(validated_spec: Dict) -> None:
+def store_validated_spec(validated_spec: dict) -> None:
     """Takes the validated test specification and stores it in the db.
 
     Args:
@@ -269,7 +271,7 @@ def get_n_pages() -> int:
 
 
 @transaction.atomic
-def get_question_mark(question_one_index: Union[str, int]) -> int:
+def get_question_mark(question_one_index: str | int) -> int:
     """Get the max mark of a given question.
 
     Args:
@@ -310,7 +312,7 @@ def n_pages_for_question(question_one_index) -> int:
 
 
 @transaction.atomic
-def get_question_label(question_one_index: Union[str, int]) -> str:
+def get_question_label(question_one_index: str | int) -> str:
     """Get the question label from its one-index.
 
     Args:
@@ -331,7 +333,7 @@ def get_question_label(question_one_index: Union[str, int]) -> str:
 
 
 @transaction.atomic
-def get_question_index_label_pairs() -> List[Tuple[int, str]]:
+def get_question_index_label_pairs() -> list[Tuple[int, str]]:
     """Get the question indices and labels as a list of pairs of tuples.
 
     Returns:
@@ -342,7 +344,7 @@ def get_question_index_label_pairs() -> List[Tuple[int, str]]:
 
 
 @transaction.atomic
-def get_question_labels() -> List[str]:
+def get_question_labels() -> list[str]:
     """Get the question labels in a list.
 
     Returns:
@@ -353,7 +355,7 @@ def get_question_labels() -> List[str]:
 
 
 @transaction.atomic
-def get_question_labels_map() -> Dict[int, str]:
+def get_question_labels_map() -> dict[int, str]:
     """Get the question labels as a mapping from unit-indexed question indices.
 
     Returns:
@@ -364,6 +366,6 @@ def get_question_labels_map() -> Dict[int, str]:
 
 
 @transaction.atomic
-def question_list_to_dict(questions: list[Dict]) -> Dict[str, Dict]:
+def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}

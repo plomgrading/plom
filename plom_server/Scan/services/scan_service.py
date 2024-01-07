@@ -5,12 +5,14 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import hashlib
 import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Any, Dict
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -1186,7 +1188,7 @@ class ScanService:
             A list of pairs `(paper_number (int), [missing pages (int)])`.
         """
         n_pages = SpecificationService.get_n_pages()
-        papers_pages: Dict[int, list] = {}
+        papers_pages: dict[int, list] = {}
         # get all known images in the bundle
         # put in dict as {paper_number: [list of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1222,7 +1224,7 @@ class ScanService:
             The number of incomplete papers in the bundle.
         """
         n_pages = SpecificationService.get_n_pages()
-        papers_pages: Dict[int, int] = {}
+        papers_pages: dict[int, int] = {}
         # get all known images in the bundle
         # put in dict as {page_number: number of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1484,7 +1486,7 @@ def huey_child_get_page_image(
     basename: str,
     *,
     debug_jpeg=False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Render a page image and save to disk in the background.
 
     It is important to understand that running this function starts an
@@ -1549,7 +1551,7 @@ def huey_child_get_page_image(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
+def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
