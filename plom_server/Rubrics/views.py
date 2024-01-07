@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.shortcuts import render, redirect
 
@@ -71,6 +72,7 @@ class RubricItemView(ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
+    @staticmethod
     def post(request, rubric_key):
         form = RubricEditForm(request.POST)
 
