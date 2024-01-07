@@ -277,7 +277,7 @@ class ReassembleService:
         return cover_page_info
 
     def build_paper_cover_page(
-        self, tmpdir, paper: Paper, solution: bool = False
+        self, tmpdir: Path, paper: Paper, solution: bool = False
     ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
@@ -360,12 +360,15 @@ class ReassembleService:
 
         return marked_pages
 
-    def reassemble_paper(self, paper: Paper, outdir: Path | None) -> Path:
+    def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a single test paper.
 
         Args:
             paper: Paper instance to re-assemble.
-            outdir (optional): pathlib.Path, the directory to save the test PDF.
+
+        Keyword Args:
+            outdir: pathlib.Path, the directory to save the test PDF
+                or a default if omitted.
 
         Returns:
             pathlib.Path: the full path of the reassembled test PDF.
@@ -809,7 +812,7 @@ def huey_reassemble_paper(
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
-        save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
+        save_path = reas.reassemble_paper(paper_obj, outdir=Path(tempdir))
 
         if _debug_be_flaky:
             for i in range(5):
