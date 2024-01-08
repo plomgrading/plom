@@ -234,12 +234,11 @@ exclude = [
 ]
 
 # These avoid mypy errors: mostly libraries that don't yet have typing
-# Maintenance: try removing some of this and rerunning mypy locally
+# Maintenance: try removing X, removing .mypy_cache, uninstalling types-X, and rerunning mypy locally
 [[tool.mypy.overrides]]
 module = [
     'api_secrets',
     'canvasapi',
-    'cv2',
     'exif',
     'fitz',
     'importlib_resources',
