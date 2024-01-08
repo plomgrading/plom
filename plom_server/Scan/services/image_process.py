@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from warnings import warn
+from typing import Any, Dict, Union
 
 import cv2 as cv
 import numpy as np
@@ -31,7 +32,7 @@ class PageImageProcessor:
     WIDTH = RIGHT - LEFT
     HEIGHT = BOTTOM - TOP
 
-    def get_page_orientation(self, qr_code_data):
+    def get_page_orientation(self, qr_code_data: Dict[str, Dict[str, Any]]) -> str:
         """Return a string representing a page orientation.
 
         The choices are:
@@ -69,7 +70,7 @@ class PageImageProcessor:
             1---2    SW---SE
 
         Args:
-            qr_code_data: (dict) data parsed from page-image QR codes
+            qr_code_data: data parsed from page-image QR codes.
 
         Returns:
             str: short description of the orientation.
@@ -161,27 +162,23 @@ class PageImageProcessor:
         elif val_from_qr == upside_down:
             return "upside_down"
 
-    def get_rotation_angle_from_QRs(self, qr_data):
+    def get_rotation_angle_from_QRs(self, qr_data: Dict[str, Dict[str, Any]]) -> int:
         """Get the current orientation of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
         in degrees counter-clockwise.
 
         Args:
-            qr_data (dict): parsed QR code data
+            qr_data: parsed QR code data.
 
         Returns:
-            int/None: rotation angle by which the page needs to be rotated.
+            Rotation angle by which the page needs to be rotated.
             If page is already upright, rotation angle of 0 is returned.
-            Returns None if the orientation cannot be determined.
-            See also also ``get_page_orientation``, although these two
-            methods should perhaps converge in the future (TODO).
+
+        Raises:
+            RuntimeError: something inconsistent in the QR data.
         """
-        try:
-            orientation = self.get_page_orientation(qr_data)
-        except RuntimeError:
-            # We cannot get the page orientation
-            return None
+        orientation = self.get_page_orientation(qr_data)
 
         if orientation == "upright":
             return 0
@@ -194,6 +191,30 @@ class PageImageProcessor:
             rotate_angle = 180
 
         return rotate_angle
+
+    def get_rotation_angle_or_None_from_QRs(
+        self, qr_data: Dict[str, Dict[str, Any]]
+    ) -> Union[None, int]:
+        """Get the current orientation or None of a page-image using its parsed QR code data.
+
+        If it isn't upright, return the angle by which the image needs to be rotated,
+        in degrees counter-clockwise.
+
+        Args:
+            qr_data: parsed QR code data.
+
+        Returns:
+            Rotation angle by which the page needs to be rotated.
+            If page is already upright, rotation angle of 0 is returned.
+            Returns None if the orientation cannot be determined.
+            See also also ``get_page_orientation``, although these two
+            methods should perhaps converge in the future (TODO).
+        """
+        try:
+            return self.get_rotation_angle_from_QRs(qr_data)
+        except RuntimeError:
+            # We cannot get the page orientation
+            return None
 
     def create_affine_transformation_matrix(self, qr_dict):
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
