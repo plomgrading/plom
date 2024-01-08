@@ -1048,7 +1048,6 @@ minpy_mindeps:
 
 
 # Minimum Python, minimum deps
-# Issue #2880: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
     - postgres
@@ -1060,7 +1059,7 @@ minpy_mindeps_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: python:3.9
+  image: python:3.8
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
