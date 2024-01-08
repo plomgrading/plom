@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -19,7 +19,7 @@
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -30,12 +30,12 @@ repos:
   - id: check-json
 
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 23.9.1
+  rev: 23.12.1
   hooks:
   - id: black
 
 - repo: https://github.com/Riverside-Healthcare/djLint
-  rev: v1.34.0
+  rev: v1.34.1
   hooks:
   - id: djlint-reformat-django
   - id: djlint-django
