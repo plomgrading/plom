@@ -98,7 +98,7 @@ class Command(BaseCommand):
         if options["manager_login"] is None:
             manager_password = simple_password(3)
             print("No manager login details provided.")
-            print(f"Manager username: manager\nManager password: {admin_password}\n")
+            print(f"Manager username: manager\nManager password: {manager_password}\n")
             self.create_manager(username="manager", password=manager_password)
         else:
             manager_username, manager_password = options["manager_login"]
