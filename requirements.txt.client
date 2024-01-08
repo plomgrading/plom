@@ -16,7 +16,7 @@ exif==1.6.0
 fonttools==4.47.0
 importlib-resources==6.1.1
 packaging==23.2
-pandas==1.5.3
+pandas==2.1.4
 passlib==1.7.4
 Pillow==10.2.0
 platformdirs==4.1.0
