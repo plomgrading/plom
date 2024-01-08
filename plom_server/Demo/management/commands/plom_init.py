@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
 from plom.aliceBob import simple_password
 
@@ -87,22 +88,28 @@ class Command(BaseCommand):
 
         # generate random passwords if no info is provided via the commandline
         if options["admin_login"] is None:
-            admin_password = simple_password(3)
-            print("No admin login details provided.")
-            print(f"Admin username: admin\nAdmin password: {admin_password}\n")
-            self.create_admin(username="admin", password=admin_password)
+            print("No admin login details provided: autogenerating...")
+            admin_username = "admin"
+            admin_password = simple_password(6)
+            print(
+                f"Admin username: {admin_username}\n"
+                f"Admin password: {admin_password}\n"
+            )
         else:
             admin_username, admin_password = options["admin_login"]
-            self.create_admin(username=admin_username, password=admin_password)
+        self.create_admin(username=admin_username, password=admin_password)
 
         if options["manager_login"] is None:
-            manager_password = simple_password(3)
-            print("No manager login details provided.")
-            print(f"Manager username: manager\nManager password: {admin_password}\n")
-            self.create_manager(username="manager", password=manager_password)
+            print("No manager login details provided: autogenerating...")
+            manager_username = "manager"
+            manager_password = simple_password(6)
+            print(
+                f"Manager username: {manager_username}\n"
+                f"Manager password: {manager_password}\n"
+            )
         else:
             manager_username, manager_password = options["manager_login"]
-            self.create_manager(username=manager_username, password=manager_password)
+        self.create_manager(username=manager_username, password=manager_password)
 
         if options["no_waiting"]:
             return
