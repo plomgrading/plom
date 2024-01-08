@@ -19,7 +19,7 @@ packaging==23.2
 pandas==1.5.3
 passlib==1.7.4
 Pillow==10.2.0
-platformdirs==4.0.0
+platformdirs==4.1.0
 pymupdf==1.23.8
 PyMySQL==1.1.0
 requests==2.31.0
