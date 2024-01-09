@@ -1601,7 +1601,7 @@ winpyinst:
   script:
   - c:\python311\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller==6.2.0
+  - c:\python311\python -m pip install pyinstaller==6.3.0
   - refreshenv
   # c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
