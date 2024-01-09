@@ -356,7 +356,7 @@ mypy-type-checking:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.7.0
+    - python3 -m pip install mypy~=1.8.0
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
@@ -1048,7 +1048,6 @@ minpy_mindeps:
 
 
 # Minimum Python, minimum deps
-# Issue #2880: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
     - postgres
@@ -1060,7 +1059,7 @@ minpy_mindeps_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: python:3.9
+  image: python:3.8
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install

@@ -10,7 +10,7 @@ from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import arrow
 import zipfly
@@ -410,13 +410,13 @@ class ReassembleService:
             )
         return outname
 
-    def get_all_paper_status_for_reassembly(self) -> List[Dict[str, Any]]:
+    def get_all_paper_status_for_reassembly(self) -> list[dict[str, Any]]:
         """Get the status information for all papers for reassembly.
 
         Returns:
             List of dicts representing each row of the data.
         """
-        status: Dict[str, Any] = {}
+        status: dict[int, dict[str, Any]] = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
@@ -440,7 +440,7 @@ class ReassembleService:
         for pn in mss.get_all_completed_test_papers():
             status[pn]["scanned"] = True
 
-        def latest_update(time_a: Optional[datetime], time_b: datetime) -> datetime:
+        def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:
             if time_a is None:
                 return time_b
             elif time_a < time_b:
@@ -753,7 +753,7 @@ class ReassembleService:
             self.queue_single_paper_reassembly(data["paper_num"])
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> List[File]:
+    def get_completed_pdf_files(self) -> list[File]:
         """Get list of paths of pdf-files of reassembled papers that are not obsolete.
 
         Returns:
