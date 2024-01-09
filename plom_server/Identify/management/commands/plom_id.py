@@ -132,7 +132,7 @@ class Command(BaseCommand):
         # scale height to retain aspect ratio of image
         new_height = int(template_id_box_width * height / width)
         scaled_id_box = cv2.resize(
-            id_box, (template_id_box_width, new_height), cv2.INTER_CUBIC
+            id_box, (template_id_box_width, new_height), interpolation=cv2.INTER_CUBIC
         )
         # extract the top strip of the IDBox template
         # which only contains the digits
