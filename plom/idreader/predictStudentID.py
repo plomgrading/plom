@@ -98,7 +98,7 @@ def get_digit_box(filename, top, bottom):
     # TODO: Remove magic number creation.
     # note that this width of 1250 is defined by the IDbox template
     new_width = int(output.shape[0] * 1250.0 / output.shape[1])
-    scaled = cv2.resize(output, (1250, new_width), cv2.INTER_CUBIC)
+    scaled = cv2.resize(output, (1250, new_width), interpolation=cv2.INTER_CUBIC)
 
     # the digit box numbers again come from the IDBox template and numerology
     ID_box = scaled[30:350, 355:1220]
