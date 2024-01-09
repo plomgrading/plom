@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
@@ -123,7 +125,7 @@ class ReassembleService:
             # TODO: default to the current date for the time being
             return timezone.now()
 
-    def get_paper_id_or_none(self, paper: Paper) -> Optional[tuple[str, str]]:
+    def get_paper_id_or_none(self, paper: Paper) -> tuple[str, str] | None:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
@@ -143,7 +145,7 @@ class ReassembleService:
 
     def get_question_data(
         self, paper: Paper, question_number: int
-    ) -> tuple[int, Optional[int]]:
+    ) -> tuple[int, int | None]:
         """For a given question, return the test's question version and score.
 
         Args:
@@ -275,7 +277,7 @@ class ReassembleService:
         return cover_page_info
 
     def build_paper_cover_page(
-        self, tmpdir, paper: Paper, solution: bool = False
+        self, tmpdir: Path, paper: Paper, solution: bool = False
     ) -> Path:
         """Build a cover page for a reassembled PDF or a solution.
 
@@ -288,9 +290,9 @@ class ReassembleService:
             pathlib.Path: filename of the coverpage.
         """
         # some annoying work here to handle casting None to (None, None) while keeping mypy happy
-        paper_id: Optional[
-            tuple[Optional[str], Optional[str]]
-        ] = self.get_paper_id_or_none(paper)
+        paper_id: tuple[str | None, str | None] | None = self.get_paper_id_or_none(
+            paper
+        )
         if not paper_id:
             paper_id = (None, None)
 
@@ -358,12 +360,15 @@ class ReassembleService:
 
         return marked_pages
 
-    def reassemble_paper(self, paper: Paper, outdir: Optional[Path]) -> Path:
+    def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a single test paper.
 
         Args:
             paper: Paper instance to re-assemble.
-            outdir (optional): pathlib.Path, the directory to save the test PDF.
+
+        Keyword Args:
+            outdir: pathlib.Path, the directory to save the test PDF
+                or a default if omitted.
 
         Returns:
             pathlib.Path: the full path of the reassembled test PDF.
@@ -607,7 +612,7 @@ class ReassembleService:
         return N
 
     def reset_single_paper_reassembly(
-        self, paper_num: int, *, wait: Optional[int] = None
+        self, paper_num: int, *, wait: int | None = None
     ) -> None:
         """Obsolete the reassembly of a paper.
 
@@ -807,7 +812,7 @@ def huey_reassemble_paper(
 
     reas = ReassembleService()
     with tempfile.TemporaryDirectory() as tempdir:
-        save_path = reas.reassemble_paper(paper_obj, Path(tempdir))
+        save_path = reas.reassemble_paper(paper_obj, outdir=Path(tempdir))
 
         if _debug_be_flaky:
             for i in range(5):

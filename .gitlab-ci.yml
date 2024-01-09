@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
@@ -349,10 +349,8 @@ pylint:
 
 # needs full dependencies, cannot easily run with other early static analysis
 # If exceptions are needed, see "tool.mypy" sections in pyproject.toml
-# Issue #2880: temporarily using 3.9 although our minimum python is 3.8
 # Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
-#       Will make not allowed to fail in the future, once types are more widely adopted in the project
-#       and 3.10 becomes our minimum supported Python version.
+#       Will make not allowed to fail in the future, once types are more widely adopted in the project.
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
@@ -362,8 +360,8 @@ mypy-type-checking:
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
-    - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.9
+    - mypy plom_server --python-ver 3.8 --install-types --non-interactive || true
+    - mypy plom_server --python-ver 3.8
   allow_failure: true
 
 

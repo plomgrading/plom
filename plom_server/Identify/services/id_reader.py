@@ -2,8 +2,9 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import pathlib
-from typing import Dict, List, Optional, Union
 from warnings import warn
 
 from django.conf import settings
@@ -23,10 +24,10 @@ class IDReaderService:
     @transaction.atomic
     def get_id_box_cmd(
         self,
-        box: Union[None, tuple[float, float, float, float]],
+        box: None | tuple[float, float, float, float],
         *,
-        dur: Optional[pathlib.Path] = None,
-    ) -> Dict[int, pathlib.Path]:
+        dur: pathlib.Path | None = None,
+    ) -> dict[int, pathlib.Path]:
         """Extract the id box, or really any rectangular part of the id page, rotation corrected.
 
         Args:
@@ -71,7 +72,7 @@ class IDReaderService:
                 img_file_dict[id_img.paper.paper_number] = id_box_filename
         return img_file_dict
 
-    def get_already_matched_sids(self) -> List:
+    def get_already_matched_sids(self) -> list:
         """Return the list of all student IDs that have been matched with a paper."""
         sid_list = []
         id_task_service = IdentifyTaskService()
@@ -82,7 +83,7 @@ class IDReaderService:
                 sid_list.append(latest.student_id)
         return sid_list
 
-    def get_unidentified_papers(self) -> List:
+    def get_unidentified_papers(self) -> list:
         """Return a list of all unidentified papers."""
         paper_list = []
         not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
@@ -202,7 +203,7 @@ class IDReaderService:
         )
 
     @transaction.atomic
-    def delete_ID_predictions(self, predictor: Optional[str] = None) -> None:
+    def delete_ID_predictions(self, predictor: str | None = None) -> None:
         """Delete all ID predictions from a particular predictor."""
         if predictor:
             IDPrediction.objects.filter(predictor=predictor).delete()

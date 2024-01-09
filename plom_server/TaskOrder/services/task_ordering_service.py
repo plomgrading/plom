@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
-from typing import Union
+from __future__ import annotations
 
 from Mark.models import MarkingTask
 from Mark.services import marking_priority
@@ -16,7 +16,7 @@ class TaskOrderService:
         self,
         order: str,
         *,
-        custom_order: Union[dict[tuple[int, int], int], None] = None,
+        custom_order: None | dict[tuple[int, int], int] = None,
     ) -> None:
         """Update the priority ordering of tasks."""
         if order == "shuffle":

@@ -6,9 +6,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Union
 
 import cv2
 import imutils
@@ -82,7 +83,7 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_largest_box(self, filename: Path) -> Union[np.ndarray, None]:
+    def get_largest_box(self, filename: Path) -> np.ndarray | None:
         """Helper function for extracting the largest box from an image.
 
         Args:
@@ -118,12 +119,15 @@ class Command(BaseCommand):
             return four_point_transform(src_image, box_contour.reshape(4, 2))
         return None
 
-    def extract_and_resize_ID_box(self, filename: Path) -> Union[np.ndarray, None]:
+    def extract_and_resize_ID_box(self, filename: Path) -> np.ndarray | None:
         template_id_box_width = 1250
         id_box = self.get_largest_box(filename)
         if id_box is None:
             return None
-        height, width, _ = id_box.shape
+        assert len(id_box.shape) in (2, 3), f"Unexpected numpy shape {id_box.shape}"
+        # third entry 1 (grayscale) or 3 (colour)
+        height: int = id_box.shape[0]
+        width: int = id_box.shape[1]
         if height < 32 or width < 32:  # check if id_box is too small
             return None
         # scale height to retain aspect ratio of image

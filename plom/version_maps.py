@@ -1,25 +1,27 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
+
+from __future__ import annotations
 
 import csv
 import json
 from pathlib import Path
 import random
-from typing import Any, Dict, Optional, Union, List
+from typing import Any
 
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
 
 def check_version_map(
-    vm: Dict[Any, Any],
+    vm: dict[Any, Any],
     spec=None,
     *,
-    legacy: Optional[bool] = False,
-    required_papers: Optional[List[int]] = None,
+    legacy: bool = False,
+    required_papers: list[int] | None = None,
 ) -> None:
     """Correctness checks of a version maps.
 
@@ -101,8 +103,8 @@ def check_version_map(
 
 
 def make_random_version_map(
-    spec, *, seed: Optional[str] = None
-) -> Dict[int, Dict[int, int]]:
+    spec, *, seed: str | None = None
+) -> dict[int, dict[int, int]]:
     """Build a random version map.
 
     Args:
@@ -136,7 +138,7 @@ def make_random_version_map(
     ]
     # we use the above when a question is shuffled, else we just use v=1.
 
-    vmap: Dict[int, Dict[int, int]] = {}
+    vmap: dict[int, dict[int, int]] = {}
     for t in range(1, spec["numberToProduce"] + 1):
         vmap[t] = {}
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
@@ -173,8 +175,8 @@ def make_random_version_map(
 
 
 def undo_json_packing_of_version_map(
-    vermap_in: Dict[str, Dict[str, int]]
-) -> Dict[int, Dict[int, int]]:
+    vermap_in: dict[str, dict[str, int]]
+) -> dict[int, dict[int, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
     Both the test number and the question number have likely been
@@ -191,8 +193,8 @@ def undo_json_packing_of_version_map(
 
 
 def _version_map_from_json(
-    f: Path, *, required_papers: Optional[List[int]] = None
-) -> Dict:
+    f: Path, *, required_papers: list[int] | None = None
+) -> dict:
     with open(f, "r") as fh:
         qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
@@ -201,8 +203,8 @@ def _version_map_from_json(
 
 
 def _version_map_from_csv(
-    f: Path, *, required_papers: Optional[List[int]] = None
-) -> Dict[int, Dict[int, int]]:
+    f: Path, *, required_papers: list[int] | None = None
+) -> dict[int, dict[int, int]]:
     """Extract the version map from a csv file.
 
     Args:
@@ -224,7 +226,7 @@ def _version_map_from_csv(
             other errors in the version map.
         KeyError: wrong column header names.
     """
-    qvmap: Dict[int, Dict[int, int]] = {}
+    qvmap: dict[int, dict[int, int]] = {}
 
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
@@ -259,8 +261,8 @@ def _version_map_from_csv(
 
 
 def version_map_from_file(
-    f: Union[Path, str], *, required_papers: Optional[List[int]] = None
-) -> Dict[int, Dict[int, int]]:
+    f: Path | str, *, required_papers: list[int] | None = None
+) -> dict[int, dict[int, int]]:
     """Extract the version map from a csv or json file.
 
     Args:
@@ -297,7 +299,7 @@ def version_map_from_file(
 
 
 def version_map_to_csv(
-    qvmap: Dict[int, Dict[int, int]], filename: Path, *, _legacy: bool = True
+    qvmap: dict[int, dict[int, int]], filename: Path, *, _legacy: bool = True
 ) -> None:
     """Output a csv of the question-version map.
 
