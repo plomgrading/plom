@@ -20,17 +20,16 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from django_huey import db_task, get_queue
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
 from Identify.models import PaperIDTask
-from Mark.models import MarkingTask, Annotation
+from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Paper, IDPage, DNMPage
-from Papers.services import SpecificationService, PaperInfoService
+from Papers.services import SpecificationService
 from Progress.services import ManageScanService
 
 from ..models import ReassemblePaperChore
@@ -41,187 +40,6 @@ class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
 
     reassemble_dir = settings.MEDIA_ROOT / "reassemble"
-
-    def is_paper_marked(self, paper: Paper) -> bool:
-        """Return True if all of the marking tasks are completed.
-
-        Args:
-            paper: a reference to a Paper instance
-
-        Returns:
-            bool: True when all questions in the given paper are marked.
-        """
-        paper_tasks = MarkingTask.objects.filter(paper=paper)
-        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
-        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
-        n_all_tasks = paper_tasks.count()
-        n_questions = SpecificationService.get_n_questions()
-        return (n_completed_tasks == n_questions) and (
-            n_completed_tasks + n_out_of_date_tasks == n_all_tasks
-        )
-
-    def are_all_papers_marked(self) -> bool:
-        """Return True if all of the papers that have a task are marked."""
-        papers = Paper.objects.exclude(markingtask__isnull=True)
-
-        for paper in papers:
-            if not self.is_paper_marked(paper):
-                return False
-        return True
-
-    def get_n_questions_marked(self, paper: Paper) -> int:
-        """Return the number of questions that are marked in a paper.
-
-        Args:
-            paper: a reference to a Paper instance
-        """
-        n_questions = SpecificationService.get_n_questions()
-        n_marked = 0
-        for i in range(1, n_questions + 1):
-            question_number_tasks = MarkingTask.objects.filter(
-                paper=paper, question_number=i, status=MarkingTask.COMPLETE
-            )
-            if question_number_tasks.count() == 1:
-                n_marked += 1
-        return n_marked
-
-    def get_last_updated_timestamp(self, paper: Paper) -> datetime:
-        """Return the latest update timestamp from the IDActions or Annotations.
-
-        Args:
-            paper: a reference to a Paper instance
-
-        Returns:
-            datetime: the time of the latest update to any task in the paper.
-            WARNING: If paper is not id'd and not marked then returns the current
-            time.
-        """
-        try:
-            paper_id_task = PaperIDTask.objects.get(
-                paper=paper, status=PaperIDTask.COMPLETE
-            )
-            last_id_time = paper_id_task.latest_action.time
-        except PaperIDTask.DoesNotExist:
-            last_id_time = None
-
-        if self.is_paper_marked(paper):
-            last_annotation_time = (
-                Annotation.objects.filter(
-                    task__paper=paper, task__status=MarkingTask.COMPLETE
-                )
-                .order_by("-time_of_last_update")
-                .first()
-                .time_of_last_update
-            )
-        else:
-            last_annotation_time = None
-
-        if last_id_time and last_annotation_time:
-            return max(last_id_time, last_annotation_time)
-        elif last_id_time:
-            return last_id_time
-        elif last_annotation_time:
-            return last_annotation_time
-        else:
-            # TODO: default to the current date for the time being
-            return timezone.now()
-
-    def get_paper_id_or_none(self, paper: Paper) -> tuple[str, str] | None:
-        """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
-
-        Args:
-            paper: a reference to a Paper instance
-
-        Returns:
-            a tuple (str, str) or None
-        """
-        try:
-            task = PaperIDTask.objects.filter(
-                paper=paper, status=PaperIDTask.COMPLETE
-            ).get()
-        except PaperIDTask.DoesNotExist:
-            return None
-        action = task.latest_action
-        return action.student_id, action.student_name
-
-    def get_question_version_and_mark(
-        self, paper: Paper, question_idx: int
-    ) -> tuple[int, int | None]:
-        """For a given question, return the test's question version and score.
-
-        Args:
-            paper: a reference to a Paper instance.
-            question_idx: int, question index, one based.
-
-        Returns:
-            tuple (int, int or None): question version and score, where score
-            might be `None`.
-
-        Raises:
-            ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
-        """
-        version = PaperInfoService().get_version_from_paper_question(
-            paper.paper_number, question_idx
-        )
-        try:
-            task = MarkingTask.objects.filter(
-                paper=paper,
-                question_number=question_idx,
-                status=MarkingTask.COMPLETE,
-            ).get()
-            mark = task.latest_annotation.score
-        except ObjectDoesNotExist:
-            mark = None
-        return version, mark
-
-    def paper_spreadsheet_dict(self, paper: Paper) -> Dict[str, Any]:
-        """Return a dictionary representing a paper for the reassembly spreadsheet.
-
-        Args:
-            paper: a reference to a Paper instance
-        """
-        paper_dict: Dict[str, Any] = {"paper_number": paper.paper_number}
-        warnings = []
-
-        paper_id_info = self.get_paper_id_or_none(paper)
-        if paper_id_info:
-            student_id, student_name = paper_id_info
-            paper_dict["student_id"] = student_id
-            paper_dict["student_name"] = student_name
-        else:
-            paper_dict["student_id"] = ""
-            paper_dict["student_name"] = ""
-            warnings.append("[Not identified]")
-        paper_dict["identified"] = paper_id_info is not None
-
-        n_questions = SpecificationService.get_n_questions()
-        paper_marked = self.is_paper_marked(paper)
-
-        paper_dict["marked"] = paper_marked
-        if paper_marked:
-            total = 0
-        else:
-            warnings.append("[Not marked]")
-            paper_dict["total_mark"] = None
-
-        for i in range(1, n_questions + 1):
-            version, mark = self.get_question_version_and_mark(paper, i)
-            paper_dict[f"q{i}_mark"] = mark
-            paper_dict[f"q{i}_version"] = version
-            # if paper is marked then compute the total
-            if paper_marked:
-                assert mark is not None
-                total += mark
-        if paper_marked:
-            paper_dict["total_mark"] = total
-
-        if warnings:
-            paper_dict.update({"warnings": ",".join(warnings)})
-
-        paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
-
-        return paper_dict
 
     def get_paper_status(self, paper: Paper) -> tuple[bool, bool, int, datetime]:
         """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
@@ -240,14 +58,6 @@ class ReassembleService:
         last_modified = self.get_last_updated_timestamp(paper)
 
         return (is_scanned, is_id, n_marked, last_modified)
-
-    def get_spreadsheet_data(self) -> Dict[str, Any]:
-        """Return a dictionary with all of the required data for a reassembly spreadsheet."""
-        spreadsheet_data = {}
-        papers = Paper.objects.all()
-        for paper in papers:
-            spreadsheet_data[paper.paper_number] = self.paper_spreadsheet_dict(paper)
-        return spreadsheet_data
 
     def get_identified_papers(self) -> Dict[str, List[str]]:
         """Return a dictionary with all of the identified papers and their names and IDs.

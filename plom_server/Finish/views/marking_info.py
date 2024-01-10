@@ -17,7 +17,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
-from ..services import StudentMarkService, TaMarkingService, ReassembleService
+from ..services import StudentMarkService, TaMarkingService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm
 
@@ -26,7 +26,6 @@ class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
     def __init__(self):
-        self.ras = ReassembleService()
         self.mts = MarkingTaskService()
         self.sms = StudentMarkService()
         self.smff = StudentMarksFilterForm()
@@ -60,7 +59,7 @@ class MarkingInformationView(ManagerRequiredView):
         ]
 
         total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
-        all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
+        all_marked = self.sms.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()

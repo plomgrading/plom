@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import ReportPDFService, ReassembleService
+from Finish.services import ReportPDFService, ReassembleService, StudentMarkService
 from Mark.services import MarkingTaskService
 
 
@@ -20,7 +20,7 @@ class ReportLandingPageView(ManagerRequiredView):
     def get(self, request):
         context = self.build_context()
         total_tasks = MarkingTaskService().get_n_valid_tasks()
-        all_marked = ReassembleService().are_all_papers_marked() and total_tasks > 0
+        all_marked = StudentMarkService().are_all_papers_marked() and total_tasks > 0
         context.update(
             {
                 "all_marked": all_marked,
