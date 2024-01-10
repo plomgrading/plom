@@ -117,7 +117,8 @@ class MarkingInformationView(ManagerRequiredView):
 
         f = StringIO()
 
-        w = csv.DictWriter(f, keys)
+        # ignore any extra fields in the dictionary.
+        w = csv.DictWriter(f, keys, extrasaction="ignore")
         w.writeheader()
         w.writerows(student_marks)
 

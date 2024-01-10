@@ -2,17 +2,15 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Andrew Rechnitzer
-
-import arrow
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 # Yuck, replace this below when we drop Python 3.8 support
-from typing import Any, Dict, Union
+from typing import Dict, Union
 
 from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
-from Identify.models import PaperIDAction, PaperIDTask
+from .reassemble_service import ReassembleService
 
 
 class StudentMarkService:
@@ -109,17 +107,11 @@ class StudentMarkService:
     def get_student_info_from_paper(
         self,
         paper_num: int,
-        version_info: bool,
-        timing_info: bool,
-        warning_info: bool,
     ) -> dict:
         """Get student info from a paper number.
 
         Args:
             paper_num: The paper number.
-            version_info: Whether to include the version info.
-            timing_info: Whether to include the timing info.
-            warning_info: Whether to include the warning info.
 
         Returns:
             Dict keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
@@ -131,69 +123,9 @@ class StudentMarkService:
             paper_obj = Paper.objects.get(pk=paper_num)
         except Paper.DoesNotExist:
             raise Paper.DoesNotExist
-        marking_tasks = paper_obj.markingtask_set.all().select_related(
-            "latest_annotation"
-        )
-        marking_tasks = marking_tasks.filter(status=MarkingTask.COMPLETE)
-        paper_id_task = PaperIDTask.objects.filter(paper=paper_obj).first()
-        last_update = None
 
-        student_info: Dict[str, Any] = {"paper_number": paper_num}
-
-        # student info
-        if paper_id_task:
-            paper_id_action = PaperIDAction.objects.filter(task=paper_id_task).first()
-            if paper_id_action:
-                student_info.update(
-                    {
-                        "student_id": paper_id_action.student_id,
-                        "student_name": paper_id_action.student_name,
-                    }
-                )
-
-        # mark info
-        total = 0
-        for marking_task in marking_tasks.order_by("question_number"):
-            current_annotation = marking_task.latest_annotation
-
-            if current_annotation:
-                student_info.update(
-                    {
-                        "q"
-                        + str(marking_task.question_number)
-                        + "_mark": current_annotation.score,
-                    }
-                )
-                if version_info:
-                    student_info.update(
-                        {
-                            "q"
-                            + str(marking_task.question_number)
-                            + "_version": marking_task.question_version,
-                        }
-                    )
-                total += current_annotation.score
-                last_update = current_annotation.time_of_last_update
-
-        student_info.update(
-            {
-                "total_mark": total,
-            }
-        )
-
-        if timing_info:
-            student_info.update(
-                {
-                    "csv_write_time": arrow.utcnow().isoformat(" ", "seconds"),
-                }
-            )
-            if last_update:
-                student_info.update(
-                    {
-                        "last_update": arrow.get(last_update).isoformat(" ", "seconds"),
-                    }
-                )
-        return student_info
+        # TODO - this spreadsheet stuff in reassemble service should move to student mark service
+        return ReassembleService().paper_spreadsheet_dict(paper_obj)
 
     def get_all_students_download(
         self,
@@ -214,19 +146,12 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        paper_nums = MarkingTask.objects.values_list(
-            "paper__paper_number", flat=True
-        ).distinct()
+        paper_nums = sorted(
+            MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
+        )
         csv_data = []
         for paper_num in paper_nums:
-            csv_data.append(
-                self.get_student_info_from_paper(
-                    paper_num,
-                    version_info,
-                    timing_info,
-                    warning_info,
-                )
-            )
+            csv_data.append(self.get_student_info_from_paper(paper_num))
 
         return csv_data
 
@@ -248,16 +173,15 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        keys = ["student_id", "student_name", "paper_number"]
+        keys = ["student_id", "student_name", "paper_number", "total_mark"]
         numberOfQuestions = spec["numberOfQuestions"]
         for q in range(1, numberOfQuestions + 1):
-            keys.append("q" + str(q) + "_mark")
-        keys.append("total_mark")
+            keys.append(f"q{q}_mark")
         if version_info:
             for q in range(1, numberOfQuestions + 1):
-                keys.append("q" + str(q) + "_version")
+                keys.append(f"q{q}_version")
         if timing_info:
-            keys.extend(["last_update", "csv_write_time"])
+            keys.extend(["last_update"])
         if warning_info:
             keys.append("warnings")
 

@@ -97,17 +97,18 @@ class ReassembleService:
             time.
         """
         try:
-            paper_id_task = PaperIDTask.objects.exclude(
-                status=PaperIDTask.OUT_OF_DATE
-            ).get(paper=paper)
+            paper_id_task = PaperIDTask.objects.get(
+                paper=paper, status=PaperIDTask.COMPLETE
+            )
             last_id_time = paper_id_task.latest_action.time
         except PaperIDTask.DoesNotExist:
             last_id_time = None
 
         if self.is_paper_marked(paper):
             last_annotation_time = (
-                Annotation.objects.exclude(task__status=PaperIDTask.OUT_OF_DATE)
-                .filter(task__paper=paper)
+                Annotation.objects.filter(
+                    task__paper=paper, task__status=MarkingTask.COMPLETE
+                )
                 .order_by("-time_of_last_update")
                 .first()
                 .time_of_last_update
@@ -162,12 +163,14 @@ class ReassembleService:
         version = PaperInfoService().get_version_from_paper_question(
             paper.paper_number, question_number
         )
-        if self.is_paper_marked(paper):
-            annotation = MarkingTaskService().get_latest_annotation(
-                paper.paper_number, question_number
-            )
-            mark = annotation.score
-        else:
+        try:
+            task = MarkingTask.objects.filter(
+                paper=paper,
+                question_number=question_number,
+                status=MarkingTask.COMPLETE,
+            ).get()
+            mark = task.latest_annotation.score
+        except ObjectDoesNotExist:
             mark = None
         return version, mark
 
@@ -177,27 +180,45 @@ class ReassembleService:
         Args:
             paper: a reference to a Paper instance
         """
-        paper_dict: Dict[str, Any] = {}
+        paper_dict: Dict[str, Any] = {"paper_number": paper.paper_number}
+        warnings = []
 
         paper_id_info = self.get_paper_id_or_none(paper)
         if paper_id_info:
             student_id, student_name = paper_id_info
-            paper_dict["sid"] = student_id
-            paper_dict["sname"] = student_name
+            paper_dict["student_id"] = student_id
+            paper_dict["student_name"] = student_name
         else:
-            paper_dict["sid"] = ""
-            paper_dict["sname"] = ""
+            paper_dict["student_id"] = ""
+            paper_dict["student_name"] = ""
+            warnings.append("[Not identified]")
         paper_dict["identified"] = paper_id_info is not None
 
         n_questions = SpecificationService.get_n_questions()
         paper_marked = self.is_paper_marked(paper)
+
+        paper_dict["marked"] = paper_marked
+        if paper_marked:
+            total = 0
+        else:
+            warnings.append("[Not marked]")
+            paper_dict["total_mark"] = None
+
         for i in range(1, n_questions + 1):
             version, mark = self.get_question_data(paper, i)
-            paper_dict[f"q{i}m"] = mark
-            paper_dict[f"q{i}v"] = version
-        paper_dict["marked"] = paper_marked
+            paper_dict[f"q{i}_mark"] = mark
+            paper_dict[f"q{i}_version"] = version
+            # if paper is marked then compute the total
+            if paper_marked:
+                total += mark
+        if paper_marked:
+            paper_dict["total_mark"] = total
+
+        if warnings:
+            paper_dict.update({"warnings": ",".join(warnings)})
 
         paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
+
         return paper_dict
 
     def get_paper_status(self, paper: Paper) -> tuple[bool, bool, int, datetime]:
