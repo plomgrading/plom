@@ -159,7 +159,7 @@ class StudentMarkService:
         Args:
             paper: a reference to a Paper instance
         """
-        paper_dict: Dict[str, Any] = {"paper_number": paper.paper_number}
+        paper_dict = {"paper_number": paper.paper_number}
         warnings = []
 
         paper_id_info = self.get_paper_id_or_none(paper)
