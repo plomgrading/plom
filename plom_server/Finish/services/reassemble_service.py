@@ -210,6 +210,7 @@ class ReassembleService:
             paper_dict[f"q{i}_version"] = version
             # if paper is marked then compute the total
             if paper_marked:
+                assert mark is not None
                 total += mark
         if paper_marked:
             paper_dict["total_mark"] = total
