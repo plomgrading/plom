@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -153,11 +153,11 @@ class StudentMarkService:
             mark = None
         return version, mark
 
-    def paper_spreadsheet_dict(self, paper: Paper) -> Dict[str, Any]:
+    def paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
         """Return a dictionary representing a paper for the reassembly spreadsheet.
 
         Args:
-            paper: a reference to a Paper instance
+            paper: a reference to a Paper instance.
         """
         paper_dict = {"paper_number": paper.paper_number}
         warnings = []
@@ -201,7 +201,7 @@ class StudentMarkService:
 
         return paper_dict
 
-    def get_spreadsheet_data(self) -> Dict[str, Any]:
+    def get_spreadsheet_data(self) -> dict[str, Any]:
         """Return a dictionary with all of the required data for a reassembly spreadsheet."""
         spreadsheet_data = {}
         papers = Paper.objects.all()
@@ -229,7 +229,7 @@ class StudentMarkService:
 
         return (is_scanned, is_id, n_marked, last_modified)
 
-    def get_identified_papers(self) -> Dict[str, List[str]]:
+    def get_identified_papers(self) -> dict[str, list[str]]:
         """Return a dictionary with all of the identified papers and their names and IDs.
 
         Returns:
