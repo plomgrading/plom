@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -76,7 +76,7 @@ def readLastTime():
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
-    lastTime["server"] = "localhost"
+    lastTime["server"] = ""
     lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
@@ -146,6 +146,7 @@ class Chooser(QDialog):
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
+        self.ui.serverLE.setPlaceholderText("plom.example.com")
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
