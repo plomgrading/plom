@@ -16,6 +16,7 @@ from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Papers.services import SpecificationService, PaperInfoService
+from Progress.services import ManageScanService
 
 
 class StudentMarkService:
@@ -206,6 +207,42 @@ class StudentMarkService:
         papers = Paper.objects.all()
         for paper in papers:
             spreadsheet_data[paper.paper_number] = self.paper_spreadsheet_dict(paper)
+        return spreadsheet_data
+
+    def get_paper_status(
+        self, paper: Paper
+    ) -> tuple[bool, bool, int, timezone.datetime]:
+        """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
+
+        Args:
+            paper: reference to a Paper object
+
+        Returns:
+            tuple of [bool, bool, int, datetime]
+        """
+        paper_id_info = self.get_paper_id_or_none(paper)
+        is_id = paper_id_info is not None
+        complete_paper_keys = ManageScanService().get_all_completed_test_papers().keys()
+        is_scanned = paper.paper_number in complete_paper_keys
+        n_marked = self.get_n_questions_marked(paper)
+        last_modified = self.get_last_updated_timestamp(paper)
+
+        return (is_scanned, is_id, n_marked, last_modified)
+
+    def get_identified_papers(self) -> Dict[str, List[str]]:
+        """Return a dictionary with all of the identified papers and their names and IDs.
+
+        Returns:
+            dictionary: keys are paper numbers, values are a list of [str, str]
+        """
+        sms = StudentMarkService()
+        spreadsheet_data = {}
+        papers = Paper.objects.all()
+        for paper in papers:
+            paper_id_info = sms.get_paper_id_or_none(paper)
+            if paper_id_info:
+                student_id, student_name = paper_id_info
+                spreadsheet_data[paper.paper_number] = [student_id, student_name]
         return spreadsheet_data
 
     def get_marks_from_paper(self, paper_num: int) -> dict:

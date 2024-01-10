@@ -35,44 +35,13 @@ from Progress.services import ManageScanService
 from ..models import ReassemblePaperChore
 from Base.models import HueyTaskTracker
 
+from .student_marks_service import StudentMarkService
+
 
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
 
     reassemble_dir = settings.MEDIA_ROOT / "reassemble"
-
-    def get_paper_status(self, paper: Paper) -> tuple[bool, bool, int, datetime]:
-        """Return a list of [scanned?, identified?, n questions marked, time of last update] for a given paper.
-
-        Args:
-            paper: reference to a Paper object
-
-        Returns:
-            tuple of [bool, bool, int, datetime]
-        """
-        paper_id_info = self.get_paper_id_or_none(paper)
-        is_id = paper_id_info is not None
-        complete_paper_keys = ManageScanService().get_all_completed_test_papers().keys()
-        is_scanned = paper.paper_number in complete_paper_keys
-        n_marked = self.get_n_questions_marked(paper)
-        last_modified = self.get_last_updated_timestamp(paper)
-
-        return (is_scanned, is_id, n_marked, last_modified)
-
-    def get_identified_papers(self) -> Dict[str, List[str]]:
-        """Return a dictionary with all of the identified papers and their names and IDs.
-
-        Returns:
-            dictionary: keys are paper numbers, values are a list of [str, str]
-        """
-        spreadsheet_data = {}
-        papers = Paper.objects.all()
-        for paper in papers:
-            paper_id_info = self.get_paper_id_or_none(paper)
-            if paper_id_info:
-                student_id, student_name = paper_id_info
-                spreadsheet_data[paper.paper_number] = [student_id, student_name]
-        return spreadsheet_data
 
     def get_completion_status(self) -> Dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall test completion progress."""
@@ -94,13 +63,14 @@ class ReassembleService:
             ``[question_label, version, max_mark]`` for each question.
             Otherwise, ``[question_label, version, mark, max_mark]``.
         """
+        sms = StudentMarkService()
         cover_page_info = []
 
         n_questions = SpecificationService.get_n_questions()
         for i in range(1, n_questions + 1):
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
-            version, mark = self.get_question_version_and_mark(paper, i)
+            version, mark = sms.get_question_version_and_mark(paper, i)
 
             if solution:
                 cover_page_info.append([question_label, version, max_mark])
@@ -123,9 +93,9 @@ class ReassembleService:
             pathlib.Path: filename of the coverpage.
         """
         # some annoying work here to handle casting None to (None, None) while keeping mypy happy
-        paper_id: tuple[str | None, str | None] | None = self.get_paper_id_or_none(
-            paper
-        )
+        paper_id: tuple[
+            str | None, str | None
+        ] | None = StudentMarkService().get_paper_id_or_none(paper)
         if not paper_id:
             paper_id = (None, None)
 
@@ -213,14 +183,14 @@ class ReassembleService:
         outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
 
-        paper_id = self.get_paper_id_or_none(paper)
+        paper_id = StudentMarkService().get_paper_id_or_none(paper)
         if not paper_id:
             raise ValueError(
                 f"Paper {paper.paper_number} is missing student ID information."
             )
         student_id, student_name = paper_id
 
-        if not self.is_paper_marked(paper):
+        if not StudentMarkService().is_paper_marked(paper):
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
         shortname = SpecificationService.get_shortname()
