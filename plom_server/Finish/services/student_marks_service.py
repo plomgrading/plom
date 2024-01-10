@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
@@ -119,11 +119,7 @@ class StudentMarkService:
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
         """
-        try:
-            paper_obj = Paper.objects.get(pk=paper_num)
-        except Paper.DoesNotExist:
-            raise Paper.DoesNotExist
-
+        paper_obj = Paper.objects.get(pk=paper_num)
         # TODO - this spreadsheet stuff in reassemble service should move to student mark service
         return ReassembleService().paper_spreadsheet_dict(paper_obj)
 
