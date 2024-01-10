@@ -236,11 +236,10 @@ class StudentMarkService:
         Returns:
             dictionary: keys are paper numbers, values are a list of [str, str]
         """
-        sms = StudentMarkService
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            paper_id_info = sms.get_paper_id_or_none(paper)
+            paper_id_info = self.get_paper_id_or_none(paper)
             if paper_id_info:
                 student_id, student_name = paper_id_info
                 spreadsheet_data[paper.paper_number] = [student_id, student_name]
