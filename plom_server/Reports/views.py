@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import HttpResponse
