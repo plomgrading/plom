@@ -30,7 +30,7 @@ include plom/server/target_Q_latex_plom.png
 include plom/latexTemplate.tex
 include plom/latexTemplatev2.tex
 include plom/idBox2.pdf
-include plom/idBox3.pdf
+include plom/idBox4.pdf
 include plom/default_keys.toml
 include plom/wasd_keys.toml
 include plom/ijkl_keys.toml

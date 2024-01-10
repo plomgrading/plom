@@ -228,8 +228,7 @@ def configure_running_server(
         dry_run: download stuff but don't actually configure the server.
     """
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
-    download_classlist(course, section=section, server_dir=work_dir)
+    download_classlist(course, section=section, workdir=work_dir)
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, dur=work_dir)
@@ -312,8 +311,7 @@ def get_submissions(
 
     if name_by_info:
         print("Fetching conversion table...")
-        # TODO: Issue #3023 server_dir= is deprecated here, switch on v0.15
-        conversion = get_conversion_table(server_dir=work_dir)
+        conversion = get_conversion_table(workdir=work_dir)
 
     tmp_downloads = work_dir / "upload" / "tmp_downloads"
     for_plom = work_dir / "upload" / "submittedHWByQ"

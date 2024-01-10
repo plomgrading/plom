@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 import csv
@@ -98,6 +98,7 @@ class MarkingInformationView(ManagerRequiredView):
 
         return render(request, self.template, context)
 
+    @staticmethod
     def marks_download(request):
         """Download marks as a csv file."""
         sms = StudentMarkService()
@@ -137,6 +138,7 @@ class MarkingInformationView(ManagerRequiredView):
 
         return response
 
+    @staticmethod
     def ta_info_download(request):
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()

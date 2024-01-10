@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import csv
 from io import StringIO
@@ -40,6 +40,7 @@ class TaskOrderPageView(ManagerRequiredView):
 
         return render(request, template_name, context=context)
 
+    @staticmethod
     def upload_task_priorities(request):
         """Upload the task priorities as a CSV file and update the database."""
         if request.method == "POST":
@@ -64,6 +65,7 @@ class TaskOrderPageView(ManagerRequiredView):
 
         return redirect("task_order_landing")
 
+    @staticmethod
     def download_priorities(request):
         """Download the task priorities."""
         tos = TaskOrderService()

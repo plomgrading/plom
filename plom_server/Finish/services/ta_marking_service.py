@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
+
+import datetime as dt
 
 import arrow
-import datetime as dt
-from typing import Union, List
 
 from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
@@ -74,6 +77,9 @@ class TaMarkingService:
         Raises:
             None expected
         """
+        assert annotation.user is not None
+        assert annotation.task is not None
+        assert annotation.annotation_data is not None
         annotation_info = {
             "user": annotation.user.username,
             "paper_number": annotation.task.paper.paper_number,
@@ -91,7 +97,7 @@ class TaMarkingService:
 
     def get_total_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> Union[float, None]:
+    ) -> float | None:
         """Get the total time spent on a question by all markers.
 
         Args:
@@ -117,7 +123,7 @@ class TaMarkingService:
 
     def get_average_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> Union[float, None]:
+    ) -> float | None:
         """Get the average time spent on a question by all markers.
 
         Args:
@@ -143,7 +149,7 @@ class TaMarkingService:
 
     def get_stdev_time_spent_on_question(
         self, question: int, *, version: int = 0
-    ) -> Union[float, None]:
+    ) -> float | None:
         """Get the standard deviation of time spent on a question by all markers.
 
         Args:
@@ -173,7 +179,7 @@ class TaMarkingService:
         """Get the total, average and standard deviation of time spent on each question.
 
         Args:
-            n_questions: (int) The number of questions in the paper.
+            n_questions: The number of questions in the paper.
 
         Returns:
             Tuple holding 3 lists that contain the total, average and standard deviation
@@ -198,9 +204,9 @@ class TaMarkingService:
             for q in range(1, n_questions + 1)
         ]
 
-        total_times_spent: List[Union[str, None]] = [None] * n_questions
-        average_times_spent: List[Union[str, None]] = [None] * n_questions
-        std_times_spent: List[Union[str, None]] = [None] * n_questions
+        total_times_spent: list[str | None] = [None] * n_questions
+        average_times_spent: list[str | None] = [None] * n_questions
+        std_times_spent: list[str | None] = [None] * n_questions
 
         for i, s in enumerate(total_seconds):
             if s:
@@ -252,7 +258,7 @@ class TaMarkingService:
 
         return num_questions_marked / num_days
 
-    def get_estimate_days_remaining(self, question: int) -> Union[float, None]:
+    def get_estimate_days_remaining(self, question: int) -> float | None:
         """Get the estimated number of days remaining to mark a given question.
 
         Args:
@@ -279,7 +285,7 @@ class TaMarkingService:
 
         return round(num_questions_remaining / avg_per_day, 2)
 
-    def get_estimate_hours_remaining(self, question: int) -> Union[float, None]:
+    def get_estimate_hours_remaining(self, question: int) -> float | None:
         """Get the estimated number of hours remaining to mark a given question.
 
         Args:

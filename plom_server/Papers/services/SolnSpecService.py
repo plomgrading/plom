@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -25,7 +28,7 @@ from ..services import SpecificationService
 
 @transaction.atomic
 def load_soln_spec_from_dict(
-    soln_spec_dict: Dict[str, Any],
+    soln_spec_dict: dict[str, Any],
 ) -> Specification:
     """Load a soln spec from a dictionary and save to the database.
 
@@ -84,7 +87,7 @@ def is_there_a_soln_spec() -> bool:
 
 
 @transaction.atomic
-def get_the_soln_spec() -> Dict:
+def get_the_soln_spec() -> dict:
     """Return the solution-specification from the database.
 
     Returns:
@@ -126,7 +129,7 @@ pages = {dat['pages']}
 
 
 @transaction.atomic
-def store_validated_soln_spec(validated_soln_spec: Dict) -> None:
+def store_validated_soln_spec(validated_soln_spec: dict) -> None:
     """Takes the validated solution specification and stores it in the db.
 
     Args:
@@ -168,14 +171,14 @@ def n_pages_for_question(question_one_index: int) -> int:
     return len(question.pages)
 
 
-def soln_list_to_dict(solns: list[Dict]) -> Dict[str, Dict]:
+def soln_list_to_dict(solns: list[dict]) -> dict[str, dict]:
     """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
     if not isinstance(solns, list):
         raise ValueError("'solution' field should be a list")
     return {str(i + 1): s for i, s in enumerate(solns)}
 
 
-def get_unused_pages() -> List[int]:
+def get_unused_pages() -> list[int]:
     """Return a list of pages in the solution that are not used in any particular question.
 
     Note that the soln spec has numberOfPages, but we are not required to use all of those
@@ -189,7 +192,7 @@ def get_unused_pages() -> List[int]:
     return unused_pages
 
 
-def get_unused_pages_in_toml_string(toml_string: str) -> List[int]:
+def get_unused_pages_in_toml_string(toml_string: str) -> list[int]:
     """As per 'get_unused_pages' except from the supplied toml string."""
     try:
         soln_spec_dict = tomllib.loads(toml_string)

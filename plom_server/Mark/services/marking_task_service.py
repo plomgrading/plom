@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import json
 import pathlib
 import random
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from rest_framework.exceptions import ValidationError
 
@@ -484,7 +486,7 @@ class MarkingTaskService:
             raise ValueError("Cannot find task or tag with given pk")
         self.add_tag(the_tag, the_task)
 
-    def get_tag_from_text(self, text: str) -> Union[MarkingTaskTag, None]:
+    def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
 
         Args:

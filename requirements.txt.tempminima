@@ -22,7 +22,6 @@ PyQt6==6.2.0
 PyQt6-sip==13.1.0
 
 aiohttp==3.7.2
-appdirs==1.4.3
 arrow==1.1.1
 beautifulsoup4==4.12.2
 canvasapi==3.0.0
@@ -47,6 +46,7 @@ opencv-python-headless==4.5.4.60
 Pillow==7.0.0
 pandas==1.5.0
 peewee==3.13.3
+platformdirs==3.0.0
 pymupdf==1.22.5
 PyMySQL==1.0.2
 pyOpenSSL==23.2.0

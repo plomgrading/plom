@@ -42,7 +42,6 @@ requires-python = '>=3.8'
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "aiohttp>=3.7.2",
-    "appdirs>=1.4.3",
     "arrow>=1.1.1",
     "beautifulsoup4>=4.12.2",
     "canvasapi>=3.0.0",
@@ -72,6 +71,7 @@ dependencies = [
     "passlib",
     "peewee>=3.13.3",
     "Pillow>=7.0.0",  # Consider >=10.2 for Issue #3216
+    "platformdirs>=3.0.0",
     "pymupdf>=1.22.5",
     "PyMySQL>=1.0.2",
     "pytest>=6.0.0",
@@ -234,12 +234,11 @@ exclude = [
 ]
 
 # These avoid mypy errors: mostly libraries that don't yet have typing
-# Maintenance: try removing some of this and rerunning mypy locally
+# Maintenance: try removing X, removing .mypy_cache, uninstalling types-X, and rerunning mypy locally
 [[tool.mypy.overrides]]
 module = [
     'api_secrets',
     'canvasapi',
-    'cv2',
     'exif',
     'fitz',
     'importlib_resources',

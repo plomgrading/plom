@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-
-import fitz
 import hashlib
 import io
 from typing import Dict
+
+import fitz
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -92,7 +93,9 @@ class SolnSourceService:
         return io.BytesIO(soln_pdf_obj.source_pdf.read())
 
     @transaction.atomic
-    def take_solution_source_pdf_from_upload(self, version, in_memory_file):
+    def take_solution_source_pdf_from_upload(
+        self, version: int, in_memory_file
+    ) -> None:
         """Take the given solution source pdf and save it to the DB."""
         if version < 1 or version > SpecificationService.get_n_versions():
             raise ValueError(f"Version {version} is out of range")
@@ -103,7 +106,7 @@ class SolnSourceService:
                 f"A pdf for solution version {version} has already been uploaded"
             )
 
-        # read the file into here so we can do some sanity checks before saving it.
+        # read the file into here so we can do some correctness checks before saving it.
         file_bytes = in_memory_file.read()
 
         doc = fitz.open(stream=file_bytes)
@@ -128,7 +131,7 @@ class SolnSourceService:
         # Assembly of solutions for each paper will use the source pdfs, not these images.
         self._create_solution_images(version, doc)
 
-    def _create_solution_images(self, version, doc):
+    def _create_solution_images(self, version: int, doc: fitz.Document) -> None:
         """Create one solution image for each question of the given version, for client."""
         # for each solution, glue the corresponding page images into a single row.
         for sqs_obj in SolnSpecQuestion.objects.all():

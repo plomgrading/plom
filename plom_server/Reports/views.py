@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -28,6 +28,7 @@ class ReportLandingPageView(ManagerRequiredView):
 
         return render(request, self.template_name, context=context)
 
+    @staticmethod
     def report_download(request):
         try:
             d = ReportPDFService.pdf_builder(versions=True)

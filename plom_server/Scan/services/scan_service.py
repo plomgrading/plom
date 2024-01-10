@@ -2,15 +2,17 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+
+from __future__ import annotations
 
 import hashlib
 import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -591,15 +593,6 @@ class ScanService:
     def get_all_known_images(self, bundle):
         """Get all the images with completed QR code data - they can be pushed."""
         return list(bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN))
-
-    @transaction.atomic
-    def all_complete_images_pushed(self, bundle):
-        """Check if all of the completed images in a bundle have been pushed."""
-        completed_images = self.get_all_complete_images(bundle)
-        for img in completed_images:
-            if not img.pushed:
-                return False
-        return True
 
     @transaction.atomic
     def get_n_pushed_bundles(self):
@@ -1195,7 +1188,7 @@ class ScanService:
             A list of pairs `(paper_number (int), [missing pages (int)])`.
         """
         n_pages = SpecificationService.get_n_pages()
-        papers_pages: Dict[int, list] = {}
+        papers_pages: dict[int, list] = {}
         # get all known images in the bundle
         # put in dict as {paper_number: [list of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1231,7 +1224,7 @@ class ScanService:
             The number of incomplete papers in the bundle.
         """
         n_pages = SpecificationService.get_n_pages()
-        papers_pages: Dict[int, int] = {}
+        papers_pages: dict[int, int] = {}
         # get all known images in the bundle
         # put in dict as {page_number: number of known pages present] }
         for img in StagingImage.objects.filter(
@@ -1324,7 +1317,7 @@ class ScanService:
 def huey_parent_split_bundle_task(
     bundle_pk,
     *,
-    debug_jpeg: Optional[bool] = False,
+    debug_jpeg: bool = False,
     tracker_pk: int,
     task=None,
 ) -> bool:
@@ -1353,6 +1346,8 @@ def huey_parent_split_bundle_task(
 
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
+        n_pages = bundle_obj.number_of_pages
+        assert n_pages is not None
         task_list = [
             huey_child_get_page_image(
                 bundle_pk,
@@ -1361,7 +1356,7 @@ def huey_parent_split_bundle_task(
                 f"page{pg:05}",  # filename matches our 1-index
                 debug_jpeg=debug_jpeg,
             )
-            for pg in range(1, bundle_obj.number_of_pages + 1)
+            for pg in range(1, n_pages + 1)
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
@@ -1491,7 +1486,7 @@ def huey_child_get_page_image(
     basename: str,
     *,
     debug_jpeg=False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Render a page image and save to disk in the background.
 
     It is important to understand that running this function starts an
@@ -1556,7 +1551,7 @@ def huey_child_get_page_image(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
+def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
@@ -1578,7 +1573,7 @@ def huey_child_parse_qr_code(image_pk: int) -> Dict[str, Any]:
 
     pipr = PageImageProcessor()
 
-    rotation = pipr.get_rotation_angle_from_QRs(page_data)
+    rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
