@@ -4,8 +4,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-# Yuck, replace this below when we drop Python 3.8 support
-from typing import Dict, Union
+from __future__ import annotations
 
 from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
@@ -35,7 +34,7 @@ class StudentMarkService:
             .select_related("latest_annotation")
             .exclude(status=MarkingTask.OUT_OF_DATE)
         )
-        questions: Dict[int, Union[Dict, str]] = {}
+        questions: dict[int, str | dict] = {}
         for marking_task in marking_tasks.order_by("question_number"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
@@ -152,7 +151,7 @@ class StudentMarkService:
         return csv_data
 
     def get_csv_header(
-        self, spec: Dict, version_info: bool, timing_info: bool, warning_info: bool
+        self, spec: dict, version_info: bool, timing_info: bool, warning_info: bool
     ) -> list:
         """Get the header for the csv file.
 
