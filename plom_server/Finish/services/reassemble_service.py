@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -144,29 +144,30 @@ class ReassembleService:
         action = task.latest_action
         return action.student_id, action.student_name
 
-    def get_question_data(
-        self, paper: Paper, question_number: int
+    def get_question_version_and_mark(
+        self, paper: Paper, question_idx: int
     ) -> tuple[int, int | None]:
         """For a given question, return the test's question version and score.
 
         Args:
-            paper: a reference to a Paper instance
-            question_number: int, question index
+            paper: a reference to a Paper instance.
+            question_idx: int, question index, one based.
 
         Returns:
-            tuple (int, int or None): question version and score
+            tuple (int, int or None): question version and score, where score
+            might be `None`.
 
         Raises:
             ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
         """
         version = PaperInfoService().get_version_from_paper_question(
-            paper.paper_number, question_number
+            paper.paper_number, question_idx
         )
         try:
             task = MarkingTask.objects.filter(
                 paper=paper,
-                question_number=question_number,
+                question_number=question_idx,
                 status=MarkingTask.COMPLETE,
             ).get()
             mark = task.latest_annotation.score
@@ -205,7 +206,7 @@ class ReassembleService:
             paper_dict["total_mark"] = None
 
         for i in range(1, n_questions + 1):
-            version, mark = self.get_question_data(paper, i)
+            version, mark = self.get_question_version_and_mark(paper, i)
             paper_dict[f"q{i}_mark"] = mark
             paper_dict[f"q{i}_version"] = version
             # if paper is marked then compute the total
@@ -289,7 +290,7 @@ class ReassembleService:
         for i in range(1, n_questions + 1):
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
-            version, mark = self.get_question_data(paper, i)
+            version, mark = self.get_question_version_and_mark(paper, i)
 
             if solution:
                 cover_page_info.append([question_label, version, max_mark])
