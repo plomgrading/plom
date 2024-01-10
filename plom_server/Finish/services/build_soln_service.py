@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import io
@@ -33,6 +33,7 @@ from Papers.models import (
 )
 from Papers.services import SpecificationService
 from Finish.models import SolutionSourcePDF, BuildSolutionPDFChore
+from .student_marks_service import StudentMarkService
 
 
 class BuildSolutionService:
@@ -167,7 +168,7 @@ class BuildSolutionService:
                     dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
 
                 shortname = SpecificationService.get_shortname()
-                sid_sname_pair = reas.get_paper_id_or_none(paper_obj)
+                sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
                 if sid_sname_pair:
                     fname = f"{shortname}_solution_{sid_sname_pair[0]}.pdf"
                     if watermark:

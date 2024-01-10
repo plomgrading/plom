@@ -100,7 +100,8 @@ class StudentMarkService:
         else:
             return timezone.now()  # if no updates return the current time.
 
-    def get_paper_id_or_none(self, paper: Paper) -> tuple[str, str] | None:
+    @staticmethod
+    def get_paper_id_or_none(paper: Paper) -> tuple[str, str] | None:
         """Return a tuple of (student ID, student name) if the paper has been identified. Otherwise, return None.
 
         Args:
@@ -235,7 +236,7 @@ class StudentMarkService:
         Returns:
             dictionary: keys are paper numbers, values are a list of [str, str]
         """
-        sms = StudentMarkService()
+        sms = StudentMarkService
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:

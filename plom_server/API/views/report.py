@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 from django.shortcuts import get_object_or_404
@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Finish.services import ReassembleService
+from Finish.services import StudentMarkService
 
 from Papers.models import Paper
 
@@ -47,7 +48,7 @@ class REPcoverPageInfo(APIView):
         service = ReassembleService()
         paper = get_object_or_404(Paper, paper_number=papernum)
         cover_page_info = service.get_cover_page_info(paper)
-        student_info = service.get_paper_id_or_none(paper)
+        student_info = StudentMarkService.get_paper_id_or_none(paper)
         if student_info:
             student_id, student_name = student_info
         else:

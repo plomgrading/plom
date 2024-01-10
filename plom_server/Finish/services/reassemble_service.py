@@ -48,7 +48,9 @@ class ReassembleService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            spreadsheet_data[paper.paper_number] = self.get_paper_status(paper)
+            spreadsheet_data[
+                paper.paper_number
+            ] = StudentMarkService().get_paper_status(paper)
         return spreadsheet_data
 
     def get_cover_page_info(self, paper: Paper, solution: bool = False) -> List[Any]:
@@ -92,10 +94,9 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
+        sms = StudentMarkService
         # some annoying work here to handle casting None to (None, None) while keeping mypy happy
-        paper_id: tuple[
-            str | None, str | None
-        ] | None = StudentMarkService().get_paper_id_or_none(paper)
+        paper_id: tuple[str | None, str | None] | None = sms.get_paper_id_or_none(paper)
         if not paper_id:
             paper_id = (None, None)
 
@@ -183,7 +184,7 @@ class ReassembleService:
         outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
 
-        paper_id = StudentMarkService().get_paper_id_or_none(paper)
+        paper_id = StudentMarkService.get_paper_id_or_none(paper)
         if not paper_id:
             raise ValueError(
                 f"Paper {paper.paper_number} is missing student ID information."
