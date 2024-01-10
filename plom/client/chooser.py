@@ -368,7 +368,12 @@ class Chooser(QDialog):
                 server_ver_str = msgr._start()
         except PlomBenignException as e:
             WarnMsg(
-                self, "Could not connect to server:", info=f"{e}", info_pre=False
+                self,
+                f"<p>Could not connect to server &ldquo;{msgr.server}&rdquo;:"
+                " check the server address and your internet connection?</p>"
+                " <p>The precise error message was:</p>",
+                info=f"{e}",
+                info_pre=False,
             ).exec()
             return False
 
