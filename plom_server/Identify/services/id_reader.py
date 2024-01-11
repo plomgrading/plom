@@ -47,7 +47,7 @@ class IDReaderService:
             id_box_folder = pathlib.Path(dur)
         if not box:
             box = (0.1, 0.9, 0.0, 1.0)
-        id_box_folder.mkdir(exist_ok=True)
+        id_box_folder.mkdir(exist_ok=True, parents=True)
 
         pipr = PageImageProcessor()
         id_pages = IDPage.objects.all()

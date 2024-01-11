@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (c) 2022 Edith Coates
 
 """Use image processing to extract and "read" student numbers.
@@ -64,7 +64,7 @@ def get_digit_box(filename, top, bottom):
     # TODO: I must make these better formatted.
     grey_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
     blurred_image = cv2.GaussianBlur(grey_image, (5, 5), 0)
-    edged_image = cv2.Canny(blurred_image, 50, 200, 255)
+    edged_image = cv2.Canny(blurred_image, threshold1=50, threshold2=200)
 
     # Find the contours to find the black bordered box.
     contours = cv2.findContours(
@@ -98,7 +98,7 @@ def get_digit_box(filename, top, bottom):
     # TODO: Remove magic number creation.
     # note that this width of 1250 is defined by the IDbox template
     new_width = int(output.shape[0] * 1250.0 / output.shape[1])
-    scaled = cv2.resize(output, (1250, new_width), cv2.INTER_CUBIC)
+    scaled = cv2.resize(output, (1250, new_width), interpolation=cv2.INTER_CUBIC)
 
     # the digit box numbers again come from the IDBox template and numerology
     ID_box = scaled[30:350, 355:1220]
@@ -128,7 +128,7 @@ def get_digit_images(ID_box, num_digits):
         # Now some hackery to centre on the digit so closer to mnist dataset.
         # Find the contours and centre on the largest (by area).
         digit2 = cv2.GaussianBlur(digit1, (3, 3), 0)
-        digit3 = cv2.Canny(digit2, 5, 255, 200)
+        digit3 = cv2.Canny(digit2, threshold1=5, threshold2=255)
         contours = cv2.findContours(
             digit3.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )

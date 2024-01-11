@@ -98,8 +98,7 @@ class Command(BaseCommand):
         # Grey, Blur and Edging are standard processes for text detection.
         grey_image = cv2.cvtColor(src_image, cv2.COLOR_BGR2GRAY)
         blurred_image = cv2.GaussianBlur(grey_image, (5, 5), 0)
-        edged_image = cv2.Canny(blurred_image, 50, 200, 255)
-
+        edged_image = cv2.Canny(blurred_image, threshold1=50, threshold2=200)
         contours = cv2.findContours(
             edged_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
@@ -133,7 +132,7 @@ class Command(BaseCommand):
         # scale height to retain aspect ratio of image
         new_height = int(template_id_box_width * height / width)
         scaled_id_box = cv2.resize(
-            id_box, (template_id_box_width, new_height), cv2.INTER_CUBIC
+            id_box, (template_id_box_width, new_height), interpolation=cv2.INTER_CUBIC
         )
         # extract the top strip of the IDBox template
         # which only contains the digits
@@ -161,7 +160,7 @@ class Command(BaseCommand):
             single_digit = ID_box[0:ID_box_height, left:right]
             # Find the contours and centre digit based on the largest contour (by area)
             blurred_digit = cv2.GaussianBlur(single_digit, (3, 3), 0)
-            edged_digit = cv2.Canny(blurred_digit, 5, 255, 200)
+            edged_digit = cv2.Canny(blurred_digit, threshold1=5, threshold2=255)
             contours = cv2.findContours(
                 edged_digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
             )
