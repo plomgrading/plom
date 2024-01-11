@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -308,15 +308,16 @@ class ReassembleService:
         )
         return cover_name
 
-    def get_id_page_image(self, paper: Paper) -> List[Dict[str, Any]]:
-        """Get the path and rotation for a paper's ID page.
+    def get_id_page_image(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get the path to image and and rotation for a paper's ID page, if any.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            Dict: with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
-
+            A list of dictionaries with keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.  If there is no ID page image we get an empty list.
         """
         id_page_obj = IDPage.objects.get(paper=paper)
         if id_page_obj.image:
