@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import ReportPDFService, ReassembleService, StudentMarkService
+from Finish.services import ReportPDFService, StudentMarkService
 from Mark.services import MarkingTaskService
 
 
