@@ -415,7 +415,7 @@ class StudentMarkService:
 
     def build_marks_csv_as_string(
         self, version_info: bool, timing_info: bool, warning_info: bool
-    ) -> StringIO:
+    ) -> str:
         spec = SpecificationService.get_the_spec()
         sms = StudentMarkService()
         keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)

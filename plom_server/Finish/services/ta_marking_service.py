@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
-
-import arrow
 import csv
 import datetime as dt
 from io import StringIO
+
+import arrow
 
 from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
@@ -82,7 +82,7 @@ class TaMarkingService:
 
         return csv_data
 
-    def build_ta_info_csv_as_string(self) -> StringIO:
+    def build_ta_info_csv_as_string(self) -> str:
         ta_info = self.build_csv_data()
         keys = self.get_csv_header()
         csv_io = StringIO()
