@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -94,7 +94,8 @@ from plom.misc_utils import arrowtime_to_simple_string
 from plom.specVerifier import get_question_label
 from plom.misc_utils import format_int_list_with_runs
 
-from plom import __version__, Plom_API_Version, Default_Port
+from plom import __version__, Plom_Legacy_Server_API_Version
+from plom import Default_Port
 
 
 log = logging.getLogger("manager")
@@ -381,12 +382,12 @@ class Manager(QWidget):
         Returns:
             None
         """
-        self.APIVersion = Plom_API_Version
+        self.APIVersion = Plom_Legacy_Server_API_Version
         super().__init__()
         self.Qapp = Qapp
         self.msgr = manager_msgr
         print(
-            "Plom Manager Client {} (communicates with api {})".format(
+            "Plom Manager Client {} (communicates with legacy api {})".format(
                 __version__, self.APIVersion
             )
         )
