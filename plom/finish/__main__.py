@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom script for post-grading tasks.
@@ -15,7 +15,7 @@ on the command line or by setting environment variables PLOM_SERVER
 and PLOM_MANAGER_PASSWORD.
 """
 
-__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -27,6 +27,7 @@ from stdiomask import getpass
 
 from plom import __version__
 from plom import Default_Port
+from plom.finish import start_messenger
 from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
@@ -226,7 +227,6 @@ def get_parser():
                 Also checks the environment variable PLOM_SERVER if omitted.
             """,
         )
-    for x in (spCheck, spCSV, spAssemble, spSolution, spRubric, spClear, spAudit):
         x.add_argument(
             "-w",
             "--password",
@@ -278,8 +278,19 @@ def main():
             verbose=True,
         )
     elif args.command == "webpage":
+        msgr = start_messenger(args.server, args.password)
+        try:
+            spec = msgr.get_spec()
+        finally:
+            msgr.closeUser()
+            msgr.stop()
         make_coded_return_webpage(
-            args.hex, args.digits, args.salt, args.server, args.solutions
+            spec["name"],
+            use_hex=args.hex,
+            digits=args.digits,
+            longname=spec["longName"],
+            salt=args.salt,
+            solutions=args.solutions,
         )
     elif args.command == "rubric":
         download_rubric_files(msgr=(args.server, args.password))
