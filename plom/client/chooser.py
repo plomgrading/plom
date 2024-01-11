@@ -425,7 +425,9 @@ class Chooser(QDialog):
 
     def validate_server(self):
         self.start_messenger_get_info()
-        # put focus at username or password line-edit
+        if not self.messenger:
+            return
+        # if successful, put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
             self.ui.passwordLE.setFocus()
         else:
@@ -447,11 +449,12 @@ class Chooser(QDialog):
 
         Returns:
             None, but modifies the state of the internal `messenger`
-            instance variable.
+            instance variable.  If that is not None, you can assume
+            something reasonable happened.
         """
         server = self.ui.serverLE.text().strip()
         if not server:
-            log.warning("No server URI")
+            self.ui.infoLabel.setText("You must specify a server address")
             return
         # due to special handling of blank versus default, use .text() not .value()
         port = self.ui.mportSB.text()
