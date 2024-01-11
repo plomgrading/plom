@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
 
@@ -25,6 +26,8 @@ class ServerConfigTests(TestCase):
         invalid_config = {"n_to_produce": 7, "test_spec": "demo", "parent_dir": "."}
 
         with self.assertRaises(TypeError):
+            # This test is exactly about unexpected args so shutup pylint
+            # pylint: disable=unexpected-keyword-arg
             PlomServerConfig(**invalid_config)
 
     def test_bundle_bad_keys(self):
@@ -42,7 +45,7 @@ class ServerConfigTests(TestCase):
         DemoHWBundleConfig(**valid_hw_bundle)
 
         invalid_bundle = {
-            "frist_paper": 1,
+            "frist_paper": 17,  # TODO: intention misspelling? or 17 > 5?
             "last_paper": 5,
         }
         invalid_hw_bundle = {
@@ -50,7 +53,11 @@ class ServerConfigTests(TestCase):
         }
 
         with self.assertRaises(TypeError):
+            # This test is exactly about unexpected args so shutup pylint
+            # pylint: disable=unexpected-keyword-arg
             DemoBundleConfig(**invalid_bundle)
 
         with self.assertRaises(TypeError):
+            # This test is exactly about unexpected args so shutup pylint
+            # pylint: disable=unexpected-keyword-arg
             DemoHWBundleConfig(**invalid_hw_bundle)
