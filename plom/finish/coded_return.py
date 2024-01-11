@@ -58,7 +58,7 @@ def make_coded_return_webpage(
     digits: int = 9,
     salt=None,
     solutions=False,
-):
+) -> None:
     """Make the secret codes and the return-code webpage.
 
     Args:
@@ -75,6 +75,9 @@ def make_coded_return_webpage(
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
         solutions (bool): add a solutions link to the website
+
+    Returns:
+        None.
     """
     longname = html.escape(longname)
     codedReturnDir = Path("codedReturn")
