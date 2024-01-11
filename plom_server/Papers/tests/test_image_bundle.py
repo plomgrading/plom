@@ -2,9 +2,9 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
-from django.conf import settings
 from model_bakery import baker
 
 from django.contrib.auth.models import User
@@ -14,7 +14,6 @@ from Papers.models import (
     Bundle,
     Image,
     Paper,
-    Specification,
     DNMPage,
     FixedPage,
     QuestionPage,
@@ -372,7 +371,7 @@ class ImageBundleTests(TestCase):
         fp_img_1 = baker.make(Image)
         fp_img_2 = baker.make(Image)
         mp_img_1 = baker.make(Image)
-        q21a = baker.make(
+        baker.make(
             QuestionPage,
             paper=paper2,
             page_number=2,
@@ -380,7 +379,7 @@ class ImageBundleTests(TestCase):
             version=1,
             image=fp_img_1,
         )
-        q22a = baker.make(
+        baker.make(
             QuestionPage,
             paper=paper2,
             page_number=3,
@@ -388,16 +387,16 @@ class ImageBundleTests(TestCase):
             version=1,
             image=fp_img_2,
         )
-        q22b = baker.make(
+        baker.make(
             QuestionPage, paper=paper2, page_number=4, question_number=2, version=1
         )
-        q23a = baker.make(
+        baker.make(
             QuestionPage, paper=paper2, page_number=5, question_number=3, version=1
         )
-        q23a = baker.make(
+        baker.make(
             QuestionPage, paper=paper2, page_number=6, question_number=4, version=1
         )
-        mp3 = baker.make(MobilePage, paper=paper2, question_number=4, image=mp_img_1)
+        baker.make(MobilePage, paper=paper2, question_number=4, image=mp_img_1)
 
         self.assertTrue(ibs.is_given_paper_question_ready(paper2, 1))
         self.assertFalse(ibs.is_given_paper_question_ready(paper2, 2))

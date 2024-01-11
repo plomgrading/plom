@@ -1,18 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-
-import sys
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
 
 from Base.tests import config_test
 from ..services import PQVMappingService
-from . import config_files
 
 
 class PQVMappingServiceTests(TestCase):
