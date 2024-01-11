@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-import arrow
 import statistics
 from typing import Any, Dict, List, Optional
+
+import arrow
+
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from Papers.models import Paper
-from ..models import MarkingTask, AnnotationImage
+from ..models import MarkingTask
 
 
 class MarkingStatsService:
