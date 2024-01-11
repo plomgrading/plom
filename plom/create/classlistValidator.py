@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
+from __future__ import annotations
+
 from collections import defaultdict
 import csv
+from pathlib import Path
+from typing import Any
 
 from plom.rules import validateStudentNumber
 
@@ -205,7 +209,9 @@ class PlomClasslistValidator:
             ]
         return []
 
-    def validate_csv(self, filename, spec=None):
+    def validate_csv(
+        self, filename: Path | str, *, spec=None
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
         Args:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from typing import Optional, List
@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from ..models import MarkingTask
-from .marking_task_service import MarkingTaskService
 from . import mark_task, page_data, annotations
 
 

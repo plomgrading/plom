@@ -2,11 +2,15 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import csv
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -21,15 +25,15 @@ log = logging.getLogger("ClasslistService")
 
 class StagingStudentService:
     @transaction.atomic
-    def how_many_students(self):
+    def how_many_students(self) -> int:
         return StagingStudent.objects.all().count()
 
     @transaction.atomic
-    def are_there_students(self):
+    def are_there_students(self) -> bool:
         return StagingStudent.objects.exists()
 
     @transaction.atomic()
-    def get_students(self):
+    def get_students(self) -> list[dict[str, str | int]]:
         return list(
             StagingStudent.objects.all().values(
                 "student_id", "student_name", "paper_number"
@@ -56,7 +60,7 @@ class StagingStudentService:
             return (None, None)
 
     @transaction.atomic()
-    def get_prenamed_papers(self):
+    def get_prenamed_papers(self) -> dict[int, tuple[str, str]]:
         """Return dict of prenamed papers {paper_number: (student_id, student_name)}."""
         return {
             s_obj.paper_number: (s_obj.student_id, s_obj.student_name)
@@ -91,7 +95,9 @@ class StagingStudentService:
         StagingStudent.objects.all().delete()
 
     @transaction.atomic()
-    def validate_and_use_classlist_csv(self, in_memory_csv_file, ignore_warnings=False):
+    def validate_and_use_classlist_csv(
+        self, in_memory_csv_file: File, ignore_warnings: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """Read the in-memory csv file, validate it and use if possible."""
         from plom.create.classlistValidator import PlomClasslistValidator
 
@@ -116,6 +122,7 @@ class StagingStudentService:
                 # make sure headers are lowercase
                 old_headers = csv_reader.fieldnames
                 # since this has been validated we know it has 'id', 'name', 'paper_number'
+                assert old_headers is not None
                 csv_reader.fieldnames = [x.lower() for x in old_headers]
                 # now we have lower case field names
                 for row in csv_reader:
@@ -126,7 +133,7 @@ class StagingStudentService:
         return (success, werr)
 
     @transaction.atomic()
-    def get_minimum_number_to_produce(self):
+    def get_minimum_number_to_produce(self) -> int:
         # if no students then return 20
         # N = number of students in classlist
         # L = last prenamed paper in classlist
@@ -148,7 +155,7 @@ class StagingStudentService:
         else:
             return max(N1, N2)
 
-    def get_classlist_sids_for_ID_matching(self):
+    def get_classlist_sids_for_ID_matching(self) -> list[str]:
         """Returns a list containing all student IDs on the classlist."""
         students = []
         classlist = self.get_students()
@@ -156,7 +163,7 @@ class StagingStudentService:
             students.append(entry.pop("student_id"))
         return students
 
-    def get_prename_for_paper(self, paper_number):
+    def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""
         try:
             student_obj = StagingStudent.objects.get(paper_number=paper_number)
