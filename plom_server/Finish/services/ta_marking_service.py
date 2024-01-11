@@ -36,8 +36,6 @@ class TaMarkingService:
             "max_score",
             "seconds_spent_marking",
             "last_update_time",
-            "csv_write_time",
-            "warnings",
         ]
 
         return keys
@@ -51,49 +49,36 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        mts = MarkingTaskService()
-        annotations = (
-            mts.get_latest_annotations_from_complete_marking_tasks().prefetch_related(
-                "user", "task", "task__paper"
+        complete_marking_tasks = (
+            MarkingTaskService()
+            .get_complete_marking_tasks()
+            .prefetch_related("paper", "latest_annotation", "latest_annotation__user")
+            .order_by(
+                "latest_annotation__user__username",
+                "paper__paper_number",
+                "question_number",
             )
         )
-
         csv_data = []
-        for annotation in annotations:
-            csv_data.append(self.get_annotation_info_download(annotation))
+        for task in complete_marking_tasks:
+            assert task.latest_annotation.user is not None
+            assert task.latest_annotation.annotation_data is not None
+            csv_data.append(
+                {
+                    "user": task.latest_annotation.user.username,
+                    "paper_number": task.paper.paper_number,
+                    "question_number": task.question_number,
+                    "question_version": task.question_version,
+                    "score_given": task.latest_annotation.score,
+                    "max_score": task.latest_annotation.annotation_data["maxMark"],
+                    "seconds_spent_marking": task.latest_annotation.marking_time,
+                    "last_update_time": arrow.get(task.last_update).isoformat(
+                        " ", "seconds"
+                    ),
+                }
+            )
 
         return csv_data
-
-    def get_annotation_info_download(self, annotation: Annotation) -> dict:
-        """Get the marking information for an annotation.
-
-        Args:
-            annotation: The annotation to get the marking information from.
-
-        Returns:
-            Dict keyed by string information about the annotation (i.e. "score": 2,
-            "question_number" : 3).
-
-        Raises:
-            None expected
-        """
-        assert annotation.user is not None
-        assert annotation.task is not None
-        assert annotation.annotation_data is not None
-        annotation_info = {
-            "user": annotation.user.username,
-            "paper_number": annotation.task.paper.paper_number,
-            "question_number": annotation.task.question_number,
-            "question_version": annotation.task.question_version,
-            "score_given": annotation.score,
-            "max_score": annotation.annotation_data["maxMark"],
-            "seconds_spent_marking": annotation.marking_time,
-            "last_update_time": arrow.get(annotation.time_of_last_update).isoformat(
-                " ", "seconds"
-            ),
-            "csv_write_time": arrow.now().isoformat(" ", "seconds"),
-        }
-        return annotation_info
 
     def get_total_time_spent_on_question(
         self, question: int, *, version: int = 0

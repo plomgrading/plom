@@ -195,10 +195,15 @@ class MarkingTaskService:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
 
+    def get_complete_marking_tasks(self) -> QuerySet[MarkingTask]:
+        """Returns all complete marking tasks"""
+        return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).all()
+
     def get_latest_annotations_from_complete_marking_tasks(
         self,
     ) -> QuerySet[Annotation]:
         """Returns the latest annotations from all tasks that are complete."""
+        # TODO - can we remove this function?
         return Annotation.objects.filter(
             markingtask__status=MarkingTask.COMPLETE
         ).filter(markingtask__latest_annotation__isnull=False)
