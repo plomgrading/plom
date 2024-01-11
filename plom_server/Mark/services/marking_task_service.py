@@ -196,7 +196,7 @@ class MarkingTaskService:
         return marking_tasks
 
     def get_complete_marking_tasks(self) -> QuerySet[MarkingTask]:
-        """Returns all complete marking tasks"""
+        """Returns all complete marking tasks."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).all()
 
     def get_latest_annotations_from_complete_marking_tasks(

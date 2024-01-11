@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import csv
+from io import StringIO
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -410,3 +412,23 @@ class StudentMarkService:
             keys.append("warnings")
 
         return keys
+
+    def build_marks_csv_as_string(
+        self, version_info: bool, timing_info: bool, warning_info: bool
+    ) -> StringIO:
+        spec = SpecificationService.get_the_spec()
+        sms = StudentMarkService()
+        keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
+        student_marks = sms.get_all_students_download(
+            version_info, timing_info, warning_info
+        )
+
+        csv_io = StringIO()
+
+        # ignore any extra fields in the dictionary.
+        w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(student_marks)
+
+        csv_io.seek(0)
+        return csv_io.getvalue()

@@ -117,7 +117,7 @@ class ManageScanService:
             return True
         # else we have (fixed_no_scan > 0) and (fixed_with_scan > 0 or mobile_pages==0)
         # = (fixed no scan>0, fixed with scan > 0) or (fixed no scan > 0 and mobile pages = 0)
-        # paper is not completely scaned in those cases
+        # paper is not completely scanned in those cases
         return False
 
     @transaction.atomic

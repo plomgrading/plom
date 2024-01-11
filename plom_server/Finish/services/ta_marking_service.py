@@ -5,15 +5,17 @@
 
 from __future__ import annotations
 
-import datetime as dt
 
 import arrow
+import csv
+import datetime as dt
+from io import StringIO
 
 from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
 
 from ..services import StudentMarkService
-from Mark.models import MarkingTask, Annotation
+from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 
 
@@ -79,6 +81,17 @@ class TaMarkingService:
             )
 
         return csv_data
+
+    def build_ta_info_csv_as_string(self) -> StringIO:
+        ta_info = self.build_csv_data()
+        keys = self.get_csv_header()
+        csv_io = StringIO()
+        w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(ta_info)
+        csv_io.seek(0)
+
+        return csv_io.getvalue()
 
     def get_total_time_spent_on_question(
         self, question: int, *, version: int = 0
