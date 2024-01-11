@@ -15,7 +15,6 @@ import threading
 from typing import Any, Dict, Tuple, Union
 
 import requests
-from requests_toolbelt import MultipartDecoder
 import urllib3
 
 from plom import __version__
@@ -23,7 +22,7 @@ from plom import Plom_API_Version
 from plom import Plom_Legacy_Server_API_Version
 from plom import Default_Port
 from plom import undo_json_packing_of_version_map
-from plom.plom_exceptions import PlomBenignException, PlomSeriousException
+from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
@@ -38,10 +37,8 @@ from plom.plom_exceptions import (
     PlomRangeException,
     PlomServerNotReady,
     PlomSSLError,
-    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
-    PlomUnscannedPaper,
 )
 
 log = logging.getLogger("messenger")
