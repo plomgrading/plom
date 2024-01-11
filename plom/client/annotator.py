@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+
+from __future__ import annotations
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -24,7 +26,7 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
     QTimer,
@@ -1559,7 +1561,7 @@ class Annotator(QWidget):
                 return False
         return True
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         """Overrides the usual QWidget close event.
 
         Deal with various cases of window trying to close.
@@ -1598,7 +1600,8 @@ class Annotator(QWidget):
         if force:
             log.debug("emitting the closing signal")
             self.annotator_done_closing.emit(self.tgvID)
-            event.accept()
+            if event:
+                event.accept()
             return
 
         # We are here b/c of cancel button, titlebar close, or related
@@ -1609,12 +1612,14 @@ class Annotator(QWidget):
                 "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.StandardButton.No:
-                event.ignore()
+                if event:
+                    event.ignore()
                 return
 
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
-        event.accept()
+        if event:
+            event.accept()
 
     def is_dirty(self):
         """Is the scene dirty?
