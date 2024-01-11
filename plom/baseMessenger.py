@@ -429,9 +429,9 @@ class BaseMessenger:
         if self.webplom:
             self._requestAndSaveToken_webplom(user, pw)
         else:
-            self._requestAndSaveToken(user, pw)
+            self._requestAndSaveToken_legacy(user, pw)
 
-    def _requestAndSaveToken(self, user, pw):
+    def _requestAndSaveToken_legacy(self, user, pw):
         self.SRmutex.acquire()
         try:
             response = self.put(
