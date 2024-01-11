@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-from typing import Union
+from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -24,8 +25,8 @@ class Command(BaseCommand):
         discard_pk: int,
         paper_number: int,
         *,
-        page_number: Union[int, None] = None,
-        question_list: Union[list, None] = None,
+        page_number: int | None = None,
+        question_list: list | None = None,
         really_do_it: bool = False,
     ):
         mds = ManageDiscardService()
@@ -83,7 +84,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["question"]:
-            n_questions = SpecificationService().get_n_questions()
+            n_questions = SpecificationService.get_n_questions()
             question_list = check_question_list(options["question"], n_questions)
         else:
             question_list = []
