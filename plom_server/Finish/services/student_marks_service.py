@@ -223,8 +223,7 @@ class StudentMarkService:
         """
         paper_id_info = self.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
-        complete_paper_keys = ManageScanService().get_all_completed_test_papers().keys()
-        is_scanned = paper.paper_number in complete_paper_keys
+        is_scanned = ManageScanService().is_paper_completely_scanned(paper.paper_number)
         n_marked = self.get_n_questions_marked(paper)
         last_modified = self.get_last_updated_timestamp(paper)
 

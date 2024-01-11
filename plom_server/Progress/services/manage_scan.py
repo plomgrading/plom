@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
 from typing import List, Dict, Any
@@ -87,6 +87,38 @@ class ManageScanService:
         # when querying backwards across foreign key fields
 
         return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+
+    def is_paper_completely_scanned(self, paper_number: int) -> bool:
+        """Test whether given paper has been completely scanned.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
+        """
+        # paper is completely scanned
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            return False
+
+        # fixed_count = FixedPage.objects.filter(paper=paper_obj).count()
+        fixed_with_no_scan_count = FixedPage.objects.filter(
+            paper=paper_obj, image=None
+        ).count()
+        fixed_with_scan_count = FixedPage.objects.filter(
+            paper=paper_obj, image__isnull=False
+        ).count()
+
+        # if all fixed pages have scans - then complete
+        if fixed_with_no_scan_count == 0:
+            return True
+        # if no fixed pages have scans, but have some mobile pages, then complete
+        mobile_page_count = MobilePage.objects.filter(paper=paper_obj).count()
+        if fixed_with_scan_count == 0 and mobile_page_count > 0:
+            return True
+        # else we have (fixed_no_scan > 0) and (fixed_with_scan > 0 or mobile_pages==0)
+        # = (fixed no scan>0, fixed with scan > 0) or (fixed no scan > 0 and mobile pages = 0)
+        # paper is not completely scaned in those cases
+        return False
 
     @transaction.atomic
     def get_all_completed_test_papers(self):
