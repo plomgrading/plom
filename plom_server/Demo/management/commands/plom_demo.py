@@ -23,7 +23,7 @@ from ...services import (
     DemoHWBundleService,
     ConfigFileService,
 )
-from ... import config_files as demo_config_files
+from Demo import config_files as demo_config_files
 from Identify.services import IDDirectService
 
 
