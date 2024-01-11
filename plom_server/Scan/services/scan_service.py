@@ -64,15 +64,15 @@ class ScanService:
 
     def upload_bundle(
         self,
-        uploaded_pdf_file,
+        uploaded_pdf_file: File,
         slug: str,
-        user,
+        user: User,
         timestamp,
         pdf_hash: str,
         number_of_pages: int,
         *,
         debug_jpeg=False,
-    ):
+    ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, split PDF into page images + store in filesystem and database.
