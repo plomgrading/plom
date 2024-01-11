@@ -96,19 +96,19 @@ class ScanService:
         Returns:
             None
         """
-        fh = uploaded_pdf_file.open()
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
-            bundle_obj = StagingBundle.objects.create(
-                slug=slug,
-                pdf_file=File(fh, name=f"{timestamp}.pdf"),
-                user=user,
-                timestamp=timestamp,
-                number_of_pages=number_of_pages,
-                pdf_hash=pdf_hash,
-                pushed=False,
-            )
+            with uploaded_pdf_file.open() as fh:
+                bundle_obj = StagingBundle.objects.create(
+                    slug=slug,
+                    pdf_file=File(fh, name=f"{timestamp}.pdf"),
+                    user=user,
+                    timestamp=timestamp,
+                    number_of_pages=number_of_pages,
+                    pdf_hash=pdf_hash,
+                    pushed=False,
+                )
 
         self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
