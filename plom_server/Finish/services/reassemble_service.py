@@ -112,21 +112,27 @@ class ReassembleService:
         )
         return cover_name
 
-    def get_id_page_image(self, paper: Paper) -> Dict[str, Any]:
-        """Get the path and rotation for a paper's ID page.
+    def get_id_page_image(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get the path to image and and rotation for a paper's ID page, if any.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            Dict: with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
-
+            A list of dictionaries with keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.  If there is no ID page image we get an empty list.
         """
-        id_page_image = IDPage.objects.get(paper=paper).image
-        return {
-            "filename": id_page_image.image_file.path,
-            "rotation": id_page_image.rotation,
-        }
+        id_page_obj = IDPage.objects.get(paper=paper)
+        if id_page_obj.image:
+            return [
+                {
+                    "filename": id_page_obj.image.image_file.path,
+                    "rotation": id_page_obj.image.rotation,
+                }
+            ]
+        else:
+            return []
 
     def get_dnm_page_images(self, paper: Paper) -> List[Dict[str, Any]]:
         """Get the path and rotation for a paper's do-not-mark pages.
@@ -139,7 +145,7 @@ class ReassembleService:
 
         """
         dnm_pages = DNMPage.objects.filter(paper=paper)
-        dnm_images = [dnmpage.image for dnmpage in dnm_pages]
+        dnm_images = [dnmpage.image for dnmpage in dnm_pages if dnmpage.image]
         return [
             {"filename": img.image_file.path, "rotation": img.rotation}
             for img in dnm_images
@@ -200,7 +206,7 @@ class ReassembleService:
         with tempfile.TemporaryDirectory() as _td:
             tmpdir = Path(_td)
             cover_file = self.build_paper_cover_page(tmpdir, paper)
-            id_pages = [self.get_id_page_image(paper)]  # cast to a list.
+            id_pages = self.get_id_page_image(paper)
             dnm_pages = self.get_dnm_page_images(paper)
             marked_pages = self.get_annotation_images(paper)
             reassemble(
