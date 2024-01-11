@@ -3,10 +3,9 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Andrew Rechnitzer
 
-import csv
 import json
-from io import StringIO
 
 import arrow
 
@@ -16,7 +15,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
-from ..services import StudentMarkService, TaMarkingService, ReassembleService
+from ..services import StudentMarkService, TaMarkingService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm
 
@@ -25,7 +24,6 @@ class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
     def __init__(self):
-        self.ras = ReassembleService()
         self.mts = MarkingTaskService()
         self.sms = StudentMarkService()
         self.smff = StudentMarksFilterForm()
@@ -59,7 +57,7 @@ class MarkingInformationView(ManagerRequiredView):
         ]
 
         total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
-        all_marked = self.ras.are_all_papers_marked() and total_tasks > 0
+        all_marked = self.sms.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()
@@ -101,36 +99,23 @@ class MarkingInformationView(ManagerRequiredView):
     @staticmethod
     def marks_download(request):
         """Download marks as a csv file."""
-        sms = StudentMarkService()
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
-        spec = SpecificationService.get_the_spec()
-
-        # create csv file headers
-        keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
-        student_marks = sms.get_all_students_download(
+        csv_as_string = StudentMarkService().build_marks_csv_as_string(
             version_info, timing_info, warning_info
         )
 
-        f = StringIO()
-
-        w = csv.DictWriter(f, keys)
-        w.writeheader()
-        w.writerows(student_marks)
-
-        f.seek(0)
-
         filename = (
             "marks--"
-            + spec["name"]
+            + SpecificationService.get_short_name_slug()
             + "--"
             + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
             + "--UTC"
             + ".csv"
         )
 
-        response = HttpResponse(f, content_type="text/csv")
+        response = HttpResponse(csv_as_string, content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename={filename}".format(
             filename=filename
         )
@@ -141,29 +126,18 @@ class MarkingInformationView(ManagerRequiredView):
     def ta_info_download(request):
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
-        ta_info = tms.build_csv_data()
-        spec = SpecificationService.get_the_spec()
-
-        keys = tms.get_csv_header()
-        response = None
-        f = StringIO()
-
-        w = csv.DictWriter(f, keys)
-        w.writeheader()
-        w.writerows(ta_info)
-
-        f.seek(0)
+        csv_as_string = tms.build_ta_info_csv_as_string()
 
         filename = (
             "TA--"
-            + spec["name"]
+            + SpecificationService.get_short_name_slug()
             + "--"
             + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
             + "--UTC"
             + ".csv"
         )
 
-        response = HttpResponse(f, content_type="text/csv")
+        response = HttpResponse(csv_as_string, content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename={filename}".format(
             filename=filename
         )
