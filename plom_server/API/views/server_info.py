@@ -38,10 +38,7 @@ class GetSpecification(APIView):
         (400) spec not found
     """
 
-    # TODO: remove for Issue #2909
-    permission_classes = [AllowAnyReadOnly]
-
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         if not SpecificationService.is_there_a_spec():
             return _error_response(
                 "Server does not have a spec", status.HTTP_400_BAD_REQUEST

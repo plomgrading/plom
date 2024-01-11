@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
+
+from __future__ import annotations
 
 from io import BytesIO
 import logging
@@ -553,18 +555,21 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_spec(self):
+    def get_spec(self) -> dict:
         """Get the specification of the exam from the server.
 
         Returns:
-            dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+            The server's spec, as in :func:`plom.SpecVerifier`.
 
         Exceptions:
             PlomServerNotReady: server does not yet have a spec.
         """
         with self.SRmutex:
             try:
-                response = self.get("/info/spec")
+                if self.is_legacy_server():
+                    response = self.get("/info/spec")
+                else:
+                    response = self.get_auth("/info/spec")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
