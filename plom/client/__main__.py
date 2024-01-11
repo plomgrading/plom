@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2022 Edith Coates
 
@@ -31,10 +31,10 @@ from plom.client.useful_classes import ErrorMsg, WarningQuestion
 from plom.misc_utils import utc_now_to_string
 
 
-def add_popup_to_toplevel_exception_handler():
+def add_popup_to_toplevel_exception_handler() -> None:
     """Muck around with sys's excepthook to popup dialogs on exception and force exit."""
-    # keep reference to the original hook
-    sys._excepthook = sys.excepthook
+    # monkey-patch in a reference to the original hook
+    sys._excepthook = sys.excepthook  # type: ignore[attr-defined]
 
     def exception_hook(exctype, value, traceback):
         rawlines = tblib.format_exception(exctype, value, traceback)
@@ -70,7 +70,7 @@ def add_popup_to_toplevel_exception_handler():
     sys.excepthook = exception_hook
 
 
-def sigint_handler(*args):
+def sigint_handler(*args) -> None:
     """Handler for the SIGINT signal.
 
     This is in order to have a somewhat graceful exit on control-c [1]
@@ -86,7 +86,7 @@ def sigint_handler(*args):
         QApplication.exit(42)
 
 
-def get_parser():
+def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
@@ -133,7 +133,7 @@ def get_parser():
     return parser
 
 
-def main():
+def main() -> None:
     parser = get_parser()
     args = parser.parse_args()
 

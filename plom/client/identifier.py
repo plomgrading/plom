@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
 
 """The Plom Identifier client."""
+
+from __future__ import annotations
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -20,7 +22,7 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -361,12 +363,13 @@ class IDClient(QWidget):
         log.error("Shutting down due to error")
         self.close()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         log.debug("Something has triggered a shutdown event")
         log.debug("Revoking login token")
         self.msgr.closeUser()
         self.my_shutdown_signal.emit(1)
-        event.accept()
+        if event:
+            event.accept()
         log.debug("Identifier: goodbye!")
 
     def getAlreadyIDList(self):

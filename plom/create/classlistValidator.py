@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
+from __future__ import annotations
+
 from collections import defaultdict
 import csv
+from pathlib import Path
+from typing import Any
 
 from plom.rules import validateStudentNumber
 
@@ -26,19 +30,14 @@ potential_column_names = [
 class PlomClasslistValidator:
     """The Plom Classlist Validator has methods to help ensure compatible classlists."""
 
-    def __init__(
-        self,
-    ):
-        pass
-
-    def readClassList(self, filename):
+    def readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
         """Read classlist from filename and return as list of dicts.
 
         Arguments:
-            filename (pathlib.Path/str): csv-file to be loaded.
+            filename: csv-file to be loaded.
 
         Returns:
-            list(dict): list of dictionaries (keys are column titles).
+            List of dictionaries (keys are column titles).
         """
         classAsDict = []
         with open(filename) as csvfile:
@@ -51,6 +50,8 @@ class PlomClasslistValidator:
             reader = csv.DictReader(csvfile, dialect=dialect)
             # check it has a header - csv.sniffer.has_header is a bit flakey
             # instead check that we have some of the potential keys - careful of case
+            if not reader.fieldnames:
+                raise ValueError("No header")
             column_names = [x.casefold() for x in reader.fieldnames]
             if any(x in potential_column_names for x in column_names):
                 print("Appears to have reasonable header - continuing.")
@@ -66,7 +67,7 @@ class PlomClasslistValidator:
             # return the list
             return classAsDict
 
-    def checkHeaders(self, rowFromDict):
+    def checkHeaders(self, rowFromDict: dict[str, Any]) -> dict[str, Any]:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
@@ -76,7 +77,7 @@ class PlomClasslistValidator:
         by casefolding.
 
         Arguments:
-            rowFromDict (dict): a row from the classlist encoded as a dictionary.
+            rowFromDict: a row from the classlist encoded as a dictionary.
                 The keys give the column titles.
 
         Returns:
@@ -87,7 +88,7 @@ class PlomClasslistValidator:
         """
         id_keys = []
         fullname_keys = []
-        papernumber_keys = []
+        papernumber_keys: list[str | None] = []
         headers = list(rowFromDict.keys())
         for x in headers:
             cfx = x.casefold()
@@ -125,7 +126,7 @@ class PlomClasslistValidator:
             "papernumber": papernumber_keys[0],
         }
 
-    def check_ID_column(self, id_key, classList):
+    def check_ID_column(self, id_key, classList) -> tuple[bool, list]:
         """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
@@ -144,7 +145,7 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
-    def check_papernumber_column(self, papernum_key, classList):
+    def check_papernumber_column(self, papernum_key, classList) -> tuple[bool, list]:
         """Check the papernumber column of the classlist."""
         err = []
         numbers_used = defaultdict(list)
@@ -171,7 +172,7 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
-    def check_name_column(self, fullname_key, classList):
+    def check_name_column(self, fullname_key, classList) -> list:
         """Check name column return any warnings."""
         warn = []
         for x in classList:
@@ -184,16 +185,17 @@ class PlomClasslistValidator:
                 )
         return warn
 
-    def check_classlist_against_spec(self, spec, classlist_length):
+    def check_classlist_against_spec(self, spec, classlist_length: int) -> list[str]:
         """Validate the classlist-length against spec parameters.
 
         Args:
             spec (None/dict/SpecVerifier): an optional test specification,
-                 if given then run additional classlist-related tests.
-            classlist_length (int): the number of students in the classlist.
+                if given then run additional classlist-related tests.
+            classlist_length: the number of students in the classlist.
 
         Returns:
-            list: if 'numberToProduce' is positive but less than classlist_length then returns [warning_message], else returns empty list.
+            If 'numberToProduce' is positive but less than classlist_length
+            then returns [warning_message], else returns empty list.
         """
         if spec is None:
             return []
@@ -205,19 +207,20 @@ class PlomClasslistValidator:
             ]
         return []
 
-    def validate_csv(self, filename, spec=None):
+    def validate_csv(
+        self, filename: Path | str, *, spec=None
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
         Args:
-            filename (str/pathlib.Path): a csv file from which to try to
-                load the classlist.
+            filename: a csv file from which to try to load the classlist.
 
         Keyword Args:
             spec (None/dict/SpecVerifier): an optional test specification,
                  if given then run additional classlist-related tests.
 
         Returns:
-            tuple: (valid, warnings_and_errors) where "valid" is either
+            ``(valid, warnings_and_errors)`` where "valid" is either
             True or False and "warnings_and_errors" is a list of
             dicts.  Each dict encodes a single warning or an error: see
             doc for precise format.  It is possible for "valid" to be True
@@ -277,29 +280,31 @@ class PlomClasslistValidator:
 
         return (validity, werr)
 
-    def check_is_canvas_csv(self, csv_file_name):
+    def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Detect if a csv file is likely a Canvas-exported classlist.
 
         Arguments:
-            csv_file_name (pathlib.Path/str): csv file to be checked.
+            csv_file_name: csv file to be checked.
 
         Returns:
-            bool: True if we think the input was from Canvas, based on
+            True if we think the input was from Canvas, based on
             presence of certain header names.  Otherwise False.
         """
         with open(csv_file_name) as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             csv_fields = csv_reader.fieldnames
+            if csv_fields is None:
+                csv_fields = []
         return all(x in csv_fields for x in canvas_columns_format)
 
-    def check_is_non_canvas_csv(self, csv_file_name):
+    def check_is_non_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Read the csv file and check if id and name columns exist.
 
         1. Check if id is present or any of possible_sid_fields.
         2. Check if name is preset or any of possible_fullname_fields.
 
         Arguments:
-            csv_file_name (pathlib.Path/str): the csv file.
+            csv_file_name: the csv file.
 
         Returns:
             bool
@@ -308,6 +313,8 @@ class PlomClasslistValidator:
         with open(csv_file_name) as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             column_names = csv_reader.fieldnames
+            if column_names is None:
+                column_names = []
         # strip excess whitespace from column names to avoid issues with blanks
         column_names = [str(x).strip() for x in column_names]
 
@@ -356,7 +363,7 @@ class PlomClasslistValidator:
         return True
 
     @classmethod
-    def print_classlist_warnings_errors(cls, warn_err):
+    def print_classlist_warnings_errors(cls, warn_err: list[dict[str, Any]]) -> None:
         # separate into warn and err
         warn = [X for X in warn_err if X["warn_or_err"] == "warning"]
         err = [X for X in warn_err if X["warn_or_err"] != "warning"]
