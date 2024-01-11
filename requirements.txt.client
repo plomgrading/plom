@@ -16,10 +16,12 @@ exif==1.6.0
 fonttools==4.47.0
 importlib-resources==6.1.1
 packaging==23.2
-pandas==1.5.3
+# Pandas 2.0.3 is the last version supporting Python 3.8, needed to build AppImage
+# Note other requirements.txt have moved beyond this
+pandas==2.0.3
 passlib==1.7.4
 Pillow==10.2.0
-platformdirs==4.0.0
+platformdirs==4.1.0
 pymupdf==1.23.8
 PyMySQL==1.1.0
 requests==2.31.0
