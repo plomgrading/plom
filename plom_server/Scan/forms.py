@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import hashlib
 import pathlib
@@ -62,5 +62,5 @@ class BundleUploadForm(forms.Form):
                     }
                 )
             return data
-        except (fitz.FileDataError, KeyError):
-            raise ValidationError("Unable to open file.")
+        except (fitz.FileDataError, KeyError) as e:
+            raise ValidationError(f"Unable to open file: {e}")
