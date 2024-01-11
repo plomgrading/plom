@@ -1,6 +1,6 @@
 htmlsrc = """
 <!DOCTYPE html>
-<!-- Copyright (C) 2018-2021 Colin B. Macdonald <cbm@m.fsf.org>-->
+<!-- Copyright (C) 2018-2021, 2024 Colin B. Macdonald <cbm@m.fsf.org>-->
 <!-- SPDX-License-Identifier: FSFAP -->
 <!--
      Copying and distribution of this file, with or without modification,
@@ -64,7 +64,8 @@ button {
 <hr>
 
 <p>In order to access your paper you need to fill in your student number and
-your __CODE_LENGTH__-digit &ldquo;return code&rdquo; from <a href="http://canvas.ubc.ca">canvas</a>.</p>
+your __CODE_LENGTH__-digit &ldquo;return code&rdquo; from your instructor
+(likely from <a href="https://canvas.ubc.ca">Canvas</a>.)</p>
 
 
 <p><i>NOTE:</i> the request will fail if incorrect information is entered.<p>
