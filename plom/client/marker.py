@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 
 """The Plom Marker client."""
+
+from __future__ import annotations
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -27,7 +29,7 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
-from typing import Any, Dict, Optional
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -37,7 +39,7 @@ else:
 from packaging.version import Version
 
 
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
     QModelIndex,
@@ -493,7 +495,7 @@ class MarkerExamModel(QStandardItemModel):
         self.setData(self.index(r, 6), aname)
         self.setData(self.index(r, 7), pname)
 
-    def _setPaperDir(self, r: int, tdir: Optional[str]) -> None:
+    def _setPaperDir(self, r: int, tdir: str | None) -> None:
         """Sets the paper directory for the given paper.
 
         Args:
@@ -992,7 +994,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
 
-    def applyLastTimeOptions(self, lastTime: Dict[str, Any]) -> None:
+    def applyLastTimeOptions(self, lastTime: dict[str, Any]) -> None:
         """Applies all settings from previous client.
 
         Args:
@@ -1315,7 +1317,10 @@ class MarkerClient(QWidget):
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            qlabel = get_question_label(self.exam_spec, self.question)
+            try:
+                qlabel = get_question_label(self.exam_spec, self.question)
+            except (ValueError, KeyError):
+                qlabel = "???"
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
             if qlabel == f"Q{self.question}":
                 msg += f" of {qlabel}.</p>"
@@ -2160,15 +2165,17 @@ class MarkerClient(QWidget):
             self.backgroundUploader.wait()
         return True
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         log.debug("Something has triggered a shutdown event")
         while not self.Qapp.downloader.stop(500):
-            msg = SimpleQuestion(
-                self,
-                "Download threads are still in progress.",
-                question="Do you want to wait a little longer?",
-            )
-            if msg.exec() == QMessageBox.StandardButton.No:
+            if (
+                SimpleQuestion(
+                    self,
+                    "Download threads are still in progress.",
+                    question="Do you want to wait a little longer?",
+                ).exec()
+                == QMessageBox.StandardButton.No
+            ):
                 # TODO: do we have a force quit?
                 break
         N = self.get_upload_queue_length()
@@ -2187,10 +2194,12 @@ class MarkerClient(QWidget):
             )
             msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
             button = msg.button(QMessageBox.StandardButton.Cancel)
+            assert button
             button.setText("Wait (cancel close)")
             msg.setIcon(QMessageBox.Icon.Warning)
             if msg.exec() == QMessageBox.StandardButton.Cancel:
-                event.ignore()
+                if event:
+                    event.ignore()
                 return
         if self.backgroundUploader is not None:
             # politely ask one more time
@@ -2218,7 +2227,8 @@ class MarkerClient(QWidget):
                 self.annotatorSettings["keybinding_custom_overlay"],
             ],
         )
-        event.accept()
+        if event:
+            event.accept()
         log.debug("Marker: goodbye!")
 
     def cacheLatexComments(self):

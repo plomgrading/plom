@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+
+from __future__ import annotations
 
 import json
 from pathlib import Path
 from statistics import mean
+from typing import Any
 
 from PIL import Image
 
@@ -57,7 +60,9 @@ def findCorner(qr, dim):
     return NS + EW, mx, my
 
 
-def QRextract(image, *, try_harder=True, rotation=0):
+def QRextract(
+    image, *, try_harder: bool = True, rotation: int = 0
+) -> dict[str, dict[str, Any]]:
     """Decode and return QR codes in an image.
 
     Args:
@@ -74,10 +79,10 @@ def QRextract(image, *, try_harder=True, rotation=0):
             counterclockwise prior to reading the QR codes. Defaults to 0.
 
     Returns:
-        dict/None: Keys "NW", "NE", "SW", "SE", each with a dict containing
-            a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
-            QR codes (one string per code) and the x-y coordinates of the QR code.
-            The dict is empty if no QR codes found in that corner.
+        A dict with keys "NW", "NE", "SW", "SE", each with a dict containing
+        a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
+        QR codes (one string per code) and the x-y coordinates of the QR code.
+        The dict is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
@@ -93,7 +98,7 @@ def QRextract(image, *, try_harder=True, rotation=0):
     # hide import inside function to prevent PlomClient depending on it
     from zxingcpp import read_barcodes, BarcodeFormat
 
-    cornerQR = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
+    cornerQR: dict[str, dict[str, Any]] = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)

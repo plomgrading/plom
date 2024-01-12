@@ -3,17 +3,24 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.test import TestCase
-from django.conf import settings
+import pathlib
+import sys
+import tempfile
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 import cv2 as cv
 import numpy as np
-import pathlib
-import tempfile
 from PIL import Image
+
+from django.test import TestCase
 
 from plom.scan import QRextract
 from ..services import PageImageProcessor, ScanService
+from .. import tests as _Scan_tests
 
 
 class PageImageProcessorTests(TestCase):
@@ -134,8 +141,7 @@ class PageImageProcessorTests(TestCase):
     def test_affine_matrix_correct_5_deg_rot(self):
         """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
-        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
-        test_img = Image.open(img_path)
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
@@ -156,8 +162,7 @@ class PageImageProcessorTests(TestCase):
     def test_affine_matrix_no_correction(self):
         """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
         pipr = PageImageProcessor()
-        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
-        # test_img = Image.open(img_path)
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
 
         codes = QRextract(img_path)
         scanner = ScanService()
@@ -177,8 +182,7 @@ class PageImageProcessorTests(TestCase):
         in_left = 0.09
         in_right = 0.91
         pipr = PageImageProcessor()
-        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
-        test_img = Image.open(img_path)
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"

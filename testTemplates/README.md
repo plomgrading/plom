@@ -48,16 +48,17 @@ Or, if you have inkscape installed you can get pdf and svg easily:
   * `inkscape --pdf-poppler --export-area-drawing idBox2-source.pdf -o idBox2.pdf`
   * `inkscape --pdf-poppler --export-area-drawing --export-plain-svg idBox2-source.pdf -o idBox2.svg`
 
-Alternatively, with more steps and intermediaries, run
-  * `latex idBox2-source.tex`
-  * `dvips idBox2-source.dvi`
-  * `ps2epsi idBox2-source.ps`    (note that this produces a large and not especially good eps file)
-  * `epspdf idBox2-source.epsi idBox2.pdf`
-  * `pdf2svg idBox2.pdf idBox2.svg`
-  * `pdftops idBox2.pdf -eps`   (this is not how idBox2.eps was created: no record kept)
+Alternatively, with more steps and intermediaries, but a smaller file size, we run
+  * `latex idBox4-source.tex`
+  * `dvips idBox4-source.dvi`
+  * `ps2eps -f idBox4-source.ps`
+  * `epstopdf -hires idBox4-source.eps`
+  * `pdfcrop --margins -1 idBox4-source.pdf idBox4.pdf`
+  * `pdf2svg idBox4.pdf idBox4.svg`
+  * `pdftops idBox4.pdf -eps`
 
 With a single command:
-  * `A=idBox3 && latex $A-source.tex && dvips $A-source.dvi && ps2epsi $A-source.ps && epspdf $A-source.epsi $A.pdf && pdf2svg $A.pdf $A.svg && pdftops $A.pdf -eps`
-    (this was precisely how `idBox3.pdf` and `idBox3.eps` were created in 2023-10 on Fedora 38.)
+  * `A=idBox4 && latex $A-source.tex && dvips $A-source.dvi && ps2eps -f $A-source.ps && epstopdf -hires $A-source.eps && pdfcrop --margins -1 $A-source.pdf $A.pdf && pdf2svg $A.pdf $A.svg && pdftops $A.pdf -eps`
+    (this was precisely how `idBox4.pdf` and `idBox4.eps` were created in 2023-12 on Fedora 39.)
 
-Note that without the extra `margins` argument pdfcrop leaves a 1pt white margin around the idbox. Also note that the intermediate .epsi file is quite large but the final cropped pdf is reasonably sized.
+Note that without the extra `margins` argument `pdfcrop` leaves a 1pt white margin around the idbox.

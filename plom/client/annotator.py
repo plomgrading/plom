@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+
+from __future__ import annotations
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -24,7 +26,7 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
     QTimer,
@@ -59,7 +61,7 @@ from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
 from .pagerearranger import RearrangementViewer
-from .viewers import SolutionViewer, WholeTestView, CatViewer, PreviousPaperViewer
+from .viewers import SolutionViewer, WholeTestView, PreviousPaperViewer
 from .pagescene import PageScene
 from .pageview import PageView
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
@@ -220,7 +222,6 @@ class Annotator(QWidget):
         if not checked:
             self.parentMarkerUI.set_experimental(False)
             # TODO: some kind of signal/slot, ontoggle...
-            self._cat_view_menu.setVisible(False)
             self._hold_crop_checkbox.setVisible(False)
             if self.scene:
                 self.scene.remove_page_hack_buttons()
@@ -236,7 +237,6 @@ class Annotator(QWidget):
         features = (
             "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
-            "Viewing cat pics.",
             # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
         )
         info = f"""
@@ -257,7 +257,6 @@ class Annotator(QWidget):
             return
         self.parentMarkerUI.set_experimental(True)
         # TODO: some kind of signal/slot, ontoggle...
-        self._cat_view_menu.setVisible(True)
         self._hold_crop_checkbox.setVisible(True)
         if self.scene:
             self.scene.build_page_hack_buttons()
@@ -283,9 +282,6 @@ class Annotator(QWidget):
         key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
-        self._cat_view_menu = m.addAction("View cat", self.viewCat)
-        if not self.is_experimental():
-            self._cat_view_menu.setVisible(False)
         (key,) = keydata["show-solutions"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
@@ -1565,7 +1561,7 @@ class Annotator(QWidget):
                 return False
         return True
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         """Overrides the usual QWidget close event.
 
         Deal with various cases of window trying to close.
@@ -1604,7 +1600,8 @@ class Annotator(QWidget):
         if force:
             log.debug("emitting the closing signal")
             self.annotator_done_closing.emit(self.tgvID)
-            event.accept()
+            if event:
+                event.accept()
             return
 
         # We are here b/c of cancel button, titlebar close, or related
@@ -1615,12 +1612,14 @@ class Annotator(QWidget):
                 "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.StandardButton.No:
-                event.ignore()
+                if event:
+                    event.ignore()
                 return
 
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
-        event.accept()
+        if event:
+            event.accept()
 
     def is_dirty(self):
         """Is the scene dirty?
@@ -1820,12 +1819,6 @@ class Annotator(QWidget):
         if self.solutionView is None:
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
-
-    def viewCat(self):
-        CatViewer(self).exec()
-
-    def viewNotCat(self):
-        CatViewer(self, dogAttempt=True).exec()
 
     def tag_paper(self, task=None, dialog_parent=None):
         if not self.scene:

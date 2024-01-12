@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+
+from __future__ import annotations
 
 import json
 import pathlib
 import random
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from rest_framework.exceptions import ValidationError
 
@@ -105,13 +107,14 @@ class MarkingTaskService:
         """Send back current marking progress counts to the client.
 
         Args:
-            question (int)
-            version (int)
+            question: which question index.
+            version: which version.
 
         Returns:
             two integers, first the number of marked papers for
             this question/version and the total number of papers for
-            this question/version.
+            this question/version.  Note: if question or version are
+            invalid we return a pair of zeros.
         """
         try:
             completed = MarkingTask.objects.filter(
@@ -192,10 +195,15 @@ class MarkingTaskService:
             marking_tasks = marking_tasks.filter(question_version=version)
         return marking_tasks
 
+    def get_complete_marking_tasks(self) -> QuerySet[MarkingTask]:
+        """Returns all complete marking tasks."""
+        return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).all()
+
     def get_latest_annotations_from_complete_marking_tasks(
         self,
     ) -> QuerySet[Annotation]:
         """Returns the latest annotations from all tasks that are complete."""
+        # TODO - can we remove this function?
         return Annotation.objects.filter(
             markingtask__status=MarkingTask.COMPLETE
         ).filter(markingtask__latest_annotation__isnull=False)
@@ -290,6 +298,10 @@ class MarkingTaskService:
     def get_n_total_tasks(self):
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
+
+    def get_n_valid_tasks(self):
+        """Return the total number of tasks in the database, excluding out of date tasks."""
+        return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
     def mark_task_as_complete(self, code):
         """Set a task as complete - assuming a client has made a successful request."""
@@ -479,7 +491,7 @@ class MarkingTaskService:
             raise ValueError("Cannot find task or tag with given pk")
         self.add_tag(the_tag, the_task)
 
-    def get_tag_from_text(self, text: str) -> Union[MarkingTaskTag, None]:
+    def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
 
         Args:

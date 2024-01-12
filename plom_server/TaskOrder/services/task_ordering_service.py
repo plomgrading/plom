@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
-from typing import Dict, Union
+from __future__ import annotations
 
 from Mark.models import MarkingTask
 from Mark.services import marking_priority
@@ -15,17 +16,18 @@ class TaskOrderService:
         self,
         order: str,
         *,
-        custom_order: Union[Dict[tuple[int, int], int], None] = None,
-    ):
+        custom_order: None | dict[tuple[int, int], int] = None,
+    ) -> None:
         """Update the priority ordering of tasks."""
         if order == "shuffle":
             marking_priority.set_marking_piority_shuffle()
         elif order == "custom":
+            assert custom_order is not None, "must provide custom_order kwarg"
             marking_priority.set_marking_priority_custom(custom_order=custom_order)
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def get_task_priorities(self) -> dict:
+    def get_task_priorities(self) -> dict[tuple[int, int], int]:
         """Get the task priorities.
 
         Returns:
@@ -47,11 +49,11 @@ class TaskOrderService:
 
         return task_priorities
 
-    def get_csv_header(self) -> list:
+    def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""
         return ["Paper Number", "Question Number", "Priority Value"]
 
-    def get_task_priorities_download(self) -> list:
+    def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
         task_priorities = self.get_task_priorities()
         return [
@@ -63,7 +65,7 @@ class TaskOrderService:
             for (paper_number, question_number), priority in task_priorities.items()
         ]
 
-    def handle_file_upload(self, csv_data) -> Dict[tuple[int, int], int]:
+    def handle_file_upload(self, csv_data) -> dict[tuple[int, int], int]:
         """Handle uploaded file data of task priorities.
 
         Args:

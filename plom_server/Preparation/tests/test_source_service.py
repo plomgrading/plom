@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import sys
 
@@ -43,10 +43,10 @@ class SourceServiceTests(TestCase):
         duplicates = tss.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
-        version_1 = baker.make(PaperSourcePDF, version=1, hash="abcde123")
+        baker.make(PaperSourcePDF, version=1, hash="abcde123")
         duplicates = tss.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
-        version_2 = baker.make(PaperSourcePDF, version=2, hash="abcde123")
+        baker.make(PaperSourcePDF, version=2, hash="abcde123")
         duplicates = tss.check_pdf_duplication()
         self.assertEqual(duplicates, {"abcde123": [1, 2]})

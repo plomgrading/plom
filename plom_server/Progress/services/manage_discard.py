@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
-from typing import Union
+from __future__ import annotations
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -235,8 +235,8 @@ class ManageDiscardService:
         self,
         username: str,
         *,
-        fixedpage_pk: Union[int, None] = None,
-        mobilepage_pk: Union[int, None] = None,
+        fixedpage_pk: int | None = None,
+        mobilepage_pk: int | None = None,
         dry_run: bool = True,
     ) -> str:
         try:

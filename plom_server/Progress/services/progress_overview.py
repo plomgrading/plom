@@ -1,21 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-from typing import Any, Dict, Union, List, Optional, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from django.db import transaction
 from django.db.models import Count, Min, Max
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
-from Papers.models import IDPage, Image, Paper
 from Papers.services import SpecificationService
 
 
 class ProgressOverviewService:
     @transaction.atomic
-    def get_id_task_status(self) -> List[Dict]:
+    def get_id_task_status(self) -> list[dict]:
         id_info = []
         for task in PaperIDTask.objects.exclude(
             status=PaperIDTask.OUT_OF_DATE
@@ -33,7 +35,7 @@ class ProgressOverviewService:
         return id_info
 
     @transaction.atomic
-    def get_marking_task_status(self) -> List[Dict]:
+    def get_marking_task_status(self) -> list[dict]:
         marking_info = []
         for task in MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
@@ -54,7 +56,7 @@ class ProgressOverviewService:
         return marking_info
 
     @transaction.atomic
-    def get_task_overview(self) -> tuple[Dict, Dict]:
+    def get_task_overview(self) -> tuple[dict, dict]:
         """Return (id-info, marking-info) dicts with info for all id and marking tasks of every paper in use.
 
         Note that a paper is in use if it has at least one ID or marking task.
@@ -69,8 +71,8 @@ class ProgressOverviewService:
           * {'status': 'Out', 'user': username} - the name of the user who has the task
           * {status: 'Complete', 'user': username, 'score': score, 'task_pk: blah} - user who did the marking'ing, the score, and the pk of the corresponding marking task.
         """
-        id_task_overview: Dict[int, Optional[Dict[str, Any]]] = {}
-        marking_task_overview: Dict[int, Dict[int, Optional[Dict[str, Any]]]] = {}
+        id_task_overview: dict[int, None | dict[str, Any]] = {}
+        marking_task_overview: dict[int, dict[int, None | dict[str, Any]]] = {}
         question_numbers = [
             q + 1 for q in range(SpecificationService.get_n_questions())
         ]
@@ -102,7 +104,7 @@ class ProgressOverviewService:
         return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
 
     @transaction.atomic
-    def get_completed_marking_task_counts(self) -> Dict:
+    def get_completed_marking_task_counts(self) -> dict:
         """Return dict of number of completed marking tasks for each question."""
         return {
             qi: MarkingTask.objects.filter(
@@ -111,16 +113,14 @@ class ProgressOverviewService:
             for qi in range(1, SpecificationService.get_n_questions() + 1)
         }
 
-    def get_completed_task_counts(self) -> Dict:
+    def get_completed_task_counts(self) -> dict:
         return {
             "id": self.get_completed_id_task_count(),
             "mk": self.get_completed_marking_task_counts(),
         }
 
     @transaction.atomic
-    def get_id_task_status_counts(
-        self, n_papers: Optional[int] = None
-    ) -> Dict[str, int]:
+    def get_id_task_status_counts(self, n_papers: int | None = None) -> dict[str, int]:
         """Return a dict of counts of ID tasks by their status.
 
         Note that this excludes out-of-date tasks.
@@ -142,8 +142,8 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_mark_task_status_counts(
-        self, n_papers: Optional[int] = None
-    ) -> Dict[int, Dict[str, int]]:
+        self, n_papers: int | None = None
+    ) -> dict[int, dict[str, int]]:
         """Return a dict of counts of marking tasks by their status for each question.
 
         Note that, if n_papers is supplied, then the number of missing
@@ -173,8 +173,8 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(
-        self, question_number: int, version: Optional[int] = None
-    ) -> Dict[str, int]:
+        self, question_number: int, version: int | None = None
+    ) -> dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
         Note that, if version is not supplied (or None) then count by
@@ -195,7 +195,7 @@ class ProgressOverviewService:
         return dat
 
     @transaction.atomic
-    def get_first_last_used_paper_number(self) -> Tuple[int, int]:
+    def get_first_last_used_paper_number(self) -> tuple[int, int]:
         """Return the first/last paper that has some marking or iding task."""
         # include a default of 1 in case there are no valid id or marking tasks
         min_max_from_marking = MarkingTask.objects.exclude(

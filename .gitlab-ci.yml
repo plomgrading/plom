@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
@@ -136,6 +136,7 @@ copyright_year:
     - echo "Considering the following commits to this branch (since main):"
     - git shortlog origin/main..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
+    # TODO: tried ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} instead of main?
     - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
     - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
@@ -348,22 +349,19 @@ pylint:
 
 # needs full dependencies, cannot easily run with other early static analysis
 # If exceptions are needed, see "tool.mypy" sections in pyproject.toml
-# Issue #2880: temporarily using 3.9 although our minimum python is 3.8
 # Note: currently allowed to fail because of partial adoption of type hints and safety in this project.
-#       Will make not allowed to fail in the future, once types are more widely adopted in the project
-#       and 3.10 becomes our minimum supported Python version.
-# Issue #3151, seems to be holding back a mypy bump to 1.7.0
+#       Will make not allowed to fail in the future, once types are more widely adopted in the project.
 mypy-type-checking:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.5.1
+    - python3 -m pip install mypy~=1.8.0
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
-    - mypy plom_server --python-ver 3.9 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.9
+    - mypy plom_server --python-ver 3.8 --install-types --non-interactive || true
+    - mypy plom_server --python-ver 3.8
   allow_failure: true
 
 
@@ -388,7 +386,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 30 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 10 ]]"
 
   allow_failure: true
 
@@ -1050,7 +1048,6 @@ minpy_mindeps:
 
 
 # Minimum Python, minimum deps
-# Issue #2880: temporarily different from legacy (3.9 vs 3.8)
 minpy_mindeps_webplom:
   services:
     - postgres
@@ -1062,7 +1059,7 @@ minpy_mindeps_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: python:3.9
+  image: python:3.8
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
@@ -1604,7 +1601,7 @@ winpyinst:
   script:
   - c:\python311\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller==6.2.0
+  - c:\python311\python -m pip install pyinstaller==6.3.0
   - refreshenv
   # c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec

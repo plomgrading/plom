@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
 <div id="bundlePageFragment">
@@ -96,6 +96,16 @@
                             <ul>
                                 <li>{{ current_page.info.reason }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
+                                {% if current_page.qr_codes %}
+                                    <li>
+                                        {{ current_page.qr_codes|length }} qr-codes read:
+                                        <ul>
+                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        </ul>
+                                    </li>
+                                {% else %}
+                                    <li>No qr-codes read</li>
+                                {% endif %}
                             </ul>
                         </div>
                     {% elif current_page.status == 'error' %}
@@ -110,6 +120,7 @@
                                         {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
                                 </li>
+                                <li>{{ current_page.qr_codes }}</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'unread' %}

@@ -48,6 +48,10 @@ class BundleThumbnailView(ScannerRequiredView):
         bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
         bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
+        # get a list of the paper-numbers in bundle that are missing pages
+        bundle_incomplete_papers_list = [
+            X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
+        ]
 
         context.update(
             {
@@ -56,6 +60,7 @@ class BundleThumbnailView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
+                "incomplete_papers_list": bundle_incomplete_papers_list,
                 "total_pages": n_pages,
                 "known_pages": known_pages,
                 "unknown_pages": unknown_pages,

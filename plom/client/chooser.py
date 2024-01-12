@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -9,21 +9,22 @@
 
 """Plom's Chooser dialog."""
 
+from __future__ import annotations
+
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import logging
-from pathlib import Path
 import re
 import sys
 import tempfile
 import time
-from typing import Union
+from typing import Any
 
-import appdirs
 import arrow
 from packaging.version import Version
+import platformdirs
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -37,7 +38,7 @@ else:
 import tomlkit
 
 import urllib3
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
@@ -65,14 +66,14 @@ from .useful_classes import ClientSettingsDialog
 
 
 log = logging.getLogger("client")
-logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
-cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
+logdir = platformdirs.user_log_path("plom", "PlomGrading.org")
+cfgdir = platformdirs.user_config_path("plom", "PlomGrading.org")
 cfgfile = cfgdir / "plomConfig.toml"
 
 
-def readLastTime():
+def readLastTime() -> dict[str, Any]:
     """Read the login + server options that were used on the last run of the client."""
-    lastTime = {}
+    lastTime: dict[str, Any] = {}
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
@@ -162,7 +163,7 @@ class Chooser(QDialog):
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
 
-    def setServer(self, s):
+    def setServer(self, s: str) -> None:
         """Set the server and port UI widgets from a string.
 
         If port is missing, a default will be used.  If we cannot
@@ -171,7 +172,7 @@ class Chooser(QDialog):
         self.ui.serverLE.setText(s)
         self.partial_parse_address()
 
-    def options(self):
+    def options(self) -> None:
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
@@ -184,7 +185,7 @@ class Chooser(QDialog):
         self.lastTime["LogToFile"] = opt["LogToFile"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def launch_task(self, which_subapp: str):
+    def launch_task(self, which_subapp: str) -> None:
         if not self.is_logged_in():
             self.login()
             if not self.is_logged_in():
@@ -240,7 +241,7 @@ class Chooser(QDialog):
             self.setEnabled(False)
             self.hide()
             idwin = IDClient(self.Qapp)
-            idwin.my_shutdown_signal.connect(self.on_other_window_close)
+            idwin.my_shutdown_signal.connect(self.on_identify_window_close)
             idwin.show()
             idwin.setup(self.messenger)
             # store ref in Qapp to avoid garbase collection
@@ -248,16 +249,16 @@ class Chooser(QDialog):
         else:
             raise RuntimeError("Invalid subapplication value")
 
-    def run_marker(self):
+    def run_marker(self) -> None:
         self.launch_task("Marker")
 
-    def run_identifier(self):
+    def run_identifier(self) -> None:
         self.launch_task("Identifier")
 
-    def run_manager(self):
+    def run_manager(self) -> None:
         self.launch_task("Manager")
 
-    def saveDetails(self):
+    def saveDetails(self) -> None:
         """Write the options to the config file."""
         self.lastTime["user"] = self.ui.userLE.text().strip()
         server = self.ui.serverLE.text().strip()
@@ -282,7 +283,7 @@ class Chooser(QDialog):
                 "Error msg: {}.".format(cfgfile, e),
             ).exec()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
         if dl and dl.has_messenger():
@@ -301,7 +302,7 @@ class Chooser(QDialog):
         fnt.setPointSize(n)
         self.Qapp.setFont(fnt)
 
-    def getQuestion(self):
+    def getQuestion(self) -> int | None:
         """Return the integer question or None."""
         if self.ui.pgDrop.isVisible():
             question = self.ui.pgDrop.currentIndex() + 1
@@ -312,7 +313,7 @@ class Chooser(QDialog):
         except ValueError:
             return None
 
-    def getv(self):
+    def getv(self) -> int | None:
         """Return the integer version or None."""
         if self.ui.vDrop.isVisible():
             v = self.ui.vDrop.currentText()
@@ -323,7 +324,7 @@ class Chooser(QDialog):
         except:  # noqa: E722
             return None
 
-    def ungetInfo(self):
+    def ungetInfo(self) -> None:
         self.ui.markGBox.setTitle("Choose a task")
         question = self.getQuestion()
         v = self.getv()
@@ -340,7 +341,7 @@ class Chooser(QDialog):
         self.ui.infoLabel.setText("")
         self.logout()
 
-    def _pre_login_connection(self, msgr):
+    def _pre_login_connection(self, msgr: Messenger | ManagerMessenger) -> bool:
         # This msgr object may or may not be logged in: it can be temporary: we
         # only use it to get public info from the server.
         #
@@ -417,7 +418,7 @@ class Chooser(QDialog):
                 self._old_client_note_seen = True
         return True
 
-    def validate_server(self):
+    def validate_server(self) -> None:
         self.start_messenger_get_info()
         # put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
@@ -426,7 +427,7 @@ class Chooser(QDialog):
             self.ui.userLE.setFocus()
 
     def start_messenger_get_info(
-        self, *, _legacy_username: Union[str, None] = None, verify_ssl: bool = True
+        self, *, _legacy_username: str | None = None, verify_ssl: bool = True
     ) -> None:
         """Get info from server, update UI with server version, check SSL.
 
@@ -461,7 +462,7 @@ class Chooser(QDialog):
             self.messenger = None
 
         try:
-            msgr: Union[Messenger, ManagerMessenger] = Messenger(
+            msgr: Messenger | ManagerMessenger = Messenger(
                 server, port=port, verify_ssl=verify_ssl
             )
             if not self._pre_login_connection(msgr):
@@ -621,7 +622,7 @@ class Chooser(QDialog):
         if not self.messenger.webplom and self.messenger.username == "manager":
             self.ui.manageButton.setVisible(True)
 
-    def _set_restrictions_from_spec(self, spec):
+    def _set_restrictions_from_spec(self, spec: dict[str, Any]) -> None:
         self.ui.markGBox.setTitle("Choose a task for “{}”".format(spec["name"]))
         question = self.getQuestion()
         v = self.getv()
@@ -647,7 +648,7 @@ class Chooser(QDialog):
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
 
-    def _partial_parse_address_manual(self):
+    def _partial_parse_address_manual(self) -> None:
         address = self.ui.serverLE.text()
         try:
             _addr, _port = address.split(":")
@@ -667,7 +668,7 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(_port)
         self.ui.serverLE.setText(_addr)
 
-    def partial_parse_address(self):
+    def partial_parse_address(self) -> None:
         """If address has a port number in it, extract and move to the port box.
 
         If there's a colon in the address (maybe user did not see port
@@ -702,8 +703,8 @@ class Chooser(QDialog):
             return
 
     @pyqtSlot(int)
-    def on_other_window_close(self, value):
-        assert isinstance(value, int)
+    def on_identify_window_close(self, value: int) -> None:
+        # `value` is always 1, no real meaning yet
         self.show()
         self.setEnabled(True)
         # TODO: wall-paper for Issue #2903
@@ -711,8 +712,8 @@ class Chooser(QDialog):
             self.logout()
 
     @pyqtSlot(int, list)
-    def on_marker_window_close(self, value, stuff):
-        assert isinstance(value, int)
+    def on_marker_window_close(self, value: int, stuff: list[Any] | None) -> None:
+        # `value` is always 2, no real meaning yet
         self.show()
         self.setEnabled(True)
         # TODO: wall-paper for Issue #2903

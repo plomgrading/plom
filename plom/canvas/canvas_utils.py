@@ -8,6 +8,7 @@ import csv
 from pathlib import Path
 import string
 from warnings import warn
+from typing import Any, Dict, Union
 
 from canvasapi import Canvas
 
@@ -31,14 +32,14 @@ def get_student_list(course_or_section):
     return students
 
 
-def download_classlist(course, *, section=None, server_dir="."):
+def download_classlist(course, *, section=None, workdir: Union[Path, str] = "."):
     """Download .csv of the classlist and various conversion tables.
 
     Args:
         course (canvasapi.course.Course): we will query for enrollment.
 
     Keyword Args:
-        server_dir (str/pathlib.Path): where to save the file.  Defaults
+        workdir (str/pathlib.Path): where to save the file.  Defaults
             to current working directory.
         section (None/canvasapi.section.Section): Which section should
             we take enrollment from?  If None (default), take all
@@ -46,7 +47,7 @@ def download_classlist(course, *, section=None, server_dir="."):
             omitting `section` can lead to duplicate students.
 
     Returns:
-        None: But saves files into ``server_dir``.
+        None: But saves files.
 
     TODO: spreadsheet with entries of the form (student ID, student name)
     TODO: so is it the plom classlist or something else?
@@ -57,7 +58,7 @@ def download_classlist(course, *, section=None, server_dir="."):
     just fill it in as needed.  That is a questionable statement; this
     function needs a serious review.
     """
-    server_dir = Path(server_dir)
+    workdir = Path(workdir)
     if section:
         enrollments_raw = section.get_enrollments()
     else:
@@ -76,7 +77,7 @@ def download_classlist(course, *, section=None, server_dir="."):
 
     conversion = [("Internal Canvas ID", "Student", "SIS User ID")]
 
-    secnames = {}
+    secnames: Dict[Any, Any] = {}
 
     for stud in students:
         stud_name, stud_id, stud_sis_id, stud_sis_login_id = (
@@ -151,20 +152,20 @@ def download_classlist(course, *, section=None, server_dir="."):
 
         conversion += [(internal_canvas_id, stud_name, stud_sis_id)]
 
-    with open(server_dir / "classlist.csv", "w", newline="\n") as csvfile:
+    with open(workdir / "classlist.csv", "w", newline="\n") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(classlist)
 
-    with open(server_dir / "conversion.csv", "w", newline="\n") as csvfile:
+    with open(workdir / "conversion.csv", "w", newline="\n") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(conversion)
 
 
-def get_conversion_table(server_dir="."):
+def get_conversion_table(*, workdir: Union[Path, str] = "."):
     """A mapping Canvas ID to Name and SIS ID."""
-    server_dir = Path(server_dir)
+    workdir = Path(workdir)
     conversion = {}
-    with open(server_dir / "conversion.csv", "r") as csvfile:
+    with open(workdir / "conversion.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
         for i, row in enumerate(reader):
             if i == 0:
@@ -174,10 +175,10 @@ def get_conversion_table(server_dir="."):
     return conversion
 
 
-def get_sis_id_to_canvas_id_table(server_dir="."):
-    server_dir = Path(server_dir)
+def get_sis_id_to_canvas_id_table(*, workdir: Union[Path, str] = "."):
+    workdir = Path(workdir)
     sis_id_to_canvas = {}
-    with open(server_dir / "classlist.csv", "r") as csvfile:
+    with open(workdir / "classlist.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
         for i, row in enumerate(reader):
             if i == 0:

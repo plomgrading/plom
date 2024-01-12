@@ -11,10 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* switch client dependency from `appdirs` to `platformdirs`.
 
 ### Fixed
-* Temporary workaround for Qt bug resulting in overly long error dialogs on macOS.
 
+
+
+## [0.14.8] - 2024-01-04
+
+### Added
+* Identifier: UI includes explanation of why we confirm prenamed papers.
+
+### Changed
+* The "new" `idBox3.pdf` was giving warnings in LaTeX: new `idBox4.pdf` is now a 1.5 PDF.
+* Client: experimental "view cat pic" feature removed; it was often offline and the content could be construed as endorsed by Plom.
+
+### Fixed
+* Client: temporary workaround for Qt bug resulting in overly-long error dialogs on macOS.
+* Previous compiled clients `0.14.x` produced imperceptibly corrupted annotated images due to bugs in jpeg libraries, causing rare problems with some PDF viewers on the reassembled files.
+* Client: crash when sorted columns in the rarely-used "filter/arrange" dialog.
+* Dependency and documentation updates.
 
 
 ## [0.14.7] - 2023-12-03
@@ -1094,7 +1110,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.7...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.14.8...main
+[0.14.8]: https://gitlab.com/plom/plom/-/compare/v0.14.7...v0.14.8
 [0.14.7]: https://gitlab.com/plom/plom/-/compare/v0.14.6...v0.14.7
 [0.14.6]: https://gitlab.com/plom/plom/-/compare/v0.14.5...v0.14.6
 [0.14.5]: https://gitlab.com/plom/plom/-/compare/v0.14.4...v0.14.5

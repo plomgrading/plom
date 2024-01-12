@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import ReportPDFService
+from Finish.services import ReportPDFService, StudentMarkService
+from Mark.services import MarkingTaskService
 
 
 class ReportLandingPageView(ManagerRequiredView):
@@ -17,9 +19,17 @@ class ReportLandingPageView(ManagerRequiredView):
 
     def get(self, request):
         context = self.build_context()
+        total_tasks = MarkingTaskService().get_n_valid_tasks()
+        all_marked = StudentMarkService().are_all_papers_marked() and total_tasks > 0
+        context.update(
+            {
+                "all_marked": all_marked,
+            }
+        )
 
         return render(request, self.template_name, context=context)
 
+    @staticmethod
     def report_download(request):
         try:
             d = ReportPDFService.pdf_builder(versions=True)
