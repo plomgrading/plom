@@ -64,6 +64,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "slug": bundle.slug,
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
+                        "username": bundle.user.username,
                         "pages": pages,
                         "cover_angle": cover_img_rotation,
                     }
@@ -74,6 +75,7 @@ class ScannerHomeView(ScannerRequiredView):
                         "slug": bundle.slug,
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
+                        "username": bundle.user.username,
                         "pages": pages,
                         "cover_angle": cover_img_rotation,
                         "is_push_locked": bundle.is_push_locked,
@@ -180,6 +182,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "timestamp": timestamp,
             "slug": bundle.slug,
             "when": arrow.get(timestamp).humanize(),
+            "username": bundle.user.username,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
