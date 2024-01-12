@@ -38,7 +38,7 @@
                         <td>{{ pn }}</td>
                         <td>
                             {% if data.idpageimage_pk %}
-                                <button hx-get="id_img_wrap/{{ data.idpageimage_pk }}"
+                                <button hx-get="{% url 'ID_img_wrap' data.idpageimage_pk %}"
                                         hx-target="#imageHere"
                                         hx-replace="innerHTML"
                                         class="btn btn-outline-success">view</button>
@@ -48,7 +48,10 @@
                         </td>
                         <td>{{ data.status }}</td>
                         {% if data.status == "Complete" %}
-                            <td>{{ data.student_id }}</td>
+                            <td>
+                                {{ data.student_id }}
+                                {% if not data.student_id %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
+                            </td>
                             <td>{{ data.student_name }}</td>
                             <td>
                                 <button class="btn btn-outline-danger"
