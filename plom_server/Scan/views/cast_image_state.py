@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechntizer
+# Copyright (C) 2023-2024 Andrew Rechntizer
 
 from django_htmx.http import HttpResponseClientRedirect
 from django.shortcuts import render

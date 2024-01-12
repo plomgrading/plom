@@ -276,9 +276,8 @@ class ScanService:
             timestamp=timestamp,
         )
 
-    def get_bundle_pk(self, timestamp, user):
+    def get_bundle_pk(self, timestamp):
         return StagingBundle.objects.get(
-            user=user,
             timestamp=timestamp,
         ).pk
 

@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
+
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
