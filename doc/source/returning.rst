@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
-   Copyright (C) 2020-2023 Colin B. Macdonald
+   Copyright (C) 2020-2024 Colin B. Macdonald
    Copyright (C) 2023 Philip D. Loewen
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -135,6 +135,7 @@ You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
 or you can get it from the Plom source code.
 Copy it to your working directory (where the ``reassembled/`` directory and
 ``marks.csv`` are).
+Make the script executable, e.g., `chmod a+x plom-push-to-canvas.py`.
 
 Make an "API key" for your Canvas account:
 
