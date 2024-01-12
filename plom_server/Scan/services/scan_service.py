@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -12,7 +12,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from typing import Any
+from typing import Any, List
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -276,14 +276,6 @@ class ScanService:
             timestamp=timestamp,
         )
 
-    @transaction.atomic
-    def get_bundle(self, timestamp, user):
-        """Get a bundle from the database from its timestamp and user."""
-        return StagingBundle.objects.get(
-            user=user,
-            timestamp=timestamp,
-        )
-
     def get_bundle_pk(self, timestamp, user):
         return StagingBundle.objects.get(
             user=user,
@@ -291,9 +283,9 @@ class ScanService:
         ).pk
 
     @transaction.atomic
-    def get_image(self, timestamp, user, index):
-        """Get an image from the database from bundle-timestamp, user and index."""
-        bundle = self.get_bundle(timestamp, user)
+    def get_image(self, timestamp, index):
+        """Get an image from the database from bundle-timestamp, and index."""
+        bundle = self.get_bundle_from_timestamp(timestamp)
         return StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
@@ -308,13 +300,13 @@ class ScanService:
         )
 
     @transaction.atomic
-    def get_thumbnail_image(self, timestamp, user, index):
+    def get_thumbnail_image(self, timestamp, index):
         """Get a thubnail image from the database.
 
         To uniquely identify an image, we need a bundle
         (and a timestamp, and user) and a page index
         """
-        bundle_obj = self.get_bundle(timestamp, user)
+        bundle_obj = self.get_bundle_from_timestamp(timestamp)
         img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
         return img.stagingthumbnail
 
@@ -329,9 +321,14 @@ class ScanService:
         return StagingImage.objects.filter(bundle=bundle)
 
     @transaction.atomic
-    def get_user_bundles(self, user):
+    def get_user_bundles(self, user: User) -> List[StagingBundle]:
         """Return all of the staging bundles that the given user uploaded."""
         return list(StagingBundle.objects.filter(user=user))
+
+    @transaction.atomic
+    def get_all_staging_bundles(self) -> List[StagingBundle]:
+        """Return all of the staging bundles."""
+        return list(StagingBundle.objects.all())
 
     def parse_qr_code(self, list_qr_codes):
         """Parse QR codes into list of dictionaries.

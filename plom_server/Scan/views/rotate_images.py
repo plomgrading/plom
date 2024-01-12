@@ -28,7 +28,7 @@ class RotateImageClockwise(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=-90
+                timestamp, index, angle=-90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -49,7 +49,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=90
+                timestamp, index, angle=90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -70,7 +70,7 @@ class RotateImageOneEighty(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=180
+                timestamp, index, angle=180
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -92,7 +92,7 @@ class GetRotatedBundleImageView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        img_obj = scanner.get_image(timestamp, request.user, index)
+        img_obj = scanner.get_image(timestamp, index)
 
         theta = img_obj.rotation
         return HttpResponse(

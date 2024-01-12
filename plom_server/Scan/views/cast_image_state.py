@@ -62,7 +62,7 @@ class KnowifyImageView(ScannerRequiredView):
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
 
         try:
             check_bundle_object_is_neither_locked_nor_pushed(bundle)

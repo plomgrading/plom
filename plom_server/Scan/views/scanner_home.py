@@ -48,10 +48,9 @@ class ScannerHomeView(ScannerRequiredView):
                 "preparation_finished": TestPreparedSetting.is_test_prepared(),
             }
         )
-        user_bundles = scanner.get_user_bundles(user)
         staged_bundles = []
         pushed_bundles = []
-        for bundle in user_bundles:
+        for bundle in scanner.get_all_staging_bundles():
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
             if bundle.has_page_images:
                 cover_img_rotation = scanner.get_first_image(bundle).rotation
@@ -130,7 +129,7 @@ class RemoveBundleView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         scanner._remove_bundle(bundle.pk)
         return HttpResponseClientRefresh()
 
@@ -146,9 +145,7 @@ class GetBundleView(ScannerRequiredView):
 
         scanner = ScanService()
 
-        # TODO: scanner users can only access their own bundles.
-        # The manager should be able to access all the scanner users' bundles?
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         return FileResponse(
             bundle.pdf_file, filename=f"{bundle.slug}.pdf", as_attachment=True
         )
@@ -165,7 +162,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         scanner = ScanService()
 
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -235,7 +232,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         try:
             scanner._remove_bundle(bundle.pk)
         except PlomBundleLockedException:
