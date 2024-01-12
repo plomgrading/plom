@@ -179,18 +179,20 @@ class IdentifyTaskService:
 
         # look to see if that SID has been used in another valid PaperIDAction.
         # if one exists, then be careful to check if we are re-id'ing the current paper with same SID.
-        try:
-            prev_action_with_that_sid = PaperIDAction.objects.filter(
-                is_valid=True, student_id=student_id
-            ).get()
-            if prev_action_with_that_sid != task.latest_action:
-                raise IntegrityError(
-                    f"Student ID {student_id} has already been used in paper "
-                    f"{prev_action_with_that_sid.paperidtask.paper.paper_number}"
-                )
-        except PaperIDAction.DoesNotExist:
-            # The SID has not been used previously.
-            pass
+        # re #2827 - we **skip** this check when the ID is blank
+        if student_id:
+            try:
+                prev_action_with_that_sid = PaperIDAction.objects.filter(
+                    is_valid=True, student_id=student_id
+                ).get()
+                if prev_action_with_that_sid != task.latest_action:
+                    raise IntegrityError(
+                        f"Student ID {student_id} has already been used in paper "
+                        f"{prev_action_with_that_sid.paperidtask.paper.paper_number}"
+                    )
+            except PaperIDAction.DoesNotExist:
+                # The SID has not been used previously.
+                pass
 
         # set the previous action (if it exists) to be invalid
         if task.latest_action:

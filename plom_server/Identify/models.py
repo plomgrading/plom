@@ -55,6 +55,11 @@ class PaperIDAction(BaseAction):
     is_valid = models.BooleanField(default=True)
     student_name = models.TextField(null=True, default="")
     student_id = models.TextField(null=True, default="")
+    # Do not set ID field uniqueness here, since this does not take
+    # into account the fact that we can ignore student-ids in
+    # OUT_OF_DATE tasks. But then we must enforce the uniqueness in
+    # our identify_paper code 'by hand' and take into account blank
+    # IDs (as per #2827) - they can be non-unique.
 
 
 class IDPrediction(models.Model):
