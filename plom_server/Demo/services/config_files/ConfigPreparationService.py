@@ -84,7 +84,8 @@ def upload_classlist(config: PlomServerConfig):
     assert isinstance(classlist_path, Path)
     try:
         with open(classlist_path, "rb") as classlist_f:
-            success, warnings = StagingStudentService.validate_and_use_classlist_csv(
+            sss = StagingStudentService()
+            success, warnings = sss.validate_and_use_classlist_csv(
                 classlist_f, ignore_warnings=True
             )
         if not success:
