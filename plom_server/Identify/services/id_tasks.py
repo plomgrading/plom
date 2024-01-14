@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
-from typing import List, Union
+from __future__ import annotations
 
 from django.contrib.auth.models import User
 from django.core.exceptions import (
@@ -61,7 +61,7 @@ class IdentifyTaskService:
         return PaperIDTask.objects.filter(paper=paper).exists()
 
     @transaction.atomic
-    def get_latest_id_results(self, task: PaperIDTask) -> Union[PaperIDAction, None]:
+    def get_latest_id_results(self, task: PaperIDTask) -> PaperIDAction | None:
         """Return the latest (valid) results from a PaperIDAction instance.
 
         Args:
@@ -75,7 +75,7 @@ class IdentifyTaskService:
         return None
 
     @transaction.atomic
-    def get_done_tasks(self, user: User) -> List:
+    def get_done_tasks(self, user: User) -> list:
         """Retrieve the results of previously completed (and valid) ID tasks for a user.
 
         Args:
@@ -97,7 +97,7 @@ class IdentifyTaskService:
         return id_list
 
     @transaction.atomic
-    def get_id_progress(self) -> List:
+    def get_id_progress(self) -> list:
         """Send back current ID progress counts to the client.
 
         Returns:
@@ -110,7 +110,7 @@ class IdentifyTaskService:
         return [n_completed, n_total]
 
     @transaction.atomic
-    def get_next_task(self) -> Union[PaperIDTask, None]:
+    def get_next_task(self) -> PaperIDTask | None:
         """Return the next available identification task.
 
         Ordered by iding_priority then by paper number.
@@ -179,18 +179,20 @@ class IdentifyTaskService:
 
         # look to see if that SID has been used in another valid PaperIDAction.
         # if one exists, then be careful to check if we are re-id'ing the current paper with same SID.
-        try:
-            prev_action_with_that_sid = PaperIDAction.objects.filter(
-                is_valid=True, student_id=student_id
-            ).get()
-            if prev_action_with_that_sid != task.latest_action:
-                raise IntegrityError(
-                    f"Student ID {student_id} has already been used in paper "
-                    f"{prev_action_with_that_sid.paperidtask.paper.paper_number}"
-                )
-        except PaperIDAction.DoesNotExist:
-            # The SID has not been used previously.
-            pass
+        # re #2827 - we **skip** this check when the ID is blank
+        if student_id:
+            try:
+                prev_action_with_that_sid = PaperIDAction.objects.filter(
+                    is_valid=True, student_id=student_id
+                ).get()
+                if prev_action_with_that_sid != task.latest_action:
+                    raise IntegrityError(
+                        f"Student ID {student_id} has already been used in paper "
+                        f"{prev_action_with_that_sid.paperidtask.paper.paper_number}"
+                    )
+            except PaperIDAction.DoesNotExist:
+                # The SID has not been used previously.
+                pass
 
         # set the previous action (if it exists) to be invalid
         if task.latest_action:
