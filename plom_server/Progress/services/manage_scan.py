@@ -410,9 +410,16 @@ class ManageScanService:
                 "page_type": "mobile",
                 "paper_number": paper_number,
                 "question_list": q_list,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
             }
         elif img.discardpage:  # linked by one-to-one
-            return {"page_type": "discard", "reason": img.discardpage.discard_reason}
+            return {
+                "page_type": "discard",
+                "reason": img.discardpage.discard_reason,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
+            }
         else:
             raise ValueError(
                 "Cannot determine what sort of page image {img_pk} is attached to."

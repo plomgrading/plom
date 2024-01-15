@@ -23,6 +23,8 @@
         <ul>
             <li>Paper: {{ page_info.paper_number }}</li>
             <li>Questions: {{ page_info.question_list }}</li>
+            <li>Bundle: {{ page_info.bundle_name }}</li>
+            <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         <button class="btn btn-danger"
                 hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
@@ -31,6 +33,8 @@
         <ul>
             <li>Discard</li>
             <li>{{ page_info.reason }}</li>
+            <li>Bundle: {{ page_info.bundle_name }}</li>
+            <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         <a href="{% url 'progress_reassign_discard' image_pk %}">
             <button class="btn btn-warning">reassign this discarded image</button>
