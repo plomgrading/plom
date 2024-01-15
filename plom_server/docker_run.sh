@@ -13,7 +13,7 @@ then
     python3 manage.py runserver 0.0.0.0:8000
 else
     python3 manage.py plom_init --no-waiting
-    gunicorn Web_Plom.wsgi.application --bind 0.0.0.0:8000
+    gunicorn Web_Plom.wsgi --bind 0.0.0.0:8000
 fi
 
 # Some stuff for making a basic server
