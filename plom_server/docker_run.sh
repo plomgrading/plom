@@ -7,7 +7,7 @@
 # python3 manage.py plom_demo --no-waiting
 
 # A basic server
-if ["PLOM_DEBUG" = true]
+if ["$PLOM_DEBUG" = true]
 then
     python3 manage.py plom_init --no-waiting
     python3 manage.py runserver 0.0.0.0:8000
