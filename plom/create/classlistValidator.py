@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -161,6 +161,10 @@ class PlomClasslistValidator:
                         f"Paper-number {x[papernum_key]} is not an integer",
                     ]
                 )
+            # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
+            if int(x[papernum_key]) == -1:
+                continue
+            # otherwise store the used papernumber.
             numbers_used[x[papernum_key]].append(x["_src_line"])
         for x, v in numbers_used.items():
             if len(v) > 1:
