@@ -344,6 +344,7 @@ pylint:
     - python3 -m pip install pylint~=3.0.3
   script:
     - pylint plom
+    - pylint plom_server
   allow_failure: true
 
 

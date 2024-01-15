@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import base64
 from io import BytesIO
@@ -262,7 +262,8 @@ class MatplotlibService:
         qlabel = SpecificationService.get_question_label(question)
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
-                ta_name, self.des._get_ta_data_for_question(question_number=question)
+                ta_name,
+                ta_df=self.des._get_ta_data_for_question(question_number=question),
             )
 
         assert isinstance(ta_df, pd.DataFrame)
@@ -344,7 +345,7 @@ class MatplotlibService:
         """
         qlabel = SpecificationService.get_question_label(question_number)
         if marking_times_df is None:
-            marking_times_df = self.ta_df()
+            marking_times_df = self.ta_df
 
         assert isinstance(marking_times_df, pd.DataFrame)
 

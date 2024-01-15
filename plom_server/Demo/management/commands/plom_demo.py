@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 import subprocess
@@ -23,7 +23,7 @@ from ...services import (
     DemoHWBundleService,
     ConfigFileService,
 )
-from ... import config_files as demo_config_files
+from Demo import config_files as demo_config_files
 from Identify.services import IDDirectService
 
 

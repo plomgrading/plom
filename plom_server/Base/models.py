@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
@@ -282,7 +282,7 @@ class Tag(models.Model):
 
     def __str__(self):
         """Return the tag's text."""
-        return self.text
+        return str(self.text)
 
 
 # ---------------------------------
