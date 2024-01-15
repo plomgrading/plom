@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 from textwrap import wrap
@@ -63,8 +63,7 @@ def status(*, msgr):
         sv = SpecVerifier(spec)
         print(sv)
         # maybe above printer should do this?
-        # TODO: Issue #2362, Django does not have
-        # print(f"  Server public code: {spec['publicCode']}")
+        print(f"  Server public code: {spec['publicCode']}")
 
     print("\nUser information")
     print("----------------\n")

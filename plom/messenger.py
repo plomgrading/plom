@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 """Backend bits 'n bobs to talk to a Plom server."""
@@ -260,7 +260,7 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            if self.webplom:
+            if not self.is_legacy_server():
                 url = f"/MK/tasks/available?q={q}&v={v}"
                 if tag:
                     url += f"&tag={tag}"
@@ -268,13 +268,7 @@ class Messenger(BaseMessenger):
                     url += f"&min_paper_num={min_paper_num}"
                 if max_paper_num:
                     url += f"&max_paper_num={max_paper_num}"
-                response = self.get(
-                    url,
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                    },
-                )
+                response = self.get_auth(url)
             else:
                 response = self.get(
                     "/MK/tasks/available",
@@ -415,7 +409,7 @@ class Messenger(BaseMessenger):
             pdict = json.load(f)
         image_md5_list = pdict["base_images"]
 
-        if self.webplom:
+        if not self.is_legacy_server():
             return self._MreturnMarkedTask_webplom(
                 code,
                 pg,

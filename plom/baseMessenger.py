@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
+
+from __future__ import annotations
 
 from io import BytesIO
 import logging
@@ -13,7 +15,6 @@ import threading
 from typing import Any, Dict, Tuple, Union
 
 import requests
-from requests_toolbelt import MultipartDecoder
 import urllib3
 
 from plom import __version__
@@ -21,7 +22,7 @@ from plom import Plom_API_Version
 from plom import Plom_Legacy_Server_API_Version
 from plom import Default_Port
 from plom import undo_json_packing_of_version_map
-from plom.plom_exceptions import PlomBenignException, PlomSeriousException
+from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
@@ -36,10 +37,8 @@ from plom.plom_exceptions import (
     PlomRangeException,
     PlomServerNotReady,
     PlomSSLError,
-    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
-    PlomUnscannedPaper,
 )
 
 log = logging.getLogger("messenger")
@@ -220,6 +219,14 @@ class BaseMessenger:
             json.pop("token")
             kwargs["json"] = json
 
+        return self.session.get(self.base + url, *args, **kwargs)
+
+    def get_auth(self, url, *args, **kwargs):
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        kwargs["headers"] = {"Authorization": f"Token {self.token['token']}"}
         return self.session.get(self.base + url, *args, **kwargs)
 
     def post_raw(self, url, *args, **kwargs):
@@ -419,9 +426,9 @@ class BaseMessenger:
         if self.webplom:
             self._requestAndSaveToken_webplom(user, pw)
         else:
-            self._requestAndSaveToken(user, pw)
+            self._requestAndSaveToken_legacy(user, pw)
 
-    def _requestAndSaveToken(self, user, pw):
+    def _requestAndSaveToken_legacy(self, user, pw):
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -545,18 +552,21 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_spec(self):
+    def get_spec(self) -> dict:
         """Get the specification of the exam from the server.
 
         Returns:
-            dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+            The server's spec, as in :func:`plom.SpecVerifier`.
 
         Exceptions:
             PlomServerNotReady: server does not yet have a spec.
         """
         with self.SRmutex:
             try:
-                response = self.get("/info/spec")
+                if self.is_legacy_server():
+                    response = self.get("/info/spec")
+                else:
+                    response = self.get_auth("/info/spec")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
@@ -1270,7 +1280,6 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
-                # note - slightly different API call for legacy vs webplom
                 if self.is_legacy_server():
                     response = self.get(
                         "/MK/solution",
@@ -1282,10 +1291,7 @@ class BaseMessenger:
                         },
                     )
                 else:
-                    response = self.get(
-                        f"/MK/solution/{question}/{version}",
-                        json={"user": self.user, "token": self.token},
-                    )
+                    response = self.get_auth(f"/MK/solution/{question}/{version}")
 
                 response.raise_for_status()
                 # deprecated: new servers will 404

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Dict, Any
+from __future__ import annotations
+
+from typing import Any
 
 from django.contrib.auth.models import update_last_login
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,10 +38,7 @@ class GetSpecification(APIView):
         (400) spec not found
     """
 
-    # TODO: remove for Issue #2909
-    permission_classes = [AllowAnyReadOnly]
-
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         if not SpecificationService.is_there_a_spec():
             return _error_response(
                 "Server does not have a spec", status.HTTP_400_BAD_REQUEST
@@ -78,7 +77,7 @@ class ServerInfo(APIView):
     permission_classes = [AllowAnyReadOnly]
 
     def get(self, request: Request) -> Response:
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "product_string": "Plom Server",
             "version": __version__,
             "API_version": Plom_API_Version,
@@ -97,9 +96,9 @@ class ExamInfo(APIView):
     """
 
     def get(self, request: Request) -> Response:
-        # TODO: hardcoded, and needs more info
+        # TODO: hardcoded, and needs more info, Issue #2938
         # TODO: suggest progress info here too
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "current_largest_paper_num": 9999,
         }
         return Response(info)

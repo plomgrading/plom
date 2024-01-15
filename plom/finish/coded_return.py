@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2023 Colin B. Macdonald
+# Copyright (C) 2018-2024 Colin B. Macdonald
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -11,8 +11,6 @@ import sys
 import shutil
 from pathlib import Path
 
-# actually BaseMessenger would work
-from plom.messenger import ManagerMessenger
 from plom.rules import isValidStudentNumber, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
@@ -52,10 +50,24 @@ def copy_soln_files(shortname, todir, sns):
             print("No solution file for student id = {}".format(sid))
 
 
-def make_coded_return_webpage(use_hex, digits, salt=None, server=None, solutions=False):
+def make_coded_return_webpage(
+    shortname: str,
+    *,
+    longname: str = "Plom Assessment",
+    use_hex: bool = True,
+    digits: int = 9,
+    salt=None,
+    solutions=False,
+) -> None:
     """Make the secret codes and the return-code webpage.
 
     Args:
+        shortname: an abbreviated name for the assessment being returned.
+
+    Keyword Args:
+        longname: a human-readable name for this assessment.  We will
+            escape parts of it as appropriate for HTML.  If omitted,
+            defaults to "Plom Assessment".
         use_hex (bool): use random hex digits, otherwise an integer
             without leading zeros.
         digits (int): length of secret code.
@@ -63,17 +75,11 @@ def make_coded_return_webpage(use_hex, digits, salt=None, server=None, solutions
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
         solutions (bool): add a solutions link to the website
-        server (str/None): server to contact or None for default
-            (probably localhost).
-    """
-    msgr = ManagerMessenger(server)
-    msgr.start()
 
-    spec = msgr.get_spec()
-    # Can also get spec via filesystem
-    # spec = SpecVerifier.load_verified()
-    shortname = spec["name"]
-    longname = html.escape(spec["longName"])
+    Returns:
+        None.
+    """
+    longname = html.escape(longname)
     codedReturnDir = Path("codedReturn")
 
     reassembles = ["reassembled", "reassembled_ID_but_not_marked"]
