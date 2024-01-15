@@ -84,7 +84,9 @@ class QuestionMarkingService:
         self.annotation_image_md5sum = annotation_image_md5sum
 
     @transaction.atomic
-    def get_first_available_task(self) -> Optional[MarkingTask]:
+    def get_first_available_task(
+        self, *, exclude_tagged_for_others: bool = True
+    ) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
@@ -96,6 +98,11 @@ class QuestionMarkingService:
 
         The results are sorted by priority.
         If the priority is the same, defer to paper number and then question number.
+
+        Keyword Args:
+            exclude_tagged_for_others: don't return papers that are
+                tagged for users other than the one in ``self.user``,
+                true by default.
 
         Returns:
             A reference to the first available task, or
@@ -117,6 +124,11 @@ class QuestionMarkingService:
 
         if self.tag:
             available = available.filter(markingtasktag__text__in=[self.tag])
+
+        if exclude_tagged_for_others:
+            users = User.objects.all()
+            other_user_tags = [f"@{u}" for u in users if u != self.user]
+            available = available.exclude(markingtasktag__text__in=other_user_tags)
 
         if not available.exists():
             return None
