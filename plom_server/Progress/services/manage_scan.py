@@ -394,6 +394,8 @@ class ManageScanService:
                 "page_type": "fixed",
                 "paper_number": fp_obj.paper.paper_number,
                 "page_number": fp_obj.page_number,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
             }
         elif img.mobilepage_set.exists():  # linked by foreign key
             # check the first such mobile page to get the paper_number
