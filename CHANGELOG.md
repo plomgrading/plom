@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * switch client dependency from `appdirs` to `platformdirs`.
 
 ### Fixed
-
+* `-1` as papernum wasn't worked for input classlists.
 
 
 ## [0.14.8] - 2024-01-04
