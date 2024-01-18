@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 from pathlib import Path
 import tempfile
@@ -71,14 +71,14 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
-    def delete(self, request):
+    def delete(self, request) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
