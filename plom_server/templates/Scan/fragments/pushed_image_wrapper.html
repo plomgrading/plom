@@ -1,8 +1,27 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
--->
-<img src="{% url 'scan_rotated_pushed_img' image_pk %} "
-     style="max-height: 100%;
-            max-width: 100%" />
+  -->
+<div>
+    <img src="{% url 'scan_rotated_pushed_img' image_pk %} "
+         style="height: 55vh" />
+</div>
+<div class="m-2">
+    {% if page_info.page_type == 'fixed' %}
+        <ul>
+            <li>Paper: {{ page_info.paper_number }}</li>
+            <li>Page: {{ page_info.page_number }}</li>
+            <li>Bundle: {{ page_info.bundle_name }}</li>
+            <li>Bundle-order: {{ page_info.bundle_order }}</li>
+        </ul>
+    {% elif page_info.page_type == 'mobile' %}
+        <ul>
+            <li>Paper: {{ page_info.paper_number }}</li>
+            <li>Questions: {{ page_info.question_list }}</li>
+            <li>Bundle: {{ page_info.bundle_name }}</li>
+            <li>Bundle-order: {{ page_info.bundle_order }}</li>
+        </ul>
+    {% else %}
+    {% endif %}
+</div>

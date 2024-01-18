@@ -114,6 +114,8 @@ class Command(BaseCommand):
         if options["no_waiting"]:
             return
 
+        huey_worker_proc = None
+        server_proc = None
         try:
             # launch Huey queue in the background
             huey_worker_proc = proc_service.launch_huey_workers()
@@ -124,5 +126,7 @@ class Command(BaseCommand):
             # wait for the user to quit, then end the background processes
             self.wait_for_exit()
         finally:
-            huey_worker_proc.terminate()
-            server_proc.terminate()
+            if huey_worker_proc is not None:
+                huey_worker_proc.terminate()
+            if server_proc is not None:
+                server_proc.terminate()

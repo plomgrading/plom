@@ -4,8 +4,11 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
 
-from typing import List, Dict, Any
+from __future__ import annotations
+
+from typing import Any
 
 import arrow
 
@@ -382,7 +385,7 @@ class ManageScanService:
             return None
 
     @transaction.atomic
-    def get_pushed_image_page_info(self, img_pk) -> Dict[str, Any]:
+    def get_pushed_image_page_info(self, img_pk: int) -> dict[str, Any]:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
@@ -394,6 +397,8 @@ class ManageScanService:
                 "page_type": "fixed",
                 "paper_number": fp_obj.paper.paper_number,
                 "page_number": fp_obj.page_number,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
             }
         elif img.mobilepage_set.exists():  # linked by foreign key
             # check the first such mobile page to get the paper_number
@@ -408,9 +413,16 @@ class ManageScanService:
                 "page_type": "mobile",
                 "paper_number": paper_number,
                 "question_list": q_list,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
             }
         elif img.discardpage:  # linked by one-to-one
-            return {"page_type": "discard", "reason": img.discardpage.discard_reason}
+            return {
+                "page_type": "discard",
+                "reason": img.discardpage.discard_reason,
+                "bundle_name": img.bundle.name,
+                "bundle_order": img.bundle_order,
+            }
         else:
             raise ValueError(
                 "Cannot determine what sort of page image {img_pk} is attached to."
@@ -439,11 +451,11 @@ class ManageScanService:
         return discards
 
     @transaction.atomic
-    def get_pages_images_in_paper(self, paper_number: int) -> List[Dict]:
+    def get_pages_images_in_paper(self, paper_number: int) -> list[dict[str, Any]]:
         """Return the fixed/mobile pages in the paper and their images.
 
         Args:
-            paper_number (int): paper ID
+            paper_number: which paper.
 
         Returns:
             List of the fixed pages and mobile pages in

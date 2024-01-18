@@ -202,8 +202,9 @@ extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
-# TODO: lots of these in plom/db
-disable = ["not-an-iterable"]
+# TODO: lots of not-an-iterable in plom/db
+# TODO: lots of no-member in plom_server
+disable = ["not-an-iterable", "no-member"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
 ignored-modules = ["tensorflow", "api_secrets"]

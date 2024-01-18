@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import reverse
 from django.http import Http404, HttpResponse
@@ -28,7 +28,7 @@ class RotateImageClockwise(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=-90
+                timestamp, index, angle=-90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -49,7 +49,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=90
+                timestamp, index, angle=90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -70,7 +70,7 @@ class RotateImageOneEighty(ScannerRequiredView):
 
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, angle=180
+                timestamp, index, angle=180
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
@@ -92,7 +92,7 @@ class GetRotatedBundleImageView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        img_obj = scanner.get_image(timestamp, request.user, index)
+        img_obj = scanner.get_image(timestamp, index)
 
         theta = img_obj.rotation
         return HttpResponse(

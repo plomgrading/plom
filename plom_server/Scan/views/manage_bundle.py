@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import Http404, FileResponse
@@ -21,7 +21,7 @@ class GetBundleImageView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        image = scanner.get_image(timestamp, request.user, index)
+        image = scanner.get_image(timestamp, index)
 
         return FileResponse(image.image_file)
 
@@ -36,7 +36,7 @@ class BundleThumbnailView(ScannerRequiredView):
         """
         context = super().build_context()
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         n_pages = scanner.get_n_images(bundle)
         known_pages = scanner.get_n_known_images(bundle)
         unknown_pages = scanner.get_n_unknown_images(bundle)
@@ -95,7 +95,7 @@ class GetBundleThumbnailView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        image = scanner.get_thumbnail_image(timestamp, request.user, index)
+        image = scanner.get_thumbnail_image(timestamp, index)
 
         return FileResponse(image.image_file)
 
@@ -112,7 +112,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         n_pages = scanner.get_n_images(bundle)
 
         if index < 0 or index > n_pages:
@@ -156,6 +156,6 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 class BundleLockView(ScannerRequiredView):
     def get(self, request, timestamp):
         context = self.build_context()
-        bundle = ScanService().get_bundle(timestamp, request.user)
+        bundle = ScanService().get_bundle_from_timestamp(timestamp)
         context.update({"slug": bundle.slug})
         return render(request, "Scan/bundle_is_locked.html", context)
