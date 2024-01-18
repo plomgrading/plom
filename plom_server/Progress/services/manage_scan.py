@@ -4,8 +4,11 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
 
-from typing import List, Dict, Any
+from __future__ import annotations
+
+from typing import Any
 
 import arrow
 
@@ -382,7 +385,7 @@ class ManageScanService:
             return None
 
     @transaction.atomic
-    def get_pushed_image_page_info(self, img_pk) -> Dict[str, Any]:
+    def get_pushed_image_page_info(self, img_pk: int) -> dict[str, Any]:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
@@ -448,11 +451,11 @@ class ManageScanService:
         return discards
 
     @transaction.atomic
-    def get_pages_images_in_paper(self, paper_number: int) -> List[Dict]:
+    def get_pages_images_in_paper(self, paper_number: int) -> list[dict[str, Any]]:
         """Return the fixed/mobile pages in the paper and their images.
 
         Args:
-            paper_number (int): paper ID
+            paper_number: which paper.
 
         Returns:
             List of the fixed pages and mobile pages in
