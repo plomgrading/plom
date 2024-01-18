@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import FileResponse
@@ -67,6 +67,11 @@ class ScannerPushedImageWrapView(ScannerRequiredView):
 
     def get(self, request, img_pk):
         pushed_img = ManageScanService().get_pushed_image(img_pk)
+        pushed_img_page_info = ManageScanService().get_pushed_image_page_info(img_pk)
         # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
-        context = {"image_pk": img_pk, "angle": -pushed_img.rotation}
+        context = {
+            "image_pk": img_pk,
+            "angle": -pushed_img.rotation,
+            "page_info": pushed_img_page_info,
+        }
         return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
