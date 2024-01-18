@@ -66,8 +66,9 @@ with the orientation code being similar to that used for the TPV
   * 4,8 SE
 """
 
+from __future__ import annotations
+
 import random
-from typing import Tuple, Union
 
 
 def isValidTPV(tpv: str) -> bool:
@@ -98,7 +99,7 @@ def isValidExtraPage(tpv: str) -> bool:
     return False
 
 
-def parseTPV(tpv: str) -> Tuple[int, int, int, str, str]:
+def parseTPV(tpv: str) -> tuple[int, int, int, str, str]:
     """Parse a TPV string (typically from a QR-code).
 
     Args:
@@ -174,7 +175,7 @@ def getPaperPageVersion(tpv: str) -> str:
     return tpv[0:11]
 
 
-def parse_paper_page_version(ppv: str) -> Tuple[int, int, int]:
+def parse_paper_page_version(ppv: str) -> tuple[int, int, int]:
     """Parse string "TTTTTPPPVVV" into paper-number, page-number, version triple.
 
     Args:
@@ -204,9 +205,7 @@ def getCode(tpv: str) -> str:
     return parseTPV(tpv)[3]
 
 
-def encodePaperPageVersion(
-    paper_number: Union[str, int], p: Union[str, int], v: Union[str, int]
-) -> str:
+def encodePaperPageVersion(paper_number: str | int, p: str | int, v: str | int) -> str:
     """Encode three values as the short paper-page-version code.
 
     Typically used for collision detection.
@@ -237,11 +236,7 @@ def encodePaperPageVersion(
 
 
 def encodeTPV(
-    test: Union[int, str],
-    p: Union[int, str],
-    v: Union[int, str],
-    o: Union[int, str],
-    code: Union[int, str],
+    test: int | str, p: int | str, v: int | str, o: int | str, code: int | str
 ) -> str:
     """Encode some values as a TPV code.
 
@@ -333,13 +328,13 @@ def isValidScrapPaperCode(code: str) -> bool:
     return False
 
 
-def encodeExtraPageCode(orientation: Union[str, int]) -> str:
+def encodeExtraPageCode(orientation: str | int) -> str:
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomX{orientation}"
 
 
-def encodeScrapPaperCode(orientation: Union[str, int]) -> str:
+def encodeScrapPaperCode(orientation: str | int) -> str:
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomS{orientation}"
