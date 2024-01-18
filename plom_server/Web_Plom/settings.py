@@ -35,7 +35,7 @@ else:
     SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("PLOM_DEBUG_MODE") or True
+DEBUG = os.environ.get("PLOM_DEBUG") or True
 
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
