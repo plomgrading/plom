@@ -132,12 +132,31 @@ class CloseUser(APIView):
 
 
 class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
-    """Overrides the DRF auth-token creator so that it updates the user last_login field."""
+    """Overrides the DRF auth-token creator so that it updates the user last_login field, and does an API version check."""
 
     # Idea from
     # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
     # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
     def post(self, request, *args, **kwargs):
+        print(request.data)
+        # TODO: probably serializer supposed to do something but ain't nobody got time for that
+        client_api = request.data.get("api")
+        client_ver = request.data.get("client_ver")
+        if not client_api:
+            # TODO: how to log in django?
+            # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
+            return _error_response(
+                "Client did not report their API version", status.HTTP_400_BAD_REQUEST
+            )
+
+        if not client_ver:
+            # TODO: how to log in django?
+            # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
+            return _error_response(
+                "Client did not report their version", status.HTTP_400_BAD_REQUEST
+            )
+
+        print(f"login from client {client_ver} that speaks API {client_api}")
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )

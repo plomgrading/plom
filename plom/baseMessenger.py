@@ -468,6 +468,8 @@ class BaseMessenger:
             json={
                 "username": user,
                 "password": pw,
+                "api": Plom_API_Version,
+                "client_ver": __version__,
             },
             timeout=5,
         )
