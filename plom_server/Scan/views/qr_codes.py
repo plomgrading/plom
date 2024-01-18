@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.http import Http404
@@ -21,7 +21,7 @@ class ReadQRcodesView(ScannerRequiredView):
             return Http404()
 
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
         scanner.read_qr_codes(bundle.pk)
 
         return HttpResponseClientRefresh()

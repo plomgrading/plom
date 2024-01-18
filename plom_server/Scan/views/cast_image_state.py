@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechntizer
+# Copyright (C) 2023-2024 Andrew Rechntizer
 
 from django_htmx.http import HttpResponseClientRedirect
 from django.shortcuts import render
@@ -62,7 +62,7 @@ class KnowifyImageView(ScannerRequiredView):
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
 
         try:
             check_bundle_object_is_neither_locked_nor_pushed(bundle)

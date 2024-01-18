@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
 -->
@@ -81,6 +81,7 @@
                         <!-- make sure thumbnail not too wide -->
                         <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
+                        <th>Uploaded by</th>
                         <th>Upload time</th>
                         <th>Pages</th>
                         <th>Actions</th>
@@ -110,6 +111,7 @@
                         <!-- make sure thumbnail not too wide -->
                         <th style="width: 8vw;">Thumbnail</th>
                         <th>Bundle name</th>
+                        <th>Uploaded by</th>
                         <th>Pages</th>
                         <th>Actions</th>
                     </thead>
@@ -122,6 +124,7 @@
                                     </div>
                                 </td>
                                 <td>{{ bundle.slug }}.pdf</td>
+                                <td>{{ bundle.username }}</td>
                                 <td>{{ bundle.pages }}</td>
                                 <td>
                                     <a class="btn btn-success"

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
@@ -144,19 +144,23 @@ class DemoCreationService:
     def upload_bundles(self, number_of_bundles=3, homework_bundles={}):
         bundle_names = [f"fake_bundle{n+1}.pdf" for n in range(number_of_bundles)]
         # these will be messed with before upload via the --demo toggle
+        # the bundle uploader altinates between demoScanner1 and demoScanner2
+        dscan = 1
         for bname in bundle_names:
-            cmd = f"plom_staging_bundles upload demoScanner{1} {bname} --demo"
+            cmd = f"plom_staging_bundles upload demoScanner{dscan} {bname} --demo"
             py_man_cmd = f"python3 manage.py {cmd}"
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
+            dscan = 3 - dscan  # alternate 1-2-1-2-1-2 etc
         # we don't want to mess with these - just upload them
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]
             bundle_name = f"fake_hw_bundle_{paper_number}.pdf"
-            cmd = f"plom_staging_bundles upload demoScanner{1} {bundle_name}"
+            cmd = f"plom_staging_bundles upload demoScanner{dscan} {bundle_name}"
             py_man_cmd = f"python3 manage.py {cmd}"
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
+            dscan = 3 - dscan  # alternate 1-2-1-2-1-2 etc
 
     def wait_for_upload(self, number_of_bundles=3, homework_bundles={}):
         bundle_names = [f"fake_bundle{n+1}" for n in range(number_of_bundles)]

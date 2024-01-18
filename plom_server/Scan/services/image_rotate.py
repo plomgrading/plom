@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -17,7 +17,6 @@ class ImageRotateService:
     @transaction.atomic
     def rotate_image_from_bundle_timestamp_and_order(
         self,
-        user_obj,
         bundle_timestamp,
         bundle_order,
         angle,
@@ -25,7 +24,6 @@ class ImageRotateService:
         """A wrapper around rotate_image_cmd.
 
         Args:
-            user_obj: (obj) An instead of a django user.
             bundle_timestamp: (float) The timestamp of the bundle.
             bundle_order: (int) Bundle order of a page.
 

@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
+
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
@@ -14,7 +16,7 @@ class Command(BaseCommand):
     """Create canned demo users, for demos and testing.
 
     This is the command for "python manage.py plom_create_demo_users"
-    It creates demo users such as 1 manager, 5 scanners and 5 markers.
+    It creates demo users such as 1 manager, 3 scanners and 8 markers.
     Then, add the users to their respective group.
     This command also prints a table with a list of the demo users and
     passwords.
@@ -29,7 +31,8 @@ class Command(BaseCommand):
                 "to create groups first before running this command!\n"
             )
         else:
-            range_of_scanners_markers = 5
+            range_of_scanners = 3
+            range_of_markers = 8
             admin_group = Group.objects.get(name="admin")
             manager_group = Group.objects.get(name="manager")
             marker_group = Group.objects.get(name="marker")
@@ -91,43 +94,43 @@ class Command(BaseCommand):
             manager_info["Username"].append("manager")
             manager_info["Password"].append("1234")
 
-            # Here is to create 5 scanners and markers
-            for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
-                scanner_username = scanner + str(number_of_scanner_marker)
+            # create scanners
+            for number_of_scanner in range(1, range_of_scanners + 1):
+                scanner_username = scanner + str(number_of_scanner)
                 scanner_password = scanner_username
                 scanner_info["Username"].append(scanner_username)
                 scanner_info["Password"].append(scanner_password)
-
-                marker_username = marker + str(number_of_scanner_marker)
-                marker_password = marker_username
-                marker_info["Username"].append(marker_username)
-                marker_info["Password"].append(marker_password)
-
                 if scanner_username in exist_usernames:
                     self.stderr.write(f"{scanner_username} already exists!")
                 else:
-                    User.objects.create_user(
+                    user = User.objects.create_user(
                         username=scanner_username,
                         email=scanner_username + email,
                         password=scanner_password,
-                    ).groups.add(scanner_group, demo_group)
-                    user = User.objects.get(username=scanner_username)
+                    )
+                    user.groups.add(scanner_group, demo_group)
                     user.is_active = True
                     user.save()
 
                     self.stdout.write(
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
+            # create markers
+            for number_of_marker in range(1, range_of_markers + 1):
+                marker_username = marker + str(number_of_marker)
+                marker_password = marker_username
+                marker_info["Username"].append(marker_username)
+                marker_info["Password"].append(marker_password)
 
                 if marker_username in exist_usernames:
                     self.stderr.write(f"{marker_username} already exists!")
                 else:
-                    User.objects.create_user(
+                    user = User.objects.create_user(
                         username=marker_username,
                         email=marker_username + email,
                         password=marker_password,
-                    ).groups.add(marker_group, demo_group)
-                    user = User.objects.get(username=marker_username)
+                    )
+                    user.groups.add(marker_group, demo_group)
                     user.is_active = True
                     user.save()
 
