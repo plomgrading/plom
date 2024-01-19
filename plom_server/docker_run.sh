@@ -7,13 +7,13 @@
 # python3 manage.py plom_demo --no-waiting
 
 # A basic server
-if [ "$PLOM_DEBUG" = true ]
+if [ -n "$PLOM_DEBUG" ]
 then
     python3 manage.py plom_init --no-waiting
-    python3 manage.py runserver 0.0.0.0:8000
+    gunicorn Web_Plom.wsgi --bind 0.0.0.0:8000
 else
     python3 manage.py plom_init --no-waiting
-    gunicorn Web_Plom.wsgi --bind 0.0.0.0:8000
+    python3 manage.py runserver 0.0.0.0:8000
 fi
 
 # Some stuff for making a basic server
