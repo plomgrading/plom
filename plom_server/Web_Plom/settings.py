@@ -37,8 +37,11 @@ else:
 # SECURITY WARNING: don't run with debug turned on in production!
 # Some basic type-checking - PLOM_DEBUG must either be the string "0" or "1"
 # Any values like "True", "False", "false", etc will be treated as truthy strings, i.e. "1"
+# If it isn't set - i.e. None, default to keeping debug mode on
 debug_setting = os.environ.get("PLOM_DEBUG")
-if debug_setting is not None and debug_setting.isdigit() and int(debug_setting) == 0:
+if debug_setting is None:
+    DEBUG = True
+elif debug_setting.isdigit() and int(debug_setting) == 0:
     DEBUG = False
 else:
     DEBUG = True
