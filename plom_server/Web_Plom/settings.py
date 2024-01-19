@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022-2024 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
@@ -28,12 +28,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
+env_secret_key = os.environ.get("PLOM_SECRET_KEY")
+if env_secret_key:
+    SECRET_KEY = env_secret_key
+else:
+    SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Some basic type-checking - PLOM_DEBUG must either be the string "0" or "1"
+# Any values like "True", "False", "false", etc will be treated as truthy strings, i.e. "1"
+# If it isn't set - i.e. None, default to keeping debug mode on
+debug_setting = os.environ.get("PLOM_DEBUG")
+if debug_setting is None:
+    DEBUG = True
+elif debug_setting.isdigit() and int(debug_setting) == 0:
+    DEBUG = False
+else:
+    DEBUG = True
 
-ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
+env_hostname = os.environ.get("PLOM_HOSTNAME")
+if env_hostname:
+    ALLOWED_HOSTS = [env_hostname]
+else:
+    ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
 
 
 # Application definition
