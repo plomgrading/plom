@@ -38,7 +38,7 @@ else:
 # Some basic type-checking - PLOM_DEBUG must either be the string "0" or "1"
 # Any values like "True", "False", "false", etc will be treated as truthy strings, i.e. "1"
 debug_setting = os.environ.get("PLOM_DEBUG")
-if debug_setting.isdigit() and int(debug_setting) == 0:
+if debug_setting is not None and debug_setting.isdigit() and int(debug_setting) == 0:
     DEBUG = False
 else:
     DEBUG = True
