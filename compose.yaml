@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023-2024 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 services:
@@ -25,10 +25,9 @@ services:
     expose:
       - 8000
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
-    # mount a local dir for storage
-    # TODO: those on Fedora, might need a :z at the end
-    # volumes:
-    #   - ./my_exam:/exam:z
+    volumes:
+      - plom_media:/exam/
+    # - ./my_exam:/exam:z   # mount local dir
     depends_on:
       - postgres
     environment:
@@ -44,5 +43,7 @@ services:
       - "POSTGRES_USER=postgres"
       - "POSTGRES_PASSWORD=postgres"
 
+# Use `docker volume ls` and `docker inspect <name>` to find where it is on the host
 volumes:
   postgres_data:
+  plom_media:
