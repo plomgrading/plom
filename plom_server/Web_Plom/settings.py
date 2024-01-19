@@ -14,12 +14,13 @@ For more information on this file, see
 https://docs.djangoproject.com/en/4.0/topics/settings/
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
 
-# Yuck, replace this below when we drop Python 3.8 support
-from typing import Dict, Any
+from typing import Any
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -280,7 +281,7 @@ MAX_BUNDLE_SIZE = 1e9
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
 
-LOGGING: Dict[str, Any] = {
+LOGGING: dict[str, Any] = {
     "version": 1,
     "handlers": {
         "console": {
