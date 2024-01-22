@@ -52,11 +52,18 @@ else:
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
+    CSRF_TRUSTED_ORIGINS = ["https://" + env_hostname + ":8443"]
 else:
     ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
+    CSRF_TRUSTED_ORIGINS = ["https://localhost:8443"]
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:1300"]
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+print(ALLOWED_HOSTS)
+print(CSRF_TRUSTED_ORIGINS)
 
 # Application definition
 

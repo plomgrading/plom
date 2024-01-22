@@ -6,15 +6,15 @@ services:
   nginx:
     build: ./nginx
     ports:
-      - 1300:80
+      - 8443:443
     depends_on:
       - web
   web:
-    image: "plomgrading/server"
+    # image: "plomgrading/server"
     # Use in-tree code by replacing image: with build:
-    # build:
-    #   context: .
-    #   dockerfile: Containerfile.bulk
+    build:
+      context: .
+      dockerfile: Containerfile.bulk
     # TODO: Support port from an env var
     # ports:
     #   - ${PORT}:8000
@@ -33,6 +33,7 @@ services:
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
+      - "PLOM_HOSTNAME=x1c10.lan"
   postgres:
     image: postgres:13
     volumes:
