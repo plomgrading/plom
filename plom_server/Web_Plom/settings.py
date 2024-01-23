@@ -69,8 +69,6 @@ else:
 # USE_X_FORWARDED_PORT = True
 # SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-print(ALLOWED_HOSTS)
-print(CSRF_TRUSTED_ORIGINS)
 
 # Application definition
 
