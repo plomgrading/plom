@@ -12,6 +12,7 @@ services:
     depends_on:
       - web
   web:
+    # Use the released version: temporarily not the default
     # image: "plomgrading/server"
     # Use in-tree code by replacing image: with build:
     build:
