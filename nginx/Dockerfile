@@ -7,4 +7,5 @@ FROM nginx:1.25.1-alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY default.conf /etc/nginx/conf.d
+# TODO: better to use a volume mount?
 COPY plom-selfsigned.crt plom-selfsigned.key /etc/ssl/private/
