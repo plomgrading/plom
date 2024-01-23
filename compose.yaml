@@ -17,11 +17,6 @@ services:
     build:
       context: .
       dockerfile: Containerfile.bulk
-    # TODO: Support port from an env var
-    # ports:
-    #   - ${PORT}:8000
-    # expose:
-    #   - ${PORT}
     ports:
       - 8000:8000
     expose:
