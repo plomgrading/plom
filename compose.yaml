@@ -34,6 +34,7 @@ services:
       # - "PLOM_HOSTNAME=x1c10.lan"
       # must match nginx's config above, not needed if running on 80/443?
       - "PLOM_PUBLIC_FACING_PORT=8443"
+      - "PLOM_PUBLIC_FACING_SCHEME=https"
   postgres:
     image: postgres:13
     volumes:

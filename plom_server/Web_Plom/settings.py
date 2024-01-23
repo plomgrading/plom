@@ -55,13 +55,16 @@ _port = ""
 if env_port:
     _port = f":{env_port}"
 
+# TODO: ditto!
+_scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
+
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
-    CSRF_TRUSTED_ORIGINS = [f"https://{env_hostname}{_port}"]
+    CSRF_TRUSTED_ORIGINS = [f"{_scheme}://{env_hostname}{_port}"]
 else:
     ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
-    CSRF_TRUSTED_ORIGINS = [f"https://localhost{_port}"]
+    CSRF_TRUSTED_ORIGINS = [f"{_scheme}://localhost{_port}"]
 
 # I think these are supposed to help with generated URLs (such as initial login links)
 # working.  It didn't seem to help for me.  Issue #3246 tracks this.
