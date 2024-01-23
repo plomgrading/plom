@@ -57,10 +57,11 @@ else:
     ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
     CSRF_TRUSTED_ORIGINS = ["https://localhost:8443"]
 
-USE_X_FORWARDED_HOST = True
-USE_X_FORWARDED_PORT = True
-
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# I think these are supposed to help with generated URLs (such as initial login links)
+# working.  It didn't seem to help for me.  Issue #3246 tracks this.
+# USE_X_FORWARDED_HOST = True
+# USE_X_FORWARDED_PORT = True
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 print(ALLOWED_HOSTS)
 print(CSRF_TRUSTED_ORIGINS)
