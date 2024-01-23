@@ -49,13 +49,19 @@ elif debug_setting.isdigit() and int(debug_setting) == 0:
 else:
     DEBUG = True
 
+# TODO: it bothers me that we need to know this, probably can be omitted if its 443
+env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
+_port = ""
+if env_port:
+    _port = f":{env_port}"
+
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
-    CSRF_TRUSTED_ORIGINS = ["https://" + env_hostname + ":8443"]
+    CSRF_TRUSTED_ORIGINS = [f"https://{env_hostname}{_port}"]
 else:
     ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
-    CSRF_TRUSTED_ORIGINS = ["https://localhost:8443"]
+    CSRF_TRUSTED_ORIGINS = [f"https://localhost{_port}"]
 
 # I think these are supposed to help with generated URLs (such as initial login links)
 # working.  It didn't seem to help for me.  Issue #3246 tracks this.

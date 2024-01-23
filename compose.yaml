@@ -33,8 +33,10 @@ services:
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
-    # If you want a hostname other than "localhost"
-    # - "PLOM_HOSTNAME=x1c10.lan"
+      # If you want a hostname other than "localhost"
+      # - "PLOM_HOSTNAME=x1c10.lan"
+      # must match nginx's config above, not needed if running on 443?
+      - "PLOM_PUBLIC_FACING_PORT=8443"
   postgres:
     image: postgres:13
     volumes:
