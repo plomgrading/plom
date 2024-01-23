@@ -21,10 +21,11 @@ services:
     #   context: .
     #   dockerfile: Containerfile.bulk
 
-    ports:
-      - 8000:8000
-    expose:
-      - 8000
+    # Optionally, expose django server directly, e.g., for dev work
+    # ports:
+    #   - 8000:8000
+    # expose:
+    #   - 8000
 
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
 
