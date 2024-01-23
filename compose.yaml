@@ -33,7 +33,8 @@ services:
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
-      - "PLOM_HOSTNAME=x1c10.lan"
+    # If you want a hostname other than "localhost"
+    # - "PLOM_HOSTNAME=x1c10.lan"
   postgres:
     image: postgres:13
     volumes:
