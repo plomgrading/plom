@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import Http404, FileResponse
@@ -26,17 +27,17 @@ class GetBundleImageView(ScannerRequiredView):
         return FileResponse(image.image_file)
 
 
-class BundleThumbnailView(ScannerRequiredView):
-    def build_context(self, timestamp, user):
+class ScanBundleThumbnailsView(ScannerRequiredView):
+    def build_context(self, bundle_id: int, user):
         """Build a context for a particular page of a bundle.
 
         Args:
-            timestamp (float): select a bundle by its timestamp.
-            user (todo): which user.
+            bundle_id: which bundle.
+            user: which user.
         """
         context = super().build_context()
         scanner = ScanService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
         n_pages = scanner.get_n_images(bundle)
         known_pages = scanner.get_n_known_images(bundle)
         unknown_pages = scanner.get_n_unknown_images(bundle)
@@ -57,7 +58,7 @@ class BundleThumbnailView(ScannerRequiredView):
             {
                 "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
-                "timestamp": timestamp,
+                "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
@@ -72,13 +73,8 @@ class BundleThumbnailView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
-        context = self.build_context(timestamp, request.user)
+    def get(self, request, bundle_id: int):
+        context = self.build_context(bundle_id, request.user)
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
 

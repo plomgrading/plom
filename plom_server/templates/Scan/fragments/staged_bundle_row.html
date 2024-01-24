@@ -1,13 +1,14 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 {% load static %}
 <td>
     <div class="bundle-thumb">
         {% if not has_been_processed or is_mid_qr_read %}
             <img src="{% static 'ball_triangle.svg' %}"
-                 hx-get="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+                 hx-get="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                  hw-swap="innerHTML"
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
@@ -109,7 +110,7 @@
             </span>
             {% if has_been_processed %}
                 <a class="btn btn-success"
-                   href="{% url 'scan_bundle_thumbnails' timestamp %}">View</a>
+                   href="{% url 'scan_bundle_thumbnails' bundle_id %}">View</a>
                 {% if has_qr_codes %}
                     <span>
                         {% if is_perfect %}
@@ -135,14 +136,14 @@
                 {% elif is_mid_qr_read %}
                 {% else %}
                     <button class="btn btn-info"
-                            hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}">Read QR</button>
+                            hx-post="{% url 'scan_get_staged_bundle_fragment' bundle_id %}">Read QR</button>
                 {% endif %}
             {% endif %}
             <a class="btn btn-secondary"
                target="_"
                href="{% url 'scan_get_bundle' timestamp %}">Download</a>
             <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
-               hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
+               hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                hx-confirm="Are you sure?">Remove</a>
         </div>
     </div>

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechntizer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django_htmx.http import HttpResponseClientRedirect
 from django.shortcuts import render
@@ -23,6 +24,9 @@ class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
         try:
             ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -33,7 +37,7 @@ class DiscardImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
@@ -41,6 +45,9 @@ class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
         try:
             ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -51,7 +58,7 @@ class UnknowifyImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
@@ -136,6 +143,9 @@ class KnowifyImageView(ScannerRequiredView):
                 """<div class="alert alert-danger">Select a page</div>"""
             )
 
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
         try:
             ScanCastService().knowify_image_from_bundle_timestamp_and_order(
                 request.user, timestamp, index, paper_number, page_number
@@ -148,7 +158,7 @@ class KnowifyImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
@@ -186,6 +196,10 @@ class ExtraliseImageView(ScannerRequiredView):
                     """<span class="alert alert-danger">At least one question</span>"""
                 )
 
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
+
         try:
             ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
                 request.user, timestamp, index, paper_number, question_list
@@ -196,10 +210,13 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
     def put(self, request, timestamp, index):
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
         try:
             ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -210,10 +227,13 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
     def delete(self, request, timestamp, index):
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle_id = _bundle.pk
         try:
             ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -224,5 +244,5 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )

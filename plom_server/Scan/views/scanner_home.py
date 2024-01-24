@@ -60,6 +60,7 @@ class ScannerHomeView(ScannerRequiredView):
             if bundle.pushed:
                 pushed_bundles.append(
                     {
+                        "id": bundle.pk,
                         "slug": bundle.slug,
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
@@ -71,6 +72,7 @@ class ScannerHomeView(ScannerRequiredView):
             else:
                 staged_bundles.append(
                     {
+                        "id": bundle.pk,
                         "slug": bundle.slug,
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
@@ -154,15 +156,17 @@ class GetBundleView(ScannerRequiredView):
 class GetStagedBundleFragmentView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
+    def get(self, request, bundle_id: int):
+        """Rendered fragment of a staged but not pushed bundle.
 
+        Args:
+            request:
+            bundle_id: which bundle?  Sometimes called the "pk" (private key)
+                internally.
+        """
         scanner = ScanService()
 
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -176,9 +180,10 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             cover_img_rotation = 0
 
         context = {
-            "timestamp": timestamp,
+            "bundle_id": bundle.pk,
+            "timestamp": bundle.timestamp,
             "slug": bundle.slug,
-            "when": arrow.get(timestamp).humanize(),
+            "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
@@ -214,30 +219,18 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/staged_bundle_row.html", context)
 
-    def post(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def post(self, request, bundle_id: int):
         scanner = ScanService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
-        scanner.read_qr_codes(bundle.pk)
+        scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
-    def delete(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def delete(self, request, bundle_id: int):
         scanner = ScanService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
         try:
-            scanner._remove_bundle(bundle.pk)
+            scanner._remove_bundle(bundle_id)
         except PlomBundleLockedException:
+            _bundle = scanner.get_bundle_from_pk(bundle_id)
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[_bundle.timestamp])
             )
-
         return HttpResponseClientRefresh()

@@ -13,7 +13,7 @@ from .scanner_home import (
 from .manage_bundle import (
     GetBundlePageFragmentView,
     GetBundleImageView,
-    BundleThumbnailView,
+    ScanBundleThumbnailsView,
     GetBundleThumbnailView,
     BundleLockView,
 )
