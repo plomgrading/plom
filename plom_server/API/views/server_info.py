@@ -138,6 +138,14 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
     # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
     def post(self, request: Request, *args, **kwargs) -> Response:
+        """Login a user from the client, provided they have given us an appropriate client version.
+
+        Returns:
+            200 and a token in json if user logged in successfully.
+            401 for bad client version.  400 for poorly formed requests,
+            such as no client version.  Legacy used to send 409 if user
+            was already logged in but currently that may not be enforced.
+        """
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
