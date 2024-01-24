@@ -1,39 +1,50 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Edith Coates
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 services:
   nginx:
     build: ./nginx
     ports:
-      - 1300:80
+      - 8443:443
+      # or for non-SSL, and also change below
+      # - 8080:80
     depends_on:
       - web
+
   web:
-    image: "plomgrading/server"
+    # Use the released version: TODO: should be set on release?  Issue #3208
+    # image: "plomgrading/server"
+    image: "registry.gitlab.com/plom/plom:main"
     # Use in-tree code by replacing image: with build:
     # build:
     #   context: .
     #   dockerfile: Containerfile.bulk
-    # TODO: Support port from an env var
+
+    # Optionally, expose django server directly, e.g., for dev work
     # ports:
-    #   - ${PORT}:8000
+    #   - 8000:8000
     # expose:
-    #   - ${PORT}
-    ports:
-      - 8000:8000
-    expose:
-      - 8000
+    #   - 8000
+
     command: bash -c "cd /src/plom_server; ./docker_run.sh"
-    # mount a local dir for storage
-    # TODO: those on Fedora, might need a :z at the end
-    # volumes:
-    #   - ./my_exam:/exam:z
+
+    volumes:
+      - plom_media:/exam/
+    # - ./my_exam:/exam:z   # mount local dir
+
     depends_on:
       - postgres
+
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
+      # If you want a hostname other than "localhost"
+      # - "PLOM_HOSTNAME=x1c10.lan"
+      # must match nginx's config above, not needed if running on 80/443?
+      - "PLOM_PUBLIC_FACING_PORT=8443"
+      - "PLOM_PUBLIC_FACING_SCHEME=https"
+
   postgres:
     image: postgres:13
     volumes:
@@ -44,5 +55,7 @@ services:
       - "POSTGRES_USER=postgres"
       - "POSTGRES_PASSWORD=postgres"
 
+# Use `docker volume ls` and `docker inspect <name>` to find where it is on the host
 volumes:
   postgres_data:
+  plom_media:

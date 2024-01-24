@@ -2,12 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import hashlib
 import pathlib
 
 import fitz
-from fitz import FileDataError
 
 from django.utils import timezone
 from django import forms
@@ -39,9 +39,6 @@ class BundleUploadForm(forms.Form):
         # correct format, readable by fitz, not a duplicate?
         try:
             file_bytes = pdf.read()
-            pdf_doc = fitz.open(stream=file_bytes)
-            if "PDF" not in pdf_doc.metadata["format"]:
-                raise ValidationError("File is not a valid PDF.")
 
             # TODO: Should we prevent uploading duplicate bundles or warn them?
             hashed = hashlib.sha256(file_bytes).hexdigest()
@@ -53,14 +50,17 @@ class BundleUploadForm(forms.Form):
             filename_stem = pathlib.Path(str(pdf)).stem
             slug = slugify(filename_stem)
 
-            data.update(
-                {
-                    "number_of_pages": pdf_doc.page_count,
-                    "slug": slug,
-                    "time_uploaded": timezone.now(),
-                    "sha256": hashed,
-                }
-            )
+            with fitz.open(stream=file_bytes) as pdf_doc:
+                if "PDF" not in pdf_doc.metadata["format"]:
+                    raise ValidationError("File is not a valid PDF.")
+                data.update(
+                    {
+                        "number_of_pages": pdf_doc.page_count,
+                        "slug": slug,
+                        "time_uploaded": timezone.now(),
+                        "sha256": hashed,
+                    }
+                )
             return data
-        except (FileDataError, KeyError):
-            raise ValidationError("Unable to open file.")
+        except (fitz.FileDataError, KeyError) as e:
+            raise ValidationError(f"Unable to open file: {e}")

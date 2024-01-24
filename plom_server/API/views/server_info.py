@@ -132,12 +132,50 @@ class CloseUser(APIView):
 
 
 class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
-    """Overrides the DRF auth-token creator so that it updates the user last_login field."""
+    """Overrides the DRF auth-token creator so that it updates the user last_login field, and does an API version check."""
 
     # Idea from
     # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
     # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        """Login a user from the client, provided they have given us an appropriate client version.
+
+        Returns:
+            200 and a token in json if user logged in successfully.
+            401 for bad client version.  400 for poorly formed requests,
+            such as no client version.  Legacy used to send 409 if user
+            was already logged in but currently that may not be enforced.
+        """
+        # TODO: probably serializer supposed to do something but ain't nobody got time for that
+        client_api = request.data.get("api")
+        client_ver = request.data.get("client_ver")
+        if not client_api:
+            # TODO: should I log and how to log in django?
+            # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
+            return _error_response(
+                "Client did not report their API version", status.HTTP_400_BAD_REQUEST
+            )
+
+        if not client_ver:
+            return _error_response(
+                "Client did not report their version", status.HTTP_400_BAD_REQUEST
+            )
+
+        # should the serializer should be doing this?
+        if not client_api.isdigit():
+            return _error_response(
+                f'Client sent non-integer API version: "{client_api}"',
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        # TODO: use >= and check client side, Issue #3247
+        if not int(client_api) == int(Plom_API_Version):
+            return _error_response(
+                f"Client API version {client_api} is not supported by this server "
+                f"(server API version {Plom_API_Version})",
+                status.HTTP_401_UNAUTHORIZED,
+            )
+
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )

@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2024 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __copyright__ = "Copyright (C) 2023 Natalie Balashov"
 __copyright__ = "Copyright (C) 2023 Julian Lapenna"
@@ -38,6 +38,7 @@ Tested on Fedora 39.  Some stuff from the package manager:
         python3-django python3-django-filter \
         python3-aiohttp python3-peewee python3-cryptography \
         python3-zxing-cpp \
+        python3-gunicorn python3-whitenoise \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
