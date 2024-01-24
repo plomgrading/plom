@@ -462,35 +462,35 @@ class BaseMessenger:
 
     def _requestAndSaveToken_webplom(self, user, pw):
         """Get an authorisation token from WebPlom."""
-        self.SRmutex.acquire()
-        response = self.post_raw(
-            "/get_token/",
-            json={
-                "username": user,
-                "password": pw,
-                "api": Plom_API_Version,
-                "client_ver": __version__,
-            },
-            timeout=5,
-        )
-        try:
-            response.raise_for_status()
-            self.token = response.json()
-            self.user = user
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomAuthenticationException(response.reason) from None
-            elif response.status_code == 401:
-                raise PlomAPIException(response.reason) from None
-            elif response.status_code == 409:
-                raise PlomExistingLoginException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        except requests.ConnectionError as err:
-            raise PlomSeriousException(
-                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
-            ) from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            response = self.post_raw(
+                "/get_token/",
+                json={
+                    "username": user,
+                    "password": pw,
+                    "api": Plom_API_Version,
+                    "client_ver": __version__,
+                },
+                timeout=5,
+            )
+            try:
+                response.raise_for_status()
+                self.token = response.json()
+                self.user = user
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 401:
+                    raise PlomAPIException(response.reason) from None
+                elif response.status_code == 409:
+                    # TODO: not sure django-server prevents simultaneous logins
+                    raise PlomExistingLoginException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+            except requests.ConnectionError as err:
+                raise PlomSeriousException(
+                    f"Cannot connect to server {self.base}\n{err}\n\n"
+                    "Please check details and try again."
+                ) from None
 
     def clearAuthorisation(self, user, pw):
         self.SRmutex.acquire()
