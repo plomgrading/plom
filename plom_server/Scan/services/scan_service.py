@@ -64,15 +64,15 @@ class ScanService:
 
     def upload_bundle(
         self,
-        uploaded_pdf_file,
-        slug,
-        user,
+        uploaded_pdf_file: File,
+        slug: str,
+        user: User,
         timestamp,
-        pdf_hash,
-        number_of_pages,
+        pdf_hash: str,
+        number_of_pages: int,
         *,
         debug_jpeg=False,
-    ):
+    ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, split PDF into page images + store in filesystem and database.
@@ -82,11 +82,11 @@ class ScanService:
         Args:
             uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
-            slug (str): Filename slug for the pdf
+            slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
             timestamp (datetime): the datetime at which the file was uploaded
-            pdf_hash (str): the sha256 of the pdf.
-            number_of_pages (int): the number of pages in the pdf.
+            pdf_hash: the sha256 of the pdf.
+            number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
             debug_jpeg (bool): off by default.  If True then we make some
@@ -96,19 +96,19 @@ class ScanService:
         Returns:
             None
         """
-        fh = uploaded_pdf_file.open()
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
-            bundle_obj = StagingBundle.objects.create(
-                slug=slug,
-                pdf_file=File(fh, name=f"{timestamp}.pdf"),
-                user=user,
-                timestamp=timestamp,
-                number_of_pages=number_of_pages,
-                pdf_hash=pdf_hash,
-                pushed=False,
-            )
+            with uploaded_pdf_file.open() as fh:
+                bundle_obj = StagingBundle.objects.create(
+                    slug=slug,
+                    pdf_file=File(fh, name=f"{timestamp}.pdf"),
+                    user=user,
+                    timestamp=timestamp,
+                    number_of_pages=number_of_pages,
+                    pdf_hash=pdf_hash,
+                    pushed=False,
+                )
 
         self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
