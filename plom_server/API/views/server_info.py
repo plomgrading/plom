@@ -142,25 +142,23 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
         if not client_api:
-            # TODO: how to log in django?
+            # TODO: should I log and how to log in django?
             # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
             return _error_response(
                 "Client did not report their API version", status.HTTP_400_BAD_REQUEST
             )
 
         if not client_ver:
-            # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
             return _error_response(
                 "Client did not report their version", status.HTTP_400_BAD_REQUEST
             )
 
-        # somehow the serializer should be doing this (?)
+        # should the serializer should be doing this?
         if not client_api.isdigit():
             return _error_response(
                 f'Client sent non-integer API version: "{client_api}"',
                 status.HTTP_400_BAD_REQUEST,
             )
-        # or try ValueError, TypeError as e:
 
         if not int(client_api) >= int(Plom_API_Version):
             return _error_response(
@@ -169,7 +167,6 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 status.HTTP_401_UNAUTHORIZED,
             )
 
-        print(f"login from client {client_ver} that speaks API {client_api}")
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
