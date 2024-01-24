@@ -168,6 +168,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 status.HTTP_400_BAD_REQUEST,
             )
 
+        # TODO: use >= and check client side, Issue #3247
         if not int(client_api) == int(Plom_API_Version):
             return _error_response(
                 f"Client API version {client_api} is not supported by this server "
