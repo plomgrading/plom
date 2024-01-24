@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -76,7 +76,7 @@ def readLastTime():
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
-    lastTime["server"] = "localhost"
+    lastTime["server"] = ""
     lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
@@ -146,6 +146,7 @@ class Chooser(QDialog):
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
+        self.ui.serverLE.setPlaceholderText("plom.example.com")
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
@@ -367,7 +368,12 @@ class Chooser(QDialog):
                 server_ver_str = msgr._start()
         except PlomBenignException as e:
             WarnMsg(
-                self, "Could not connect to server:", info=f"{e}", info_pre=False
+                self,
+                f"<p>Could not connect to server &ldquo;{msgr.server}&rdquo;:"
+                " check the server address and your internet connection?</p>"
+                " <p>The precise error message was:</p>",
+                info=f"{e}",
+                info_pre=False,
             ).exec()
             return False
 
@@ -419,7 +425,9 @@ class Chooser(QDialog):
 
     def validate_server(self):
         self.start_messenger_get_info()
-        # put focus at username or password line-edit
+        if not self.messenger:
+            return
+        # if successful, put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
             self.ui.passwordLE.setFocus()
         else:
@@ -441,11 +449,12 @@ class Chooser(QDialog):
 
         Returns:
             None, but modifies the state of the internal `messenger`
-            instance variable.
+            instance variable.  If that is not None, you can assume
+            something reasonable happened.
         """
         server = self.ui.serverLE.text().strip()
         if not server:
-            log.warning("No server URI")
+            self.ui.infoLabel.setText("You must specify a server address")
             return
         # due to special handling of blank versus default, use .text() not .value()
         port = self.ui.mportSB.text()
