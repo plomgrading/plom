@@ -138,7 +138,6 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
     # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
     def post(self, request, *args, **kwargs):
-        print(request.data)
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
@@ -150,10 +149,24 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             )
 
         if not client_ver:
-            # TODO: how to log in django?
             # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
             return _error_response(
                 "Client did not report their version", status.HTTP_400_BAD_REQUEST
+            )
+
+        # somehow the serializer should be doing this (?)
+        if not client_api.isdigit():
+            return _error_response(
+                f'Client sent non-integer API version: "{client_api}"',
+                status.HTTP_400_BAD_REQUEST,
+            )
+        # or try ValueError, TypeError as e:
+
+        if not int(client_api) >= int(Plom_API_Version):
+            return _error_response(
+                f"Client API version {client_api} is not supported by this server "
+                f"(server API version {Plom_API_Version})",
+                status.HTTP_401_UNAUTHORIZED,
             )
 
         print(f"login from client {client_ver} that speaks API {client_api}")

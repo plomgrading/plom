@@ -479,11 +479,11 @@ class BaseMessenger:
             self.user = user
         except requests.HTTPError as e:
             if response.status_code == 400:
-                raise PlomAuthenticationException(response.json()) from None
+                raise PlomAuthenticationException(response.reason) from None
             elif response.status_code == 401:
-                raise PlomAPIException(response.json()) from None
+                raise PlomAPIException(response.reason) from None
             elif response.status_code == 409:
-                raise PlomExistingLoginException(response.json()) from None
+                raise PlomExistingLoginException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
