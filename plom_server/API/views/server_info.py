@@ -137,7 +137,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     # Idea from
     # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
     # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
