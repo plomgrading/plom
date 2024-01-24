@@ -3,16 +3,17 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
+from plom.version_maps import version_map_from_file
 from Papers.services import SpecificationService
 
 from ...services import PQVMappingService, TestPreparedSetting
-
-from plom.version_maps import version_map_from_file
 
 
 class Command(BaseCommand):
