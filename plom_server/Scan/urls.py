@@ -13,7 +13,6 @@ from .views import (
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
-    RemoveBundleView,
     ReadQRcodesView,
     PushAllPageImages,
     ScannerSummaryView,
@@ -68,11 +67,6 @@ urlpatterns = [
         "bundle_rot/<timestamp>/<int:index>/",
         GetRotatedBundleImageView.as_view(),
         name="scan_get_rotated_image",
-    ),
-    path(
-        "delete/<timestamp>/",
-        RemoveBundleView.as_view(),
-        name="scan_remove_bundle",
     ),
     path(
         "read/<timestamp>",
