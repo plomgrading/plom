@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
+from django.http import HttpResponse, Http404, FileResponse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -73,7 +73,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request, bundle_id: int):
+    def get(self, request, *, bundle_id: int) -> HttpResponse:
         context = self.build_context(bundle_id, request.user)
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})

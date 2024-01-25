@@ -10,7 +10,7 @@ from datetime import datetime
 import arrow
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, Http404, FileResponse
+from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -156,13 +156,18 @@ class GetBundleView(ScannerRequiredView):
 class GetStagedBundleFragmentView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request, bundle_id: int):
+    def get(self, request, *, bundle_id: int) -> HttpResponse:
         """Rendered fragment of a staged but not pushed bundle.
 
         Args:
-            request:
+            request: the request.
+
+        Keyword Args:
             bundle_id: which bundle?  Sometimes called the "pk" (private key)
                 internally.
+
+        Returns:
+            A rendered HTML page.
         """
         scanner = ScanService()
 
@@ -219,12 +224,12 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/staged_bundle_row.html", context)
 
-    def post(self, request, bundle_id: int):
+    def post(self, request, *, bundle_id: int) -> HttpResponseClientRefresh:
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
-    def delete(self, request, bundle_id: int):
+    def delete(self, request, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
         try:
             scanner._remove_bundle(bundle_id)
