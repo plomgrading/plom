@@ -27,7 +27,7 @@ class GetBundleImageView(ScannerRequiredView):
         return FileResponse(image.image_file)
 
 
-class ScanBundleThumbnailsView(ScannerRequiredView):
+class BundleThumbnailsView(ScannerRequiredView):
     def build_context(self, bundle_id: int, user):
         """Build a context for a particular page of a bundle.
 

@@ -8,7 +8,7 @@ from django.urls import path
 
 from .views import (
     ScannerHomeView,
-    ScanBundleThumbnailsView,
+    BundleThumbnailsView,
     GetBundleView,
     GetBundlePageFragmentView,
     GetBundleImageView,
@@ -47,7 +47,7 @@ urlpatterns = [
     ),
     path(
         "thumbnails/<int:bundle_id>",
-        ScanBundleThumbnailsView.as_view(),
+        BundleThumbnailsView.as_view(),
         name="scan_bundle_thumbnails",
     ),
     path(
