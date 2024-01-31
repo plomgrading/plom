@@ -11,6 +11,7 @@ from datetime import datetime
 
 import arrow
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
@@ -224,4 +225,17 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[_bundle.timestamp])
             )
+        except ObjectDoesNotExist as e:
+            print(type(e))
+            print(f"raising {e}")
+            return HttpResponseClientRedirect(reverse("troubles_afoot"))
+        except Exception as e:
+            # I don't like generic excepts: my preference would be to fix
+            # this at the htmx end of things (Issue #3251)
+            print(f"Unexpected, catchall activated: {e}")
+            print(type(e))
+            print(f"raising {e}")
+            # I don't think this works
+            return HttpResponseClientRedirect(Http404)
+
         return HttpResponseClientRefresh()

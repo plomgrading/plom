@@ -1,0 +1,37 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Something vaguely unexpected happened
+{% endblock title %}
+{% block page_heading %}
+    Something vaguely unexpected happened
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <p>If you are here then it is because someone isn't doing sufficient error handling.</p>
+                    <p>Generally this is a bug.  Some non-mutually exclusive ideas of what happened:</p>
+                    <ul>
+                        <li>Multiple users are doing things simultaneously.</li>
+                        <li>Perhaps you have two tabs open and are maniacally clicking around in both.</li>
+                        <li>HTMX was somehow involved and it has no catch-all?  Issue #3251</li>
+                    </ul>
+                    <p>
+                        If you're seeing this instead of a Server 500 error or similar,
+                        it is possible&mdash;perhaps even likely&mdash;that useful information is available in the server log
+                        but we cannot show you that because AJAXy nonsense is likely afoot.
+                    </p>
+                    <p>
+                        Please go back somewhere and try something again, consult an oracle,
+                        make a small sacrifice, or otherwise help us fix this.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

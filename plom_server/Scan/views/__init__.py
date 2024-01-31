@@ -18,6 +18,8 @@ from .manage_bundle import (
     BundleLockView,
 )
 
+from .troubles_afoot import TroublesAfootGenericErrorView
+
 from .qr_codes import (
     ReadQRcodesView,
 )
