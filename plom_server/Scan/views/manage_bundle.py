@@ -30,17 +30,14 @@ class GetBundleImageView(ScannerRequiredView):
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-    # Need to pass this info somehow to build_context
-    _yuck_eww_bundle_id: int | None = None
-
-    def build_context(self):
+    def build_context(self, *, bundle_id: int | None = None):
         """Build a context for a particular page of a bundle.
 
-        Definitely not Args, no way, nothing to see here:
+        Keyword Args:
             bundle_id: which bundle.
         """
-        bundle_id = self._yuck_eww_bundle_id
-        assert bundle_id is not None, "Now you've done it: wrong magic spell cast"
+        # TODO: not clear if superclass forbids this?
+        assert bundle_id is not None, "bundle_id must be specified (?)"
 
         context = super().build_context()
         scanner = ScanService()
@@ -81,7 +78,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         return context
 
     def get(self, request, *, bundle_id: int) -> HttpResponse:
-        context = self.build_context()
+        context = self.build_context(bundle_id=bundle_id)
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
 
