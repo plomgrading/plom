@@ -68,7 +68,9 @@ def is_within_one_hour_of_now(timestamp):
 # ---------------------------------------------
 
 
-def format_int_list_with_runs(L: list, *, use_unicode: None | bool = None) -> str:
+def format_int_list_with_runs(
+    L: list, *, use_unicode: None | bool = None, zero_padding: None | int = None
+) -> str:
     """Replace runs in a list with a range notation.
 
     Args:
@@ -77,19 +79,22 @@ def format_int_list_with_runs(L: list, *, use_unicode: None | bool = None) -> st
     Keyword Args:
         use_unicode: by default auto-detect from UTF-8 in stdout encoding
             or a boolean value to force on/off.
+        zero_padding: if specified, pad each integer with this many zeros.
+            By default (or on ``None``) don't do that.
     """
     if use_unicode is None:
         if "utf-8" in str(sys.stdout.encoding).casefold():
             use_unicode = True
         else:
             use_unicode = False
-    if use_unicode:
-        rangy = "{}\N{En Dash}{}"
-    else:
-        rangy = "{}-{}"
+    dash = "\N{En Dash}" if use_unicode else "-"
     L = _find_runs(L)
     L = _flatten_2len_runs(L)
-    L = [rangy.format(l[0], l[-1]) if isinstance(l, list) else str(l) for l in L]
+    z = zero_padding if zero_padding else 0
+    L = [
+        f"{x[0]:0{z}}{dash}{x[-1]:0{z}}" if isinstance(x, list) else f"{x:0{z}}"
+        for x in L
+    ]
     return ", ".join(L)
 
 
