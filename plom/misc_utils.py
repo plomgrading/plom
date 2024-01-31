@@ -1,17 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
-# Copyright (C) 2019, 2021-2023 Colin B. Macdonald
+# Copyright (C) 2019, 2021-2024 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
+
+from __future__ import annotations
 
 """Misc utilities."""
 
 import arrow
+
 from contextlib import contextmanager
 import math
 import os
 import string
 import sys
+from typing import Any
 
 
 # ------------------------------------------------
@@ -61,11 +65,19 @@ def is_within_one_hour_of_now(timestamp):
 
 # ---------------------------------------------
 # tools for printing lists and other miscellany
-# ------------------------------------------------
+# ---------------------------------------------
 
 
-def format_int_list_with_runs(L, use_unicode=None):
-    """Replace runs in a list with a range notation."""
+def format_int_list_with_runs(L: list, *, use_unicode: None | bool = None) -> str:
+    """Replace runs in a list with a range notation.
+
+    Args:
+        L: a list of integers or strings of integers?  TODO!
+
+    Keyword Args:
+        use_unicode: by default auto-detect from UTF-8 in stdout encoding
+            or a boolean value to force on/off.
+    """
     if use_unicode is None:
         if "utf-8" in str(sys.stdout.encoding).casefold():
             use_unicode = True
@@ -81,14 +93,15 @@ def format_int_list_with_runs(L, use_unicode=None):
     return ", ".join(L)
 
 
-def _find_runs(S):
-    S = [int(x) for x in S]
-    S.sort()
+def _find_runs(S: list[str | int]) -> list[list[int]]:
+    S_ = [int(x) for x in S]
+    S_.sort()
     L = []
     prev = -math.inf
-    for x in S:
+    run: list[int] = []
+    for x in S_:
         if x - prev == 1:
-            run.append(x)  # noqa
+            run.append(x)
         else:
             run = [x]
             L.append(run)
@@ -96,7 +109,7 @@ def _find_runs(S):
     return L
 
 
-def _flatten_2len_runs(L):
+def _flatten_2len_runs(L: list[Any]) -> list[Any]:
     L2 = []
     for l in L:
         if len(l) < 3:
@@ -106,7 +119,7 @@ def _flatten_2len_runs(L):
     return L2
 
 
-def run_length_encoding(L):
+def run_length_encoding(L: list[Any]) -> list[tuple[Any, int, int]]:
     """Do a run-length-encoding of a list, producing triplets value, start, end.
 
     Examples:
@@ -119,7 +132,7 @@ def run_length_encoding(L):
     >>> run_length_encoding([])
     []
     """
-    runs = []
+    runs: list[tuple[Any, int, int]] = []
     if not L:
         return runs
     prev = L[0]
@@ -133,14 +146,15 @@ def run_length_encoding(L):
     return runs
 
 
-def next_in_longest_subsequence(items):
+def next_in_longest_subsequence(items: list[str]) -> str | None:
     """Guess next entry in the longest unordered contiguous subsequence.
 
     Args:
-        items (list): an unordered list of strings.
+        items: an unordered list of strings.
 
     Returns:
-        str/None: the next item in a longest subsequence.
+        The next item in a longest subsequence or ``None`` if no
+        subsequences are detected.
 
     Examples:
     >>> next_in_longest_subsequence(["(a)", "(b)"])
