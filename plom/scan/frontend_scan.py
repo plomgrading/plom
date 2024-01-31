@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 """Plom tools for scanning tests and pushing to servers.
@@ -27,6 +27,7 @@ else:
     import tomllib
 import tomlkit
 
+from plom.misc_utils import format_int_list_with_runs
 from plom.scan.sendUnknownsToServer import (
     upload_unknowns,
     print_unknowns_warning,
@@ -216,7 +217,12 @@ def uploadImages(
     print(f"Upload images to server from {bundledir}")
     log.info("Upload images to server from %s", bundledir)
     TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
-    msg = f'Tests were uploaded to the following papers: {", ".join(TPN.keys())}'
+    if len(TPN.keys()) < 20:
+        _formatted_paper_list = ", ".join(TPN.keys())
+    else:
+        # abbreviate with runs; but downside is the loss of leading zero padding
+        _formatted_paper_list = format_int_list_with_runs((int(x) for x in TPN.keys()))
+    msg = f"Tests were uploaded to the following papers: {_formatted_paper_list}"
     print(msg)
     log.info(msg)
 
