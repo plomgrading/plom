@@ -84,7 +84,7 @@ def format_int_list_with_runs(L: list, *, use_unicode: None | bool = None) -> st
         else:
             use_unicode = False
     if use_unicode:
-        rangy = "{}–{}"
+        rangy = "{}\N{En Dash}{}"
     else:
         rangy = "{}-{}"
     L = _find_runs(L)
