@@ -484,7 +484,7 @@ def get_parser():
         description="""
             Add pre-made rubrics to the server.  Your graders will be able to
             build their own rubrics but if you have premade rubrics you can
-            add them here or by using the plom-manager tool.
+            add them here.
             This tool can also dump the current rubrics from a running server.""",
     )
     group = sp_rubric.add_mutually_exclusive_group(required=True)
