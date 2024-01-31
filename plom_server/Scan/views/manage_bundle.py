@@ -4,6 +4,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse
 
@@ -28,13 +30,18 @@ class GetBundleImageView(ScannerRequiredView):
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-    def build_context(self, bundle_id: int, user):
+    # Need to pass this info somehow to build_context
+    _yuck_eww_bundle_id: int | None = None
+
+    def build_context(self):
         """Build a context for a particular page of a bundle.
 
-        Args:
+        Definitely not Args, no way, nothing to see here:
             bundle_id: which bundle.
-            user: which user.
         """
+        bundle_id = self._yuck_eww_bundle_id
+        assert bundle_id is not None, "Now you've done it: wrong magic spell cast"
+
         context = super().build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle_from_pk(bundle_id)
@@ -74,7 +81,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         return context
 
     def get(self, request, *, bundle_id: int) -> HttpResponse:
-        context = self.build_context(bundle_id, request.user)
+        context = self.build_context()
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
 
