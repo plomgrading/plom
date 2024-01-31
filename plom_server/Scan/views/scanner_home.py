@@ -2,8 +2,10 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+
+from __future__ import annotations
 
 from datetime import datetime
 
@@ -27,7 +29,7 @@ from plom.plom_exceptions import PlomBundleLockedException
 class ScannerHomeView(ScannerRequiredView):
     """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
 
-    def build_context(self, user):
+    def build_context(self):
         context = super().build_context()
         scanner = ScanService()
         mss = ManageScanService()
@@ -91,13 +93,12 @@ class ScannerHomeView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request):
-        context = self.build_context(request.user)
-
+    def get(self, request) -> HttpResponse:
+        context = self.build_context()
         return render(request, "Scan/home.html", context)
 
-    def post(self, request):
-        context = self.build_context(request.user)
+    def post(self, request) -> HttpResponse:
+        context = self.build_context()
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data  # this checks the file really is a valid PDF
@@ -139,7 +140,7 @@ class RemoveBundleView(ScannerRequiredView):
 class GetBundleView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request, timestamp):
+    def get(self, request, timestamp: str | float) -> HttpResponse:
         try:
             timestamp = float(timestamp)
         except ValueError:
