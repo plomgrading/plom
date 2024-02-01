@@ -13,7 +13,7 @@
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
         {% else %}
-            <img src="{% url 'scan_get_thumbnail' timestamp 1 %}" />
+            <img src="{% url 'scan_get_thumbnail' bundle_id 1 %}" />
         {% endif %}
     </div>
 </td>

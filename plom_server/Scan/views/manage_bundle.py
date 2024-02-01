@@ -62,6 +62,7 @@ class BundleThumbnailsView(ScannerRequiredView):
             {
                 "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
+                "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
@@ -88,15 +89,12 @@ class BundleThumbnailsView(ScannerRequiredView):
 class GetBundleThumbnailView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def get(self, request, *, bundle_id: int, index: int) -> HttpResponse:
         scanner = ScanService()
-        image = scanner.get_thumbnail_image(timestamp, index)
-
+        # TODO: error handling when not found or not image?
+        image = scanner.get_thumbnail_image(bundle_id, index)
+        # except ValueError:
+        #     raise Http404()
         return FileResponse(image.image_file)
 
 
