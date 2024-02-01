@@ -119,21 +119,6 @@ class ScannerHomeView(ScannerRequiredView):
             return render(request, "Scan/home.html", context)
 
 
-class RemoveBundleView(ScannerRequiredView):
-    """Delete an uploaded bundle."""
-
-    def delete(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
-        scanner = ScanService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
-        scanner._remove_bundle(bundle.pk)
-        return HttpResponseClientRefresh()
-
-
 class GetBundleView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 

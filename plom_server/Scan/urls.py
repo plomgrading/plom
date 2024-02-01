@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.urls import path
 
@@ -13,7 +14,6 @@ from .views import (
     GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
-    RemoveBundleView,
     ReadQRcodesView,
     PushAllPageImages,
     ScannerSummaryView,
@@ -68,11 +68,6 @@ urlpatterns = [
         "bundle_rot/<timestamp>/<int:index>/",
         GetRotatedBundleImageView.as_view(),
         name="scan_get_rotated_image",
-    ),
-    path(
-        "delete/<timestamp>/",
-        RemoveBundleView.as_view(),
-        name="scan_remove_bundle",
     ),
     path(
         "read/<timestamp>",
