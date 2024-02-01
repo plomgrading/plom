@@ -217,7 +217,7 @@ def uploadImages(
     print(f"Upload images to server from {bundledir}")
     log.info("Upload images to server from %s", bundledir)
     TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
-    _fmt_list = format_int_list_with_runs([int(x) for x in TPN.keys()], zero_padding=4)
+    _fmt_list = format_int_list_with_runs(TPN.keys(), zero_padding=4)
     msg = f"Tests were uploaded to the following papers: {_fmt_list}"
     print(msg)
     log.info(msg)
