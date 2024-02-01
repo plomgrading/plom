@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -24,7 +25,7 @@ class PushAllPageImages(ScannerRequiredView):
             return Http404()
 
         scanner = ScanService()
-        bundle_pk = scanner.get_bundle_pk(timestamp)
+        bundle_pk = scanner.get_bundle_pk_from_timestamp(timestamp)
         try:
             scanner.push_bundle_to_server(bundle_pk, request.user)
         except PlomBundleLockedException:

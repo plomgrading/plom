@@ -2,9 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
+from django.http import HttpResponse, Http404, FileResponse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -26,17 +29,19 @@ class GetBundleImageView(ScannerRequiredView):
         return FileResponse(image.image_file)
 
 
-class BundleThumbnailView(ScannerRequiredView):
-    def build_context(self, timestamp, user):
+class BundleThumbnailsView(ScannerRequiredView):
+    def build_context(self, *, bundle_id: int | None = None):
         """Build a context for a particular page of a bundle.
 
-        Args:
-            timestamp (float): select a bundle by its timestamp.
-            user (todo): which user.
+        Keyword Args:
+            bundle_id: which bundle.
         """
+        # TODO: not clear if superclass forbids this?
+        assert bundle_id is not None, "bundle_id must be specified (?)"
+
         context = super().build_context()
         scanner = ScanService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
         n_pages = scanner.get_n_images(bundle)
         known_pages = scanner.get_n_known_images(bundle)
         unknown_pages = scanner.get_n_unknown_images(bundle)
@@ -57,7 +62,7 @@ class BundleThumbnailView(ScannerRequiredView):
             {
                 "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
-                "timestamp": timestamp,
+                "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
@@ -72,13 +77,8 @@ class BundleThumbnailView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request, timestamp):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
-        context = self.build_context(timestamp, request.user)
+    def get(self, request, *, bundle_id: int) -> HttpResponse:
+        context = self.build_context(bundle_id=bundle_id)
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
 

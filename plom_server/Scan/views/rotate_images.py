@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import reverse
@@ -26,6 +26,8 @@ class RotateImageClockwise(ScannerRequiredView):
         except ValueError:
             return Http404()
 
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=-90
@@ -36,7 +38,7 @@ class RotateImageClockwise(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
@@ -47,6 +49,8 @@ class RotateImageCounterClockwise(ScannerRequiredView):
         except ValueError:
             return Http404()
 
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=90
@@ -57,7 +61,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
@@ -68,6 +72,8 @@ class RotateImageOneEighty(ScannerRequiredView):
         except ValueError:
             return Http404()
 
+        # TODO: Eventually bundle_id will be the arg, Issue #2621
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=180
@@ -78,7 +84,7 @@ class RotateImageOneEighty(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[timestamp]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
 
