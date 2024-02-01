@@ -69,12 +69,16 @@ def is_within_one_hour_of_now(timestamp):
 
 
 def format_int_list_with_runs(
-    L: list, *, use_unicode: None | bool = None, zero_padding: None | int = None
+    L: list[str | int],
+    *,
+    use_unicode: None | bool = None,
+    zero_padding: None | int = None,
 ) -> str:
     """Replace runs in a list with a range notation.
 
     Args:
-        L: a list of integers or strings of integers?  TODO!
+        L: a list of integers (or strings that can be converted to
+            integers).
 
     Keyword Args:
         use_unicode: by default auto-detect from UTF-8 in stdout encoding
@@ -98,13 +102,13 @@ def format_int_list_with_runs(
     return ", ".join(L)
 
 
-def _find_runs(S: list[str | int]) -> list[list[int]]:
-    S_ = [int(x) for x in S]
-    S_.sort()
+def _find_runs(S_: list[str | int]) -> list[list[int]]:
+    S = [int(x) for x in S_]
+    S.sort()
     L = []
     prev = -math.inf
     run: list[int] = []
-    for x in S_:
+    for x in S:
         if x - prev == 1:
             run.append(x)
         else:
