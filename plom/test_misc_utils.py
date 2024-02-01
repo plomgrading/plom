@@ -4,10 +4,12 @@
 from .misc_utils import format_int_list_with_runs
 from .misc_utils import run_length_encoding
 
+endash = "\N{En Dash}"
+
 
 def test_runs():
     L = ["1", "2", "3", "4", "7", "10", "11", "12", "13", "14", "64"]
-    uout = "1–4, 7, 10–14, 64"
+    uout = f"1{endash}4, 7, 10{endash}14, 64"
     aout = "1-4, 7, 10-14, 64"
     assert format_int_list_with_runs(L, use_unicode=True) == uout
     assert format_int_list_with_runs(L, use_unicode=False) == aout
@@ -16,7 +18,7 @@ def test_runs():
 
 def test_runs_zero_padding():
     L = ["1", "2", "3", "4", "7", "10", "11", "12", "13", "14", "64"]
-    uout = "0001–0004, 0007, 0010–0014, 0064"
+    uout = f"0001{endash}0004, 0007, 0010{endash}0014, 0064"
     aout = "0001-0004, 0007, 0010-0014, 0064"
     assert format_int_list_with_runs(L, use_unicode=True, zero_padding=4) == uout
     assert format_int_list_with_runs(L, use_unicode=False, zero_padding=4) == aout
