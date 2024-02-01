@@ -78,13 +78,17 @@ def format_int_list_with_runs(
 
     Args:
         L: a list of integers (or strings that can be converted to
-            integers).
+            integers).  Need not be sorted (we will sort a copy).
 
     Keyword Args:
         use_unicode: by default auto-detect from UTF-8 in stdout encoding
             or a boolean value to force on/off.
         zero_padding: if specified, pad each integer with this many zeros.
             By default (or on ``None``) don't do that.
+
+    Returns:
+        A string with comma-separated list, with dashed range notations
+        for contiguous runs.  For example: ``"1, 2-5, 10-45, 64"``.
     """
     if use_unicode is None:
         if "utf-8" in str(sys.stdout.encoding).casefold():
