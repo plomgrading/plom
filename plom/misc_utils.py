@@ -82,7 +82,8 @@ def format_int_list_with_runs(
 
     Keyword Args:
         use_unicode: by default auto-detect from UTF-8 in stdout encoding
-            or a boolean value to force on/off.
+            or a boolean value to force on/off.  If we have unicode, then
+            en-dash is used instead of hyphen to indicate ranges.
         zero_padding: if specified, pad each integer with this many zeros.
             By default (or on ``None``) don't do that.
 
