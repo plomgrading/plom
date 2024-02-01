@@ -96,14 +96,14 @@ def format_int_list_with_runs(
         else:
             use_unicode = False
     dash = "\N{En Dash}" if use_unicode else "-"
-    L = _find_runs(L)
-    L = _flatten_2len_runs(L)
+    L2 = _find_runs(L)
+    L3 = _flatten_2len_runs(L2)
     z = zero_padding if zero_padding else 0
-    L = [
+    L4 = [
         f"{x[0]:0{z}}{dash}{x[-1]:0{z}}" if isinstance(x, list) else f"{x:0{z}}"
-        for x in L
+        for x in L3
     ]
-    return ", ".join(L)
+    return ", ".join(L4)
 
 
 def _find_runs(S_: list[str | int]) -> list[list[int]]:
