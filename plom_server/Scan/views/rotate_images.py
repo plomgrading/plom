@@ -27,8 +27,7 @@ class RotateImageClockwise(ScannerRequiredView):
             return Http404()
 
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=-90
@@ -51,8 +50,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
             return Http404()
 
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=90
@@ -75,8 +73,7 @@ class RotateImageOneEighty(ScannerRequiredView):
             return Http404()
 
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
                 timestamp, index, angle=180

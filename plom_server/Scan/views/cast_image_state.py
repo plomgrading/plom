@@ -25,8 +25,7 @@ class DiscardImageView(ScannerRequiredView):
 
     def post(self, request, timestamp, index):
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -46,8 +45,7 @@ class UnknowifyImageView(ScannerRequiredView):
 
     def post(self, request, timestamp, index):
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -144,8 +142,7 @@ class KnowifyImageView(ScannerRequiredView):
             )
 
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ScanCastService().knowify_image_from_bundle_timestamp_and_order(
                 request.user, timestamp, index, paper_number, page_number
@@ -197,8 +194,7 @@ class ExtraliseImageView(ScannerRequiredView):
                 )
 
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
 
         try:
             ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
@@ -215,8 +211,7 @@ class ExtraliseImageView(ScannerRequiredView):
 
     def put(self, request, timestamp, index):
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
@@ -232,8 +227,7 @@ class ExtraliseImageView(ScannerRequiredView):
 
     def delete(self, request, timestamp, index):
         # TODO: Eventually bundle_id will be the arg, Issue #2621
-        _bundle = ScanService().get_bundle_from_timestamp(timestamp)
-        bundle_id = _bundle.pk
+        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
             ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
                 request.user, timestamp, index
