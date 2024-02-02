@@ -548,9 +548,9 @@ class MarkingTaskService:
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
         the_task = self.get_task_from_code(code)
-        self.remove_tag_from_task(the_tag, the_task)
+        self._remove_tag_from_task(the_tag, the_task)
 
-    def remove_tag_from_task(self, tag, task):
+    def _remove_tag_from_task(self, tag, task):
         """Backend to remove a tag from a marking task.
 
         Args:
@@ -571,10 +571,12 @@ class MarkingTaskService:
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-        self.remove_tag_from_task(the_tag, the_task)
+        self._remove_tag_from_task(the_tag, the_task)
 
     @transaction.atomic
-    def set_paper_marking_task_outdated(self, paper_number: int, question_number: int):
+    def set_paper_marking_task_outdated(
+        self, paper_number: int, question_number: int
+    ) -> None:
         """Set the marking task for the given paper/question as OUT_OF_DATE.
 
         When a page-image is removed or added to a paper/question, any
@@ -584,6 +586,7 @@ class MarkingTaskService:
         Args:
             paper_number (int): the paper
             question_number (int): the question
+
         Raises:
             ValueError: when there is no such paper.
             MultipleObjectsReturned: when there are multiple valid marking tasks
@@ -613,7 +616,7 @@ class MarkingTaskService:
         # we know there is at most one valid task.
         if valid_task_count == 1:
             # there is an "in date" task - get it and set it as out of date
-            task_obj = valid_tasks.get()
+            task_obj = valid_tasks.select_for_update().get()
             # set the last id-action as invalid (if it exists)
             if task_obj.latest_annotation:
                 latest_annotation = task_obj.latest_annotation

@@ -11,7 +11,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from ..models import MarkingTask
-from . import mark_task, page_data, annotations
+from . import mark_task, page_data
+from . import create_new_annotation_in_database
 
 
 class QuestionMarkingService:
@@ -143,9 +144,8 @@ class QuestionMarkingService:
         self.task_pk = first_task.pk
         return first_task
 
-    @transaction.atomic
-    def get_task(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk.
+    def _get_task_for_update(self) -> MarkingTask:
+        """Retrieve the relevant marking task using self.code or self.task_pk, and select it for update.
 
         Raises:
             ObjectDoesNotExist: paper or paper with that question does not exist,
@@ -153,23 +153,23 @@ class QuestionMarkingService:
             ValueError:
         """
         if self.task_pk:
-            return MarkingTask.objects.get(pk=self.task_pk)
+            return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
         elif self.code:
             paper_number, question_number = mark_task.unpack_code(self.code)
             task_to_assign = mark_task.get_latest_task(paper_number, question_number)
             self.task_pk = task_to_assign.pk
-            return task_to_assign
+            return self._get_task_for_update()
         else:
             raise ValueError("Cannot find task - no public key or code specified.")
 
     @transaction.atomic
-    def assign_task_to_user(self) -> MarkingTask:
+    def assign_task_to_user(self) -> None:
         """Assign a specific marking task to a user.
 
         Fails if the relevant task can't be found, or the task cannot be
         assigned to that user.
         """
-        task_to_assign = self.get_task()
+        task_to_assign = self._get_task_for_update()
 
         if task_to_assign.status != MarkingTask.TO_DO:
             raise ValueError("Task is currently assigned.")
@@ -180,9 +180,6 @@ class QuestionMarkingService:
         task_to_assign.assigned_user = self.user
         task_to_assign.status = MarkingTask.OUT
         task_to_assign.save()
-        self.task_pk = task_to_assign.pk
-
-        return task_to_assign
 
     @transaction.atomic
     def get_page_data(self) -> List[dict]:
@@ -200,31 +197,32 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def mark_task(self):
-        """Accept a marker's annotation and grade for a task."""
-        task = self.get_task()
+        """Accept a marker's annotation and grade for a task, store them in the database."""
+        task = self._get_task_for_update()
 
-        # save annotation image
         if self.annotation_image is None:
             raise ValueError("Cannot find annotation image to save.")
         if self.annotation_image_md5sum is None:
             raise ValueError("Cannot find annotation image hash.")
-        annotation_image = annotations.save_annotation_image(
-            self.annotation_image_md5sum, self.annotation_image
-        )
 
-        # save annotation
         if self.annotation_data is None:
             raise ValueError("Cannot find annotation data.")
         if self.user is None:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
-        annotations.save_annotation(
+
+        # Various work in creating the new Annotation object: linking it to the
+        # associated Rubrics and managing the task's latest annotation link.
+        # TODO: Issue #3231.
+        create_new_annotation_in_database(
             task,
             self.marking_data["score"],
             self.marking_data["marking_time"],
-            annotation_image,
+            self.annotation_image_md5sum,
+            self.annotation_image,
             self.annotation_data,
         )
-
-        mark_task.update_task_status(task, MarkingTask.COMPLETE)
+        # Note the helper function above also performs `task.save`; that seems ok.
+        task.status = MarkingTask.COMPLETE
+        task.save()
