@@ -48,7 +48,6 @@ class QuestionMarkingService:
         user: Optional[User] = None,
         min_paper_num: Optional[int] = None,
         max_paper_num: Optional[int] = None,
-        tag: Optional[str] = None,
         marking_data: Optional[dict] = None,
         annotation_data: Optional[dict] = None,
         annotation_image: Optional[InMemoryUploadedFile] = None,
@@ -56,7 +55,7 @@ class QuestionMarkingService:
     ):
         """Service constructor.
 
-        Args:
+        Keyword Args:
             task_pk: public key of a task instance
             code: string representing a paper number + question number pair
             question: question number of task
@@ -64,7 +63,6 @@ class QuestionMarkingService:
             user: reference to a user instance
             min_paper_num: the minimum paper number of the task
             max_paper_num: the maximum paper number of the task
-            tag: the tag that the task must have
             marking_data: dict representing a mark, rubrics used, etc
             annotation_data: a dictionary representing an annotation SVG
             annotation_image: an in-memory raster representation of an annotation
@@ -77,7 +75,6 @@ class QuestionMarkingService:
         self.user = user
         self.min_paper_num = min_paper_num
         self.max_paper_num = max_paper_num
-        self.tag = tag
         self.marking_data = marking_data
         self.annotation_data = annotation_data
         self.annotation_image = annotation_image
@@ -85,13 +82,14 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def get_first_available_task(
-        self, *, exclude_tagged_for_others: bool = True
+        self,
+        *,
+        tags: Optional[List[str]] = None,
+        exclude_tagged_for_others: bool = True,
     ) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
-
-        If ``tag`` is set, we restrict to papers with matching tags.
 
         If ``min_paper_num`` and/or ``max_paper_num`` are set, paper numbers in this
         range (including end points) are required.
@@ -100,9 +98,12 @@ class QuestionMarkingService:
         If the priority is the same, defer to paper number and then question number.
 
         Keyword Args:
+            tags: a task must match at least one of the strings in this
+                list.
             exclude_tagged_for_others: don't return papers that are
                 tagged for users other than the one in ``self.user``,
-                true by default.
+                true by default.  Note if a username is explicitly
+                listed in ``tags`` that takes precedence.
 
         Returns:
             A reference to the first available task, or
@@ -122,12 +123,15 @@ class QuestionMarkingService:
         if self.max_paper_num:
             available = available.filter(paper__paper_number__lte=self.max_paper_num)
 
-        if self.tag:
-            available = available.filter(markingtasktag__text__in=[self.tag])
+        if tags:
+            available = available.filter(markingtasktag__text__in=tags)
 
         if exclude_tagged_for_others:
             users = User.objects.all()
             other_user_tags = [f"@{u}" for u in users if u != self.user]
+            # anything explicitly in tags should not be filtered here
+            if tags:
+                other_user_tags = [x for x in other_user_tags if x not in tags]
             available = available.exclude(markingtasktag__text__in=other_user_tags)
 
         if not available.exists():

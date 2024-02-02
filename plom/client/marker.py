@@ -1389,6 +1389,10 @@ class MarkerClient(QWidget):
             log.info('Next available?  Prefer tagged "%s"', tag)
         elif paper_range[0] or paper_range[1]:
             log.info("Next available?  Range %s", paper_range)
+        if tag:
+            tags = [tag]
+        else:
+            tags = []
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1399,7 +1403,7 @@ class MarkerClient(QWidget):
                 task = self.msgr.MaskNextTask(
                     self.question,
                     self.version,
-                    tag=tag,
+                    tags=tags,
                     min_paper_num=paper_range[0],
                     max_paper_num=paper_range[1],
                 )

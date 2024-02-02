@@ -130,7 +130,11 @@ class TaggingAndRangeOptions(QDialog):
         q = self._prefer_tags_combobox
         cur = q.currentText()
         q.clear()
-        q.addItems(all_tags)
+        normal_tags = [t for t in all_tags if not t.startswith("@")]
+        user_tags = [t for t in all_tags if t.startswith("@")]
+        q.addItems(normal_tags)
+        q.insertSeparator(len(normal_tags))
+        q.addItems(user_tags)
         if cur:
             # TODO: we could restore the previous text only if its still a tag
             # if cur in all_tags:

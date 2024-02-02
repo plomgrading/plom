@@ -110,12 +110,16 @@ class AddRemoveTagDialog(QDialog):
                 20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
             )
         )
-        CBadd = QComboBox()
-        CBadd.setEditable(True)
-        CBadd.addItem("")
-        CBadd.addItems(tag_choices)
-        flay.addRow("Add new tag", CBadd)
-        self.CBadd = CBadd
+        q = QComboBox()
+        q.setEditable(True)
+        q.addItem("")
+        normal_tags = [t for t in tag_choices if not t.startswith("@")]
+        user_tags = [t for t in tag_choices if t.startswith("@")]
+        q.addItems(normal_tags)
+        q.insertSeparator(len(normal_tags) + 1)
+        q.addItems(user_tags)
+        flay.addRow("Add new tag", q)
+        self.CBadd = q
 
         flay.addItem(
             QSpacerItem(
