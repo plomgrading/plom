@@ -11,7 +11,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from ..models import MarkingTask
-from . import mark_task, page_data, annotations
+from . import mark_task, page_data
+from .annotations import create_new_annotation_in_database
 
 
 class QuestionMarkingService:
@@ -196,34 +197,32 @@ class QuestionMarkingService:
 
     @transaction.atomic
     def mark_task(self):
-        """Accept a marker's annotation and grade for a task."""
+        """Accept a marker's annotation and grade for a task, store them in the database."""
         task = self._get_task_for_update()
 
-        # save annotation image
         if self.annotation_image is None:
             raise ValueError("Cannot find annotation image to save.")
         if self.annotation_image_md5sum is None:
             raise ValueError("Cannot find annotation image hash.")
-        annotation_image = annotations.save_annotation_image(
-            self.annotation_image_md5sum, self.annotation_image
-        )
 
-        # save annotation
         if self.annotation_data is None:
             raise ValueError("Cannot find annotation data.")
         if self.user is None:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
-        # Note: note following method also does task.save, assume that's ok
-        # but not sure what the transactions look like.  Also Issue #3231.
-        annotations.save_annotation(
+
+        # Various work in creating the new Annotation object: linking it to the
+        # associated Rubrics and managing the task's latest annotation link.
+        # TODO: Issue #3231.
+        create_new_annotation_in_database(
             task,
             self.marking_data["score"],
             self.marking_data["marking_time"],
-            annotation_image,
+            self.annotation_image_md5sum,
+            self.annotation_image,
             self.annotation_data,
         )
-
+        # Note the helper function above also performs `task.save`; that seems ok.
         task.status = MarkingTask.COMPLETE
         task.save()
