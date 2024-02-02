@@ -29,7 +29,6 @@ from .views import (
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
     BundleLockView,
-    TroublesAfootGenericErrorView,
 )
 
 
@@ -135,10 +134,5 @@ urlpatterns = [
         "bundle_lock/<timestamp>/",
         BundleLockView.as_view(),
         name="scan_bundle_lock",
-    ),
-    path(
-        "troubles_afoot/<str:hint>",
-        TroublesAfootGenericErrorView.as_view(),
-        name="troubles_afoot",
     ),
 ]

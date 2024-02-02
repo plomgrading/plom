@@ -3,20 +3,16 @@
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.views.generic import View
 
-from Base.base_group_views import ScannerRequiredView
 
-
-class TroublesAfootGenericErrorView(ScannerRequiredView):
+class TroublesAfootGenericErrorView(View):
     def get(self, request: HttpRequest, *, hint: str) -> HttpResponse:
         """Render an unexpected or semi-expected "error page" using kludges.
 
         We'd probably like to show a real error page, like 404 or 500.
         But for technical reasons we might not know how (yet!).
         Code calling this should be improved if possible.
-
-        TODO: no particular reason this should live in Scan or be a
-        ScannerRequiredView.
 
         Args:
             request: the incoming request.
@@ -30,6 +26,5 @@ class TroublesAfootGenericErrorView(ScannerRequiredView):
         Returns:
             A rendered HTML page.
         """
-        context = self.build_context()
-        context["hint"] = hint
-        return render(request, "Scan/troubles_afoot.html", context)
+        context = {"hint": hint}
+        return render(request, "base/troubles_afoot.html", context)

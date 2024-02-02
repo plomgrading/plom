@@ -32,6 +32,7 @@ urlpatterns = [
     path("", include("UserManagement.urls")),
     path("", include("Profile.urls")),
     path("", include("API.urls")),
+    path("", include("Base.urls")),
     path("create/", include("Preparation.urls")),
     path("create/spec/", include("SpecCreator.urls")),
     path("create/paperpdfs/", include("BuildPaperPDF.urls")),
