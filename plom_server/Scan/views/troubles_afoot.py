@@ -26,6 +26,9 @@ class TroublesAfootGenericErrorView(ScannerRequiredView):
                 to be recovered from inside the URL so its probably
                 something easy to encode like
                 ``"oh-snap-x-can-be-negative"``.
+
+        Returns:
+            A rendered HTML page.
         """
         context = self.build_context()
         context["hint"] = hint
