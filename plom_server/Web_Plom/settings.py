@@ -30,13 +30,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-env_secret_key = os.environ.get("PLOM_SECRET_KEY")
-if env_secret_key:
-    SECRET_KEY = env_secret_key
-else:
-    SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
-
 # SECURITY WARNING: don't run with debug turned on in production!
 # Some basic type-checking - PLOM_DEBUG must either be the string "0" or "1"
 # Any values like "True", "False", "false", etc will be treated as truthy strings, i.e. "1"
@@ -48,6 +41,13 @@ elif debug_setting.isdigit() and int(debug_setting) == 0:
     DEBUG = False
 else:
     DEBUG = True
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get("PLOM_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError("When PLOM_DEBUG is off, you must set PLOM_SECRET_KEY")
+    SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
 # TODO: it bothers me that we need to know this, probably can be omitted if its 443
 env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
