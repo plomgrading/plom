@@ -52,7 +52,17 @@ def create_new_annotation_in_database(
         annot_img_md5sum,
         annot_img_file,
     )
+    # implementation details abtracted for testing purposes
+    return _create_new_annotation_in_database(task, score, time, annotation_image, data)
 
+
+def _create_new_annotation_in_database(
+    task: MarkingTask,
+    score: int,
+    time: int,
+    annotation_image: AnnotationImage,
+    data: str,
+) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
     else:  # there was no previous annotation
