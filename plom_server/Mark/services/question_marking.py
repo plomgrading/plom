@@ -12,7 +12,7 @@ from django.db import transaction
 
 from ..models import MarkingTask
 from . import mark_task, page_data
-from .annotations import create_new_annotation_in_database
+from . import create_new_annotation_in_database
 
 
 class QuestionMarkingService:
