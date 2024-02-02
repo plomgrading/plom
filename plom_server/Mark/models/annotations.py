@@ -10,7 +10,7 @@ from . import MarkingTask
 class AnnotationImage(models.Model):
     """A raster representation of an annotated question.
 
-    Atttributes:
+    Attributes:
         image: a jpeg or png file.
         hash: a string of a hash of the file, currently the md5sum.
 
