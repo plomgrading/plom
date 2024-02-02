@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 from pathlib import Path
 import tempfile
@@ -71,14 +71,14 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
-    def delete(self, request):
+    def delete(self, request) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
@@ -137,15 +137,26 @@ class PQVMappingView(ManagerRequiredView):
 
     def post(self, request):
         ntp = request.POST.get("number_to_produce", None)
+        first = request.POST.get("first_paper_num", None)
         if not ntp:
             return HttpResponseRedirect(".")
+        if not first:
+            first = 1
+        if first == "n":
+            first = request.POST.get("startn_value", None)
+
+        # TODO neither of these error cases gives a meaningful error message?
         try:
             number_to_produce = int(ntp)
         except ValueError:
             return HttpResponseRedirect(".")
+        try:
+            first = int(first)
+        except ValueError:
+            return HttpResponseRedirect(".")
 
         pqvs = PQVMappingService()
-        pqvs.generate_and_set_pqvmap(number_to_produce)
+        pqvs.generate_and_set_pqvmap(number_to_produce, first=first)
         return HttpResponseRedirect(".")
 
 
@@ -158,6 +169,7 @@ class PQVMappingReadOnlyView(ManagerRequiredView):
         context.update(
             {
                 "prenaming": pss.get_prenaming_setting(),
+                # TODO: this looks like question index
                 "question_list": range(1, 1 + SpecificationService.get_n_questions()),
                 "pqv_table": pqvs.get_pqv_map_as_table(pss.get_prenaming_setting()),
             }

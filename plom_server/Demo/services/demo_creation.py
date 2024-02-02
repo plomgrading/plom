@@ -81,7 +81,14 @@ class DemoCreationService:
             config.num_to_produce is not None
         ):  # TODO: users should be able to specify path to custom qvmap
             n_to_produce = config.num_to_produce
-            call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
+            call_command(
+                "plom_preparation_qvmap",
+                "generate",
+                "-n",
+                str(n_to_produce),
+                "--first-paper",
+                "1",
+            )
         else:
             print("No papers to produce. Stopping.")
             return

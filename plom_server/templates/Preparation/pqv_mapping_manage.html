@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -136,7 +136,26 @@
                                        value="{{ min_number_to_produce }}"
                                        max="9999"
                                        required />
-                                <button class="btn btn-primary" type="submit">build qv-map</button>
+                                <!-- TODO: this form has a lot of br in it :( -->
+                                <br />
+                                <br />
+                                First paper:
+                                <ul>
+                                    <input type="radio" id="start0" name="first_paper_num" value="0" />
+                                    <label for="start0">Start at number zero (warning: experimental!)</label>
+                                    <br />
+                                    <input type="radio" id="start1" name="first_paper_num" value="1" checked />
+                                    <label for="start1">Start at number one (default)</label>
+                                    <br />
+                                    <input type="radio" id="startn" name="first_paper_num" value="n" />
+                                    <label for="startn">Start at number</label>
+                                    <input id="startn_value"
+                                           type="number"
+                                           name="startn_value"
+                                           min="0"
+                                           max="9999">
+                                </ul>
+                                <button class="btn btn-primary" type="submit">Build question-version map</button>
                             </form>
                         </div>
                     </div>

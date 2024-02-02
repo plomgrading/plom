@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pathlib import Path
 import tempfile
-from typing import Dict
+from typing import Any
 
 from django.db import transaction
 
@@ -38,7 +40,7 @@ class PQVMappingService:
         StagingPQVMapping.objects.all().delete()
 
     @transaction.atomic()
-    def use_pqv_map(self, pqvmap: Dict[int, Dict[int, int]]):
+    def use_pqv_map(self, pqvmap: dict[int, dict[int, int]]):
         """Populate the database with this particular version map.
 
         Note: assumes that there is no current pqvmap or that you are adding
@@ -55,9 +57,9 @@ class PQVMappingService:
                 )
 
     @transaction.atomic()
-    def get_pqv_map_dict(self) -> Dict[int, Dict[int, int]]:
+    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
         # put into the dict in paper_number order.
-        pqvmapping: Dict[int, Dict[int, int]] = {}
+        pqvmapping: dict[int, dict[int, int]] = {}
         for pqv_obj in StagingPQVMapping.objects.all().order_by("paper_number"):
             if pqv_obj.paper_number in pqvmapping:
                 pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
@@ -67,13 +69,15 @@ class PQVMappingService:
         return pqvmapping
 
     @transaction.atomic()
-    def get_pqv_map_length(self):
+    def get_pqv_map_length(self) -> int:
         # TODO: likely not the most efficient way!
         return len(self.get_pqv_map_dict())
         # But careful, its certainly not this:
         # return StagingPQVMapping.objects.count()
 
-    def get_pqv_map_as_table(self, prenaming=False):
+    def get_pqv_map_as_table(
+        self, prenaming: bool = False
+    ) -> dict[int, dict[str, Any]]:
         # format the data in a way that makes it easy to display for django-template
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
@@ -132,10 +136,24 @@ class PQVMappingService:
         seed = SpecificationService.get_private_seed()
         return make_random_version_map(speck, seed=seed)
 
-    def generate_and_set_pqvmap(self, numberToProduce):
-        # delete old map, build a new one, and then use it.
+    def generate_and_set_pqvmap(
+        self, number_to_produce: int, *, first: int = 1
+    ) -> None:
+        """Remove any existing question-version map, generate a new map and set it in the database.
+
+        Args:
+            number_to_produce: how many items in the version map.
+
+        Keyword Args:
+            first: the starting paper number.
+
+        Returns:
+            None
+        """
         self.remove_pqv_map()
-        pqvmap = self.make_version_map(numberToProduce)
+        pqvmap = self.make_version_map(number_to_produce)
+        # kind of hacky: we just increase/decrease the keys
+        pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
         self.use_pqv_map(pqvmap)
 
     def get_minimum_number_to_produce(self):

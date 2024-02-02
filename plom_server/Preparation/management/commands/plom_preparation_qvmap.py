@@ -1,17 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
+from plom.version_maps import version_map_from_file
 from Papers.services import SpecificationService
 
 from ...services import PQVMappingService, TestPreparedSetting
-
-from plom.version_maps import version_map_from_file
 
 
 class Command(BaseCommand):
@@ -36,7 +38,9 @@ class Command(BaseCommand):
                 f"Recommended minimum number of papers to produce is {pqvms.get_minimum_number_to_produce()}"
             )
 
-    def generate_pqv_map(self, number_to_produce=None):
+    def generate_pqv_map(
+        self, *, number_to_produce: int | None = None, first: int | None = None
+    ) -> None:
         if TestPreparedSetting.is_test_prepared():
             raise CommandError("Test is marked as prepared. You cannot change qvmap.")
 
@@ -54,16 +58,18 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Number-to-produce not supplied, using recommended number = {number_to_produce}."
             )
-
         elif number_to_produce < pqvms.get_minimum_number_to_produce():
             self.stdout.write(
                 f"Warning: Supplied number-to-produce={number_to_produce} is less than the recommended minimum={min_production}."
             )
 
+        if first is None:
+            first = 1
+
+        pqvms.generate_and_set_pqvmap(number_to_produce, first=first)
         self.stdout.write(
-            f"Question-version map with {number_to_produce} rows generated."
+            f"Question-version map generated: {number_to_produce} rows starting from {first}."
         )
-        pqvms.generate_and_set_pqvmap(number_to_produce)
 
     def download_pqv_map(self):
         pqvms = PQVMappingService()
@@ -126,11 +132,20 @@ class Command(BaseCommand):
         p = sub.add_parser("generate", help="Generate the question-version map")
         p.add_argument(
             "-n",
-            "--number_to_produce",
+            "--number-to-produce",
+            metavar="N",
             type=int,
             help="""
                 The number of papers to produce.  If not present, the system will
                 compute this for you (not recommended).
+            """,
+        )
+        p.add_argument(
+            "--first-paper",
+            metavar="F",
+            type=int,
+            help="""
+                The paper number to start at.  Defaults to 1 if omitted.
             """,
         )
         sub.add_parser("download", help="Download the question-version map")
@@ -142,7 +157,10 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "generate":
-            self.generate_pqv_map(number_to_produce=options["number_to_produce"])
+            self.generate_pqv_map(
+                number_to_produce=options["number_to_produce"],
+                first=options["first_paper"],
+            )
 
         elif options["command"] == "download":
             self.download_pqv_map()
