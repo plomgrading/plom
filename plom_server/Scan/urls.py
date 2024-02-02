@@ -137,7 +137,7 @@ urlpatterns = [
         name="scan_bundle_lock",
     ),
     path(
-        "troubles_afoot/",
+        "troubles_afoot/<str:hint>",
         TroublesAfootGenericErrorView.as_view(),
         name="troubles_afoot",
     ),
