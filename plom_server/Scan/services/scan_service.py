@@ -302,13 +302,12 @@ class ScanService:
         )
 
     @transaction.atomic
-    def get_thumbnail_image(self, timestamp, index):
+    def get_thumbnail_image(self, bundle_pk: int, index: int) -> StagingImage:
         """Get a thubnail image from the database.
 
-        To uniquely identify an image, we need a bundle
-        (and a timestamp, and user) and a page index
+        To uniquely identify an image, we need a bundle and a page index.
         """
-        bundle_obj = self.get_bundle_from_timestamp(timestamp)
+        bundle_obj = self.get_bundle_from_pk(bundle_pk)
         img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
         return img.stagingthumbnail
 

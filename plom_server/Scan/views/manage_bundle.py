@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse
 
@@ -62,6 +63,7 @@ class BundleThumbnailsView(ScannerRequiredView):
             {
                 "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
+                "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
@@ -78,25 +80,50 @@ class BundleThumbnailsView(ScannerRequiredView):
         return context
 
     def get(self, request, *, bundle_id: int) -> HttpResponse:
-        context = self.build_context(bundle_id=bundle_id)
+        """Get a page of thumbnails with manipulations options for a bundle.
+
+        Args:
+            request: incoming request.
+
+        Keyword Args:
+            bundle_id: which bundle.
+
+        Returns:
+            The response returns a template-rendered page.
+            If there was no such bundle, return a 404 error page.
+        """
+        try:
+            context = self.build_context(bundle_id=bundle_id)
+        except ObjectDoesNotExist as e:
+            raise Http404(e)
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
-
         return render(request, "Scan/bundle_thumbnails.html", context)
 
 
 class GetBundleThumbnailView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
+    def get(self, request, *, bundle_id: int, index: int) -> HttpResponse:
+        """Get a thumbnail view for a particular position in a bundle.
 
+        Args:
+            request: incoming request.
+
+        Keyword Args:
+            bundle_id: which bundle.
+            index: which index within the bundle.
+
+        Returns:
+            The response returns the file when everything was successful.
+            If there was no such bundle or no such index within the
+            bundle, we get a 404 error.
+        """
         scanner = ScanService()
-        image = scanner.get_thumbnail_image(timestamp, index)
-
+        try:
+            image = scanner.get_thumbnail_image(bundle_id, index)
+        except ObjectDoesNotExist as e:
+            raise Http404(e)
         return FileResponse(image.image_file)
 
 

@@ -40,7 +40,7 @@ urlpatterns = [
         name="scan_bundle_page",
     ),
     path(
-        "thumbnails/<timestamp>/<int:index>",
+        "thumbnails/<int:bundle_id>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
     ),
