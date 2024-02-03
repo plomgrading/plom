@@ -464,7 +464,9 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
@@ -581,7 +583,9 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
