@@ -12,8 +12,9 @@ from datetime import datetime
 import arrow
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -211,12 +212,14 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/staged_bundle_row.html", context)
 
-    def post(self, request, *, bundle_id: int) -> HttpResponseClientRefresh:
+    def post(
+        self, request: HttpRequest, *, bundle_id: int
+    ) -> HttpResponseClientRefresh:
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
-    def delete(self, request, *, bundle_id: int) -> HttpResponse:
+    def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
         try:
             scanner._remove_bundle(bundle_id)

@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -150,7 +151,7 @@ class LandingResetQVmap(ManagerRequiredView):
 class LandingFinishedToggle(ManagerRequiredView):
     """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         current_setting = TestPreparedSetting.is_test_prepared()
         try:
             TestPreparedSetting.set_test_prepared(not current_setting)

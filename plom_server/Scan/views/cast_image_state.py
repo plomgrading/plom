@@ -3,10 +3,10 @@
 # Copyright (C) 2023-2024 Andrew Rechntizer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django_htmx.http import HttpResponseClientRedirect
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
 from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -23,7 +23,9 @@ from plom.plom_exceptions import PlomBundleLockedException
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
-    def post(self, request, timestamp, index):
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int
+    ) -> HttpResponse:
         try:
             # TODO: Eventually bundle_id will be the arg, Issue #2621
             bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
@@ -46,7 +48,9 @@ class DiscardImageView(ScannerRequiredView):
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
-    def post(self, request, timestamp, index):
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int
+    ) -> HttpResponse:
         try:
             # TODO: Eventually bundle_id will be the arg, Issue #2621
             bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
