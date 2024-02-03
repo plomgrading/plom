@@ -24,12 +24,15 @@ class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
-            ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().discard_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
             )
+        except ValueError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
@@ -44,12 +47,15 @@ class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
-            ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().unknowify_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
             )
+        except ValueError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
