@@ -24,8 +24,9 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
-class TestPreparedSettingModel(SingletonBaseModel):
-    finished = models.BooleanField(default=False, null=False)
+class PapersPrintedSettingModel(SingletonBaseModel):
+    "Set this once user has printed papers."
+    have_printed_papers = models.BooleanField(default=False, null=False)
 
 
 # ---------------------------------
