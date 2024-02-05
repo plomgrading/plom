@@ -12,8 +12,8 @@ class RubricAdminForm(forms.Form):
 
 
 class RubricWipeForm(forms.Form):
-    are_you_sure = forms.BooleanField()
-    please_confirm_the_short_name = forms.CharField()
+    I_am_sure = forms.BooleanField()
+    confirm_by_typing_the_short_name = forms.CharField()
 
 
 class RubricFilterForm(forms.Form):

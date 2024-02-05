@@ -5,7 +5,8 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect, reverse
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -89,7 +90,6 @@ class RubricWipePageView(ManagerRequiredView):
     """Confirm before wiping rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        print(f"get: {request}")
         template_name = "Rubrics/rubrics_wipe.html"
         context = self.build_context()
         form = RubricWipeForm()
@@ -106,23 +106,16 @@ class RubricWipePageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        print(f"post: {request}")
         template_name = "Rubrics/rubrics_wipe.html"
-
         context = self.build_context()
-
         form = RubricWipeForm(request.POST)
-
         # TODO: or None
         short_name = SpecificationService.get_shortname()
-
         if form.is_valid():
-            print("is valid")
-            print(form.cleaned_data)
-            print(form.cleaned_data["please_confirm_the_short_name"])
-            if form.cleaned_data["please_confirm_the_short_name"] != short_name:
-                raise ValueError("TODO: failed, but what am I supposed to do?")
-            RubricService().erase_all_rubrics()
+            if form.cleaned_data["confirm_by_typing_the_short_name"] == short_name:
+                RubricService().erase_all_rubrics()
+                return HttpResponseRedirect(reverse("rubrics_landing"))
+            raise ValueError("TODO: failed, but what am I supposed to do?")
         context.update(
             {
                 "rubric_wipe_form": form,
@@ -131,7 +124,7 @@ class RubricWipePageView(ManagerRequiredView):
                 "n_rubrics": len(RubricService().get_all_rubrics()),
             }
         )
-        # TODO: back to main page on success?  But how?
+        # TODO: this is the error path, what to do?
         return render(request, template_name, context=context)
 
 
