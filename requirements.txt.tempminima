@@ -27,7 +27,7 @@ beautifulsoup4==4.12.2
 canvasapi==3.0.0
 cryptography==41.0.3
 debugpy==1.6.7
-django==4.0.10
+django==4.2.6
 django-braces==1.15.0
 django-filter==23.2
 django-htmx==1.14.0
