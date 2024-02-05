@@ -219,7 +219,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-# TODO: maybe incorrect, didn't work on Django 4.0
+# Note: "collectstatic" command line copies files too here:
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
