@@ -1,9 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django import forms
 
-from Rubrics.models import Rubric
+from .models import Rubric
+
+
+class RubricAdminForm(forms.Form):
+    naked_deltas = forms.BooleanField(required=False)
+
+
+class RubricWipeForm(forms.Form):
+    are_you_sure = forms.BooleanField()
+    please_confirm_the_short_name = forms.CharField()
 
 
 class RubricFilterForm(forms.Form):

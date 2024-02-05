@@ -4,11 +4,128 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
 from .services import RubricService
+from .forms import RubricAdminForm, RubricWipeForm
 from .forms import RubricFilterForm, RubricEditForm
+
+
+class RubricAdminPageView(ManagerRequiredView):
+    """Initializing/wiping/pushing/pulling rubrics."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        print(f"get: {request}")
+        template_name = "Rubrics/rubrics_admin.html"
+        rs = RubricService()
+        # rubric_filter_form = RubricFilterForm
+        rubric_admin_form = RubricAdminForm
+
+        context = self.build_context()
+
+        form = rubric_admin_form(request.GET)
+        rubrics = rs.get_all_rubrics()
+
+        if form.is_valid():
+            pass
+            # question_filter = filter_form.cleaned_data["question_filter"]
+            # kind_filter = filter_form.cleaned_data["kind_filter"]
+
+            # if question_filter:
+            #    rubrics = rubrics.filter(question=question_filter)
+            #
+            # if kind_filter:
+            #    rubrics = rubrics.filter(kind=kind_filter)
+
+        context.update(
+            {
+                "rubrics": rubrics,
+                "rubric_admin_form": form,
+            }
+        )
+
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        print(f"post: {request}")
+        template_name = "Rubrics/rubrics_admin.html"
+        rs = RubricService()
+        # rubric_filter_form = RubricFilterForm
+        rubric_admin_form = RubricAdminForm
+
+        context = self.build_context()
+
+        form = rubric_admin_form(request.GET)
+
+        if form.is_valid():
+            print("is valid")
+            pass
+            # question_filter = filter_form.cleaned_data["question_filter"]
+            # kind_filter = filter_form.cleaned_data["kind_filter"]
+
+            # if question_filter:
+            #    rubrics = rubrics.filter(question=question_filter)
+            #
+            # if kind_filter:
+            #    rubrics = rubrics.filter(kind=kind_filter)
+        print("after is valid")
+        RubricService().init_rubrics("manager")  # TODO: hardcoded
+        rubrics = rs.get_all_rubrics()
+
+        context.update(
+            {
+                "rubrics": rubrics,
+                "rubric_admin_form": form,
+            }
+        )
+
+        return render(request, template_name, context=context)
+
+
+class RubricWipePageView(ManagerRequiredView):
+    """Confirm before wiping rubrics."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        print(f"get: {request}")
+        template_name = "Rubrics/rubrics_wipe.html"
+        context = self.build_context()
+        form = RubricWipeForm()
+        context.update(
+            {
+                "rubric_wipe_form": form,
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        print(f"post: {request}")
+        template_name = "Rubrics/rubrics_wipe.html"
+
+        context = self.build_context()
+
+        form = RubricWipeForm(request.GET)
+
+        if form.is_valid():
+            print("is valid")
+            print(form.cleaned_data)
+            # question_filter = filter_form.cleaned_data["question_filter"]
+            # kind_filter = filter_form.cleaned_data["kind_filter"]
+
+            # if question_filter:
+            #    rubrics = rubrics.filter(question=question_filter)
+            #
+            # if kind_filter:
+            #    rubrics = rubrics.filter(kind=kind_filter)
+        print("after is valid")
+        RubricService().erase_all_rubrics()
+        context.update(
+            {
+                "rubric_wipe_form": form,
+            }
+        )
+        return render(request, template_name, context=context)
 
 
 class RubricLandingPageView(ManagerRequiredView):
