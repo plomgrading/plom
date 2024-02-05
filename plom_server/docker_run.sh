@@ -12,7 +12,7 @@ then
     python3 manage.py plom_init --no-waiting
     gunicorn Web_Plom.wsgi --bind 0.0.0.0:8000
 else
-    python manage.py collectstatic --clear --no-input
+    python3 manage.py collectstatic --clear --no-input
     python3 manage.py plom_init --no-waiting
     python3 manage.py runserver 0.0.0.0:8000
 fi
