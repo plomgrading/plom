@@ -34,49 +34,49 @@ class PapersPrintedSettingTests(TestCase):
 
         self.assertFalse(PapersPrinted.can_status_be_set_false())
 
-    def test_is_prepared(self):
-        """Test the is_prepared getter function."""
+    def test_papers_have_been_printed(self):
+        """Test the have_been_printed getter function."""
         self.assertFalse(PapersPrinted.have_papers_been_printed())
 
         setting_obj = PapersPrintedSettingModel.load()
-        setting_obj.finished = True
+        setting_obj.have_printed_papers = True
         setting_obj.save()
 
         self.assertTrue(PapersPrinted.have_papers_been_printed())
 
-    def test_set_prepared(self):
-        """Test the prepared setter function."""
+    def test_papers_printed(self):
+        """Test the papers_printed setter function."""
         baker.make(Paper)
 
         setting_obj = PapersPrintedSettingModel.load()
-        self.assertFalse(setting_obj.finished)
+        self.assertFalse(setting_obj.have_printed_papers)
 
-        PapersPrinted.set_test_prepared(True)
-
-        setting_obj.refresh_from_db()
-        self.assertTrue(setting_obj.finished)
-
-        PapersPrinted.set_test_prepared(False)
+        PapersPrinted.set_papers_printed(True)
 
         setting_obj.refresh_from_db()
-        self.assertFalse(setting_obj.finished)
+        self.assertTrue(setting_obj.have_printed_papers)
+
+        PapersPrinted.set_papers_printed(False)
+
+        setting_obj.refresh_from_db()
+        self.assertFalse(setting_obj.have_printed_papers)
 
     def test_setting_raises_papers(self):
         """Make sure the setting raises an error on being set true while the papers database is empty."""
         with self.assertRaises(RuntimeError):
-            PapersPrinted.set_test_prepared(True)
+            PapersPrinted.set_papers_printed(True)
 
         baker.make(Paper)
-        PapersPrinted.set_test_prepared(True)
+        PapersPrinted.set_papers_printed(True)
 
     def test_setting_raises_bundles(self):
         """Make sure the setting raises an error on being set false while bundles are in the database."""
         baker.make(Paper)
-        PapersPrinted.set_test_prepared(True)
+        PapersPrinted.set_papers_printed(True)
 
         bundle = baker.make(Bundle)
         with self.assertRaises(RuntimeError):
-            PapersPrinted.set_test_prepared(False)
+            PapersPrinted.set_papers_printed(False)
 
         bundle.delete()
-        PapersPrinted.set_test_prepared(False)
+        PapersPrinted.set_papers_printed(False)

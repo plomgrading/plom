@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 
@@ -19,7 +19,7 @@ from Scan.models import (
     StagingImage,
 )
 
-from Preparation.services import TestPreparedSetting
+from Preparation.services import PapersPrinted
 from Papers.models import (
     Bundle,
     Image,
@@ -104,8 +104,8 @@ class ImageBundleService:
             RuntimeError
             ValueError
         """
-        if not TestPreparedSetting.is_test_prepared():
-            raise RuntimeError("Test preparation has not been marked as finished.")
+        if not PapersPrinted.have_papers_been_printed():
+            raise RuntimeError("Papers have not yet been printed.")
 
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle

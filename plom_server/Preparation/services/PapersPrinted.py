@@ -37,7 +37,7 @@ def can_status_be_set_false() -> bool:
 def have_papers_been_printed() -> bool:
     """Return True if has been marked as 'papers_have_been_printed'."""
     setting_obj = PapersPrintedSettingModel.load()
-    return setting_obj.finished
+    return setting_obj.have_printed_papers
 
 
 @transaction.atomic
@@ -53,5 +53,5 @@ def set_papers_printed(status: bool):
         raise RuntimeError("Unable to mark papers as yet to be printed.")
 
     setting_obj = PapersPrintedSettingModel.load()
-    setting_obj.finished = status
+    setting_obj.have_printed_papers = status
     setting_obj.save()

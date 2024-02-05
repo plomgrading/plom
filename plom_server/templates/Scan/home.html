@@ -57,7 +57,7 @@
                             When there are no issues the bundle can be <q>pushed</q> and marking can begin.
                         </li>
                     </ul>
-                    {% if preparation_finished %}
+                    {% if papers_have_been_printed %}
                         <form enctype="multipart/form-data"
                               method="post"
                               action="{% url 'scan_home' %}">
@@ -66,7 +66,7 @@
                             <input type="submit" class="btn btn-secondary" value="Upload">
                         </form>
                     {% else %}
-                        <a disabled>No bundles to upload - test preparation is still in progress.</a>
+                        <a disabled>No bundles to upload - papers have not yet been printed.</a>
                     {% endif %}
                 </div>
             </div>

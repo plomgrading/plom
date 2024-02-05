@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Colin B. Macdonald
 
@@ -20,7 +20,7 @@ from Papers.models import (
     MobilePage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
-from Preparation.services import TestPreparedSetting
+from Preparation.services import PapersPrinted
 from Preparation.models import StagingPQVMapping
 
 
@@ -73,7 +73,7 @@ class ImageBundleTests(TestCase):
         )
 
         # Set preparation as finished
-        TestPreparedSetting.set_test_prepared(True)
+        PapersPrinted.set_papers_printed(True)
 
         return super().setUp()
 

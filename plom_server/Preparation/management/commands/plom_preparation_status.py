@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     raise CommandError(
                         "Unable to set paper-printing as todo - bundles have been pushed to the database."
                     )
-                PapersPrinted.set_test_prepared(False)
+                PapersPrinted.set_papers_printed(False)
             else:
                 return
 
