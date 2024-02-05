@@ -7,14 +7,14 @@
 # python3 manage.py plom_demo --no-waiting
 
 # set server binding port
-if [[ -v $PLOM_PUBLIC_FACING_PORT ]]; then
-    PORT=$PLOM_PUBLIC_FACING_PORT
+if [[ -z $PLOM_PUBLIC_FACING_PORT ]]; then
+    PORT="8000"
 else
-    PORT=8000
+    PORT=$PLOM_PUBLIC_FACING_PORT
 fi
 
 # A basic server
-if [ "$PLOM_DEBUG" -eq 0 ]
+if [[ "$PLOM_DEBUG" -eq 0 ]]
 then
     python3 manage.py plom_init --no-waiting
     gunicorn Web_Plom.wsgi --bind 0.0.0.0:$PORT
