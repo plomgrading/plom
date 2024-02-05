@@ -67,7 +67,7 @@ urllib3==2.2.0
 weasyprint==60.2
 whitenoise==6.6.0
 zipfly==6.0.5
-zxing-cpp==2.1.0
+zxing-cpp==2.2.0
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
