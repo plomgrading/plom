@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2023-2024 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 # A demo
 # python3 manage.py plom_demo --no-waiting
@@ -12,6 +12,7 @@ then
     python3 manage.py plom_init --no-waiting
     gunicorn Web_Plom.wsgi --bind 0.0.0.0:8000
 else
+    python3 manage.py collectstatic --clear --no-input
     python3 manage.py plom_init --no-waiting
     python3 manage.py runserver 0.0.0.0:8000
 fi
