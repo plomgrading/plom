@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
-from ..services import PQVMappingService, TestPreparedSetting
+from ..services import PQVMappingService, PapersPrinted
 
 
 class PaperCreationView(ManagerRequiredView):
@@ -24,7 +25,7 @@ class PaperCreationView(ManagerRequiredView):
                 "n_questions": SpecificationService.get_n_questions(),
                 "n_versions": SpecificationService.get_n_versions(),
                 "n_pages": SpecificationService.get_n_pages(),
-                "is_test_prepared": TestPreparedSetting.is_test_prepared(),
+                "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             }
         )
         return context

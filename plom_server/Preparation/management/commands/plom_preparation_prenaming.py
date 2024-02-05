@@ -4,7 +4,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...services import PrenameSettingService, TestPreparedSetting
+from ...services import PrenameSettingService, PapersPrinted
 
 
 class Command(BaseCommand):
@@ -31,10 +31,8 @@ class Command(BaseCommand):
                 self.stdout.write("Prenaming is currently disabled")
             return
 
-        if TestPreparedSetting.is_test_prepared():
-            raise CommandError(
-                "Test is marked as prepared. You cannot change prenaming"
-            )
+        if PapersPrinted.have_papers_been_printed():
+            raise CommandError("Papers have been printed. You cannot change prenaming")
 
         # if enable or disable options given
         if options["enable"]:

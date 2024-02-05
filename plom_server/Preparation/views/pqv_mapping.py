@@ -19,7 +19,7 @@ from ..services import (
     PQVMappingService,
     PrenameSettingService,
     StagingStudentService,
-    TestPreparedSetting,
+    PapersPrinted,
 )
 
 from plom.version_maps import version_map_from_file
@@ -130,7 +130,7 @@ class PQVMappingView(ManagerRequiredView):
         return context
 
     def get(self, request):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_qvmapping_view")
         context = self.build_context()
         return render(request, "Preparation/pqv_mapping_manage.html", context)

@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.db import transaction
 
 from Papers.models import Paper, Bundle
-from ..models import TestPreparedSettingModel
+from ..models import PapersPrintedSettingModel
 
 
 @transaction.atomic
@@ -25,31 +26,32 @@ def can_status_be_set_false() -> bool:
     return Bundle.objects.all().count() == 0
 
 
-# We've chosen to give the above helper functions to this module because
-# we want this to be the single source of truth w.r.t. the test preparation status.
-# It's currently still possible to work around the setting and the various guards
-# using manage.py shell and the like.
+# We've chosen to give the above helper functions to this module
+# because we want this to be the single source of truth w.r.t. the
+# test preparation / papers printed status.  It's currently still
+# possible to work around the setting and the various guards using
+# manage.py shell and the like.
 
 
 @transaction.atomic
-def is_test_prepared() -> bool:
-    """Return True if the preparation has been marked as 'finished'."""
-    setting_obj = TestPreparedSettingModel.load()
+def have_papers_been_printed() -> bool:
+    """Return True if has been marked as 'papers_have_been_printed'."""
+    setting_obj = PapersPrintedSettingModel.load()
     return setting_obj.finished
 
 
 @transaction.atomic
-def set_test_prepared(status: bool):
-    """Set the test preparation as 'finished' or 'in progress'.
+def set_papers_printed(status: bool):
+    """Set the papers as (true) 'printed' or (false) 'yet to be printed'.
 
     Raises:
         RuntimeError: if status cannot be set true/false.
     """
     if status and not can_status_be_set_true():
-        raise RuntimeError("Unable to mark preparation as finished.")
+        raise RuntimeError("Unable to mark papers as printed.")
     if not status and not can_status_be_set_false():
-        raise RuntimeError("Unable to mark preparation as todo.")
+        raise RuntimeError("Unable to mark papers as yet to be printed.")
 
-    setting_obj = TestPreparedSettingModel.load()
+    setting_obj = PapersPrintedSettingModel.load()
     setting_obj.finished = status
     setting_obj.save()

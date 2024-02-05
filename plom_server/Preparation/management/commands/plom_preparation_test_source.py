@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import TestSourceService, TestPreparedSetting
+from ...services import TestSourceService, PapersPrinted
 
 
 class Command(BaseCommand):
@@ -77,9 +77,9 @@ class Command(BaseCommand):
             )
 
     def remove_source(self, version=None, all=False):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             raise CommandError(
-                "Test is marked as prepared. You cannot change the sources."
+                "Papers have been printed. You cannot change the sources."
             )
 
         tss = TestSourceService()
@@ -105,9 +105,9 @@ class Command(BaseCommand):
             )
 
     def upload_source(self, version=None, source_pdf=None):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             raise CommandError(
-                "Test is marked as prepared. You cannot change the sources."
+                "Papers have been printed. You cannot change the sources."
             )
 
         if not SpecificationService.is_there_a_spec():
