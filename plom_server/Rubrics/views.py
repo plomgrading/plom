@@ -38,7 +38,7 @@ class RubricAdminPageView(ManagerRequiredView):
         context = self.build_context()
         if form.is_valid():
             # TODO: not necessarily the one who logged in; does it matter?
-            any_manager = User.objects.get(groups__name="manager").first()
+            any_manager = User.objects.filter(groups__name="manager").first()
             RubricService().init_rubrics(any_manager.username)
         # and if not valid, this just kinda DTRT (?)
         rubrics = RubricService().get_all_rubrics()

@@ -21,13 +21,12 @@
                 <button type="submit" class="btn btn-success">Create system rubrics</button>
             </form>
             <p>These are basic rubrics that Plom needs to function.  TODO: marking cannot begin until these are created.</p>
-            <p>(TODO: should this happen automatically when clients connect?)</p>
-            <hr />
-            <a class="btn btn-primary" href="">Create additional "demo" rubrics</a>
-            <p>Explanations go here</p>
-            <a class="btn btn-primary" href="">Download all rubrics to a local file</a>
+            <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
+            <a class="btn btn-primary disabled" href="">Create additional "demo" rubrics</a>
+            <p>Explanations go here, not implemented yet in the UI.</p>
+            <a class="btn btn-primary disabled" href="">Download all rubrics to a local file</a>
             <p>Not implemented yet in the UI.</p>
-            <a class="btn btn-primary" href="">Upload rubrics from a file</a>
+            <a class="btn btn-primary disabled" href="">Upload rubrics from a file</a>
             <p>Not implemented yet in the UI.</p>
             <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
             <p>(A destructive action; you'll need to confirm it on the next screen)</p>

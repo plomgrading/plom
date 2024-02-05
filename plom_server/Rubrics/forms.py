@@ -8,7 +8,12 @@ from .models import Rubric
 
 
 class RubricAdminForm(forms.Form):
-    naked_deltas = forms.BooleanField(required=False)
+    pass
+    # TODO: "Also create the +1, +2, -1, -2, "naked delta" rubrics"
+    # TODO: Issue #2915
+    # create_naked_deltas = forms.BooleanField(
+    #     required=False, widget=forms.CheckboxInput(attrs={"checked": True})
+    # )
 
 
 class RubricWipeForm(forms.Form):
