@@ -18,9 +18,18 @@
             <form method="post" action="">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_admin_form }}</div>
-                <button type="submit" class="btn btn-success">Create system rubrics</button>
+                <button type="submit"
+                        class="btn btn-success"
+                        {% if rubrics %}disabled{% endif %}>Create system rubrics</button>
             </form>
-            <p>These are basic rubrics that Plom needs to function.  TODO: marking cannot begin until these are created.</p>
+            <p>
+                These are basic rubrics that Plom needs to function.
+                {% if rubrics %}
+                    They have already been created.
+                {% else %}
+                    Marking cannot begin until these are created.
+                {% endif %}
+            </p>
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
             <a class="btn btn-primary disabled" href="">Create additional "demo" rubrics</a>
             <p>Explanations go here, not implemented yet in the UI.</p>
