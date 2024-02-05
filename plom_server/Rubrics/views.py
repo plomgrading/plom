@@ -111,11 +111,12 @@ class RubricWipePageView(ManagerRequiredView):
         form = RubricWipeForm(request.POST)
         # TODO: or None
         short_name = SpecificationService.get_shortname()
+        _confirm_field = "confirm_by_typing_the_short_name"
         if form.is_valid():
-            if form.cleaned_data["confirm_by_typing_the_short_name"] == short_name:
+            if form.cleaned_data[_confirm_field] == short_name:
                 RubricService().erase_all_rubrics()
                 return HttpResponseRedirect(reverse("rubrics_landing"))
-            raise ValueError("TODO: failed, but what am I supposed to do?")
+            form.add_error(_confirm_field, "Short name did not match")
         context.update(
             {
                 "rubric_wipe_form": form,
