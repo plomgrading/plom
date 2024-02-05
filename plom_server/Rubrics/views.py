@@ -59,7 +59,7 @@ class RubricWipePageView(ManagerRequiredView):
         context = self.build_context()
         form = RubricWipeForm()
         # TODO: what is supposed to happen if we don't have a shortname yet?
-        # TODO: do we need a `get_shortname_or_None`?
+        # TODO: do we need a `get_shortname_or_None`?  Related to Issue #2996
         context.update(
             {
                 "rubric_wipe_form": form,
@@ -74,7 +74,6 @@ class RubricWipePageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_wipe.html"
         context = self.build_context()
         form = RubricWipeForm(request.POST)
-        # TODO: or None
         short_name = SpecificationService.get_shortname()
         _confirm_field = "confirm_by_typing_the_short_name"
         if form.is_valid():
@@ -90,7 +89,6 @@ class RubricWipePageView(ManagerRequiredView):
                 "n_rubrics": len(RubricService().get_all_rubrics()),
             }
         )
-        # TODO: this is the error path, what to do?
         return render(request, template_name, context=context)
 
 
