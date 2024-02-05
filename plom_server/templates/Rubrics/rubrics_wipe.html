@@ -13,10 +13,15 @@
     <div class="card m-2">
         <div class="card-body">
             <p>
-                You are about to permanently erase all rubrics from this server with
-                TODO: list short name.
+                You are about to permanently erase all rubrics from this
+                &ldquo;<strong>{{ long_name }}</strong>&rdquo;
+                server with
+                short name &ldquo;<strong>{{ short_name }}</strong>&rdquo;.
             </p>
-            <p>The server has TODO: N rubrics.  TODO M marking tasks are complete or in-progress.</p>
+            <p>
+                The server has {{ n_rubrics }} rubrics.
+                TODO HOWMANY marking tasks are complete or in-progress.
+            </p>
             <form method="post" action="">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_wipe_form }}</div>

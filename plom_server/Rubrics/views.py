@@ -8,6 +8,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
+from Papers.services import SpecificationService
 from .services import RubricService
 from .forms import RubricAdminForm, RubricWipeForm
 from .forms import RubricFilterForm, RubricEditForm
@@ -92,9 +93,14 @@ class RubricWipePageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_wipe.html"
         context = self.build_context()
         form = RubricWipeForm()
+        # TODO: what is supposed to happen if we don't have a shortname yet?
+        # TODO: do we need a `get_shortname_or_None`?
         context.update(
             {
                 "rubric_wipe_form": form,
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
             }
         )
         return render(request, template_name, context=context)
@@ -105,26 +111,27 @@ class RubricWipePageView(ManagerRequiredView):
 
         context = self.build_context()
 
-        form = RubricWipeForm(request.GET)
+        form = RubricWipeForm(request.POST)
+
+        # TODO: or None
+        short_name = SpecificationService.get_shortname()
 
         if form.is_valid():
             print("is valid")
             print(form.cleaned_data)
-            # question_filter = filter_form.cleaned_data["question_filter"]
-            # kind_filter = filter_form.cleaned_data["kind_filter"]
-
-            # if question_filter:
-            #    rubrics = rubrics.filter(question=question_filter)
-            #
-            # if kind_filter:
-            #    rubrics = rubrics.filter(kind=kind_filter)
-        print("after is valid")
-        RubricService().erase_all_rubrics()
+            print(form.cleaned_data["please_confirm_the_short_name"])
+            if form.cleaned_data["please_confirm_the_short_name"] != short_name:
+                raise ValueError("TODO: failed, but what am I supposed to do?")
+            RubricService().erase_all_rubrics()
         context.update(
             {
                 "rubric_wipe_form": form,
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
             }
         )
+        # TODO: back to main page on success?  But how?
         return render(request, template_name, context=context)
 
 
