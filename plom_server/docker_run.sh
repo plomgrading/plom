@@ -7,10 +7,10 @@
 # python3 manage.py plom_demo --no-waiting
 
 # set server binding port
-if [[ -z $PLOM_PUBLIC_FACING_PORT ]]; then
+if [[ -z $PLOM_CONTAINER_PORT ]]; then
     PORT="8000"
 else
-    PORT=$PLOM_PUBLIC_FACING_PORT
+    PORT=$PLOM_CONTAINER_PORT
 fi
 
 # A basic server
