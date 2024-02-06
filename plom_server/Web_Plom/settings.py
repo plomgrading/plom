@@ -49,8 +49,7 @@ if not SECRET_KEY:
         raise RuntimeError("When PLOM_DEBUG is off, you must set PLOM_SECRET_KEY")
     SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
-# TODO: it bothers me that we need to know this, probably can be omitted if its 443
-env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
+env_port = os.environ.get("PLOM_CONTAINER_PORT")
 _port = ""
 if env_port:
     _port = f":{env_port}"
