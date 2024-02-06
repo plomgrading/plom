@@ -69,7 +69,9 @@
                             <h6 class="alert-heading">Extra</h6>
                             <ul>
                                 <li>paper: {{ current_page.info.paper_number }}</li>
-                                <li>question(s): {{ current_page.info.question_list }}</li>
+                                <!-- TODO use labels here too, Issue #2716 -->
+                                <!-- TODO conditional printing for plural: index vs indices -->
+                                <li>question indices: {{ current_page.info.question_list }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
@@ -252,14 +254,16 @@
                                                         <label class="form-check-label" for="questionall">all questions</label>
                                                     </div>
                                                     <div x-show="!allq" x-transition>
-                                                        {% for ql in question_labels %}
+                                                        {% for qidx, qlabel in question_index_label_pairs %}
                                                             <div class="form-check">
                                                                 <input name="questions"
                                                                        class="form-check-input"
                                                                        type="checkbox"
-                                                                       value="{{ forloop.counter }}"
-                                                                       id="{{ ql }}">
-                                                                <label class="form-check-label" for="{{ ql }}">Index: {{ ql }}</label>
+                                                                       value="{{ qidx }}"
+                                                                       id="{{ qlabel }}" />
+                                                                <label class="form-check-label" for="{{ qlabel }}">
+                                                                    <abbr title="question index {{ qidx }}">{{ qlabel }}</abbr>
+                                                                </label>
                                                             </div>
                                                         {% endfor %}
                                                     </div>

@@ -145,6 +145,8 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
+        # TODO: this thing has .info with index-based question_list inside
+        # instead of question labels (Issue #2716)
         current_page = scanner.get_bundle_single_page_info(bundle, index)
         context.update(
             {
@@ -162,16 +164,14 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         # If page is an extra page then we grab some data for the
         # set-extra-page-info form stuff
         if current_page["status"] == "extra":
-            # TODO - we really need a list of question-labels: Issue #2716
-            # This is a hack to be fixed vvvvvvvvvvvv
-            question_labels = [
-                f"Q.{n+1}" for n in range(SpecificationService.get_n_questions())
-            ]
+            question_index_label_pairs = (
+                SpecificationService.get_question_index_label_pairs()
+            )
             paper_numbers = scanner.get_bundle_paper_numbers(bundle)
             all_paper_numbers = paper_info.which_papers_in_database()
             context.update(
                 {
-                    "question_labels": question_labels,
+                    "question_index_label_pairs": question_index_label_pairs,
                     "bundle_paper_numbers": paper_numbers,
                     "all_paper_numbers": all_paper_numbers,
                 }
