@@ -378,16 +378,20 @@ def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
 
 def render_html_question_label(qidx: int) -> str:
     """HTML rendering of the question label for a particular question index."""
-    m = get_question_labels_map()
-    qlabel = m[qidx]
+    qlabel = get_question_label(qidx)
+    qlabel = html.escape(qlabel)
     if qlabel == f"Q{qidx}":
-        return html.escape(qlabel)
+        return qlabel
     else:
-        return f'<abbr title="question index {qidx}">{html.escape(qlabel)}</abbr>'
+        return f'<abbr title="question index {qidx}">{qlabel}</abbr>'
 
 
 def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
-    """HTML code for rendering a specified list of question labels."""
-    if qindices is None:
+    """HTML code for rendering a specified list of question labels.
+
+    If the list is empty or the special value ``None``, then return the
+    string ``"None"``.
+    """
+    if not qindices:
         return "None"
     return ", ".join(render_html_question_label(qidx) for qidx in qindices)
