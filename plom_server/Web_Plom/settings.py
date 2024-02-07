@@ -49,12 +49,16 @@ if not SECRET_KEY:
         raise RuntimeError("When PLOM_DEBUG is off, you must set PLOM_SECRET_KEY")
     SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
-env_port = os.environ.get("PLOM_CONTAINER_PORT")
+# Notes on ports:
+#   - PLOM_PUBLIC_FACING_PORT: where nginx or whoever will be expecting connections typically HTTPS
+#     TODO: we need to know this (for CSRF), probably can be omitted if its 443
+#   - PLOM_CONTAINER_PORT: the localhost port that django binds too for HTTP, default 8000
+env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 _port = ""
 if env_port:
     _port = f":{env_port}"
 
-# TODO: ditto!
+# TODO: it bothers me that we need to know this (for CSRF)
 _scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
 
 env_hostname = os.environ.get("PLOM_HOSTNAME")
