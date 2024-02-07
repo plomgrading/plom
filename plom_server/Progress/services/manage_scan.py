@@ -389,7 +389,7 @@ class ManageScanService:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
-            raise ValueError("Cannot find an image with pk {img_pk}.")
+            raise ValueError(f"Cannot find an image with pk {img_pk}.")
 
         if img.fixedpage_set.exists():  # linked by foreign key
             fp_obj = FixedPage.objects.get(image=img)
@@ -425,7 +425,7 @@ class ManageScanService:
             }
         else:
             raise ValueError(
-                "Cannot determine what sort of page image {img_pk} is attached to."
+                f"Cannot determine what sort of page image {img_pk} is attached to."
             )
 
     @transaction.atomic
