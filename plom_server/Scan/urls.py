@@ -90,6 +90,7 @@ urlpatterns = [
         GetRotatedPushedImageView.as_view(),
         name="scan_rotated_pushed_img",
     ),
+    # TODO: currently dead unused code?
     path(
         "summary/pushed_img_wrap/<int:img_pk>",
         ScannerPushedImageWrapView.as_view(),

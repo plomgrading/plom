@@ -405,14 +405,14 @@ class ManageScanService:
             paper_number = (
                 MobilePage.objects.filter(image=img).first().paper.paper_number
             )
-            q_list = [
+            q_idx_list = [
                 mp_obj.question_number
                 for mp_obj in MobilePage.objects.filter(image=img)
             ]
             return {
                 "page_type": "mobile",
                 "paper_number": paper_number,
-                "question_list": q_list,
+                "question_index_list": q_idx_list,
                 "bundle_name": img.bundle.name,
                 "bundle_order": img.bundle_order,
             }
