@@ -69,9 +69,7 @@
                             <h6 class="alert-heading">Extra</h6>
                             <ul>
                                 <li>paper: {{ current_page.info.paper_number }}</li>
-                                <!-- TODO use labels here too, Issue #2716 -->
-                                <!-- TODO conditional printing for plural: index vs indices -->
-                                <li>question indices: {{ current_page.info.question_list }}</li>
+                                <li>questions: {{ current_page.info.question_list_html | safe }}</li>
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 {% if current_page.qr_codes %}
                                     <li>
@@ -200,7 +198,7 @@
                                    hx-post="{% url 'discard_image' timestamp index %}"
                                    hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
                             </div>
-                            {% if current_page.info.paper_number and current_page.info.question_list %}
+                            {% if current_page.info.paper_number and current_page.info.question_index_list %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-delete="{% url 'extralise_image' timestamp index %}"

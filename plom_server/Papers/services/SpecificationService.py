@@ -6,9 +6,10 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+import html
 import logging
 from typing import Any, Optional, Tuple
-from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
@@ -369,3 +370,20 @@ def get_question_labels_map() -> dict[int, str]:
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}
+
+
+def render_html_question_label(qidx: int) -> str:
+    """HTML rendering of the question label for a particular question index."""
+    m = get_question_labels_map()
+    qlabel = m[qidx]
+    if qlabel == f"Q{qidx}":
+        return html.escape(qlabel)
+    else:
+        return f'<abbr title="question index {qidx}">{html.escape(qlabel)}</abbr>'
+
+
+def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
+    """HTML code for rendering a specified list of question labels."""
+    if qindices is None:
+        return ""
+    return ", ".join(render_html_question_label(qidx) for qidx in qindices)
