@@ -137,19 +137,10 @@ class AuthenticationServices:
         Returns:
             Dictionary of username to password reset link.
         """
-        # TODO change to https:// when plom_server is deploy
-        http_protocol = "http://"
-        domain = get_current_site(request).domain
-        url_path = "/reset/"
-        forward_slash = "/"
         links_dict = {}
         for username in username_list:
             user = User.objects.get(username=username)
-            uid = uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            link = http_protocol + domain + url_path + uid + forward_slash + token
-            links_dict[username] = link
-
+            links_dict[username] = self.generate_link(request, user)
         return links_dict
 
     @transaction.atomic
