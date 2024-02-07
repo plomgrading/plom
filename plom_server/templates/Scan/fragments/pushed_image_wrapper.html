@@ -18,7 +18,7 @@
     {% elif page_info.page_type == 'mobile' %}
         <ul>
             <li>Paper: {{ page_info.paper_number }}</li>
-            <li>Question indices: {{ page_info.question_index_list }}</li>
+            <li>Questions: {{ page_info.question_list_html | safe }}</li>
             <li>Bundle: {{ page_info.bundle_name }}</li>
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>

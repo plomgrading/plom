@@ -1138,13 +1138,11 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         elif img.image_type == StagingImage.EXTRA:
-            s = SpecificationService.render_html_flat_question_label_list(
-                img.extrastagingimage.question_list
-            )
+            _render = SpecificationService.render_html_flat_question_label_list
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
                 "question_index_list": img.extrastagingimage.question_list,
-                "question_list_html": s,
+                "question_list_html": _render(img.extrastagingimage.question_list),
             }
         else:
             info = {}

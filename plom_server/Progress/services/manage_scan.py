@@ -22,6 +22,7 @@ from Papers.models import (
     Image,
     Bundle,
 )
+from Papers.services import SpecificationService
 from Scan.models import StagingBundle
 
 
@@ -409,10 +410,12 @@ class ManageScanService:
                 mp_obj.question_number
                 for mp_obj in MobilePage.objects.filter(image=img)
             ]
+            _render = SpecificationService.render_html_flat_question_label_list
             return {
                 "page_type": "mobile",
                 "paper_number": paper_number,
                 "question_index_list": q_idx_list,
+                "question_list_html": _render(q_idx_list),
                 "bundle_name": img.bundle.name,
                 "bundle_order": img.bundle_order,
             }
