@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+from typing import Optional
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction, IntegrityError
+from django.http import HttpRequest
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
@@ -19,7 +22,7 @@ class AuthenticationServices:
     @transaction.atomic
     def generate_list_of_basic_usernames(
         self, group_name: str, num_users: int, *, basename: Optional[str] = None
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate a list of basic numbered usernames.
 
         Args:
@@ -37,7 +40,7 @@ class AuthenticationServices:
         if not basename:
             basename = group_name.capitalize()
 
-        user_list: List[str] = []
+        user_list: list[str] = []
         username_number = 0
 
         while len(user_list) < num_users:
@@ -80,7 +83,7 @@ class AuthenticationServices:
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate a list of "funky usernames" and add them to a group.
 
         Args:
@@ -123,8 +126,8 @@ class AuthenticationServices:
 
     @transaction.atomic
     def generate_password_reset_links_dict(
-        self, request, username_list: List[str]
-    ) -> Dict[str, str]:
+        self, request: HttpRequest, username_list: list[str]
+    ) -> dict[str, str]:
         """Generate a dictionary of password reset links for a list of usernames.
 
         Args:
@@ -150,7 +153,7 @@ class AuthenticationServices:
         return links_dict
 
     @transaction.atomic
-    def generate_link(self, request, user: User) -> str:
+    def generate_link(self, request: HttpRequest, user: User) -> str:
         """Generate a password reset link for a user.
 
         Args:
