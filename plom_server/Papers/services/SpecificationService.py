@@ -363,7 +363,7 @@ def get_question_labels_map() -> dict[int, str]:
     return {i: label for i, label in get_question_index_label_pairs()}
 
 
-def get_question_html_triples() -> list[Tuple[int, str, str]]:
+def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
     """Get the question indices, string labels and fancy HTML labels as a list of triples."""
     return [
         (i, get_question_label(i), render_html_question_label(i))
