@@ -145,8 +145,6 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
-        # TODO: this thing has .info with index-based question_list inside
-        # instead of question labels (Issue #2716)
         current_page = scanner.get_bundle_single_page_info(bundle, index)
         context.update(
             {
