@@ -22,6 +22,7 @@ from Papers.models import (
     Image,
     Bundle,
 )
+from Papers.services import SpecificationService
 from Scan.models import StagingBundle
 
 
@@ -389,7 +390,7 @@ class ManageScanService:
         try:
             img = Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
-            raise ValueError("Cannot find an image with pk {img_pk}.")
+            raise ValueError(f"Cannot find an image with pk {img_pk}.")
 
         if img.fixedpage_set.exists():  # linked by foreign key
             fp_obj = FixedPage.objects.get(image=img)
@@ -405,14 +406,16 @@ class ManageScanService:
             paper_number = (
                 MobilePage.objects.filter(image=img).first().paper.paper_number
             )
-            q_list = [
+            q_idx_list = [
                 mp_obj.question_number
                 for mp_obj in MobilePage.objects.filter(image=img)
             ]
+            _render = SpecificationService.render_html_flat_question_label_list
             return {
                 "page_type": "mobile",
                 "paper_number": paper_number,
-                "question_list": q_list,
+                "question_index_list": q_idx_list,
+                "question_list_html": _render(q_idx_list),
                 "bundle_name": img.bundle.name,
                 "bundle_order": img.bundle_order,
             }
@@ -425,7 +428,7 @@ class ManageScanService:
             }
         else:
             raise ValueError(
-                "Cannot determine what sort of page image {img_pk} is attached to."
+                f"Cannot determine what sort of page image {img_pk} is attached to."
             )
 
     @transaction.atomic

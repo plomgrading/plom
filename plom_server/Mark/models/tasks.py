@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.db import models
 
@@ -43,6 +44,7 @@ class MarkingTask(BaseTask):
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     code = models.TextField(default="", unique=False)
+    # TODO: rename to question_index, Issue #3264, Issue #2716.
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
     latest_annotation = models.OneToOneField(

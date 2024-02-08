@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -34,6 +34,7 @@ class Paper(models.Model):
 class MobilePage(models.Model):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
+    # TODO: rename to question_index, Issue #3264, Issue #2716.
     question_number = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
     # NOTE  - no ordering.

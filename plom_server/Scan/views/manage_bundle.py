@@ -162,16 +162,14 @@ class GetBundlePageFragmentView(ScannerRequiredView):
         # If page is an extra page then we grab some data for the
         # set-extra-page-info form stuff
         if current_page["status"] == "extra":
-            # TODO - we really need a list of question-labels: Issue #2716
-            # This is a hack to be fixed vvvvvvvvvvvv
-            question_labels = [
-                f"Q.{n+1}" for n in range(SpecificationService.get_n_questions())
-            ]
+            question_labels_html = (
+                SpecificationService.get_question_html_label_triples()
+            )
             paper_numbers = scanner.get_bundle_paper_numbers(bundle)
             all_paper_numbers = paper_info.which_papers_in_database()
             context.update(
                 {
-                    "question_labels": question_labels,
+                    "question_labels_html": question_labels_html,
                     "bundle_paper_numbers": paper_numbers,
                     "all_paper_numbers": all_paper_numbers,
                 }
