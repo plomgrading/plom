@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 from django.contrib.auth.models import User, Group
@@ -155,15 +156,25 @@ class AuthenticationServices:
         Returns:
             The generated password reset link as a string.
 
-        Note:
+        .. note::
+
             The generated link follows the format: 'http://<domain>/reset/<uid>/<token>'.
+            Because you may have proxies between your server and the client, the
+            URL can be influenced with the environment variables:
+
+               - PLOM_PUBLIC_FACING_SCHEME
+               - PLOM_PUBLIC_FACING_PORT
+               - PLOM_PUBLIC_FACING_PREFIX
+               - PLOM_HOSTNAME
         """
-        http_protocol = "http://"
-        domain = get_current_site(request).domain
-        url_path = "/reset/"
+        scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
+        # TODO: do we need a public facing hostname var too?
+        domain = os.environ.get("PLOM_HOSTNAME", get_current_site(request).domain)
+        prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        forward_slash = "/"
-        link = http_protocol + domain + url_path + uid + forward_slash + token
+        link = f"{scheme}://{domain}/{prefix}reset/{uid}/{token}"
 
         return link

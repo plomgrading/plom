@@ -61,6 +61,11 @@ if env_port:
 # TODO: it bothers me that we need to know this (for CSRF)
 _scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
 
+# Ues PLOM_PUBLIC_FACING_PREFIX if you want to proxy your connection like
+# this: `https://plom.example.com/<prefix>/...`
+#
+# Finally, PLOM_HOSTNAME should be the external-facing hostname to which
+# clients connect.
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
