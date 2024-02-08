@@ -46,11 +46,11 @@ class AuthenticationServices:
         while len(user_list) < num_users:
             username_number += 1
             try:
-                user = self.create_user_and_add_to_group(
+                username = self.create_user_and_add_to_group(
                     username=basename + str(username_number),
                     group_name=group_name,
                 )
-                user_list.append(user)
+                user_list.append(username)
             except IntegrityError:
                 pass
 
@@ -66,13 +66,16 @@ class AuthenticationServices:
 
         Args:
             username: The username of the user.
-            group_name: The name of the group.
+            group_name: The name of the group.  This must already exist.
 
         Keyword Args:
             email: optional email address for the user.
 
         Returns:
             The username of the created user.
+
+        Raises:
+            ObjectDoesNotExist: no such group.
         """
         group = Group.objects.get(name=group_name)
         User.objects.create_user(
