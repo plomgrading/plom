@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
-from django_htmx.http import HttpResponseClientRefresh
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
@@ -150,5 +153,10 @@ class LandingFinishedToggle(ManagerRequiredView):
 
     def post(self, request):
         current_setting = PapersPrinted.have_papers_been_printed()
-        PapersPrinted.set_papers_printed(not current_setting)
+        try:
+            PapersPrinted.set_papers_printed(not current_setting)
+        except RuntimeError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            hint = f"maybe-started-uploads-{e}"
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
         return HttpResponseClientRefresh()

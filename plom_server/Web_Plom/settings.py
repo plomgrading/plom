@@ -49,15 +49,23 @@ if not SECRET_KEY:
         raise RuntimeError("When PLOM_DEBUG is off, you must set PLOM_SECRET_KEY")
     SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn"
 
-# TODO: it bothers me that we need to know this, probably can be omitted if its 443
+# Notes on ports:
+#   - PLOM_PUBLIC_FACING_PORT: where nginx or whoever will be expecting connections typically HTTPS
+#     TODO: we need to know this (for CSRF), probably can be omitted if its 443
+#   - PLOM_CONTAINER_PORT: the localhost port that django binds to for HTTP, default 8000
 env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 _port = ""
 if env_port:
     _port = f":{env_port}"
 
-# TODO: ditto!
+# TODO: it bothers me that we need to know this (for CSRF)
 _scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
 
+# Use PLOM_PUBLIC_FACING_PREFIX if you want to proxy your connection like
+# this: `https://plom.example.com/<prefix>/...`
+#
+# Finally, PLOM_HOSTNAME should be the external-facing hostname to which
+# clients connect.
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
@@ -95,7 +103,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
-    # add newly created app folder below
+    # Custom apps
     "Base",
     "Authentication",
     "UserManagement",
@@ -217,12 +225,9 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.0/howto/static-files/
-
 STATIC_URL = "static/"
-
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-
+# Note: "collectstatic" command line copies files to this dir
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type

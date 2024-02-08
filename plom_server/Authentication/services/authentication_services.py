@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+import os
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction, IntegrityError
+from django.http import HttpRequest
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
@@ -18,8 +21,8 @@ class AuthenticationServices:
 
     @transaction.atomic
     def generate_list_of_basic_usernames(
-        self, group_name: str, num_users: int, *, basename: Optional[str] = None
-    ) -> List[str]:
+        self, group_name: str, num_users: int, *, basename: str | None = None
+    ) -> list[str]:
         """Generate a list of basic numbered usernames.
 
         Args:
@@ -37,17 +40,17 @@ class AuthenticationServices:
         if not basename:
             basename = group_name.capitalize()
 
-        user_list: List[str] = []
+        user_list: list[str] = []
         username_number = 0
 
         while len(user_list) < num_users:
             username_number += 1
             try:
-                user = self.create_user_and_add_to_group(
+                username = self.create_user_and_add_to_group(
                     username=basename + str(username_number),
                     group_name=group_name,
                 )
-                user_list.append(user)
+                user_list.append(username)
             except IntegrityError:
                 pass
 
@@ -55,7 +58,7 @@ class AuthenticationServices:
 
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, email: Optional[str] = None
+        self, username: str, group_name: str, *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -63,10 +66,16 @@ class AuthenticationServices:
 
         Args:
             username: The username of the user.
-            group_name: The name of the group.
+            group_name: The name of the group.  This must already exist.
+
+        Keyword Args:
+            email: optional email address for the user.
 
         Returns:
             The username of the created user.
+
+        Raises:
+            ObjectDoesNotExist: no such group.
         """
         group = Group.objects.get(name=group_name)
         User.objects.create_user(
@@ -80,7 +89,7 @@ class AuthenticationServices:
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate a list of "funky usernames" and add them to a group.
 
         Args:
@@ -123,8 +132,8 @@ class AuthenticationServices:
 
     @transaction.atomic
     def generate_password_reset_links_dict(
-        self, request, username_list: List[str]
-    ) -> Dict[str, str]:
+        self, request: HttpRequest, username_list: list[str]
+    ) -> dict[str, str]:
         """Generate a dictionary of password reset links for a list of usernames.
 
         Args:
@@ -134,23 +143,14 @@ class AuthenticationServices:
         Returns:
             Dictionary of username to password reset link.
         """
-        # TODO change to https:// when plom_server is deploy
-        http_protocol = "http://"
-        domain = get_current_site(request).domain
-        url_path = "/reset/"
-        forward_slash = "/"
         links_dict = {}
         for username in username_list:
             user = User.objects.get(username=username)
-            uid = uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            link = http_protocol + domain + url_path + uid + forward_slash + token
-            links_dict[username] = link
-
+            links_dict[username] = self.generate_link(request, user)
         return links_dict
 
     @transaction.atomic
-    def generate_link(self, request, user: User) -> str:
+    def generate_link(self, request: HttpRequest, user: User) -> str:
         """Generate a password reset link for a user.
 
         Args:
@@ -161,15 +161,28 @@ class AuthenticationServices:
         Returns:
             The generated password reset link as a string.
 
-        Note:
+        .. note::
+
             The generated link follows the format: 'http://<domain>/reset/<uid>/<token>'.
+            Because you may have proxies between your server and the client, the
+            URL can be influenced with the environment variables:
+
+               - PLOM_PUBLIC_FACING_SCHEME
+               - PLOM_PUBLIC_FACING_PORT
+               - PLOM_PUBLIC_FACING_PREFIX
+               - PLOM_HOSTNAME
         """
-        http_protocol = "http://"
-        domain = get_current_site(request).domain
-        url_path = "/reset/"
+        scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
+        # TODO: do we need a public facing hostname var too?
+        domain = os.environ.get("PLOM_HOSTNAME", get_current_site(request).domain)
+        prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        if port:
+            port = ":" + port
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        forward_slash = "/"
-        link = http_protocol + domain + url_path + uid + forward_slash + token
+        link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
 
         return link

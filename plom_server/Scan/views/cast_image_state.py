@@ -3,10 +3,10 @@
 # Copyright (C) 2023-2024 Andrew Rechntizer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django_htmx.http import HttpResponseClientRedirect
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
 from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -23,13 +23,18 @@ from plom.plom_exceptions import PlomBundleLockedException
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
-    def post(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int
+    ) -> HttpResponse:
         try:
-            ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().discard_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
             )
+        except ValueError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
@@ -43,13 +48,18 @@ class DiscardImageView(ScannerRequiredView):
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
-    def post(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int
+    ) -> HttpResponse:
         try:
-            ScanCastService().unknowify_image_type_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().unknowify_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
             )
+        except ValueError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])

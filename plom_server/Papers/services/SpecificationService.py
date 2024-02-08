@@ -6,9 +6,10 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+import html
 import logging
 from typing import Any, Optional, Tuple
-from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
@@ -332,7 +333,6 @@ def get_question_label(question_one_index: str | int) -> str:
     return question.label
 
 
-@transaction.atomic
 def get_question_index_label_pairs() -> list[Tuple[int, str]]:
     """Get the question indices and labels as a list of pairs of tuples.
 
@@ -343,7 +343,6 @@ def get_question_index_label_pairs() -> list[Tuple[int, str]]:
     return [(i, get_question_label(i)) for i in range(1, get_n_questions() + 1)]
 
 
-@transaction.atomic
 def get_question_labels() -> list[str]:
     """Get the question labels in a list.
 
@@ -354,7 +353,6 @@ def get_question_labels() -> list[str]:
     return [label for _, label in get_question_index_label_pairs()]
 
 
-@transaction.atomic
 def get_question_labels_map() -> dict[int, str]:
     """Get the question labels as a mapping from unit-indexed question indices.
 
@@ -365,7 +363,35 @@ def get_question_labels_map() -> dict[int, str]:
     return {i: label for i, label in get_question_index_label_pairs()}
 
 
-@transaction.atomic
+def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
+    """Get the question indices, string labels and fancy HTML labels as a list of triples."""
+    return [
+        (i, get_question_label(i), render_html_question_label(i))
+        for i in range(1, get_n_questions() + 1)
+    ]
+
+
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}
+
+
+def render_html_question_label(qidx: int) -> str:
+    """HTML rendering of the question label for a particular question index."""
+    qlabel = get_question_label(qidx)
+    qlabel = html.escape(qlabel)
+    if qlabel == f"Q{qidx}":
+        return qlabel
+    else:
+        return f'<abbr title="question index {qidx}">{qlabel}</abbr>'
+
+
+def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
+    """HTML code for rendering a specified list of question labels.
+
+    If the list is empty or the special value ``None``, then return the
+    string ``"None"``.
+    """
+    if not qindices:
+        return "None"
+    return ", ".join(render_html_question_label(qidx) for qidx in qindices)

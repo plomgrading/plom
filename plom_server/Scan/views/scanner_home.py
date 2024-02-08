@@ -11,8 +11,10 @@ from datetime import datetime
 
 import arrow
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -210,12 +212,14 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/staged_bundle_row.html", context)
 
-    def post(self, request, *, bundle_id: int) -> HttpResponseClientRefresh:
+    def post(
+        self, request: HttpRequest, *, bundle_id: int
+    ) -> HttpResponseClientRefresh:
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
-    def delete(self, request, *, bundle_id: int) -> HttpResponse:
+    def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
         try:
             scanner._remove_bundle(bundle_id)
@@ -224,4 +228,20 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[_bundle.timestamp])
             )
+        except ObjectDoesNotExist as e:
+            # Semantically we want 404 but I don't think this works:
+            # return HttpResponseClientRedirect(Http404(e))
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            hint = f"not-found-maybe-deleted-already-{e}"
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
+        except Exception as e:
+            # I don't like generic excepts: my preference would be to fix
+            # this at the htmx end of things (Issue #3251)
+            print(f"Unexpected, catchall activated: {e}")
+            print(type(e))
+            print(f"raising {e}")
+            return HttpResponseClientRedirect(
+                reverse("troubles_afoot", args=["completely-unexpected"])
+            )
+
         return HttpResponseClientRefresh()

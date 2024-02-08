@@ -1114,7 +1114,9 @@ class ScanService:
         return self.get_bundle_extra_pages_info(bundle_obj)
 
     @transaction.atomic
-    def get_bundle_single_page_info(self, bundle_obj, index):
+    def get_bundle_single_page_info(
+        self, bundle_obj: StagingBundle, index: int
+    ) -> dict[str, Any]:
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
 
@@ -1136,9 +1138,11 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         elif img.image_type == StagingImage.EXTRA:
+            _render = SpecificationService.render_html_flat_question_label_list
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_list": img.extrastagingimage.question_list,
+                "question_index_list": img.extrastagingimage.question_list,
+                "question_list_html": _render(img.extrastagingimage.question_list),
             }
         else:
             info = {}

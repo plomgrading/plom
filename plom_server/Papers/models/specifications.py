@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.db import models
 
@@ -19,6 +19,7 @@ class SpecQuestion(models.Model):
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)
+    # TODO: rename to question_index, Issue #3264, Issue #2716.
     question_number = models.PositiveIntegerField(null=False, unique=True)
 
 

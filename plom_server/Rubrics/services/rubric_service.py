@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
@@ -279,9 +279,10 @@ class RubricService:
             How many rubrics were removed.
         """
         n = 0
-        for r in Rubric.objects.all():
-            r.delete()
-            n += 1
+        with transaction.atomic():
+            for r in Rubric.objects.all().select_for_update():
+                r.delete()
+                n += 1
         return n
 
     def get_rubric_pane(self, user: User, question: int) -> Dict:

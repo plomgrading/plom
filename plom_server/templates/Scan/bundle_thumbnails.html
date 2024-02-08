@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -135,6 +135,7 @@
                                                  data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
                                                 {% include "Scan/fragments/bundle_thumbnail_container.html" %}
                                             </div>
+                                            <!-- above div should say question_index_list, Issue #2716, but I think it works for now -->
                                         </div>
                                     {% else %}
                                         <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">

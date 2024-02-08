@@ -261,36 +261,6 @@ class MarkingTaskService:
 
         return True
 
-    @transaction.atomic
-    def mark_task(self, user, code, score, time, image, data):
-        """Save a user's marking attempt to the database."""
-        task = self.get_task_from_code(code)
-        if task.latest_annotation:
-            last_annotation_edition = task.latest_annotation.edition
-        else:  # there was no previous annotation
-            last_annotation_edition = 0
-
-        this_annotation = Annotation(
-            edition=last_annotation_edition + 1,
-            score=score,
-            image=image,
-            annotation_data=data,
-            marking_time=time,
-            task=task,
-            user=user,
-        )
-        this_annotation.save()
-        # update the latest_annotation field in the parent task
-        task.latest_annotation = this_annotation
-        task.save()
-
-        # link to rubric object
-        for item in data["sceneItems"]:
-            if item[0] == "GroupDeltaText":
-                rubric = Rubric.objects.get(key=item[3])
-                rubric.annotations.add(this_annotation)
-                rubric.save()
-
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
