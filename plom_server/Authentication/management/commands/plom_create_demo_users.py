@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"{admin} already exists!")
                 raise CommandError(err)
             except Group.DoesNotExist as err:
-                self.stderr.write("Admin group {admin_group} does not exist.")
+                self.stderr.write(f"Admin group {admin_group} does not exist.")
                 raise CommandError(err)
 
             admin_info["Username"].append(admin)
