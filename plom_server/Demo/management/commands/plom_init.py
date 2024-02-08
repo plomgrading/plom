@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
+import os
+
 from plom.aliceBob import simple_password
 
 from django.contrib.auth.models import User, Group
@@ -121,7 +123,8 @@ class Command(BaseCommand):
             huey_worker_proc = proc_service.launch_huey_workers()
 
             # run the development server (TODO: for now)
-            server_proc = proc_service.launch_server(port=8000)
+            port = int(os.environ.get("PLOM_CONTAINER_PORT", "8000"))
+            server_proc = proc_service.launch_server(port=port)
 
             # wait for the user to quit, then end the background processes
             self.wait_for_exit()
