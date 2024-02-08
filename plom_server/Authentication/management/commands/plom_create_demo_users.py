@@ -81,51 +81,45 @@ class Command(BaseCommand):
 
             # create scanners
             for n in range(1, number_of_scanners + 1):
-                scanner_username = f"demoScanner{n}"
-                scanner_password = scanner_username
-                if User.objects.filter(username=scanner_username).exists():
-                    self.stderr.write(
-                        f'User "{scanner_username}" already exists, skipping'
-                    )
+                username = f"demoScanner{n}"
+                password = username
+                email = f"{username}@example.com"
+                if User.objects.filter(username=username).exists():
+                    self.stderr.write(f'User "{username}" already exists, skipping')
                 else:
                     user = User.objects.create_user(
-                        username=scanner_username,
-                        email=f"{scanner_username}@example.com",
-                        password=scanner_password,
+                        username=username, email=email, password=password
                     )
                     user.groups.add(scanner_group, demo_group)
                     user.is_active = True
                     user.save()
 
                     self.stdout.write(
-                        f"User {scanner_username} created and added to {scanner_group} group"
+                        f"User {username} created and added to {scanner_group} group"
                     )
-                    user_info["Username"].append(scanner_username)
-                    user_info["Password"].append(scanner_password)
+                    user_info["Username"].append(username)
+                    user_info["Password"].append(password)
 
             # create markers
             for n in range(1, number_of_markers + 1):
-                marker_username = f"demoMarker{n}"
-                marker_password = marker_username
-                if User.objects.filter(username=marker_username).exists():
-                    self.stderr.write(
-                        f'User "{marker_username}" already exists, skipping'
-                    )
+                username = f"demoMarker{n}"
+                password = username
+                email = f"{username}@example.com"
+                if User.objects.filter(username=username).exists():
+                    self.stderr.write(f'User "{username}" already exists, skipping')
                 else:
                     user = User.objects.create_user(
-                        username=marker_username,
-                        email=f"{marker_username}@example.com",
-                        password=marker_password,
+                        username=username, email=email, password=password
                     )
                     user.groups.add(marker_group, demo_group)
                     user.is_active = True
                     user.save()
 
                     self.stdout.write(
-                        f"User {marker_username} created and added to {marker_group} group"
+                        f"User {username} created and added to {marker_group} group"
                     )
-                    user_info["Username"].append(marker_username)
-                    user_info["Password"].append(marker_password)
+                    user_info["Username"].append(username)
+                    user_info["Password"].append(password)
 
             self.stdout.write("\nDemo usernames and passwords")
             self.stdout.write(
