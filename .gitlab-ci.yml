@@ -723,7 +723,6 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  needs: []
   image: fedora:39
   when: manual
   allow_failure: true
@@ -849,7 +848,6 @@ fedora_webplom:
 # allowed to fail (some pip stuff might be new) but we want to know
 newOS_newdeps_legacy:
   stage: alt_build
-  needs: []
   image: ubuntu:22.04
   allow_failure: true
   before_script:
@@ -927,7 +925,6 @@ newOS_newdeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  needs: []
   image: ubuntu:22.04
   allow_failure: true
   before_script:
@@ -962,7 +959,6 @@ newOS_newdeps_webplom:
 # Goal here is to catch changes that need newer features of a dependency.
 oldOS_mindeps:
   stage: alt_build
-  needs: []
   image: ubuntu:20.04
   before_script:
     - apt-get update
@@ -1030,7 +1026,6 @@ oldOS_mindeps:
 # Minimum Python, minimum deps
 minpy_mindeps:
   stage: alt_build
-  needs: []
   image: python:3.8
   before_script:
     - apt-get update
@@ -1057,7 +1052,6 @@ minpy_mindeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  needs: []
   image: python:3.8
   before_script:
     - apt-get update
