@@ -16,11 +16,13 @@ fi
 # A basic server
 if [[ "$PLOM_DEBUG" -eq 0 ]]
 then
-    python3 manage.py plom_init --no-waiting
-    gunicorn Web_Plom.wsgi --bind 0.0.0.0:$PORT
-else
     python3 manage.py collectstatic --clear --no-input
     python3 manage.py plom_init --no-waiting
+    python3 manage.py djangohuey &
+    gunicorn Web_Plom.wsgi --bind 0.0.0.0:$PORT
+else
+    python3 manage.py plom_init --no-waiting
+    python3 manage.py djangohuey &
     python3 manage.py runserver 0.0.0.0:$PORT
 fi
 
