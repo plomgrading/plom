@@ -4,11 +4,11 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
-from tabulate import tabulate
 
 
 # -m to get number of scanners and markers
@@ -37,39 +37,34 @@ class Command(BaseCommand):
             marker_group = Group.objects.get(name="marker")
             scanner_group = Group.objects.get(name="scanner")
             demo_group = Group.objects.get(name="demo")
-            admin_info = {"Username": [], "Password": []}
-            manager_info = {"Username": [], "Password": []}
-            scanner_info = {"Username": [], "Password": []}
-            marker_info = {"Username": [], "Password": []}
-
-            admin = "demoAdmin"
-            scanner = "demoScanner"
-            marker = "demoMarker"
+            user_info = {"Username": [], "Password": []}
 
             # Here is to create a single demo admin user
+            # is_staff means they can use the django admin tools
+            # is_superuser grants all permissions
+            uname, pwd = "demoAdmin", "demoAdmin"
             try:
                 User.objects.create_superuser(
-                    username=admin,
-                    email=f"{admin}@example.com",
-                    password="password",
+                    username=uname,
+                    email=f"{uname}@example.com",
+                    password=pwd,
                     is_staff=True,
                     is_superuser=True,
                 ).groups.add(admin_group, demo_group)
                 self.stdout.write(
-                    f"User {admin} created and added to {admin_group} group"
+                    f"User {uname} created and added to {admin_group} group"
                 )
+                user_info["Username"].append(uname)
+                user_info["Password"].append(pwd)
 
             except IntegrityError as err:
-                self.stderr.write(f"{admin} already exists!")
+                self.stderr.write(f"{uname} already exists!")
                 raise CommandError(err)
             except Group.DoesNotExist as err:
                 self.stderr.write(f"Admin group {admin_group} does not exist.")
                 raise CommandError(err)
 
-            admin_info["Username"].append(admin)
-            admin_info["Password"].append("password")
-
-            # manager users
+            # create managers
             for uname, pwd in (("demoManager1", "demoManager1"), ("manager", "1234")):
                 try:
                     User.objects.create_user(
@@ -78,18 +73,16 @@ class Command(BaseCommand):
                     self.stdout.write(
                         f"User {uname} created and added to {manager_group} group"
                     )
-                    manager_info["Username"].append(uname)
-                    manager_info["Password"].append(pwd)
+                    user_info["Username"].append(uname)
+                    user_info["Password"].append(pwd)
                 except IntegrityError as err:
                     self.stderr.write(f"{uname} already exists!")
                     raise CommandError(err)
 
             # create scanners
             for n in range(1, number_of_scanners + 1):
-                scanner_username = scanner + str(n)
+                scanner_username = f"demoScanner{n}"
                 scanner_password = scanner_username
-                scanner_info["Username"].append(scanner_username)
-                scanner_info["Password"].append(scanner_password)
                 if User.objects.filter(username=scanner_username).exists():
                     self.stderr.write(
                         f'User "{scanner_username}" already exists, skipping'
@@ -107,13 +100,13 @@ class Command(BaseCommand):
                     self.stdout.write(
                         f"User {scanner_username} created and added to {scanner_group} group"
                     )
+                    user_info["Username"].append(scanner_username)
+                    user_info["Password"].append(scanner_password)
+
             # create markers
             for n in range(1, number_of_markers + 1):
-                marker_username = marker + str(n)
+                marker_username = f"demoMarker{n}"
                 marker_password = marker_username
-                marker_info["Username"].append(marker_username)
-                marker_info["Password"].append(marker_password)
-
                 if User.objects.filter(username=marker_username).exists():
                     self.stderr.write(
                         f'User "{marker_username}" already exists, skipping'
@@ -131,24 +124,10 @@ class Command(BaseCommand):
                     self.stdout.write(
                         f"User {marker_username} created and added to {marker_group} group"
                     )
+                    user_info["Username"].append(marker_username)
+                    user_info["Password"].append(marker_password)
 
-            # Here is print the table of demo users
-            self.stdout.write("\nAdmin table: demo admin usernames and passwords")
+            self.stdout.write("\nDemo usernames and passwords")
             self.stdout.write(
-                str(tabulate(admin_info, headers="keys", tablefmt="fancy_grid"))
-            )
-
-            self.stdout.write("\nManager table: demo manager usernames and passwords")
-            self.stdout.write(
-                str(tabulate(manager_info, headers="keys", tablefmt="fancy_grid"))
-            )
-
-            self.stdout.write("\nScanner table: demo scanner usernames and passwords")
-            self.stdout.write(
-                str(tabulate(scanner_info, headers="keys", tablefmt="fancy_grid"))
-            )
-
-            self.stdout.write("\nMarker table: demo marker usernames and passwords")
-            self.stdout.write(
-                str(tabulate(marker_info, headers="keys", tablefmt="fancy_grid"))
+                str(tabulate(user_info, headers="keys", tablefmt="simple_outline"))
             )
