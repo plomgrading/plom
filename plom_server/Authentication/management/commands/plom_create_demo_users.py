@@ -28,100 +28,96 @@ class Command(BaseCommand):
                 "No groups. Please run 'python3 manage.py plom_create_groups' "
                 "before running this command"
             )
-        # TODO: remove later, avoiding a big indent diff with no changes...
-        if True:
-            number_of_scanners = 3
-            number_of_markers = 8
-            admin_group = Group.objects.get(name="admin")
-            manager_group = Group.objects.get(name="manager")
-            marker_group = Group.objects.get(name="marker")
-            scanner_group = Group.objects.get(name="scanner")
-            demo_group = Group.objects.get(name="demo")
-            user_info = {"Username": [], "Password": []}
+        number_of_scanners = 3
+        number_of_markers = 8
+        admin_group = Group.objects.get(name="admin")
+        manager_group = Group.objects.get(name="manager")
+        marker_group = Group.objects.get(name="marker")
+        scanner_group = Group.objects.get(name="scanner")
+        demo_group = Group.objects.get(name="demo")
+        user_info = {"Username": [], "Password": []}
 
-            # Here is to create a single demo admin user
-            # is_staff means they can use the django admin tools
-            # is_superuser grants all permissions
-            uname, pwd = "demoAdmin", "demoAdmin"
+        # Here is to create a single demo admin user
+        # is_staff means they can use the django admin tools
+        # is_superuser grants all permissions
+        uname, pwd = "demoAdmin", "demoAdmin"
+        try:
+            User.objects.create_superuser(
+                username=uname,
+                email=f"{uname}@example.com",
+                password=pwd,
+                is_staff=True,
+                is_superuser=True,
+            ).groups.add(admin_group, demo_group)
+            self.stdout.write(f"User {uname} created and added to {admin_group} group")
+            user_info["Username"].append(uname)
+            user_info["Password"].append(pwd)
+
+        except IntegrityError as err:
+            self.stderr.write(f"{uname} already exists!")
+            raise CommandError(err)
+        except Group.DoesNotExist as err:
+            self.stderr.write(f"Admin group {admin_group} does not exist.")
+            raise CommandError(err)
+
+        # create managers
+        for uname, pwd in (("demoManager1", "demoManager1"), ("manager", "1234")):
             try:
-                User.objects.create_superuser(
-                    username=uname,
-                    email=f"{uname}@example.com",
-                    password=pwd,
-                    is_staff=True,
-                    is_superuser=True,
-                ).groups.add(admin_group, demo_group)
+                User.objects.create_user(
+                    username=uname, email=f"{uname}@example.com", password=pwd
+                ).groups.add(manager_group, demo_group)
                 self.stdout.write(
-                    f"User {uname} created and added to {admin_group} group"
+                    f"User {uname} created and added to {manager_group} group"
                 )
                 user_info["Username"].append(uname)
                 user_info["Password"].append(pwd)
-
             except IntegrityError as err:
                 self.stderr.write(f"{uname} already exists!")
                 raise CommandError(err)
-            except Group.DoesNotExist as err:
-                self.stderr.write(f"Admin group {admin_group} does not exist.")
-                raise CommandError(err)
 
-            # create managers
-            for uname, pwd in (("demoManager1", "demoManager1"), ("manager", "1234")):
-                try:
-                    User.objects.create_user(
-                        username=uname, email=f"{uname}@example.com", password=pwd
-                    ).groups.add(manager_group, demo_group)
-                    self.stdout.write(
-                        f"User {uname} created and added to {manager_group} group"
-                    )
-                    user_info["Username"].append(uname)
-                    user_info["Password"].append(pwd)
-                except IntegrityError as err:
-                    self.stderr.write(f"{uname} already exists!")
-                    raise CommandError(err)
+        # create scanners
+        for n in range(1, number_of_scanners + 1):
+            username = f"demoScanner{n}"
+            password = username
+            email = f"{username}@example.com"
+            if User.objects.filter(username=username).exists():
+                self.stderr.write(f'User "{username}" already exists, skipping')
+            else:
+                user = User.objects.create_user(
+                    username=username, email=email, password=password
+                )
+                user.groups.add(scanner_group, demo_group)
+                user.is_active = True
+                user.save()
 
-            # create scanners
-            for n in range(1, number_of_scanners + 1):
-                username = f"demoScanner{n}"
-                password = username
-                email = f"{username}@example.com"
-                if User.objects.filter(username=username).exists():
-                    self.stderr.write(f'User "{username}" already exists, skipping')
-                else:
-                    user = User.objects.create_user(
-                        username=username, email=email, password=password
-                    )
-                    user.groups.add(scanner_group, demo_group)
-                    user.is_active = True
-                    user.save()
+                self.stdout.write(
+                    f"User {username} created and added to {scanner_group} group"
+                )
+                user_info["Username"].append(username)
+                user_info["Password"].append(password)
 
-                    self.stdout.write(
-                        f"User {username} created and added to {scanner_group} group"
-                    )
-                    user_info["Username"].append(username)
-                    user_info["Password"].append(password)
+        # create markers
+        for n in range(1, number_of_markers + 1):
+            username = f"demoMarker{n}"
+            password = username
+            email = f"{username}@example.com"
+            if User.objects.filter(username=username).exists():
+                self.stderr.write(f'User "{username}" already exists, skipping')
+            else:
+                user = User.objects.create_user(
+                    username=username, email=email, password=password
+                )
+                user.groups.add(marker_group, demo_group)
+                user.is_active = True
+                user.save()
 
-            # create markers
-            for n in range(1, number_of_markers + 1):
-                username = f"demoMarker{n}"
-                password = username
-                email = f"{username}@example.com"
-                if User.objects.filter(username=username).exists():
-                    self.stderr.write(f'User "{username}" already exists, skipping')
-                else:
-                    user = User.objects.create_user(
-                        username=username, email=email, password=password
-                    )
-                    user.groups.add(marker_group, demo_group)
-                    user.is_active = True
-                    user.save()
+                self.stdout.write(
+                    f"User {username} created and added to {marker_group} group"
+                )
+                user_info["Username"].append(username)
+                user_info["Password"].append(password)
 
-                    self.stdout.write(
-                        f"User {username} created and added to {marker_group} group"
-                    )
-                    user_info["Username"].append(username)
-                    user_info["Password"].append(password)
-
-            self.stdout.write("\nDemo usernames and passwords")
-            self.stdout.write(
-                str(tabulate(user_info, headers="keys", tablefmt="simple_outline"))
-            )
+        self.stdout.write("\nDemo usernames and passwords")
+        self.stdout.write(
+            str(tabulate(user_info, headers="keys", tablefmt="simple_outline"))
+        )
