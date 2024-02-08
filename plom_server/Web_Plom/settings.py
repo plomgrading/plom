@@ -52,7 +52,7 @@ if not SECRET_KEY:
 # Notes on ports:
 #   - PLOM_PUBLIC_FACING_PORT: where nginx or whoever will be expecting connections typically HTTPS
 #     TODO: we need to know this (for CSRF), probably can be omitted if its 443
-#   - PLOM_CONTAINER_PORT: the localhost port that django binds too for HTTP, default 8000
+#   - PLOM_CONTAINER_PORT: the localhost port that django binds to for HTTP, default 8000
 env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 _port = ""
 if env_port:
@@ -61,6 +61,11 @@ if env_port:
 # TODO: it bothers me that we need to know this (for CSRF)
 _scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "https")
 
+# Use PLOM_PUBLIC_FACING_PREFIX if you want to proxy your connection like
+# this: `https://plom.example.com/<prefix>/...`
+#
+# Finally, PLOM_HOSTNAME should be the external-facing hostname to which
+# clients connect.
 env_hostname = os.environ.get("PLOM_HOSTNAME")
 if env_hostname:
     ALLOWED_HOSTS = [env_hostname]
