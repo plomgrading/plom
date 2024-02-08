@@ -40,39 +40,47 @@ class Command(BaseCommand):
         # Here is to create a single demo admin user
         # is_staff means they can use the django admin tools
         # is_superuser grants all permissions
-        uname, pwd = "demoAdmin", "demoAdmin"
+        username = "demoAdmin"
+        password = username
+        email = f"{username}@example.com"
         try:
             User.objects.create_superuser(
-                username=uname,
-                email=f"{uname}@example.com",
-                password=pwd,
+                username=username,
+                email=email,
+                password=password,
                 is_staff=True,
                 is_superuser=True,
             ).groups.add(admin_group, demo_group)
-            self.stdout.write(f"User {uname} created and added to {admin_group} group")
-            user_info["Username"].append(uname)
-            user_info["Password"].append(pwd)
+            self.stdout.write(
+                f"User {username} created and added to {admin_group} group"
+            )
+            user_info["Username"].append(username)
+            user_info["Password"].append(password)
 
         except IntegrityError as err:
-            self.stderr.write(f"{uname} already exists!")
+            self.stderr.write(f"{username} already exists!")
             raise CommandError(err)
         except Group.DoesNotExist as err:
             self.stderr.write(f"Admin group {admin_group} does not exist.")
             raise CommandError(err)
 
         # create managers
-        for uname, pwd in (("demoManager1", "demoManager1"), ("manager", "1234")):
+        for username, password in (
+            ("demoManager1", "demoManager1"),
+            ("manager", "1234"),
+        ):
+            email = f"{username}@example.com"
             try:
                 User.objects.create_user(
-                    username=uname, email=f"{uname}@example.com", password=pwd
+                    username=username, email=email, password=password
                 ).groups.add(manager_group, demo_group)
                 self.stdout.write(
-                    f"User {uname} created and added to {manager_group} group"
+                    f"User {username} created and added to {manager_group} group"
                 )
-                user_info["Username"].append(uname)
-                user_info["Password"].append(pwd)
+                user_info["Username"].append(username)
+                user_info["Password"].append(password)
             except IntegrityError as err:
-                self.stderr.write(f"{uname} already exists!")
+                self.stderr.write(f"{username} already exists!")
                 raise CommandError(err)
 
         # create scanners
