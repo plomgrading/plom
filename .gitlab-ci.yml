@@ -387,8 +387,6 @@ flake8:
     # Future hackers: please try to decrease this number
     - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 7 ]]"
 
-  allow_failure: true
-
 
 pydocstyle-plom-count:
   image: python:3.11
