@@ -23,14 +23,13 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        # Check to see if there are any groups created
-        exist_groups = [str(group) for group in Group.objects.all()]
-        if not exist_groups:
-            self.stderr.write(
-                "\nNo groups created! Please run python manage.py plom_create_groups "
-                "to create groups first before running this command!\n"
+        if not Group.objects.exists():
+            raise CommandError(
+                "No groups! Please run 'python3 manage.py plom_create_groups' "
+                "before running this command!"
             )
-        else:
+        # TODO: remove later, avoiding a big indent diff with no changes...
+        if True:
             range_of_scanners = 3
             range_of_markers = 8
             admin_group = Group.objects.get(name="admin")
