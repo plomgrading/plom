@@ -4,11 +4,92 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.shortcuts import render, redirect
+from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect, reverse
+from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
+from Papers.services import SpecificationService
 from .services import RubricService
+from .forms import RubricAdminForm, RubricWipeForm
 from .forms import RubricFilterForm, RubricEditForm
+
+
+class RubricAdminPageView(ManagerRequiredView):
+    """Initializing rubrics, maybe other features in the future."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_admin.html"
+        form = RubricAdminForm(request.GET)
+        context = self.build_context()
+        rubrics = RubricService().get_all_rubrics()
+        context.update(
+            {
+                "rubrics": rubrics,
+                "rubric_admin_form": form,
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_admin.html"
+        form = RubricAdminForm(request.POST)
+        context = self.build_context()
+        if form.is_valid():
+            # TODO: not necessarily the one who logged in; does it matter?
+            any_manager = User.objects.filter(groups__name="manager").first()
+            RubricService().init_rubrics(any_manager.username)
+        # and if not valid, this just kinda DTRT (?)
+        rubrics = RubricService().get_all_rubrics()
+        context.update(
+            {
+                "rubrics": rubrics,
+                "rubric_admin_form": form,
+            }
+        )
+        return render(request, template_name, context=context)
+
+
+class RubricWipePageView(ManagerRequiredView):
+    """Confirm before wiping rubrics."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_wipe.html"
+        context = self.build_context()
+        form = RubricWipeForm()
+        # TODO: what is supposed to happen if we don't have a shortname yet?
+        # TODO: do we need a `get_shortname_or_None`?  Related to Issue #2996
+        context.update(
+            {
+                "rubric_wipe_form": form,
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_wipe.html"
+        context = self.build_context()
+        form = RubricWipeForm(request.POST)
+        short_name = SpecificationService.get_shortname()
+        _confirm_field = "confirm_by_typing_the_short_name"
+        if form.is_valid():
+            if form.cleaned_data[_confirm_field] == short_name:
+                RubricService().erase_all_rubrics()
+                return HttpResponseRedirect(reverse("rubrics_landing"))
+            form.add_error(_confirm_field, "Short name did not match")
+        context.update(
+            {
+                "rubric_wipe_form": form,
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
+            }
+        )
+        return render(request, template_name, context=context)
 
 
 class RubricLandingPageView(ManagerRequiredView):
