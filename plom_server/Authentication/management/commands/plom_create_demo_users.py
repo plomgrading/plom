@@ -25,8 +25,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if not Group.objects.exists():
             raise CommandError(
-                "No groups! Please run 'python3 manage.py plom_create_groups' "
-                "before running this command!"
+                "No groups. Please run 'python3 manage.py plom_create_groups' "
+                "before running this command"
             )
         # TODO: remove later, avoiding a big indent diff with no changes...
         if True:
@@ -41,10 +41,8 @@ class Command(BaseCommand):
             manager_info = {"Username": [], "Password": []}
             scanner_info = {"Username": [], "Password": []}
             marker_info = {"Username": [], "Password": []}
-            email = "@example.com"
 
             admin = "demoAdmin"
-            manager = "demoManager1"
             scanner = "demoScanner"
             marker = "demoMarker"
 
@@ -52,12 +50,14 @@ class Command(BaseCommand):
             try:
                 User.objects.create_superuser(
                     username=admin,
-                    email=admin + email,
+                    email=f"{admin}@example.com",
                     password="password",
                     is_staff=True,
                     is_superuser=True,
                 ).groups.add(admin_group, demo_group)
-                self.stdout.write(f"{admin} created and added to {admin_group} group!")
+                self.stdout.write(
+                    f"User {admin} created and added to {admin_group} group"
+                )
 
             except IntegrityError as err:
                 self.stderr.write(f"{admin} already exists!")
@@ -69,28 +69,20 @@ class Command(BaseCommand):
             admin_info["Username"].append(admin)
             admin_info["Password"].append("password")
 
-            # Here is to create a single demo manager user
-            try:
-                User.objects.create_user(
-                    username=manager, email=manager + email, password=manager
-                ).groups.add(manager_group, demo_group)
-                self.stdout.write(
-                    f"{manager} created and added to {manager_group} group!"
-                )
-                User.objects.create_user(
-                    username="manager", email="manager" + email, password="1234"
-                ).groups.add(manager_group, demo_group)
-                self.stdout.write(
-                    f"{manager} created and added to {manager_group} group!"
-                )
-            except IntegrityError as err:
-                self.stderr.write(f"{manager} already exists!")
-                raise CommandError(err)
-
-            manager_info["Username"].append(manager)
-            manager_info["Password"].append(manager)
-            manager_info["Username"].append("manager")
-            manager_info["Password"].append("1234")
+            # manager users
+            for uname, pwd in (("demoManager1", "demoManager1"), ("manager", "1234")):
+                try:
+                    User.objects.create_user(
+                        username=uname, email=f"{uname}@example.com", password=pwd
+                    ).groups.add(manager_group, demo_group)
+                    self.stdout.write(
+                        f"User {uname} created and added to {manager_group} group"
+                    )
+                    manager_info["Username"].append(uname)
+                    manager_info["Password"].append(pwd)
+                except IntegrityError as err:
+                    self.stderr.write(f"{uname} already exists!")
+                    raise CommandError(err)
 
             # create scanners
             for n in range(1, number_of_scanners + 1):
@@ -105,7 +97,7 @@ class Command(BaseCommand):
                 else:
                     user = User.objects.create_user(
                         username=scanner_username,
-                        email=scanner_username + email,
+                        email=f"{scanner_username}@example.com",
                         password=scanner_password,
                     )
                     user.groups.add(scanner_group, demo_group)
@@ -113,7 +105,7 @@ class Command(BaseCommand):
                     user.save()
 
                     self.stdout.write(
-                        f"{scanner_username} created and added to {scanner_group} group!"
+                        f"User {scanner_username} created and added to {scanner_group} group"
                     )
             # create markers
             for n in range(1, number_of_markers + 1):
@@ -129,7 +121,7 @@ class Command(BaseCommand):
                 else:
                     user = User.objects.create_user(
                         username=marker_username,
-                        email=marker_username + email,
+                        email=f"{marker_username}@example.com",
                         password=marker_password,
                     )
                     user.groups.add(marker_group, demo_group)
@@ -137,7 +129,7 @@ class Command(BaseCommand):
                     user.save()
 
                     self.stdout.write(
-                        f"{marker_username} created and added to {marker_group} group!"
+                        f"User {marker_username} created and added to {marker_group} group"
                     )
 
             # Here is print the table of demo users
