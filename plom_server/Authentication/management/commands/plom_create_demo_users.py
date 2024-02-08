@@ -35,7 +35,7 @@ class Command(BaseCommand):
         marker_group = Group.objects.get(name="marker")
         scanner_group = Group.objects.get(name="scanner")
         demo_group = Group.objects.get(name="demo")
-        user_info = {"Username": [], "Password": []}
+        user_info = {"Username": [], "Password": [], "Group": []}
 
         # Here is to create a single demo admin user
         # is_staff means they can use the django admin tools
@@ -56,7 +56,7 @@ class Command(BaseCommand):
             )
             user_info["Username"].append(username)
             user_info["Password"].append(password)
-
+            user_info["Group"].append(admin_group)
         except IntegrityError as err:
             self.stderr.write(f"{username} already exists!")
             raise CommandError(err)
@@ -79,6 +79,7 @@ class Command(BaseCommand):
                 )
                 user_info["Username"].append(username)
                 user_info["Password"].append(password)
+                user_info["Group"].append(manager_group)
             except IntegrityError as err:
                 self.stderr.write(f"{username} already exists!")
                 raise CommandError(err)
@@ -103,6 +104,7 @@ class Command(BaseCommand):
                 )
                 user_info["Username"].append(username)
                 user_info["Password"].append(password)
+                user_info["Group"].append(scanner_group)
 
         # create markers
         for n in range(1, number_of_markers + 1):
@@ -124,6 +126,7 @@ class Command(BaseCommand):
                 )
                 user_info["Username"].append(username)
                 user_info["Password"].append(password)
+                user_info["Group"].append(marker_group)
 
         self.stdout.write("\nDemo usernames and passwords")
         self.stdout.write(
