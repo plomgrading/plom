@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
@@ -22,7 +21,7 @@ class AuthenticationServices:
 
     @transaction.atomic
     def generate_list_of_basic_usernames(
-        self, group_name: str, num_users: int, *, basename: Optional[str] = None
+        self, group_name: str, num_users: int, *, basename: str | None = None
     ) -> list[str]:
         """Generate a list of basic numbered usernames.
 
@@ -59,7 +58,7 @@ class AuthenticationServices:
 
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, email: Optional[str] = None
+        self, username: str, group_name: str, *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -68,6 +67,9 @@ class AuthenticationServices:
         Args:
             username: The username of the user.
             group_name: The name of the group.
+
+        Keyword Args:
+            email: optional email address for the user.
 
         Returns:
             The username of the created user.
