@@ -26,6 +26,7 @@ class PrenamingSetting(SingletonBaseModel):
 
 class PapersPrintedSettingModel(SingletonBaseModel):
     """Set this once user has printed papers."""
+
     have_printed_papers = models.BooleanField(default=False, null=False)
 
 

@@ -287,14 +287,14 @@
                         {% endif %}
                     {% else %}
                         <a class="btn btn-success" hx-post="{% url 'prep_finished_toggle' %}">Set 'papers are printed'</a>
-                        {% endif %}
-                    {% else %}
-                        <a disabled>
-                            Needs database
-                            <i class="bi bi-chevron-up"></i>
-                        </a>
                     {% endif %}
-                </div>
-            </li>
-        </ul>
-    {% endblock main_content %}
+                {% else %}
+                    <a disabled>
+                        Needs database
+                        <i class="bi bi-chevron-up"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+    </ul>
+{% endblock main_content %}
