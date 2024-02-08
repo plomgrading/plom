@@ -175,8 +175,11 @@ class AuthenticationServices:
         prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
         if prefix and not prefix.endswith("/"):
             prefix += "/"
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        if port:
+            port = ":" + port
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        link = f"{scheme}://{domain}/{prefix}reset/{uid}/{token}"
+        link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
 
         return link
