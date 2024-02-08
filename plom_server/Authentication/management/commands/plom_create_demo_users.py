@@ -30,8 +30,8 @@ class Command(BaseCommand):
             )
         # TODO: remove later, avoiding a big indent diff with no changes...
         if True:
-            range_of_scanners = 3
-            range_of_markers = 8
+            number_of_scanners = 3
+            number_of_markers = 8
             admin_group = Group.objects.get(name="admin")
             manager_group = Group.objects.get(name="manager")
             marker_group = Group.objects.get(name="marker")
@@ -94,8 +94,8 @@ class Command(BaseCommand):
             manager_info["Password"].append("1234")
 
             # create scanners
-            for number_of_scanner in range(1, range_of_scanners + 1):
-                scanner_username = scanner + str(number_of_scanner)
+            for n in range(1, number_of_scanners + 1):
+                scanner_username = scanner + str(n)
                 scanner_password = scanner_username
                 scanner_info["Username"].append(scanner_username)
                 scanner_info["Password"].append(scanner_password)
@@ -115,8 +115,8 @@ class Command(BaseCommand):
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
             # create markers
-            for number_of_marker in range(1, range_of_markers + 1):
-                marker_username = marker + str(number_of_marker)
+            for n in range(1, number_of_markers + 1):
+                marker_username = marker + str(n)
                 marker_password = marker_username
                 marker_info["Username"].append(marker_username)
                 marker_info["Password"].append(marker_password)
