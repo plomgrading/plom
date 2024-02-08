@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
@@ -18,7 +18,6 @@ from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 
 from .services import AuthenticationServices
-from .form.signupForm import CreateUserForm
 from Base.base_group_views import (
     AdminRequiredView,
     RoleRequiredView,
