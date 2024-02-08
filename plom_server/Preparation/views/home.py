@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
-from django_htmx.http import HttpResponseClientRefresh
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
@@ -148,7 +151,12 @@ class LandingResetQVmap(ManagerRequiredView):
 class LandingFinishedToggle(ManagerRequiredView):
     """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         current_setting = TestPreparedSetting.is_test_prepared()
-        TestPreparedSetting.set_test_prepared(not current_setting)
+        try:
+            TestPreparedSetting.set_test_prepared(not current_setting)
+        except RuntimeError as e:
+            # TODO: uses the troubles-afoot kludge (Issue #3251)
+            hint = f"maybe-started-uploads-{e}"
+            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
         return HttpResponseClientRefresh()

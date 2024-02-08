@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -51,43 +53,71 @@ class ScanCastService:
     # ----------------------------------------
 
     @transaction.atomic
-    def discard_image_type_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
-    ):
-        """A wrapper around discard_image_type_from_bundle cmd.
+    def discard_image_type_from_bundle_id_and_order(
+        self, user_obj: User, bundle_id: int, bundle_order: int
+    ) -> None:
+        """A wrapper around ``discard_image_type_from_bundle``.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
-            user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
-            bundle_order: (int) Bundle order of a page.
+            user_obj: which user is doing this.
+            bundle_id: which bundle.
+            bundle_order: which item within the bundle.
 
         Returns:
             None.
+
+        Raises:
+            ValueError: cannot find either the bundle or the order.
+                Also if the image has already been discarded.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
         try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
             img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find an image at order {bundle_order}")
+            raise ValueError(
+                f"Cannot find an image for bundle {bundle_id} order {bundle_order}"
+            )
         self.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
     @transaction.atomic
     def discard_image_type_from_bundle(
-        self, user_obj, bundle_obj, bundle_order, *, image_type=None
-    ):
+        self,
+        user_obj: User,
+        bundle_obj: StagingBundle,
+        bundle_order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
+        """Discard an image from a bundle.
+
+        Args:
+            user_obj: which user.
+            bundle_obj: which bundle.
+            bundle_order: which item within the bundle.
+
+        Keyword Args:
+            image_type: the *current* type of the image that we wish to
+                discard.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find, or already discarded.
+        """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
@@ -136,8 +166,13 @@ class ScanCastService:
 
     @transaction.atomic
     def discard_image_type_from_bundle_cmd(
-        self, username, bundle_name, bundle_order, *, image_type=None
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        bundle_order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -157,49 +192,58 @@ class ScanCastService:
         )
 
     @transaction.atomic
-    def unknowify_image_type_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
-    ):
-        """A wrapper around unknowify_image_type_from_bundle cmd.
+    def unknowify_image_type_from_bundle_id_and_order(
+        self, user_obj: User, bundle_id: int, bundle_order: int
+    ) -> None:
+        """A wrapper around ``unknowify_image_type_from_bundle``.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
-            user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
-            bundle_order: (int) Bundle order of a page.
+            user_obj: which user.
+            bundle_id: which bundle.
+            bundle_order: which item within the bundle.
 
         Returns:
             None.
+
+        Raises:
+            ValueError: cannot find either the bundle or the order.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
         try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
             img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find an image at order {bundle_order}")
+            raise ValueError(
+                f"Cannot find an image for bundle {bundle_id} order {bundle_order}"
+            )
         self.unknowify_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
     @transaction.atomic
     def unknowify_image_type_from_bundle(
-        self, user_obj, bundle_obj, bundle_order, *, image_type=None
+        self,
+        user_obj: User,
+        bundle_obj: StagingBundle,
+        bundle_order: int,
+        *,
+        image_type: int | None = None,
     ):
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        if (
-            image_type is None
-        ):  # Compute the type of the image at that position and use that.
+        if image_type is None:
+            # Compute the type of the image at that position and use that.
             image_type = img.image_type
 
         if image_type == StagingImage.UNKNOWN:
@@ -464,7 +508,9 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
@@ -581,7 +627,9 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            img = bundle_obj.stagingimage_set.select_for_update().get(
+                bundle_order=bundle_order
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 

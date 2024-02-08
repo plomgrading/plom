@@ -103,7 +103,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
-    # add newly created app folder below
+    # Custom apps
     "Base",
     "Authentication",
     "UserManagement",
