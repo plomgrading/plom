@@ -37,7 +37,6 @@ class Command(BaseCommand):
             marker_group = Group.objects.get(name="marker")
             scanner_group = Group.objects.get(name="scanner")
             demo_group = Group.objects.get(name="demo")
-            exist_usernames = [str(username) for username in User.objects.all()]
             admin_info = {"Username": [], "Password": []}
             manager_info = {"Username": [], "Password": []}
             scanner_info = {"Username": [], "Password": []}
@@ -99,8 +98,10 @@ class Command(BaseCommand):
                 scanner_password = scanner_username
                 scanner_info["Username"].append(scanner_username)
                 scanner_info["Password"].append(scanner_password)
-                if scanner_username in exist_usernames:
-                    self.stderr.write(f"{scanner_username} already exists!")
+                if User.objects.filter(username=scanner_username).exists():
+                    self.stderr.write(
+                        f'User "{scanner_username}" already exists, skipping'
+                    )
                 else:
                     user = User.objects.create_user(
                         username=scanner_username,
@@ -121,8 +122,10 @@ class Command(BaseCommand):
                 marker_info["Username"].append(marker_username)
                 marker_info["Password"].append(marker_password)
 
-                if marker_username in exist_usernames:
-                    self.stderr.write(f"{marker_username} already exists!")
+                if User.objects.filter(username=marker_username).exists():
+                    self.stderr.write(
+                        f'User "{marker_username}" already exists, skipping'
+                    )
                 else:
                     user = User.objects.create_user(
                         username=marker_username,
