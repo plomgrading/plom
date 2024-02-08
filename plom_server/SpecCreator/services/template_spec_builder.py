@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 
 class TemplateSpecBuilderService:
@@ -33,13 +34,13 @@ doNotMarkPages = []
 # and then uncomment them by removing the leading #'s.
 #
 # Then, optionally, give a label for the question, such as
-# 'label = "Ex3"
+# label = "Ex3"
 # By default Plom generates labels for you.
 #
 # Then, also optionally, tell Plom how to select the question from the
 # available versions - either
-#    'select = "shuffle"' - take randomly from any version, or
-#    'select = "fix"' - always take from version 1
+#    select = "shuffle" - take randomly from any version, or
+#    select = "fix" - always take from version 1
 # By default Plom will use "shuffle"
 """
 
@@ -57,7 +58,7 @@ doNotMarkPages = []
         for k in range(questions):
             spec_toml += f"""
 [[question]]
-## "pages" = {question_pages[k]}  ## <<<<< This needs editing
-## "mark"= {question_scores[k]}  ## <<<<< This needs editing
+## pages = {question_pages[k]}  ## <<<<< This needs editing
+## mark = {question_scores[k]}  ## <<<<< This needs editing
 """
         return spec_toml
