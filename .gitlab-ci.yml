@@ -58,7 +58,6 @@ stages:
 # Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
 docker-image:
   stage: build
-  needs: []
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo $DOCKER_USE_CACHE
@@ -179,7 +178,6 @@ docker-tag-latest:
 make_package:
   image: python:3.11
   stage: build
-  needs: []
   script:
     - pip install --upgrade build
     - python3 -m build
