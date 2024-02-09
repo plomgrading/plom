@@ -5,6 +5,7 @@
 from django.db import transaction
 
 from Papers.models import Paper, Bundle
+from Scan.models import StagingBundle
 from ..models import PapersPrintedSettingModel
 
 
@@ -23,7 +24,7 @@ def can_status_be_set_false() -> bool:
 
     Currently, only a check to see if bundles haven't been uploaded yet - subject to change.
     """
-    return Bundle.objects.all().count() == 0
+    return not (StagingBundle.objects.exists() or Bundle.objects.exists())
 
 
 # We've chosen to give the above helper functions to this module

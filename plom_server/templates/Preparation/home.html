@@ -64,7 +64,7 @@
                     <a class="btn btn-success float-end"
                        href="{% url 'prep_sources_view' %}">View</a>
                     <a>
-                        Preparation set as finished
+                        Papers have been printed
                         <i class="bi bi-chevron-down"></i>
                     </a>
                 {% elif can_upload_source_tests %}
@@ -273,19 +273,23 @@
         <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
             <div class="d-flex align-items-center">
                 <div class="flex-fill">
-                    <p class="fs-4 mb-0">8. Tell Plom that papers have been printed</p>
+                    <p class="fs-4 mb-0">
+                        8. Tell Plom that papers have been printed
+                        {% if have_papers_been_printed %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                    </p>
                     <p class="fs-7">
                         &emsp;&ensp; Once you tell Plom that papers have been printed, the server will be ready to accept scanned exam bundles.
                         <ul>
                             {% if papers_staged %}
                                 {% if have_papers_been_printed %}
                                     {% if not can_unset_papers_printed %}
+                                        <li>Bundles have been uploaded</li>
                                         <li>
-                                            Scanning and marking is in progress so you cannot unset <q>papers are printed</q>
+                                            This means that scanning and/or marking is underway and so you cannot unset <q>papers are printed</q>.
                                         </li>
                                     {% else %}
                                         <li>
-                                            Although you set <q>papers are printed</q> neither scanning nor marking has started, so you can unset this.
+                                            Although you set <q>papers are printed</q> no scans have been uploaded, so you can unset this.
                                         </li>
                                         <li>Be very careful doing this. Any existing physical papers should be destroyed before you change anything.</li>
                                     {% endif %}
