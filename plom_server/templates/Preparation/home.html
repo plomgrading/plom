@@ -273,9 +273,29 @@
         <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
             <div class="d-flex align-items-center">
                 <div class="flex-fill">
-                    <p class="fs-4 mb-0">8. Set papers as printed</p>
+                    <p class="fs-4 mb-0">8. Tell Plom that papers have been printed</p>
                     <p class="fs-7">
                         &emsp;&ensp; Once you tell Plom that papers have been printed, the server will be ready to accept scanned exam bundles.
+                        <ul>
+                            {% if papers_staged %}
+                                {% if have_papers_been_printed %}
+                                    {% if not can_unset_papers_printed %}
+                                        <li>
+                                            Scanning and marking is in progress so you cannot unset <q>papers are printed</q>
+                                        </li>
+                                    {% else %}
+                                        <li>
+                                            Although you set <q>papers are printed</q> neither scanning nor marking has started, so you can unset this.
+                                        </li>
+                                        <li>Be very careful doing this. Any existing physical papers should be destroyed before you change anything.</li>
+                                    {% endif %}
+                                {% else %}
+                                    <li>Your database is set up, so once you have printed the test-paper PDFs, please tell Plom.</li>
+                                {% endif %}
+                            {% else %}
+                                <li>Your database is not set up; you can't do much before that is finished.</li>
+                            {% endif %}
+                        </ul>
                     </p>
                 </div>
                 {% if papers_staged %}
@@ -283,7 +303,9 @@
                         {% if not can_unset_papers_printed %}
                             <a disabled>Scanning and marking in progress</a>
                         {% else %}
-                            <a class="btn btn-danger" hx-post="{% url 'prep_finished_toggle' %}">Unset 'papers are printed'</a>
+                            <a class="btn btn-danger"
+                               hx-post="{% url 'prep_finished_toggle' %}"
+                               hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
                         {% endif %}
                     {% else %}
                         <a class="btn btn-success" hx-post="{% url 'prep_finished_toggle' %}">Set 'papers are printed'</a>
