@@ -6,6 +6,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 
@@ -72,3 +73,9 @@ class PasswordResetPage(ManagerRequiredView):
 
         context = {"username": username, "link": link}
         return render(request, "UserManagement/password_reset_page.html", context)
+
+
+class HTMXExplodeView(ManagerRequiredView):
+    def get(self, request):
+        1 / 0
+        return HttpResponse(status=200)

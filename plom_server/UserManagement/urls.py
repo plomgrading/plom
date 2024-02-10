@@ -25,4 +25,5 @@ urlpatterns = [
         views.UserPage.toggleLeadMarker,
         name="toggleLeadMarker",
     ),
+    path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
 ]
