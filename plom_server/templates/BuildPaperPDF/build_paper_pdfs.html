@@ -18,17 +18,6 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if not db_initialised %}
-            <div class="card w-50">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
-                        Database not initialised
-                    </h5>
-                    <p class="card-text">You must initialize the database before building PDFs.</p>
-                </div>
-            </div>
-        {% endif %}
         <div id="pdf_table">{{ pdf_table |safe }}</div>
     </div>
     <div class="modal fade"

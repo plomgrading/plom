@@ -5,31 +5,42 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
 -->
-<div>
-    <a class="btn btn-primary"
-       hx-post="{% url 'start_all_PDFs' %}"
-       hx-target="#pdf_table">Build All PDFs</a>
-    {% if pdf_errors %}
-        <a class="btn btn-warning"
-           hx-post="{% url 'retry_all_PDFs' %}"
-           hx-target="#pdf_table">Retry All</a>
+<div class="d-grid gap-2">
+    {% if not db_initialised %}
+        <div class="card w-50">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
+                    Database not initialised
+                </h5>
+                <p class="card-text">You must initialize the database before building PDFs.</p>
+            </div>
+        </div>
     {% endif %}
-    <a class="btn btn-danger"
-       hx-post="{% url 'cancel_all_PDFs' %}"
-       hx-target="#pdf_table">Cancel All</a>
-    <a class="btn btn-danger"
-       data-bs-toggle="modal"
-       data-bs-target="#deleteBtnModal">Delete All PDFs</a>
-    {% if tasks %}
-        <a class="btn btn-secondary"
-           onclick="document.getElementById('bottom').scrollIntoView()">
-            Scroll to bottom
-            <i class="bi bi-chevron-down"></i>
-        </a>
-    {% endif %}
-</div>
-<div>
-    <p class="mt-2 mb-1">{{ message }}</p>
+    <div>
+        <a class="btn btn-primary"
+           hx-post="{% url 'start_all_PDFs' %}"
+           hx-target="#pdf_table">Build All PDFs</a>
+        {% if pdf_errors %}
+            <a class="btn btn-warning"
+               hx-post="{% url 'retry_all_PDFs' %}"
+               hx-target="#pdf_table">Retry All</a>
+        {% endif %}
+        <a class="btn btn-danger"
+           hx-post="{% url 'cancel_all_PDFs' %}"
+           hx-target="#pdf_table">Cancel All</a>
+        <a class="btn btn-danger"
+           data-bs-toggle="modal"
+           data-bs-target="#deleteBtnModal">Delete All PDFs</a>
+        {% if tasks %}
+            <a class="btn btn-secondary"
+               onclick="document.getElementById('bottom').scrollIntoView()">
+                Scroll to bottom
+                <i class="bi bi-chevron-down"></i>
+            </a>
+        {% endif %}
+    </div>
+    <p class="mb-1">{{ message }}</p>
 </div>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
 <table class="table table-striped"

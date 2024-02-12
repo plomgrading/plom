@@ -76,13 +76,13 @@ class BuildPaperPDFs(ManagerRequiredView):
         return table_fragment
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        pinfo = PaperInfoService()
+        # Here we build an initial version of the table, which is likely to be updated
+        # later via various HTMX or other refresh calls.
         table_fragment = self._table_fragment(request)
         context = self.build_context()
         context.update(
             {
                 "pdf_table": table_fragment,
-                "db_initialised": pinfo.is_paper_database_populated(),
             }
         )
         return render(request, self.template_name, context)
