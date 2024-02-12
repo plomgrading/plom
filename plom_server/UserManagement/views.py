@@ -2,12 +2,12 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 
 from django_htmx.http import HttpResponseClientRefresh
 
