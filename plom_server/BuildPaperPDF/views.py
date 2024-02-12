@@ -40,9 +40,9 @@ def _task_context_and_status() -> tuple[dict[str, Any], int]:
         percent = n_complete / n_total * 100
         msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
 
-    zip_disabled = True
+    zip_enabled = False
     if n_total > 0 and n_complete == n_total:
-        zip_disabled = False
+        zip_enabled = True
 
     status = 200
     if n_complete == n_total:
@@ -55,7 +55,7 @@ def _task_context_and_status() -> tuple[dict[str, Any], int]:
         "tasks": task_context,
         "pdf_errors": bps.are_there_errors(),
         "message": msg,
-        "zip_disabled": zip_disabled,
+        "zip_enabled": zip_enabled,
         "poll": poll,
         "db_initialised": db_initialised,
     }
