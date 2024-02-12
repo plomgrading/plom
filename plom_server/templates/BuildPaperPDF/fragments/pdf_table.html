@@ -28,7 +28,9 @@
         </a>
     {% endif %}
 </div>
-<div>{{ message }}</div>
+<div>
+    <p class="mt-2 mb-1">{{ message }}</p>
+</div>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
 <table class="table table-striped"
        {% if poll %} hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s" {% endif %}>
@@ -106,7 +108,7 @@
     {% endif %}
     {% if tasks %}
         <a class="btn btn-secondary"
-           onclick="document.getElementById('top').scrollIntoView()">
+           onclick="document.querySelector('h1').scrollIntoView()">
             Scroll to top
             <i class="bi bi-chevron-up"></i>
         </a>
