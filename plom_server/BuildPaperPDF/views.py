@@ -11,6 +11,7 @@ from typing import Any
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
+from django.http import HttpRequest, HttpResponse
 from django.http import FileResponse, StreamingHttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
@@ -64,19 +65,19 @@ def _task_context_and_status() -> tuple[dict[str, Any], int]:
 class BuildPaperPDFs(ManagerRequiredView):
     template_name = "BuildPaperPDF/build_paper_pdfs.html"
 
-    def table_fragment(self, request):
+    def _table_fragment(self, request: HttpRequest) -> str:
         """Get the current state of the tasks, render it as an HTML table, and return."""
-        d, _ = _task_context_and_status()
+        context, _ = _task_context_and_status()
         table_fragment = render_to_string(
             "BuildPaperPDF/fragments/pdf_table.html",
-            d,
+            context,
             request=request,
         )
         return table_fragment
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         pinfo = PaperInfoService()
-        table_fragment = self.table_fragment(request)
+        table_fragment = self._table_fragment(request)
         context = self.build_context()
         context.update(
             {
@@ -88,7 +89,7 @@ class BuildPaperPDFs(ManagerRequiredView):
 
 
 class PDFTableView(ManagerRequiredView):
-    def render_pdf_table(self, request):
+    def render_pdf_table(self, request: HttpRequest) -> HttpResponse:
         d, status = _task_context_and_status()
         context = self.build_context()
         context.update(d)
@@ -100,12 +101,12 @@ class PDFTableView(ManagerRequiredView):
 class UpdatePDFTable(PDFTableView):
     """Get an updated pdf-building-progress table."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return self.render_pdf_table(request)
 
 
 class GetPDFFile(ManagerRequiredView):
-    def get(self, request, paper_number):
+    def get(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         try:
             (pdf_filename, pdf_bytes) = BuildPapersService().get_paper_path_and_bytes(
                 paper_number
@@ -126,7 +127,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         short_name = SpecificationService.get_short_name_slug()
         zgen = BuildPapersService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
@@ -135,42 +136,42 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 
 
 class StartAllPDFs(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.send_all_tasks()
         return self.render_pdf_table(request)
 
 
 class StartOnePDF(PDFTableView):
-    def post(self, request, paper_number):
+    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         bps = BuildPapersService()
         bps.send_single_task(paper_number)
         return self.render_pdf_table(request)
 
 
 class CancelAllPDFs(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.try_to_cancel_all_queued_tasks()
         return self.render_pdf_table(request)
 
 
 class CancelOnePDF(PDFTableView):
-    def post(self, request, paper_number):
+    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         bps = BuildPapersService()
         bps.try_to_cancel_single_queued_task(paper_number)
         return self.render_pdf_table(request)
 
 
 class RetryAllPDF(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.retry_all_task()
         return self.render_pdf_table(request)
 
 
 class DeleteAllPDFs(ManagerRequiredView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         BuildPapersService().reset_all_tasks()
 
         return HttpResponseClientRedirect(reverse("create_paperPDFs"))
