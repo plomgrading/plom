@@ -88,26 +88,6 @@ class BuildPaperPDFs(ManagerRequiredView):
 
         return render(request, self.template_name, context)
 
-    def post(self, request):
-        bps = BuildPapersService()
-
-        task_context = bps.get_task_context()
-
-        table_fragment = self.table_fragment(request)
-
-        context = self.build_context()
-        context.update(
-            {
-                "message": "",
-                "tasks": task_context,
-                "zip_disabled": True,
-                "pdfs_staged": True,
-                "pdf_table": table_fragment,
-            }
-        )
-
-        return render(request, self.template_name, context)
-
 
 class PDFTableView(ManagerRequiredView):
     def render_pdf_table(self, request):
