@@ -4,6 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
+from typing import Any
+
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
@@ -14,10 +18,47 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import PQVMappingService
 
 
 from .services import BuildPapersService
+
+
+def _task_context_and_status() -> tuple[dict[str, Any], int]:
+    db_initialised = PaperInfoService().is_paper_database_populated()
+    db_num_papers = PaperInfoService().how_many_papers_in_database()
+    bps = BuildPapersService()
+    task_context = bps.get_task_context()
+
+    n_complete = bps.get_n_complete_tasks()
+    n_total = len(task_context)
+    if not db_initialised:
+        msg = "Nothing to build; have you initialised the database?"
+    elif n_total == 0:
+        msg = f"There are {db_num_papers} papers to be built (none triggered)."
+    else:
+        percent = n_complete / n_total * 100
+        msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
+
+    zip_disabled = True
+    if n_total > 0 and n_complete == n_total:
+        zip_disabled = False
+
+    status = 200
+    if n_complete == n_total:
+        status = 286
+
+    n_running = bps.get_n_tasks_started_but_not_complete()
+    poll = n_running > 0
+
+    d = {
+        "tasks": task_context,
+        "pdf_errors": bps.are_there_errors(),
+        "message": msg,
+        "zip_disabled": zip_disabled,
+        "poll": poll,
+        "db_initialised": db_initialised,
+    }
+    return d, status
 
 
 class BuildPaperPDFs(ManagerRequiredView):
@@ -25,100 +66,32 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def table_fragment(self, request):
         """Get the current state of the tasks, render it as an HTML table, and return."""
-        bps = BuildPapersService()
-        task_context = bps.get_task_context()
-
-        running_tasks = bps.get_n_tasks_started_but_not_complete()
-        if running_tasks > 0:
-            poll = True
-        else:
-            poll = False
-
-        if bps.are_all_papers_built():
-            zip_disabled = False
-        else:
-            zip_disabled = True
-
+        d, _ = _task_context_and_status()
         table_fragment = render_to_string(
             "BuildPaperPDF/fragments/pdf_table.html",
-            {
-                "tasks": task_context,
-                "poll": poll,
-                "zip_disabled": zip_disabled,
-            },
+            d,
             request=request,
         )
-
         return table_fragment
 
     def get(self, request):
-        bps = BuildPapersService()
         pinfo = PaperInfoService()
-
-        # TODO: find a simpler way to get this!
-        # TODO: also a better name like "max_num_pdfs" or something unambiguous
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-        num_pdfs = len(qvmap)
-
-        n_tasks = bps.get_n_tasks()
-
         table_fragment = self.table_fragment(request)
-
-        zip_disabled = True
-        n_completed_tasks = bps.get_n_complete_tasks()
-        if n_completed_tasks == n_tasks:
-            zip_disabled = False
-
         context = self.build_context()
         context.update(
             {
-                "message": "",
-                "zip_disabled": zip_disabled,
-                "num_pdfs": num_pdfs,
                 "pdf_table": table_fragment,
                 "db_initialised": pinfo.is_paper_database_populated(),
             }
         )
-
         return render(request, self.template_name, context)
 
 
 class PDFTableView(ManagerRequiredView):
     def render_pdf_table(self, request):
-        bps = BuildPapersService()
-        task_context = bps.get_task_context()
-
-        n_complete = bps.get_n_complete_tasks()
-        n_total = len(task_context)
-        if n_total > 0:
-            percent = n_complete / n_total * 100
-            msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
-        else:
-            msg = "Nothing to build; have you initialised the database?"
-
-        zip_disabled = True
-        if n_total > 0 and n_complete == n_total:
-            zip_disabled = False
-
-        status = 200
-        if n_complete == n_total:
-            status = 286
-
-        n_running = bps.get_n_tasks_started_but_not_complete()
-        poll = n_running > 0
-
+        d, status = _task_context_and_status()
         context = self.build_context()
-        context.update(
-            {
-                "tasks": task_context,
-                "pdf_errors": bps.are_there_errors(),
-                "message": msg,
-                "zip_disabled": zip_disabled,
-                "poll": poll,
-            }
-        )
-
+        context.update(d)
         return render(
             request, "BuildPaperPDF/fragments/pdf_table.html", context, status=status
         )
