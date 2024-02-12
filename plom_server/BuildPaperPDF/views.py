@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -62,10 +62,6 @@ class BuildPaperPDFs(ManagerRequiredView):
         num_pdfs = len(qvmap)
 
         n_tasks = bps.get_n_tasks()
-        if n_tasks > 0:
-            pdfs_staged = True
-        else:
-            pdfs_staged = False
 
         table_fragment = self.table_fragment(request)
 
@@ -80,7 +76,6 @@ class BuildPaperPDFs(ManagerRequiredView):
                 "message": "",
                 "zip_disabled": zip_disabled,
                 "num_pdfs": num_pdfs,
-                "pdfs_staged": pdfs_staged,
                 "pdf_table": table_fragment,
                 "db_initialised": pinfo.is_paper_database_populated(),
             }
