@@ -3,7 +3,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 <div>
     <a class="btn btn-primary"
@@ -20,11 +20,13 @@
     <a class="btn btn-danger"
        data-bs-toggle="modal"
        data-bs-target="#deleteBtnModal">Delete All PDFs</a>
-    <a class="btn btn-secondary"
-       onclick="document.getElementById('bottom').scrollIntoView()">
-        Scroll to bottom
-        <i class="bi bi-chevron-down"></i>
-    </a>
+    {% if tasks %}
+        <a class="btn btn-secondary"
+           onclick="document.getElementById('bottom').scrollIntoView()">
+            Scroll to bottom
+            <i class="bi bi-chevron-down"></i>
+        </a>
+    {% endif %}
 </div>
 <div>{{ message }}</div>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
@@ -102,9 +104,11 @@
            href="{% url 'zip_stream_paperPDFs' %}"
            download>Save as zip file</a>
     {% endif %}
-    <a class="btn btn-secondary"
-       onclick="document.getElementById('top').scrollIntoView()">
-        Scroll to top
-        <i class="bi bi-chevron-up"></i>
-    </a>
+    {% if tasks %}
+        <a class="btn btn-secondary"
+           onclick="document.getElementById('top').scrollIntoView()">
+            Scroll to top
+            <i class="bi bi-chevron-up"></i>
+        </a>
+    {% endif %}
 </div>
