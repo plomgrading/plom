@@ -92,15 +92,18 @@ class PDFTableView(ManagerRequiredView):
         n_complete = bps.get_n_complete_tasks()
         n_total = len(task_context)
         if n_total > 0:
-            percent_complete = n_complete / n_total * 100
+            percent = n_complete / n_total * 100
+            msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
         else:
-            percent_complete = 0
+            msg = "Nothing to build; have you initialised the database?"
 
         zip_disabled = True
+        if n_total > 0 and n_complete == n_total:
+            zip_disabled = False
+
         status = 200
         if n_complete == n_total:
             status = 286
-            zip_disabled = False
 
         n_running = bps.get_n_tasks_started_but_not_complete()
         poll = n_running > 0
@@ -110,7 +113,7 @@ class PDFTableView(ManagerRequiredView):
             {
                 "tasks": task_context,
                 "pdf_errors": bps.are_there_errors(),
-                "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
+                "message": msg,
                 "zip_disabled": zip_disabled,
                 "poll": poll,
             }
