@@ -6,7 +6,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 
@@ -77,5 +77,10 @@ class PasswordResetPage(ManagerRequiredView):
 
 class HTMXExplodeView(ManagerRequiredView):
     def get(self, request):
-        1 / 0
-        return HttpResponse(status=200)
+        import random
+
+        if random.random() < 0.333:
+            1 / 0
+        if random.random() < 0.5:
+            raise Http404("Should happen 1/3 of the time")
+        return HttpResponse("Button pushed", status=200)
