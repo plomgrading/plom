@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 
 from django.http import HttpRequest, HttpResponse
-from django.http import FileResponse, StreamingHttpResponse
+from django.http import FileResponse, StreamingHttpResponse, Http404
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -129,7 +129,10 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
     def get(self, request: HttpRequest) -> HttpResponse:
         short_name = SpecificationService.get_short_name_slug()
-        zgen = BuildPapersService().get_zipfly_generator(short_name)
+        try:
+            zgen = BuildPapersService().get_zipfly_generator(short_name)
+        except ValueError as e:
+            raise Http404(e)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = f"attachment; filename={short_name}.zip"
         return response
