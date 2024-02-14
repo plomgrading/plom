@@ -58,7 +58,6 @@ stages:
 # Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
 docker-image:
   stage: build
-  needs: []
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo $DOCKER_USE_CACHE
@@ -179,7 +178,6 @@ docker-tag-latest:
 make_package:
   image: python:3.11
   stage: build
-  needs: []
   script:
     - pip install --upgrade build
     - python3 -m build
@@ -387,9 +385,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 10 ]]"
-
-  allow_failure: true
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 7 ]]"
 
 
 pydocstyle-plom-count:
@@ -725,7 +721,6 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  needs: []
   image: fedora:39
   when: manual
   allow_failure: true
@@ -851,7 +846,6 @@ fedora_webplom:
 # allowed to fail (some pip stuff might be new) but we want to know
 newOS_newdeps_legacy:
   stage: alt_build
-  needs: []
   image: ubuntu:22.04
   allow_failure: true
   before_script:
@@ -929,7 +923,6 @@ newOS_newdeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  needs: []
   image: ubuntu:22.04
   allow_failure: true
   before_script:
@@ -964,7 +957,6 @@ newOS_newdeps_webplom:
 # Goal here is to catch changes that need newer features of a dependency.
 oldOS_mindeps:
   stage: alt_build
-  needs: []
   image: ubuntu:20.04
   before_script:
     - apt-get update
@@ -1032,7 +1024,6 @@ oldOS_mindeps:
 # Minimum Python, minimum deps
 minpy_mindeps:
   stage: alt_build
-  needs: []
   image: python:3.8
   before_script:
     - apt-get update
@@ -1059,7 +1050,6 @@ minpy_mindeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  needs: []
   image: python:3.8
   before_script:
     - apt-get update
