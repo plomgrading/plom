@@ -33,8 +33,7 @@ class DiscardImageView(ScannerRequiredView):
                 request.user, bundle_id, index
             )
         except ValueError as e:
-            # TODO: uses the troubles-afoot kludge (Issue #3251)
-            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
+            raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
@@ -58,8 +57,7 @@ class UnknowifyImageView(ScannerRequiredView):
                 request.user, bundle_id, index
             )
         except ValueError as e:
-            # TODO: uses the troubles-afoot kludge (Issue #3251)
-            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[f"{e}"]))
+            raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
