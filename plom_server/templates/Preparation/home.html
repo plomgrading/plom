@@ -278,28 +278,36 @@
                         {% if have_papers_been_printed %}<i class="bi bi-check-circle text-success"></i>{% endif %}
                     </p>
                     <p class="fs-7">
-                        &emsp;&ensp; Once you tell Plom that papers have been printed, the server will be ready to accept scanned exam bundles.
-                        <ul>
-                            {% if papers_staged %}
-                                {% if have_papers_been_printed %}
-                                    {% if not can_unset_papers_printed %}
-                                        <li>Bundles have been uploaded</li>
+                        &emsp;&ensp; Tell Plom that the assessment is set and you are ready to move on to next steps.
+                        {% if papers_staged %}
+                            {% if have_papers_been_printed %}
+                                {% if can_unset_papers_printed %}
+                                    <ul>
+                                        <li>Although you have set this, no scans have been uploaded, so this can be unset.</li>
                                         <li>
-                                            This means that scanning and/or marking is underway and so you cannot unset <q>papers are printed</q>.
+                                            Be extremely careful doing this. Any existing papers (physical and PDFs) should be discarded before you change anything.
                                         </li>
-                                    {% else %}
-                                        <li>
-                                            Although you set <q>papers are printed</q> no scans have been uploaded, so you can unset this.
-                                        </li>
-                                        <li>Be very careful doing this. Any existing physical papers should be destroyed before you change anything.</li>
-                                    {% endif %}
+                                    </ul>
                                 {% else %}
-                                    <li>Your database is set up, so once you have printed the test-paper PDFs, please tell Plom.</li>
+                                    <ul>
+                                        <li>Scans have been uploaded, so you cannot unset this.</li>
+                                    </ul>
                                 {% endif %}
                             {% else %}
-                                <li>Your database is not set up; you can't do much before that is finished.</li>
+                                <ul>
+                                    <li>Before this set you can modify your assessment (steps 1-5 above), but you cannot upload scanned exams bundles.</li>
+                                    <li>After it is set, you cannot modify your assessment (steps 1-5 above), but you can upload scanned exams.</li>
+                                    <li>Since your database is set up, you can set this after you have printed papers.</li>
+                                    <li>
+                                        Note that it is possible to unset this provided you have not uploaded any scans - but be careful to make sure any existing papers are discarded.
+                                    </li>
+                                </ul>
                             {% endif %}
-                        </ul>
+                        {% else %}
+                            <ul>
+                                <li>Your database is not ready, so you cannot set this.</li>
+                            </ul>
+                        {% endif %}
                     </p>
                 </div>
                 {% if papers_staged %}
