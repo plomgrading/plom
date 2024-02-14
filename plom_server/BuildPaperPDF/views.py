@@ -2,11 +2,16 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
+
+from typing import Any
 
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
+from django.http import HttpRequest, HttpResponse
 from django.http import FileResponse, StreamingHttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
@@ -14,133 +19,80 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import PQVMappingService
 
 
 from .services import BuildPapersService
 
 
+def _task_context_and_status() -> tuple[dict[str, Any], int]:
+    db_initialised = PaperInfoService().is_paper_database_populated()
+    db_num_papers = PaperInfoService().how_many_papers_in_database()
+    bps = BuildPapersService()
+    task_context = bps.get_task_context()
+
+    n_complete = bps.get_n_complete_tasks()
+    n_total = len(task_context)
+    if not db_initialised:
+        msg = "Nothing to build; have you initialised the database?"
+    elif n_total == 0:
+        msg = f"There are {db_num_papers} papers to be built (none triggered)."
+    else:
+        percent = n_complete / n_total * 100
+        msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
+
+    zip_disabled = True
+    if n_total > 0 and n_complete == n_total:
+        zip_disabled = False
+
+    status = 200
+    if n_complete == n_total:
+        status = 286
+
+    n_running = bps.get_n_tasks_started_but_not_complete()
+    poll = n_running > 0
+
+    d = {
+        "tasks": task_context,
+        "pdf_errors": bps.are_there_errors(),
+        "message": msg,
+        "zip_disabled": zip_disabled,
+        "poll": poll,
+        "db_initialised": db_initialised,
+    }
+    return d, status
+
+
 class BuildPaperPDFs(ManagerRequiredView):
     template_name = "BuildPaperPDF/build_paper_pdfs.html"
 
-    def table_fragment(self, request):
+    def _table_fragment(self, request: HttpRequest) -> str:
         """Get the current state of the tasks, render it as an HTML table, and return."""
-        bps = BuildPapersService()
-        task_context = bps.get_task_context()
-
-        running_tasks = bps.get_n_tasks_started_but_not_complete()
-        if running_tasks > 0:
-            poll = True
-        else:
-            poll = False
-
-        if bps.are_all_papers_built():
-            zip_disabled = False
-        else:
-            zip_disabled = True
-
+        context, _ = _task_context_and_status()
         table_fragment = render_to_string(
             "BuildPaperPDF/fragments/pdf_table.html",
-            {
-                "tasks": task_context,
-                "poll": poll,
-                "zip_disabled": zip_disabled,
-            },
+            context,
             request=request,
         )
-
         return table_fragment
 
-    def get(self, request):
-        bps = BuildPapersService()
-        pinfo = PaperInfoService()
-
-        # TODO: find a simpler way to get this!
-        # TODO: also a better name like "max_num_pdfs" or something unambiguous
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-        num_pdfs = len(qvmap)
-
-        n_tasks = bps.get_n_tasks()
-        if n_tasks > 0:
-            pdfs_staged = True
-        else:
-            pdfs_staged = False
-
-        table_fragment = self.table_fragment(request)
-
-        zip_disabled = True
-        n_completed_tasks = bps.get_n_complete_tasks()
-        if n_completed_tasks == n_tasks:
-            zip_disabled = False
-
+    def get(self, request: HttpRequest) -> HttpResponse:
+        # Here we build an initial version of the table, which is likely to be updated
+        # later via various HTMX or other refresh calls.
+        table_fragment = self._table_fragment(request)
         context = self.build_context()
         context.update(
             {
-                "message": "",
-                "zip_disabled": zip_disabled,
-                "num_pdfs": num_pdfs,
-                "pdfs_staged": pdfs_staged,
-                "pdf_table": table_fragment,
-                "db_initialised": pinfo.is_paper_database_populated(),
-            }
-        )
-
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        bps = BuildPapersService()
-
-        task_context = bps.get_task_context()
-
-        table_fragment = self.table_fragment(request)
-
-        context = self.build_context()
-        context.update(
-            {
-                "message": "",
-                "tasks": task_context,
-                "zip_disabled": True,
-                "pdfs_staged": True,
                 "pdf_table": table_fragment,
             }
         )
-
         return render(request, self.template_name, context)
 
 
 class PDFTableView(ManagerRequiredView):
-    def render_pdf_table(self, request):
-        bps = BuildPapersService()
-        task_context = bps.get_task_context()
-
-        n_complete = bps.get_n_complete_tasks()
-        n_total = len(task_context)
-        if n_total > 0:
-            percent_complete = n_complete / n_total * 100
-        else:
-            percent_complete = 0
-
-        zip_disabled = True
-        status = 200
-        if n_complete == n_total:
-            status = 286
-            zip_disabled = False
-
-        n_running = bps.get_n_tasks_started_but_not_complete()
-        poll = n_running > 0
-
+    def render_pdf_table(self, request: HttpRequest) -> HttpResponse:
+        d, status = _task_context_and_status()
         context = self.build_context()
-        context.update(
-            {
-                "tasks": task_context,
-                "pdf_errors": bps.are_there_errors(),
-                "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
-                "zip_disabled": zip_disabled,
-                "poll": poll,
-            }
-        )
-
+        context.update(d)
         return render(
             request, "BuildPaperPDF/fragments/pdf_table.html", context, status=status
         )
@@ -149,12 +101,12 @@ class PDFTableView(ManagerRequiredView):
 class UpdatePDFTable(PDFTableView):
     """Get an updated pdf-building-progress table."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return self.render_pdf_table(request)
 
 
 class GetPDFFile(ManagerRequiredView):
-    def get(self, request, paper_number):
+    def get(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         try:
             (pdf_filename, pdf_bytes) = BuildPapersService().get_paper_path_and_bytes(
                 paper_number
@@ -175,7 +127,7 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         short_name = SpecificationService.get_short_name_slug()
         zgen = BuildPapersService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
@@ -184,42 +136,42 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 
 
 class StartAllPDFs(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.send_all_tasks()
         return self.render_pdf_table(request)
 
 
 class StartOnePDF(PDFTableView):
-    def post(self, request, paper_number):
+    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         bps = BuildPapersService()
         bps.send_single_task(paper_number)
         return self.render_pdf_table(request)
 
 
 class CancelAllPDFs(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.try_to_cancel_all_queued_tasks()
         return self.render_pdf_table(request)
 
 
 class CancelOnePDF(PDFTableView):
-    def post(self, request, paper_number):
+    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         bps = BuildPapersService()
         bps.try_to_cancel_single_queued_task(paper_number)
         return self.render_pdf_table(request)
 
 
 class RetryAllPDF(PDFTableView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.retry_all_task()
         return self.render_pdf_table(request)
 
 
 class DeleteAllPDFs(ManagerRequiredView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         BuildPapersService().reset_all_tasks()
 
         return HttpResponseClientRedirect(reverse("create_paperPDFs"))

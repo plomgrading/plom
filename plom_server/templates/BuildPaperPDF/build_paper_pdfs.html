@@ -14,30 +14,11 @@
     Build Paper PDFs
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="d-grid gap-2" id="top">
+    <div class="d-grid gap-2">
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if pdfs_staged %}
-            <div id="pdf_table">{{ pdf_table |safe }}</div>
-        {% else %}
-            <div class="card w-50">
-                <div class="card-body">
-                    {% if db_initialised %}
-                        <h5 class="card-title">Build test papers</h5>
-                        <p class="card-text">Will build {{ num_pdfs }} tests.</p>
-                        <form action="{% url 'create_paperPDFs' %}" method="post">
-                            {% csrf_token %}
-                            <input type="submit" class="btn btn-primary" value="Submit">
-                        </form>
-                    {% else %}
-                        <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
-                        <h5 class="card-title">Database not initialised</h5>
-                        <p class="card-text">You must initialize the database before building PDFs for your papers.</p>
-                    {% endif %}
-                </div>
-            </div>
-        {% endif %}
+        <div id="pdf_table">{{ pdf_table |safe }}</div>
     </div>
     <div class="modal fade"
          id="deleteBtnModal"
@@ -65,7 +46,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <a class="btn btn-danger"
                        hx-post="{% url 'delete_all_PDFs' %}"
-                       hx-target="#top"
                        data-bs-dismiss="modal">Delete</a>
                 </div>
             </div>
