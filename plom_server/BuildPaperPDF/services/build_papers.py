@@ -213,12 +213,13 @@ class BuildPapersService:
     def send_single_task(self, paper_num) -> None:
         """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
 
+        If there is a existing chore, it will be set to obsolete.
+
         Args:
             paper_num: which paper number
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
-            ValueError: existing non-obsolete chores for that paper number.
         """
         spec = SpecificationService.get_the_spec()
 
@@ -246,16 +247,24 @@ class BuildPapersService:
         *,
         obsolete_any_existing: bool = True,
     ) -> None:
-        # TODO: error handling!
         paper = Paper.objects.get(paper_number=paper_num)
 
         # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            if BuildPaperPDFChore.objects.filter(paper=paper, obsolete=False).exists():
-                raise ValueError(
-                    f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
-                    " make them obsolete before creating another"
+            try:
+                c = (
+                    BuildPaperPDFChore.objects.filter(paper=paper, obsolete=False)
+                    .select_for_update()
+                    .get()
                 )
+                if not obsolete_any_existing:
+                    raise ValueError(
+                        f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
+                        " make them obsolete before creating another"
+                    )
+                c.set_as_obsolete()
+            except ObjectDoesNotExist:
+                pass
             task = BuildPaperPDFChore.objects.create(
                 paper=paper,
                 huey_id=None,
