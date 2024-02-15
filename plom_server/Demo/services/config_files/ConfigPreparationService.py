@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 """Handle creating pre-bundle server state from a config file.
 
@@ -32,7 +33,7 @@ from Preparation.services import (
     PrenameSettingService,
     StagingStudentService,
     PQVMappingService,
-    TestPreparedSetting,
+    PapersPrinted,
 )
 
 from . import PlomServerConfig, PlomConfigCreationError
@@ -162,6 +163,6 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
         echo("Creating test paper instances...")
         create_papers(config)
 
-    if TestPreparedSetting.can_status_be_set_true():
-        TestPreparedSetting.set_test_prepared(True)
-        echo("Preparation complete.")
+    if PapersPrinted.can_status_be_set_true():
+        PapersPrinted.set_papers_printed(True)
+        echo("Preparation complete, papers printed.")

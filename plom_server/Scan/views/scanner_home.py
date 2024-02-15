@@ -20,7 +20,7 @@ from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
-from Preparation.services import TestPreparedSetting
+from Preparation.services import PapersPrinted
 from Progress.services import ManageScanService
 from ..services import ScanService
 from ..forms import BundleUploadForm
@@ -49,7 +49,7 @@ class ScannerHomeView(ScannerRequiredView):
                 "total_papers": total_papers,
                 "form": BundleUploadForm(),
                 "is_any_bundle_push_locked": False,
-                "preparation_finished": TestPreparedSetting.is_test_prepared(),
+                "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
             }
         )
         staged_bundles = []

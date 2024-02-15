@@ -13,7 +13,7 @@ from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
 from Papers.services import SpecificationService
 
-from ...services import PQVMappingService, TestPreparedSetting
+from ...services import PQVMappingService, PapersPrinted
 
 
 class Command(BaseCommand):
@@ -29,8 +29,8 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
             )
-            if TestPreparedSetting.is_test_prepared():
-                print("Exam preparation is locked: cannot change qvmap.")
+            if PapersPrinted.have_papers_been_printed():
+                print("Papers have been printed: cannot change qvmap.")
 
         else:
             self.stdout.write("There is no question-version mapping.")
@@ -41,8 +41,8 @@ class Command(BaseCommand):
     def generate_pqv_map(
         self, *, number_to_produce: int | None = None, first: int | None = None
     ) -> None:
-        if TestPreparedSetting.is_test_prepared():
-            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+        if PapersPrinted.have_papers_been_printed():
+            raise CommandError("Paper have been printed. You cannot change qvmap.")
 
         if not SpecificationService.is_there_a_spec():
             raise CommandError("There no valid test specification.")
@@ -91,8 +91,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
-        if TestPreparedSetting.is_test_prepared():
-            raise CommandError("Test is marked as prepared. You cannot change qvmap.")
+        if PapersPrinted.have_papers_been_printed():
+            raise CommandError("Paper have been printed. You cannot change qvmap.")
 
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
@@ -111,8 +111,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self):
-        if TestPreparedSetting.is_test_prepared():
-            raise CommandError("Exam preparation is locked: cannot change qvmap.")
+        if PapersPrinted.have_papers_been_printed():
+            raise CommandError("Paper have been printed. You cannot change qvmap.")
 
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -9,7 +10,7 @@ from ...services import (
     TestSourceService,
     PrenameSettingService,
     PQVMappingService,
-    TestPreparedSetting,
+    PapersPrinted,
 )
 
 
@@ -51,23 +52,23 @@ class Command(BaseCommand):
             papers_status = PaperInfoService().is_paper_database_populated()
             self.stdout.write(f"Test papers saved to database: {papers_status}")
 
-            prep_setting = TestPreparedSetting.is_test_prepared()
+            prep_setting = PapersPrinted.have_papers_been_printed()
             prep_status = "finished" if prep_setting else "todo"
-            self.stdout.write(f"Preparation set as: {prep_status}")
+            self.stdout.write(f"Paper-printing set as: {prep_status}")
         else:
             status = options["set"][0]
             if status == "finished":
-                if not TestPreparedSetting.can_status_be_set_true():
+                if not PapersPrinted.can_status_be_set_true():
                     raise CommandError(
-                        "Unable to mark status as finished - test-papers have not been saved to the database."
+                        "Unable to set paper-printing as finished - test-papers have not been saved to the database."
                     )
-                TestPreparedSetting.set_test_prepared(True)
+                PapersPrinted.set_papers_printed(True)
             elif status == "todo":
-                if not TestPreparedSetting.can_status_be_set_false():
+                if not PapersPrinted.can_status_be_set_false():
                     raise CommandError(
-                        "Unable to mark status as todo - bundles have been pushed to the database."
+                        "Unable to set paper-printing as todo - bundles have been pushed to the database."
                     )
-                TestPreparedSetting.set_test_prepared(False)
+                PapersPrinted.set_papers_printed(False)
             else:
                 return
 

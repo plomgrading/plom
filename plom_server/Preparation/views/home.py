@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
@@ -21,7 +21,7 @@ from ..services import (
     PQVMappingService,
     ExtraPageService,
     ScrapPaperService,
-    TestPreparedSetting,
+    PapersPrinted,
 )
 
 
@@ -46,8 +46,8 @@ class PreparationLandingView(ManagerRequiredView):
             "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
             "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
-            "is_test_prepared": TestPreparedSetting.is_test_prepared(),
-            "can_status_be_set_todo": TestPreparedSetting.can_status_be_set_false(),
+            "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
+            "can_unset_papers_printed": PapersPrinted.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -149,12 +149,12 @@ class LandingResetQVmap(ManagerRequiredView):
 
 
 class LandingFinishedToggle(ManagerRequiredView):
-    """Toggle the TestPreparedSetting state. When True, bundles are allowed to be pushed to the server."""
+    """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
 
-    def post(self, request: HttpRequest) -> HttpResponse:
-        current_setting = TestPreparedSetting.is_test_prepared()
+    def post(self, request):
+        current_setting = PapersPrinted.have_papers_been_printed()
         try:
-            TestPreparedSetting.set_test_prepared(not current_setting)
+            PapersPrinted.set_papers_printed(not current_setting)
         except RuntimeError as e:
             # TODO: uses the troubles-afoot kludge (Issue #3251)
             hint = f"maybe-started-uploads-{e}"

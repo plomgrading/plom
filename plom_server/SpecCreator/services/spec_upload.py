@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
@@ -9,7 +10,7 @@ from django.db import transaction
 
 from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
 
-from Preparation.services import TestPreparedSetting, PQVMappingService
+from Preparation.services import PapersPrinted, PQVMappingService
 
 from Papers.services import SpecificationService, PaperInfoService
 
@@ -116,15 +117,13 @@ class SpecificationUploadService:
         Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
-        test_prepared = TestPreparedSetting.is_test_prepared()
+        papers_printed = PapersPrinted.have_papers_been_printed()
         papers_created = PaperInfoService().is_paper_database_populated()
         qvmap_created = PQVMappingService().is_there_a_pqv_map()
 
-        if test_prepared:
+        if papers_printed:
             if raise_exception:
-                raise ValueError(
-                    "Cannot modify spec while preparation is set as complete."
-                )
+                raise ValueError("Cannot modify spec once papers have been printed.")
             return False
 
         if papers_created:

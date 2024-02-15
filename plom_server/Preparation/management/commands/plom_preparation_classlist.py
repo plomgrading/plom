@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from ...services import (
     StagingStudentService,
     PrenameSettingService,
-    TestPreparedSetting,
+    PapersPrinted,
 )
 
 
@@ -26,9 +26,9 @@ class Command(BaseCommand):
             self.stdout.write("There is no classlist on the server.")
 
     def upload_classlist(self, source_csv, ignore_warnings=False):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             raise CommandError(
-                "Test is marked as prepared. You cannot change the classlist."
+                "Papers have been printed. You cannot change the classlist."
             )
 
         sss = StagingStudentService()
@@ -102,9 +102,9 @@ class Command(BaseCommand):
             fh.write(csv_text)
 
     def remove_classlist(self):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             raise CommandError(
-                "Test is marked as prepared. You cannot remove the classlist."
+                "Papers have been printed. You cannot remove the classlist."
             )
 
         sss = StagingStudentService()

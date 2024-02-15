@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
@@ -14,7 +14,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import TestSourceService, TestPreparedSetting
+from ..services import TestSourceService, PapersPrinted
 
 
 class TestSourceUploadForm(forms.Form):
@@ -41,7 +41,7 @@ class TestSourceManageView(ManagerRequiredView):
         }
 
     def get(self, request, version=None):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_sources_view")
 
         if version:
@@ -61,7 +61,7 @@ class TestSourceManageView(ManagerRequiredView):
             return render(request, "Preparation/test_source_manage.html", context)
 
     def post(self, request, version=None):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_sources_view")
 
         context = self.build_context()
@@ -79,7 +79,7 @@ class TestSourceManageView(ManagerRequiredView):
         return render(request, "Preparation/test_source_attempt.html", context)
 
     def delete(self, request, version=None):
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_sources_view")
 
         if version:

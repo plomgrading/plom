@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from ..services import StagingStudentService, PrenameSettingService, TestPreparedSetting
+from ..services import StagingStudentService, PrenameSettingService, PapersPrinted
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -23,8 +23,8 @@ class ClasslistDownloadView(ManagerRequiredView):
 
 class ClasslistView(ManagerRequiredView):
     def get(self, request):
-        # if test is already prepared then redirect to the readonly view
-        if TestPreparedSetting.is_test_prepared():
+        # if papers have been printed then redirect to the readonly view
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_classlist_view")
 
         sss = StagingStudentService()
@@ -42,7 +42,7 @@ class ClasslistView(ManagerRequiredView):
 
     def post(self, request):
         # if test is already prepared then redirect to the readonly view
-        if TestPreparedSetting.is_test_prepared():
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_classlist_view")
 
         context = self.build_context()
@@ -68,8 +68,8 @@ class ClasslistView(ManagerRequiredView):
             return redirect("prep_classlist")
 
     def delete(self, request):
-        # if test is already prepared then redirect to the readonly view
-        if TestPreparedSetting.is_test_prepared():
+        # if papers have been printed then redirect to the readonly view
+        if PapersPrinted.have_papers_been_printed():
             return redirect("prep_classlist_view")
 
         StagingStudentService().remove_all_students()
