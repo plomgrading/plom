@@ -101,7 +101,7 @@ class PreparationLandingView(ManagerRequiredView):
 
         return context
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         return render(request, "Preparation/home.html", context)
 
