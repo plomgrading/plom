@@ -10,8 +10,8 @@ else
     PORT=$PLOM_CONTAINER_PORT
 fi
 
-# in production mode, there are addition steps for static files
-if [[ "$PLOM_DEBUG" -eq 0 ]]; then
+# in production mode, there are additional steps for static files
+if [ "x$PLOM_DEBUG" = "x0" ]; then
     python3 manage.py collectstatic --clear --no-input
 fi
 
