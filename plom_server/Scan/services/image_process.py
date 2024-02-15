@@ -227,7 +227,9 @@ class PageImageProcessor:
             # We cannot get the page orientation
             return None
 
-    def create_affine_transformation_matrix(self, qr_dict):
+    def create_affine_transformation_matrix(
+        self, qr_dict: dict[str, dict[str, Any]]
+    ) -> np.ndarray:
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
         Args:
@@ -237,14 +239,14 @@ class PageImageProcessor:
             numpy.ndarray: the affine transformation matrix for correcting the image
         """
         if "NW" in qr_dict:
-            dest_three_points = np.float32(
+            dest_three_points = np.array(
                 [
                     [self.LEFT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
                 ]
             )
-            src_three_points = np.float32(
+            src_three_points = np.array(
                 [
                     [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
@@ -252,14 +254,14 @@ class PageImageProcessor:
                 ]
             )
         elif "NE" in qr_dict:
-            dest_three_points = np.float32(
+            dest_three_points = np.array(
                 [
                     [self.RIGHT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
                 ]
             )
-            src_three_points = np.float32(
+            src_three_points = np.array(
                 [
                     [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
@@ -267,8 +269,12 @@ class PageImageProcessor:
                 ]
             )
         else:
-            return np.float64([[1, 0, 0], [0, 1, 0]])
-        return cv.getAffineTransform(src_three_points, dest_three_points)
+            return np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        # float32 input expected
+        return cv.getAffineTransform(
+            src_three_points.astype(np.float32),
+            dest_three_points.astype(np.float32),
+        )
 
     def extract_rect_region(
         self, image_path, orientation, qr_dict, top, bottom, left, right
