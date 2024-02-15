@@ -444,7 +444,7 @@ class ScanCastService:
         try:
             img = (
                 bundle_obj.stagingimage_set.select_related("extrastagingimage")
-                .exlude(extrastagingimage=None)
+                .exclude(extrastagingimage=None)
                 .select_for_update()
                 .get(bundle_order=bundle_order, image_type=StagingImage.EXTRA)
             )
