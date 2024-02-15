@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import pathlib
 import sys
@@ -96,7 +96,7 @@ class PageImageProcessorTests(TestCase):
 
         return super().setUp()
 
-    def test_check_corner(self):
+    def test_check_corner(self) -> None:
         """Test PageImageProcessor.check_corner()."""
         pipr = PageImageProcessor()
         orientation = pipr.check_corner(
@@ -108,7 +108,7 @@ class PageImageProcessorTests(TestCase):
         )
         self.assertEqual(orientation, "upright")
 
-    def test_get_page_orientation(self):
+    def test_get_page_orientation(self) -> None:
         """Test PageImageProcessor.get_page_orientation()."""
         pipr = PageImageProcessor()
 
@@ -138,7 +138,7 @@ class PageImageProcessorTests(TestCase):
         with self.assertRaises(RuntimeError):
             pipr.get_page_orientation({})
 
-    def test_affine_matrix_correct_5_deg_rot(self):
+    def test_affine_matrix_correct_5_deg_rot(self) -> None:
         """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
         test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
@@ -152,14 +152,14 @@ class PageImageProcessorTests(TestCase):
             scanner = ScanService()
             qr_dict_id = scanner.parse_qr_code([codes])
             affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-            expected_matrix = np.float64(
+            expected_matrix = np.array(
                 [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
             )
             err = np.linalg.norm(affine_matrix - expected_matrix, "fro")
             relative_err = err / np.linalg.norm(expected_matrix, "fro")
             self.assertTrue(relative_err < 0.01)
 
-    def test_affine_matrix_no_correction(self):
+    def test_affine_matrix_no_correction(self) -> None:
         """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
         pipr = PageImageProcessor()
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
@@ -168,10 +168,10 @@ class PageImageProcessorTests(TestCase):
         scanner = ScanService()
         qr_dict_id = scanner.parse_qr_code([codes])
         affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-        expected_matrix = np.float64([[1, 0, 0], [0, 1, 0]])
+        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.assertTrue(np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001)
 
-    def test_ID_box_corrected_and_extracted(self):
+    def test_ID_box_corrected_and_extracted(self) -> None:
         """Test PageImageProcessor rectangle extractor on an image with 3-degree rotation.
 
         Verify that the extracted ID box is upright by checking the interior of the blank "Signature" box,
@@ -198,4 +198,4 @@ class PageImageProcessorTests(TestCase):
             )
             output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
             white_subimage = output_opencv[395:490, 300:1030]
-            self.assertTrue((np.mean(white_subimage) - 255) < 0.001)
+            self.assertTrue((np.mean(white_subimage.astype(float)) - 255) < 0.001)

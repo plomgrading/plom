@@ -2,12 +2,15 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import pathlib
 import random
 import sys
 import tempfile
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -34,26 +37,24 @@ from .. import tests as _Scan_tests
 
 class ScanServiceTests(TestCase):
     # This test does unpleasant things, see Issue #2925.
-    def setUp(self):
+    def setUp(self) -> None:
         random_user_name = f"__tests_user{random.randint(0, 99999)}"
-        self.user = baker.make(User, username=random_user_name)
+        self.user: User = baker.make(User, username=random_user_name)
         self.pdf_path = resources.files(_Scan_tests) / "test_bundle.pdf"
         with fitz.Document(self.pdf_path) as pdf:
             assert len(pdf) == 28
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
-        return super().setUp()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         # TODO: if you have a collision with a real user, this may destroy their files
         # shutil.rmtree(
         #     settings.MEDIA_ROOT / "staging/bundles/" / self.user.username,
         #     ignore_errors=True,
         # )
         (settings.MEDIA_ROOT / "staging/bundles/" / self.user.username).rmdir()
-        return super().tearDown()
 
-    def test_upload_bundle(self):
+    def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
 
         scanner = ScanService()
@@ -82,7 +83,7 @@ class ScanServiceTests(TestCase):
         bundle_path.unlink()
         bundle_path.parent.rmdir()
 
-    def test_remove_bundle(self):
+    def test_remove_bundle(self) -> None:
         """Test ScanService.remove_bundle() and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
@@ -114,7 +115,7 @@ class ScanServiceTests(TestCase):
 
 
 class MoreScanServiceTests(TestCase):
-    def test_duplicate_hash(self):
+    def test_duplicate_hash(self) -> None:
         """
         Test ScanService.check_for_duplicate_hash()
         """
@@ -123,7 +124,7 @@ class MoreScanServiceTests(TestCase):
         duplicate_detected = scanner.check_for_duplicate_hash("abcde")
         self.assertTrue(duplicate_detected)
 
-    def test_parse_qr_codes(self):
+    def test_parse_qr_codes(self) -> None:
         """
         Test ScanService.parse_qr_code() and assert that the test QR codes
         have been successfully read and parsed into the correct format.
@@ -134,7 +135,7 @@ class MoreScanServiceTests(TestCase):
         parsed_codes = scanner.parse_qr_code([codes])
 
         assert parsed_codes
-        code_dict = {
+        code_dict: dict[str, dict[str, Any]] = {
             "NW": {
                 "page_info": {
                     "paper_id": 6,
@@ -172,7 +173,7 @@ class MoreScanServiceTests(TestCase):
                 "y_coord": 2883.5,
             },
         }
-        for quadrant in code_dict:
+        for quadrant in code_dict.keys():
             self.assertEqual(
                 parsed_codes[quadrant]["page_info"]["paper_id"],
                 code_dict[quadrant]["page_info"]["paper_id"],
@@ -204,7 +205,7 @@ class MoreScanServiceTests(TestCase):
                 < 0.01
             )
 
-    def test_parse_qr_codes_png_rotated_180(self):
+    def test_parse_qr_codes_png_rotated_180(self) -> None:
         """
         Test ScanService.parse_qr_code() and assert that the QR codes
         are read correctly after the page image is rotated.
@@ -249,7 +250,7 @@ class MoreScanServiceTests(TestCase):
             self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_parse_qr_codes_jpeg_rotated_180_no_exif(self):
+    def test_parse_qr_codes_jpeg_rotated_180_no_exif(self) -> None:
         """
         Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
         after an upside down jpeg page image with no exif is rotated.
@@ -300,7 +301,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((upright[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((upright[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_parse_qr_codes_jpeg_upright_exif_rot_180(self):
+    def test_parse_qr_codes_jpeg_upright_exif_rot_180(self) -> None:
         """
         Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
         after an upright page image with exif rotation of 180 is rotated.
@@ -330,7 +331,7 @@ class MoreScanServiceTests(TestCase):
                 im = exif.Image(f)
             self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
-    def test_parse_qr_codes_jpeg_upside_down_exif_180(self):
+    def test_parse_qr_codes_jpeg_upside_down_exif_180(self) -> None:
         """
         Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation
         """
@@ -377,7 +378,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_parse_qr_codes_jpeg_exif_90(self):
+    def test_parse_qr_codes_jpeg_exif_90(self) -> None:
         """
         Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation
         """
@@ -427,11 +428,11 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_known_images(self):
+    def test_known_images(self) -> None:
         """
         Test ScanService.get_all_known_images()
         """
-        user = baker.make(User, username="user")
+        user: User = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(
             StagingBundle, user=user, timestamp=timezone.now().timestamp()
