@@ -3,13 +3,15 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import pathlib
 import random
 from tempfile import TemporaryDirectory
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import zipfly
 
@@ -39,9 +41,9 @@ from ..models import BuildPaperPDFChore
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
-    question_versions: Dict[int, int],
+    question_versions: dict[int, int],
     *,
-    student_info: Optional[Dict[str, Any]] = None,
+    student_info: dict[str, Any] | None = None,
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
@@ -238,9 +240,11 @@ class BuildPapersService:
         self,
         paper_num: int,
         spec: dict,
-        student_name: Optional[str],
-        student_id: Optional[str],
-        qv_row: Dict[int, int],
+        student_name: str | None,
+        student_id: str | None,
+        qv_row: dict[int, int],
+        *,
+        obsolete_any_existing: bool = True,
     ) -> None:
         # TODO: error handling!
         paper = Paper.objects.get(paper_number=paper_num)
@@ -346,7 +350,7 @@ class BuildPapersService:
             task.set_as_obsolete()
 
     @transaction.atomic
-    def get_all_task_status(self) -> Dict[int, str]:
+    def get_all_task_status(self) -> dict[int, str]:
         """Get the status of every task and return as a dict."""
         return {
             task.paper.paper_number: task.get_status_display()
@@ -370,7 +374,7 @@ class BuildPapersService:
             return (paper_path.name, fh.read())
 
     @transaction.atomic
-    def get_task_context(self, include_obsolete: bool = False) -> List[Dict[str, Any]]:
+    def get_task_context(self, include_obsolete: bool = False) -> list[dict[str, Any]]:
         """Get information about all tasks.
 
         Keyword Args:
