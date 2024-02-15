@@ -3,8 +3,10 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 from warnings import warn
-from typing import Any, Dict, Union
+from typing import Any
 
 import cv2 as cv
 import numpy as np
@@ -32,7 +34,7 @@ class PageImageProcessor:
     WIDTH = RIGHT - LEFT
     HEIGHT = BOTTOM - TOP
 
-    def get_page_orientation(self, qr_code_data: Dict[str, Dict[str, Any]]) -> str:
+    def get_page_orientation(self, qr_code_data: dict[str, dict[str, Any]]) -> str:
         """Return a string representing a page orientation.
 
         The choices are:
@@ -81,7 +83,7 @@ class PageImageProcessor:
         northeast_orientation = None
         if "NE" in qr_code_data:
             expected_corner = qr_code_data["NE"]["quadrant"]
-            northeast_orientation = self.check_corner(
+            northeast_orientation = self._check_corner(
                 val_from_qr=expected_corner,
                 upright="1",
                 turned_right="2",
@@ -92,7 +94,7 @@ class PageImageProcessor:
         northwest_orientation = None
         if "NW" in qr_code_data:
             expected_corner = qr_code_data["NW"]["quadrant"]
-            northwest_orientation = self.check_corner(
+            northwest_orientation = self._check_corner(
                 val_from_qr=expected_corner,
                 upright="2",
                 turned_right="3",
@@ -103,7 +105,7 @@ class PageImageProcessor:
         southeast_orientation = None
         if "SE" in qr_code_data:
             expected_corner = qr_code_data["SE"]["quadrant"]
-            southeast_orientation = self.check_corner(
+            southeast_orientation = self._check_corner(
                 val_from_qr=expected_corner,
                 upright="4",
                 turned_right="1",
@@ -114,7 +116,7 @@ class PageImageProcessor:
         southwest_orientation = None
         if "SW" in qr_code_data:
             expected_corner = qr_code_data["SW"]["quadrant"]
-            southwest_orientation = self.check_corner(
+            southwest_orientation = self._check_corner(
                 val_from_qr=expected_corner,
                 upright="3",
                 turned_right="4",
@@ -140,9 +142,14 @@ class PageImageProcessor:
 
         return truthy_results[0]
 
-    def check_corner(
-        self, val_from_qr, upright, turned_right, turned_left, upside_down
-    ):
+    def _check_corner(
+        self,
+        val_from_qr: str,
+        upright: str,
+        turned_right: str,
+        turned_left: str,
+        upside_down: str,
+    ) -> str:
         """Check a page corner for its actual orientation.
 
         Args:
@@ -152,6 +159,9 @@ class PageImageProcessor:
             turned_right (str): value for a turned_right orientation
             turned_left (str): value for a turned_left orientation
             upside_down (str): value for an upside_down orientation
+
+        Returns:
+            String describing the orientation.
         """
         if val_from_qr == upright:
             return "upright"
@@ -161,8 +171,9 @@ class PageImageProcessor:
             return "turned_left"
         elif val_from_qr == upside_down:
             return "upside_down"
+        raise RuntimeError("Tertium non datur")
 
-    def get_rotation_angle_from_QRs(self, qr_data: Dict[str, Dict[str, Any]]) -> int:
+    def get_rotation_angle_from_QRs(self, qr_data: dict[str, dict[str, Any]]) -> int:
         """Get the current orientation of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
@@ -193,8 +204,8 @@ class PageImageProcessor:
         return rotate_angle
 
     def get_rotation_angle_or_None_from_QRs(
-        self, qr_data: Dict[str, Dict[str, Any]]
-    ) -> Union[None, int]:
+        self, qr_data: dict[str, dict[str, Any]]
+    ) -> int | None:
         """Get the current orientation or None of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
@@ -216,7 +227,9 @@ class PageImageProcessor:
             # We cannot get the page orientation
             return None
 
-    def create_affine_transformation_matrix(self, qr_dict):
+    def create_affine_transformation_matrix(
+        self, qr_dict: dict[str, dict[str, Any]]
+    ) -> np.ndarray:
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
         Args:
@@ -226,14 +239,14 @@ class PageImageProcessor:
             numpy.ndarray: the affine transformation matrix for correcting the image
         """
         if "NW" in qr_dict:
-            dest_three_points = np.float32(
+            dest_three_points = np.array(
                 [
                     [self.LEFT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
                 ]
             )
-            src_three_points = np.float32(
+            src_three_points = np.array(
                 [
                     [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
@@ -241,14 +254,14 @@ class PageImageProcessor:
                 ]
             )
         elif "NE" in qr_dict:
-            dest_three_points = np.float32(
+            dest_three_points = np.array(
                 [
                     [self.RIGHT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
                 ]
             )
-            src_three_points = np.float32(
+            src_three_points = np.array(
                 [
                     [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
@@ -256,8 +269,12 @@ class PageImageProcessor:
                 ]
             )
         else:
-            return np.float64([[1, 0, 0], [0, 1, 0]])
-        return cv.getAffineTransform(src_three_points, dest_three_points)
+            return np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        # float32 input expected
+        return cv.getAffineTransform(
+            src_three_points.astype(np.float32),
+            dest_three_points.astype(np.float32),
+        )
 
     def extract_rect_region(
         self, image_path, orientation, qr_dict, top, bottom, left, right

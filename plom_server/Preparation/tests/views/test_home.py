@@ -25,29 +25,28 @@ from ... import useful_files_for_testing as useful_files
 class PreparationLandingTests(TestCase):
     """Test the preparation app landing view."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Create and force login a manager user so the client can request the page."""
-        self.manager_user = baker.make(User)
-        self.manager_group = baker.make(Group, name="manager")
-        self.manager_user.groups.add(self.manager_group)
+        manager_user: User = baker.make(User)
+        manager_group: Group = baker.make(Group, name="manager")
+        manager_user.groups.add(manager_group)
 
         self.cli = Client()
-        self.cli.force_login(self.manager_user)
+        self.cli.force_login(manager_user)
 
         self.factory = RequestFactory()
-        return super().setUp()
 
-    def test_reverses(self):
+    def test_reverses(self) -> None:
         """Test the expected URL path and shortcut name."""
         landing = reverse("prep_landing")
         self.assertEqual(landing, "/create/")
 
-    def test_get(self):
+    def test_get(self) -> None:
         """Test getting the page when signed in."""
         response = self.cli.get(reverse("prep_landing"))
         self.assertEqual(response.status_code, 200)
 
-    def test_default_seatbelts(self):
+    def test_default_seatbelts(self) -> None:
         """Test an empty preparation page: should only allow creating a specification."""
         landing_view = PreparationLandingView()
         context = landing_view.build_context()
@@ -67,7 +66,7 @@ class PreparationLandingTests(TestCase):
 
         self.assertFalse(context["papers_built"])
 
-    def test_after_spec_made(self):
+    def test_after_spec_made(self) -> None:
         """Test the seatbelts after a specification is saved.
 
         Tt should reveal source versions and QV map.

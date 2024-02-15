@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+
+from __future__ import annotations
+
+from typing import Any
 
 from django.db import transaction
 
@@ -11,6 +15,7 @@ from plom.tpv_utils import parse_paper_page_version
 from Papers.services import SpecificationService, PaperInfoService
 from ..models import (
     StagingImage,
+    StagingBundle,
     UnknownStagingImage,
     KnownStagingImage,
     ExtraStagingImage,
@@ -20,7 +25,7 @@ from ..models import (
 
 
 class QRErrorService:
-    def check_read_qr_codes(self, bundle):
+    def check_read_qr_codes(self, bundle: StagingBundle) -> None:
         # Steps
         # * flag images with no qr-codes
         # * check all images have consistent qr-codes
@@ -39,7 +44,7 @@ class QRErrorService:
         # if a given tpv corresponds to multiple images then that is
         # an "internal collision", that is, we have multiple copies of
         # a given page (as encoded by its tpv) inside the current bundle.
-        known_imgs = {}
+        known_imgs: dict[str, list[int]] = {}
         # for each known image, also keep its bundle-order - we use that to create useful
         # error messages in case of internal collisions.
         img_bundle_order = {}
@@ -139,7 +144,7 @@ class QRErrorService:
                     staging_image=img, error_reason=err_str
                 )
 
-    def check_consistent_qr(self, parsed_qr_dict):
+    def check_consistent_qr(self, parsed_qr_dict: dict[str, dict[str, Any]]) -> None:
         """Check the parsed qr-codes: confirm they are self-consistent and that the publicCode matches the test spec.
 
         Note that the parsed_qr_dict is of the form
@@ -156,7 +161,7 @@ class QRErrorService:
             ValueError: describing various inconsistencies.
         """
 
-        def is_list_inconsistent(lst):
+        def is_list_inconsistent(lst: list) -> bool:
             """Helper function to test data consistency."""
             return any([X != lst[0] for X in lst])
 
@@ -166,7 +171,7 @@ class QRErrorService:
             raise ValueError("Inconsistent qr-codes - check scan for folded pages")
         # if it is an extra page or scrap-paper, then no further consistency checks
         if page_types[0] in ["plom_extra", "plom_scrap"]:
-            return True
+            return
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
         codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
@@ -196,7 +201,9 @@ class QRErrorService:
             raise ValueError("Inconsistent tpv - check scan for folded pages")
         # check that the version in the qr-code matches the question-version-map in the system.
 
-    def check_qr_against_spec_and_qvmap(self, parsed_qr_dict, correct_public_code):
+    def check_qr_against_spec_and_qvmap(
+        self, parsed_qr_dict: dict[str, dict[str, Any]], correct_public_code: str
+    ) -> bool:
         """Check the info in the qr-code against the spec and the qv-map in the database.
 
         More precisely, check that the

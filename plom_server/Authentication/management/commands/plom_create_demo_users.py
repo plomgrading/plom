@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+
+from __future__ import annotations
 
 from tabulate import tabulate
 
@@ -22,7 +24,7 @@ class Command(BaseCommand):
     passwords.
     """
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         if not Group.objects.exists():
             raise CommandError(
                 "No groups. Please run 'python3 manage.py plom_create_groups' "
@@ -35,7 +37,7 @@ class Command(BaseCommand):
         marker_group = Group.objects.get(name="marker")
         scanner_group = Group.objects.get(name="scanner")
         demo_group = Group.objects.get(name="demo")
-        user_info = {"Username": [], "Password": [], "Group": []}
+        user_info: dict[str, list[str]] = {"Username": [], "Password": [], "Group": []}
 
         # Here is to create a single demo admin user
         # is_staff means they can use the django admin tools
