@@ -26,9 +26,9 @@ pymupdf==1.23.8
 PyMySQL==1.1.0
 requests==2.31.0
 requests-toolbelt==1.0.0
-segno==1.6.0
+segno==1.6.1
 stdiomask==0.0.6
 tomli==2.0.1
 tomlkit==0.12.3
-tqdm==4.66.1
+tqdm==4.66.2
 urllib3==2.2.0
