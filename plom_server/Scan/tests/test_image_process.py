@@ -97,9 +97,8 @@ class PageImageProcessorTests(TestCase):
         return super().setUp()
 
     def test_check_corner(self) -> None:
-        """Test PageImageProcessor.check_corner()."""
         pipr = PageImageProcessor()
-        orientation = pipr.check_corner(
+        orientation = pipr._check_corner(
             val_from_qr="1",
             upright="1",
             turned_right="2",
