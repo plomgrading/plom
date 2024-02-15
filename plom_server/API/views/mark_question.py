@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 
-from typing import Optional
+from __future__ import annotations
 
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.request import Request
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
 from .utils import _error_response
@@ -21,7 +22,7 @@ class QuestionMarkingViewSet(ViewSet):
     """Controller for the question marking workflow."""
 
     @action(detail=False, methods=["get"], url_path="available")
-    def available(self, request, *args):
+    def available(self, request: Request, *args) -> Response:
         """Get the next marking task.
 
         get:
@@ -41,14 +42,14 @@ class QuestionMarkingViewSet(ViewSet):
             return None if x is None else int(x)
 
         try:
-            question: Optional[int] = int_or_None(data.get("q"))
-            version: Optional[int] = int_or_None(data.get("v"))
-            min_paper_num: Optional[int] = int_or_None(data.get("min_paper_num"))
-            max_paper_num: Optional[int] = int_or_None(data.get("max_paper_num"))
+            question = int_or_None(data.get("q"))
+            version = int_or_None(data.get("v"))
+            min_paper_num = int_or_None(data.get("min_paper_num"))
+            max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
 
-        _tag: Optional[str] = data.get("tags")
+        _tag: str | None = data.get("tags")
         if _tag:
             tags = _tag.split(",")
         else:
@@ -77,7 +78,7 @@ class QuestionMarkingViewSet(ViewSet):
         return Response(task.code, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
-    def claim_or_mark_task(self, request, code):
+    def claim_or_mark_task(self, request: Request, code: str) -> Response:
         """Attach a user to a marking task, or accept a grade and annotation.
 
         patch:
@@ -95,7 +96,7 @@ class QuestionMarkingViewSet(ViewSet):
         elif request.method == "POST":
             return self.mark_task(request, code)
 
-    def claim_task(self, request, code):
+    def claim_task(self, request: Request, code: str) -> Response:
         """Attach a user to a marking task and return the task's metadata.
 
         Reply with status 200, or 409 if someone else has claimed this
@@ -118,7 +119,7 @@ class QuestionMarkingViewSet(ViewSet):
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
-    def mark_task(self, request, code):
+    def mark_task(self, request: Request, code: str) -> Response:
         """Accept a marker's grade and annotation for a task."""
         mts = MarkingTaskService()
         data = request.POST
@@ -151,7 +152,7 @@ class QuestionMarkingViewSet(ViewSet):
         try:
             service.mark_task()
         except ValueError as e:
-            return _error_response(str(e), status.HTTP_400_BAD_REQUEST)
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
