@@ -442,8 +442,11 @@ class ScanCastService:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
-            img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            img = (
+                bundle_obj.stagingimage_set.select_related("extrastagingimage")
+                .exlude(extrastagingimage=None)
+                .select_for_update()
+                .get(bundle_order=bundle_order, image_type=StagingImage.EXTRA)
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
