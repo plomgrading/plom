@@ -251,20 +251,25 @@ class BuildPapersService:
 
         # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            try:
-                c = (
-                    BuildPaperPDFChore.objects.filter(paper=paper, obsolete=False)
-                    .select_for_update()
-                    .get()
-                )
+            q = BuildPaperPDFChore.objects.filter(
+                paper=paper, obsolete=False
+            ).select_for_update()
+            n_chores = q.count()
+            if n_chores == 0:
+                pass
+            elif n_chores == 1:
                 if not obsolete_any_existing:
                     raise ValueError(
                         f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
                         " make them obsolete before creating another"
                     )
+                c = q.get()
                 c.set_as_obsolete()
-            except ObjectDoesNotExist:
-                pass
+            else:
+                raise RuntimeError(
+                    f"Paper build serious error: there are {n_chores} non-obsolete"
+                    f" chores for paper {paper}, when there should be at most one"
+                )
             task = BuildPaperPDFChore.objects.create(
                 paper=paper,
                 huey_id=None,
