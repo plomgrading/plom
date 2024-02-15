@@ -26,26 +26,27 @@ from .services import BuildPapersService
 
 def _task_context_and_status() -> tuple[dict[str, Any], int]:
     db_initialised = PaperInfoService().is_paper_database_populated()
-    db_num_papers = PaperInfoService().how_many_papers_in_database()
     bps = BuildPapersService()
-    task_context = bps.get_task_context()
-
     n_complete = bps.get_n_complete_tasks()
-    n_total = len(task_context)
+    n_papers = bps.get_n_papers()
+    # Note: task_context could be longer if we include obsoletes
+    task_context = bps.get_task_context()
+    # task_context = bps.get_task_context(include_obsolete=True)
+
     if not db_initialised:
         msg = "Nothing to build; have you initialised the database?"
-    elif n_total == 0:
-        msg = f"There are {db_num_papers} papers to be built (none triggered)."
+    elif n_papers == 0:
+        msg = f"There are {n_papers} papers to be built (none triggered)."
     else:
-        percent = n_complete / n_total * 100
-        msg = f"Progress: {n_complete} papers of {n_total} built ({percent:.0f}%)"
+        _percent = n_complete / n_papers * 100
+        msg = f"Progress: {n_complete} papers of {n_papers} built ({_percent:.0f}%)"
 
     zip_enabled = False
-    if n_total > 0 and n_complete == n_total:
+    if db_initialised and n_complete == n_papers:
         zip_enabled = True
 
     status = 200
-    if n_complete == n_total:
+    if n_complete == n_papers:
         status = 286
 
     n_running = bps.get_n_tasks_started_but_not_complete()

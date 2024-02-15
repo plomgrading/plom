@@ -39,7 +39,6 @@ class HueyTaskTracker(models.Model):
     In the meantime, you can change status to ``QUEUED`` (provided you
     are careful not to overwrite ``RUNNING``!)
     Generally the Huey task itself should set status ``COMPLETE``.
-    TODO: ``ERROR`` is still in-flux.
 
     The difference between STARTING, QUEUED, and RUNNING is rather
     sensitive to timing.  Caller can set STARTING and try to set
@@ -54,7 +53,9 @@ class HueyTaskTracker(models.Model):
     ``obsolete=True`` is a "light deletion; no one cares for the result
     and it should not be used.  It is ok to change status (e.g., a
     background task finishes a chore that no one cares about anymore is
-    free to complete the chore---or not!)
+    free to complete the chore---or not!)  Obsolete is not the same as
+    ``ERROR``: a task could be in an error state but still relevant, for
+    example, being displayed in a UI to show users it has errored.
     """
 
     StatusChoices = models.IntegerChoices(
@@ -175,6 +176,14 @@ class HueyTaskTracker(models.Model):
 
     def set_as_obsolete_with_error(self, errmsg: str) -> None:
         """Move to the error state and set obsolete."""
+        self.huey_id = None
+        self.status = self.ERROR
+        self.message = errmsg
+        self.obsolete = True
+        self.save()
+
+    def transition_to_error(self, errmsg: str) -> None:
+        """Move to the error state."""
         self.huey_id = None
         self.status = self.ERROR
         self.message = errmsg

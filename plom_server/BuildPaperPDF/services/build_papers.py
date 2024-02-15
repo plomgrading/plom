@@ -213,12 +213,13 @@ class BuildPapersService:
     def send_single_task(self, paper_num) -> None:
         """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
 
+        If there is a existing chore, it will be set to obsolete.
+
         Args:
             paper_num: which paper number
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
-            ValueError: existing non-obsolete chores for that paper number.
         """
         spec = SpecificationService.get_the_spec()
 
@@ -246,15 +247,28 @@ class BuildPapersService:
         *,
         obsolete_any_existing: bool = True,
     ) -> None:
-        # TODO: error handling!
         paper = Paper.objects.get(paper_number=paper_num)
 
         # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            if BuildPaperPDFChore.objects.filter(paper=paper, obsolete=False).exists():
-                raise ValueError(
-                    f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
-                    " make them obsolete before creating another"
+            q = BuildPaperPDFChore.objects.filter(
+                paper=paper, obsolete=False
+            ).select_for_update()
+            n_chores = q.count()
+            if n_chores == 0:
+                pass
+            elif n_chores == 1:
+                if not obsolete_any_existing:
+                    raise ValueError(
+                        f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
+                        " make them obsolete before creating another"
+                    )
+                c = q.get()
+                c.set_as_obsolete()
+            else:
+                raise RuntimeError(
+                    f"Paper build serious error: there are {n_chores} non-obsolete"
+                    f" chores for paper {paper}, when there should be at most one"
                 )
             task = BuildPaperPDFChore.objects.create(
                 paper=paper,
@@ -302,11 +316,11 @@ class BuildPapersService:
             queue_tasks = BuildPaperPDFChore.objects.filter(
                 Q(status=BuildPaperPDFChore.STARTING)
                 | Q(status=BuildPaperPDFChore.QUEUED)
-            )
+            ).select_for_update()
             for task in queue_tasks:
                 if task.huey_id:
                     queue.revoke_by_id(str(task.huey_id))
-                task.set_as_obsolete_with_error("never ran: forcibly dequeued")
+                task.transition_to_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
@@ -321,18 +335,16 @@ class BuildPapersService:
         to call on tasks that have errored out, or are incomplete or are still
         to do.
 
-        TODO: what if it is Complete?  What then?  I'm not sure it should reset
-        but currently it does.
+        If the task is Complete, this should have no effect on it.
         """
         task = BuildPaperPDFChore.objects.get(
             obsolete=False, paper__paper_number=paper_number
         )
-        task.set_as_obsolete()
         if task.huey_id:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(task.huey_id))
         if task.status in (BuildPaperPDFChore.STARTING, BuildPaperPDFChore.QUEUED):
-            task.set_as_obsolete_with_error("never ran: forcibly dequeued")
+            task.transition_to_error("never ran: forcibly dequeued")
 
     def retry_all_task(self) -> None:
         """Retry all non-obsolete tasks that have error status."""
@@ -374,7 +386,9 @@ class BuildPapersService:
             return (paper_path.name, fh.read())
 
     @transaction.atomic
-    def get_task_context(self, include_obsolete: bool = False) -> list[dict[str, Any]]:
+    def get_task_context(
+        self, *, include_obsolete: bool = False
+    ) -> list[dict[str, Any]]:
         """Get information about all tasks.
 
         Keyword Args:
