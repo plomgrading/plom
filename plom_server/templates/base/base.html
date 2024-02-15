@@ -62,7 +62,9 @@
                          alt="Plom logo"
                          style="max-width: 8rem" />
                 </a>
-                <span class="badge bg-secondary mt-1">version {{ plom_version }}</span>
+                <p class="text-center fw-light mb-0">
+                    <small>v{{ plom_version }}</small>
+                </p>
                 {% block sidebar_content %}
                     {% include "base/sidebar.html" %}
                 {% endblock sidebar_content %}
