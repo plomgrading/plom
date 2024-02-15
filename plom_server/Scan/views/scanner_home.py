@@ -229,19 +229,6 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[_bundle.timestamp])
             )
         except ObjectDoesNotExist as e:
-            # Semantically we want 404 but I don't think this works:
-            # return HttpResponseClientRedirect(Http404(e))
-            # TODO: uses the troubles-afoot kludge (Issue #3251)
-            hint = f"not-found-maybe-deleted-already-{e}"
-            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
-        except Exception as e:
-            # I don't like generic excepts: my preference would be to fix
-            # this at the htmx end of things (Issue #3251)
-            print(f"Unexpected, catchall activated: {e}")
-            print(type(e))
-            print(f"raising {e}")
-            return HttpResponseClientRedirect(
-                reverse("troubles_afoot", args=["completely-unexpected"])
-            )
+            raise Http404(e)
 
         return HttpResponseClientRefresh()

@@ -3,7 +3,7 @@
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
@@ -17,6 +17,7 @@
     <div class="card my-2">
         <div class="card-body">
             <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
+            <!--     <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise an exception with htmx-get</button> -->
         </div>
     </div>
     <div class="card my-2">

@@ -3,9 +3,10 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
+from django.http import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
@@ -72,3 +73,14 @@ class PasswordResetPage(ManagerRequiredView):
 
         context = {"username": username, "link": link}
         return render(request, "UserManagement/password_reset_page.html", context)
+
+
+class HTMXExplodeView(ManagerRequiredView):
+    def get(self, request):
+        import random
+
+        if random.random() < 0.333:
+            1 / 0
+        if random.random() < 0.5:
+            raise Http404("Should happen 1/3 of the time")
+        return HttpResponse("Button pushed", status=200)

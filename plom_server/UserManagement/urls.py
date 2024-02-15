@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.urls import path
+
 from UserManagement import views
+
 
 urlpatterns = [
     path("users", view=views.UserPage.as_view(), name="users"),
@@ -25,4 +27,5 @@ urlpatterns = [
         views.UserPage.toggleLeadMarker,
         name="toggleLeadMarker",
     ),
+    path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
 ]

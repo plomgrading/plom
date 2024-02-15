@@ -42,6 +42,7 @@ elif debug_setting.isdigit() and int(debug_setting) == 0:
 else:
     DEBUG = True
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("PLOM_SECRET_KEY")
 if not SECRET_KEY:
@@ -99,6 +100,8 @@ INSTALLED_APPS = [
     # Huey + polymorphism
     "django_huey",
     "polymorphic",
+    # HTMX
+    "django_htmx",
     # REST framework
     "rest_framework",
     "rest_framework.authtoken",
@@ -136,6 +139,7 @@ MIDDLEWARE = [
     "Web_Plom.middleware.OnlineNowMiddleware",
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "Web_Plom.urls"
