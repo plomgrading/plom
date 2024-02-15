@@ -26,7 +26,7 @@ fi
 python3 manage.py djangohuey &
 
 # Finally launch the server itself
-if [[ "$PLOM_DEBUG" -eq 0 ]]; then
+if [ "x$PLOM_DEBUG" = "x0" ]; then
     gunicorn Web_Plom.wsgi --bind 0.0.0.0:$PORT
 else
     python3 manage.py runserver 0.0.0.0:$PORT
