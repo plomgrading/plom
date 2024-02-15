@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
-from pathlib import Path
+from __future__ import annotations
 
+from pathlib import Path
 from tabulate import tabulate
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -64,7 +65,7 @@ class Command(BaseCommand):
             help="Download all papers in a ZIP file",
         )
 
-    def start_all_tasks(self):
+    def start_all_tasks(self) -> None:
         bp_service = BuildPapersService()
         if bp_service.get_n_papers() == 0:
             self.stdout.write(
@@ -78,7 +79,7 @@ class Command(BaseCommand):
             raise CommandError(e) from e
         self.stdout.write(f"Started building {N} papers.")
 
-    def start_specific_task(self, paper_number):
+    def start_specific_task(self, paper_number: int) -> None:
         bp_service = BuildPapersService()
 
         try:
@@ -87,7 +88,7 @@ class Command(BaseCommand):
             raise CommandError(e) from e
         self.stdout.write(f"Started building paper number {paper_number}.")
 
-    def show_task_status(self):
+    def show_task_status(self) -> None:
         bp_service = BuildPapersService()
         if bp_service.are_all_papers_built():
             self.stdout.write("All papers are now built")
@@ -98,30 +99,31 @@ class Command(BaseCommand):
             self.stdout.write("No current chores.")
         else:
             self.stdout.write(f"{len(stats)} chores total:")
-            rev_stat = {}
+            rev_stat: dict[str, list[int]] = {}
             for n, state in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for state, papers in rev_stat.items():
-                self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
+                lst = format_int_list_with_runs(papers, zero_padding=4)
+                self.stdout.write(f' * "{state}": {lst}')
         N = bp_service.get_n_obsolete_tasks()
         print(f"There are also {N} obsolete PDF building chores")
         print("(left-over from previous runs, etc; don't worry about these)")
 
-    def list_tasks(self):
+    def list_tasks(self) -> None:
         bp_service = BuildPapersService()
         tab = bp_service.get_task_context(include_obsolete=True)
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
 
-    def delete_all_tasks(self):
+    def delete_all_tasks(self) -> None:
         bp_service = BuildPapersService()
         bp_service.reset_all_tasks()
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         bp_service = BuildPapersService()
         N = bp_service.try_to_cancel_all_queued_tasks()
         self.stdout.write(f"Revoked {N} build paper PDF chores")
 
-    def download_specific_paper(self, paper_number):
+    def download_specific_paper(self, paper_number: int) -> None:
         bp_service = BuildPapersService()
         try:
             (name, b) = bp_service.get_paper_path_and_bytes(paper_number)
@@ -132,7 +134,7 @@ class Command(BaseCommand):
             fh.write(b)
         self.stdout.write(f'Saved paper {paper_number} as "{name}"')
 
-    def download_all_papers(self):
+    def download_all_papers(self) -> None:
         bps = BuildPapersService()
         short_name = SpecificationService.get_short_name_slug()
         zgen = bps.get_zipfly_generator(short_name)
@@ -147,7 +149,7 @@ class Command(BaseCommand):
                 )
         self.stdout.write(f'\nAll built papers saved in zip = "{short_name}.zip"')
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         if options["start"]:
             self.start_specific_task(options["start"])
         elif options["download"]:
