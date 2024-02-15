@@ -585,14 +585,8 @@ class MarkingTaskService:
             )
         # we know there is at most one valid task.
         if valid_task_count == 1:
-            # there is an "in date" task - get it and set it as out of date
+            # there is an "in date" task - get it and set it as out of date, and set the assigned user to None.
             task_obj = valid_tasks.select_for_update().get()
-            # set the last id-action as invalid (if it exists)
-            if task_obj.latest_annotation:
-                latest_annotation = task_obj.latest_annotation
-                latest_annotation.is_valid = False
-                latest_annotation.save()
-            # now set status and make assigned user None
             task_obj.assigned_user = None
             task_obj.status = MarkingTask.OUT_OF_DATE
             task_obj.save()
