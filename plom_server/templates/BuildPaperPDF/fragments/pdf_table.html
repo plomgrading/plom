@@ -110,12 +110,10 @@
     {% endfor %}
 </table>
 <div id="bottom">
-    {% if zip_disabled %}
-        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
+    {% if zip_enabled %}
+        <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
     {% else %}
-        <a class="btn btn-primary"
-           href="{% url 'zip_stream_paperPDFs' %}"
-           download>Save as zip file</a>
+        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
     {% endif %}
     {% if tasks %}
         <a class="btn btn-secondary"
