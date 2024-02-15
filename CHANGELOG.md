@@ -9,17 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Django-based server container starts the canned demo if environment variable PLOM_DEMO is set to 1.
 
 ### Changed
+* Web UI: displays version number.
+* Web UI: various tweaks and improvements to building blank paper PDFs.
 
 ### Fixed
-
+* Web UI: improved error handling for unexpected errors when using asynchronous HTMX calls.
 
 
 ## [0.15.0] - 2024-02-13
 
 ### Added
-* next-gen server is closer to being the default server.
+* Django-based server is closer to being the default server.
 
 ### Changed
 * switch client dependency from `appdirs` to `platformdirs`.
