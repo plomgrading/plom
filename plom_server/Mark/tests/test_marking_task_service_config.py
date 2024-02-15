@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -18,7 +18,7 @@ from ..models import MarkingTask
 
 class MarkingTaskTestsWithConfig(TestCase):
     @config_test()
-    def test_create_task(self):
+    def test_create_task(self) -> None:
         """Test MarkingTaskService.create_task()
 
         Config:
@@ -46,7 +46,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         self.assertEqual(task2.code, "q0002g1")
 
     @config_test()
-    def test_marking_task_before_pqvmap(self):
+    def test_marking_task_before_pqvmap(self) -> None:
         """Test that .create_task() fails if there is no QV map.
 
         Config:
@@ -59,7 +59,7 @@ class MarkingTaskTestsWithConfig(TestCase):
             mts.create_task(paper1, 1)
 
     @config_test()
-    def test_get_first_filter(self):
+    def test_get_first_filter(self) -> None:
         """Test MarkingTaskService.get_first_available_task() with a specified question and version.
 
         Config:
@@ -87,7 +87,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         )
 
     @config_test()
-    def test_user_can_update_task(self):
+    def test_user_can_update_task(self) -> None:
         """Test MarkingTaskService.user_can_update_task()
 
         Config:
@@ -95,8 +95,8 @@ class MarkingTaskTestsWithConfig(TestCase):
         num_to_produce = 3
         auto_init_tasks = true
         """
-        user1 = baker.make(User)
-        user2 = baker.make(User)
+        user1: User = baker.make(User)
+        user2: User = baker.make(User)
 
         task1 = MarkingTask.objects.get(code="q0001g1")
         task1.assigned_user = user1
@@ -134,7 +134,7 @@ class MarkingTaskTestsWithConfig(TestCase):
         self.assertFalse(mts.user_can_update_task(user1, task6.code))
 
     @config_test()
-    def test_task_priorities_by_papernum(self):
+    def test_task_priorities_by_papernum(self) -> None:
         """Test setting task priority by paper number.
 
         Config:

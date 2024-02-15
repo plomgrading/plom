@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 
 import hashlib
@@ -35,7 +35,7 @@ from plom.baseMessenger import BaseMessenger
 class ManagerMessenger(BaseMessenger):
     """Management-related communications."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     def InitialiseDB(self, version_map={}):

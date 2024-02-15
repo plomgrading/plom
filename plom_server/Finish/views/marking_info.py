@@ -9,7 +9,7 @@ import json
 
 import arrow
 
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
@@ -33,7 +33,7 @@ class MarkingInformationView(ManagerRequiredView):
 
     template = "Finish/marking_landing.html"
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
         papers = self.sms.get_all_marks()
@@ -61,21 +61,23 @@ class MarkingInformationView(ManagerRequiredView):
 
         # histogram of grades per question
         question_avgs = self.des.get_average_grade_on_all_questions()
-        grades_hist_data = self.d3s.convert_stats_to_d3_hist_format(
-            question_avgs, ylabel="Grade", title="Average Grade vs Question"
+        grades_hist_data = json.dumps(
+            self.d3s.convert_stats_to_d3_hist_format(
+                question_avgs, ylabel="Grade", title="Average Grade vs Question"
+            )
         )
-        grades_hist_data = json.dumps(grades_hist_data)
 
         # heatmap of correlation between questions
         corr_df = self.des._get_question_correlation_heatmap_data()
         # TODO: easily might've mixed up row/column here
-        corr_heatmap_data = self.d3s.convert_correlation_to_d3_heatmap_format(
-            corr_df.values,
-            title="Question correlation",
-            xlabels=corr_df.columns.to_list(),
-            ylabels=corr_df.index.to_list(),
+        corr_heatmap_data = json.dumps(
+            self.d3s.convert_correlation_to_d3_heatmap_format(
+                corr_df.values,
+                title="Question correlation",
+                xlabels=corr_df.columns.to_list(),
+                ylabels=corr_df.index.to_list(),
+            )
         )
-        corr_heatmap_data = json.dumps(corr_heatmap_data)
 
         context.update(
             {
@@ -97,7 +99,7 @@ class MarkingInformationView(ManagerRequiredView):
         return render(request, self.template, context)
 
     @staticmethod
-    def marks_download(request):
+    def marks_download(request: HttpRequest) -> HttpResponse:
         """Download marks as a csv file."""
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
@@ -123,7 +125,7 @@ class MarkingInformationView(ManagerRequiredView):
         return response
 
     @staticmethod
-    def ta_info_download(request):
+    def ta_info_download(request: HttpRequest) -> HttpResponse:
         """Download TA marking information as a csv file."""
         tms = TaMarkingService()
         csv_as_string = tms.build_ta_info_csv_as_string()
@@ -150,6 +152,6 @@ class MarkingInformationPaperView(ManagerRequiredView):
 
     sms = StudentMarkService()
 
-    def get(self, request, paper_num):
+    def get(self, request: HttpRequest, *, paper_num: int) -> JsonResponse:
         marks_dict = self.sms.get_marks_from_paper(paper_num)
         return JsonResponse(marks_dict)

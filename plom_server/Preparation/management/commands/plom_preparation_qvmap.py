@@ -19,7 +19,7 @@ from ...services import PQVMappingService, PapersPrinted
 class Command(BaseCommand):
     help = "Displays the current status of the question-version map and allows user generate/download/remove it."
 
-    def show_status(self):
+    def show_status(self) -> None:
         if not SpecificationService.is_there_a_spec():
             self.stdout.write("There is no valid test specification. Stopping.")
 
@@ -27,7 +27,9 @@ class Command(BaseCommand):
         if pqvms.is_there_a_pqv_map():
             paper_list = pqvms.list_of_paper_numbers()
             self.stdout.write(
-                f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
+                "There is a question-version mapping on the server "
+                f"with {len(paper_list)} rows: "
+                f"papers {format_int_list_with_runs(paper_list, zero_padding=4)}"
             )
             if PapersPrinted.have_papers_been_printed():
                 print("Papers have been printed: cannot change qvmap.")
@@ -71,7 +73,7 @@ class Command(BaseCommand):
             f"Question-version map generated: {number_to_produce} rows starting from {first}."
         )
 
-    def download_pqv_map(self):
+    def download_pqv_map(self) -> None:
         pqvms = PQVMappingService()
         if not pqvms.is_there_a_pqv_map():
             raise CommandError(
@@ -110,7 +112,7 @@ class Command(BaseCommand):
             raise CommandError(e)
         self.stdout.write(f"Uploaded qvmap from {f}")
 
-    def remove_pqv_map(self):
+    def remove_pqv_map(self) -> None:
         if PapersPrinted.have_papers_been_printed():
             raise CommandError("Paper have been printed. You cannot change qvmap.")
 
@@ -153,7 +155,7 @@ class Command(BaseCommand):
         p.add_argument("csv_or_json_file")
         sub.add_parser("remove", help="Remove the question-version map")
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options) -> None:
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "generate":

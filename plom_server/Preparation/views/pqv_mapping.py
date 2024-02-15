@@ -3,11 +3,14 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from pathlib import Path
 import tempfile
+from typing import Any
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpRequest, HttpResponseRedirect, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
@@ -26,11 +29,11 @@ from plom.version_maps import version_map_from_file
 
 
 class PQVMappingUploadView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         # if you are here, then you should really be at the main qvmap management page.
         return redirect("prep_qvmapping")
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         if not request.FILES["pqvmap_csv"]:
             return redirect("prep_qvmapping")
 
@@ -40,7 +43,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
 
-        context = {"errors": []}
+        context: dict[str, Any] = {"errors": []}
         # far from ideal, but the csv module doesn't like bytes.
         try:
             with tempfile.TemporaryDirectory() as td:
@@ -71,21 +74,21 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request) -> HttpResponse:
+    def get(self, request: HttpRequest) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
-    def delete(self, request) -> HttpResponse:
+    def delete(self, request: HttpRequest) -> HttpResponse:
         pqvs = PQVMappingService()
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
 
 
 class PQVMappingView(ManagerRequiredView):
-    def build_context(self):
+    def build_context(self) -> dict[str, Any]:
         pqvs = PQVMappingService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
@@ -129,13 +132,13 @@ class PQVMappingView(ManagerRequiredView):
 
         return context
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         if PapersPrinted.have_papers_been_printed():
             return redirect("prep_qvmapping_view")
         context = self.build_context()
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         ntp = request.POST.get("number_to_produce", None)
         first = request.POST.get("first_paper_num", None)
         if not ntp:
@@ -176,6 +179,6 @@ class PQVMappingReadOnlyView(ManagerRequiredView):
         )
         return context
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         return render(request, "Preparation/pqv_mapping_view.html", context)

@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 
 from Base.base_group_views import ScannerRequiredView
 from Progress.services import ManageScanService
@@ -15,7 +15,7 @@ from plom.misc_utils import format_int_list_with_runs
 class ScannerSummaryView(ScannerRequiredView):
     """Display the summary of the whole test."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = super().build_context()
         mss = ManageScanService()
 
@@ -57,7 +57,7 @@ class ScannerSummaryView(ScannerRequiredView):
 class ScannerPushedImageView(ScannerRequiredView):
     """Return a pushed image given by its pk."""
 
-    def get(self, request, img_pk):
+    def get(self, request: HttpRequest, img_pk: int) -> FileResponse:
         img = ManageScanService().get_pushed_image(img_pk)
         return FileResponse(img.image_file)
 
@@ -65,7 +65,7 @@ class ScannerPushedImageView(ScannerRequiredView):
 class ScannerPushedImageWrapView(ScannerRequiredView):
     """Return the simple html wrapper around the pushed image with correct rotation."""
 
-    def get(self, request, img_pk):
+    def get(self, request: HttpRequest, img_pk: int) -> HttpResponse:
         pushed_img = ManageScanService().get_pushed_image(img_pk)
         pushed_img_page_info = ManageScanService().get_pushed_image_page_info(img_pk)
         # pass negative of angle for css rotation since it uses positive=clockwise (sigh)

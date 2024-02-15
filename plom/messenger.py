@@ -5,12 +5,13 @@
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
+from __future__ import annotations
+
 import hashlib
 from io import BytesIO
 import json
 import logging
 import mimetypes
-from typing import Optional, List, Tuple, Union
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -46,7 +47,7 @@ log = logging.getLogger("messenger")
 class Messenger(BaseMessenger):
     """Handle communication with a Plom Server."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     # ------------------------
@@ -233,10 +234,10 @@ class Messenger(BaseMessenger):
         q: int,
         v: int,
         *,
-        tags: Optional[List[str]] = None,
-        min_paper_num: Optional[int] = None,
-        max_paper_num: Optional[int] = None,
-    ) -> Union[str, None]:
+        tags: list[str] | None = None,
+        min_paper_num: int | None = None,
+        max_paper_num: int | None = None,
+    ) -> str | None:
         """Ask server for a new marking task, return tgv or None.
 
         Args:
@@ -248,7 +249,8 @@ class Messenger(BaseMessenger):
                 preference for those.  (But we will still accept tasks
                 without any of these tags).
             min_paper_num: paper number must be at least this value.
-                (Only a preference on legacy servers).
+                (On legacy servers, this is a soft preference not a hard
+                requirement).
             max_paper_num: paper number must at most this value.
                 (Ignored on legacy servers).
 
@@ -343,7 +345,7 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MlatexFragment(self, latex: str) -> Tuple[bool, Union[bytes, str]]:
+    def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:
         """Give some text to the server, it comes back as a PNG image processed via TeX.
 
         Args:

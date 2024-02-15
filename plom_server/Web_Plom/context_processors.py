@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+from plom import __version__ as plom_version
 
 
 def user_group_information(request):
@@ -33,3 +34,11 @@ def user_group_information(request):
     elif "lead_marker" in group_list:
         context["navbar_color"] = "dark"
     return context
+
+
+def plom_version_information(request):
+    """Adds plom version information to the view context.
+
+    Adds string "plom_version".
+    """
+    return {"plom_version": plom_version}

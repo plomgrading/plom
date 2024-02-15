@@ -15,7 +15,7 @@ import math
 import os
 import string
 import sys
-from typing import Any
+from typing import Any, Sequence
 
 
 # ------------------------------------------------
@@ -69,7 +69,7 @@ def is_within_one_hour_of_now(timestamp):
 
 
 def format_int_list_with_runs(
-    L: list[str | int],
+    L: Sequence[str | int],
     *,
     use_unicode: None | bool = None,
     zero_padding: None | int = None,
@@ -97,7 +97,7 @@ def format_int_list_with_runs(
         else:
             use_unicode = False
     dash = "\N{En Dash}" if use_unicode else "-"
-    L2 = _find_runs(L)
+    L2 = _find_runs(sorted([int(x) for x in L]))
     L3 = _flatten_2len_runs(L2)
     z = zero_padding if zero_padding else 0
     L4 = [
@@ -107,9 +107,7 @@ def format_int_list_with_runs(
     return ", ".join(L4)
 
 
-def _find_runs(S_: list[str | int]) -> list[list[int]]:
-    S = [int(x) for x in S_]
-    S.sort()
+def _find_runs(S: list[int]) -> list[list[int]]:
     L = []
     prev = -math.inf
     run: list[int] = []

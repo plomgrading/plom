@@ -12,7 +12,7 @@ from io import BytesIO
 import logging
 import os
 import threading
-from typing import Any, Dict, Tuple, Union
+from typing import Any
 
 import requests
 import urllib3
@@ -61,12 +61,12 @@ class BaseMessenger:
 
     def __init__(
         self,
-        server: Union[str, None] = None,
+        server: str | None = None,
         *,
-        port: Union[int, None] = None,
-        scheme: Union[str, None] = None,
-        verify_ssl: Union[bool, str] = True,
-        webplom: Union[bool, None] = None,
+        port: int | None = None,
+        scheme: str | None = None,
+        verify_ssl: bool | str = True,
+        webplom: bool | None = None,
     ) -> None:
         """Initialize a new BaseMessenger.
 
@@ -74,19 +74,19 @@ class BaseMessenger:
             server: URL or None to default to localhost.
 
         Keyword Arguments:
-            port (None/int): What port to try to connect to.  Defaults
+            port: What port to try to connect to.  Defaults
                 to 41984 if omitted and cannot be determined from the
                 URI string.
-            scheme (None/str): What scheme to use to connect.  Defaults
+            scheme: What scheme to use to connect.  Defaults
                 to ``"https"`` if omitted and cannot be determined from
                 the URI string.
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
-            webplom (True/False/None): whether to connect to a newer
-                Django-based server.  If False, force connection to a
-                legacy server.  If True, force connect to a new server.
-                The default (recommended!) is None, to autodetect.
+            webplom: whether to connect to a newer
+                Django-based server.  If ``False``, force connection to a
+                legacy server.  If ``True``, force connect to a new server.
+                The default (recommended!) is ``None``, to autodetect.
 
         Returns:
             None
@@ -128,10 +128,11 @@ class BaseMessenger:
 
         self._raw_init(server, verify_ssl=verify_ssl)
 
-    def _raw_init(self, base: str, *, verify_ssl: Union[bool, str]) -> None:
-        self.session: Union[requests.Session, None] = None
-        self.user = None
-        self.token = None
+    def _raw_init(self, base: str, *, verify_ssl: bool | str) -> None:
+        self.session: requests.Session | None = None
+        self.user: str | None = None
+        # on legacy, it is a string, modern server it is a dict
+        self.token: str | dict[str, str] | None = None
         self.default_timeout = (10, 60)
         try:
             parsed_url = urllib3.util.parse_url(base)
@@ -144,7 +145,7 @@ class BaseMessenger:
         if not self.verify_ssl:
             self._shutup_urllib3()
 
-    def _shutup_urllib3(self):
+    def _shutup_urllib3(self) -> None:
         # If we use unverified ssl certificates we get lots of warnings,
         # so put in this to hide them.
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -168,20 +169,22 @@ class BaseMessenger:
         return x
 
     def is_ssl_verified(self):
+        # TODO: this is used as a bool by chooser... but this implementation can return a string
+        # TODO: add typing and decide about this
         return self.verify_ssl
 
-    def force_ssl_unverified(self):
+    def force_ssl_unverified(self) -> None:
         """This connection (can be open) does not need to verify cert SSL going forward."""
         self.verify_ssl = False
         if self.session:
             self.session.verify = False
         self._shutup_urllib3()
 
-    def whoami(self):
+    def whoami(self) -> str | None:
         return self.user
 
     @property
-    def username(self):
+    def username(self) -> str | None:
         return self.whoami()
 
     def enable_legacy_server_support(self) -> None:
@@ -194,7 +197,7 @@ class BaseMessenger:
             raise RuntimeError('cannot change "legacy" status after login')
         self.webplom = True
 
-    def is_legacy_server(self) -> Union[bool, None]:
+    def is_legacy_server(self) -> bool | None:
         if self.webplom is None:
             return None
         return not self.webplom
@@ -203,7 +206,7 @@ class BaseMessenger:
     def server(self) -> str:
         return self.base
 
-    def get(self, url, *args, **kwargs):
+    def get(self, url: str, *args, **kwargs) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -213,30 +216,37 @@ class BaseMessenger:
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
+            assert isinstance(self.token, dict)
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
             json = kwargs["json"]
             json.pop("token")
             kwargs["json"] = json
 
+        assert self.session
         return self.session.get(self.base + url, *args, **kwargs)
 
-    def get_auth(self, url, *args, **kwargs):
+    def get_auth(self, url: str, *args, **kwargs) -> requests.Response:
         if self.is_legacy_server():
             raise RuntimeError("This routine does not work on legacy servers")
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+        assert isinstance(self.token, dict)
         kwargs["headers"] = {"Authorization": f"Token {self.token['token']}"}
+        assert self.session
         return self.session.get(self.base + url, *args, **kwargs)
 
-    def post_raw(self, url, *args, **kwargs):
+    def post_raw(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a POST operation without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
+        assert self.session
         return self.session.post(self.base + url, *args, **kwargs)
 
-    def post_auth(self, url, *args, **kwargs):
+    def post_auth(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a POST operation with tokens for authentication."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
@@ -245,6 +255,7 @@ class BaseMessenger:
             raise PlomAuthenticationException("Trying auth'd operation w/o token")
 
         if self.webplom:
+            assert isinstance(self.token, dict)
             # Django-based servers pass token in the header
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
@@ -255,51 +266,58 @@ class BaseMessenger:
             json["token"] = self.token
             kwargs["json"] = json
 
+        assert self.session
         return self.session.post(self.base + url, *args, **kwargs)
 
-    def put(self, url, *args, **kwargs):
+    def put(self, url: str, *args, **kwargs) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
+            assert isinstance(self.token, dict)
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
             json = kwargs["json"]
             json.pop("token")
             kwargs["json"] = json
 
+        assert self.session
         return self.session.put(self.base + url, *args, **kwargs)
 
-    def delete(self, url, *args, **kwargs):
+    def delete(self, url: str, *args, **kwargs) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
+            assert isinstance(self.token, dict)
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
             json = kwargs["json"]
             json.pop("token")
             kwargs["json"] = json
 
+        assert self.session
         return self.session.delete(self.base + url, *args, **kwargs)
 
-    def patch(self, url, *args, **kwargs):
+    def patch(self, url: str, *args, **kwargs) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
         if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
+            assert isinstance(self.token, dict)
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
             json = kwargs["json"]
             json.pop("token")
             kwargs["json"] = json
 
+        assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
     def _start(self) -> str:
@@ -368,7 +386,7 @@ class BaseMessenger:
             self.session.close()
             self.session = None
 
-    def isStarted(self):
+    def isStarted(self) -> bool:
         return bool(self.session)
 
     def get_server_version(self) -> str:
@@ -387,7 +405,7 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_server_info(self) -> Dict[str, Any]:
+    def get_server_info(self) -> dict[str, Any]:
         """Get a dictionary of server software information.
 
         Returns:
@@ -409,7 +427,7 @@ class BaseMessenger:
     # ------------------------
     # Authentication stuff
 
-    def requestAndSaveToken(self, user, pw):
+    def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.
 
         The token is then used to authenticate future transactions with the server.
@@ -428,7 +446,7 @@ class BaseMessenger:
         else:
             self._requestAndSaveToken_legacy(user, pw)
 
-    def _requestAndSaveToken_legacy(self, user, pw):
+    def _requestAndSaveToken_legacy(self, user: str, pw: str) -> None:
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -460,7 +478,7 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def _requestAndSaveToken_webplom(self, user, pw):
+    def _requestAndSaveToken_webplom(self, user: str, pw: str) -> None:
         """Get an authorisation token from WebPlom."""
         with self.SRmutex:
             response = self.post_raw(
@@ -492,7 +510,7 @@ class BaseMessenger:
                     "Please check details and try again."
                 ) from None
 
-    def clearAuthorisation(self, user, pw):
+    def clearAuthorisation(self, user: str, pw: str) -> None:
         self.SRmutex.acquire()
         try:
             response = self.delete(
@@ -506,7 +524,7 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def closeUser(self):
+    def closeUser(self) -> None:
         """User self-indicates they are logging out, surrender token and tasks.
 
         Raises:
@@ -536,7 +554,7 @@ class BaseMessenger:
     # ----------------------
     # Test information
 
-    def get_exam_info(self) -> Dict[str, Any]:
+    def get_exam_info(self) -> dict[str, Any]:
         """Get a dictionary of information about this assessment.
 
         Returns:
@@ -747,7 +765,7 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def sid_to_paper_number(self, student_id) -> Tuple[bool, Union[int, str], str]:
+    def sid_to_paper_number(self, student_id) -> tuple[bool, int | str, str]:
         """Ask server to match given student_id to a test-number.
 
         This is callable only by "manager" and "scanner" users and currently
@@ -1197,13 +1215,17 @@ class BaseMessenger:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_annotations_image(self, num, question, edition=None) -> Tuple[Dict, bytes]:
+    def get_annotations_image(
+        self, num: int, question: int, *, edition: int | None = None
+    ) -> tuple[dict, bytes]:
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
-            num (int): the paper number.
-            question (int): the question number.
-            edition (int/None): which annotation set or None for latest.
+            num: the paper number.
+            question: the question number.
+
+        Keyword Args:
+            edition: which annotation set or None for latest.
 
         Returns:
             2-tuple, the first being a dictionary with info about the download and
@@ -1226,7 +1248,7 @@ class BaseMessenger:
             try:
                 response = self.get(url, json={"user": self.user, "token": self.token})
                 response.raise_for_status()
-                info: Dict[str, Any] = {}
+                info: dict[str, Any] = {}
                 info["Content-Type"] = response.headers.get("Content-Type", None)
                 if info["Content-Type"] == "image/png":
                     info["extension"] = "png"

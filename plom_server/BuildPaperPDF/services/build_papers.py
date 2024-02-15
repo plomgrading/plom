@@ -410,13 +410,20 @@ class BuildPapersService:
         ]
 
     def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
-        bps = BuildPapersService()
+        """Get a dynamic zip file streamer generator for all the PDF files.
+
+        Raises:
+            ValueError: no papers available.
+        """
+        pdf_paths = self.get_completed_pdf_paths()
+        if not pdf_paths:
+            raise ValueError("No PDF files are built")
         paths = [
             {
                 "fs": pdf_path,
                 "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
             }
-            for pdf_path in bps.get_completed_pdf_paths()
+            for pdf_path in pdf_paths
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
@@ -44,15 +44,15 @@ class ScanCastServiceTests(TestCase):
         else:
             raise RuntimeError(f"Do not recognise image type '{image_type}'")
 
-    def setUp(self):
+    def setUp(self) -> None:
         # make scan-group, two users, one with permissions and the other not.
-        scan_group = baker.make(Group, name="scanner")
-        self.user0 = baker.make(User, username="user0")
-        self.user0.groups.add(scan_group)
-        self.user0.save()
-        self.user1 = baker.make(User, username="user1")
+        scan_group: Group = baker.make(Group, name="scanner")
+        user0: User = baker.make(User, username="user0")
+        user0.groups.add(scan_group)
+        user0.save()
+        baker.make(User, username="user1")
         # make a bundle
-        self.bundle = baker.make(StagingBundle, user=self.user0, slug="testbundle")
+        self.bundle = baker.make(StagingBundle, user=user0, slug="testbundle")
         # make some pages
         for img in [
             StagingImage.UNKNOWN,
@@ -72,12 +72,7 @@ class ScanCastServiceTests(TestCase):
         ]:
             self.make_image(img)
 
-        return super().setUp()
-
-    def tearDown(self):
-        return super().tearDown()
-
-    def test_permissions(self):
+    def test_permissions(self) -> None:
         scs = ScanCastService()
         # get the ord of an error page from the bundle
         ord = (
@@ -108,7 +103,7 @@ class ScanCastServiceTests(TestCase):
             "user0", "testbundle", ord, image_type=StagingImage.ERROR
         )
 
-    def test_cast_to_discard(self):
+    def test_cast_to_discard(self) -> None:
         for img_type, typemodel, typestr, reason in [
             (
                 StagingImage.ERROR,
@@ -155,7 +150,7 @@ class ScanCastServiceTests(TestCase):
             # verify that no error image remains and that a discard image now exists
             stimg.refresh_from_db()
             with self.assertRaises(ObjectDoesNotExist):
-                typemodel.objects.get(staging_image=stimg)
+                typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
             # verify that a discard image exists
             self.assertIsNotNone(stimg.discardstagingimage)
             # verify discard reason
@@ -164,7 +159,7 @@ class ScanCastServiceTests(TestCase):
                 stimg.discardstagingimage.discard_reason,
             )
 
-    def test_cast_to_unknown(self):
+    def test_cast_to_unknown(self) -> None:
         for img_type, typemodel, typestr in [
             (StagingImage.ERROR, ErrorStagingImage, "errorstagingimage"),
             (StagingImage.EXTRA, ExtraStagingImage, "extrastagingimage"),
@@ -190,11 +185,11 @@ class ScanCastServiceTests(TestCase):
             # verify that no error image remains and that a discard image now exists
             stimg.refresh_from_db()
             with self.assertRaises(ObjectDoesNotExist):
-                typemodel.objects.get(staging_image=stimg)
+                typemodel.objects.get(staging_image=stimg)  # type: ignore[attr-defined]
             # verify that an unknown image exists
             self.assertIsNotNone(stimg.unknownstagingimage)
 
-    def test_attempt_discard_discard(self):
+    def test_attempt_discard_discard(self) -> None:
         ord = (
             self.bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD)
             .first()
@@ -205,7 +200,7 @@ class ScanCastServiceTests(TestCase):
                 "user0", "testbundle", ord, image_type=StagingImage.DISCARD
             )
 
-    def test_attempt_unknowify_unknown(self):
+    def test_attempt_unknowify_unknown(self) -> None:
         ord = (
             self.bundle.stagingimage_set.filter(image_type=StagingImage.UNKNOWN)
             .first()
@@ -216,7 +211,7 @@ class ScanCastServiceTests(TestCase):
                 "user0", "testbundle", ord, image_type=StagingImage.UNKNOWN
             )
 
-    def test_attempt_modify_pushed(self):
+    def test_attempt_modify_pushed(self) -> None:
         # set the bundle to "pushed"
         self.bundle.pushed = True
         self.bundle.save()
