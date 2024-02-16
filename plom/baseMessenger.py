@@ -65,7 +65,7 @@ class BaseMessenger:
         *,
         port: int | None = None,
         scheme: str | None = None,
-        verify_ssl: bool | str = True,
+        verify_ssl: bool = True,
         webplom: bool | None = None,
     ) -> None:
         """Initialize a new BaseMessenger.
@@ -80,9 +80,9 @@ class BaseMessenger:
             scheme: What scheme to use to connect.  Defaults
                 to ``"https"`` if omitted and cannot be determined from
                 the URI string.
-            verify_ssl (True/False/str): controls where SSL certs are
-                checked, see the `requests` library parameter `verify`
-                which ultimately receives this.
+            verify_ssl (True/False): controls where SSL certs are
+                checked, see the `requests` library parameter
+                ``Session.verify`` which ultimately receives this.
             webplom: whether to connect to a newer
                 Django-based server.  If ``False``, force connection to a
                 legacy server.  If ``True``, force connect to a new server.
@@ -128,7 +128,7 @@ class BaseMessenger:
 
         self._raw_init(server, verify_ssl=verify_ssl)
 
-    def _raw_init(self, base: str, *, verify_ssl: bool | str) -> None:
+    def _raw_init(self, base: str, *, verify_ssl: bool) -> None:
         self.session: requests.Session | None = None
         self.user: str | None = None
         # on legacy, it is a string, modern server it is a dict
@@ -168,9 +168,7 @@ class BaseMessenger:
         x.token = m.token
         return x
 
-    def is_ssl_verified(self):
-        # TODO: this is used as a bool by chooser... but this implementation can return a string
-        # TODO: add typing and decide about this
+    def is_ssl_verified(self) -> bool:
         return self.verify_ssl
 
     def force_ssl_unverified(self) -> None:
