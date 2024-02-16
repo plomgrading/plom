@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.http import FileResponse
@@ -33,6 +33,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
+        the_tag = request.GET.get("the_tag", "*")
 
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
@@ -46,6 +47,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         mark_list = [
             str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
         ]
+        tag_list = sorted([X[1] for X in MarkingTaskService().get_all_tags()])
 
         context.update(
             {
@@ -54,17 +56,19 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
                 "version": version,
                 "username": username,
                 "score": score,
+                "the_tag": the_tag,
                 "paper_list": paper_list,
                 "question_list": question_list,
                 "version_list": version_list,
                 "mark_list": mark_list,
                 "username_list": mss.get_list_of_users_who_marked_anything(),
+                "tag_list": tag_list,
             }
         )
 
         # if all filters set to * then ask user to set at least one
         # don't actually filter **all** tasks
-        if all(X == "*" for X in [paper, question, version, username, score]):
+        if all(X == "*" for X in [paper, question, version, username, score, the_tag]):
             context.update({"warning": True})
             return render(request, "Progress/Mark/task_filter.html", context)
 
@@ -85,6 +89,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
             username=optional_arg(username),
             score_min=optional_arg(score),
             score_max=optional_arg(score),
+            the_tag=optional_arg(the_tag),
         )
         context.update({"task_info": task_info})
 
