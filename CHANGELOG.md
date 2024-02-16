@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Web UI: displays version number.
 * Web UI: various tweaks and improvements to building blank paper PDFs.
+* `plom-manager` command is deprecated; use `plom-legacy-manager` to manage legacy servers.
 
 ### Fixed
 * Web UI: improved error handling for unexpected errors when using asynchronous HTMX calls.

@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2018-2022 Andrew Rechnitzer
-   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -131,7 +131,7 @@ quick look at them in ``bundles/mABCmt1-s1-b2.pdf/unknownPages``.
 If its a small percentage of the total files in your bundle or can be
 explained by the above situations, you can proceed to uploading, but
 note "Unknowns" will need to be handled manually (later after
-uploading, with the ``plom-manager`` tool).
+uploading, with the :doc:`plom-legacy-manager` tool).
 
 On the other hand, if something has systematically gone wrong, such as
 all pages are blank or very few QR-codes have been read, then you'll
@@ -160,7 +160,7 @@ There are a few ways in which "collisions" might occur:
 
 In the first two cases, perhaps you do not want to upload these files.
 But images falling into the last case should definitely be uploaded:
-later the ``plom-manager`` tool can be used to select which one you
+later the :doc:`plom-legacy-manager` tool can be used to select which one you
 want to keep.
 To upload the "collisions" run ``plom-scan upload mABCmt1-s1-b2.pdf --collisions``.
 
@@ -202,7 +202,7 @@ Technical docs
 --------------
 
 * The command-line tool :doc:`plom-scan` is the current front-end for
-  most tasks related to returning work.
+  most tasks related to scanning work onto legacy servers.
 
 * For scripting or other advanced usage, you can ``import plom.scan``
   in your own Python code.  See :doc:`module-plom-scan`.

@@ -2,12 +2,12 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom server management GUI tool."""
 
-__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -15,6 +15,7 @@ import argparse
 import signal
 import os
 import sys
+from warnings import warn
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication, QStyleFactory
@@ -61,6 +62,11 @@ def main():
     timer.start(1000)
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+
+    if sys.argv[0].endswith("plom-manager"):
+        warn(
+            "'plom-manager' is is deprecated; use 'plom-legacy-manager' instead",
+        )
 
     window = Manager(app, server=args.server, password=args.password)
     window.show()
