@@ -207,7 +207,7 @@ class BuildSolutionService:
         if chore.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
-            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+            chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
             if wait is None:
                 print(
@@ -348,7 +348,7 @@ class BuildSolutionService:
             BuildSolutionPDFChore.STARTING,
             BuildSolutionPDFChore.QUEUED,
         ):
-            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+            chore.transition_to_error("never ran: forcibly dequeued")
 
     def try_to_cancel_all_queued_chores(self) -> int:
         """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
