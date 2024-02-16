@@ -396,17 +396,17 @@ class ReassembleService:
             chore.transition_to_error("never ran: forcibly dequeued")
 
     def try_to_cancel_all_queued_chores(self) -> int:
-        """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
+        """Loop over all not-yet-running chores, marking them obsolete and cancelling (if possible) any in Huey.
 
         This is a "best-attempt" at catching reassembly chores while they
         are queued.  It might be possible for a Chore to sneak past from the
-        "Starting" state.  Already "Running" chores are not effected, although
-        they ARE marked as obsolete.
+        "Starting" state.  Already "Running" chores should not be effected.
 
         Completed chores are uneffected.
 
         Returns:
-            The number of chores that we actually tried to revoke.
+            The number of chores that we tried to revoke (and/or stopped
+            before the reached the queue).
         """
         N = 0
         queue = get_queue("tasks")
@@ -414,10 +414,11 @@ class ReassembleService:
             for chore in ReassemblePaperChore.objects.filter(
                 Q(status=ReassemblePaperChore.STARTING)
                 | Q(status=ReassemblePaperChore.QUEUED)
-            ):
+            ).select_for_update():
+                chore.set_as_obsolete()
                 if chore.huey_id:
                     queue.revoke_by_id(str(chore.huey_id))
-                chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+                chore.transition_to_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
