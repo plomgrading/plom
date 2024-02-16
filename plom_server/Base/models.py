@@ -174,14 +174,6 @@ class HueyTaskTracker(models.Model):
         self.obsolete = True
         self.save()
 
-    def set_as_obsolete_with_error(self, errmsg: str) -> None:
-        """Move to the error state and set obsolete."""
-        self.huey_id = None
-        self.status = self.ERROR
-        self.message = errmsg
-        self.obsolete = True
-        self.save()
-
     def transition_to_error(self, errmsg: str) -> None:
         """Move to the error state."""
         self.huey_id = None

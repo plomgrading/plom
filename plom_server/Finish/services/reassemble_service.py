@@ -10,7 +10,7 @@ from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import arrow
 import zipfly
@@ -43,7 +43,7 @@ class ReassembleService:
 
     reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
-    def get_completion_status(self) -> Dict[int, tuple[bool, bool, int, datetime]]:
+    def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall test completion progress."""
         spreadsheet_data = {}
         papers = Paper.objects.all()
@@ -53,7 +53,7 @@ class ReassembleService:
             ] = StudentMarkService().get_paper_status(paper)
         return spreadsheet_data
 
-    def get_cover_page_info(self, paper: Paper, solution: bool = False) -> List[Any]:
+    def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
         """Return information needed to build a cover page for a reassembled test.
 
         Args:
@@ -134,15 +134,16 @@ class ReassembleService:
         else:
             return []
 
-    def get_dnm_page_images(self, paper: Paper) -> List[Dict[str, Any]]:
+    def get_dnm_page_images(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the path and rotation for a paper's do-not-mark pages.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            List of Dict: Each dict has with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
-
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
         """
         dnm_pages = DNMPage.objects.filter(paper=paper)
         dnm_images = [dnmpage.image for dnmpage in dnm_pages if dnmpage.image]
@@ -151,14 +152,16 @@ class ReassembleService:
             for img in dnm_images
         ]
 
-    def get_annotation_images(self, paper: Paper) -> List[Dict[str, Any]]:
+    def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the paths for a paper's annotation images.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            List of Dict: Each dict has with keys 'filename' and 'rotation' giving the path to the image and the rotation angle of the image.
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
         """
         n_questions = SpecificationService.get_n_questions()
         marked_pages = []
@@ -393,20 +396,20 @@ class ReassembleService:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
         if chore.status in (ReassemblePaperChore.STARTING, ReassemblePaperChore.QUEUED):
-            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+            chore.transition_to_error("never ran: forcibly dequeued")
 
     def try_to_cancel_all_queued_chores(self) -> int:
-        """Loop over all incomplete chores, marking them obsolete and cancelling (if possible) any in Huey.
+        """Loop over all not-yet-running chores, marking them obsolete and cancelling (if possible) any in Huey.
 
         This is a "best-attempt" at catching reassembly chores while they
         are queued.  It might be possible for a Chore to sneak past from the
-        "Starting" state.  Already "Running" chores are not effected, although
-        they ARE marked as obsolete.
+        "Starting" state.  Already "Running" chores should not be effected.
 
         Completed chores are uneffected.
 
         Returns:
-            The number of chores that we actually tried to revoke.
+            The number of chores that we tried to revoke (and/or stopped
+            before the reached the queue).
         """
         N = 0
         queue = get_queue("tasks")
@@ -414,10 +417,11 @@ class ReassembleService:
             for chore in ReassemblePaperChore.objects.filter(
                 Q(status=ReassemblePaperChore.STARTING)
                 | Q(status=ReassemblePaperChore.QUEUED)
-            ):
+            ).select_for_update():
+                chore.set_as_obsolete()
                 if chore.huey_id:
                     queue.revoke_by_id(str(chore.huey_id))
-                chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+                chore.transition_to_error("never ran: forcibly dequeued")
                 N += 1
         return N
 
@@ -448,7 +452,7 @@ class ReassembleService:
         if chore.status == HueyTaskTracker.QUEUED:
             queue = get_queue("tasks")
             queue.revoke_by_id(str(chore.huey_id))
-            chore.set_as_obsolete_with_error("never ran: forcibly dequeued")
+            chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
             if wait is None:
                 print(
