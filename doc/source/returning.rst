@@ -20,7 +20,7 @@ Is everything done?
 -------------------
 
 ..
-    TODO: One way to access this information is through the :doc:`module-plom-manager`.
+    TODO: One way to access this information is through the :doc:`plom-legacy-manager`.
 
 Once we are mopping up the last few questions, and it becomes important
 to know what tasks are left to do.
