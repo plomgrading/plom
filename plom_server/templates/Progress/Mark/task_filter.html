@@ -154,38 +154,36 @@
                                                     {% for tg in task_data.attn_tags %}<div class="badge text-bg-warning">{{ tg }}</div>{% endfor %}
                                                     {% for tg in task_data.tags %}<div class="badge bg-primary">{{ tg }}</div>{% endfor %}
                                                 </td>
-                                            </td>
-                                        </td>
-                                        <td class="text-start">
-                                            <a class="btn btn-outline-primary"
-                                               href="{% url 'progress_marking_task_details' task_data.task_pk %}">details</a>
-                                            {% if task_data.status %}
-                                                <button hx-get="{% url 'progress_original_img_wrap' task_data.paper_number task_data.question %}"
-                                                        hx-target="#imageHere"
-                                                        hx-replace="innerHTML"
-                                                        class="btn btn-outline-info">orig</button>
-                                            {% endif %}
-                                            {% if task_data.status == "Complete" %}
-                                                <button hx-get="{% url 'progress_annotation_img_wrap' task_data.paper_number task_data.question %}"
-                                                        hx-target="#imageHere"
-                                                        hx-replace="innerHTML"
-                                                        class="btn btn-outline-success">annot</button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                                <td class="text-start">
+                                                    <a class="btn btn-outline-primary"
+                                                       href="{% url 'progress_marking_task_details' task_data.task_pk %}">details</a>
+                                                    {% if task_data.status %}
+                                                        <button hx-get="{% url 'progress_original_img_wrap' task_data.paper_number task_data.question %}"
+                                                                hx-target="#imageHere"
+                                                                hx-replace="innerHTML"
+                                                                class="btn btn-outline-info">orig</button>
+                                                    {% endif %}
+                                                    {% if task_data.status == "Complete" %}
+                                                        <button hx-get="{% url 'progress_annotation_img_wrap' task_data.paper_number task_data.question %}"
+                                                                hx-target="#imageHere"
+                                                                hx-replace="innerHTML"
+                                                                class="btn btn-outline-success">annot</button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endif %}
+            {% if not warning %}
+                <div class="col-auto">
+                    <div class="card" id="imageHere"></div>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
-    {% if not warning %}
-        <div class="col-auto">
-            <div class="card" id="imageHere"></div>
-        </div>
-    {% endif %}
-</div>
-</div>
+    </div>
 {% endblock main_content %}
