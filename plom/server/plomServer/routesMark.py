@@ -745,8 +745,8 @@ class MarkHandler:
 
         Respond with status 200/409.
 
-        Some deprecated: use `get_pagedata_context_question` instead and filter
-        out those with ``included=False``.
+        Somewhat deprecated: use `get_pagedata_context_question` instead
+        and filter out those with ``included=False``.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -789,6 +789,8 @@ class MarkHandler:
             where each dict has keys: `pagename`, `md5`, `included`,
             `order`, `id`, `orientation`, `server_path` as documented below.
             A 409 is returned with an explanation if paper number not found.
+            Note the paper number can be "found" but not scanned, in which
+            case the returned list will be empty.
 
         The list of dicts (we think of them as rows) have the same content
         as documented in ``get_pagedata`` except an additional key:
