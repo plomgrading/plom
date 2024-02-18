@@ -689,7 +689,7 @@ appstreamValid:
   before_script:
     - apk add appstream-glib
   script:
-    - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
+    - appstream-util validate org.plomgrading.PlomClient.metainfo.xml
 
 
 # TODO: perhaps all deps should be in the docker image?

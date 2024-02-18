@@ -49,13 +49,13 @@
     <binary>plom-client</binary>
   </provides>
 
-  <!-- don't list "touch" unless test with it -->
-  <requires>
+  <!-- docs said don't list "touch" unless test with it -->
+  <recommends>
     <control>keyboard</control>
     <control>pointing</control>
-  </requires>
+  </recommends>
   <requires>
-    <display_length compare="ge">medium</display_length>
+    <display_length compare="ge">1024</display_length>
   </requires>
 
   <kudos>
