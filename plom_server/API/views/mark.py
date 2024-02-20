@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from __future__ import annotations
+
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -243,7 +245,7 @@ class MgetAnnotations(APIView):
         200: the annotation data.
         404: no such task (i.e., no such paper) or no annotations for the
             task if it exists.
-        406: the task has been mdified, perhaps even during this call?
+        406: the task has been modified, perhaps even during this call?
             TODO: some atomic operation would prevent this?
     """
 
