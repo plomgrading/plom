@@ -121,17 +121,17 @@ class BackgroundUploader(QThread):
     uploadUnknownFail = pyqtSignal(str, str)
     queue_status_changed = pyqtSignal(int, int, int, int)
 
-    def __init__(self, msgr):
+    def __init__(self, msgr: Messenger) -> None:
         """Initialize a new uploader.
 
         Args:
-            msgr (Messenger):
+            msgr: a Messenger for communicating with a Plom server.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
         """
         super().__init__()
-        self.q = None
+        self.q: queue.Queue = queue.Queue()
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
         self.num_uploaded = 0
@@ -143,11 +143,11 @@ class BackgroundUploader(QThread):
         self._simulate_failure_rate = 20.0
         self._simulate_slow_net = (3, 8)
 
-    def enable_fail_mode(self):
+    def enable_fail_mode(self) -> None:
         log.info("fail mode ENABLED")
         self.simulate_failures = True
 
-    def disable_fail_mode(self):
+    def disable_fail_mode(self) -> None:
         log.info("fail mode disabled")
         self.simulate_failures = False
 
@@ -176,13 +176,13 @@ class BackgroundUploader(QThread):
             self.q.qsize(), n, self.num_uploaded, self.num_failed
         )
 
-    def queue_size(self):
+    def queue_size(self) -> int:
         """Return the number of papers waiting or currently uploading."""
         if self.is_upload_in_progress:
             return self.q.qsize() + 1
         return self.q.qsize()
 
-    def isEmpty(self) -> None:
+    def isEmpty(self) -> bool:
         """Checks if the upload queue is empty.
 
         Returns:
@@ -242,7 +242,6 @@ class BackgroundUploader(QThread):
                 self.q.qsize(), 0, self.num_uploaded, self.num_failed
             )
 
-        self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
