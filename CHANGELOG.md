@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.1] - 2024-02-16
 
 ### Added
-* Django-based server container starts the canned demo if environment variable PLOM_DEMO is set to 1.
+* Django-based server container starts the canned demo if environment variable `PLOM_DEMO` is set to 1.
 
 ### Changed
 * Web UI: displays version number.
