@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -19,7 +19,6 @@ import html
 import json
 import logging
 from math import ceil
-import os
 from pathlib import Path
 import platform
 import queue
@@ -1819,31 +1818,28 @@ class MarkerClient(QWidget):
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
 
-    def getSolutionImage(self):
-        # get the file from disc if it exists, else grab from server
-        soln = os.path.join(
-            self.workingDirectory, f"solution.{self.question_idx}.{self.version}.png"
-        )
-        if os.path.isfile(soln):
-            return soln
-        else:
-            return self.refreshSolutionImage()
+    def getSolutionImage(self) -> Path | None:
+        """Get the file from disc if it exists, else grab from server."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
+        if f.is_file():
+            return f
+        return self.refreshSolutionImage()
 
-    def refreshSolutionImage(self):
-        # get solution and save it to temp dir
-        soln = os.path.join(
-            self.workingDirectory, f"solution.{self.question_idx}.{self.version}.png"
-        )
+    def refreshSolutionImage(self) -> Path | None:
+        """Get solution image and save it to working dir."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
         try:
             im_bytes = self.msgr.getSolutionImage(self.question_idx, self.version)
-            with open(soln, "wb") as fh:
+            with open(f, "wb") as fh:
                 fh.write(im_bytes)
-            return soln
+            return f
         except PlomNoSolutionException as e:
             log.warning(f"no solution image: {e}")
-            # if a residual file is there, delete it
-            if os.path.isfile(soln):
-                os.remove(soln)
+            # if a residual file is there, try to delete it
+            try:
+                f.unlink()
+            except FileNotFoundError:
+                pass
             return None
 
     def saveTabStateToServer(self, tab_state):

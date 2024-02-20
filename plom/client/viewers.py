@@ -251,9 +251,12 @@ class SolutionViewer(QWidget):
     by the Annotator or Marker windows).  At least in the Gnome
     environment, that means it does not stay on top of the Annotator
     window (unlike for example `QVHistogram` in Manager).
+
+    The parent must be an Annotator, or otherwise have a method
+    ``refreshSolutionImage`` that behaves like Annotator.
     """
 
-    def __init__(self, parent, fname):
+    def __init__(self, parent: QWidget, fname: Path) -> None:
         super().__init__()
         self._annotr = parent
         grid = QVBoxLayout()
@@ -270,15 +273,16 @@ class SolutionViewer(QWidget):
         closeButton.clicked.connect(self.close)
         refreshButton.clicked.connect(self.refresh)
 
-        self.setWindowTitle(f"Solutions - {Path(fname).stem}")
+        self.setWindowTitle(f"Solutions - {fname.stem}")
 
         self.show()
 
     def refresh(self):
-        solnfile = self._annotr.refreshSolutionImage()
-        self.sv.updateImage(solnfile)
-        if solnfile is None:
+        fname = self._annotr.refreshSolutionImage()
+        self.sv.updateImage(fname)
+        if fname is None:
             WarnMsg(self, "Server no longer has a solution.  Try again later?").exec()
+        self.setWindowTitle(f"Solutions - {fname.stem}")
 
 
 class PreviousPaperViewer(QDialog):
