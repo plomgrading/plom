@@ -81,7 +81,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
-from .viewers import QuestionViewDialog, SelectTestQuestion
+from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
@@ -2454,8 +2454,15 @@ class MarkerClient(QWidget):
     def view_other(self):
         """Shows a particular paper number and question."""
         max_question_idx = self.exam_spec["numberOfQuestions"]
-        tgs = SelectTestQuestion(
-            self, self.max_papernum, max_question_idx, self.question
+        qlabels = [
+            get_question_label(self.exam_spec, i + 1)
+            for i in range(0, max_question_idx)
+        ]
+        tgs = SelectPaperQuestion(
+            self,
+            self.max_papernum,
+            qlabels,
+            initial_idx=self.question,
         )
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
