@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
@@ -264,15 +265,30 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """Get an annotation-image."""
+    """Get an annotation-image.
 
-    def get(self, request, paper, question, edition=None):
+    TODO: The legacy server sends 410 for "task deleted", and the client
+    messenger is documented as expecting 406/410/416 (although the legacy
+    server doesn't seem to send 406/416 for annotation image calls).
+    I suspect here we have folded the "task deleted" case into the 404.
+
+    Returns:
+        200: the image as a file.
+        404: no such task (i.e., no such paper) or no annotations for the
+            task if it exists.
+        406: the task has been modified, perhaps even during this call?
+            TODO: some atomic operation would prevent this?
+    """
+
+    def get(
+        self, request: Request, *, paper: int, question: int, edition: int | None = None
+    ) -> Response:
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except ObjectDoesNotExist as e:
+        except (ObjectDoesNotExist, ValueError) as e:
             return _error_response(
-                f"No annotations for paper {paper} question {question}: {str(e)}",
+                f"No annotations for paper {paper} question idx {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
         annotation_task = annotation.task

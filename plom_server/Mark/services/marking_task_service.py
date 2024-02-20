@@ -363,21 +363,28 @@ class MarkingTaskService:
 
         return list(annotations)
 
-    def get_latest_annotation(self, paper, question):
+    def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.
 
         Args:
-            paper: int, the paper number
-            question: int, the question number
+            paper: the paper number.
+            question_idx: the question index, from one.
 
         Returns:
-            Annotation: the latest annotation instance
+            The latest annotation instance.
 
         Raises:
             ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
+                does not exist or the question does not exist for that
+                paper.
+            ValueError: This paper question exists but does not have
+                annotations.
         """
-        task = mark_task.get_latest_task(paper, question)
+        task = mark_task.get_latest_task(paper, question_idx)
+        if task.latest_annotation is None:
+            raise ValueError(
+                f"Paper {paper} question index {question_idx} has no annotations"
+            )
         return task.latest_annotation
 
     def get_all_tags(self):
