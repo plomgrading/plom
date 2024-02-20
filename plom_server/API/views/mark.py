@@ -267,6 +267,8 @@ class MgetAnnotations(APIView):
 class MgetAnnotationImage(APIView):
     """Get an annotation-image.
 
+    TODO: implement "edition".
+
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416 (although the legacy
     server doesn't seem to send 406/416 for annotation image calls).
@@ -283,6 +285,8 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
+        if edition is not None:
+            raise NotImplementedError('"edition" not implemented')
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
@@ -294,6 +298,7 @@ class MgetAnnotationImage(APIView):
         annotation_task = annotation.task
         annotation_image = annotation.image
 
+        # TODO is this really needed?
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
