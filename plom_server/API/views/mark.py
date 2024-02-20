@@ -211,7 +211,7 @@ class MgetPageDataQuestionInContext(APIView):
             )
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Test paper does not exist: {str(e)}", status.HTTP_409_CONFLICT
+                f"Paper {paper} does not exist: {e}", status.HTTP_409_CONFLICT
             )
         return Response(page_metadata, status=status.HTTP_200_OK)
 
@@ -231,20 +231,35 @@ class MgetOneImage(APIView):
 
 
 class MgetAnnotations(APIView):
-    """Get the latest annotations for a question."""
+    """Get the latest annotations for a question.
 
-    def get(self, request, paper, question):
+    TODO: implement "edition"?
+
+    TODO: The legacy server sends 410 for "task deleted", and the client
+    messenger is documented as expecting 406/410/416.
+    I suspect here we have folded the "task deleted" case into the 404.
+
+    Returns:
+        200: the annotation data.
+        404: no such task (i.e., no such paper) or no annotations for the
+            task if it exists.
+        406: the task has been mdified, perhaps even during this call?
+            TODO: some atomic operation would prevent this?
+    """
+
+    def get(self, request: Request, *, paper: int, question: int) -> Response:
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except ObjectDoesNotExist as e:
+        except (ObjectDoesNotExist, ValueError) as e:
             return _error_response(
-                f"No annotations for paper {paper} question {question}: {str(e)}",
+                f"No annotations for paper {paper} question {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
+        # TODO is this really needed?
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
