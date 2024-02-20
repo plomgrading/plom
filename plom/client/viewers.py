@@ -185,28 +185,34 @@ class SelectPaperQuestion(QDialog):
     """Select paper and question number.
 
     Args:
-        parent: the parent of this dialog
-        max_papernum (int): limit the paper number selection to this value.
-        qlabels (list[str]):
+        parent: the parent of this dialog.
+        qlabels: the questions labels.
 
     Keyword Args:
-        initial_idx (int): which question (index) is initially selected.
+        initial_idx: which question (index) is initially selected.
             Indexed from one.
+        min_papernum: limit the paper number selection to at least this
+            value.  Defaults to 0.
+        max_papernum: limit the paper number selection to at most this
+            value.  If ``None`` then no maximum is specified.
     """
 
     def __init__(
         self,
         parent: QWidget,
-        max_papernum: int,
         qlabels: list[str],
         *,
         initial_idx: int | None = None,
+        min_papernum: int = 0,
+        max_papernum: int | None = None,
     ):
         super().__init__(parent)
         self.setWindowTitle("View another paper")
         flay = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, max_papernum)
+        self.tsb.setMinimum(min_papernum)
+        if max_papernum is not None:
+            self.tsb.setMaximum(max_papernum)
         self.tsb.setValue(1)
         flay.addRow("Select paper:", self.tsb)
         q = QComboBox()

@@ -2460,8 +2460,8 @@ class MarkerClient(QWidget):
         ]
         tgs = SelectPaperQuestion(
             self,
-            self.max_papernum,
             qlabels,
+            max_papernum=self.max_papernum,
             initial_idx=self.question,
         )
         if tgs.exec() != QDialog.DialogCode.Accepted:
