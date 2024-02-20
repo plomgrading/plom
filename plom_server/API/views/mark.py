@@ -261,7 +261,7 @@ class MgetAnnotations(APIView):
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
-        # TODO is this really needed?
+        # TODO is this really needed?  Issue #3283.
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
@@ -315,7 +315,7 @@ class MgetAnnotationImage(APIView):
         annotation_task = annotation.task
         annotation_image = annotation.image
 
-        # TODO is this really needed?
+        # TODO is this really needed?  Issue #3283.
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
