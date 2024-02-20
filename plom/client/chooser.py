@@ -230,6 +230,8 @@ class Chooser(QDialog):
         elif which_subapp == "Marker":
             question = self.getQuestion()
             v = self.getv()
+            assert question is not None
+            assert v is not None
             self.setEnabled(False)
             self.hide()
             markerwin = MarkerClient(self.Qapp)

@@ -916,7 +916,13 @@ class MarkerClient(QWidget):
         self.marking_history = []
         self._cachedProgressFormatStr = None
 
-    def setup(self, messenger, question_idx, version, lastTime):
+    def setup(
+        self,
+        messenger: Messenger,
+        question_idx: int,
+        version: int,
+        lastTime: dict[str, Any],
+    ) -> None:
         """Performs setup procedure for markerClient.
 
         TODO: move all this into init?
@@ -924,14 +930,13 @@ class MarkerClient(QWidget):
         TODO: verify all lastTime Params, there are almost certainly some missing
 
         Args:
-            messenger (Messenger): handle communication with server.
-            question_idx (int): question number.
-            version (int): version number
-            lastTime (dict): settings.
-                containing::
+            messenger: handle communication with server.
+            question_idx: question index number, one based.
+            version: question version number
+            lastTime: dict of settings.
+                Containing::
 
                    {
-                     "POWERUSER"
                      "FOREGROUND"
                      "KeyBinding"
                    }
