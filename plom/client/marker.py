@@ -106,6 +106,14 @@ def _marking_time_as_str(m):
         return f"{m:.0f}"
 
 
+def verbose_question_label(spec: dict[str, Any], qidx: int) -> str:
+    """Get the question label with a possible parenthetical for the index."""
+    qlabel = get_question_label(spec, qidx)
+    if qlabel == f"Q{qidx}":
+        return qlabel
+    return f"{qlabel} (question index {qidx})"
+
+
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
@@ -1319,13 +1327,12 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setFormat("No papers to mark")
             try:
                 qlabel = get_question_label(self.exam_spec, self.question)
+                verbose_qlabel = verbose_question_label(self.exam_spec, self.question)
             except (ValueError, KeyError):
                 qlabel = "???"
+                verbose_qlabel = qlabel
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
-            if qlabel == f"Q{self.question}":
-                msg += f" of {qlabel}.</p>"
-            else:
-                msg += f" of {qlabel} (question index {self.question}).</p>"
+            msg += f" of {verbose_qlabel}.</p>"
             info = f"""<p>There are several ways this can happen:</p>
                 <ul>
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
@@ -1345,8 +1352,10 @@ class MarkerClient(QWidget):
 
         If available, download stuff, add to list, update view.
         """
+        verbose_qlabel = verbose_question_label(self.exam_spec, self.question)
         s = "<p>Which paper number would you like to get?</p>"
-        s += f"<p>Note: you are marking version {self.version} of question {self.question}.</p>"
+        s += f"<p>Note: you are marking version {self.version}"
+        s += f" of {verbose_qlabel}.</p>"
         n, ok = QInputDialog.getInt(
             self, "Which paper to get", s, 1, 1, self.max_papernum
         )
