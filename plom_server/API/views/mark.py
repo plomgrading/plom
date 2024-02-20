@@ -83,7 +83,7 @@ class MgetDoneTasks(APIView):
 
         mts = MarkingTaskService()
         marks = mts.get_user_mark_results(
-            request.user, question=question, version=version
+            request.user, question_idx=question, version=version
         )
 
         # TODO: 3rd entry here is marking time: in legacy, we trust the client's

@@ -336,22 +336,26 @@ class MarkingTaskService:
 
         return cleaned_data, annot_data, rubrics_used
 
-    def get_user_mark_results(self, user, question=None, version=None):
+    def get_user_mark_results(
+        self, user: User, *, question_idx: int | None = None, version: int | None = None
+    ) -> list[Annotation]:
         """For each completed task, get the latest annotation instances for a particular user.
 
         Args:
-            user: User instance
-            question (optional): int, the question number
-            version (optional): int, the version number
+            user: User instance.
+
+        Keyword Args:
+            question_idx: int, the question index number from 1, or ``None``.
+            version: int, the version number, or ``None``.
 
         Returns:
-            list [Annotation]: the relevant annotations
+            List of Annotation objects.
         """
         complete_tasks = MarkingTask.objects.filter(
             assigned_user=user, status=MarkingTask.COMPLETE
         )
-        if question:
-            complete_tasks = complete_tasks.filter(question_number=question)
+        if question_idx:
+            complete_tasks = complete_tasks.filter(question_number=question_idx)
         if version:
             complete_tasks = complete_tasks.filter(question_version=version)
 
