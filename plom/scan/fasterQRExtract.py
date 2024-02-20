@@ -159,13 +159,17 @@ def QRextract(
     return cornerQR
 
 
-def QRextract_legacy(image, write_to_file=True, try_harder=True):
+def QRextract_legacy(
+    image, *, write_to_file: bool = True, try_harder: bool = True
+) -> dict[str, list[str]] | None:
     """Decode QR codes in an image, return or save them in .qr file.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
+
+    Keyword Args:
         write_to_file (bool): by default, the results are written into
             a file named `image.qr` (i.e., the same as input name
             with `.qr` appended, so something like `foo.jpg.qr`).
@@ -202,7 +206,7 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
         if qrfile.exists() and qrfile.stat().st_size > 0:
             return None
 
-    cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
+    cornerQR: dict[str, list[str]] = {"NW": [], "NE": [], "SW": [], "SE": []}
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
