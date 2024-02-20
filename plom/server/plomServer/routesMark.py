@@ -388,6 +388,7 @@ class MarkHandler:
             if results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
             elif results[1] == "no_such_task":
+                # TODO: 2024: seems this can also happen if it never existed (?)
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
@@ -472,6 +473,7 @@ class MarkHandler:
         results = self.server.DB.Mget_annotations(number, question, edition)
         if not results[0]:
             if results[1] == "no_such_task":
+                # TODO: 2024: seems this can also happen if it never existed (?)
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
