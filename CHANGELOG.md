@@ -13,7 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Legacy server: fix crash when client asks to view images from paper which exists but has no scans.
+* Server: fix crash when client asks for non-existing Annotation images.
+* Client: popup error message when viewing non-existent images rather than empty blue dialog.
 
 
 ## [0.15.1] - 2024-02-16
