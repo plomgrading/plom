@@ -18,9 +18,8 @@ class MarkingTaskServiceTests(TestCase):
     Also tests some of the function-based services in mark_task.
     """
 
-    def test_unpack_code(self):
+    def test_unpack_code(self) -> None:
         """Test mark_task.unpack_code()."""
-
         with self.assertRaises(AssertionError):
             mark_task.unpack_code("")
 
@@ -37,7 +36,7 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(paper_number, 1)
         self.assertEqual(question_number, 2)
 
-    def test_unpack_code_additional_tests(self):
+    def test_unpack_code_additional_tests(self) -> None:
         with self.assertRaises(AssertionError):
             mark_task.unpack_code("g0001q2")
 
@@ -70,12 +69,12 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(p1, 8)
         self.assertEqual(q1, 9)
 
-    def test_get_latest_task_no_paper_nor_question(self):
+    def test_get_latest_task_no_paper_nor_question(self) -> None:
         s = MarkingTaskService()
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code("q0042g42")
 
-    def test_get_latest_task_has_paper_but_no_question(self):
+    def test_get_latest_task_has_paper_but_no_question(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
             MarkingTask, question_number=1, paper__paper_number=42, code="q0042g1"
@@ -85,13 +84,10 @@ class MarkingTaskServiceTests(TestCase):
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
 
-    def test_assign_task_to_user(self):
-        """
-        Test MarkingTaskService.assign_task_to_user()
-        """
-
-        user1 = baker.make(User)
-        user2 = baker.make(User)
+    def test_assign_task_to_user(self) -> None:
+        """Test MarkingTaskService.assign_task_to_user()."""
+        user1: User = baker.make(User)
+        user2: User = baker.make(User)
         task = baker.make(MarkingTask, status=MarkingTask.TO_DO)
 
         mts = MarkingTaskService()
@@ -106,8 +102,8 @@ class MarkingTaskServiceTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task.assigned_user, user1)
 
-    def test_surrender_all_tasks(self):
-        user = baker.make(User)
+    def test_surrender_all_tasks(self) -> None:
+        user: User = baker.make(User)
         task1 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
         task2 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
         mts = MarkingTaskService()

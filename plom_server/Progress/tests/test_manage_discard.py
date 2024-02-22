@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -24,13 +24,13 @@ from Progress.services import ManageDiscardService
 class ManageScanTests(TestCase):
     """Tests for Progress.services.ManageScanService"""
 
-    def setUp(self):
-        self.user0 = baker.make(User, username="user0")
+    def setUp(self) -> None:
+        self.user0: User = baker.make(User, username="user0")
         self.paper1 = baker.make(Paper, paper_number=1)
 
         return super().setUp()
 
-    def test_discard_idpage(self):
+    def test_discard_idpage(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -39,7 +39,7 @@ class ManageScanTests(TestCase):
         mds.discard_pushed_fixed_page(self.user0, id1.pk, dry_run=True)
         mds.discard_pushed_fixed_page(self.user0, id1.pk, dry_run=False)
 
-    def test_discard_dnm(self):
+    def test_discard_dnm(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -48,7 +48,7 @@ class ManageScanTests(TestCase):
         mds.discard_pushed_fixed_page(self.user0, dnm1.pk, dry_run=True)
         mds.discard_pushed_fixed_page(self.user0, dnm1.pk, dry_run=False)
 
-    def test_discard_questionpage(self):
+    def test_discard_questionpage(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -57,7 +57,7 @@ class ManageScanTests(TestCase):
         mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=True)
         mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=False)
 
-    def test_discard_fixedpage_exceptions(self):
+    def test_discard_fixedpage_exceptions(self) -> None:
         mds = ManageDiscardService()
         fp1 = baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
         img1 = baker.make(Image)
@@ -72,7 +72,7 @@ class ManageScanTests(TestCase):
             ValueError, mds.discard_pushed_fixed_page, self.user0, fp2.pk, dry_run=False
         )
 
-    def test_discard_mobile_page(self):
+    def test_discard_mobile_page(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -88,7 +88,7 @@ class ManageScanTests(TestCase):
             ValueError, mds.discard_pushed_mobile_page, self.user0, 17, dry_run=False
         )
 
-    def test_discard_image_from_pk(self):
+    def test_discard_image_from_pk(self) -> None:
         mds = ManageDiscardService()
         baker.make(FixedPage, paper=self.paper1, page_number=1, image=None)
         img1 = baker.make(Image)
@@ -114,7 +114,7 @@ class ManageScanTests(TestCase):
         baker.make(DiscardPage, image=img4)
         mds.discard_pushed_image_from_pk(self.user0, img4.pk)
 
-    def test_reassign_discard_to_mobile(self):
+    def test_reassign_discard_to_mobile(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -157,7 +157,7 @@ class ManageScanTests(TestCase):
             [1, 2],
         )
 
-    def test_reassign_discard_to_fixed(self):
+    def test_reassign_discard_to_fixed(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -244,7 +244,7 @@ class ManageScanTests(TestCase):
             2,
         )
 
-    def test_some_reassign_exceptions(self):
+    def test_some_reassign_exceptions(self) -> None:
         mds = ManageDiscardService()
         # test non-existent discardpage
         self.assertRaises(
