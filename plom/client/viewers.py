@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
+
+from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -11,6 +13,7 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -178,28 +181,46 @@ class WholeTestView(QDialog):
         self.pageTabs.setCurrentIndex(t)
 
 
-class SelectTestQuestion(QDialog):
+class SelectPaperQuestion(QDialog):
     """Select paper and question number.
 
     Args:
-        parent: the parent of this dialog
-        max_papernum (int): limit the paper number selection to this value.
-        max_question_index (int): limit the question index to this value.
-        question_index (int): which question (index) is initially selected.
+        parent: the parent of this dialog.
+        qlabels: the questions labels.
+
+    Keyword Args:
+        initial_idx: which question (index) is initially selected.
+            Indexed from one.
+        min_papernum: limit the paper number selection to at least this
+            value.  Defaults to 0.
+        max_papernum: limit the paper number selection to at most this
+            value.  If ``None`` then no maximum is specified.
     """
 
-    def __init__(self, parent, max_papernum, max_question_index, question_index):
+    def __init__(
+        self,
+        parent: QWidget,
+        qlabels: list[str],
+        *,
+        initial_idx: int | None = None,
+        min_papernum: int = 0,
+        max_papernum: int | None = None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("View another paper")
         flay = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, max_papernum)
+        self.tsb.setMinimum(min_papernum)
+        if max_papernum is not None:
+            self.tsb.setMaximum(max_papernum)
         self.tsb.setValue(1)
         flay.addRow("Select paper:", self.tsb)
-        self.gsb = QSpinBox()
-        self.gsb.setRange(1, max_question_index)
-        self.gsb.setValue(question_index)
-        flay.addRow("Select question:", self.gsb)
+        q = QComboBox()
+        q.addItems(qlabels)
+        if initial_idx is not None:
+            q.setCurrentIndex(initial_idx - 1)
+        flay.addRow("Select question:", q)
+        self.which_question = q
         self.annotations = QCheckBox("Show annotations")
         self.annotations.setChecked(True)
         flay.addWidget(self.annotations)
@@ -214,8 +235,12 @@ class SelectTestQuestion(QDialog):
         vlay.addWidget(buttons)
         self.setLayout(vlay)
 
-    def get_results(self):
-        return (self.tsb.value(), self.gsb.value(), self.annotations.isChecked())
+    def get_results(self) -> tuple[int, int, bool]:
+        return (
+            self.tsb.value(),
+            self.which_question.currentIndex() + 1,
+            self.annotations.isChecked(),
+        )
 
 
 class SolutionViewer(QWidget):
