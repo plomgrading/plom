@@ -4,6 +4,10 @@
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
 
+from __future__ import annotations
+
+from typing import Any
+
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -11,6 +15,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpRequest, HttpResponse
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.views.generic import View
@@ -133,8 +138,8 @@ class Home(RoleRequiredView):
     login_url = "login/"
     redirect_field_name = "login"
 
-    def get(self, request):
-        context = {}
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context: dict[str, Any] = {}
         return render(request, "Authentication/home.html", context)
 
 
@@ -182,12 +187,12 @@ class PasswordResetLinks(AdminRequiredView):
     template_name = "Authentication/regenerative_links.html"
     activation_link = "Authentication/manager_activation_link.html"
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         users = User.objects.all().filter(groups__name="manager").values()
         context = {"users": users}
         return render(request, self.template_name, context)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
         link = AuthenticationServices().generate_link(request, user)
@@ -196,6 +201,6 @@ class PasswordResetLinks(AdminRequiredView):
 
 
 class Maintenance(Home, View):
-    def get(self, request):
-        context = {}
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context: dict[str, Any] = {}
         return render(request, "Authentication/maintenance.html", context)

@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+from __future__ import annotations
+
 import re
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -16,6 +18,7 @@ else:
     import importlib_resources as resources
 
 from PyQt6.QtCore import Qt, QRegularExpression
+from PyQt6 import QtGui
 from PyQt6.QtGui import (
     QColor,
     QPixmap,
@@ -57,7 +60,7 @@ class SignedSB(QSpinBox):
     # range is from -N,..,-1,1,...N
     # note - to fix #1561 include +/- N in this range.
     # else 1 point questions become very problematic
-    def __init__(self, maxMark):
+    def __init__(self, maxMark: int) -> None:
         super().__init__()
         self.setRange(-maxMark, maxMark)
         self.setValue(1)
@@ -68,9 +71,9 @@ class SignedSB(QSpinBox):
         if self.value() == 0:
             self.setValue(self.value() + steps)
 
-    def textFromValue(self, n):
-        t = QSpinBox().textFromValue(n)
-        if n > 0:
+    def textFromValue(self, v) -> str:
+        t = QSpinBox().textFromValue(v)
+        if v > 0:
             return "+" + t
         else:
             return t
@@ -84,23 +87,25 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.subs = []
         super().__init__(*args, **kwargs)
 
-    def highlightBlock(self, txt):
+    def highlightBlock(self, text: str | None) -> None:
         """Highlight tex prefix and matches in our substitution list.
 
         Args:
-            txt (str): the text to be highlighted.
+            text: the text to be highlighted.
 
         TODO: use colours from the palette?
         """
+        if text is None:
+            return
         # TODO: can we set a popup: "v2 value: 'x'"
         # reset format
-        self.setFormat(0, len(txt), QTextCharFormat())
+        self.setFormat(0, len(text), QTextCharFormat())
         # highlight tex: at beginning
-        if txt.casefold().startswith("tex:"):
+        if text.casefold().startswith("tex:"):
             self.setFormat(0, len("tex:"), QColor("grey"))
         # highlight parametric substitutions
         for s in self.subs:
-            for match in re.finditer(s, txt):
+            for match in re.finditer(s, text):
                 # print(f"matched on {s} at {match.start()} to {match.end()}!")
                 frmt = QTextCharFormat()
                 frmt.setForeground(QColor("teal"))
@@ -124,14 +129,15 @@ class WideTextEdit(QTextEdit):
         sz.setWidth(sz.width() * 2)
         return sz
 
-    def keyPressEvent(self, event):
-        if event.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
-            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
+    def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
+        if (
+            e is not None
+            and e.modifiers() == Qt.KeyboardModifier.ShiftModifier
+            and (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter)
         ):
-            # print("WideTextEdit: ignoring Shift-Enter event")
-            event.ignore()
+            e.ignore()
             return
-        return super().keyPressEvent(event)
+        super().keyPressEvent(e)
 
 
 class AddRubricBox(QDialog):
@@ -639,7 +645,7 @@ class AddRubricBox(QDialog):
         self.scope_frame.layout().insertLayout(idx, grid)
         self._param_grid = grid
 
-    def get_parameters(self) -> List[Tuple[str, List[str]]]:
+    def get_parameters(self) -> list[tuple[str, list[str]]]:
         """Extract the current parametric values from the UI."""
         idx = self.scope_frame.layout().indexOf(self._param_grid)
         # print(f"extracting parameters from grid at layout index {idx}")
@@ -654,7 +660,7 @@ class AddRubricBox(QDialog):
             params.append((param, values))
         return params
 
-    def get_versions_list(self) -> List[int]:
+    def get_versions_list(self) -> list[int]:
         """Extract the version-specific list as a list of ints.
 
         If the input of the textbox is empty, or not acceptable
@@ -821,7 +827,7 @@ class AddRubricBox(QDialog):
                 tags = tag
         return tags
 
-    def gimme_rubric_data(self) -> Dict[str, Any]:
+    def gimme_rubric_data(self) -> dict[str, Any]:
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tags = self._gimme_rubric_tags()
 

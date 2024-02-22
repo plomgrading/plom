@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -19,7 +19,6 @@ import html
 import json
 import logging
 from math import ceil
-import os
 from pathlib import Path
 import platform
 import queue
@@ -122,17 +121,17 @@ class BackgroundUploader(QThread):
     uploadUnknownFail = pyqtSignal(str, str)
     queue_status_changed = pyqtSignal(int, int, int, int)
 
-    def __init__(self, msgr):
+    def __init__(self, msgr: Messenger) -> None:
         """Initialize a new uploader.
 
         Args:
-            msgr (Messenger):
+            msgr: a Messenger for communicating with a Plom server.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
         """
         super().__init__()
-        self.q = None
+        self.q: queue.Queue = queue.Queue()
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
         self.num_uploaded = 0
@@ -144,11 +143,11 @@ class BackgroundUploader(QThread):
         self._simulate_failure_rate = 20.0
         self._simulate_slow_net = (3, 8)
 
-    def enable_fail_mode(self):
+    def enable_fail_mode(self) -> None:
         log.info("fail mode ENABLED")
         self.simulate_failures = True
 
-    def disable_fail_mode(self):
+    def disable_fail_mode(self) -> None:
         log.info("fail mode disabled")
         self.simulate_failures = False
 
@@ -177,13 +176,13 @@ class BackgroundUploader(QThread):
             self.q.qsize(), n, self.num_uploaded, self.num_failed
         )
 
-    def queue_size(self):
+    def queue_size(self) -> int:
         """Return the number of papers waiting or currently uploading."""
         if self.is_upload_in_progress:
             return self.q.qsize() + 1
         return self.q.qsize()
 
-    def isEmpty(self) -> None:
+    def isEmpty(self) -> bool:
         """Checks if the upload queue is empty.
 
         Returns:
@@ -243,7 +242,6 @@ class BackgroundUploader(QThread):
                 self.q.qsize(), 0, self.num_uploaded, self.num_failed
             )
 
-        self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
@@ -917,7 +915,13 @@ class MarkerClient(QWidget):
         self.marking_history = []
         self._cachedProgressFormatStr = None
 
-    def setup(self, messenger, question_idx, version, lastTime):
+    def setup(
+        self,
+        messenger: Messenger,
+        question_idx: int,
+        version: int,
+        lastTime: dict[str, Any],
+    ) -> None:
         """Performs setup procedure for markerClient.
 
         TODO: move all this into init?
@@ -925,14 +929,13 @@ class MarkerClient(QWidget):
         TODO: verify all lastTime Params, there are almost certainly some missing
 
         Args:
-            messenger (Messenger): handle communication with server.
-            question_idx (int): question number.
-            version (int): version number
-            lastTime (dict): settings.
-                containing::
+            messenger: handle communication with server.
+            question_idx: question index number, one based.
+            version: question version number
+            lastTime: dict of settings.
+                Containing::
 
                    {
-                     "POWERUSER"
                      "FOREGROUND"
                      "KeyBinding"
                    }
@@ -1819,31 +1822,28 @@ class MarkerClient(QWidget):
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
 
-    def getSolutionImage(self):
-        # get the file from disc if it exists, else grab from server
-        soln = os.path.join(
-            self.workingDirectory, f"solution.{self.question_idx}.{self.version}.png"
-        )
-        if os.path.isfile(soln):
-            return soln
-        else:
-            return self.refreshSolutionImage()
+    def getSolutionImage(self) -> Path | None:
+        """Get the file from disc if it exists, else grab from server."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
+        if f.is_file():
+            return f
+        return self.refreshSolutionImage()
 
-    def refreshSolutionImage(self):
-        # get solution and save it to temp dir
-        soln = os.path.join(
-            self.workingDirectory, f"solution.{self.question_idx}.{self.version}.png"
-        )
+    def refreshSolutionImage(self) -> Path | None:
+        """Get solution image and save it to working dir."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
         try:
             im_bytes = self.msgr.getSolutionImage(self.question_idx, self.version)
-            with open(soln, "wb") as fh:
+            with open(f, "wb") as fh:
                 fh.write(im_bytes)
-            return soln
+            return f
         except PlomNoSolutionException as e:
             log.warning(f"no solution image: {e}")
-            # if a residual file is there, delete it
-            if os.path.isfile(soln):
-                os.remove(soln)
+            # if a residual file is there, try to delete it
+            try:
+                f.unlink()
+            except FileNotFoundError:
+                pass
             return None
 
     def saveTabStateToServer(self, tab_state):

@@ -29,7 +29,7 @@ class ImageBundleTests(TestCase):
     Tests for Papers.services.ImageBundelService
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         # make a spec and a paper
         spec_dict = {
             "idPage": 1,
@@ -46,7 +46,7 @@ class ImageBundleTests(TestCase):
             },
         }
         SpecificationService.store_validated_spec(spec_dict)
-        self.user = baker.make(User, username="testScanner")
+        self.user: User = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
@@ -77,11 +77,8 @@ class ImageBundleTests(TestCase):
 
         return super().setUp()
 
-    def test_create_bundle(self):
-        """
-        Test ImageBundlseService.create_bundle()
-        """
-
+    def test_create_bundle(self) -> None:
+        """Test ImageBundlseService.create_bundle()"""
         n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 0)
 
@@ -97,15 +94,13 @@ class ImageBundleTests(TestCase):
         n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 1)
 
-    def test_all_staged_imgs_valid(self):
-        """
-        Test ImageBundleService.all_staged_imgs_valid().
+    def test_all_staged_imgs_valid(self) -> None:
+        """Test ImageBundleService.all_staged_imgs_valid().
 
         If the input collection of staging images is empty, return True.
         If there are one or more images that are not "known" return False.
         Otherwise, return True.
         """
-
         ibs = ImageBundleService()
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
@@ -138,11 +133,8 @@ class ImageBundleTests(TestCase):
         imgs = StagingImage.objects.all()
         self.assertFalse(ibs.all_staged_imgs_valid(imgs))
 
-    def test_find_internal_collisions(self):
-        """
-        Test ImageBundleService.find_internal_collisions()
-        """
-
+    def test_find_internal_collisions(self) -> None:
+        """Test ImageBundleService.find_internal_collisions()"""
         ibs = ImageBundleService()
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
@@ -254,11 +246,8 @@ class ImageBundleTests(TestCase):
             ),
         )
 
-    def test_find_external_collisions(self):
-        """
-        Test ImageBundleService.find_external_collisions()
-        """
-
+    def test_find_external_collisions(self) -> None:
+        """Test ImageBundleService.find_external_collisions()"""
         ibs = ImageBundleService()
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
@@ -312,12 +301,8 @@ class ImageBundleTests(TestCase):
 
         self.assertEqual(res, [(st_img6, img4, 3, 1)])
 
-    def test_perfect_bundle(self):
-        """
-        Test that upload_valid_bundle() works as intended with a valid
-        staged bundle.
-        """
-
+    def test_perfect_bundle(self) -> None:
+        """Test that upload_valid_bundle() works as intended with a valid staged bundle."""
         bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
@@ -364,7 +349,7 @@ class ImageBundleTests(TestCase):
             img1.image_hash,
         )
 
-    def test_paper_question_ready(self):
+    def test_paper_question_ready(self) -> None:
         ibs = ImageBundleService()
         paper2 = baker.make(Paper, paper_number=2)
 
