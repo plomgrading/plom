@@ -7,6 +7,8 @@
 
 """Services for annotations and annotation images."""
 
+from typing import Any, Dict
+
 import pathlib
 
 from django.db import transaction
@@ -23,7 +25,7 @@ def create_new_annotation_in_database(
     time: int,
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
-    data: str,
+    data: Dict[str, Any],
 ) -> Annotation:
     """Save an annotation.
 
@@ -39,7 +41,8 @@ def create_new_annotation_in_database(
         annot_img_md5sum: the annotation image's hash.
         annot_img_file: the annotation image file in memory.
             The filename including extension is taken from this.
-        data: JSON blob of SVG data.
+        data: came from a JSON blob of SVG data, but should be dict of
+            string keys by the time we see it.
 
     Returns:
         A reference to the new Annotation object, but there are various
@@ -61,7 +64,7 @@ def _create_new_annotation_in_database(
     score: int,
     time: int,
     annotation_image: AnnotationImage,
-    data: str,
+    data: Dict[str, Any],
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
