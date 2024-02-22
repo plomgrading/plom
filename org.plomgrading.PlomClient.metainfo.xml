@@ -64,7 +64,9 @@
 
   <url type="homepage">https://plomgrading.org</url>
   <update_contact>devs@plomgrading.org</update_contact>
-  <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
+  <developer id="plomgrading.org">
+    <name>Andrew Rechnitzer, Colin B. Macdonald, and others</name>
+  </developer>
   <content_rating type="oars-1.0"/>
   <releases>
     <release date="2024-02-16" version="0.15.1"/>
