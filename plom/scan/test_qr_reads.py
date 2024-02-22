@@ -4,7 +4,6 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import json
-from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
