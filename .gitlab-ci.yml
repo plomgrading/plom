@@ -683,13 +683,18 @@ fullworkflow:
     - popd
 
 
-appstreamValid:
+appstream-valid:
   stage: static_analysis
   image: alpine
   before_script:
+    - apk add appstream
     - apk add appstream-glib
   script:
+    - appstream-util --version
     - appstream-util validate org.plomgrading.PlomClient.metainfo.xml
+    - appstreamcli --version
+    # TODO: consider adding --strict on 0.16.4 which supports <developer> tag
+    - appstreamcli validate --pendantic --explain org.plomgrading.PlomClient.metainfo.xml
 
 
 # TODO: perhaps all deps should be in the docker image?
