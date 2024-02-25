@@ -15,7 +15,12 @@ class Command(BaseCommand):
         parser.add_argument(
             "--check-for-database",
             action="store_true",
-            help="Check if a database exists, and exit with nonzero if it does,",
+            help="Check if a database exists, and exit with nonzero if it does.",
+        )
+        parser.add_argument(
+            "--drop-database",
+            action="store_true",
+            help="Completely erase the database: DANGEROUS!",
         )
 
     def handle(self, *args, **options):
@@ -24,4 +29,7 @@ class Command(BaseCommand):
             if r:
                 sys.exit(1)
             sys.exit(0)
-        raise CommandError("Need to provide an argument")
+        elif options["drop_database"]:
+            DemoProcessesService().drop_postgres_db()
+        else:
+            raise CommandError("Need to provide an argument")

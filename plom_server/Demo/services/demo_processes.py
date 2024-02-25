@@ -54,33 +54,46 @@ class DemoProcessesService:
         conn.close()
         return True
 
-    def recreate_postgres_db(self):
+    def drop_postgres_db(self, *, verbose: bool = True) -> None:
+        """Delete the existing database."""
         import psycopg2
 
         # use local "socket" thing
         # conn = psycopg2.connect(user="postgres", password="postgres")
         # use TCP/IP
         host = settings.DATABASES["postgres"]["HOST"]
-        conn = psycopg2.connect(user="postgres", password="postgres", host=host)
-
-        conn.autocommit = True
         db_name = settings.DATABASES["default"]["NAME"]
+        conn = psycopg2.connect(user="postgres", password="postgres", host=host)
+        conn.autocommit = True
 
-        print(f'Removing old database "{db_name}"')
+        if verbose:
+            print(f'Removing old database "{db_name}"')
         try:
             with conn.cursor() as curs:
                 curs.execute(f"DROP DATABASE {db_name};")
         except psycopg2.errors.InvalidCatalogName:
-            print(f'No database "{db_name}" - continuing')
+            if verbose:
+                print(f'There was no database "{db_name}"')
+        conn.close()
+
+    def recreate_postgres_db(self):
+        import psycopg2
+
+        self.drop_postgres_db(verbose=True)
+
+        host = settings.DATABASES["postgres"]["HOST"]
+        db_name = settings.DATABASES["default"]["NAME"]
+        conn = psycopg2.connect(user="postgres", password="postgres", host=host)
+        conn.autocommit = True
 
         print(f'Creating database "{db_name}"')
         try:
             with conn.cursor() as curs:
                 curs.execute(f"CREATE DATABASE {db_name};")
         except psycopg2.errors.DuplicateDatabase:
-            with conn.cursor() as curs:
-                print("We should not reach here.")
-                quit()
+            raise RuntimeError(
+                f'Failed to create database "{db_name}"; perhaps we are racing?'
+            )
         conn.close()
 
     def remove_old_db_and_misc_user_files(self, engine):
