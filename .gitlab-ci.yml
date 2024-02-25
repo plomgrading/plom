@@ -694,7 +694,7 @@ appstream-valid:
     - appstream-util validate org.plomgrading.PlomClient.metainfo.xml
     - appstreamcli --version
     # TODO: consider adding --strict on 0.16.4 which supports <developer> tag
-    - appstreamcli validate --pendantic --explain org.plomgrading.PlomClient.metainfo.xml
+    - appstreamcli validate --pedantic --explain org.plomgrading.PlomClient.metainfo.xml
 
 
 # TODO: perhaps all deps should be in the docker image?
