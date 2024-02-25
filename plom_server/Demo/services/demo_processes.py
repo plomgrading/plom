@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
@@ -25,6 +25,34 @@ class DemoProcessesService:
         else:
             return "unknown"
         # TODO = get this working with mysql too
+
+    def is_there_a_database(self):
+        """Return True if there is already a Plom database."""
+        engine = settings.DATABASES["default"]["ENGINE"]
+        if "postgres" in engine:
+            return self.is_there_a_postgres_database()
+        elif "sqlite" in engine:
+            # TODO = get this working with mysql too
+            raise NotImplementedError("TODO: sqlite not yet implemented")
+        else:
+            raise NotImplementedError(f'Database engine "{engine}" not implemented')
+
+    def is_there_a_postgres_database(self, *, verbose: bool = True) -> bool:
+        """Return True if there is already a Plom database in PostgreSQL."""
+        import psycopg2
+
+        host = settings.DATABASES["postgres"]["HOST"]
+        db_name = settings.DATABASES["default"]["NAME"]
+        try:
+            conn = psycopg2.connect(
+                user="postgres", password="postgres", host=host, dbname=db_name
+            )
+        except psycopg2.OperationalError:
+            if verbose:
+                print(f'Cannot find database "{db_name}"')
+            return False
+        conn.close()
+        return True
 
     def recreate_postgres_db(self):
         import psycopg2
@@ -140,6 +168,8 @@ class DemoProcessesService:
 
         print("*" * 40)
         if engine == "postgres":
+            # if self.is_there_a_postgres_db():
+            #     print("Overwriting existing database")
             self.recreate_postgres_db()
 
         print("*" * 40)

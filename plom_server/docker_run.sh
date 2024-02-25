@@ -15,11 +15,16 @@ if [ "x$PLOM_DEBUG" = "x0" ]; then
     python3 manage.py collectstatic --clear --no-input
 fi
 
-# start either a canned demo or an empty server
-if [[ "$PLOM_DEMO" -eq 1 ]]; then
-    python3 manage.py plom_demo --no-waiting
+if ! python3 manage.py plom_db --check-for-database; then
+  echo "DOING A HOT START (we already have a database)"
 else
-    python3 manage.py plom_init --no-waiting
+  echo "No existing database; starting from scratch"
+  # start either a canned demo or an empty server
+  if [[ "$PLOM_DEMO" -eq 1 ]]; then
+      python3 manage.py plom_demo --no-waiting
+  else
+      python3 manage.py plom_init --no-waiting
+  fi
 fi
 
 # We need a Huey queue: start one in the background
