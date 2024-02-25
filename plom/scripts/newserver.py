@@ -28,6 +28,10 @@ server_instructions = f"""Overview of running the Plom server:
   If you are not using our container, then its very likely your
   source code is not in the default "{_default_src_location}"
   and you will need to configure with a command line argument.
+
+  For example, if you are currently in the source code, try
+
+    plom-new-server --src $PWD
 """
 
 

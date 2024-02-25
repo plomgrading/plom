@@ -122,7 +122,7 @@ class Command(BaseCommand):
             # launch Huey queue in the background
             huey_worker_proc = proc_service.launch_huey_workers()
 
-            # run the development server (TODO: for now)
+            # run the development server (TODO: for now, see Issue #3289)
             port = int(os.environ.get("PLOM_CONTAINER_PORT", "8000"))
             server_proc = proc_service.launch_server(port=port)
 
