@@ -690,7 +690,7 @@ appstream-valid:
     - apk add appstream
     - apk add appstream-glib
   script:
-    - appstream-util --version
+    - appstream-util --version || true
     - appstream-util validate org.plomgrading.PlomClient.metainfo.xml
     - appstreamcli --version
     # TODO: consider adding --strict on 0.16.4 which supports <developer> tag
