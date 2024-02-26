@@ -170,22 +170,20 @@ WSGI_APPLICATION = "Web_Plom.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-plom_db_host = os.environ.get("PLOM_DATABASE_HOSTNAME") or "127.0.0.1"
-
-plom_db_name = os.environ.get("PLOM_DB_NAME") or "plom_db"
+plom_database_name = os.environ.get("PLOM_DATABASE_NAME") or "plom_db"
 
 DATABASES = {
     "postgres": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": plom_db_name,
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": plom_db_host,
+        "NAME": plom_database_name,
+        "USER": os.environ.get("PLOM_DATABASE_USER") or "postgres",
+        "PASSWORD": os.environ.get("PLOM_DATABASE_PASSWORD") or "postgres",
+        "HOST": os.environ.get("PLOM_DATABASE_HOSTNAME") or "127.0.0.1",
         "PORT": "5432",
     },
     "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / f"{plom_db_name}.sqlite3",
+        "NAME": BASE_DIR / f"{plom_database_name}.sqlite3",
     },
 }
 # Issue #2619: users can choose a database backend via env var
