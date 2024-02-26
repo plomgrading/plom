@@ -14,13 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client respects Question Labels in more places.
 
 ### Fixed
-
+* Legacy server: fix crash when client asks to view images from paper which exists but has no scans.
+* Server: fix crash when client asks for non-existing Annotation images.
+* Client: popup error message when viewing non-existent images rather than empty blue dialog.
 
 
 ## [0.15.1] - 2024-02-16
 
 ### Added
-* Django-based server container starts the canned demo if environment variable PLOM_DEMO is set to 1.
+* Django-based server container starts the canned demo if environment variable `PLOM_DEMO` is set to 1.
 
 ### Changed
 * Web UI: displays version number.

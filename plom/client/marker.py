@@ -2502,8 +2502,23 @@ class MarkerClient(QWidget):
             except PlomBenignException as e:
                 WarnMsg(self, f"Could not get page data: {e}").exec()
                 return
+            if not pagedata:
+                WarnMsg(
+                    self,
+                    f"No page images for paper {tn:04}:"
+                    " it may not be scanned or was not written.",
+                ).exec()
+                return
             # also, discard the non-included pages
             pagedata = [x for x in pagedata if x["included"]]
+            if not pagedata:
+                WarnMsg(
+                    self,
+                    f"No page images for paper {tn:04} question index {q}:"
+                    " possibly that question is not yet scanned"
+                    " or has been discarded.",
+                ).exec()
+                return
             # don't cache this pagedata: "q" might not be our question number
             # (but the images are cacheable)
             pagedata = self.downloader.sync_downloads(pagedata)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022, 2024 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Chris Jin
 
@@ -524,13 +524,13 @@ def MgetWholePaper(self, test_number, question):
     """All non-ID pages of a paper, highlighting which belong to a question.
 
     Returns:
-        tuple: `(True, rval)` on success or `(False, msg)` on failure.
-        Here `msg` is an error message and `rval` is a list of dict with
+        tuple: `(True, pagedata)` on success or `(False, msg)` on failure,
+        where `msg` is an error message string when the test or question
+        do not exist.  Here `pagedata` is a list of dict with
         keys `pagename`, `md5`, `id`, `orientation`, `server_path`,
         `order` and `included`.
-
-    Raises:
-        RuntimeError: some unexpected thing that we think cannot happen.
+        Note that pagedata could be an empty list when test paper exists
+        but was never scanned or was deleted.
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
@@ -545,10 +545,7 @@ def MgetWholePaper(self, test_number, question):
     # dict of image-ids and positions in the current annotation
     current_image_orders = {}
     aref = qref.annotations[-1]
-    if aref.apages.count() == 0:
-        # this should never happen (?) no such thing as a "fresh annotation" any more
-        log.critical("Oh my, colin thought it cannot happen aref={}".format(aref))
-        raise RuntimeError("Oh my, colin thought it cannot happen")
+    # if not scanned or discarded, there won't be any apages
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
 

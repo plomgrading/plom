@@ -1107,6 +1107,8 @@ class BaseMessenger:
         """Get metadata about all non-ID page images in this paper, as related to a question.
 
         For now, questionNumber effects the "included" column...
+
+        If the paper wasn't scanned, the result will be an empty list.
         """
         with self.SRmutex:
             try:
