@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
+import sqlite3
 
 from django.conf import settings
 
@@ -93,11 +94,24 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
     conn.close()
 
 
-def recreate_postgres_database() -> None:
-    """Delete the existing database, and create a new one: DESTRUCTIVE!"""
-    import psycopg2
+def create_database() -> None:
+    """Create a new database.
 
-    _drop_postgres_database(verbose=True)
+    raises:
+        ValueError: there is already a database.
+            TODO: something better than ValueError?
+    """
+    engine = settings.DATABASES["default"]["ENGINE"]
+    if "postgres" in engine:
+        return _create_postgres_database()
+    elif "sqlite" in engine:
+        return _create_sqlite_database()
+    else:
+        raise NotImplementedError(f'Database engine "{engine}" not implemented')
+
+
+def _create_postgres_database(*, verbose: bool = True) -> None:
+    import psycopg2
 
     host = settings.DATABASES["postgres"]["HOST"]
     user = settings.DATABASES["postgres"]["USER"]
@@ -106,20 +120,31 @@ def recreate_postgres_database() -> None:
     conn = psycopg2.connect(user=user, password=password, host=host)
     conn.autocommit = True
 
-    print(f'Creating database "{db_name}"')
+    if verbose:
+        print(f'Creating database "{db_name}"')
     try:
         with conn.cursor() as curs:
             curs.execute(f"CREATE DATABASE {db_name};")
-    except psycopg2.errors.DuplicateDatabase:
-        raise RuntimeError(
-            f'Failed to create database "{db_name}"; perhaps we are racing?'
-        )
+    except psycopg2.errors.DuplicateDatabase as e:
+        raise ValueError(f'Failed to create database "{db_name}": {e}') from e
+    finally:
+        conn.close()
+
+
+def _create_sqlite_database(*, verbose: bool = True) -> None:
+    db_name = settings.DATABASES["default"]["NAME"]
+
+    if _is_there_a_sqlite_database(verbose=False):
+        raise ValueError(f"Database already exists: {db_name}")
+
+    if verbose:
+        print(f'Creating database "{db_name}"')
+    _sqlite_set_wal()
+    conn = sqlite3.connect(db_name)
     conn.close()
 
 
-def sqlite_set_wal() -> None:
-    import sqlite3
-
+def _sqlite_set_wal() -> None:
     db_name = settings.DATABASES["default"]["NAME"]
     print(f"Setting journal mode WAL for sqlite database: {db_name}")
     conn = sqlite3.connect(db_name)

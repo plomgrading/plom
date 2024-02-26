@@ -18,6 +18,11 @@ class Command(BaseCommand):
             help="Check if a database exists, and exit with nonzero if it does.",
         )
         parser.add_argument(
+            "--create-database",
+            action="store_true",
+            help="Create a new database.",
+        )
+        parser.add_argument(
             "--drop-database",
             action="store_true",
             help="Completely erase the database: DANGEROUS!",
@@ -38,6 +43,8 @@ class Command(BaseCommand):
             if r:
                 sys.exit(1)
             sys.exit(0)
+        elif options["create_database"]:
+            database_service.create_database()
         elif options["drop_database"]:
             if options["yes"]:
                 yes = True

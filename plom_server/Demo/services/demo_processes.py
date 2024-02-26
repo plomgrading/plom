@@ -17,15 +17,8 @@ from Base.services import database_service
 class DemoProcessesService:
     """Handle starting and stopping the server and the Huey background process."""
 
-    def remove_old_db_and_misc_user_files(self, engine):
-        print("Removing old DB and any misc user-generated files")
-
-        if engine == "sqlite":
-            database_service.sqlite_delete_database()
-        elif engine == "postgres":
-            database_service.recreate_postgres_database()
-        else:
-            raise RuntimeError('Unexpected engine "{engine}"')
+    def remove_misc_user_files(self, engine):
+        print("Removing any misc user-generated files")
 
         # TODO: Issue #2926:  where should these live?  And there are three
         # hardcoded here but seems to me the toml could specify something else...
@@ -36,30 +29,19 @@ class DemoProcessesService:
         ]:
             Path(fname).unlink(missing_ok=True)
 
+        # TODO: some stop huey function needed?
         for path in Path("huey").glob("huey_db.*"):
             path.unlink(missing_ok=True)
 
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-
-        # TODO: don't delete things that are not ours
-        # TODO: some of these don't exist any more?
-        # for rmdir in ["sourceVersions", "papersToPrint", "media"]:
-        #     shutil.rmtree(rmdir, ignore_errors=True)
 
         # surely Django will do this?  Else we need the settings here
         # Path("media").mkdir()
 
     def rebuild_migrations_and_migrate(self, engine):
         # print("Rebuild the database migrations and migrate")
-        # for cmd in ["makemigrations", "migrate"]:
-        # py_man_cmd = f"python3 manage.py {cmd}"
-        # subprocess.check_call(split(py_man_cmd))
-
         call_command("makemigrations")
         call_command("migrate")
-
-        if engine == "sqlite":
-            database_service.sqlite_set_wal()
 
     def launch_huey_workers(self):
         # I don't understand why, but this seems to need to be run as a sub-proc
@@ -93,16 +75,14 @@ class DemoProcessesService:
         print(f"You appear to be running with a {engine} database.")
 
         print("*" * 40)
-        if engine == "postgres":
-            # if database_services.is_there_a_postgres_db():
-            #     print("Overwriting existing database")
-            database_service.recreate_postgres_database()
-
-        print("*" * 40)
         self.remove_old_migration_files()
 
         print("*" * 40)
-        self.remove_old_db_and_misc_user_files(engine)
+        self.remove_misc_user_files(engine)
+
+        print("*" * 40)
+        database_service.drop_database()
+        database_service.create_database()
 
         print("*" * 40)
         self.rebuild_migrations_and_migrate(engine)
