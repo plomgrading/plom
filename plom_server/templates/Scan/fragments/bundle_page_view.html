@@ -172,6 +172,15 @@
                                     Cast to unknown page
                                 </a>
                             </div>
+                            <div>
+                                <a class="btn btn-outline-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_all_discards' timestamp index %}"
+                                   hx-confirm="Are you sure you want to set all discarded pages as unknown pages?">
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                    Cast all discards to unknown pages
+                                    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                                </a>
+                            </div>
                         {% elif current_page.status == 'unknown' %}
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
@@ -190,6 +199,15 @@
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
                                    hx-get="{% url 'knowify_image' timestamp index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
+                            </div>
+                            <div>
+                                <a class="btn btn-danger text-centre w-100 mb-3"
+                                   hx-post="{% url 'discard_all_unknowns' timestamp index %}"
+                                   hx-confirm="Are you sure you want to discard all remaining unknowns?">
+                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                    Discard all unknown pages
+                                    <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
+                                </a>
                             </div>
                         {% elif current_page.status == 'extra' %}
                             <!-- can discard  -->

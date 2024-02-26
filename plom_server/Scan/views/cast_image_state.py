@@ -44,6 +44,36 @@ class DiscardImageView(ScannerRequiredView):
         )
 
 
+class DiscardAllUnknownsView(ScannerRequiredView):
+    """Discard all unknown pages from the given bundle"""
+
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int | None
+    ) -> HttpResponse:
+        # note that we optionally take the index so that we can refresh the page with the correct image shown.
+        try:
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().discard_all_unknowns_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
+        if index:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            )
+        else:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+            )
+
+
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
@@ -66,6 +96,36 @@ class UnknowifyImageView(ScannerRequiredView):
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
+
+
+class UnknowifyAllDiscardsView(ScannerRequiredView):
+    """Unknowify all discard pages from a bundle."""
+
+    def post(
+        self, request: HttpRequest, *, timestamp: float, index: int | None
+    ) -> HttpResponse:
+        # note that we optionally take the index so that we can refresh the page with the correct image shown.
+        try:
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().unknowify_all_discards_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
+        if index:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            )
+        else:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+            )
 
 
 class KnowifyImageView(ScannerRequiredView):

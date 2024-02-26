@@ -192,6 +192,41 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def discard_all_unknowns_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        try:
+            unknown_images = (
+                bundle_obj.stagingimage_set.select_related("unknownstagingimage")
+                .exclude(unknownstagingimage=None)
+                .select_for_update()
+                .filter(image_type=StagingImage.UNKNOWN)
+            )
+        except ObjectDoesNotExist:
+            # This means there are no unknowns in that bundle.
+            return
+
+        # now that we have the unknowns, remove associated data and create associated discard info.
+        for img in unknown_images:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.unknownstagingimage.delete()
+            img.image_type = StagingImage.DISCARD
+            DiscardStagingImage.objects.create(
+                staging_image=img,
+                discard_reason=f"Unknown page discarded by {user_obj.username}",
+            )
+            img.save()
+
+    @transaction.atomic
     def unknowify_image_type_from_bundle_id_and_order(
         self, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
@@ -304,6 +339,38 @@ class ScanCastService:
         self.unknowify_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
+
+    @transaction.atomic
+    def unknowify_all_discards_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        try:
+            discard_images = (
+                bundle_obj.stagingimage_set.select_related("discardstagingimage")
+                .exclude(discardstagingimage=None)
+                .select_for_update()
+                .filter(image_type=StagingImage.DISCARD)
+            )
+        except ObjectDoesNotExist:
+            # This means there are no unknowns in that bundle.
+            return
+
+        # now that we have the discards, remove associated data and create associated unknown info.
+        for img in discard_images:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.discardstagingimage.delete()
+            img.image_type = StagingImage.UNKNOWN
+            UnknownStagingImage.objects.create(staging_image=img)
+            img.save()
 
     @transaction.atomic
     def assign_extra_page(
