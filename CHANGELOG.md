@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Client respects Question Labels in more places.
+* Server container should automatically hotstart if a database exist.  Previously behaviour was to delete and start again.
 
 ### Fixed
 * Legacy server: fix crash when client asks to view images from paper which exists but has no scans.
