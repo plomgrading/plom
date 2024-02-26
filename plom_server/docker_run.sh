@@ -15,7 +15,7 @@ if [ "x$PLOM_DEBUG" = "x0" ]; then
     python3 manage.py collectstatic --clear --no-input
 fi
 
-if ! python3 manage.py plom_db --check-for-database; then
+if ! python3 manage.py plom_database --check-for-database; then
     echo "DOING A HOT START (we already have a database)"
 else
     echo "No existing database; starting from scratch"

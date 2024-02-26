@@ -11,7 +11,7 @@ from shlex import split
 from django.core.management import call_command
 from django.conf import settings
 
-from . import database_service
+from Base.services import database_service
 
 
 class DemoProcessesService:
