@@ -3,10 +3,12 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
+from pathlib import Path
+
 from django.conf import settings
 
 
-def get_database_engine():
+def get_database_engine() -> str:
     """Which database engine are we using?"""
     engine = settings.DATABASES["default"]["ENGINE"]
     if "postgres" in engine:
@@ -18,14 +20,13 @@ def get_database_engine():
     # TODO = get this working with mysql too
 
 
-def is_there_a_database():
+def is_there_a_database() -> bool:
     """Return True if there is already a Plom database."""
     engine = settings.DATABASES["default"]["ENGINE"]
     if "postgres" in engine:
         return _is_there_a_postgres_database()
     elif "sqlite" in engine:
-        # TODO = get this working with mysql too
-        raise NotImplementedError("TODO: sqlite not yet implemented")
+        return _is_there_a_sqlite_database()
     else:
         raise NotImplementedError(f'Database engine "{engine}" not implemented')
 
@@ -48,11 +49,21 @@ def _is_there_a_postgres_database(*, verbose: bool = True) -> bool:
     return True
 
 
+def _is_there_a_sqlite_database(*, verbose: bool = True) -> bool:
+    db_name = settings.DATABASES["default"]["NAME"]
+    r = Path(db_name).exists()
+    if verbose and not r:
+        print(f"Cannot find database {db_name}")
+    return r
+
+
 def drop_database(*, verbose: bool = True) -> None:
     """Delete the existing database: DESTRUCTIVE!"""
     engine = settings.DATABASES["default"]["ENGINE"]
     if "postgres" in engine:
         return _drop_postgres_database()
+    elif "sqlite" in engine:
+        return sqlite_delete_database()
     else:
         raise NotImplementedError(f'Database engine "{engine}" not implemented')
 
@@ -82,7 +93,7 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
     conn.close()
 
 
-def recreate_postgres_database():
+def recreate_postgres_database() -> None:
     """Delete the existing database, and create a new one: DESTRUCTIVE!"""
     import psycopg2
 
@@ -106,10 +117,17 @@ def recreate_postgres_database():
     conn.close()
 
 
-def sqlite_set_wal():
+def sqlite_set_wal() -> None:
     import sqlite3
 
-    print("Setting journal mode WAL for sqlite database")
-    conn = sqlite3.connect("db.sqlite3")
+    db_name = settings.DATABASES["default"]["NAME"]
+    print(f"Setting journal mode WAL for sqlite database: {db_name}")
+    conn = sqlite3.connect(db_name)
     conn.execute("pragma journal_mode=wal")
     conn.close()
+
+
+def sqlite_delete_database() -> None:
+    db_name = settings.DATABASES["default"]["NAME"]
+    print(f"Deleting sqlite database: {db_name}")
+    Path(db_name).unlink(missing_ok=True)

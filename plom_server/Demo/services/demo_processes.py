@@ -21,7 +21,7 @@ class DemoProcessesService:
         print("Removing old DB and any misc user-generated files")
 
         if engine == "sqlite":
-            Path("db.sqlite3").unlink(missing_ok=True)
+            database_service.sqlite_delete_database()
         elif engine == "postgres":
             database_service.recreate_postgres_database()
         else:

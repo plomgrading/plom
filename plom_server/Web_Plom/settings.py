@@ -183,6 +183,7 @@ DATABASES = {
     },
     "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
+        # TODO: note semantic difference: here the filename, above just the name
         "NAME": BASE_DIR / f"{plom_database_name}.sqlite3",
     },
 }
