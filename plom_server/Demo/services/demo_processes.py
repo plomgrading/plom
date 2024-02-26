@@ -29,10 +29,6 @@ class DemoProcessesService:
         ]:
             Path(fname).unlink(missing_ok=True)
 
-        # TODO: some stop huey function needed?
-        for path in Path("huey").glob("huey_db.*"):
-            path.unlink(missing_ok=True)
-
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
         # surely Django will do this?  Else we need the settings here
@@ -52,6 +48,11 @@ class DemoProcessesService:
         for cmd in ["djangohuey --quiet"]:  # quiet huey tasks.
             py_man_cmd = f"python3 manage.py {cmd}"
             return subprocess.Popen(split(py_man_cmd))
+
+    def _huey_cleanup(self):
+        # TODO: cleanup from older huey run; for now removes a hardcoded database
+        for path in Path("huey").glob("huey_db.*"):
+            path.unlink(missing_ok=True)
 
     def launch_server(self, *, port):
         print(f"Launching django server on localhost port {port}")
@@ -79,6 +80,7 @@ class DemoProcessesService:
 
         print("*" * 40)
         self.remove_misc_user_files(engine)
+        self._huey_cleanup()
 
         print("*" * 40)
         database_service.drop_database()
