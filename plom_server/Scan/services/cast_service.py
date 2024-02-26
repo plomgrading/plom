@@ -197,6 +197,7 @@ class ScanCastService:
         user_obj: User,
         bundle_id: int,
     ) -> None:
+        """Discard all unknown pages in the given bundle."""
         try:
             bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         except ObjectDoesNotExist:
@@ -346,6 +347,7 @@ class ScanCastService:
         user_obj: User,
         bundle_id: int,
     ) -> None:
+        """Cast all discard pages in the given bundle as unknowns."""
         try:
             bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         except ObjectDoesNotExist:

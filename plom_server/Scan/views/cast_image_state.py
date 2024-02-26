@@ -45,12 +45,15 @@ class DiscardImageView(ScannerRequiredView):
 
 
 class DiscardAllUnknownsView(ScannerRequiredView):
-    """Discard all unknown pages from the given bundle"""
-
     def post(
         self, request: HttpRequest, *, timestamp: float, index: int | None
     ) -> HttpResponse:
-        # note that we optionally take the index so that we can refresh the page with the correct image shown.
+        """View that discards all unknowns from the given bundle.
+
+        Notice that it optionally takes the index so that when the
+        page is refreshed it can display the correct calling
+        image-index.
+        """
         try:
             # TODO: Eventually bundle_id will be the arg, Issue #2621
             bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
@@ -99,12 +102,15 @@ class UnknowifyImageView(ScannerRequiredView):
 
 
 class UnknowifyAllDiscardsView(ScannerRequiredView):
-    """Unknowify all discard pages from a bundle."""
-
     def post(
         self, request: HttpRequest, *, timestamp: float, index: int | None
     ) -> HttpResponse:
-        # note that we optionally take the index so that we can refresh the page with the correct image shown.
+        """View that casts all discards in the given bundle as unknowns.
+
+        Notice that it optionally takes the index so that when the
+        page is refreshed it can display the correct calling
+        image-index.
+        """
         try:
             # TODO: Eventually bundle_id will be the arg, Issue #2621
             bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
