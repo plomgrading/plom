@@ -22,6 +22,15 @@ class Command(BaseCommand):
             action="store_true",
             help="Completely erase the database: DANGEROUS!",
         )
+        parser.add_argument(
+            "--yes",
+            "-y",
+            action="store_true",
+            help="""
+                Don't ask interactively when doing dangerous things such
+                as dropping databases.
+            """,
+        )
 
     def handle(self, *args, **options):
         if options["check_for_database"]:
@@ -30,6 +39,17 @@ class Command(BaseCommand):
                 sys.exit(1)
             sys.exit(0)
         elif options["drop_database"]:
-            database_service.drop_database()
+            if options["yes"]:
+                yes = True
+            else:
+                yes = (
+                    input(
+                        "Are you sure you want to completely erase the "
+                        "database? (Type 'yes' to continue) "
+                    )
+                    == "yes"
+                )
+            if yes:
+                database_service.drop_database()
         else:
             raise CommandError("Need to provide an argument")
