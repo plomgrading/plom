@@ -189,6 +189,7 @@ plom-legacy-manager = "plom.manager.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
+plom-new-server = "plom.scripts.newserver:main"
 
 
 # Tooling configuration
