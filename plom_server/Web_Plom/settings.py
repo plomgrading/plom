@@ -179,14 +179,14 @@ DATABASES = {
         "USER": os.environ.get("PLOM_DATABASE_USER") or "postgres",
         "PASSWORD": os.environ.get("PLOM_DATABASE_PASSWORD") or "postgres",
         "HOST": os.environ.get("PLOM_DATABASE_HOSTNAME") or "127.0.0.1",
-        "PORT": "5432",
+        "PORT": os.environ.get("PLOM_DATABASE_PORT") or "5432",
     },
     "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / f"{plom_database_name}.sqlite3",
     },
 }
-# Issue #2619: users can choose a database backend via env var
+# Users can choose a database backend via env var
 default = os.environ.get("PLOM_DATABASE_BACKEND")
 if not default:
     default = "postgres"
