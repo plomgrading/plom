@@ -5,7 +5,7 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandParser, CommandError
 
-from ...services import DemoProcessesService
+from ...services import database_service
 
 
 class Command(BaseCommand):
@@ -25,11 +25,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["check_for_database"]:
-            r = DemoProcessesService().is_there_a_database()
+            r = database_service.is_there_a_database()
             if r:
                 sys.exit(1)
             sys.exit(0)
         elif options["drop_database"]:
-            DemoProcessesService().drop_postgres_db()
+            database_service.drop_database()
         else:
             raise CommandError("Need to provide an argument")
