@@ -42,10 +42,12 @@ class DemoProcessesService:
         import psycopg2
 
         host = settings.DATABASES["postgres"]["HOST"]
+        user = settings.DATABASES["postgres"]["USER"]
+        password = settings.DATABASES["postgres"]["PASSWORD"]
         db_name = settings.DATABASES["default"]["NAME"]
         try:
             conn = psycopg2.connect(
-                user="postgres", password="postgres", host=host, dbname=db_name
+                user=user, password=password, host=host, dbname=db_name
             )
         except psycopg2.OperationalError:
             if verbose:
@@ -62,8 +64,10 @@ class DemoProcessesService:
         # conn = psycopg2.connect(user="postgres", password="postgres")
         # use TCP/IP
         host = settings.DATABASES["postgres"]["HOST"]
+        user = settings.DATABASES["postgres"]["USER"]
+        password = settings.DATABASES["postgres"]["PASSWORD"]
         db_name = settings.DATABASES["default"]["NAME"]
-        conn = psycopg2.connect(user="postgres", password="postgres", host=host)
+        conn = psycopg2.connect(user=user, password=password, host=host)
         conn.autocommit = True
 
         if verbose:
@@ -82,8 +86,10 @@ class DemoProcessesService:
         self.drop_postgres_db(verbose=True)
 
         host = settings.DATABASES["postgres"]["HOST"]
+        user = settings.DATABASES["postgres"]["USER"]
+        password = settings.DATABASES["postgres"]["PASSWORD"]
         db_name = settings.DATABASES["default"]["NAME"]
-        conn = psycopg2.connect(user="postgres", password="postgres", host=host)
+        conn = psycopg2.connect(user=user, password=password, host=host)
         conn.autocommit = True
 
         print(f'Creating database "{db_name}"')
