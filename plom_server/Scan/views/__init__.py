@@ -35,11 +35,11 @@ from .scanner_summary import (
 
 from .cast_image_state import (
     DiscardImageView,
-    DiscardAllUnknownsView,
+    DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
     KnowifyImageView,
     UnknowifyImageView,
-    UnknowifyAllDiscardsView,
+    UnknowifyAllDiscardsHTMXView,
 )
 
 from .rotate_images import (

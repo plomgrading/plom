@@ -44,9 +44,9 @@ class DiscardImageView(ScannerRequiredView):
         )
 
 
-class DiscardAllUnknownsView(ScannerRequiredView):
+class DiscardAllUnknownsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, timestamp: float, index: int | None
+        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
     ) -> HttpResponse:
         """View that discards all unknowns from the given bundle.
 
@@ -67,13 +67,14 @@ class DiscardAllUnknownsView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[timestamp])
             )
 
-        if index:
+        if pop_index is None:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
             )
         else:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_thumbnails", args=[bundle_id])
+                + f"?pop={pop_index}"
             )
 
 
@@ -101,9 +102,9 @@ class UnknowifyImageView(ScannerRequiredView):
         )
 
 
-class UnknowifyAllDiscardsView(ScannerRequiredView):
+class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, timestamp: float, index: int | None
+        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
     ) -> HttpResponse:
         """View that casts all discards in the given bundle as unknowns.
 
@@ -124,13 +125,14 @@ class UnknowifyAllDiscardsView(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[timestamp])
             )
 
-        if index:
+        if pop_index is None:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
             )
         else:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_thumbnails", args=[bundle_id])
+                + f"?pop={pop_index}"
             )
 
 

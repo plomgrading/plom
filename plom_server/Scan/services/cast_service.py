@@ -205,19 +205,16 @@ class ScanCastService:
 
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
-        try:
-            unknown_images = (
-                bundle_obj.stagingimage_set.select_related("unknownstagingimage")
-                .exclude(unknownstagingimage=None)
-                .select_for_update()
-                .filter(image_type=StagingImage.UNKNOWN)
-            )
-        except ObjectDoesNotExist:
-            # This means there are no unknowns in that bundle.
-            return
+        unknown_images = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.UNKNOWN
+        ).select_related("unknownstagingimage")
+        # see 'select_for_update' docs - you have to be careful with nullable relations.
+        unknown_images_locked = unknown_images.select_for_update().exclude(
+            unknownstagingimage=None
+        )
 
         # now that we have the unknowns, remove associated data and create associated discard info.
-        for img in unknown_images:
+        for img in unknown_images_locked:
             # Be very careful to update the image type when doing this sort of operation.
             img.unknownstagingimage.delete()
             img.image_type = StagingImage.DISCARD
@@ -355,19 +352,16 @@ class ScanCastService:
 
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
-        try:
-            discard_images = (
-                bundle_obj.stagingimage_set.select_related("discardstagingimage")
-                .exclude(discardstagingimage=None)
-                .select_for_update()
-                .filter(image_type=StagingImage.DISCARD)
-            )
-        except ObjectDoesNotExist:
-            # This means there are no unknowns in that bundle.
-            return
+        discard_images = bundle_obj.stagingimage_set.select_related(
+            "discardstagingimage"
+        ).filter(image_type=StagingImage.DISCARD)
+        # be careful locking with nullable relations - see select_for_update docs.
+        discard_images_locked = discard_images.select_for_update().exclude(
+            discardstagingimage=None
+        )
 
         # now that we have the discards, remove associated data and create associated unknown info.
-        for img in discard_images:
+        for img in discard_images_locked:
             # Be very careful to update the image type when doing this sort of operation.
             img.discardstagingimage.delete()
             img.image_type = StagingImage.UNKNOWN

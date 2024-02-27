@@ -20,11 +20,11 @@ from .views import (
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
     DiscardImageView,
-    DiscardAllUnknownsView,
+    DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
     KnowifyImageView,
     UnknowifyImageView,
-    UnknowifyAllDiscardsView,
+    UnknowifyAllDiscardsHTMXView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
     RotateImageOneEighty,
@@ -104,8 +104,8 @@ urlpatterns = [
         name="discard_image",
     ),
     path(
-        "discard_unknowns/<timestamp>/<int:index>/",
-        DiscardAllUnknownsView.as_view(),
+        "discard_unknowns/<timestamp>/<int:pop_index>/",
+        DiscardAllUnknownsHTMXView.as_view(),
         name="discard_all_unknowns",
     ),
     path(
@@ -114,8 +114,8 @@ urlpatterns = [
         name="unknowify_image",
     ),
     path(
-        "unknowify_discards/<timestamp>/<int:index>/",
-        UnknowifyAllDiscardsView.as_view(),
+        "unknowify_discards/<timestamp>/<int:pop_index>/",
+        UnknowifyAllDiscardsHTMXView.as_view(),
         name="unknowify_all_discards",
     ),
     path(
