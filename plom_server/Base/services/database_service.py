@@ -97,9 +97,8 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
 def create_database() -> None:
     """Create a new database.
 
-    raises:
+    Raises:
         ValueError: there is already a database.
-            TODO: something better than ValueError?
     """
     engine = settings.DATABASES["default"]["ENGINE"]
     if "postgres" in engine:
