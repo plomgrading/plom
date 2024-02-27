@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from __future__ import annotations
@@ -392,7 +392,7 @@ class ScanCastService:
             question_list (list)
 
         Raises:
-            ValueError: can't find things.
+            ValueError: can't find things, or extra page already has information.
 
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
@@ -409,13 +409,26 @@ class ScanCastService:
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
-            img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            img_locked = (
+                bundle_obj.stagingimage_set.filter(
+                    bundle_order=bundle_order, image_type=StagingImage.EXTRA
+                )
+                .select_related("extrastagingimage")
+                .select_for_update()
+                .exclude(extrastagingimage=None)
+                .get()
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
 
-        eximg = img.extrastagingimage
+        eximg = img_locked.extrastagingimage
+
+        # Throw value error if data has already been set.
+        if eximg.paper_number or eximg.question_list:
+            raise ValueError(
+                "Cannot overwrite existing extra-page info; potentially another user has set data."
+            )
+
         eximg.paper_number = paper_number
         eximg.question_list = question_list
         eximg.save()

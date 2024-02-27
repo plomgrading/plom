@@ -3,6 +3,8 @@
 # Copyright (C) 2023-2024 Andrew Rechntizer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
@@ -279,6 +281,10 @@ class ExtraliseImageView(ScannerRequiredView):
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
+            )
+        except ValueError as e:
+            return HttpResponse(
+                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
             )
 
         return HttpResponseClientRedirect(
