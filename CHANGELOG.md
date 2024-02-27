@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Server - scanner can now bulk-discard unknown pages from a bundle, and bulk change discards back to unknowns.
 
 ### Changed
 * Client respects Question Labels in more places.
