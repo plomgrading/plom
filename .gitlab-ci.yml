@@ -338,8 +338,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.0.2
-    - python3 -m pip install pylint~=3.0.3
+    - python3 -m pip install astroid~=3.1.0
+    - python3 -m pip install pylint~=3.1.0
   script:
     - pylint plom
     - pylint plom_server
