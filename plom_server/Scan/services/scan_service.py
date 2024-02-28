@@ -99,17 +99,19 @@ class ScanService:
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
+            # create the bundle first, so it has a pk and
+            # then give it the file and resave it.
+            bundle_obj = StagingBundle.objects.create(
+                slug=slug,
+                user=user,
+                timestamp=timestamp,
+                pushed=False,
+            )
             with uploaded_pdf_file.open() as fh:
-                bundle_obj = StagingBundle.objects.create(
-                    slug=slug,
-                    pdf_file=File(fh, name=f"{timestamp}.pdf"),
-                    user=user,
-                    timestamp=timestamp,
-                    number_of_pages=number_of_pages,
-                    pdf_hash=pdf_hash,
-                    pushed=False,
-                )
-
+                bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
+                bundle_obj.pdf_hash = pdf_hash
+                bundle_obj.number_of_pages = number_of_pages
+                bundle_obj.save()
         self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
     def upload_bundle_cmd(

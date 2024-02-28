@@ -11,10 +11,8 @@ class StagingBundle(models.Model):
     """A user-uploaded bundle that isn't validated."""
 
     def _staging_bundle_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
-        return "staging/bundles/{}/{}/{}".format(
-            self.user.username, self.timestamp, filename
-        )
+        # save bundle as "//media/staging/bundles/username/bundle-id/filename"
+        return "staging/bundles/{}/{}/{}".format(self.user.username, self.pk, filename)
 
     slug = models.TextField(default="")
     pdf_file = models.FileField(upload_to=_staging_bundle_upload_path)
