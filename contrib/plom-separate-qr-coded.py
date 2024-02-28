@@ -28,6 +28,13 @@ from zxingcpp import read_barcodes, BarcodeFormat
 
 from plom.scan.scansToImages import processFileToBitmaps
 
+
+try:
+    micro = BarcodeFormat.MicroQRCode
+except AttributeError:
+    # workaround github.com/zxing-cpp/zxing-cpp/issues/512
+    micro = BarcodeFormat.MircoQRCode
+
 if len(sys.argv) != 2:
     print("Requires a single pdf as argument.")
     quit()
@@ -49,7 +56,7 @@ with tempfile.TemporaryDirectory() as td:
         image = Image.open(X)
         # from pyzbar import pyzbar
         # qrlist = pyzbar.decode(image, symbols=[pyzbar.ZBarSymbol.QRCODE])
-        qrlist = read_barcodes(image)
+        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         if len(qrlist) > 0:
             print(f"# + Page {pn} has {len(qrlist)} codes")
             if len(qrlist) < 3:
