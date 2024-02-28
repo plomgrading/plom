@@ -24,7 +24,7 @@ import tempfile
 
 import fitz
 from PIL import Image
-from pyzbar import pyzbar
+from zxingcpp import read_barcodes, BarcodeFormat
 
 from plom.scan.scansToImages import processFileToBitmaps
 
@@ -47,7 +47,9 @@ with tempfile.TemporaryDirectory() as td:
         stem = X.name[:-4]  # name without the ".png"
         pn = int(stem.split("-")[-1])  # blah-XX.png - get the XX
         image = Image.open(X)
-        qrlist = pyzbar.decode(image, symbols=[pyzbar.ZBarSymbol.QRCODE])
+        # from pyzbar import pyzbar
+        # qrlist = pyzbar.decode(image, symbols=[pyzbar.ZBarSymbol.QRCODE])
+        qrlist = read_barcodes(image)
         if len(qrlist) > 0:
             print(f"# + Page {pn} has {len(qrlist)} codes")
             if len(qrlist) < 3:
@@ -69,6 +71,9 @@ if inp.page_count != len(qrd_pages) + len(blank_pages):
     print("EEK! stopping.")
     quit()
 
+if len(blank_pages) == 0:
+    print("Did not detect any blank pages")
+    quit()
 
 print(f"Saving qr-coded pages {qrd_pages} to {qrd_file}")
 qr_out = fitz.open()
