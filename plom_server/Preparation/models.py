@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.db import models
 from django.conf import settings
@@ -24,10 +24,16 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
+# TODO: rename as ServerSettingsModel
 class PapersPrintedSettingModel(SingletonBaseModel):
     """Set this once user has printed papers."""
 
     have_printed_papers = models.BooleanField(default=False, null=False)
+    # TODO: I want at least a tri-states: everyone, per-user, our-own, no-one
+    anyone_can_create_rubrics = models.BooleanField(default=True, null=False)
+    no_one_can_create_rubrics = models.BooleanField(default=True, null=False)
+    anyone_can_modify_rubrics = models.BooleanField(default=True, null=False)
+    no_one_can_modify_rubrics = models.BooleanField(default=True, null=False)
 
 
 # ---------------------------------
