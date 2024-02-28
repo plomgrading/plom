@@ -283,9 +283,9 @@ tag_matches_ver:
 # Should keep version same or close to that in .pre-commit-config.yaml
 black:
   stage: static_analysis
-  image: python:3.11
+  image: python:3.12
   before_script:
-    - pip3 install "black~=23.12.1"
+    - pip3 install "black~=24.2.0"
   script:
     - black --check --diff .
   allow_failure: true
