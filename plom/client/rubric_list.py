@@ -1587,6 +1587,7 @@ class RubricWidget(QWidget):
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
+        # TODO: Displays username instead of preferred name, Issue #3048
         msg = SimpleQuestion(
             self,
             "<p>You did not create this rubric "
