@@ -9,14 +9,16 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import html
 import logging
-from typing import Dict, List, Union
+from typing import Any
 
 from operator import itemgetter
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import QuerySet
 
@@ -39,11 +41,17 @@ class RubricService:
 
     __valid_kinds = ("absolute", "neutral", "relative")
 
-    def create_rubric(self, rubric_data: Dict) -> Rubric:
+    def create_rubric(
+        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+    ) -> Rubric:
         """Create a rubric using data submitted by a marker.
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
+
+        Keyword Args:
+            creating_user: who is trying to create the rubric.  None
+                means you don't care who (probably for internal use only).
 
         Returns:
             The created and saved rubric instance.
@@ -52,6 +60,8 @@ class RubricService:
             KeyError: if rubric_data contains missing username or kind fields.
             ValidationError: if rubric kind is not a valid option.
             ValueError: if username does not exist in the DB.
+            PermissionDenied: user are not allowed to create rubrics.
+                This could be "this user" or "all users".
         """
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
@@ -63,8 +73,22 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
-        kind = rubric_data["kind"]
+        anyone_can_create_rubrics = False
+        no_one_can_create_rubrics = False
 
+        if anyone_can_create_rubrics:
+            pass
+        elif no_one_can_create_rubrics:
+            raise PermissionDenied(
+                "No users are allowed to create rubrics on this server"
+            )
+        elif creating_user is None:
+            pass
+        else:
+            # TODO: consult per-user permissions (not implemented yet)
+            pass
+
+        kind = rubric_data["kind"]
         if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
@@ -76,32 +100,64 @@ class RubricService:
         return rubric
 
     @transaction.atomic
-    def modify_rubric(self, key: str, rubric_data: Dict) -> Rubric:
+    def modify_rubric(
+        self,
+        key: str,
+        rubric_data: dict[str, Any],
+        *,
+        modifying_user: User | None = None,
+    ) -> Rubric:
         """Modify a rubric.
 
         Args:
             key: a sequence of ints that uniquely identify a specific rubric.
             rubric_data: data for a rubric submitted by a web request.
 
+        Keyword Args:
+            modifying_user: who is trying to modify the rubric.  This might
+                differ from the "owner" of the rubric, i.e., the ``username``
+                field inside the ``rubric_data``.  If you pass None (default)
+                no checking will be done (probably for internal use).
+
         Returns:
             The modified rubric instance.
 
         Exceptions:
             ValueError: wrong "kind" or invalid rubric data.
+            PermissionDenied: user does not have permission to modify.
+                This could be "this user" or "all users".
         """
         username = rubric_data.pop("username")
-        user = User.objects.get(
-            username=username
-        )  # TODO: prevent different users from modifying rubrics?
+        user = User.objects.get(username=username)
         rubric_data["user"] = user.pk
 
-        kind = rubric_data["kind"]
+        anyone_can_modify_rubrics = False
+        no_one_can_modify_rubrics = False
 
+        if anyone_can_modify_rubrics:
+            pass
+        elif no_one_can_modify_rubrics:
+            raise PermissionDenied(
+                "No users are allowed to modify rubrics on this server"
+            )
+        elif modifying_user is None:
+            pass
+        else:
+            # TODO: consult per-user permissions (not implemented yet)
+            # For now, we have only the default case: users can modify their own rubrics
+            if username != modifying_user:
+                raise PermissionDenied(
+                    f"You ({modifying_user}) are not allowed to modify"
+                    f' rubrics created by other users (here "{user}")'
+                )
+
+        kind = rubric_data["kind"]
         if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
         try:
-            rubric = Rubric.objects.get(key=key)
+            # silly to lock all of them?  Can one select for update after get?
+            rubric = Rubric.objects.select_for_update().get(key=key)
             serializer = RubricSerializer(rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
@@ -111,10 +167,10 @@ class RubricService:
 
         return rubric_instance
 
-    def get_rubrics(self, *, question: Union[None, str] = None) -> List[Dict]:
+    def get_rubrics(self, *, question: str | None = None) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question number.
 
-        Args:
+        Keyword Args:
             question: question number or None for all.
 
         Returns:
@@ -183,7 +239,7 @@ class RubricService:
         self._build_special_rubrics(spec, username)
         return True
 
-    def _build_special_rubrics(self, spec: Dict, username: str) -> None:
+    def _build_special_rubrics(self, spec: dict[str, Any], username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in range(1, 1 + spec["numberOfQuestions"]):
@@ -285,7 +341,7 @@ class RubricService:
                 n += 1
         return n
 
-    def get_rubric_pane(self, user: User, question: int) -> Dict:
+    def get_rubric_pane(self, user: User, question: int) -> dict:
         """Gets a rubric pane for a user.
 
         Args:
@@ -300,7 +356,7 @@ class RubricService:
             return {}
         return pane.data
 
-    def update_rubric_pane(self, user: User, question: int, data: Dict) -> None:
+    def update_rubric_pane(self, user: User, question: int, data: dict) -> None:
         """Updates a rubric pane for a user.
 
         Args:
@@ -312,7 +368,7 @@ class RubricService:
         pane.data = data
         pane.save()
 
-    def check_rubric(self, rubric_data: Dict) -> None:
+    def check_rubric(self, rubric_data: dict[str, Any]) -> None:
         """Check rubric data to ensure the data is consistent.
 
         Args:

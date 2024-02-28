@@ -1604,6 +1604,7 @@ class RubricWidget(QWidget):
         if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
+            # TODO: how catches the 403 permissions error?
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
 
