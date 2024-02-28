@@ -365,6 +365,9 @@ class BaseMessenger:
 
         Returns:
             The version string of the server.
+
+        Raises:
+            PlomAPIException: server is too old (or maybe just non-existent.
         """
         s = self._start()
         if self.webplom is not None:
@@ -410,8 +413,8 @@ class BaseMessenger:
             Key-value pairs of information about the server software.
 
         Exceptions:
-            TODO: maybe older servers don't have this API; they would
-                respond with 404.
+            PlomAPIException: 404, maybe there is no server, or its too
+                old to support the server info API call.
         """
         with self.SRmutex:
             try:
@@ -419,6 +422,10 @@ class BaseMessenger:
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
+                if response.status_code == 404:
+                    raise PlomAPIException(
+                        f"Server info not found: server too old?\n{e}"
+                    ) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     # ------------------------
