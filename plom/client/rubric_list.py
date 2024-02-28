@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -1591,11 +1591,22 @@ class RubricWidget(QWidget):
         msg = SimpleQuestion(
             self,
             "<p>You did not create this rubric "
-            f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
+            f"(it was created by &ldquo;{com['username']}&rdquo;)."
+            "Depending on server settings, you may not be allowed to modify it "
+            "(TODO: display server settings here).</p>"
             "Do you want to make a copy and edit that instead?",
         )
-        if msg.exec() == QMessageBox.StandardButton.No:
+        msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        msg.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
+        msg.addButton("(try to) &Edit anyway", QMessageBox.ButtonRole.ActionRole)
+        msg.exec()
+        clicked = msg.clickedButton()
+        if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
+        if "copy" not in clicked.text().casefold():
+            self._new_or_edit_rubric(com, edit=True, index=index)
+            return
+
         com = com.copy()  # don't muck-up the original
         newmeta = [com["meta"]] if com["meta"] else []
         newmeta.append(
