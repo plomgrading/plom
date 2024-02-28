@@ -343,6 +343,7 @@ pylint:
   script:
     - pylint plom
     - pylint plom_server
+    - pylint contrib
   allow_failure: true
 
 

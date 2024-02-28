@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 """Make a custom version map.
 
@@ -17,7 +17,7 @@ between versions 3 and 4 for papers 200-500 (the second sitting).
 
 from math import remainder
 
-from plom.create.version_map_utils import _version_map_to_csv
+from plom.version_maps import version_map_to_csv
 
 
 if __name__ == "__main__":
@@ -37,4 +37,4 @@ if __name__ == "__main__":
             row = {q: 3 for q in range(1, num_questions + 1)}
         qvmap[n] = row
     print(qvmap)
-    _version_map_to_csv(qvmap, "custom_question_version_map.csv")
+    version_map_to_csv(qvmap, "custom_question_version_map.csv")
