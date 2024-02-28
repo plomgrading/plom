@@ -5,7 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.urls import reverse
 

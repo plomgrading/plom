@@ -220,7 +220,6 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         try:
             scanner._remove_bundle(bundle_id)
         except PlomBundleLockedException:
-            _bundle = scanner.get_bundle_from_pk(bundle_id)
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )

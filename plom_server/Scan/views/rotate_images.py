@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import reverse
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
