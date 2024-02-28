@@ -434,12 +434,10 @@ class ScanCastService:
         eximg.save()
 
     @transaction.atomic
-    def assign_extra_page_from_bundle_timestamp_and_order(
-        self, user_obj, timestamp, bundle_order, paper_number, question_list
+    def assign_extra_page_from_bundle_pk_and_order(
+        self, user_obj, bundle_id, bundle_order, paper_number, question_list
     ):
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.assign_extra_page(
             user_obj, bundle_obj, bundle_order, paper_number, question_list
         )
@@ -490,27 +488,25 @@ class ScanCastService:
         )
 
     @transaction.atomic
-    def clear_extra_page_info_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
+    def clear_extra_page_info_from_bundle_pk_and_order(
+        self, user_obj, bundle_id, bundle_order
     ):
         """A wrapper around clear_image_type.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle
             bundle_order: (int) Bundle order of a page.
 
         Returns:
             None.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
@@ -551,27 +547,25 @@ class ScanCastService:
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
-    def extralise_image_type_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
+    def extralise_image_type_from_bundle_pk_and_order(
+        self, user_obj, bundle_id, bundle_order
     ):
         """A wrapper around extralise_image_type_from_bundle cmd.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle.
             bundle_order: (int) Bundle order of a page.
 
         Returns:
             None.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         try:
             img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
@@ -656,10 +650,10 @@ class ScanCastService:
         )
 
     @transaction.atomic
-    def knowify_image_from_bundle_timestamp_and_order(
+    def knowify_image_from_bundle_pk_and_order(
         self,
         user_obj,
-        bundle_timestamp,
+        bundle_id,
         bundle_order,
         paper_number,
         page_number,
@@ -667,13 +661,13 @@ class ScanCastService:
         """A wrapper around knowify_image_from_bundle cmd.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle
             bundle_order: (int) Bundle order of a page.
             paper_number: (int) Set image as known-page with this paper number
             page_number: (int) Set image as known-page with this page number
@@ -682,7 +676,7 @@ class ScanCastService:
             None.
         """
         bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
+            pk=bundle_id,
         )
         if not bundle_obj.stagingimage_set.filter(bundle_order=bundle_order).exists():
             raise ValueError(f"Cannot find an image at order {bundle_order}")

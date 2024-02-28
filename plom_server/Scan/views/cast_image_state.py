@@ -25,12 +25,9 @@ from plom.plom_exceptions import PlomBundleLockedException
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
-    def post(
-        self, request: HttpRequest, *, timestamp: float, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             # TODO: Eventually bundle_id will be the arg, Issue #2621
-            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
             ScanCastService().discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
@@ -38,7 +35,7 @@ class DiscardImageView(ScannerRequiredView):
             raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -48,7 +45,7 @@ class DiscardImageView(ScannerRequiredView):
 
 class DiscardAllUnknownsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
+        self, request: HttpRequest, *, bundle_id: int, pop_index: int | None
     ) -> HttpResponse:
         """View that discards all unknowns from the given bundle.
 
@@ -57,8 +54,6 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
         image-index.
         """
         try:
-            # TODO: Eventually bundle_id will be the arg, Issue #2621
-            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
             ScanCastService().discard_all_unknowns_from_bundle_id(
                 request.user, bundle_id
             )
@@ -66,7 +61,7 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         if pop_index is None:
@@ -83,12 +78,8 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
-    def post(
-        self, request: HttpRequest, *, timestamp: float, index: int
-    ) -> HttpResponse:
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
-            # TODO: Eventually bundle_id will be the arg, Issue #2621
-            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
             ScanCastService().unknowify_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
@@ -96,7 +87,7 @@ class UnknowifyImageView(ScannerRequiredView):
             raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -106,17 +97,15 @@ class UnknowifyImageView(ScannerRequiredView):
 
 class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
+        self, request: HttpRequest, *, bundle_id: int, pop_index: int | None
     ) -> HttpResponse:
         """View that casts all discards in the given bundle as unknowns.
 
-        Notice that it optionally takes the index so that when the
+        Notice that it optionally takes the page-index so that when the
         page is refreshed it can display the correct calling
         image-index.
         """
         try:
-            # TODO: Eventually bundle_id will be the arg, Issue #2621
-            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
             ScanCastService().unknowify_all_discards_from_bundle_id(
                 request.user, bundle_id
             )
@@ -124,7 +113,7 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
             raise Http404(e)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         if pop_index is None:
@@ -141,18 +130,18 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
 class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
-    def get(self, request, timestamp, index):
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int):
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
 
         try:
             check_bundle_object_is_neither_locked_nor_pushed(bundle)
         except PlomBundleLockedException:
             # bounce user back to scanner home page if not allowed to change things
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         n_pages = scanner.get_n_images(bundle)
@@ -165,7 +154,8 @@ class KnowifyImageView(ScannerRequiredView):
             {
                 "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
-                "timestamp": timestamp,
+                "bundle_id": bundle_id,
+                "timestamp": bundle.timestamp,
                 "index": index,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
@@ -187,7 +177,7 @@ class KnowifyImageView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/knowify_image.html", context)
 
-    def post(self, request, timestamp, index):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int):
         # TODO - improve this form processing
 
         knowify_page_data = request.POST
@@ -219,17 +209,15 @@ class KnowifyImageView(ScannerRequiredView):
                 """<div class="alert alert-danger">Select a page</div>"""
             )
 
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
         try:
-            ScanCastService().knowify_image_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, paper_number, page_number
+            ScanCastService().knowify_image_from_bundle_pk_and_order(
+                request.user, bundle_id, index, paper_number, page_number
             )
         except ValueError as err:
             return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -240,7 +228,7 @@ class KnowifyImageView(ScannerRequiredView):
 class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
-    def post(self, request, timestamp, index):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int):
         # TODO - improve this form processing
 
         extra_page_data = request.POST
@@ -271,16 +259,13 @@ class ExtraliseImageView(ScannerRequiredView):
                     """<span class="alert alert-danger">At least one question</span>"""
                 )
 
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
-
         try:
-            ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
-                request.user, timestamp, index, paper_number, question_list
+            ScanCastService().assign_extra_page_from_bundle_pk_and_order(
+                request.user, bundle_id, index, paper_number, question_list
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ValueError as e:
             return HttpResponse(
@@ -291,32 +276,28 @@ class ExtraliseImageView(ScannerRequiredView):
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
-    def put(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+    def put(self, request: HttpRequest, *, bundle_id: int, index: int):
         try:
-            ScanCastService().extralise_image_type_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            ScanCastService().extralise_image_type_from_bundle_pk_and_order(
+                request.user, bundle_id, index
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
-    def delete(self, request, timestamp, index):
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+    def delete(self, request: HttpRequest, *, bundle_id: int, index: int):
         try:
-            ScanCastService().clear_extra_page_info_from_bundle_timestamp_and_order(
-                request.user, timestamp, index
+            ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
+                request.user, bundle_id, index
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(

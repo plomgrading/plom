@@ -285,9 +285,9 @@ class ScanService:
         return StagingBundle.objects.get(pk=pk)
 
     @transaction.atomic
-    def get_image(self, timestamp, index):
-        """Get an image from the database from bundle-timestamp, and index."""
-        bundle = self.get_bundle_from_timestamp(timestamp)
+    def get_image(self, bundle_id: int, index: int):
+        """Get an image from the database from bundle-id, and index."""
+        bundle = self.get_bundle_from_pk(bundle_id)
         return StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
@@ -994,7 +994,8 @@ class ScanService:
             pages[img.bundle_order] = {
                 "status": img.image_type.lower(),
                 "info": {},
-                "order": f"{img.bundle_order}".zfill(n_digits),  # order is 1-indexed
+                # order is 1-indexed
+                "order": f"{img.bundle_order}".zfill(n_digits),
                 "rotation": img.rotation,
                 "n_qr_read": len(img.parsed_qr),
             }
@@ -1123,7 +1124,8 @@ class ScanService:
         img = bundle_obj.stagingimage_set.get(bundle_order=index)
         current_page = {
             "status": img.image_type.lower(),
-            "order": f"{img.bundle_order}".zfill(n_digits),  # order is 1-indexed
+            # order is 1-indexed
+            "order": f"{img.bundle_order}".zfill(n_digits),
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
         }

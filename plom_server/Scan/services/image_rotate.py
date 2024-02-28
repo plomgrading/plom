@@ -15,16 +15,16 @@ from .util import update_thumbnail_after_rotation
 
 class ImageRotateService:
     @transaction.atomic
-    def rotate_image_from_bundle_timestamp_and_order(
+    def rotate_image_from_bundle_pk_and_order(
         self,
-        bundle_timestamp,
+        bundle_id,
         bundle_order,
         angle,
     ):
         """A wrapper around rotate_image_cmd.
 
         Args:
-            bundle_timestamp: (float) The timestamp of the bundle.
+            bundle_id: (int) The pk of the bundle.
             bundle_order: (int) Bundle order of a page.
 
         Returns:
@@ -34,7 +34,7 @@ class ImageRotateService:
             PlomBundleLockedException: when the bundle is pushed or push-locked
             ValueError: when no image at that order in the bundle
         """
-        bundle_obj = StagingBundle.objects.get(timestamp=bundle_timestamp)
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
 
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
