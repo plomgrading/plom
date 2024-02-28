@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from __future__ import annotations
@@ -192,6 +192,39 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def discard_all_unknowns_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        """Discard all unknown pages in the given bundle."""
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        unknown_images = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.UNKNOWN
+        ).select_related("unknownstagingimage")
+        # see 'select_for_update' docs - you have to be careful with nullable relations.
+        unknown_images_locked = unknown_images.select_for_update().exclude(
+            unknownstagingimage=None
+        )
+
+        # now that we have the unknowns, remove associated data and create associated discard info.
+        for img in unknown_images_locked:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.unknownstagingimage.delete()
+            img.image_type = StagingImage.DISCARD
+            DiscardStagingImage.objects.create(
+                staging_image=img,
+                discard_reason=f"Unknown page discarded by {user_obj.username}",
+            )
+            img.save()
+
+    @transaction.atomic
     def unknowify_image_type_from_bundle_id_and_order(
         self, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
@@ -306,6 +339,36 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def unknowify_all_discards_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        """Cast all discard pages in the given bundle as unknowns."""
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        discard_images = bundle_obj.stagingimage_set.select_related(
+            "discardstagingimage"
+        ).filter(image_type=StagingImage.DISCARD)
+        # be careful locking with nullable relations - see select_for_update docs.
+        discard_images_locked = discard_images.select_for_update().exclude(
+            discardstagingimage=None
+        )
+
+        # now that we have the discards, remove associated data and create associated unknown info.
+        for img in discard_images_locked:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.discardstagingimage.delete()
+            img.image_type = StagingImage.UNKNOWN
+            UnknownStagingImage.objects.create(staging_image=img)
+            img.save()
+
+    @transaction.atomic
     def assign_extra_page(
         self, user_obj, bundle_obj, bundle_order, paper_number, question_list
     ):
@@ -329,7 +392,7 @@ class ScanCastService:
             question_list (list)
 
         Raises:
-            ValueError: can't find things.
+            ValueError: can't find things, or extra page already has information.
 
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
@@ -346,13 +409,26 @@ class ScanCastService:
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
-            img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            img_locked = (
+                bundle_obj.stagingimage_set.filter(
+                    bundle_order=bundle_order, image_type=StagingImage.EXTRA
+                )
+                .select_related("extrastagingimage")
+                .select_for_update()
+                .exclude(extrastagingimage=None)
+                .get()
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
 
-        eximg = img.extrastagingimage
+        eximg = img_locked.extrastagingimage
+
+        # Throw value error if data has already been set.
+        if (eximg.paper_number is not None) or eximg.question_list:
+            raise ValueError(
+                "Cannot overwrite existing extra-page info; potentially another user has set data."
+            )
+
         eximg.paper_number = paper_number
         eximg.question_list = question_list
         eximg.save()

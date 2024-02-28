@@ -3,6 +3,8 @@
 # Copyright (C) 2023-2024 Andrew Rechntizer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
@@ -44,6 +46,40 @@ class DiscardImageView(ScannerRequiredView):
         )
 
 
+class DiscardAllUnknownsHTMXView(ScannerRequiredView):
+    def post(
+        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
+    ) -> HttpResponse:
+        """View that discards all unknowns from the given bundle.
+
+        Notice that it optionally takes the index so that when the
+        page is refreshed it can display the correct calling
+        image-index.
+        """
+        try:
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().discard_all_unknowns_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
+        if pop_index is None:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+            )
+        else:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+                + f"?pop={pop_index}"
+            )
+
+
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
@@ -66,6 +102,40 @@ class UnknowifyImageView(ScannerRequiredView):
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
+
+
+class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
+    def post(
+        self, request: HttpRequest, *, timestamp: float, pop_index: int | None
+    ) -> HttpResponse:
+        """View that casts all discards in the given bundle as unknowns.
+
+        Notice that it optionally takes the index so that when the
+        page is refreshed it can display the correct calling
+        image-index.
+        """
+        try:
+            # TODO: Eventually bundle_id will be the arg, Issue #2621
+            bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
+            ScanCastService().unknowify_all_discards_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[timestamp])
+            )
+
+        if pop_index is None:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+            )
+        else:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_thumbnails", args=[bundle_id])
+                + f"?pop={pop_index}"
+            )
 
 
 class KnowifyImageView(ScannerRequiredView):
@@ -211,6 +281,10 @@ class ExtraliseImageView(ScannerRequiredView):
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[timestamp])
+            )
+        except ValueError as e:
+            return HttpResponse(
+                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
             )
 
         return HttpResponseClientRedirect(

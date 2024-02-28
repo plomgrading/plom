@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.urls import path
@@ -20,9 +20,11 @@ from .views import (
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
     DiscardImageView,
+    DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
     KnowifyImageView,
     UnknowifyImageView,
+    UnknowifyAllDiscardsHTMXView,
     RotateImageClockwise,
     RotateImageCounterClockwise,
     RotateImageOneEighty,
@@ -102,9 +104,19 @@ urlpatterns = [
         name="discard_image",
     ),
     path(
+        "discard_unknowns/<timestamp>/<int:pop_index>/",
+        DiscardAllUnknownsHTMXView.as_view(),
+        name="discard_all_unknowns",
+    ),
+    path(
         "unknowify/<timestamp>/<int:index>/",
         UnknowifyImageView.as_view(),
         name="unknowify_image",
+    ),
+    path(
+        "unknowify_discards/<timestamp>/<int:pop_index>/",
+        UnknowifyAllDiscardsHTMXView.as_view(),
+        name="unknowify_all_discards",
     ),
     path(
         "knowify/<timestamp>/<int:index>/",
