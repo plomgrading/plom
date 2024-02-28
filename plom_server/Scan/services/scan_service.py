@@ -657,7 +657,7 @@ class ScanService:
 
     @transaction.atomic
     def staging_bundle_status_cmd(self):
-        bundles = StagingBundle.objects.all()
+        bundles = StagingBundle.objects.all().order_by("slug")
 
         bundle_status = []
         status_header = (
