@@ -22,11 +22,7 @@ class DemoProcessesService:
 
         # TODO: Issue #2926:  where should these live?  And there are three
         # hardcoded here but seems to me the toml could specify something else...
-        for fname in [
-            "fake_bundle1.pdf",
-            "fake_bundle2.pdf",
-            "fake_bundle3.pdf",
-        ]:
+        for fname in Path(".").glob("fake_*bundle*.pdf"):
             Path(fname).unlink(missing_ok=True)
 
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
