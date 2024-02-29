@@ -4,6 +4,9 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
+from __future__ import annotations
+from typing import Any
+
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,10 +20,10 @@ class ImageRotateService:
     @transaction.atomic
     def rotate_image_from_bundle_pk_and_order(
         self,
-        bundle_id,
-        bundle_order,
-        angle,
-    ):
+        bundle_id: int,
+        bundle_order: int,
+        angle: int,
+    ) -> None:
         """A wrapper around rotate_image_cmd.
 
         Args:
@@ -46,7 +49,9 @@ class ImageRotateService:
         self._rotate_image(staging_img.pk, angle)
 
     @transaction.atomic
-    def rotate_image_cmd(self, username, bundle_name, bundle_order):
+    def rotate_image_cmd(
+        self, username: str, bundle_name: str, bundle_order: int
+    ) -> None:
         try:
             User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -71,7 +76,7 @@ class ImageRotateService:
         self._rotate_image(staging_img.pk, angle=-90)
 
     @transaction.atomic
-    def _rotate_image(self, staging_img_pk, angle, **kwargs):
+    def _rotate_image(self, staging_img_pk: int, angle: int, **kwargs: Any) -> None:
         try:
             staging_img = StagingImage.objects.get(pk=staging_img_pk)
         except ObjectDoesNotExist:

@@ -12,7 +12,7 @@ from ..models import StagingImage, StagingThumbnail, StagingBundle
 from plom.plom_exceptions import PlomBundleLockedException
 
 
-def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj):
+def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj: StagingBundle) -> None:
     """Raise PlomBundleLockedException exception if bundle is push-locked or pushed."""
     if bundle_obj.is_push_locked:
         raise PlomBundleLockedException("Bundle is push-locked - it cannot be modified")
@@ -20,7 +20,7 @@ def check_bundle_object_is_neither_locked_nor_pushed(bundle_obj):
         raise PlomBundleLockedException("Bundle is pushed - it cannot be modified")
 
 
-def check_any_bundle_push_locked():
+def check_any_bundle_push_locked() -> None:
     """Raise PlomBundleLockedException exception when **any** bundle is push-locked."""
     if StagingBundle.objects.filter(is_push_locked=True).exists():
         raise PlomBundleLockedException(
@@ -28,7 +28,7 @@ def check_any_bundle_push_locked():
         )
 
 
-def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int):
+def update_thumbnail_after_rotation(staging_img: StagingImage, angle: int) -> None:
     """Once staging image has been rotated by angle, update the corresponding thumbnail."""
     thumb_obj = staging_img.stagingthumbnail
     thumb_name = Path(thumb_obj.image_file.path).name

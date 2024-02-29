@@ -36,7 +36,8 @@ class QRErrorService:
 
         # lists of various image types
         no_qr_imgs = []  # no qr-codes could be read
-        error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
+        # indicative of a serious error (eg inconsistent qr-codes)
+        error_imgs = []
         extra_imgs = []  # extra-page
         scrap_imgs = []  # scrap-page
         # keep a dict of tpv to image_pk of known-images. is {tpv: [pk1, pk2, pk3,...]}
@@ -161,7 +162,7 @@ class QRErrorService:
             ValueError: describing various inconsistencies.
         """
 
-        def is_list_inconsistent(lst: list) -> bool:
+        def is_list_inconsistent(lst: list[Any]) -> bool:
             """Helper function to test data consistency."""
             return any([X != lst[0] for X in lst])
 
@@ -241,11 +242,6 @@ class QRErrorService:
 
         return True
 
-    def get_tpv(self, parsed_qr_dict):
+    def get_tpv(self, parsed_qr_dict: dict[str, dict[str, str]]) -> str:
         # since we know the codes are consistent, it is sufficient to check just one.
-        # note - a little python hack to get **any** value from a dict
-        return next(iter(parsed_qr_dict.values()))["tpv"]
-
-    # --------------------------
-    # hacked up to here....
-    # --------------------------
+        return list(parsed_qr_dict.values())[0]["tpv"]
