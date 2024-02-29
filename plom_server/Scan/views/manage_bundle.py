@@ -5,10 +5,11 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
-from django.http import HttpResponse, Http404, FileResponse
+from django.http import HttpResponse, Http404, FileResponse, HttpRequest
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -18,7 +19,7 @@ from ..services import ScanService
 class GetBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
         scanner = ScanService()
         image = scanner.get_image(bundle_id, index)
 
@@ -26,7 +27,7 @@ class GetBundleImageView(ScannerRequiredView):
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-    def build_context(self, *, bundle_id: int | None = None):
+    def build_context(self, *, bundle_id: int | None = None) -> dict[str, Any]:
         """Build a context for a particular page of a bundle.
 
         Keyword Args:
@@ -74,7 +75,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request, *, bundle_id: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         """Get a page of thumbnails with manipulations options for a bundle.
 
         Args:
@@ -99,7 +100,7 @@ class BundleThumbnailsView(ScannerRequiredView):
 class GetBundleThumbnailView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request, *, bundle_id: int, index: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         """Get a thumbnail view for a particular position in a bundle.
 
         Args:
@@ -125,7 +126,7 @@ class GetBundleThumbnailView(ScannerRequiredView):
 class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -170,7 +171,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
-    def get(self, request: HttpResponse, *, bundle_id):
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
         bundle = ScanService().get_bundle_from_pk(bundle_id)
         context.update({"slug": bundle.slug})

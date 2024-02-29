@@ -7,9 +7,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import arrow
+from datetime import datetime
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
@@ -31,7 +31,7 @@ from plom.plom_exceptions import PlomBundleLockedException
 class ScannerHomeView(ScannerRequiredView):
     """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
 
-    def build_context(self):
+    def build_context(self) -> dict[str, Any]:
         context = super().build_context()
         scanner = ScanService()
         mss = ManageScanService()
@@ -95,11 +95,11 @@ class ScannerHomeView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request) -> HttpResponse:
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         return render(request, "Scan/home.html", context)
 
-    def post(self, request) -> HttpResponse:
+    def post(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -128,7 +128,7 @@ class ScannerHomeView(ScannerRequiredView):
 class GetBundleView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
 
         bundle = scanner.get_bundle_from_pk(bundle_id)
@@ -140,7 +140,7 @@ class GetBundleView(ScannerRequiredView):
 class GetStagedBundleFragmentView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request, *, bundle_id: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         """Rendered fragment of a staged but not pushed bundle.
 
         Args:

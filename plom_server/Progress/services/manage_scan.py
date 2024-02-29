@@ -29,20 +29,20 @@ from Scan.models import StagingBundle
 class ManageScanService:
     """Functions for overseeing pushed papers."""
 
-    def get_total_fixed_pages(self):
+    def get_total_fixed_pages(self) -> int:
         """Return the total number of fixed pages."""
-        return FixedPage.objects.all().count()
+        return FixedPage.objects.count()
 
-    def get_total_mobile_pages(self):
+    def get_total_mobile_pages(self) -> int:
         """Return the total number of mobile pages.
 
         Note that an image used for multiple questions will be counted
         with multiplicity.
         """
-        return MobilePage.objects.all().count()
+        return MobilePage.objects.count()
 
     @transaction.atomic
-    def get_number_of_scanned_pages(self):
+    def get_number_of_scanned_pages(self) -> int:
         """Return the number of pages scanned and validated.
 
         Note that any mobile page used in multiple questions is
@@ -52,12 +52,12 @@ class ManageScanService:
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
-    def get_total_test_papers(self):
+    def get_total_test_papers(self) -> int:
         """Return the total number of test-papers in the exam."""
         return Paper.objects.all().count()
 
     @transaction.atomic
-    def get_number_completed_test_papers(self):
+    def get_number_completed_test_papers(self) -> int:
         """Return a dict of completed papers and their fixed/mobile pages.
 
         A paper is complete when it either has **all** its fixed
@@ -125,7 +125,7 @@ class ManageScanService:
         return False
 
     @transaction.atomic
-    def get_all_completed_test_papers(self):
+    def get_all_completed_test_papers(self) -> dict[int, dict[str, Any]]:
         """Return dict of test-papers that have been completely scanned.
 
         A paper is complete when it either has **all** its fixed
@@ -178,7 +178,7 @@ class ManageScanService:
         # in a specified order, and ref the image in those mobile-pages
         # we do all this prefetching.
 
-        complete = {}
+        complete: dict[int, dict[str, Any]] = {}
         for paper in all_fixed_present:
             complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
@@ -210,7 +210,7 @@ class ManageScanService:
         return complete
 
     @transaction.atomic
-    def get_all_incomplete_test_papers(self):
+    def get_all_incomplete_test_papers(self) -> dict[int, dict[str, Any]]:
         """Return a dict of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
@@ -239,7 +239,7 @@ class ManageScanService:
             "mobilepage_set__image",
         )
 
-        incomplete = {}
+        incomplete: dict[int, dict[str, Any]] = {}
         for paper in some_but_not_all_fixed_present:
             incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
@@ -269,7 +269,7 @@ class ManageScanService:
         return incomplete
 
     @transaction.atomic
-    def get_number_incomplete_test_papers(self):
+    def get_number_incomplete_test_papers(self) -> int:
         """Return the number of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
@@ -288,7 +288,7 @@ class ManageScanService:
         return some_but_not_all_fixed_present.count()
 
     @transaction.atomic
-    def get_number_unused_test_papers(self):
+    def get_number_unused_test_papers(self) -> int:
         """Return the number of test-papers that are usused.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
@@ -305,7 +305,7 @@ class ManageScanService:
         return no_images_at_all.count()
 
     @transaction.atomic
-    def get_all_unused_test_papers(self):
+    def get_all_unused_test_papers(self) -> list[int]:
         """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
@@ -321,7 +321,7 @@ class ManageScanService:
         return sorted([paper.paper_number for paper in no_images_at_all])
 
     @transaction.atomic
-    def get_all_used_test_papers(self):
+    def get_all_used_test_papers(self) -> list[int]:
         """Return a list of paper-numbers of all used test-papers. Is sorted into paper-number order.
 
         A paper is used when it has at least one fixed page image or any mobile page.
@@ -338,7 +338,7 @@ class ManageScanService:
         return sorted([paper.paper_number for paper in has_some_image])
 
     @transaction.atomic
-    def get_page_image(self, test_paper, index):
+    def get_page_image(self, test_paper: int, index: int) -> Image:
         """Return a page-image.
 
         Args:
@@ -349,16 +349,16 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    def get_number_pushed_bundles(self):
+    def get_number_pushed_bundles(self) -> int:
         """Return the number of pushed bundles."""
         return Bundle.objects.all().count()
 
-    def get_number_unpushed_bundles(self):
+    def get_number_unpushed_bundles(self) -> int:
         """Return the number of uploaded, but not yet pushed, bundles."""
         return StagingBundle.objects.filter(pushed=False).count()
 
     @transaction.atomic
-    def get_pushed_bundles_list(self):
+    def get_pushed_bundles_list(self) -> list[dict[str, Any]]:
         """Return a list of all pushed bundles."""
         bundle_list = []
         for bundle in Bundle.objects.all().prefetch_related(
@@ -378,10 +378,9 @@ class ManageScanService:
             )
         return bundle_list
 
-    def get_pushed_image(self, img_pk):
+    def get_pushed_image(self, img_pk: int) -> Image | None:
         try:
-            img = Image.objects.get(pk=img_pk)
-            return img
+            return Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
             return None
 
@@ -432,7 +431,7 @@ class ManageScanService:
             )
 
     @transaction.atomic
-    def get_discarded_images(self):
+    def get_discarded_images(self) -> list[dict[str, Any]]:
         discards = []
 
         for img in (
@@ -501,7 +500,7 @@ class ManageScanService:
         return page_images
 
     @transaction.atomic
-    def get_papers_missing_fixed_pages(self):
+    def get_papers_missing_fixed_pages(self) -> list[tuple[int, list[int]]]:
         """Return a list of the missing fixed pages in papers.
 
         Returns:

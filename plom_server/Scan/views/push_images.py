@@ -18,7 +18,7 @@ from plom.plom_exceptions import PlomBundleLockedException
 class PushAllPageImages(ScannerRequiredView):
     """Push all page-images that pass the QR validation checks."""
 
-    def post(self, request: HttpResponse, *, bundle_id: int):
+    def post(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         try:
             ScanService().push_bundle_to_server(bundle_id, request.user)
         except PlomBundleLockedException:

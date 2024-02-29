@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
@@ -14,7 +14,7 @@ from ..services import ScanService
 class ReadQRcodesView(ScannerRequiredView):
     """Read QR codes of all pages in a bundle."""
 
-    def post(self, request: HttpResponse, *, bundle_id: int):
+    def post(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
 
