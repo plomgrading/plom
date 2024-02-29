@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import pathlib
 import random
-from statistics import mode
 import tempfile
 from typing import Any, List
 
@@ -25,7 +24,6 @@ from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.scansToImages import make_mucked_up_jpeg
-from plom.scan.readQRCodes import checkQRsValid
 from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
