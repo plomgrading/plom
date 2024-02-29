@@ -10,6 +10,7 @@ from typing import Any
 
 import cv2 as cv
 import numpy as np
+from pathlib import Path
 from PIL import Image
 
 from plom.scan import rotate
@@ -229,7 +230,7 @@ class PageImageProcessor:
 
     def create_affine_transformation_matrix(
         self, qr_dict: dict[str, dict[str, Any]]
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
         Args:
@@ -277,8 +278,15 @@ class PageImageProcessor:
         )
 
     def extract_rect_region(
-        self, image_path, orientation, qr_dict, top, bottom, left, right
-    ):
+        self,
+        image_path: str | Path,
+        orientation: int,
+        qr_dict: dict[Any, Any],
+        top_f: float,
+        bottom_f: float,
+        left_f: float,
+        right_f: float,
+    ) -> Image.Image:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
@@ -287,12 +295,12 @@ class PageImageProcessor:
                 the affine transform.
             qr_dict (dict): parsed QR code data, used to calculate the
                 transformation.
-            top (float): fractional value in roughly in ``[0, 1]``
+            top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
                 the image.
-            left (float): same as top, defining the left boundary
-            bottom (float): same as top, defining the bottom boundary
-            right (float): same as top, defining the right boundary
+            left_f (float): same as top, defining the left boundary
+            bottom_f (float): same as top, defining the bottom boundary
+            right_f (float): same as top, defining the right boundary
 
         Returns:
             PIL.Image: the requested subsection of the original image, or
@@ -312,10 +320,10 @@ class PageImageProcessor:
             flags=cv.INTER_LINEAR,
         )
 
-        top = round(self.TOP + top * self.HEIGHT)
-        bottom = round(self.TOP + bottom * self.HEIGHT)
-        left = round(self.LEFT + left * self.WIDTH)
-        right = round(self.LEFT + right * self.WIDTH)
+        top = round(self.TOP + top_f * self.HEIGHT)
+        bottom = round(self.TOP + bottom_f * self.HEIGHT)
+        left = round(self.LEFT + left_f * self.WIDTH)
+        right = round(self.LEFT + right_f * self.WIDTH)
 
         if top < 0:
             warn(f"Top input of {top} is outside of image pixel range, capping at 0.")

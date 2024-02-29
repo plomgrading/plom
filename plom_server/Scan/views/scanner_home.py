@@ -113,6 +113,7 @@ class ScannerHomeView(ScannerRequiredView):
             number_of_pages = data["number_of_pages"]
             timestamp = datetime.timestamp(time_uploaded)
 
+            # Note that this does take a timestamp instead of a bundle_pk, because that bundle does not yet exist in the database and so has no pk.
             ScanService().upload_bundle(
                 bundle_file, slug, user, timestamp, pdf_hash, number_of_pages
             )
@@ -127,15 +128,10 @@ class ScannerHomeView(ScannerRequiredView):
 class GetBundleView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
-    def get(self, request, timestamp: str | float) -> HttpResponse:
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
 
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
         return FileResponse(
             bundle.pdf_file, filename=f"{bundle.slug}.pdf", as_attachment=True
         )
@@ -222,11 +218,10 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
         scanner = ScanService()
         try:
-            scanner._remove_bundle(bundle_id)
+            scanner._remove_bundle_by_pk(bundle_id)
         except PlomBundleLockedException:
-            _bundle = scanner.get_bundle_from_pk(bundle_id)
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[_bundle.timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
         except ObjectDoesNotExist as e:
             raise Http404(e)

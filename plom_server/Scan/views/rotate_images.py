@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import reverse
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
@@ -20,21 +20,14 @@ from plom.plom_exceptions import PlomBundleLockedException
 
 
 class RotateImageClockwise(ScannerRequiredView):
-    def post(self, request, timestamp, index):
+    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
         try:
-            timestamp = float(timestamp)
-        except ValueError:
-            return Http404()
-
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
-        try:
-            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                timestamp, index, angle=-90
+            ImageRotateService().rotate_image_from_bundle_pk_and_order(
+                bundle_id, index, angle=-90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -43,21 +36,14 @@ class RotateImageClockwise(ScannerRequiredView):
 
 
 class RotateImageCounterClockwise(ScannerRequiredView):
-    def post(self, request, timestamp, index):
+    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
         try:
-            timestamp = float(timestamp)
-        except ValueError:
-            return Http404()
-
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
-        try:
-            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                timestamp, index, angle=90
+            ImageRotateService().rotate_image_from_bundle_pk_and_order(
+                bundle_id, index, angle=90
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -66,21 +52,14 @@ class RotateImageCounterClockwise(ScannerRequiredView):
 
 
 class RotateImageOneEighty(ScannerRequiredView):
-    def post(self, request, timestamp, index):
+    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
         try:
-            timestamp = float(timestamp)
-        except ValueError:
-            return Http404()
-
-        # TODO: Eventually bundle_id will be the arg, Issue #2621
-        bundle_id = ScanService().get_bundle_pk_from_timestamp(timestamp)
-        try:
-            ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-                timestamp, index, angle=180
+            ImageRotateService().rotate_image_from_bundle_pk_and_order(
+                bundle_id, index, angle=180
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRedirect(
@@ -91,14 +70,9 @@ class RotateImageOneEighty(ScannerRequiredView):
 class GetRotatedBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
         scanner = ScanService()
-        img_obj = scanner.get_image(timestamp, index)
+        img_obj = scanner.get_image(bundle_id, index)
 
         theta = img_obj.rotation
         return HttpResponse(

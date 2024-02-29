@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -27,13 +27,14 @@ class StagingImage(models.Model):
     ERROR = ImageTypeChoices.ERROR
 
     def _staging_image_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+        # save bundle as "//media/staging/bundles/username/bundle-pk/page_images/filename"
         return "staging/bundles/{}/{}/page_images/{}".format(
-            self.bundle.user.username, self.bundle.timestamp, filename
+            self.bundle.user.username, self.bundle.pk, filename
         )
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
-    bundle_order = models.PositiveIntegerField(null=True)  # starts from 1 not zero.
+    # starts from 1 not zero.
+    bundle_order = models.PositiveIntegerField(null=True)
     image_file = models.ImageField(upload_to=_staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
@@ -44,10 +45,10 @@ class StagingImage(models.Model):
 
 class StagingThumbnail(models.Model):
     def _staging_thumbnail_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+        # save bundle as "//media/staging/bundles/username/bundle-pk/page_images/filename"
         return "staging/bundles/{}/{}/page_images/{}".format(
             self.staging_image.bundle.user.username,
-            self.staging_image.bundle.timestamp,
+            self.staging_image.bundle.pk,
             filename,
         )
 

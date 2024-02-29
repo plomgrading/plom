@@ -18,14 +18,9 @@ from ..services import ScanService
 class GetBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
         scanner = ScanService()
-        image = scanner.get_image(timestamp, index)
+        image = scanner.get_image(bundle_id, index)
 
         return FileResponse(image.image_file)
 
@@ -130,16 +125,11 @@ class GetBundleThumbnailView(ScannerRequiredView):
 class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
+    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
-        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        bundle = scanner.get_bundle_from_pk(bundle_id)
         n_pages = scanner.get_n_images(bundle)
 
         if index < 0 or index > n_pages:
@@ -151,7 +141,8 @@ class GetBundlePageFragmentView(ScannerRequiredView):
                 "is_pushed": bundle.pushed,
                 "is_push_locked": bundle.is_push_locked,
                 "slug": bundle.slug,
-                "timestamp": timestamp,
+                "bundle_id": bundle.pk,
+                "timestamp": bundle.timestamp,
                 "index": index,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
@@ -179,8 +170,8 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
-    def get(self, request, timestamp):
+    def get(self, request: HttpResponse, *, bundle_id):
         context = self.build_context()
-        bundle = ScanService().get_bundle_from_timestamp(timestamp)
+        bundle = ScanService().get_bundle_from_pk(bundle_id)
         context.update({"slug": bundle.slug})
         return render(request, "Scan/bundle_is_locked.html", context)
