@@ -1604,7 +1604,11 @@ class RubricWidget(QWidget):
         if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
-            # TODO: how catches the 403 permissions error?
+            com = com.copy()
+            # append a changelog of sorts to the meta field
+            newmeta = [com["meta"]] if com["meta"] else []
+            newmeta.append(f'Modified by "{self.username}"')
+            com["meta"] = "\n".join(newmeta)
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
 
