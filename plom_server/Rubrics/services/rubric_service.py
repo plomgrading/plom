@@ -73,6 +73,7 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
+        # Hardcoded for now but these could be configurable later
         anyone_can_create_rubrics = False
         no_one_can_create_rubrics = False
 
@@ -130,6 +131,7 @@ class RubricService:
         user = User.objects.get(username=rubric_data.pop("username"))
         rubric_data["user"] = user.pk
 
+        # Hardcoded for now but these could be configurable later
         anyone_can_modify_rubrics = False
         no_one_can_modify_rubrics = False
 
