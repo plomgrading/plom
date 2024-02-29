@@ -1601,6 +1601,8 @@ class RubricWidget(QWidget):
         msg.addButton("(try to) &Edit anyway", QMessageBox.ButtonRole.ActionRole)
         msg.exec()
         clicked = msg.clickedButton()
+        if not clicked:
+            return
         if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
