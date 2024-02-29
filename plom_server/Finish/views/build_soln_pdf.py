@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 from django.http import FileResponse, StreamingHttpResponse
@@ -10,8 +10,8 @@ from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
-from ..services import BuildSolutionService
 from Papers.services import SpecificationService
+from ..services import BuildSolutionService
 
 
 class BuildSolutionsView(ManagerRequiredView):
@@ -94,9 +94,9 @@ class StartAllBuildSoln(ManagerRequiredView):
         short_name = slugify(SpecificationService.get_shortname())
         zgen = BuildSolutionService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
-        response[
-            "Content-Disposition"
-        ] = f"attachment; filename={short_name}_solutions.zip"
+        response["Content-Disposition"] = (
+            f"attachment; filename={short_name}_solutions.zip"
+        )
         return response
 
 
