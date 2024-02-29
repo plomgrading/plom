@@ -61,11 +61,12 @@ class MmodifyRubric(APIView):
                 guaranteed to be the "private key" in the database.  In
                 fact currently it is not.
 
-        On success, responds with a string, the rubric id/key.
-        Responds with 409 (or in some cases 404) if the rubric is not found.
-        Responds with 406 not acceptable if the proposed data is invalid
-        in some way.  Responds with 403 if you are not allowed to modify
-        this rubric.
+        Returns:
+            On success, responds with a string, the rubric id/key.
+            Responds with 409 (or in some cases 404) if the rubric is
+            not found.  Responds with 406 not acceptable if the proposed
+            data is invalid in some way.  Responds with 403 if you are
+            not allowed to modify this rubric.
         """
         rs = RubricService()
         try:
@@ -74,7 +75,7 @@ class MmodifyRubric(APIView):
             )
             return Response(rubric.key, status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
-            # 404 would be reasonble, but for now do 409 like Legacy does.
+            # 404 would be reasonable, but for now do 409 like Legacy does.
             # Django also intercepts invalid (too short) keys before we see them
             # and uses 404 for those (see the regex in ``mark_patterns.py``).
             return _error_response(
