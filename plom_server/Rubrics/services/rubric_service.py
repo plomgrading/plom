@@ -127,8 +127,7 @@ class RubricService:
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
         """
-        username = rubric_data.pop("username")
-        user = User.objects.get(username=username)
+        user = User.objects.get(username=rubric_data.pop("username"))
         rubric_data["user"] = user.pk
 
         anyone_can_modify_rubrics = False
@@ -145,7 +144,7 @@ class RubricService:
         else:
             # TODO: consult per-user permissions (not implemented yet)
             # For now, we have only the default case: users can modify their own rubrics
-            if username != modifying_user:
+            if user != modifying_user:
                 raise PermissionDenied(
                     f'You ("{modifying_user}") are not allowed to modify'
                     f' rubrics created by other users (here "{user}")'
