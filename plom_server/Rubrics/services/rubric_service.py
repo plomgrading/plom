@@ -155,8 +155,7 @@ class RubricService:
         if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
-        # silly to lock all of them?  Can one select for update after get?
-        rubric = Rubric.objects.select_for_update().get(key=key)
+        rubric = Rubric.objects.filter(key=key).select_for_update().get()
         serializer = RubricSerializer(rubric, data=rubric_data)
         serializer.is_valid()
         serializer.save()
