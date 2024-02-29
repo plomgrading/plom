@@ -1807,7 +1807,7 @@ class Annotator(QWidget):
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
     def modifyRubric(self, key, updated_rubric):
-        """Ask server to create a new rubric with data supplied."""
+        """Ask server to modify an existing rubric with the new data supplied."""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
 
     def viewSolutions(self):

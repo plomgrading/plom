@@ -30,12 +30,12 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion
+from .useful_classes import SimpleQuestion, ErrorMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
-from plom.plom_exceptions import PlomInconsistentRubric
+from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric, PlomNoRubric
 
 
 log = logging.getLogger("annotr")
@@ -1671,7 +1671,17 @@ class RubricWidget(QWidget):
         new_rubric = arb.gimme_rubric_data()
 
         if edit:
-            key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+            try:
+                key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+            except PlomConflict as e:
+                ErrorMsg(self, f"No permission to modify that rubric: {e}").exec()
+                return
+            except PlomInconsistentRubric as e:
+                ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
+                return
+            except PlomNoRubric as e:
+                ErrorMsg(self, f"{e}").exec()
+                return
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert key == new_rubric["id"]

@@ -147,7 +147,7 @@ class RubricService:
             # For now, we have only the default case: users can modify their own rubrics
             if username != modifying_user:
                 raise PermissionDenied(
-                    f"You ({modifying_user}) are not allowed to modify"
+                    f'You ("{modifying_user}") are not allowed to modify'
                     f' rubrics created by other users (here "{user}")'
                 )
 
@@ -155,16 +155,12 @@ class RubricService:
         if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
-        try:
-            # silly to lock all of them?  Can one select for update after get?
-            rubric = Rubric.objects.select_for_update().get(key=key)
-            serializer = RubricSerializer(rubric, data=rubric_data)
-            serializer.is_valid()
-            serializer.save()
-            rubric_instance = serializer.instance
-        except ObjectDoesNotExist:
-            raise ValidationError("No rubric exists.")
-
+        # silly to lock all of them?  Can one select for update after get?
+        rubric = Rubric.objects.select_for_update().get(key=key)
+        serializer = RubricSerializer(rubric, data=rubric_data)
+        serializer.is_valid()
+        serializer.save()
+        rubric_instance = serializer.instance
         return rubric_instance
 
     def get_rubrics(self, *, question: str | None = None) -> list[dict[str, Any]]:

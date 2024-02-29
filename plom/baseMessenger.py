@@ -30,9 +30,11 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
+    PlomInconsistentRubric,
     PlomNoClasslist,
     PlomNoMoreException,
     PlomNoPaper,
+    PlomNoRubric,
     PlomNoSolutionException,
     PlomRangeException,
     PlomServerNotReady,
@@ -1050,13 +1052,15 @@ class BaseMessenger:
         Args:
             rubric (dict): the modified rubric info as dict.
 
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
         Returns:
             str: the key/id of the rubric.  Currently should be unchanged
-            from what you sent.
+            from what you sent.  But this behaviour might change in the future.
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomInconsistentRubric:
+            PlomNoRubric:
+            PlomSeriousException: Other error types, possible needs fix or debugging.
         """
         self.SRmutex.acquire()
         try:
@@ -1076,10 +1080,15 @@ class BaseMessenger:
                 raise PlomAuthenticationException(response.reason) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(response.reason) from None
-            elif response.status_code == 406:
-                raise PlomSeriousException(response.reason) from None
+            elif response.status_code == 403:
+                raise PlomConflict(response.reason) from None
+            elif response.status_code == 404:
+                # arectnizer dislikes 404 but Django uses for non-12-digit key
+                raise PlomNoRubric(response.reason) from None
             elif response.status_code == 409:
-                raise PlomSeriousException(response.reason) from None
+                raise PlomNoRubric(response.reason) from None
+            elif response.status_code == 406:
+                raise PlomInconsistentRubric(response.reason) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"
             ) from None

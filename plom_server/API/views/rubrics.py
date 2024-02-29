@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -58,9 +59,10 @@ class MmodifyRubric(APIView):
         Keyword Args:
             key: the "key" or "id" of the rubric to modify.  This is not
                 guaranteed to be the "private key" in the database.  In
-                fact current it is not.
+                fact currently it is not.
 
         On success, responds with a string, the rubric id/key.
+        Responds with 409 (or in some cases 404) if the rubric is not found.
         Responds with 406 not acceptable if the proposed data is invalid
         in some way.  Responds with 403 if you are not allowed to modify
         this rubric.
@@ -71,7 +73,15 @@ class MmodifyRubric(APIView):
                 key, request.data["rubric"], modifying_user=request.user
             )
             return Response(rubric.key, status=status.HTTP_200_OK)
-        except (ValidationError, NotImplementedError) as e:
+        except ObjectDoesNotExist as e:
+            # 404 would be reasonble, but for now do 409 like Legacy does.
+            # Django also intercepts invalid (too short) keys before we see them
+            # and uses 404 for those (see the regex in ``mark_patterns.py``).
             return _error_response(
-                f"Invalid rubric data: {e}", status.HTTP_406_NOT_ACCEPTABLE
+                f"Rubric with key {key} not found: {e}", status.HTTP_409_CONFLICT
             )
+        except PermissionDenied as e:
+            # not catching this would work, but we don't get the full error message
+            return _error_response(e, status.HTTP_403_FORBIDDEN)
+        except (ValidationError, NotImplementedError) as e:
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)

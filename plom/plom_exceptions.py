@@ -138,6 +138,10 @@ class PlomNoClasslist(PlomServerNotReady):
     pass
 
 
+class PlomNoRubric(PlomSeriousException):
+    pass
+
+
 class PlomInconsistentRubric(PlomSeriousException):
     pass
 
