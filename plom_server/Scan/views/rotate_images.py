@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest, Http404
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ScannerRequiredView
@@ -20,7 +20,7 @@ from plom.plom_exceptions import PlomBundleLockedException
 
 
 class RotateImageClockwise(ScannerRequiredView):
-    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ImageRotateService().rotate_image_from_bundle_pk_and_order(
                 bundle_id, index, angle=-90
@@ -36,7 +36,7 @@ class RotateImageClockwise(ScannerRequiredView):
 
 
 class RotateImageCounterClockwise(ScannerRequiredView):
-    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ImageRotateService().rotate_image_from_bundle_pk_and_order(
                 bundle_id, index, angle=90
@@ -52,7 +52,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
 
 
 class RotateImageOneEighty(ScannerRequiredView):
-    def post(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ImageRotateService().rotate_image_from_bundle_pk_and_order(
                 bundle_id, index, angle=180
@@ -70,7 +70,7 @@ class RotateImageOneEighty(ScannerRequiredView):
 class GetRotatedBundleImageView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int):
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         scanner = ScanService()
         img_obj = scanner.get_image(bundle_id, index)
 
@@ -86,8 +86,10 @@ class GetRotatedBundleImageView(ScannerRequiredView):
 class GetRotatedPushedImageView(ScannerRequiredView):
     """Return an image from a pushed bundle."""
 
-    def get(self, request, img_pk):
+    def get(self, request: HttpRequest, img_pk: int) -> HttpResponse:
         img_obj = ManageScanService().get_pushed_image(img_pk)
+        if img_obj is None:
+            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
 
         theta = img_obj.rotation
         return HttpResponse(

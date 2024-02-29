@@ -130,7 +130,7 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
 class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
-    def get(self, request: HttpRequest, *, bundle_id: int, index: int):
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -177,7 +177,7 @@ class KnowifyImageView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/knowify_image.html", context)
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         # TODO - improve this form processing
 
         knowify_page_data = request.POST
@@ -228,7 +228,7 @@ class KnowifyImageView(ScannerRequiredView):
 class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int):
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         # TODO - improve this form processing
 
         extra_page_data = request.POST
@@ -276,7 +276,7 @@ class ExtraliseImageView(ScannerRequiredView):
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
-    def put(self, request: HttpRequest, *, bundle_id: int, index: int):
+    def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
             ScanCastService().extralise_image_type_from_bundle_pk_and_order(
                 request.user, bundle_id, index
@@ -290,7 +290,9 @@ class ExtraliseImageView(ScannerRequiredView):
             reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
         )
 
-    def delete(self, request: HttpRequest, *, bundle_id: int, index: int):
+    def delete(
+        self, request: HttpRequest, *, bundle_id: int, index: int
+    ) -> HttpResponse:
         try:
             ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
                 request.user, bundle_id, index
