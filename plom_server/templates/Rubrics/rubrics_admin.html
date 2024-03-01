@@ -31,12 +31,14 @@
                 {% endif %}
             </p>
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
-            <a class="btn btn-primary disabled" href="">Create additional "demo" rubrics</a>
+            <a class="btn btn-secondary disabled" href="">Create additional "demo" rubrics</a>
             <p>Explanations go here, not implemented yet in the UI.</p>
-            <a class="btn btn-primary disabled" href="">Download all rubrics to a local file</a>
+            <a class="btn btn-secondary disabled" href="">Download all rubrics to a local file</a>
             <p>Not implemented yet in the UI.</p>
-            <a class="btn btn-primary disabled" href="">Upload rubrics from a file</a>
+            <a class="btn btn-secondary disabled" href="">Upload rubrics from a file</a>
             <p>Not implemented yet in the UI.</p>
+            <a class="btn btn-primary" href="{% url 'rubrics_access' %}">Control access to rubrics&hellip;</a>
+            <p>Which users can create and modify rubrics.</p>
             <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
             <p>(A destructive action; you'll need to confirm it on the next screen)</p>
         </div>

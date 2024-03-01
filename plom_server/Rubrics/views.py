@@ -92,6 +92,34 @@ class RubricWipePageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
+class RubricAccessPageView(ManagerRequiredView):
+    """Highlevel control of who can modify/create rubrics."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_access.html"
+        context = self.build_context()
+        context.update(
+            {
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_access.html"
+        context = self.build_context()
+        context.update(
+            {
+                "short_name": SpecificationService.get_shortname(),
+                "long_name": SpecificationService.get_longname(),
+                "n_rubrics": len(RubricService().get_all_rubrics()),
+            }
+        )
+        return render(request, template_name, context=context)
+
+
 class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
