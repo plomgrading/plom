@@ -10,6 +10,7 @@ from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
+from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
 from .forms import RubricAdminForm, RubricWipeForm
@@ -97,8 +98,6 @@ class RubricAccessPageView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
-        # TODO: move this to Base?
-        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
         settings = SettingsModel.load()
 
@@ -134,8 +133,6 @@ class RubricAccessPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_access.html"
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
-
-        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
         settings = SettingsModel.load()
 

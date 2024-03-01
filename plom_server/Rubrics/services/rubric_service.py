@@ -24,6 +24,7 @@ from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
+from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
@@ -73,9 +74,6 @@ class RubricService:
             rubric_data["user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
-
-        # TODO: move this to Base?
-        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
         s = SettingsModel.load()
         if creating_user is None:
@@ -131,9 +129,6 @@ class RubricService:
         """
         user = User.objects.get(username=rubric_data.pop("username"))
         rubric_data["user"] = user.pk
-
-        # TODO: move this to Base?
-        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
         s = SettingsModel.load()
         if modifying_user is None:

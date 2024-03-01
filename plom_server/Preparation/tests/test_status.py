@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -12,7 +13,7 @@ from ..models import PapersPrintedSettingModel
 
 
 class PapersPrintedSettingTests(TestCase):
-    def test_can_be_set_as_printed(self):
+    def test_can_be_set_as_printed(self) -> None:
         """Test can_status_be_set_true.
 
         Should return false if the Paper table is empty.
@@ -23,7 +24,7 @@ class PapersPrintedSettingTests(TestCase):
 
         self.assertTrue(PapersPrinted.can_status_be_set_true())
 
-    def test_can_be_set_false(self):
+    def test_can_be_set_false(self) -> None:
         """Test can_status_be_set_false.
 
         Should return false if the Bundle table isn't empty.
@@ -34,7 +35,7 @@ class PapersPrintedSettingTests(TestCase):
 
         self.assertFalse(PapersPrinted.can_status_be_set_false())
 
-    def test_papers_have_been_printed(self):
+    def test_papers_have_been_printed(self) -> None:
         """Test the have_been_printed getter function."""
         self.assertFalse(PapersPrinted.have_papers_been_printed())
 
@@ -44,7 +45,7 @@ class PapersPrintedSettingTests(TestCase):
 
         self.assertTrue(PapersPrinted.have_papers_been_printed())
 
-    def test_papers_printed(self):
+    def test_papers_printed(self) -> None:
         """Test the papers_printed setter function."""
         baker.make(Paper)
 
@@ -61,7 +62,7 @@ class PapersPrintedSettingTests(TestCase):
         setting_obj.refresh_from_db()
         self.assertFalse(setting_obj.have_printed_papers)
 
-    def test_setting_raises_papers(self):
+    def test_setting_raises_papers(self) -> None:
         """Make sure the setting raises an error on being set true while the papers database is empty."""
         with self.assertRaises(RuntimeError):
             PapersPrinted.set_papers_printed(True)
@@ -69,7 +70,7 @@ class PapersPrintedSettingTests(TestCase):
         baker.make(Paper)
         PapersPrinted.set_papers_printed(True)
 
-    def test_setting_raises_bundles(self):
+    def test_setting_raises_bundles(self) -> None:
         """Make sure the setting raises an error on being set false while bundles are in the database."""
         baker.make(Paper)
         PapersPrinted.set_papers_printed(True)

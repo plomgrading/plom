@@ -24,14 +24,11 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
-# TODO: rename as ServerSettingsModel
+# TODO: consider moving this field to Base.SettingsModel
 class PapersPrintedSettingModel(SingletonBaseModel):
     """Set this once user has printed papers."""
 
     have_printed_papers = models.BooleanField(default=False, null=False)
-    # TODO: intention is a tri-state: "permissive", "per-user", "locked"
-    who_can_create_rubrics = models.TextField(default="permissive")
-    who_can_modify_rubrics = models.TextField(default="per-user")
 
 
 # ---------------------------------
