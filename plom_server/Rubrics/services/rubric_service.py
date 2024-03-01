@@ -50,8 +50,9 @@ class RubricService:
             rubric_data: data for a rubric submitted by a web request.
 
         Keyword Args:
-            creating_user: who is trying to create the rubric.  None
+            creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
+                ``None`` also bypasses the rubric access settings.
 
         Returns:
             The created and saved rubric instance.
@@ -73,18 +74,18 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
-        # Hardcoded for now but these could be configurable later
-        anyone_can_create_rubrics = False
-        no_one_can_create_rubrics = False
+        # TODO: move this to Base?
+        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
-        if anyone_can_create_rubrics:
+        s = SettingsModel.load()
+        if creating_user is None:
             pass
-        elif no_one_can_create_rubrics:
+        elif s.who_can_create_rubrics == "permissive":
+            pass
+        elif s.who_can_create_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to create rubrics on this server"
             )
-        elif creating_user is None:
-            pass
         else:
             # TODO: consult per-user permissions (not implemented yet)
             pass
@@ -131,18 +132,18 @@ class RubricService:
         user = User.objects.get(username=rubric_data.pop("username"))
         rubric_data["user"] = user.pk
 
-        # Hardcoded for now but these could be configurable later
-        anyone_can_modify_rubrics = False
-        no_one_can_modify_rubrics = False
+        # TODO: move this to Base?
+        from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
-        if anyone_can_modify_rubrics:
+        s = SettingsModel.load()
+        if modifying_user is None:
             pass
-        elif no_one_can_modify_rubrics:
+        elif s.who_can_modify_rubrics == "permissive":
+            pass
+        elif s.who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
             )
-        elif modifying_user is None:
-            pass
         else:
             # TODO: consult per-user permissions (not implemented yet)
             # For now, we have only the default case: users can modify their own rubrics

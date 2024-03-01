@@ -92,18 +92,6 @@ class RubricWipePageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-# helper function
-def _checks_from_anyone_no_one(anyone, no_one):
-    if anyone and no_one:
-        raise RuntimeError('Should not be possible to set both "anyone" and "no one"')
-    elif anyone:
-        return (True, False, False)
-    elif no_one:
-        return (False, False, True)
-    else:
-        return (False, True, False)
-
-
 class RubricAccessPageView(ManagerRequiredView):
     """Highlevel control of who can modify/create rubrics."""
 
@@ -112,14 +100,21 @@ class RubricAccessPageView(ManagerRequiredView):
         # TODO: move this to Base?
         from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
-        s = SettingsModel.load()
+        settings = SettingsModel.load()
 
-        create_checked = _checks_from_anyone_no_one(
-            s.anyone_can_create_rubrics, s.no_one_can_create_rubrics
-        )
-        modify_checked = _checks_from_anyone_no_one(
-            s.anyone_can_modify_rubrics, s.no_one_can_modify_rubrics
-        )
+        if settings.who_can_create_rubrics == "permissive":
+            create_checked = (True, False, False)
+        elif settings.who_can_create_rubrics == "locked":
+            create_checked = (False, False, True)
+        else:
+            create_checked = (False, True, False)
+
+        if settings.who_can_modify_rubrics == "permissive":
+            modify_checked = (True, False, False)
+        elif settings.who_can_modify_rubrics == "locked":
+            modify_checked = (False, False, True)
+        else:
+            modify_checked = (False, True, False)
 
         context = self.build_context()
         context.update(
@@ -137,53 +132,38 @@ class RubricAccessPageView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
-        # todo: error handling for int conversion?
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
 
         from Preparation.models import PapersPrintedSettingModel as SettingsModel
 
-        s = SettingsModel.load()
+        settings = SettingsModel.load()
 
-        if create == "permissive":
-            s.anyone_can_create_rubrics = True
-            s.no_one_can_create_rubrics = False
-            s.save()
-        elif create == "default":
-            s.anyone_can_create_rubrics = False
-            s.no_one_can_create_rubrics = False
-            s.save()
-        elif create == "locked":
-            s.anyone_can_create_rubrics = False
-            s.no_one_can_create_rubrics = True
-            s.save()
-        else:
+        if create not in ("permissive", "per-user", "locked"):
             # TODO: 406?
             raise ValueError(f"create={create} is invalid")
+        settings.who_can_create_rubrics = create
+        settings.save()
 
-        create_checked = _checks_from_anyone_no_one(
-            s.anyone_can_create_rubrics, s.no_one_can_create_rubrics
-        )
-
-        if modify == "permissive":
-            s.anyone_can_modify_rubrics = True
-            s.no_one_can_modify_rubrics = False
-            s.save()
-        elif modify == "default":
-            s.anyone_can_modify_rubrics = False
-            s.no_one_can_modify_rubrics = False
-            s.save()
-        elif modify == "lockdown":
-            s.anyone_can_modify_rubrics = False
-            s.no_one_can_modify_rubrics = True
-            s.save()
-        else:
+        if modify not in ("permissive", "per-user", "locked"):
             # TODO: 406?
             raise ValueError(f"modify={modify} is invalid")
+        settings.who_can_modify_rubrics = modify
+        settings.save()
 
-        modify_checked = _checks_from_anyone_no_one(
-            s.anyone_can_modify_rubrics, s.no_one_can_modify_rubrics
-        )
+        if settings.who_can_create_rubrics == "permissive":
+            create_checked = (True, False, False)
+        elif settings.who_can_create_rubrics == "locked":
+            create_checked = (False, False, True)
+        else:
+            create_checked = (False, True, False)
+
+        if settings.who_can_modify_rubrics == "permissive":
+            modify_checked = (True, False, False)
+        elif settings.who_can_modify_rubrics == "locked":
+            modify_checked = (False, False, True)
+        else:
+            modify_checked = (False, True, False)
 
         context = self.build_context()
         context.update(
