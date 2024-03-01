@@ -100,9 +100,7 @@ class RubricAccessPageView(ManagerRequiredView):
         context = self.build_context()
         context.update(
             {
-                "short_name": SpecificationService.get_shortname(),
-                "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "successful_post": False,
             }
         )
         return render(request, template_name, context=context)
@@ -112,9 +110,7 @@ class RubricAccessPageView(ManagerRequiredView):
         context = self.build_context()
         context.update(
             {
-                "short_name": SpecificationService.get_shortname(),
-                "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "successful_post": True,
             }
         )
         return render(request, template_name, context=context)
