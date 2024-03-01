@@ -25,7 +25,24 @@ def generate_unique_key():
 
 
 class Rubric(models.Model):
-    """Represents a marker's comment and mark delta for a particular question."""
+    """Represents a marker's comment and mark delta for a particular question.
+
+    Fields:
+        key: is a unique key/id for accessing or uniquely identifying
+            a rubric.  It is not generally (and currently isn't) the
+            same as the ``pk``, which is an internal field, and
+            implementation-specific.
+        user: which user "owns" this Rubric.  Generally, currently, who
+            first created it, although in some circumstances other users
+            can modify it.
+        TODO: document other fields.
+        annotations: a mapping to Annotation objects.  Its many-to-many
+            so that multiple rubrics can link to multiple Annotations.
+        system_rubric: this Rubric was created by or is otherwise
+            important to the functioning of the Plom system.  Probably
+            readonly or at least extreme caution before poking at.
+        published: for future use.
+    """
 
     key = models.TextField(null=False, default=generate_unique_key)
     kind = models.TextField(null=False)
