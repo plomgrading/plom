@@ -112,15 +112,28 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-primary" type="submit">Set rubric access levels</button>
+                <button class="btn btn-primary" type="submit">Set rubric access preferences</button>
+                {% if successful_post %}
+                    <!-- will be hidden in a few seconds by javascript -->
+                    <!-- should be an class-alert but it doesn't size right -->
+                    <div id="my_alert"
+                         class="alert-success fade show d-inline-block ms-1"
+                         role="alert">
+                        <i class="bi bi-check-circle text-success"></i>
+                        Preferences saved
+                    </div>
+                {% endif %}
             </form>
-            <!-- TODO: hide this when user clicks any radio -->
-            {% if successful_post %}
-                <div class="alert alert-success mt-2 mb-0" role="alert">
-                    <i class="bi bi-check-circle text-success"></i>
-                    Preferences set.
-                </div>
-            {% endif %}
         </div>
     </div>
+    <script>
+        // Set a timeout to execute the animation after a few seconds
+        setTimeout(function () {
+            var alert_element = document.getElementById('my_alert');
+	    if (alert_element)  {
+		var bsAlert = new bootstrap.Alert(alert_element);
+		bsAlert.close();
+	    }
+        }, 4000);
+    </script>
 {% endblock main_content %}
