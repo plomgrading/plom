@@ -985,38 +985,11 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def MgetRubrics(self):
-        """Retrieve list of all rubrics from server.
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: any other unexpected error.
-
-        Returns:
-            list: list of dicts, possibly an empty list if server has no
-                rubrics.
-        """
-        with self.SRmutex:
-            try:
-                response = self.get(
-                    "/MK/rubric",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                    },
-                )
-                response.raise_for_status()
-                return response.json()
-            except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException(response.reason) from None
-                raise PlomSeriousException(f"Error getting rubric list: {e}") from None
-
-    def MgetRubricsByQuestion(self, question):
+    def MgetRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         """Retrieve list of all rubrics from server for given question.
 
         Args:
-            question (int)
+            question: ``None`` or omit to get all questions.
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -1027,9 +1000,14 @@ class BaseMessenger:
                 rubrics for this question.
         """
         with self.SRmutex:
+            if question is None:
+                url = "/MK/rubric"
+            else:
+                url = f"/MK/rubric/{question}"
+
             try:
                 response = self.get(
-                    f"/MK/rubric/{question}",
+                    url,
                     json={
                         "user": self.user,
                         "token": self.token,
