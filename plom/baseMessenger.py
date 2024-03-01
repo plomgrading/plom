@@ -996,23 +996,21 @@ class BaseMessenger:
             list: list of dicts, possibly an empty list if server has no
                 rubrics.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/rubric",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/MK/rubric",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Error getting rubric list: {e}") from None
 
     def MgetRubricsByQuestion(self, question):
         """Retrieve list of all rubrics from server for given question.
@@ -1028,23 +1026,21 @@ class BaseMessenger:
             list: list of dicts, possibly an empty list if server has no
                 rubrics for this question.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/MK/rubric/{question}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/MK/rubric/{question}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Error getting rubric list: {e}") from None
 
     def MmodifyRubric(self, key, new_rubric):
         """Ask server to modify a rubric and get key back.
