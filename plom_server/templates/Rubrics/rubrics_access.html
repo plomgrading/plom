@@ -116,17 +116,19 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-primary mt-2" type="submit">Set rubric access preferences</button>
-                {% if successful_post %}
-                    <!-- will be hidden in a few seconds by javascript -->
-                    <!-- should be an class-alert but it doesn't size right -->
-                    <div id="my_alert"
-                         class="alert-success fade show d-inline-block ms-1"
-                         role="alert">
-                        <i class="bi bi-check-circle text-success"></i>
-                        Preferences saved
-                    </div>
-                {% endif %}
+                <div class="mt-4">
+                    <button class="btn btn-primary" type="submit">Set rubric access preferences</button>
+                    {% if successful_post %}
+                        <!-- will be hidden in a few seconds by javascript -->
+                        <!-- should be an class-alert but it doesn't size right -->
+                        <div id="my_alert"
+                             class="alert-success fade show d-inline-block ms-1"
+                             role="alert">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Preferences saved
+                        </div>
+                    {% endif %}
+                </div>
             </form>
         </div>
     </div>
