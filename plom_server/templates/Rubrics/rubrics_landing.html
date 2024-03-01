@@ -13,10 +13,11 @@
     Rubrics
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="card m-2">
-        <div class="card-body">
-            <a class="btn btn-primary" href="{% url 'rubrics_admin' %}">Rubric management</a>
-        </div>
+    <div>
+        <a class="btn btn-primary dinline-block"
+           href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
+        <a class="btn btn-primary dinline-block ms-2"
+           href="{% url 'rubrics_access' %}">Rubric access controls&hellip;</a>
     </div>
     <hr />
     {% comment %} Filter {% endcomment %}

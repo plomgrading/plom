@@ -12,7 +12,10 @@
 {% block main_content %}
     <div class="card m-2">
         <div class="card-body">
-            <p>These options control which users can create and modify existing rubrics.</p>
+            <p>
+                These options provide &ldquo;high-level&rdquo; control over which users
+                can create and modify existing rubrics.
+            </p>
             <form enctype="multipart/form-data"
                   id="form"
                   method="post"
@@ -76,7 +79,7 @@
                                            {% if modify0_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify0">
                                         <strong>Permissive:</strong> any user can modify any rubric.
-                                        TBD: maybe &ldquo;system rubrics&rdquo; cannot be modified.
+                                        <!-- TODO: maybe say "non-system rubrics". -->
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -112,7 +115,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-primary" type="submit">Set rubric access preferences</button>
+                <button class="btn btn-primary mt-2" type="submit">Set rubric access preferences</button>
                 {% if successful_post %}
                     <!-- will be hidden in a few seconds by javascript -->
                     <!-- should be an class-alert but it doesn't size right -->
