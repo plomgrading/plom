@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
@@ -40,6 +40,8 @@ class Rubric(models.Model):
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
+    system_rubric = models.BooleanField(null=False, default=False)
+    published = models.BooleanField(null=False, default=True)
 
 
 class RubricPane(models.Model):
