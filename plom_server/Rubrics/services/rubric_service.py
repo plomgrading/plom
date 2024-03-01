@@ -210,6 +210,23 @@ class RubricService:
         """
         return Rubric.objects.all()
 
+    def get_rubric_count(self) -> int:
+        """How many rubrics in total."""
+        return Rubric.objects.count()
+
+    def get_rubric_by_key(self, rubric_key: str) -> Rubric:
+        """Get a rubric by its key/id.
+
+        Args:
+            rubric_key: which rubric.  Note currently the key/id is not
+                the same as the internal ``pk``.
+
+        Returns:
+            The rubric object.  It is not "selected for update" so should
+            be read-only.
+        """
+        return Rubric.objects.get(key=rubric_key)
+
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
