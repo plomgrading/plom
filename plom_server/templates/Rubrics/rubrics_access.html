@@ -29,8 +29,8 @@
                                            type="radio"
                                            id="create0"
                                            name="create"
-                                           value="0"
-                                           checked />
+                                           value="permissive"
+                                           {% if create0_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="create0">
                                         <strong>Permissive:</strong> any user can create rubrics.
                                     </label>
@@ -40,8 +40,9 @@
                                            type="radio"
                                            id="create1"
                                            name="create"
-                                           value="1"
-                                           disabled />
+                                           value="default"
+                                           disabled
+                                           {% if create1_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="create1">
                                         <strong>Some users</strong> can create rubrics,
                                         depending on their account settings.
@@ -54,7 +55,8 @@
                                            type="radio"
                                            id="create2"
                                            name="create"
-                                           value="2" />
+                                           value="locked"
+                                           {% if create2_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="create2">
                                         <strong>Locked-down:</strong> No users can create rubrics, overriding any per-account settings.
                                         TBD if manager-level users are effected.
@@ -66,8 +68,13 @@
                             <h5>Who can modify rubrics?</h5>
                             <fieldset>
                                 <div class="form-check mt-2">
-                                    <input class="form-check-input" type="radio" id="mod0" name="mod" value="0" />
-                                    <label class="form-check-label" for="mod0">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="modify0"
+                                           name="modify"
+                                           value="permissive"
+                                           {% if modify0_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify0">
                                         <strong>Permissive:</strong> any user can modify any rubric.
                                         TBD: maybe &ldquo;system rubrics&rdquo; cannot be modified.
                                     </label>
@@ -75,31 +82,28 @@
                                 <div class="form-check mt-3 disabled">
                                     <input class="form-check-input"
                                            type="radio"
-                                           id="mod1"
-                                           name="mod"
-                                           value="1"
-                                           disabled />
-                                    <label class="form-check-label" for="mod1">
-                                        <strong>Some users</strong> can modify all non-system rubrics,
-                                        depending on their account settings.
-                                        <em>Not implemented yet,</em>
-                                        but this will eventually be the default setting.
+                                           id="modify1"
+                                           name="modify"
+                                           value="default"
+                                           {% if modify1_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify1">
+                                        Users can modify rubrics <strong>they created.</strong>
+                                        <br />
+                                        <span class="text-muted">
+                                            <strong>Some users</strong> may modify all non-system rubrics,
+                                            depending on their account settings
+                                            <em>(Not implemented yet).</em>
+                                        </span>
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
                                     <input class="form-check-input"
                                            type="radio"
-                                           id="mod2"
-                                           name="mod"
-                                           value="2"
-                                           checked />
-                                    <label class="form-check-label" for="mod2">
-                                        Users can modify rubrics which <strong>they created</strong>.
-                                    </label>
-                                </div>
-                                <div class="form-check mt-3">
-                                    <input class="form-check-input" type="radio" id="mod3" name="mod" value="3" />
-                                    <label class="form-check-label" for="mod3">
+                                           id="modify2"
+                                           name="modify"
+                                           value="locked"
+                                           {% if modify2_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify2">
                                         <strong>Locked-down:</strong> No users can modify rubrics, overriding any per-account settings.
                                         TBD if manager-level users are effected.
                                     </label>
@@ -110,10 +114,11 @@
                 </div>
                 <button class="btn btn-primary" type="submit">Set rubric access levels</button>
             </form>
+            <!-- TODO: hide this when user clicks any radio -->
             {% if successful_post %}
                 <div class="alert alert-success mt-2 mb-0" role="alert">
                     <i class="bi bi-check-circle text-success"></i>
-                    Preferences saved
+                    Preferences set.
                 </div>
             {% endif %}
         </div>

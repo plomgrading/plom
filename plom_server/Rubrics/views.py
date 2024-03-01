@@ -92,25 +92,109 @@ class RubricWipePageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
+# helper function
+def _checks_from_anyone_no_one(anyone, no_one):
+    if anyone and no_one:
+        raise RuntimeError('Should not be possible to set both "anyone" and "no one"')
+    elif anyone:
+        return (True, False, False)
+    elif no_one:
+        return (False, False, True)
+    else:
+        return (False, True, False)
+
+
 class RubricAccessPageView(ManagerRequiredView):
     """Highlevel control of who can modify/create rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
+        # TODO: move this to Base?
+        from Preparation.models import PapersPrintedSettingModel as SettingsModel
+
+        s = SettingsModel.load()
+
+        create_checked = _checks_from_anyone_no_one(
+            s.anyone_can_create_rubrics, s.no_one_can_create_rubrics
+        )
+        modify_checked = _checks_from_anyone_no_one(
+            s.anyone_can_modify_rubrics, s.no_one_can_modify_rubrics
+        )
+
         context = self.build_context()
         context.update(
             {
                 "successful_post": False,
+                "create0_checked": create_checked[0],
+                "create1_checked": create_checked[1],
+                "create2_checked": create_checked[2],
+                "modify0_checked": modify_checked[0],
+                "modify1_checked": modify_checked[1],
+                "modify2_checked": modify_checked[2],
             }
         )
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
+        # todo: error handling for int conversion?
+        create = request.POST.get("create", None)
+        modify = request.POST.get("modify", None)
+
+        from Preparation.models import PapersPrintedSettingModel as SettingsModel
+
+        s = SettingsModel.load()
+
+        if create == "permissive":
+            s.anyone_can_create_rubrics = True
+            s.no_one_can_create_rubrics = False
+            s.save()
+        elif create == "default":
+            s.anyone_can_create_rubrics = False
+            s.no_one_can_create_rubrics = False
+            s.save()
+        elif create == "locked":
+            s.anyone_can_create_rubrics = False
+            s.no_one_can_create_rubrics = True
+            s.save()
+        else:
+            # TODO: 406?
+            raise ValueError(f"create={create} is invalid")
+
+        create_checked = _checks_from_anyone_no_one(
+            s.anyone_can_create_rubrics, s.no_one_can_create_rubrics
+        )
+
+        if modify == "permissive":
+            s.anyone_can_modify_rubrics = True
+            s.no_one_can_modify_rubrics = False
+            s.save()
+        elif modify == "default":
+            s.anyone_can_modify_rubrics = False
+            s.no_one_can_modify_rubrics = False
+            s.save()
+        elif modify == "lockdown":
+            s.anyone_can_modify_rubrics = False
+            s.no_one_can_modify_rubrics = True
+            s.save()
+        else:
+            # TODO: 406?
+            raise ValueError(f"modify={modify} is invalid")
+
+        modify_checked = _checks_from_anyone_no_one(
+            s.anyone_can_modify_rubrics, s.no_one_can_modify_rubrics
+        )
+
         context = self.build_context()
         context.update(
             {
                 "successful_post": True,
+                "create0_checked": create_checked[0],
+                "create1_checked": create_checked[1],
+                "create2_checked": create_checked[2],
+                "modify0_checked": modify_checked[0],
+                "modify1_checked": modify_checked[1],
+                "modify2_checked": modify_checked[2],
             }
         )
         return render(request, template_name, context=context)
