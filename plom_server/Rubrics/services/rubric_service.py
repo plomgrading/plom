@@ -103,7 +103,7 @@ class RubricService:
     def modify_rubric(
         self,
         key: str,
-        rubric_data: dict[str, Any],
+        new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
     ) -> Rubric:
@@ -127,14 +127,24 @@ class RubricService:
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
         """
-        user = User.objects.get(username=rubric_data.pop("username"))
-        rubric_data["user"] = user.pk
+        user = User.objects.get(username=new_rubric_data.pop("username"))
+        new_rubric_data["user"] = user.pk
+
+        kind = new_rubric_data["kind"]
+        if kind not in RubricService.__valid_kinds:
+            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
+
+        rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
         s = SettingsModel.load()
         if modifying_user is None:
             pass
         elif s.who_can_modify_rubrics == "permissive":
-            pass
+            # can modify system rubrics using modifying_user=None
+            if rubric.system_rubric:
+                raise PermissionDenied(
+                    f'You ("{modifying_user}") are not allowed to modify system rubrics'
+                )
         elif s.who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
@@ -148,12 +158,7 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        kind = rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
-
-        rubric = Rubric.objects.filter(key=key).select_for_update().get()
-        serializer = RubricSerializer(rubric, data=rubric_data)
+        serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
         rubric_instance = serializer.instance
@@ -228,10 +233,10 @@ class RubricService:
         if existing_rubrics:
             return False
         spec = SpecificationService.get_the_spec()
-        self._build_special_rubrics(spec, username)
+        self._build_system_rubrics(spec, username)
         return True
 
-    def _build_special_rubrics(self, spec: dict[str, Any], username: str) -> None:
+    def _build_system_rubrics(self, spec: dict[str, Any], username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in range(1, 1 + spec["numberOfQuestions"]):
@@ -248,6 +253,7 @@ class RubricService:
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -265,6 +271,7 @@ class RubricService:
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -282,6 +289,7 @@ class RubricService:
                 "meta": "",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -302,6 +310,7 @@ class RubricService:
                     "meta": "",
                     "tags": "",
                     "username": username,
+                    "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
@@ -316,6 +325,7 @@ class RubricService:
                     "meta": "",
                     "tags": "",
                     "username": username,
+                    "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
