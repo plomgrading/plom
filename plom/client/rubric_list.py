@@ -1693,7 +1693,7 @@ class RubricWidget(QWidget):
             try:
                 key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             except PlomConflict as e:
-                ErrorMsg(self, f"No permission to modify that rubric: {e}").exec()
+                InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
                 ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
