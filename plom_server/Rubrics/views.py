@@ -66,7 +66,7 @@ class RubricWipePageView(ManagerRequiredView):
                 "rubric_wipe_form": form,
                 "short_name": SpecificationService.get_shortname(),
                 "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "n_rubrics": RubricService().get_rubric_count(),
             }
         )
         return render(request, template_name, context=context)
@@ -87,7 +87,7 @@ class RubricWipePageView(ManagerRequiredView):
                 "rubric_wipe_form": form,
                 "short_name": SpecificationService.get_shortname(),
                 "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "n_rubrics": RubricService().get_rubric_count(),
             }
         )
         return render(request, template_name, context=context)
@@ -223,7 +223,7 @@ class RubricItemView(ManagerRequiredView):
         # we need to pad the number with zeros on the left since if the keystarts
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
-        rubric = rs.get_all_rubrics().get(key=rubric_key)
+        rubric = rs.get_rubric_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
@@ -248,7 +248,7 @@ class RubricItemView(ManagerRequiredView):
 
         if form.is_valid():
             rs = RubricService()
-            rubric = rs.get_all_rubrics().get(key=rubric_key)
+            rubric = rs.get_rubric_by_key(rubric_key)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
