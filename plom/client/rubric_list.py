@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion, ErrorMsg
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
@@ -1584,6 +1584,14 @@ class RubricWidget(QWidget):
             return
         com = self.rubrics[index]
 
+        if com["system_rubric"]:
+            InfoMsg(
+                self,
+                "<p>This is a &ldquo;system rubric&rdquo; "
+                "created by Plom itself; the server will probably not "
+                "let you modify it</p>",
+            ).exec()
+            return
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
