@@ -999,6 +999,24 @@ class BaseMessenger:
             list: list of dicts, possibly an empty list if server has no
                 rubrics for this question.
         """
+        if self.is_legacy_server():
+            return self._legacy_getRubrics(question)
+
+        with self.SRmutex:
+            if question is None:
+                url = "/MK/rubric"
+            else:
+                url = f"/MK/rubric/{question}"
+            try:
+                response = self.get_auth(url)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Error getting rubric list: {e}") from None
+
+    def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         with self.SRmutex:
             if question is None:
                 url = "/MK/rubric"
@@ -1014,11 +1032,18 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                return response.json()
+                rubrics = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
+            # monkey-patch new "system_rubric" field into legacy results
+            for r in rubrics:
+                if r["username"] in ("HAL", "manager"):
+                    r["system_rubric"] = True
+                else:
+                    r["system_rubric"] = False
+            return rubrics
 
     def MmodifyRubric(self, key, new_rubric):
         """Ask server to modify a rubric and get key back.
