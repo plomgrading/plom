@@ -1584,35 +1584,35 @@ class RubricWidget(QWidget):
             return
         com = self.rubrics[index]
 
-        if com["system_rubric"]:
-            InfoMsg(
-                self,
-                "<p>This is a &ldquo;system rubric&rdquo; "
-                "created by Plom itself; the server will probably not "
-                "let you modify it</p>",
-            ).exec()
-            return
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
-        # TODO: Displays username instead of preferred name, Issue #3048
-        # TODO: would be nice if this dialog *knew* about the server settings
-        msg = SimpleQuestion(
-            self,
-            "<p>You did not create this rubric "
-            f"(it was created by &ldquo;{com['username']}&rdquo;).  "
-            "Depending on server settings, you might not be allowed to "
-            "modify it.</p>",
-            "Do you want to make a copy and edit that instead?",
+        if com["system_rubric"]:
+            msg = (
+                "<p>This is a &ldquo;system rubric&rdquo; "
+                "created by Plom itself; the server will probably not "
+                "let you modify it.</p>"
+            )
+        else:
+            # TODO: Displays username instead of preferred name, Issue #3048
+            # TODO: would be nice if this dialog *knew* about the server settings
+            msg = (
+                "<p>You did not create this rubric "
+                f"(it was created by &ldquo;{com['username']}&rdquo;).  "
+                "Depending on server settings, you might not be allowed to "
+                "modify it.</p>"
+            )
+        msgbox = SimpleQuestion(
+            self, msg, "Do you want to make a copy and edit that instead?"
         )
-        msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
-        msg.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
-        msg.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
-        msg.exec()
-        clicked = msg.clickedButton()
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
+        msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
         if not clicked:
             return
-        if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
+        if msgbox.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
             com = com.copy()
