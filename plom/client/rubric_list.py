@@ -1611,6 +1611,7 @@ class RubricWidget(QWidget):
         msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
         b = msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
         if not edit_button:
+            assert b is not None
             b.setEnabled(False)
         msgbox.exec()
         clicked = msgbox.clickedButton()
