@@ -1593,6 +1593,7 @@ class RubricWidget(QWidget):
                 "created by Plom itself; the server will probably not "
                 "let you modify it.</p>"
             )
+            edit_button = False
         else:
             # TODO: Displays username instead of preferred name, Issue #3048
             # TODO: would be nice if this dialog *knew* about the server settings
@@ -1602,12 +1603,15 @@ class RubricWidget(QWidget):
                 "Depending on server settings, you might not be allowed to "
                 "modify it.</p>"
             )
+            edit_button = True
         msgbox = SimpleQuestion(
             self, msg, "Do you want to make a copy and edit that instead?"
         )
         msgbox.setStandardButtons(QMessageBox.StandardButton.Cancel)
         msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
-        msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        b = msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        if not edit_button:
+            b.setEnabled(False)
         msgbox.exec()
         clicked = msgbox.clickedButton()
         if not clicked:
