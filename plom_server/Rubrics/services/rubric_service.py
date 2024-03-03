@@ -126,6 +126,7 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
+            ValidationError: collision detected or invalid kind.
         """
         user = User.objects.get(username=new_rubric_data.pop("username"))
         new_rubric_data["user"] = user.pk
@@ -136,6 +137,14 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
+        if not new_rubric_data["_age"] == rubric._age:
+            # TODO: perhaps want a different error to distinguish this?
+            # TODO: record who last modified and when
+            raise ValidationError(
+                f"Your rubric age={new_rubric_data['_age']} does not match "
+                f"database content with age={rubric._age}: most likely your "
+                "edits have collided with those of someone else."
+            )
         s = SettingsModel.load()
         if modifying_user is None:
             pass
@@ -158,6 +167,7 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
+        new_rubric_data["_age"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
@@ -195,6 +205,7 @@ class RubricService:
                 "parameters": r.parameters,
                 "system_rubric": r.system_rubric,
                 "published": r.published,
+                "_age": r._age,
             }
             rubric_data.append(rubric_dict)
 

@@ -42,6 +42,11 @@ class Rubric(models.Model):
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
         published: for future use.
+        _age: a monontonitcally-increasing value used to detect mid-air
+            collisions.  At this point not really intended for clients
+            (hence the underscore).  Modifying a rubric will increase
+            this by one.  If you are messing with this, presumably you
+            are doing something creative/hacky.
     """
 
     key = models.TextField(null=False, default=generate_unique_key)
@@ -59,6 +64,7 @@ class Rubric(models.Model):
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
+    _age = models.IntegerField(null=False, default=0)
 
 
 class RubricPane(models.Model):
