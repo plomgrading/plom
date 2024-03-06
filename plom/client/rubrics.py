@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 import html
 from typing import Any, Dict, List, Optional, Tuple
@@ -246,13 +246,17 @@ def render_rubric_as_html(r):
     """
 
 
-def _diff_line(a, b):
+def _diff_line(a: str, b: str) -> str:
     a = html.escape(a)
     b = html.escape(b)
+    lines = []
+    if a:
+        lines.append(f'<span style="color:#AA0000;"><b>-</b> {a}</span>')
+    if b:
+        lines.append(f'<span style="color:#00AA00;"><b>+</b> {b}</span>')
     return f"""<br />
       <tt>
-        <span style="color:#AA0000;"><b>-</b> {a}</span><br />
-        <span style="color:#00AA00;"><b>+</b> {b}</span>
+        {"<br />".join(lines)}
       </tt>
     """
 
