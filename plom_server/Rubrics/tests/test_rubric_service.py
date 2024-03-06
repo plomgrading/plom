@@ -10,6 +10,7 @@ from django.test import TestCase
 from model_bakery import baker
 from rest_framework.exceptions import ValidationError
 
+from plom.plom_exceptions import PlomConflict
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models.paper_structure import Paper
@@ -481,3 +482,24 @@ class RubricServiceTests(TestCase):
         rubric1.annotations.add(annotation4)
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 4)
+
+    def test_modify_rubric_wrong_age(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+            "_age": 10,
+        }
+        # TODO: create rubric should probably not be modifying its input
+        r = RubricService().create_rubric(rub.copy())
+        key = r.key
+
+        # ok to change if age matches
+        rub.update({"text": "Changed"})
+        RubricService().modify_rubric(key, rub.copy())
+
+        # but its an error if the age does not match
+        rub.update({"_age": 0})
+        with self.assertRaises(PlomConflict):
+            RubricService().modify_rubric(key, rub)
