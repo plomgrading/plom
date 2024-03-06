@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 from datetime import datetime
+import html
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -1708,10 +1709,43 @@ class RubricWidget(QWidget):
                 ErrorMsg(self, f"{e}").exec()
                 return
             except PlomConflict as e:
+                tmp_rubrics = self._parent.getRubricsFromServer()
+                (old_rubric,) = (r for r in self.rubrics if r["id"] == new_rubric["id"])
+                (their_rubric,) = (
+                    r for r in tmp_rubrics if r["id"] == new_rubric["id"]
+                )
+                same, their_diff = diff_rubric(old_rubric, their_rubric)
+                same, our_diff = diff_rubric(old_rubric, new_rubric)
                 # TODO: in the future, show diffs and offer choices
-                InfoMsg(
-                    self, f"Someone else modified that rubric before you: {e}"
+                SimpleQuestion(
+                    self,
+                    f"""
+                        <h3>Rubric change conflict</h3>
+                        <br />
+                        <quote>
+                        <small>
+                        <tt>{html.escape(str(e))}</tt>
+                        </small>
+                        </quote>
+                        <br />
+                        <table><tr>
+                        <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
+                          <h4>Their's</h4>
+                          {render_rubric_as_html(their_rubric)}
+                          <b>changes</b><br />
+                          {their_diff}
+                        </td>
+                        <td style="padding-left: 2ex;">
+                          <h4>Your's</h4>
+                          {render_rubric_as_html(new_rubric)}
+                          <b>changes</b><br />
+                          {our_diff}
+                        </td>
+                        </tr></table>
+                    """,
+                    "Do you want to keep their's or your's?  (TODO: both buttons keep their's for now)",
                 ).exec()
+                # buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
                 return
             # update the rubric in the current internal rubric list
             # make sure that keys match.
