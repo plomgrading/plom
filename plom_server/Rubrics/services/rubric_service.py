@@ -139,6 +139,8 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
+        # default age if missing from incoming data
+        new_rubric_data.setdefault("_age", 0)
         if not new_rubric_data["_age"] == rubric._age:
             # TODO: record who last modified and when
             raise PlomConflict(
