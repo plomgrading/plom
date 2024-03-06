@@ -34,6 +34,7 @@ from plom.plom_exceptions import (
     PlomNoClasslist,
     PlomNoMoreException,
     PlomNoPaper,
+    PlomNoPermission,
     PlomNoRubric,
     PlomNoSolutionException,
     PlomRangeException,
@@ -1059,6 +1060,8 @@ class BaseMessenger:
             PlomAuthenticationException: Authentication error.
             PlomInconsistentRubric:
             PlomNoRubric:
+            PlomNoPermission: you are not allowed to modify the rubric.
+            PlomConflict: two users try to modify the rubric.
             PlomSeriousException: Other error types, possible needs fix or debugging.
         """
         self.SRmutex.acquire()
@@ -1080,14 +1083,16 @@ class BaseMessenger:
             elif response.status_code == 400:
                 raise PlomSeriousException(response.reason) from None
             elif response.status_code == 403:
-                raise PlomConflict(response.reason) from None
+                raise PlomNoPermission(response.reason) from None
             elif response.status_code == 404:
-                # arectnizer dislikes 404 but Django uses for non-12-digit key
-                raise PlomNoRubric(response.reason) from None
-            elif response.status_code == 409:
                 raise PlomNoRubric(response.reason) from None
             elif response.status_code == 406:
                 raise PlomInconsistentRubric(response.reason) from None
+            elif response.status_code == 409:
+                if self.is_legacy_server():
+                    # legacy sends 409 for not-found
+                    raise PlomNoRubric(response.reason) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"
             ) from None

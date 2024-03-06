@@ -24,6 +24,7 @@ from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
+from plom.plom_exceptions import PlomConflict
 from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
@@ -126,7 +127,8 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
-            ValidationError: collision detected or invalid kind.
+            ValidationError: invalid kind, maybe other invalidity.
+            PlomConflict: the new data is too old; someone else modified.
         """
         user = User.objects.get(username=new_rubric_data.pop("username"))
         new_rubric_data["user"] = user.pk
@@ -138,9 +140,8 @@ class RubricService:
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
         if not new_rubric_data["_age"] == rubric._age:
-            # TODO: perhaps want a different error to distinguish this?
             # TODO: record who last modified and when
-            raise ValidationError(
+            raise PlomConflict(
                 f"Your rubric age={new_rubric_data['_age']} does not match "
                 f"database content with age={rubric._age}: most likely your "
                 "edits have collided with those of someone else."
