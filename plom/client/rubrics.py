@@ -308,17 +308,24 @@ def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
         out += _diff_line(p["text"], r["text"])
     else:
         out += _context(r["text"])
-    if p["tags"] != r["tags"]:
+    if p.get("tags") != r.get("tags"):
         rval = False
-        out += _diff_line(p["tags"], r["tags"])
-    if p["versions"] != r["versions"]:
+        out += _diff_line(str(p.get("tags")), str(r.get("tags")))
+    if p.get("versions") != r.get("versions"):
         rval = False
-        out += _diff_compact(str(p["versions"]), str(r["versions"]), label="versions:")
-    if p["parameters"] != r["parameters"]:
+        out += _diff_compact(
+            str(p.get("versions")), str(r.get("versions")), label="versions:"
+        )
+    if p.get("parameters") != r.get("parameters"):
         rval = False
-        out += _diff_line(str(p["parameters"]), str(r["parameters"]))
+        out += _diff_line(str(p.get("parameters")), str(r.get("parameters")))
     if not rval:
-        when = arrow.get(r["modified"]).humanize()
+        mod = r.get("modified")
+        if mod:
+            when = arrow.get(mod).humanize()
+        else:
+            # TODO: or force input to have modified?
+            when = arrow.now().humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
     return rval, out
 
