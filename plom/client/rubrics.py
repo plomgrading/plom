@@ -261,11 +261,11 @@ def _diff_line(a: str, b: str) -> str:
     """
 
 
-def _diff_compact(a, b):
+def _diff_compact(a: str, b: str, *, label: str = "") -> str:
     a = html.escape(a)
     b = html.escape(b)
     return f"""<br />
-      <tt>&nbsp; </tt><span style="color:#AA0000;">{a}</span>
+      <tt>&nbsp; </tt>{label} <span style="color:#AA0000;">{a}</span>
       &rarr;
       <span style="color:#00AA00;">{b}</span>
     """
@@ -280,12 +280,12 @@ def _context(a):
     """
 
 
-def diff_rubric(p, r):
+def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
     """Are two rubrics the same, and a marked up visual representation if not.
 
     Args:
-        p (dict): a previous rubric.
-        r (dict): the current rubric.  We diff from ``p`` to ``q``.
+        p: a previous rubric.
+        r: the current rubric.  We diff from ``p`` to ``r``.
 
     Returns:
         tuple: True/False and an string of HTML.  True means they are
@@ -299,7 +299,6 @@ def diff_rubric(p, r):
     out = ""
     if p["display_delta"] != r["display_delta"]:
         rval = False
-        # out += _diff_helper(p["display_delta"], r["display_delta"])
         out += _diff_compact(p["display_delta"], r["display_delta"])
     else:
         if r["display_delta"] != ".":
@@ -314,7 +313,7 @@ def diff_rubric(p, r):
         out += _diff_line(p["tags"], r["tags"])
     if p["versions"] != r["versions"]:
         rval = False
-        out += _diff_compact(str(p["versions"]), str(r["versions"]))
+        out += _diff_compact(str(p["versions"]), str(r["versions"]), label="versions:")
     if not rval:
         when = arrow.get(r["modified"]).humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
