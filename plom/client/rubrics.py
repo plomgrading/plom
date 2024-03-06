@@ -314,6 +314,9 @@ def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
     if p["versions"] != r["versions"]:
         rval = False
         out += _diff_compact(str(p["versions"]), str(r["versions"]), label="versions:")
+    if p["parameters"] != r["parameters"]:
+        rval = False
+        out += _diff_line(str(p["parameters"]), str(r["parameters"]))
     if not rval:
         when = arrow.get(r["modified"]).humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
