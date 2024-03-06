@@ -50,6 +50,7 @@ class RubricService:
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
             creating_user: who is trying to create the rubric.  ``None``
@@ -66,6 +67,7 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
+        rubric_data = rubric_data.copy()
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
@@ -111,8 +113,11 @@ class RubricService:
         """Modify a rubric.
 
         Args:
-            key: a sequence of ints that uniquely identify a specific rubric.
+            key: a string that uniquely identify a specific rubric.
+                Generally not the same as the "private key" used
+                internally, although this could change in the future.
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
             modifying_user: who is trying to modify the rubric.  This might
@@ -130,6 +135,7 @@ class RubricService:
             ValidationError: invalid kind, maybe other invalidity.
             PlomConflict: the new data is too old; someone else modified.
         """
+        new_rubric_data = new_rubric_data.copy()
         user = User.objects.get(username=new_rubric_data.pop("username"))
         new_rubric_data["user"] = user.pk
 

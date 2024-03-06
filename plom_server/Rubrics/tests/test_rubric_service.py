@@ -491,13 +491,12 @@ class RubricServiceTests(TestCase):
             "question": 1,
             "_age": 10,
         }
-        # TODO: create rubric should probably not be modifying its input
-        r = RubricService().create_rubric(rub.copy())
+        r = RubricService().create_rubric(rub)
         key = r.key
 
         # ok to change if age matches
         rub.update({"text": "Changed"})
-        RubricService().modify_rubric(key, rub.copy())
+        RubricService().modify_rubric(key, rub)
 
         # but its an error if the age does not match
         rub.update({"_age": 0})
