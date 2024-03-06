@@ -314,7 +314,7 @@ def diff_rubric(p, r):
         out += _diff_line(p["tags"], r["tags"])
     if p["versions"] != r["versions"]:
         rval = False
-        out += _diff_line(p["versions"], r["versions"])
+        out += _diff_compact(str(p["versions"]), str(r["versions"]))
     if not rval:
         when = arrow.get(r["modified"]).humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
