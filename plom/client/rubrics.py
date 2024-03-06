@@ -327,7 +327,9 @@ def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
             # TODO: or force input to have modified?
             when = arrow.now().humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
-    return rval, out
+    if rval:
+        return True, ""
+    return False, out
 
 
 def check_for_illadvised(
