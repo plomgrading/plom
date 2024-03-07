@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
-   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -40,7 +40,7 @@ UI: `Issue #2990 <https://gitlab.com/plom/plom/-/issues/2990>`_.
 Running the auto-identifier (legacy server)
 -------------------------------------------
 
-1. Open the :doc:`Manager tool <manage>`, then "Progress" → "ID progress".
+1. Open the :doc:`Legacy Manager tool <manage>`, then "Progress" → "ID progress".
 2. Optionally, adjust the top/bottom crop values, either manually or by
    clicking "Select interactively".  Only the vertical coordinate are used.
    The defaults probably work in most cases.

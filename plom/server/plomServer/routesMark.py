@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2023 Tam Nguyen
@@ -388,6 +388,7 @@ class MarkHandler:
             if results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
             elif results[1] == "no_such_task":
+                # TODO: 2024: seems this can also happen if it never existed (?)
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
@@ -472,6 +473,7 @@ class MarkHandler:
         results = self.server.DB.Mget_annotations(number, question, edition)
         if not results[0]:
             if results[1] == "no_such_task":
+                # TODO: 2024: seems this can also happen if it never existed (?)
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
@@ -745,8 +747,8 @@ class MarkHandler:
 
         Respond with status 200/409.
 
-        Some deprecated: use `get_pagedata_context_question` instead and filter
-        out those with ``included=False``.
+        Somewhat deprecated: use `get_pagedata_context_question` instead
+        and filter out those with ``included=False``.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -789,6 +791,8 @@ class MarkHandler:
             where each dict has keys: `pagename`, `md5`, `included`,
             `order`, `id`, `orientation`, `server_path` as documented below.
             A 409 is returned with an explanation if paper number not found.
+            Note the paper number can be "found" but not scanned, in which
+            case the returned list will be empty.
 
         The list of dicts (we think of them as rows) have the same content
         as documented in ``get_pagedata`` except an additional key:
@@ -852,7 +856,7 @@ class MarkHandler:
     @authenticate_by_token_required_fields(["paper_number", "question"])
     @write_admin
     def MreviewQuestion(self, data, request):
-        """Confirm the question review done on plom-manager.
+        """Confirm the question review done on plom-legacy-manager.
 
         Args:
             data (dict): Dictionary including user data, `paper_number` (int)

@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -230,6 +230,8 @@ class Chooser(QDialog):
         elif which_subapp == "Marker":
             question = self.getQuestion()
             v = self.getv()
+            assert question is not None
+            assert v is not None
             self.setEnabled(False)
             self.hide()
             markerwin = MarkerClient(self.Qapp)

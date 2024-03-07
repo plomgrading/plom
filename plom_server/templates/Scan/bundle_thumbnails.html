@@ -55,7 +55,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is missing pages"
-                                            hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% else %}
@@ -63,7 +63,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is complete"
-                                            hx-get="{% url 'scan_bundle_page' timestamp pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% endif %}
@@ -184,7 +184,7 @@
         </div>
         <div class="col-8" id="updatePage">
             {% if pop %}
-                <div hx-get="{% url 'scan_bundle_page' timestamp pop %}"
+                <div hx-get="{% url 'scan_bundle_page' bundle_id pop %}"
                      hx-swap="innerHTML"
                      hx-target="#updatePage"
                      hx-trigger="load"></div>

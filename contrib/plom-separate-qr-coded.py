@@ -3,26 +3,37 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021 Nicholas JH Lai
+# Copyright (C) 2024 Colin B. Macdonald
 
 """
 Separate qr_coded pages from blank pages.
 
 This script is helpful if you accidentally printed the exam
-single-sdied. This script will separate blank pages from
+single-sided. This script will separate blank pages from
 qr-coded pages, which should be checked by someone after.
 
 Provided as is, WITH all faults.
 Please be sure you understand what's happening here before using it!
+
+Note: this script depends on `pyzbar`, whereas Plom has switched to `ZXing-CPP`
 """
 
-import fitz
-from pyzbar.pyzbar import decode, ZBarSymbol
 from pathlib import Path
-from PIL import Image
 import sys
 import tempfile
 
+import fitz
+from PIL import Image
+from zxingcpp import read_barcodes, BarcodeFormat
+
 from plom.scan.scansToImages import processFileToBitmaps
+
+
+try:
+    micro = BarcodeFormat.MicroQRCode
+except AttributeError:
+    # workaround github.com/zxing-cpp/zxing-cpp/issues/512
+    micro = BarcodeFormat.MircoQRCode
 
 if len(sys.argv) != 2:
     print("Requires a single pdf as argument.")
@@ -43,7 +54,9 @@ with tempfile.TemporaryDirectory() as td:
         stem = X.name[:-4]  # name without the ".png"
         pn = int(stem.split("-")[-1])  # blah-XX.png - get the XX
         image = Image.open(X)
-        qrlist = decode(image, symbols=[ZBarSymbol.QRCODE])
+        # from pyzbar import pyzbar
+        # qrlist = pyzbar.decode(image, symbols=[pyzbar.ZBarSymbol.QRCODE])
+        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         if len(qrlist) > 0:
             print(f"# + Page {pn} has {len(qrlist)} codes")
             if len(qrlist) < 3:
@@ -65,6 +78,9 @@ if inp.page_count != len(qrd_pages) + len(blank_pages):
     print("EEK! stopping.")
     quit()
 
+if len(blank_pages) == 0:
+    print("Did not detect any blank pages")
+    quit()
 
 print(f"Saving qr-coded pages {qrd_pages} to {qrd_file}")
 qr_out = fitz.open()

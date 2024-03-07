@@ -9,11 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Django-based server container starts the canned demo if environment variable PLOM_DEMO is set to 1.
+* Server - scanner can now bulk-discard unknown pages from a bundle, and bulk change discards back to unknowns.
+
+### Changed
+* Client respects Question Labels in more places.
+
+### Fixed
+* Legacy server: fix crash when client asks to view images from paper which exists but has no scans.
+* Server: fix crash when client asks for non-existing Annotation images.
+* Client: popup error message when viewing non-existent images rather than empty blue dialog.
+
+
+## [0.15.1] - 2024-02-16
+
+### Added
+* Django-based server container starts the canned demo if environment variable `PLOM_DEMO` is set to 1.
 
 ### Changed
 * Web UI: displays version number.
 * Web UI: various tweaks and improvements to building blank paper PDFs.
+* `plom-manager` command is deprecated; use `plom-legacy-manager` to manage legacy servers.
 
 ### Fixed
 * Web UI: improved error handling for unexpected errors when using asynchronous HTMX calls.
@@ -1124,7 +1139,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.0...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.1...main
+[0.15.1]: https://gitlab.com/plom/plom/-/compare/v0.15.0...v0.15.1
 [0.15.0]: https://gitlab.com/plom/plom/-/compare/v0.14.8...v0.15.0
 [0.14.8]: https://gitlab.com/plom/plom/-/compare/v0.14.7...v0.14.8
 [0.14.7]: https://gitlab.com/plom/plom/-/compare/v0.14.6...v0.14.7

@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from datetime import timedelta
 
@@ -29,12 +30,12 @@ from Identify.models import (
 class IdentifyTaskTests(TestCase):
     """Tests for ``Identify.services.IdentifyTaskService`` and ``Identify.services.IDProgressService`` functions."""
 
-    def setUp(self):
-        self.marker0 = baker.make(User, username="marker0")
-        self.marker1 = baker.make(User, username="marker1")
+    def setUp(self) -> None:
+        self.marker0: User = baker.make(User, username="marker0")
+        self.marker1: User = baker.make(User, username="marker1")
         return super().setUp()
 
-    def test_are_there_id_tasks(self):
+    def test_are_there_id_tasks(self) -> None:
         """Test ``IdentifyTaskService.are_there_id_tasks()``."""
         its = IdentifyTaskService()
         self.assertFalse(its.are_there_id_tasks())
@@ -42,7 +43,7 @@ class IdentifyTaskTests(TestCase):
         baker.make(PaperIDTask)
         self.assertTrue(its.are_there_id_tasks())
 
-    def test_get_done_tasks(self):
+    def test_get_done_tasks(self) -> None:
         """Test ``IdentifyTaskService.get_done_tasks()``."""
         its = IdentifyTaskService()
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
@@ -68,7 +69,7 @@ class IdentifyTaskTests(TestCase):
         result = its.get_done_tasks(user=self.marker0)
         self.assertEqual(result, [[1, "1", "A"]])
 
-    def test_get_latest_id_task(self):
+    def test_get_latest_id_task(self) -> None:
         """Test ``IdentifyTaskService.get_latest_id_results()``."""
         its = IdentifyTaskService()
         paper = baker.make(Paper, paper_number=1)
@@ -98,7 +99,7 @@ class IdentifyTaskTests(TestCase):
 
         self.assertEqual(its.get_latest_id_results(task1), second)
 
-    def test_get_id_progress(self):
+    def test_get_id_progress(self) -> None:
         """Test ``IdentifyTaskService.get_id_progress()``."""
         its = IdentifyTaskService()
         self.assertEqual(its.get_id_progress(), [0, 0])
@@ -108,7 +109,7 @@ class IdentifyTaskTests(TestCase):
         baker.make(PaperIDTask, status=PaperIDTask.OUT)
         self.assertEqual(its.get_id_progress(), [1, 3])
 
-    def test_get_next_task(self):
+    def test_get_next_task(self) -> None:
         """Test ``IdentifyTaskService.get_next_task()``."""
         its = IdentifyTaskService()
         self.assertIsNone(its.get_next_task())
@@ -126,7 +127,7 @@ class IdentifyTaskTests(TestCase):
         claimed = its.get_next_task()
         self.assertEqual(claimed, t2)
 
-    def test_claim_task(self):
+    def test_claim_task(self) -> None:
         """Test a simple case of ``IdentifyTaskService.claim_task()``."""
         its = IdentifyTaskService()
         with self.assertRaises(RuntimeError):
@@ -141,7 +142,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(task.status, PaperIDTask.OUT)
         self.assertEqual(task.assigned_user, self.marker0)
 
-    def test_out_claim_task(self):
+    def test_out_claim_task(self) -> None:
         """Test that claiming a task throws an error if the task is currently out."""
         its = IdentifyTaskService()
         p1 = baker.make(Paper, paper_number=1)
@@ -150,7 +151,7 @@ class IdentifyTaskTests(TestCase):
         with self.assertRaises(RuntimeError):
             its.claim_task(self.marker0, 1)
 
-    def test_identify_paper(self):
+    def test_identify_paper(self) -> None:
         """Test a simple case for ``IdentifyTaskService.identify_paper()``."""
         its = IdentifyTaskService()
         with self.assertRaises(ObjectDoesNotExist):
@@ -174,7 +175,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(action.student_name, "A")
         self.assertEqual(action.student_id, "1")
 
-    def test_clear_id_from_paper(self):
+    def test_clear_id_from_paper(self) -> None:
         """Test ``IDProgressService().clear_id_from_paper()``."""
         ids = IDProgressService()
         paper = baker.make(Paper, paper_number=1)
@@ -187,7 +188,7 @@ class IdentifyTaskTests(TestCase):
         new_task = PaperIDTask.objects.get(paper=paper, status=PaperIDTask.TO_DO)
         self.assertQuerysetEqual(PaperIDAction.objects.filter(task=new_task), [])
 
-    def test_clear_id_from_all_identified_papers(self):
+    def test_clear_id_from_all_identified_papers(self) -> None:
         """Test ``IDProgressService().set_all_id_task_todo_and_clear_all_id_cmd()``."""
         ids = IDProgressService()
         for paper_number in range(1, 11):
@@ -200,7 +201,7 @@ class IdentifyTaskTests(TestCase):
         for id_task in PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE):
             self.assertEqual(id_task.status, PaperIDTask.TO_DO)
 
-    def test_id_already_used(self):
+    def test_id_already_used(self) -> None:
         """Test that using same ID twice raises exception."""
         its = IdentifyTaskService()
         for k in range(1, 3):
@@ -213,7 +214,7 @@ class IdentifyTaskTests(TestCase):
             IntegrityError, its.identify_paper, self.marker0, 2, "1", "ABC"
         )
 
-    def test_claim_and_surrender(self):
+    def test_claim_and_surrender(self) -> None:
         its = IdentifyTaskService()
         for k in range(1, 5):
             paper = baker.make(Paper, paper_number=k)
@@ -222,7 +223,7 @@ class IdentifyTaskTests(TestCase):
             its.claim_task(self.marker0, k)
         its.surrender_all_tasks(self.marker0)
 
-    def test_id_task_misc(self):
+    def test_id_task_misc(self) -> None:
         """Test the number of id'd papers."""
         its = IdentifyTaskService()
         for k in range(1, 5):
@@ -251,7 +252,7 @@ class IdentifyTaskTests(TestCase):
         its.create_task(paper)
         self.assertTrue(its.id_task_exists(paper))
 
-    def test_idtask_outdated(self):
+    def test_idtask_outdated(self) -> None:
         its = IdentifyTaskService()
         self.assertRaises(ValueError, its.set_paper_idtask_outdated, 7)
 
@@ -271,7 +272,7 @@ class IdentifyTaskTests(TestCase):
         its.identify_paper(self.marker0, 3, "4", "CBA")
         its.set_paper_idtask_outdated(3)
 
-    def test_idtask_recreate(self):
+    def test_idtask_recreate(self) -> None:
         its = IdentifyTaskService()
         # create a paper with at least one out-of-date tasks
         paper1 = baker.make(Paper, paper_number=1)
@@ -290,7 +291,7 @@ class IdentifyTaskTests(TestCase):
         its.claim_task(self.marker0, 1)
         its.identify_paper(self.marker0, 1, "4", "ABCD")
 
-    def test_get_all_id_task_count(self):
+    def test_get_all_id_task_count(self) -> None:
         ids = IDProgressService()
         for n in range(1, 4):
             paper = baker.make(Paper, paper_number=n)
@@ -301,7 +302,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(7, ids.get_all_id_task_count())
         self.assertEqual(4, ids.get_completed_id_task_count())
 
-    def test_get_all_id_task_info(self):
+    def test_get_all_id_task_info(self) -> None:
         its = IdentifyTaskService()
         ids = IDProgressService()
 
@@ -325,7 +326,7 @@ class IdentifyTaskTests(TestCase):
 
         self.assertEqual(info_dict, ids.get_all_id_task_info())
 
-    def test_id_hw(self):
+    def test_id_hw(self) -> None:
         its = IdentifyTaskService()
         ids = IDProgressService()
         idirs = IDDirectService()

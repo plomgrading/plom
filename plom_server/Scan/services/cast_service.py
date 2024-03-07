@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from __future__ import annotations
 
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from Papers.models import Paper, QuestionPage
@@ -30,7 +30,7 @@ class ScanCastService:
     # Page casting helper function
     # ----------------------------------------
 
-    def string_to_staging_image_type(self, img_str):
+    def string_to_staging_image_type(self, img_str: str) -> models.TextChoices:
         """A helper function to translate from string to the staging image enum type."""
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
@@ -192,6 +192,39 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def discard_all_unknowns_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        """Discard all unknown pages in the given bundle."""
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        unknown_images = bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.UNKNOWN
+        ).select_related("unknownstagingimage")
+        # see 'select_for_update' docs - you have to be careful with nullable relations.
+        unknown_images_locked = unknown_images.select_for_update().exclude(
+            unknownstagingimage=None
+        )
+
+        # now that we have the unknowns, remove associated data and create associated discard info.
+        for img in unknown_images_locked:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.unknownstagingimage.delete()
+            img.image_type = StagingImage.DISCARD
+            DiscardStagingImage.objects.create(
+                staging_image=img,
+                discard_reason=f"Unknown page discarded by {user_obj.username}",
+            )
+            img.save()
+
+    @transaction.atomic
     def unknowify_image_type_from_bundle_id_and_order(
         self, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
@@ -232,7 +265,7 @@ class ScanCastService:
         bundle_order: int,
         *,
         image_type: int | None = None,
-    ):
+    ) -> None:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -285,8 +318,13 @@ class ScanCastService:
 
     @transaction.atomic
     def unknowify_image_type_from_bundle_cmd(
-        self, username, bundle_name, bundle_order, *, image_type=None
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        bundle_order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -306,9 +344,44 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def unknowify_all_discards_from_bundle_id(
+        self,
+        user_obj: User,
+        bundle_id: int,
+    ) -> None:
+        """Cast all discard pages in the given bundle as unknowns."""
+        try:
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find bundle {bundle_id}")
+
+        check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
+
+        discard_images = bundle_obj.stagingimage_set.select_related(
+            "discardstagingimage"
+        ).filter(image_type=StagingImage.DISCARD)
+        # be careful locking with nullable relations - see select_for_update docs.
+        discard_images_locked = discard_images.select_for_update().exclude(
+            discardstagingimage=None
+        )
+
+        # now that we have the discards, remove associated data and create associated unknown info.
+        for img in discard_images_locked:
+            # Be very careful to update the image type when doing this sort of operation.
+            img.discardstagingimage.delete()
+            img.image_type = StagingImage.UNKNOWN
+            UnknownStagingImage.objects.create(staging_image=img)
+            img.save()
+
+    @transaction.atomic
     def assign_extra_page(
-        self, user_obj, bundle_obj, bundle_order, paper_number, question_list
-    ):
+        self,
+        user_obj: User,
+        bundle_obj: StagingBundle,
+        bundle_order: int,
+        paper_number: int,
+        question_list: list[int],
+    ) -> None:
         """Fill in the missing information in a ExtraStagingImage.
 
         The command assigns the paper-number and question list to the
@@ -329,7 +402,7 @@ class ScanCastService:
             question_list (list)
 
         Raises:
-            ValueError: can't find things.
+            ValueError: can't find things, or extra page already has information.
 
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
@@ -346,32 +419,53 @@ class ScanCastService:
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
-            img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            img_locked = (
+                bundle_obj.stagingimage_set.filter(
+                    bundle_order=bundle_order, image_type=StagingImage.EXTRA
+                )
+                .select_related("extrastagingimage")
+                .select_for_update()
+                .exclude(extrastagingimage=None)
+                .get()
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
 
-        eximg = img.extrastagingimage
+        eximg = img_locked.extrastagingimage
+
+        # Throw value error if data has already been set.
+        if (eximg.paper_number is not None) or eximg.question_list:
+            raise ValueError(
+                "Cannot overwrite existing extra-page info; potentially another user has set data."
+            )
+
         eximg.paper_number = paper_number
         eximg.question_list = question_list
         eximg.save()
 
     @transaction.atomic
-    def assign_extra_page_from_bundle_timestamp_and_order(
-        self, user_obj, timestamp, bundle_order, paper_number, question_list
-    ):
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=timestamp,
-        )
+    def assign_extra_page_from_bundle_pk_and_order(
+        self,
+        user_obj: User,
+        bundle_id: int,
+        bundle_order: int,
+        paper_number: int,
+        question_list: list[int],
+    ) -> None:
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.assign_extra_page(
             user_obj, bundle_obj, bundle_order, paper_number, question_list
         )
 
     @transaction.atomic
     def assign_extra_page_cmd(
-        self, username, bundle_name, bundle_order, paper_number, question_list
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        bundle_order: int,
+        paper_number: int,
+        question_list: list[int],
+    ) -> None:
         """Fill in the missing information in a ExtraStagingImage.
 
         The command assigns the paper-number and question list to the
@@ -414,31 +508,31 @@ class ScanCastService:
         )
 
     @transaction.atomic
-    def clear_extra_page_info_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
-    ):
+    def clear_extra_page_info_from_bundle_pk_and_order(
+        self, user_obj: User, bundle_id: int, bundle_order: int
+    ) -> None:
         """A wrapper around clear_image_type.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle
             bundle_order: (int) Bundle order of a page.
 
         Returns:
             None.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
-    def clear_extra_page(self, user_obj, bundle_obj, bundle_order):
+    def clear_extra_page(
+        self, user_obj: User, bundle_obj: StagingBundle, bundle_order: int
+    ) -> None:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -457,7 +551,9 @@ class ScanCastService:
         eximg.save()
 
     @transaction.atomic
-    def clear_extra_page_cmd(self, username, bundle_name, bundle_order):
+    def clear_extra_page_cmd(
+        self, username: str, bundle_name: str, bundle_order: int
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -475,27 +571,25 @@ class ScanCastService:
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
-    def extralise_image_type_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order
-    ):
+    def extralise_image_type_from_bundle_pk_and_order(
+        self, user_obj: User, bundle_id: int, bundle_order: int
+    ) -> None:
         """A wrapper around extralise_image_type_from_bundle cmd.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle.
             bundle_order: (int) Bundle order of a page.
 
         Returns:
             None.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         try:
             img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
@@ -506,8 +600,13 @@ class ScanCastService:
 
     @transaction.atomic
     def extralise_image_type_from_bundle(
-        self, user_obj, bundle_obj, bundle_order, *, image_type=None
-    ):
+        self,
+        user_obj: User,
+        bundle_obj: StagingBundle,
+        bundle_order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -559,8 +658,13 @@ class ScanCastService:
 
     @transaction.atomic
     def extralise_image_type_from_bundle_cmd(
-        self, username, bundle_name, bundle_order, *, image_type=None
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        bundle_order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
@@ -580,24 +684,24 @@ class ScanCastService:
         )
 
     @transaction.atomic
-    def knowify_image_from_bundle_timestamp_and_order(
+    def knowify_image_from_bundle_pk_and_order(
         self,
-        user_obj,
-        bundle_timestamp,
-        bundle_order,
-        paper_number,
-        page_number,
-    ):
+        user_obj: User,
+        bundle_id: int,
+        bundle_order: int,
+        paper_number: int,
+        page_number: int,
+    ) -> None:
         """A wrapper around knowify_image_from_bundle cmd.
 
         The main difference is that it that takes a
-        bundle-timestamp instead of a bundle-object itself. Further,
+        bundle-id instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
 
         Args:
             user_obj: (obj) An instead of a django user
-            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_id: (int) The pk of the bundle
             bundle_order: (int) Bundle order of a page.
             paper_number: (int) Set image as known-page with this paper number
             page_number: (int) Set image as known-page with this page number
@@ -606,7 +710,7 @@ class ScanCastService:
             None.
         """
         bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
+            pk=bundle_id,
         )
         if not bundle_obj.stagingimage_set.filter(bundle_order=bundle_order).exists():
             raise ValueError(f"Cannot find an image at order {bundle_order}")
@@ -621,12 +725,12 @@ class ScanCastService:
     @transaction.atomic
     def knowify_image_from_bundle(
         self,
-        user_obj,
-        bundle_obj,
-        bundle_order,
-        paper_number,
-        page_number,
-    ):
+        user_obj: User,
+        bundle_obj: StagingBundle,
+        bundle_order: int,
+        paper_number: int,
+        page_number: int,
+    ) -> None:
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -675,8 +779,13 @@ class ScanCastService:
 
     @transaction.atomic
     def assign_page_as_known_cmd(
-        self, username, bundle_name, bundle_order, paper_number, page_number
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        bundle_order: int,
+        paper_number: int,
+        page_number: int,
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]

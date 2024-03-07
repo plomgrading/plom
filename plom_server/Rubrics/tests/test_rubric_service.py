@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
@@ -31,10 +31,10 @@ def _rubric_to_dict(x):
 class RubricServiceTests_exceptions(TestCase):
     """Tests for `Rubric.service.RubricService()` exceptions."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         baker.make(User, username="Liam")
 
-    def test_no_user_ValueError(self):
+    def test_no_user_ValueError(self) -> None:
         """Test ValueError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
@@ -52,7 +52,7 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValueError):
             RubricService().create_rubric(rub)
 
-    def test_no_user_KeyError(self):
+    def test_no_user_KeyError(self) -> None:
         """Test KeyError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
@@ -69,7 +69,7 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(KeyError):
             RubricService().create_rubric(rub)
 
-    def test_no_kind_ValidationError(self):
+    def test_no_kind_ValidationError(self) -> None:
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
 
         This test case checks if the RubricService.create_rubric()
@@ -89,7 +89,7 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
-    def test_no_kind_KeyError(self):
+    def test_no_kind_KeyError(self) -> None:
         """Test KeyError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
@@ -110,9 +110,9 @@ class RubricServiceTests_exceptions(TestCase):
 class RubricServiceTests(TestCase):
     """Tests for `Rubric.service.RubricService()`."""
 
-    def setUp(self):
-        user1 = baker.make(User, username="Liam")
-        user2 = baker.make(User, username="Olivia")
+    def setUp(self) -> None:
+        user1: User = baker.make(User, username="Liam")
+        user2: User = baker.make(User, username="Olivia")
 
         self.neutral_rubric = baker.make(
             Rubric,
@@ -193,7 +193,7 @@ class RubricServiceTests(TestCase):
 
         return super().setUp()
 
-    def test_create_neutral_rubric(self):
+    def test_create_neutral_rubric(self) -> None:
         """Test RubricService.create_rubric() to create a neural rubric."""
         simulated_client_data = {
             "kind": "neutral",
@@ -221,7 +221,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.versions, self.neutral_rubric.versions)
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
-    def test_create_relative_rubric(self):
+    def test_create_relative_rubric(self) -> None:
         """Test RubricService.create_rubric() to create a relative rubric."""
         simulated_client_data = {
             "kind": "relative",
@@ -249,7 +249,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.versions, self.relative_rubric.versions)
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
-    def test_create_absolute_rubric(self):
+    def test_create_absolute_rubric(self) -> None:
         """Test RubricService.create_rubric() to create an absolute rubric."""
         simulated_client_data = {
             "kind": "absolute",
@@ -277,7 +277,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.versions, self.absolute_rubric.versions)
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
-    def test_modify_neutral_rubric(self):
+    def test_modify_neutral_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a neural rubric."""
         service = RubricService()
         key = self.modified_neutral_rubric.key
@@ -329,10 +329,8 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.value, self.modified_relative_rubric.value)
         self.assertEqual(r.user, self.modified_relative_rubric.user)
 
-    def test_modify_absolute_rubric(self):
-        """
-        Test RubricService.modify_rubric() to modify a relative rubric
-        """
+    def test_modify_absolute_rubric(self) -> None:
+        """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
         key = self.modified_absolute_rubric.key
 
@@ -359,13 +357,13 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.out_of, self.modified_absolute_rubric.out_of)
         self.assertEqual(r.user, self.modified_absolute_rubric.user)
 
-    def test_modify_rubric_change_kind(self):
+    def test_modify_rubric_change_kind(self) -> None:
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
         For each of the three kinds of rubric, we ensure we can change them
         into the other three kinds.  The key should not change.
         """
-        user = baker.make(User)
+        user: User = baker.make(User)
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
@@ -406,9 +404,9 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r.value, d["value"])
             self.assertEqual(r.out_of, d["out_of"])
 
-    def test_rubrics_from_user(self):
+    def test_rubrics_from_user(self) -> None:
         service = RubricService()
-        user = baker.make(User)
+        user: User = baker.make(User)
         rubrics = service.get_rubrics_from_user(user)
         self.assertEqual(rubrics.count(), 0)
 
@@ -424,7 +422,7 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_user(user)
         self.assertEqual(rubrics.count(), 3)
 
-    def test_rubrics_from_annotation(self):
+    def test_rubrics_from_annotation(self) -> None:
         service = RubricService()
         annotation1 = baker.make(Annotation)
 
@@ -443,7 +441,7 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 2)
 
-    def test_annotations_from_rubric(self):
+    def test_annotations_from_rubric(self) -> None:
         service = RubricService()
         rubric1 = baker.make(Rubric)
 
@@ -460,7 +458,7 @@ class RubricServiceTests(TestCase):
         annotations = service.get_annotation_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 2)
 
-    def test_rubrics_from_paper(self):
+    def test_rubrics_from_paper(self) -> None:
         service = RubricService()
         paper1 = baker.make(Paper, paper_number=1)
         marking_task1 = baker.make(MarkingTask, paper=paper1)

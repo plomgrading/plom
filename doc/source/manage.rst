@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2020-2023 Colin B. Macdonald
+   Copyright (C) 2020-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -12,22 +12,22 @@ Managing a legacy Plom server
    Plom server.  You may want to read about the new server instead.
 
 
-Plom Manager is a tool to monitor the marking team's progress as well
+Plom (Legacy) Manager is a tool to monitor the marking team's progress as well
 as perform various server oversight actions.
 
 .. warning::
 
-   This tool is not particularly well-tested, and is still under development.
-   Proceed with caution.
+   This tool is not particularly well-tested, and is being deprecated in favour
+   of online Web UI.  Proceed with caution.
 
 
-Starting Plom Manager
-----------------------
+Starting Plom Legacy Manager
+----------------------------
 
 You can use the regular :doc:`Plom Client <install-client>`
 but login as ``manager`` instead of your regular user.
 
-Alternatively, you can run :doc:`plom-manager` from the command line.
+Alternatively, you can run :doc:`plom-legacy-manager` from the command line.
 
 
 User management
@@ -87,9 +87,7 @@ client and look through the tasks, possibly revising the marking.
 Technical docs
 --------------
 
-* The command-line tool :doc:`plom-manager` directly launches the Plom
-  Manager.  It can also be launched by logging into :doc:`plom-client`
+* The command-line tool :doc:`plom-legacy-manager` directly launches the
+  Plom Legacy Manager.
+  It can also be launched by logging into :doc:`plom-client`
   using the ``manager`` account.
-
-* For scripting or other advanced usage, you can ``import plom.manager``
-  in your own Python code.  See :ref:`module-plom-manager`.

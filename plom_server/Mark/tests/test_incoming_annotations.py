@@ -18,17 +18,17 @@ from ..services.annotations import _create_new_annotation_in_database
 
 class MiscIncomingAnnotationsTests(TestCase):
     # some existing rests imported here and split into multiple parts
-    def test_marking_outdated(self):
+    def test_marking_outdated(self) -> None:
         mts = MarkingTaskService()
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
         baker.make(Paper, paper_number=1)
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
 
-    def test_marking_outdated2(self):
+    def test_marking_outdated2(self) -> None:
         mts = MarkingTaskService()
         paper1 = baker.make(Paper, paper_number=1)
 
-        user0 = baker.make(User)
+        user0: User = baker.make(User)
         baker.make(
             MarkingTask,
             code="q0001g1",
@@ -49,10 +49,10 @@ class MiscIncomingAnnotationsTests(TestCase):
             MultipleObjectsReturned, mts.set_paper_marking_task_outdated, 1, 1
         )
 
-    def test_marking_outdated3(self):
+    def test_marking_outdated3(self) -> None:
         mts = MarkingTaskService()
         paper1 = baker.make(Paper, paper_number=1)
-        user0 = baker.make(User)
+        user0: User = baker.make(User)
         baker.make(
             MarkingTask,
             code="q0001g2",
@@ -63,9 +63,9 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
 
-    def test_marking_outdated4(self):
+    def test_marking_outdated4(self) -> None:
         mts = MarkingTaskService()
-        user0 = baker.make(User)
+        user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check

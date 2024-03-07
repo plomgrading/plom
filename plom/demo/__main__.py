@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
 
@@ -172,9 +172,9 @@ def main():
 
     if args.in_tree_dev:
         # if running in-place, need python -m to work after changing dir
-        paths = os.environ.get("PYTHONPATH", "")
-        if paths:
-            paths = paths.strip().split(os.pathsep)
+        paths_ = os.environ.get("PYTHONPATH", "")
+        if paths_:
+            paths = paths_.strip().split(os.pathsep)
         else:
             paths = []
         paths.insert(0, str(Path.cwd().resolve()))

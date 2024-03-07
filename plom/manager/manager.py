@@ -2857,11 +2857,11 @@ class Manager(QWidget):
                 "You cannot force-logout the manager. To logout, click on the Quit button.",
             ).exec()
             return
+        # do something about this formatting? right now it's just a python list
         if (
             SimpleQuestion(
                 self,
-                "Are you sure you want to force-logout users {}?".format(selectedUsers)
-                # do something about this formatting, right now it's just a python list
+                "Are you sure you want to force-logout users {}?".format(selectedUsers),
             ).exec()
             == QMessageBox.StandardButton.Yes
         ):

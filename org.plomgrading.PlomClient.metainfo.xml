@@ -49,13 +49,13 @@
     <binary>plom-client</binary>
   </provides>
 
-  <!-- don't list "touch" unless test with it -->
-  <requires>
+  <!-- docs said don't list "touch" unless test with it -->
+  <recommends>
     <control>keyboard</control>
     <control>pointing</control>
-  </requires>
+  </recommends>
   <requires>
-    <display_length compare="ge">medium</display_length>
+    <display_length compare="ge">1024</display_length>
   </requires>
 
   <kudos>
@@ -64,9 +64,12 @@
 
   <url type="homepage">https://plomgrading.org</url>
   <update_contact>devs@plomgrading.org</update_contact>
-  <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
+  <developer id="plomgrading.org">
+    <name>Andrew Rechnitzer, Colin B. Macdonald, and others</name>
+  </developer>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2024-02-16" version="0.15.1"/>
     <release date="2024-02-13" version="0.15.0"/>
     <release date="2024-01-04" version="0.14.8"/>
     <release date="2023-12-03" version="0.14.7"/>

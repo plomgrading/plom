@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 
 from Base.base_group_views import ScannerRequiredView
 from Progress.services import ManageScanService
@@ -59,6 +59,8 @@ class ScannerPushedImageView(ScannerRequiredView):
 
     def get(self, request: HttpRequest, img_pk: int) -> FileResponse:
         img = ManageScanService().get_pushed_image(img_pk)
+        if img is None:
+            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
         return FileResponse(img.image_file)
 
 
@@ -67,6 +69,8 @@ class ScannerPushedImageWrapView(ScannerRequiredView):
 
     def get(self, request: HttpRequest, img_pk: int) -> HttpResponse:
         pushed_img = ManageScanService().get_pushed_image(img_pk)
+        if pushed_img is None:
+            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
         pushed_img_page_info = ManageScanService().get_pushed_image_page_info(img_pk)
         # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
         context = {

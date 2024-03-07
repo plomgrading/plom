@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -866,9 +866,9 @@ class Annotator(QWidget):
             # keep the open tab for next time we re-open KeyHelp
             self._keyhelp_tab_idx = diag.tabs.currentIndex()
         self.parentMarkerUI.annotatorSettings["keybinding_name"] = self.keybinding_name
-        self.parentMarkerUI.annotatorSettings[
-            "keybinding_custom_overlay"
-        ] = self.keybinding_custom_overlay
+        self.parentMarkerUI.annotatorSettings["keybinding_custom_overlay"] = (
+            self.keybinding_custom_overlay
+        )
         self.setToolShortCuts()
 
     def setViewAndScene(self, src_img_data):
@@ -1356,13 +1356,13 @@ class Annotator(QWidget):
             None: modifies self.parentMarkerUI and self.scene
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
-        self.parentMarkerUI.annotatorSettings[
-            "viewRectangle"
-        ] = self.view.getCurrentViewRect()
+        self.parentMarkerUI.annotatorSettings["viewRectangle"] = (
+            self.view.getCurrentViewRect()
+        )
         self.parentMarkerUI.annotatorSettings["_config"] = self._config.copy()
-        self.parentMarkerUI.annotatorSettings[
-            "zoomState"
-        ] = self.ui.zoomCB.currentIndex()
+        self.parentMarkerUI.annotatorSettings["zoomState"] = (
+            self.ui.zoomCB.currentIndex()
+        )
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
         else:

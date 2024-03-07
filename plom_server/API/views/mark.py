@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from __future__ import annotations
+
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
@@ -82,7 +85,7 @@ class MgetDoneTasks(APIView):
 
         mts = MarkingTaskService()
         marks = mts.get_user_mark_results(
-            request.user, question=question, version=version
+            request.user, question_idx=question, version=version
         )
 
         # TODO: 3rd entry here is marking time: in legacy, we trust the client's
@@ -210,7 +213,7 @@ class MgetPageDataQuestionInContext(APIView):
             )
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Test paper does not exist: {str(e)}", status.HTTP_409_CONFLICT
+                f"Paper {paper} does not exist: {e}", status.HTTP_409_CONFLICT
             )
         return Response(page_metadata, status=status.HTTP_200_OK)
 
@@ -230,20 +233,35 @@ class MgetOneImage(APIView):
 
 
 class MgetAnnotations(APIView):
-    """Get the latest annotations for a question."""
+    """Get the latest annotations for a question.
 
-    def get(self, request, paper, question):
+    TODO: implement "edition"?
+
+    TODO: The legacy server sends 410 for "task deleted", and the client
+    messenger is documented as expecting 406/410/416.
+    I suspect here we have folded the "task deleted" case into the 404.
+
+    Returns:
+        200: the annotation data.
+        404: no such task (i.e., no such paper) or no annotations for the
+            task if it exists.
+        406: the task has been modified, perhaps even during this call?
+            TODO: some atomic operation would prevent this?
+    """
+
+    def get(self, request: Request, *, paper: int, question: int) -> Response:
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except ObjectDoesNotExist as e:
+        except (ObjectDoesNotExist, ValueError) as e:
             return _error_response(
-                f"No annotations for paper {paper} question {question}: {str(e)}",
+                f"No annotations for paper {paper} question {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
+        # TODO is this really needed?  Issue #3283.
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:
@@ -264,20 +282,40 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """Get an annotation-image."""
+    """Get an annotation-image.
 
-    def get(self, request, paper, question, edition=None):
+    TODO: implement "edition".
+
+    TODO: The legacy server sends 410 for "task deleted", and the client
+    messenger is documented as expecting 406/410/416 (although the legacy
+    server doesn't seem to send 406/416 for annotation image calls).
+    I suspect here we have folded the "task deleted" case into the 404.
+
+    Returns:
+        200: the image as a file.
+        404: no such task (i.e., no such paper) or no annotations for the
+            task if it exists.
+        406: the task has been modified, perhaps even during this call?
+            TODO: some atomic operation would prevent this?
+    """
+
+    def get(
+        self, request: Request, *, paper: int, question: int, edition: int | None = None
+    ) -> Response:
+        if edition is not None:
+            raise NotImplementedError('"edition" not implemented')
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except ObjectDoesNotExist as e:
+        except (ObjectDoesNotExist, ValueError) as e:
             return _error_response(
-                f"No annotations for paper {paper} question {question}: {str(e)}",
+                f"No annotations for paper {paper} question idx {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
         annotation_task = annotation.task
         annotation_image = annotation.image
 
+        # TODO is this really needed?  Issue #3283.
         try:
             latest_task = mark_task.get_latest_task(paper, question)
         except ObjectDoesNotExist as e:

@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -19,7 +19,6 @@ import html
 import json
 import logging
 from math import ceil
-import os
 from pathlib import Path
 import platform
 import queue
@@ -81,7 +80,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
-from .viewers import QuestionViewDialog, SelectTestQuestion
+from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
@@ -106,6 +105,14 @@ def _marking_time_as_str(m):
         return f"{m:.0f}"
 
 
+def verbose_question_label(spec: dict[str, Any], qidx: int) -> str:
+    """Get the question label with a possible parenthetical for the index."""
+    qlabel = get_question_label(spec, qidx)
+    if qlabel == f"Q{qidx}":
+        return qlabel
+    return f"{qlabel} (question index {qidx})"
+
+
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
@@ -114,17 +121,17 @@ class BackgroundUploader(QThread):
     uploadUnknownFail = pyqtSignal(str, str)
     queue_status_changed = pyqtSignal(int, int, int, int)
 
-    def __init__(self, msgr):
+    def __init__(self, msgr: Messenger) -> None:
         """Initialize a new uploader.
 
         Args:
-            msgr (Messenger):
+            msgr: a Messenger for communicating with a Plom server.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
         """
         super().__init__()
-        self.q = None
+        self.q: queue.Queue = queue.Queue()
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
         self.num_uploaded = 0
@@ -136,11 +143,11 @@ class BackgroundUploader(QThread):
         self._simulate_failure_rate = 20.0
         self._simulate_slow_net = (3, 8)
 
-    def enable_fail_mode(self):
+    def enable_fail_mode(self) -> None:
         log.info("fail mode ENABLED")
         self.simulate_failures = True
 
-    def disable_fail_mode(self):
+    def disable_fail_mode(self) -> None:
         log.info("fail mode disabled")
         self.simulate_failures = False
 
@@ -169,13 +176,13 @@ class BackgroundUploader(QThread):
             self.q.qsize(), n, self.num_uploaded, self.num_failed
         )
 
-    def queue_size(self):
+    def queue_size(self) -> int:
         """Return the number of papers waiting or currently uploading."""
         if self.is_upload_in_progress:
             return self.q.qsize() + 1
         return self.q.qsize()
 
-    def isEmpty(self) -> None:
+    def isEmpty(self) -> bool:
         """Checks if the upload queue is empty.
 
         Returns:
@@ -235,7 +242,6 @@ class BackgroundUploader(QThread):
                 self.q.qsize(), 0, self.num_uploaded, self.num_failed
             )
 
-        self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
@@ -251,7 +257,7 @@ def upload(
     grade,
     filenames,
     marking_time,
-    question,
+    question_idx,
     ver,
     rubrics,
     integrity_check,
@@ -268,7 +274,7 @@ def upload(
         filenames (list[str]): a list containing the annotated file's name,
             the .plom file's name and the comment file's name, in that order.
         marking_time (float/int): the marking time (s) for this specific question.
-        question (int or str): the question number
+        question_idx (int or str): the question index number.
         ver (int or str): the version number
         integrity_check (str): the integrity_check string of the task.
         knownFailCallback: if we fail in a way that is reasonably expected,
@@ -300,7 +306,7 @@ def upload(
     try:
         msg = _msgr.MreturnMarkedTask(
             task,
-            question,
+            question_idx,
             ver,
             grade,
             marking_time,
@@ -541,7 +547,7 @@ class MarkerExamModel(QStandardItemModel):
 
         Args:
             task (str): the task for the image files to be loaded from.
-                Takes the form "q1234g9" = test 1234 question 9
+                Takes the form "q1234g9" = test 1234 question index 9.
 
         Returns:
             The row index of the task.
@@ -899,7 +905,7 @@ class MarkerClient(QWidget):
         self.allowBackgroundOps = True
 
         # instance vars that get initialized later
-        self.question = None
+        self.question_idx = None
         self.version = None
         self.exam_spec = None
         self.max_papernum = None
@@ -909,7 +915,13 @@ class MarkerClient(QWidget):
         self.marking_history = []
         self._cachedProgressFormatStr = None
 
-    def setup(self, messenger, question, version, lastTime):
+    def setup(
+        self,
+        messenger: Messenger,
+        question_idx: int,
+        version: int,
+        lastTime: dict[str, Any],
+    ) -> None:
         """Performs setup procedure for markerClient.
 
         TODO: move all this into init?
@@ -917,14 +929,13 @@ class MarkerClient(QWidget):
         TODO: verify all lastTime Params, there are almost certainly some missing
 
         Args:
-            messenger (Messenger): handle communication with server.
-            question (int): question number.
-            version (int): version number
-            lastTime (dict): settings.
-                containing::
+            messenger: handle communication with server.
+            question_idx: question index number, one based.
+            version: question version number
+            lastTime: dict of settings.
+                Containing::
 
                    {
-                     "POWERUSER"
                      "FOREGROUND"
                      "KeyBinding"
                    }
@@ -935,7 +946,7 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = messenger
-        self.question = question
+        self.question_idx = question_idx
         self.version = version
 
         # Get the number of Tests, Pages, Questions and Versions
@@ -950,7 +961,7 @@ class MarkerClient(QWidget):
         self.connectGuiButtons()
 
         try:
-            self.maxMark = self.msgr.getMaxMark(self.question)
+            self.maxMark = self.msgr.getMaxMark(self.question_idx)
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return
@@ -1031,7 +1042,7 @@ class MarkerClient(QWidget):
         """
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         try:
-            question_label = get_question_label(self.exam_spec, self.question)
+            question_label = get_question_label(self.exam_spec, self.question_idx)
         except (ValueError, KeyError):
             question_label = "???"
         self.ui.labelTasks.setText(
@@ -1146,7 +1157,7 @@ class MarkerClient(QWidget):
             None
         """
         # Ask server for list of previously marked papers
-        markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
+        markedList = self.msgr.MrequestDoneTasks(self.question_idx, self.version)
         self.marking_history = []
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
@@ -1183,16 +1194,16 @@ class MarkerClient(QWidget):
         assert task[0] == "q"
         assert task[5] == "g"
         num = int(task[1:5])
-        question = int(task[6:])
-        assert question == self.question
+        question_idx = int(task[6:])
+        assert question_idx == self.question_idx
 
         try:
             integrity = self.examModel.getIntegrityCheck(task)
             plomdata = self.msgr.get_annotations(
-                num, self.question, edition=None, integrity=integrity
+                num, question_idx, edition=None, integrity=integrity
             )
             annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(
-                num, self.question, edition=plomdata["annotation_edition"]
+                num, question_idx, edition=plomdata["annotation_edition"]
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
@@ -1310,7 +1321,7 @@ class MarkerClient(QWidget):
         if not val and not maxm:
             # ask server for progress update
             try:
-                val, maxm = self.msgr.MprogressCount(self.question, self.version)
+                val, maxm = self.msgr.MprogressCount(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
@@ -1318,14 +1329,15 @@ class MarkerClient(QWidget):
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
             try:
-                qlabel = get_question_label(self.exam_spec, self.question)
+                qlabel = get_question_label(self.exam_spec, self.question_idx)
+                verbose_qlabel = verbose_question_label(
+                    self.exam_spec, self.question_idx
+                )
             except (ValueError, KeyError):
                 qlabel = "???"
+                verbose_qlabel = qlabel
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
-            if qlabel == f"Q{self.question}":
-                msg += f" of {qlabel}.</p>"
-            else:
-                msg += f" of {qlabel} (question index {self.question}).</p>"
+            msg += f" of {verbose_qlabel}.</p>"
             info = f"""<p>There are several ways this can happen:</p>
                 <ul>
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
@@ -1345,15 +1357,17 @@ class MarkerClient(QWidget):
 
         If available, download stuff, add to list, update view.
         """
+        verbose_qlabel = verbose_question_label(self.exam_spec, self.question_idx)
         s = "<p>Which paper number would you like to get?</p>"
-        s += f"<p>Note: you are marking version {self.version} of question {self.question}.</p>"
+        s += f"<p>Note: you are marking version {self.version}"
+        s += f" of {verbose_qlabel}.</p>"
         n, ok = QInputDialog.getInt(
             self, "Which paper to get", s, 1, 1, self.max_papernum
         )
         if not ok:
             return
         log.info("getting paper num %s", n)
-        task = f"q{n:04}g{self.question}"
+        task = f"q{n:04}g{self.question_idx}"
         try:
             self.claim_task_and_trigger_downloads(task)
         except (
@@ -1401,7 +1415,7 @@ class MarkerClient(QWidget):
                 return
             try:
                 task = self.msgr.MaskNextTask(
-                    self.question,
+                    self.question_idx,
                     self.version,
                     tags=tags,
                     min_paper_num=paper_range[0],
@@ -1482,7 +1496,7 @@ class MarkerClient(QWidget):
         assert task[0] == "q"
         assert task[5] == "g"
         question_idx = int(task[6:])
-        assert question_idx == self.question
+        assert question_idx == self.question_idx
 
         self.get_downloads_for_src_img_data(src_img_data)
 
@@ -1808,44 +1822,39 @@ class MarkerClient(QWidget):
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
 
-    def getSolutionImage(self):
-        # get the file from disc if it exists, else grab from server
-        soln = os.path.join(
-            self.workingDirectory,
-            "solution.{}.{}.png".format(self.question, self.version),
-        )
-        if os.path.isfile(soln):
-            return soln
-        else:
-            return self.refreshSolutionImage()
+    def getSolutionImage(self) -> Path | None:
+        """Get the file from disc if it exists, else grab from server."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
+        if f.is_file():
+            return f
+        return self.refreshSolutionImage()
 
-    def refreshSolutionImage(self):
-        # get solution and save it to temp dir
-        soln = os.path.join(
-            self.workingDirectory,
-            "solution.{}.{}.png".format(self.question, self.version),
-        )
+    def refreshSolutionImage(self) -> Path | None:
+        """Get solution image and save it to working dir."""
+        f = self.workingDirectory / f"solution.{self.question_idx}.{self.version}.png"
         try:
-            im_bytes = self.msgr.getSolutionImage(self.question, self.version)
-            with open(soln, "wb") as fh:
+            im_bytes = self.msgr.getSolutionImage(self.question_idx, self.version)
+            with open(f, "wb") as fh:
                 fh.write(im_bytes)
-            return soln
+            return f
         except PlomNoSolutionException as e:
             log.warning(f"no solution image: {e}")
-            # if a residual file is there, delete it
-            if os.path.isfile(soln):
-                os.remove(soln)
+            # if a residual file is there, try to delete it
+            try:
+                f.unlink()
+            except FileNotFoundError:
+                pass
             return None
 
     def saveTabStateToServer(self, tab_state):
         """Upload a tab state to the server."""
         log.info("Saving user's rubric tab configuration to server")
-        self.msgr.MsaveUserRubricTabs(self.question, tab_state)
+        self.msgr.MsaveUserRubricTabs(self.question_idx, tab_state)
 
     def getTabStateFromServer(self):
         """Download the state from the server."""
         log.info("Pulling user's rubric tab configuration from server")
-        return self.msgr.MgetUserRubricTabs(self.question)
+        return self.msgr.MgetUserRubricTabs(self.question_idx)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1937,7 +1946,7 @@ class MarkerClient(QWidget):
                 plomFileName,
             ),
             totmtime,  # total marking time (seconds)
-            self.question,
+            self.question_idx,
             self.version,
             rubrics,
             integrity_check,
@@ -2454,8 +2463,15 @@ class MarkerClient(QWidget):
     def view_other(self):
         """Shows a particular paper number and question."""
         max_question_idx = self.exam_spec["numberOfQuestions"]
-        tgs = SelectTestQuestion(
-            self, self.max_papernum, max_question_idx, self.question
+        qlabels = [
+            get_question_label(self.exam_spec, i + 1)
+            for i in range(0, max_question_idx)
+        ]
+        tgs = SelectPaperQuestion(
+            self,
+            qlabels,
+            max_papernum=self.max_papernum,
+            initial_idx=self.question_idx,
         )
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
@@ -2486,8 +2502,23 @@ class MarkerClient(QWidget):
             except PlomBenignException as e:
                 WarnMsg(self, f"Could not get page data: {e}").exec()
                 return
+            if not pagedata:
+                WarnMsg(
+                    self,
+                    f"No page images for paper {tn:04}:"
+                    " it may not be scanned or was not written.",
+                ).exec()
+                return
             # also, discard the non-included pages
             pagedata = [x for x in pagedata if x["included"]]
+            if not pagedata:
+                WarnMsg(
+                    self,
+                    f"No page images for paper {tn:04} question index {q}:"
+                    " possibly that question is not yet scanned"
+                    " or has been discarded.",
+                ).exec()
+                return
             # don't cache this pagedata: "q" might not be our question number
             # (but the images are cacheable)
             pagedata = self.downloader.sync_downloads(pagedata)

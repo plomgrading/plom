@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
 -->
 <div class="card p-2" id="bundlePageFragment">
     <!-- HEADER STUFF -->
@@ -10,7 +10,7 @@
             <div class="col-8">
                 <div>
                     <img class="shadow rounded"
-                         src="{% url 'scan_get_rotated_image' timestamp index %}"
+                         src="{% url 'scan_get_rotated_image' bundle_id index %}"
                          style="max-height: 100%;
                                 max-width: 100%" />
                 </div>
@@ -19,7 +19,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="py-4" id="invalidmessage"></div>
-                        <form hx-post="{% url 'knowify_image' timestamp index %}"
+                        <form hx-post="{% url 'knowify_image' bundle_id index %}"
                               hx-target="#invalidmessage"
                               hx-swap="innerHTML">
                             <div class="input-group p-3">
@@ -58,7 +58,7 @@
                             <button class="btn btn-primary" type="submit">Set data</button>
                             <button class="btn btn-danger px-4"
                                     type="button"
-                                    hx-get="{% url 'scan_bundle_page' timestamp index %}"
+                                    hx-get="{% url 'scan_bundle_page' bundle_id index %}"
                                     hx-swap="outerHTML"
                                     hx-target="#bundlePageFragment">Cancel</button>
                         </form>

@@ -1,10 +1,15 @@
 .. Plom documentation
-   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
 Solutions
 =========
+
+.. note::
+   These instructions are working with solutions on legacy servers.
+   TODO: update these docs.
+
 
 Plom can manage solutions for your exam.  These are used for showing
 solutions on-screen to markers and for returning a custom solutions
@@ -29,7 +34,7 @@ The command-line tool :doc:`plom-solutions` can extract solutions from
 PDF files, push to server, etc.  See ``plom-solutions --help`` for
 more information.
 
-The ``plom-manager`` GUI tool currently allows some manipulation of
+The :doc:`plom-legacy-manager` GUI tool currently allows some manipulation of
 the solutions but is not yet a replacement for the command-line tool.
 
 

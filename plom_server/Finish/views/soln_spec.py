@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from typing import Any, Dict
 
@@ -12,11 +12,9 @@ from django_htmx.http import HttpResponseClientRedirect
 
 from rest_framework.serializers import ValidationError
 
-
 from Base.base_group_views import ManagerRequiredView
-
-from ..services import TemplateSolnSpecService, BuildSolutionService, SolnSourceService
 from Papers.services import SolnSpecService
+from ..services import TemplateSolnSpecService, BuildSolutionService, SolnSourceService
 
 
 class SolnSpecView(ManagerRequiredView):
@@ -86,9 +84,9 @@ class SolnSpecView(ManagerRequiredView):
                 else:
                     SolnSpecService.load_soln_spec_from_toml_string(spec)
                 context["valid"] = True
-                context[
-                    "unused_pages"
-                ] = SolnSpecService.get_unused_pages_in_toml_string(spec)
+                context["unused_pages"] = (
+                    SolnSpecService.get_unused_pages_in_toml_string(spec)
+                )
             except ValueError as e:
                 context["error_list"].append(f"{e}")
             except ValidationError as errs:

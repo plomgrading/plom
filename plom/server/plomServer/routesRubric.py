@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web
 
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request
-from .routeutils import log
+from .routeutils import authenticate_by_token_required_fields
 
 
 class RubricHandler:
@@ -127,8 +125,6 @@ class RubricHandler:
         Returns:
             aiohttp.web_response.Response: List of all comments in DB
         """
-        username = data["user"]
-
         rubrics = self.server.MgetRubrics()
         return web.json_response(rubrics, status=200)
 
@@ -144,9 +140,7 @@ class RubricHandler:
         Returns:
             aiohttp.web_response.Response: List of all comments in DB
         """
-        username = data["user"]
         question = request.match_info["question"]
-
         rubrics = self.server.MgetRubrics(question)
         return web.json_response(rubrics, status=200)
 
