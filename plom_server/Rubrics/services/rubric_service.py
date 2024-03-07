@@ -193,6 +193,8 @@ class RubricService:
                 "question": r.question,
                 "versions": r.versions,
                 "parameters": r.parameters,
+                "system_rubric": r.system_rubric,
+                "published": r.published,
             }
             rubric_data.append(rubric_dict)
 

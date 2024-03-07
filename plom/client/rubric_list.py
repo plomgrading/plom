@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion, ErrorMsg
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
@@ -1587,24 +1587,37 @@ class RubricWidget(QWidget):
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
-        # TODO: Displays username instead of preferred name, Issue #3048
-        # TODO: would be nice if this dialog *knew* about the server settings
-        msg = SimpleQuestion(
-            self,
-            "<p>You did not create this rubric "
-            f"(it was created by &ldquo;{com['username']}&rdquo;).  "
-            "Depending on server settings, you might not be allowed to "
-            "modify it.</p>",
-            "Do you want to make a copy and edit that instead?",
+        if com["system_rubric"]:
+            msg = (
+                "<p>This is a &ldquo;system rubric&rdquo; "
+                "created by Plom itself; the server will probably not "
+                "let you modify it.</p>"
+            )
+            edit_button = False
+        else:
+            # TODO: Displays username instead of preferred name, Issue #3048
+            # TODO: would be nice if this dialog *knew* about the server settings
+            msg = (
+                "<p>You did not create this rubric "
+                f"(it was created by &ldquo;{com['username']}&rdquo;).  "
+                "Depending on server settings, you might not be allowed to "
+                "modify it.</p>"
+            )
+            edit_button = True
+        msgbox = SimpleQuestion(
+            self, msg, "Do you want to make a copy and edit that instead?"
         )
-        msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
-        msg.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
-        msg.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
-        msg.exec()
-        clicked = msg.clickedButton()
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
+        b = msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        if not edit_button:
+            assert b is not None
+            b.setEnabled(False)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
         if not clicked:
             return
-        if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
+        if msgbox.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
             com = com.copy()
@@ -1681,7 +1694,7 @@ class RubricWidget(QWidget):
             try:
                 key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             except PlomConflict as e:
-                ErrorMsg(self, f"No permission to modify that rubric: {e}").exec()
+                InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
                 ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
