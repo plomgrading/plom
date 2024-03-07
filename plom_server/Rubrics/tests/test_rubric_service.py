@@ -483,22 +483,22 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 4)
 
-    def test_modify_rubric_wrong_age(self) -> None:
+    def test_modify_rubric_wrong_edition(self) -> None:
         rub = {
             "kind": "neutral",
             "text": "qwerty",
             "username": "Liam",
             "question": 1,
-            "_age": 10,
+            "_edition": 10,
         }
         r = RubricService().create_rubric(rub)
         key = r.key
 
-        # ok to change if age matches
+        # ok to change if edition matches
         rub.update({"text": "Changed"})
         RubricService().modify_rubric(key, rub)
 
-        # but its an error if the age does not match
-        rub.update({"_age": 0})
+        # but its an error if the edition does not match
+        rub.update({"_edition": 0})
         with self.assertRaises(PlomConflict):
             RubricService().modify_rubric(key, rub)

@@ -145,13 +145,13 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
-        # default age if missing from incoming data
-        new_rubric_data.setdefault("_age", 0)
-        if not new_rubric_data["_age"] == rubric._age:
+        # default edition if missing from incoming data
+        new_rubric_data.setdefault("_edition", 0)
+        if not new_rubric_data["_edition"] == rubric._edition:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f"Your rubric age={new_rubric_data['_age']} does not match "
-                f"database content with age={rubric._age}: most likely your "
+                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
+                f"database content (edition = {rubric._edition}: most likely your "
                 "edits have collided with those of someone else."
             )
         s = SettingsModel.load()
@@ -176,7 +176,7 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        new_rubric_data["_age"] += 1
+        new_rubric_data["_edition"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
@@ -214,7 +214,7 @@ class RubricService:
                 "parameters": r.parameters,
                 "system_rubric": r.system_rubric,
                 "published": r.published,
-                "_age": r._age,
+                "_edition": r._edition,
             }
             rubric_data.append(rubric_dict)
 
