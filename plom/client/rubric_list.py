@@ -35,7 +35,12 @@ from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
-from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric, PlomNoRubric
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomInconsistentRubric,
+    PlomNoPermission,
+    PlomNoRubric,
+)
 
 
 log = logging.getLogger("annotr")
@@ -1693,7 +1698,7 @@ class RubricWidget(QWidget):
         if edit:
             try:
                 key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
-            except PlomConflict as e:
+            except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
@@ -1701,6 +1706,12 @@ class RubricWidget(QWidget):
                 return
             except PlomNoRubric as e:
                 ErrorMsg(self, f"{e}").exec()
+                return
+            except PlomConflict as e:
+                # TODO: in the future, show diffs and offer choices
+                InfoMsg(
+                    self, f"Someone else modified that rubric before you: {e}"
+                ).exec()
                 return
             # update the rubric in the current internal rubric list
             # make sure that keys match.

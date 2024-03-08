@@ -166,6 +166,12 @@ class PlomNoPaper(PlomBenignException):
     pass
 
 
+class PlomNoPermission(PlomBenignException):
+    """You don't have permission, e.g.., for that paper, rubric, etc."""
+
+    pass
+
+
 class PlomBundleLockedException(PlomBenignException):
     """For when a bundle is locked or pushed."""
 

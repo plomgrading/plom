@@ -24,6 +24,7 @@ from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
+from plom.plom_exceptions import PlomConflict
 from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
@@ -49,6 +50,7 @@ class RubricService:
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
             creating_user: who is trying to create the rubric.  ``None``
@@ -65,6 +67,7 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
+        rubric_data = rubric_data.copy()
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
@@ -110,8 +113,11 @@ class RubricService:
         """Modify a rubric.
 
         Args:
-            key: a sequence of ints that uniquely identify a specific rubric.
+            key: a string that uniquely identify a specific rubric.
+                Generally not the same as the "private key" used
+                internally, although this could change in the future.
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
             modifying_user: who is trying to modify the rubric.  This might
@@ -126,7 +132,10 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
+            ValidationError: invalid kind, maybe other invalidity.
+            PlomConflict: the new data is too old; someone else modified.
         """
+        new_rubric_data = new_rubric_data.copy()
         user = User.objects.get(username=new_rubric_data.pop("username"))
         new_rubric_data["user"] = user.pk
 
@@ -136,6 +145,15 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
+        # default edition if missing from incoming data
+        new_rubric_data.setdefault("_edition", 0)
+        if not new_rubric_data["_edition"] == rubric._edition:
+            # TODO: record who last modified and when
+            raise PlomConflict(
+                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
+                f"database content (edition = {rubric._edition}: most likely your "
+                "edits have collided with those of someone else."
+            )
         s = SettingsModel.load()
         if modifying_user is None:
             pass
@@ -158,6 +176,7 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
+        new_rubric_data["_edition"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
@@ -195,6 +214,7 @@ class RubricService:
                 "parameters": r.parameters,
                 "system_rubric": r.system_rubric,
                 "published": r.published,
+                "_edition": r._edition,
             }
             rubric_data.append(rubric_dict)
 

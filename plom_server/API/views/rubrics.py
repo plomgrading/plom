@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 
+from plom.plom_exceptions import PlomConflict
 from Rubrics.services import RubricService
 
 from .utils import _error_response
@@ -63,10 +64,12 @@ class MmodifyRubric(APIView):
 
         Returns:
             On success, responds with a string, the rubric id/key.
-            Responds with 409 (or in some cases 404) if the rubric is
-            not found.  Responds with 406 not acceptable if the proposed
+            Responds with 404 if the rubric is not found.
+            Responds with 406 not acceptable if the proposed
             data is invalid in some way.  Responds with 403 if you are
             not allowed to modify this rubric.
+            Responds with 409 if your modifications conflict with others'
+            (e.g., two users have both modified the same rubric).
         """
         rs = RubricService()
         try:
@@ -75,14 +78,15 @@ class MmodifyRubric(APIView):
             )
             return Response(rubric.key, status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
-            # 404 would be reasonable, but for now do 409 like Legacy does.
             # Django also intercepts invalid (too short) keys before we see them
             # and uses 404 for those (see the regex in ``mark_patterns.py``).
             return _error_response(
-                f"Rubric with key {key} not found: {e}", status.HTTP_409_CONFLICT
+                f"Rubric with key {key} not found: {e}", status.HTTP_404_NOT_FOUND
             )
         except PermissionDenied as e:
             # not catching this would work, but we don't get the full error message
             return _error_response(e, status.HTTP_403_FORBIDDEN)
         except (ValidationError, NotImplementedError) as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+        except PlomConflict as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
