@@ -36,6 +36,14 @@ def test_rubric_diff() -> None:
     assert re.match(r"(?s).*\+.*DEF", diff)
 
 
+def test_rubric_diff_delta() -> None:
+    p = _make_ex()
+    r = _make_ex()
+    r.update({"value": 3, "display_delta": "3 of 4"})
+    same, diff = diff_rubric(p, r)
+    assert not same
+
+
 def test_rubric_diff_version_change_issue3295() -> None:
     p = _make_ex()
     r = _make_ex()
