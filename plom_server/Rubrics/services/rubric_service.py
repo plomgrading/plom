@@ -249,6 +249,37 @@ class RubricService:
         """
         return Rubric.objects.get(key=rubric_key)
 
+    def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
+        """Get a rubric by its key/id and return as a dictionary.
+
+        Args:
+            rubric_key: which rubric.  Note currently the key/id is not
+                the same as the internal ``pk``.
+
+        Returns:
+            Key-value pairs representing the rubric.
+
+        TODO: write dict-from-r helper use here and in the all-getter
+        """
+        r = Rubric.objects.get(key=rubric_key)
+        return {
+            "id": r.key,
+            "kind": r.kind,
+            "display_delta": r.display_delta,
+            "value": r.value,
+            "out_of": r.out_of,
+            "text": r.text,
+            "tags": r.tags,
+            "meta": r.meta,
+            "username": r.user.username,
+            "question": r.question,
+            "versions": r.versions,
+            "parameters": r.parameters,
+            "system_rubric": r.system_rubric,
+            "published": r.published,
+            "_edition": r._edition,
+        }
+
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
@@ -502,6 +533,8 @@ class RubricService:
 
         Returns:
             HTML representation of the rubric.
+
+        TODO: code duplication from plom.client.rubrics.py.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)
