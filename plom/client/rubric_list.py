@@ -1716,8 +1716,7 @@ class RubricWidget(QWidget):
                 )
                 same, their_diff = diff_rubric(old_rubric, their_rubric)
                 same, our_diff = diff_rubric(old_rubric, new_rubric)
-                # TODO: in the future, show diffs and offer choices
-                SimpleQuestion(
+                InfoMsg(
                     self,
                     f"""
                         <h3>Rubric change conflict</h3>
@@ -1742,10 +1741,14 @@ class RubricWidget(QWidget):
                           {our_diff}
                         </td>
                         </tr></table>
+                        <p>
+                          This is work-in-progress,
+                          for now we always keep &ldquo;Their's&rdquo;.
+                        </p>
                     """,
-                    "Do you want to keep their's or your's?  (TODO: both buttons keep their's for now)",
+                    # "Do you want to keep their's or your's?",
                 ).exec()
-                # buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
+                # TODO: future buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
                 return
             # update the rubric in the current internal rubric list
             # make sure that keys match.
