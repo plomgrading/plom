@@ -13,6 +13,7 @@ urlpatterns = [
     path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),
     path("admin/wipe/", views.RubricWipePageView.as_view(), name="rubrics_wipe"),
+    path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
     path(

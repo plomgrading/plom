@@ -452,6 +452,8 @@ class AddRubricBox(QDialog):
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
+        # the rubric may have fields we don't modify: keep a copy around
+        self._old_rubric = {} if not com else com.copy()
         params = []
         # If supplied with current text/delta then set them
         if com:
@@ -857,17 +859,21 @@ class AddRubricBox(QDialog):
 
         params = self.get_parameters()
 
-        return {
-            "id": rubricID,
-            "kind": kind,
-            "display_delta": display_delta,
-            "value": value,
-            "out_of": out_of,
-            "text": txt,
-            "tags": tags,
-            "meta": meta,
-            "username": username,
-            "question": self.question_number,
-            "versions": vers,
-            "parameters": params,
-        }
+        rubric = self._old_rubric
+        rubric.update(
+            {
+                "id": rubricID,
+                "kind": kind,
+                "display_delta": display_delta,
+                "value": value,
+                "out_of": out_of,
+                "text": txt,
+                "tags": tags,
+                "meta": meta,
+                "username": username,
+                "question": self.question_number,
+                "versions": vers,
+                "parameters": params,
+            }
+        )
+        return rubric

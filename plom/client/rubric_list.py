@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 from datetime import datetime
+import html
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -30,12 +31,17 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion, ErrorMsg
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
-from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric, PlomNoRubric
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomInconsistentRubric,
+    PlomNoPermission,
+    PlomNoRubric,
+)
 
 
 log = logging.getLogger("annotr")
@@ -1587,24 +1593,37 @@ class RubricWidget(QWidget):
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
-        # TODO: Displays username instead of preferred name, Issue #3048
-        # TODO: would be nice if this dialog *knew* about the server settings
-        msg = SimpleQuestion(
-            self,
-            "<p>You did not create this rubric "
-            f"(it was created by &ldquo;{com['username']}&rdquo;).  "
-            "Depending on server settings, you might not be allowed to "
-            "modify it.</p>",
-            "Do you want to make a copy and edit that instead?",
+        if com["system_rubric"]:
+            msg = (
+                "<p>This is a &ldquo;system rubric&rdquo; "
+                "created by Plom itself; the server will probably not "
+                "let you modify it.</p>"
+            )
+            edit_button = False
+        else:
+            # TODO: Displays username instead of preferred name, Issue #3048
+            # TODO: would be nice if this dialog *knew* about the server settings
+            msg = (
+                "<p>You did not create this rubric "
+                f"(it was created by &ldquo;{com['username']}&rdquo;).  "
+                "Depending on server settings, you might not be allowed to "
+                "modify it.</p>"
+            )
+            edit_button = True
+        msgbox = SimpleQuestion(
+            self, msg, "Do you want to make a copy and edit that instead?"
         )
-        msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
-        msg.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
-        msg.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
-        msg.exec()
-        clicked = msg.clickedButton()
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
+        b = msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        if not edit_button:
+            assert b is not None
+            b.setEnabled(False)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
         if not clicked:
             return
-        if msg.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
+        if msgbox.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
             return
         if "copy" not in clicked.text().casefold():
             com = com.copy()
@@ -1680,14 +1699,56 @@ class RubricWidget(QWidget):
         if edit:
             try:
                 key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
-            except PlomConflict as e:
-                ErrorMsg(self, f"No permission to modify that rubric: {e}").exec()
+            except PlomNoPermission as e:
+                InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
                 ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
                 return
             except PlomNoRubric as e:
                 ErrorMsg(self, f"{e}").exec()
+                return
+            except PlomConflict as e:
+                tmp_rubrics = self._parent.getRubricsFromServer()
+                (old_rubric,) = (r for r in self.rubrics if r["id"] == new_rubric["id"])
+                (their_rubric,) = (
+                    r for r in tmp_rubrics if r["id"] == new_rubric["id"]
+                )
+                same, their_diff = diff_rubric(old_rubric, their_rubric)
+                same, our_diff = diff_rubric(old_rubric, new_rubric)
+                InfoMsg(
+                    self,
+                    f"""
+                        <h3>Rubric change conflict</h3>
+                        <br />
+                        <quote>
+                        <small>
+                        <tt>{html.escape(str(e))}</tt>
+                        </small>
+                        </quote>
+                        <br />
+                        <table><tr>
+                        <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
+                          <h4>Their's</h4>
+                          {render_rubric_as_html(their_rubric)}
+                          <b>changes</b><br />
+                          {their_diff}
+                        </td>
+                        <td style="padding-left: 2ex;">
+                          <h4>Your's</h4>
+                          {render_rubric_as_html(new_rubric)}
+                          <b>changes</b><br />
+                          {our_diff}
+                        </td>
+                        </tr></table>
+                        <p>
+                          This is work-in-progress,
+                          for now we always keep &ldquo;Their's&rdquo;.
+                        </p>
+                    """,
+                    # "Do you want to keep their's or your's?",
+                ).exec()
+                # TODO: future buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
                 return
             # update the rubric in the current internal rubric list
             # make sure that keys match.

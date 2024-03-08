@@ -31,47 +31,14 @@
                 {% endif %}
             </p>
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
-            <a class="btn btn-primary disabled" href="">Create additional "demo" rubrics</a>
+            <a class="btn btn-secondary disabled" href="">Create additional "demo" rubrics</a>
             <p>Explanations go here, not implemented yet in the UI.</p>
-            <a class="btn btn-primary disabled" href="">Download all rubrics to a local file</a>
+            <a class="btn btn-secondary disabled" href="">Download all rubrics to a local file</a>
             <p>Not implemented yet in the UI.</p>
-            <a class="btn btn-primary disabled" href="">Upload rubrics from a file</a>
+            <a class="btn btn-secondary disabled" href="">Upload rubrics from a file</a>
             <p>Not implemented yet in the UI.</p>
             <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
             <p>(A destructive action; you'll need to confirm it on the next screen)</p>
         </div>
-    </div>
-    <hr />
-    <div>
-        <table class="table table-striped table-bordered sortable">
-            <thead>
-                <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Value</th>
-                    <th scope="col">Out of</th>
-                    <th scope="col">Display Delta</th>
-                    <th scope="col">Kind</th>
-                    <th scope="col">Question</th>
-                    <th scope="col"># used</th>
-                    <th scope="col">Text</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rubric in rubrics %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'rubric_item' rubric.key %}">{{ rubric.key }}</a>
-                        </td>
-                        <td>{{ rubric.value }}</td>
-                        <td>{{ rubric.out_of }}</td>
-                        <td>{{ rubric.display_delta }}</td>
-                        <td>{{ rubric.kind }}</td>
-                        <td>{{ rubric.question }}</td>
-                        <td></td>
-                        <td>{{ rubric.text }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 {% endblock main_content %}

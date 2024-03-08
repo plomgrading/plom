@@ -1,15 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import html
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import arrow
 
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
-def compute_score_naive(rubrics, maxscore):
+def compute_score_naive(rubrics: list[dict[str, Any]], maxscore: int) -> int:
     """Compute score given a set of rubrics, using naive straight sum rules.
 
     Args:
@@ -36,7 +38,9 @@ def compute_score_naive(rubrics, maxscore):
     return score
 
 
-def compute_score_legacy2022(rubrics, maxscore):
+def compute_score_legacy2022(
+    rubrics: list[dict[str, Any]], maxscore: int
+) -> int | None:
     """Compute score given a set of rubrics, using "Plom 2022" rules.
 
     Args:
@@ -102,7 +106,7 @@ def compute_score_legacy2022(rubrics, maxscore):
     return score
 
 
-def compute_score_locabs(rubrics, maxscore):
+def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | None:
     """Compute score given a set of rubrics.
 
     A new set of rubric summation rules, designed to allow mixing up
@@ -222,7 +226,7 @@ def compute_score_locabs(rubrics, maxscore):
 compute_score = compute_score_locabs
 
 
-def render_rubric_as_html(r):
+def render_rubric_as_html(r: dict[str, Any]) -> str:
     display_delta = html.escape(r["display_delta"])
     text = html.escape(r["text"])
 
@@ -246,28 +250,32 @@ def render_rubric_as_html(r):
     """
 
 
-def _diff_line(a, b):
+def _diff_line(a: str, b: str) -> str:
     a = html.escape(a)
     b = html.escape(b)
+    lines = []
+    if a:
+        lines.append(f'<span style="color:#AA0000;"><b>-</b> {a}</span>')
+    if b:
+        lines.append(f'<span style="color:#00AA00;"><b>+</b> {b}</span>')
     return f"""<br />
       <tt>
-        <span style="color:#AA0000;"><b>-</b> {a}</span><br />
-        <span style="color:#00AA00;"><b>+</b> {b}</span>
+        {"<br />".join(lines)}
       </tt>
     """
 
 
-def _diff_compact(a, b):
+def _diff_compact(a: str, b: str, *, label: str = "") -> str:
     a = html.escape(a)
     b = html.escape(b)
     return f"""<br />
-      <tt>&nbsp; </tt><span style="color:#AA0000;">{a}</span>
+      <tt>&nbsp; </tt>{label} <span style="color:#AA0000;">{a}</span>
       &rarr;
       <span style="color:#00AA00;">{b}</span>
     """
 
 
-def _context(a):
+def _context(a: str) -> str:
     a = html.escape(a)
     return f"""<br />
       <tt>
@@ -276,12 +284,12 @@ def _context(a):
     """
 
 
-def diff_rubric(p, r):
+def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
     """Are two rubrics the same, and a marked up visual representation if not.
 
     Args:
-        p (dict): a previous rubric.
-        r (dict): the current rubric.  We diff from ``p`` to ``q``.
+        p: a previous rubric.
+        r: the current rubric.  We diff from ``p`` to ``r``.
 
     Returns:
         tuple: True/False and an string of HTML.  True means they are
@@ -295,7 +303,6 @@ def diff_rubric(p, r):
     out = ""
     if p["display_delta"] != r["display_delta"]:
         rval = False
-        # out += _diff_helper(p["display_delta"], r["display_delta"])
         out += _diff_compact(p["display_delta"], r["display_delta"])
     else:
         if r["display_delta"] != ".":
@@ -305,21 +312,33 @@ def diff_rubric(p, r):
         out += _diff_line(p["text"], r["text"])
     else:
         out += _context(r["text"])
-    if p["tags"] != r["tags"]:
+    if p.get("tags") != r.get("tags"):
         rval = False
-        out += _diff_line(p["tags"], r["tags"])
-    if p["versions"] != r["versions"]:
+        out += _diff_line(str(p.get("tags")), str(r.get("tags")))
+    if p.get("versions") != r.get("versions"):
         rval = False
-        out += _diff_line(p["versions"], r["versions"])
+        out += _diff_compact(
+            str(p.get("versions")), str(r.get("versions")), label="versions:"
+        )
+    if p.get("parameters") != r.get("parameters"):
+        rval = False
+        out += _diff_line(str(p.get("parameters")), str(r.get("parameters")))
     if not rval:
-        when = arrow.get(r["modified"]).humanize()
+        mod = r.get("modified")
+        if mod:
+            when = arrow.get(mod).humanize()
+        else:
+            # TODO: or force input to have modified?
+            when = arrow.now().humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
-    return rval, out
+    if rval:
+        return True, ""
+    return False, out
 
 
 def check_for_illadvised(
-    rubrics: List[Dict[str, Any]], maxscore: int
-) -> Tuple[bool, Optional[str], Optional[str]]:
+    rubrics: list[dict[str, Any]], maxscore: int
+) -> tuple[bool, str | None, str | None]:
     """Certain combinations of rubrics are legal but not a good idea.
 
     Args:

@@ -10,6 +10,7 @@ from django.test import TestCase
 from model_bakery import baker
 from rest_framework.exceptions import ValidationError
 
+from plom.plom_exceptions import PlomConflict
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models.paper_structure import Paper
@@ -384,6 +385,8 @@ class RubricServiceTests(TestCase):
             d["display_delta"] = "+2"
             d["value"] = 2
             d["username"] = username
+            # update the edition
+            d["_edition"] = RubricService().get_rubric_by_key(key)._edition
 
             r = RubricService().modify_rubric(key, d)
             self.assertEqual(r.key, rubric.key)
@@ -396,6 +399,8 @@ class RubricServiceTests(TestCase):
             d["value"] = 2
             d["out_of"] = 3
             d["username"] = username
+            # update the edition
+            d["_edition"] = RubricService().get_rubric_by_key(key)._edition
 
             r = RubricService().modify_rubric(key, d)
             self.assertEqual(r.key, rubric.key)
@@ -481,3 +486,23 @@ class RubricServiceTests(TestCase):
         rubric1.annotations.add(annotation4)
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 4)
+
+    def test_modify_rubric_wrong_edition(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "text": "qwerty",
+            "username": "Liam",
+            "question": 1,
+            "_edition": 10,
+        }
+        r = RubricService().create_rubric(rub)
+        key = r.key
+
+        # ok to change if edition matches
+        rub.update({"text": "Changed"})
+        RubricService().modify_rubric(key, rub)
+
+        # but its an error if the edition does not match
+        rub.update({"_edition": 0})
+        with self.assertRaises(PlomConflict):
+            RubricService().modify_rubric(key, rub)

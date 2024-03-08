@@ -24,6 +24,8 @@ from django.db.models import QuerySet
 
 from rest_framework.exceptions import ValidationError
 
+from plom.plom_exceptions import PlomConflict
+from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
 from Papers.models import Paper
@@ -48,10 +50,12 @@ class RubricService:
 
         Args:
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
-            creating_user: who is trying to create the rubric.  None
+            creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
+                ``None`` also bypasses the rubric access settings.
 
         Returns:
             The created and saved rubric instance.
@@ -63,6 +67,7 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
+        rubric_data = rubric_data.copy()
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
@@ -73,18 +78,15 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
-        # Hardcoded for now but these could be configurable later
-        anyone_can_create_rubrics = False
-        no_one_can_create_rubrics = False
-
-        if anyone_can_create_rubrics:
+        s = SettingsModel.load()
+        if creating_user is None:
             pass
-        elif no_one_can_create_rubrics:
+        elif s.who_can_create_rubrics == "permissive":
+            pass
+        elif s.who_can_create_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to create rubrics on this server"
             )
-        elif creating_user is None:
-            pass
         else:
             # TODO: consult per-user permissions (not implemented yet)
             pass
@@ -104,15 +106,18 @@ class RubricService:
     def modify_rubric(
         self,
         key: str,
-        rubric_data: dict[str, Any],
+        new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
     ) -> Rubric:
         """Modify a rubric.
 
         Args:
-            key: a sequence of ints that uniquely identify a specific rubric.
+            key: a string that uniquely identify a specific rubric.
+                Generally not the same as the "private key" used
+                internally, although this could change in the future.
             rubric_data: data for a rubric submitted by a web request.
+                This input will not be modified by this call.
 
         Keyword Args:
             modifying_user: who is trying to modify the rubric.  This might
@@ -127,22 +132,41 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
+            ValidationError: invalid kind, maybe other invalidity.
+            PlomConflict: the new data is too old; someone else modified.
         """
-        user = User.objects.get(username=rubric_data.pop("username"))
-        rubric_data["user"] = user.pk
+        new_rubric_data = new_rubric_data.copy()
+        user = User.objects.get(username=new_rubric_data.pop("username"))
+        new_rubric_data["user"] = user.pk
 
-        # Hardcoded for now but these could be configurable later
-        anyone_can_modify_rubrics = False
-        no_one_can_modify_rubrics = False
+        kind = new_rubric_data["kind"]
+        if kind not in RubricService.__valid_kinds:
+            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
-        if anyone_can_modify_rubrics:
+        rubric = Rubric.objects.filter(key=key).select_for_update().get()
+
+        # default edition if missing from incoming data
+        new_rubric_data.setdefault("_edition", 0)
+        if not new_rubric_data["_edition"] == rubric._edition:
+            # TODO: record who last modified and when
+            raise PlomConflict(
+                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
+                f"database content (edition = {rubric._edition}: most likely your "
+                "edits have collided with those of someone else."
+            )
+        s = SettingsModel.load()
+        if modifying_user is None:
             pass
-        elif no_one_can_modify_rubrics:
+        elif s.who_can_modify_rubrics == "permissive":
+            # can modify system rubrics using modifying_user=None
+            if rubric.system_rubric:
+                raise PermissionDenied(
+                    f'You ("{modifying_user}") are not allowed to modify system rubrics'
+                )
+        elif s.who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
             )
-        elif modifying_user is None:
-            pass
         else:
             # TODO: consult per-user permissions (not implemented yet)
             # For now, we have only the default case: users can modify their own rubrics
@@ -152,12 +176,8 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        kind = rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
-
-        rubric = Rubric.objects.filter(key=key).select_for_update().get()
-        serializer = RubricSerializer(rubric, data=rubric_data)
+        new_rubric_data["_edition"] += 1
+        serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
         rubric_instance = serializer.instance
@@ -192,6 +212,9 @@ class RubricService:
                 "question": r.question,
                 "versions": r.versions,
                 "parameters": r.parameters,
+                "system_rubric": r.system_rubric,
+                "published": r.published,
+                "_edition": r._edition,
             }
             rubric_data.append(rubric_dict)
 
@@ -208,6 +231,23 @@ class RubricService:
             Lazy queryset of all rubrics.
         """
         return Rubric.objects.all()
+
+    def get_rubric_count(self) -> int:
+        """How many rubrics in total."""
+        return Rubric.objects.count()
+
+    def get_rubric_by_key(self, rubric_key: str) -> Rubric:
+        """Get a rubric by its key/id.
+
+        Args:
+            rubric_key: which rubric.  Note currently the key/id is not
+                the same as the internal ``pk``.
+
+        Returns:
+            The rubric object.  It is not "selected for update" so should
+            be read-only.
+        """
+        return Rubric.objects.get(key=rubric_key)
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
@@ -232,10 +272,10 @@ class RubricService:
         if existing_rubrics:
             return False
         spec = SpecificationService.get_the_spec()
-        self._build_special_rubrics(spec, username)
+        self._build_system_rubrics(spec, username)
         return True
 
-    def _build_special_rubrics(self, spec: dict[str, Any], username: str) -> None:
+    def _build_system_rubrics(self, spec: dict[str, Any], username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in range(1, 1 + spec["numberOfQuestions"]):
@@ -252,6 +292,7 @@ class RubricService:
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -269,6 +310,7 @@ class RubricService:
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -286,6 +328,7 @@ class RubricService:
                 "meta": "",
                 "tags": "",
                 "username": username,
+                "system_rubric": True,
             }
             try:
                 r = self.create_rubric(rubric)
@@ -306,6 +349,7 @@ class RubricService:
                     "meta": "",
                     "tags": "",
                     "username": username,
+                    "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
@@ -320,6 +364,7 @@ class RubricService:
                     "meta": "",
                     "tags": "",
                     "username": username,
+                    "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
