@@ -174,7 +174,9 @@ class RubricHandler:
         if key_or_reason == "incomplete":
             return web.HTTPNotAcceptable(reason="Sent rubric was incomplete")
         elif key_or_reason == "noSuchRubric":
-            return web.HTTPConflict(reason="No rubric with that key found")
+            return web.HTTPConflict(
+                reason=f"No rubric found with key={key} and user={username}"
+            )
         return web.HTTPConflict(reason=f"Unexpected error/bug: '{key_or_reason}'")
 
     # @routes.get("/MK/user/{user}/{question}")
