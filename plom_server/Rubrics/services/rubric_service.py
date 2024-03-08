@@ -108,7 +108,14 @@ class RubricService:
                 "No users are allowed to create rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
+            # neither permissive nor locked so consult per-user permissions
+            if True:  # if is_lead_marker(creating_user):
+                pass
+            else:
+                raise PermissionDenied(
+                    f'You ("{creating_user}") are not allowed to create'
+                    " rubrics on this server"
+                )
             pass
 
         kind = rubric_data["kind"]
@@ -193,9 +200,14 @@ class RubricService:
                 "No users are allowed to modify rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
-            # For now, we have only the default case: users can modify their own rubrics
-            if user != modifying_user:
+            # neither permissive nor locked so consult per-user permissions
+            if user.username == modifying_user:
+                # users can modify their own
+                pass
+            # elif is_lead_marker(modifying_user):
+            #     # lead markers can modify any non-system-rubric
+            #     pass
+            else:
                 raise PermissionDenied(
                     f'You ("{modifying_user}") are not allowed to modify'
                     f' rubrics created by other users (here "{user}")'
