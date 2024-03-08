@@ -385,6 +385,8 @@ class RubricServiceTests(TestCase):
             d["display_delta"] = "+2"
             d["value"] = 2
             d["username"] = username
+            # update the edition
+            d["_edition"] = RubricService().get_rubric_by_key(key)._edition
 
             r = RubricService().modify_rubric(key, d)
             self.assertEqual(r.key, rubric.key)
@@ -397,6 +399,8 @@ class RubricServiceTests(TestCase):
             d["value"] = 2
             d["out_of"] = 3
             d["username"] = username
+            # update the edition
+            d["_edition"] = RubricService().get_rubric_by_key(key)._edition
 
             r = RubricService().modify_rubric(key, d)
             self.assertEqual(r.key, rubric.key)
