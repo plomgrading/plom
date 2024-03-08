@@ -18,12 +18,12 @@ def _make_ex():
     }
 
 
-def test_basic_render():
+def test_basic_render() -> None:
     html = render_rubric_as_html(_make_ex())
     assert "ABC" in html
 
 
-def test_rubric_diff():
+def test_rubric_diff() -> None:
     p = _make_ex()
     r = _make_ex()
     r.update({"text": "DEF"})
@@ -36,7 +36,7 @@ def test_rubric_diff():
     assert re.match(r"(?s).*\+.*DEF", diff)
 
 
-def test_rubric_diff_version_change_issue3295():
+def test_rubric_diff_version_change_issue3295() -> None:
     p = _make_ex()
     r = _make_ex()
     p.update({"versions": [1]})

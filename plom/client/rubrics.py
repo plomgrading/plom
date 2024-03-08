@@ -1,15 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import html
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import arrow
 
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
-def compute_score_naive(rubrics, maxscore):
+def compute_score_naive(rubrics: list[dict[str, Any]], maxscore: int) -> int:
     """Compute score given a set of rubrics, using naive straight sum rules.
 
     Args:
@@ -36,7 +38,9 @@ def compute_score_naive(rubrics, maxscore):
     return score
 
 
-def compute_score_legacy2022(rubrics, maxscore):
+def compute_score_legacy2022(
+    rubrics: list[dict[str, Any]], maxscore: int
+) -> int | None:
     """Compute score given a set of rubrics, using "Plom 2022" rules.
 
     Args:
@@ -102,7 +106,7 @@ def compute_score_legacy2022(rubrics, maxscore):
     return score
 
 
-def compute_score_locabs(rubrics, maxscore):
+def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | None:
     """Compute score given a set of rubrics.
 
     A new set of rubric summation rules, designed to allow mixing up
@@ -222,7 +226,7 @@ def compute_score_locabs(rubrics, maxscore):
 compute_score = compute_score_locabs
 
 
-def render_rubric_as_html(r):
+def render_rubric_as_html(r: dict[str, Any]) -> str:
     display_delta = html.escape(r["display_delta"])
     text = html.escape(r["text"])
 
@@ -271,7 +275,7 @@ def _diff_compact(a: str, b: str, *, label: str = "") -> str:
     """
 
 
-def _context(a):
+def _context(a: str) -> str:
     a = html.escape(a)
     return f"""<br />
       <tt>
@@ -280,7 +284,7 @@ def _context(a):
     """
 
 
-def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
+def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
     """Are two rubrics the same, and a marked up visual representation if not.
 
     Args:
@@ -333,8 +337,8 @@ def diff_rubric(p: Dict[str, Any], r: Dict[str, Any]) -> Tuple[bool, str]:
 
 
 def check_for_illadvised(
-    rubrics: List[Dict[str, Any]], maxscore: int
-) -> Tuple[bool, Optional[str], Optional[str]]:
+    rubrics: list[dict[str, Any]], maxscore: int
+) -> tuple[bool, str | None, str | None]:
     """Certain combinations of rubrics are legal but not a good idea.
 
     Args:
