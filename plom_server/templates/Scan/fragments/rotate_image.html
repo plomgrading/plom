@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
 <div>
@@ -10,21 +10,21 @@
            data-bs-toggle="tooltip"
            data-bs-placement="top"
            title="Rotate counter-clockwise"
-           hx-post="{% url 'rotate_img_ccw' timestamp index %}">
+           hx-post="{% url 'rotate_img_ccw' bundle_id index %}">
             <i class="bi-arrow-counterclockwise fs-5"></i>
         </a>
         <a class="btn btn-secondary mx-2 w-100"
            data-bs-toggle="tooltip"
            data-bs-placement="top"
            title="Rotate 180"
-           hx-post="{% url 'rotate_img_one_eighty' timestamp index %}">
+           hx-post="{% url 'rotate_img_one_eighty' bundle_id index %}">
             <i class="bi-arrow-repeat fs-5"></i>
         </a>
         <a class="btn btn-secondary w-75"
            data-bs-toggle="tooltip"
            data-bs-placement="top"
            title="Rotate clockwise"
-           hx-post="{% url 'rotate_img_cw' timestamp index %}">
+           hx-post="{% url 'rotate_img_cw' bundle_id index %}">
             <i class="bi-arrow-clockwise fs-5"></i>
         </a>
     </div>

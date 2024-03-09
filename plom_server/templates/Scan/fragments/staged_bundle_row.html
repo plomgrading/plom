@@ -119,13 +119,13 @@
                                 <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
                                 <button class="btn btn-warning"
                                         hx-confirm="Are you sure?"
-                                        hx-post="push/{{ timestamp }}/all/"
+                                        hx-post="{% url 'scan_push_all' bundle_id %}"
                                         x-bind:disabled="midPush"
                                         @htmx:before-send="midPush=true;">Push</button>
                             {% else %}
                                 <button class="btn btn-danger"
                                         hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
-                                        hx-post="push/{{ timestamp }}/all/"
+                                        hx-post="{% url 'scan_push_all' bundle_id %}"
                                         x-bind:disabled="midPush"
                                         @htmx:before-send="midPush=true;">Push</button>
                             {% endif %}
@@ -141,7 +141,7 @@
             {% endif %}
             <a class="btn btn-secondary"
                target="_"
-               href="{% url 'scan_get_bundle' timestamp %}">Download</a>
+               href="{% url 'scan_get_bundle' bundle_id %}">Download</a>
             <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
                hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                hx-confirm="Are you sure?">Remove</a>

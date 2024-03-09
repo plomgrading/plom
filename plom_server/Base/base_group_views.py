@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+
+from __future__ import annotations
+
+from typing import Any
+
 
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
@@ -20,7 +25,7 @@ class RoleRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     raise_exception = True
     redirect_unauthenticated_users = True
 
-    def build_context(self):
+    def build_context(self) -> dict[str, Any]:
         return {}
 
     # this is adapted from the django braces source code for access-required-mixin

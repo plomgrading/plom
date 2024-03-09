@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 import statistics
@@ -10,7 +10,7 @@ import arrow
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from ..models import MarkingTask
+from ..models import MarkingTask, MarkingTaskTag
 
 
 class MarkingStatsService:
@@ -317,6 +317,7 @@ class MarkingStatsService:
         question: Optional[int] = None,
         version: Optional[int] = None,
         username: Optional[str] = None,
+        the_tag: Optional[str] = None,
     ) -> List[Dict]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
@@ -333,6 +334,13 @@ class MarkingStatsService:
             task_set = task_set.filter(question_version=version)
         if username:
             task_set = task_set.filter(assigned_user__username=username)
+        if the_tag:
+            # if tag with this text exists then filter on it, else skip.
+            try:
+                tag_obj = MarkingTaskTag.objects.get(text=the_tag)
+                task_set = task_set.filter(markingtasktag=tag_obj)
+            except MarkingTaskTag.DoesNotExist:
+                pass
         task_info = []
         for task in task_set.prefetch_related(
             "latest_annotation", "paper", "assigned_user"
@@ -344,6 +352,13 @@ class MarkingStatsService:
                 "version": task.question_version,
                 "task_pk": task.pk,
             }
+            all_tags = sorted([tag.text for tag in task.markingtasktag_set.all()])
+            dat.update(
+                {
+                    "tags": [tg for tg in all_tags if tg[0] != "@"],
+                    "attn_tags": [tg for tg in all_tags if tg[0] == "@"],
+                }
+            )
             if task.status == MarkingTask.COMPLETE:
                 dat.update(
                     {

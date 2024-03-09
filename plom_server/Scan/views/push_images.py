@@ -5,7 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.http import Http404
+from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.urls import reverse
 
@@ -18,19 +18,12 @@ from plom.plom_exceptions import PlomBundleLockedException
 class PushAllPageImages(ScannerRequiredView):
     """Push all page-images that pass the QR validation checks."""
 
-    def post(self, request, timestamp):
+    def post(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         try:
-            timestamp = float(timestamp)
-        except ValueError:
-            return Http404()
-
-        scanner = ScanService()
-        bundle_pk = scanner.get_bundle_pk_from_timestamp(timestamp)
-        try:
-            scanner.push_bundle_to_server(bundle_pk, request.user)
+            ScanService().push_bundle_to_server(bundle_id, request.user)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_lock", args=[timestamp])
+                reverse("scan_bundle_lock", args=[bundle_id])
             )
 
         return HttpResponseClientRefresh()
