@@ -16,7 +16,6 @@ from ..services import RubricService
 
 def _make_ex():
     return {
-        "id": "123456123456",
         "username": "xenia",
         "kind": "neutral",
         "display_delta": ".",
@@ -51,6 +50,18 @@ class RubricServiceTests_permissions(TestCase):
         with self.assertRaises(PermissionDenied):
             RubricService().modify_rubric(key, rub, modifying_user="yvonne")
         # even creator cannot modify
+        with self.assertRaises(PermissionDenied):
+            RubricService().modify_rubric(key, rub, modifying_user="xenia")
+
+    def test_rubrics_permissive_cannot_modify_system_rubrics(self) -> None:
+        s = SettingsModel.load()
+        s.who_can_modify_rubrics = "permissive"
+        s.save()
+        rub = _make_ex()
+        rub.update({"system_rubric": True})
+        key = RubricService().create_rubric(rub).key
+        rub = RubricService().get_rubric_by_key_as_dict(key)
+        rub.update({"text": "trying to change a system rubric"})
         with self.assertRaises(PermissionDenied):
             RubricService().modify_rubric(key, rub, modifying_user="xenia")
 

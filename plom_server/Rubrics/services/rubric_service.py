@@ -174,15 +174,20 @@ class RubricService:
                 f"database content (edition = {rubric._edition}: most likely your "
                 "edits have collided with those of someone else."
             )
+
+        # Generally, omitting modifying_user bypasses checks
+        if modifying_user is None:
+            pass
+        elif rubric.system_rubric:
+            raise PermissionDenied(
+                f'User "{modifying_user}" is not allowed to modify system rubrics'
+            )
+
         s = SettingsModel.load()
         if modifying_user is None:
             pass
         elif s.who_can_modify_rubrics == "permissive":
-            # can modify system rubrics using modifying_user=None
-            if rubric.system_rubric:
-                raise PermissionDenied(
-                    f'You ("{modifying_user}") are not allowed to modify system rubrics'
-                )
+            pass
         elif s.who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
