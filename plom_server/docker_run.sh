@@ -17,6 +17,9 @@ fi
 
 if ! python3 manage.py plom_database --check-for-database; then
     echo "DOING A HOT START (we already have a database)"
+    echo "Issue #3299: Please note this merely checks for the *existence* of"
+    echo "a database; it does not yet check anything about the filesystem."
+    echo "Use this hot start feature at your own peril."
 else
     echo "No existing database; starting from scratch"
     # start either a canned demo or an empty server
