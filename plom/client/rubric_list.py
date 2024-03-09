@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
 from datetime import datetime
+import html
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -30,12 +31,17 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
-from plom.plom_exceptions import PlomInconsistentRubric
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomInconsistentRubric,
+    PlomNoPermission,
+    PlomNoRubric,
+)
 
 
 log = logging.getLogger("annotr")
@@ -1587,14 +1593,54 @@ class RubricWidget(QWidget):
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
-        msg = SimpleQuestion(
-            self,
-            "<p>You did not create this rubric "
-            f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
-            "Do you want to make a copy and edit that instead?",
+        if com["system_rubric"]:
+            msg = (
+                "<p>This is a &ldquo;system rubric&rdquo; "
+                "created by Plom itself; the server will probably not "
+                "let you modify it.</p>"
+            )
+            edit_button = False
+        elif self._parent.parentMarkerUI.msgr.is_legacy_server():
+            # TODO: don't like "drilling up": maybe Annotator should know legacy or not
+            msg = (
+                "<p>You did not create this rubric "
+                f"(it was created by &ldquo;{com['username']}&rdquo;).  "
+                "You are connected to a legacy server which does not "
+                " support modification of other user's rubrics.</p>"
+            )
+            edit_button = False
+        else:
+            # TODO: Displays username instead of preferred name, Issue #3048
+            # TODO: would be nice if this dialog *knew* about the server settings
+            msg = (
+                "<p>You did not create this rubric "
+                f"(it was created by &ldquo;{com['username']}&rdquo;).  "
+                "Depending on server settings, you might not be allowed to "
+                "modify it.</p>"
+            )
+            edit_button = True
+        msgbox = SimpleQuestion(
+            self, msg, "Do you want to make a copy and edit that instead?"
         )
-        if msg.exec() == QMessageBox.StandardButton.No:
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        msgbox.addButton("E&dit a copy", QMessageBox.ButtonRole.ActionRole)
+        if edit_button:
+            msgbox.addButton("Try to &edit anyway", QMessageBox.ButtonRole.ActionRole)
+        msgbox.exec()
+        clicked = msgbox.clickedButton()
+        if not clicked:
             return
+        if msgbox.buttonRole(clicked) == QMessageBox.ButtonRole.RejectRole:
+            return
+        if "copy" not in clicked.text().casefold():
+            com = com.copy()
+            # append a changelog of sorts to the meta field
+            newmeta = [com["meta"]] if com["meta"] else []
+            newmeta.append(f'Modified by "{self.username}"')
+            com["meta"] = "\n".join(newmeta)
+            self._new_or_edit_rubric(com, edit=True, index=index)
+            return
+
         com = com.copy()  # don't muck-up the original
         newmeta = [com["meta"]] if com["meta"] else []
         newmeta.append(
@@ -1658,7 +1704,59 @@ class RubricWidget(QWidget):
         new_rubric = arb.gimme_rubric_data()
 
         if edit:
-            key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+            try:
+                key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+            except PlomNoPermission as e:
+                InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
+                return
+            except PlomInconsistentRubric as e:
+                ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
+                return
+            except PlomNoRubric as e:
+                ErrorMsg(self, f"{e}").exec()
+                return
+            except PlomConflict as e:
+                tmp_rubrics = self._parent.getRubricsFromServer()
+                (old_rubric,) = (r for r in self.rubrics if r["id"] == new_rubric["id"])
+                (their_rubric,) = (
+                    r for r in tmp_rubrics if r["id"] == new_rubric["id"]
+                )
+                same, their_diff = diff_rubric(old_rubric, their_rubric)
+                same, our_diff = diff_rubric(old_rubric, new_rubric)
+                InfoMsg(
+                    self,
+                    f"""
+                        <h3>Rubric change conflict</h3>
+                        <br />
+                        <quote>
+                        <small>
+                        <tt>{html.escape(str(e))}</tt>
+                        </small>
+                        </quote>
+                        <br />
+                        <table><tr>
+                        <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
+                          <h4>Their's</h4>
+                          {render_rubric_as_html(their_rubric)}
+                          <b>changes</b><br />
+                          {their_diff}
+                        </td>
+                        <td style="padding-left: 2ex;">
+                          <h4>Your's</h4>
+                          {render_rubric_as_html(new_rubric)}
+                          <b>changes</b><br />
+                          {our_diff}
+                        </td>
+                        </tr></table>
+                        <p>
+                          This is work-in-progress,
+                          for now we always keep &ldquo;Their's&rdquo;.
+                        </p>
+                    """,
+                    # "Do you want to keep their's or your's?",
+                ).exec()
+                # TODO: future buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
+                return
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert key == new_rubric["id"]

@@ -1803,18 +1803,17 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
-    def getRubricsFromServer(self, question=None):
+    def getRubricsFromServer(self, question: int | None = None) -> list[dict[str, Any]]:
         """Get list of rubrics from server.
 
         Args:
-            question (int/None)
+            question: pertaining to which question or ``None`` for all
+                rubrics.
 
         Returns:
-            list: A list of the dictionary objects.
+            A list of the dictionary objects.
         """
-        if question is None:
-            return self.msgr.MgetRubrics()
-        return self.msgr.MgetRubricsByQuestion(question)
+        return self.msgr.MgetRubrics(question)
 
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)

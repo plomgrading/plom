@@ -1,0 +1,145 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Rubric access controls
+{% endblock title %}
+{% block page_heading %}
+    Rubric access controls
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card m-2">
+        <div class="card-body">
+            <p>
+                These options provide &ldquo;high-level&rdquo; control over which users
+                can create and modify existing rubrics.
+            </p>
+            <form enctype="multipart/form-data"
+                  id="form"
+                  method="post"
+                  action="{% url 'rubrics_access' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="row">
+                        <!-- border-end makes a vertical line between columns: TODO: fix and make columns response -->
+                        <div class="col border-end">
+                            <h5>Who can create rubrics?</h5>
+                            <fieldset>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="create0"
+                                           name="create"
+                                           value="permissive"
+                                           {% if create0_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="create0">
+                                        <strong>Permissive:</strong> any user can create rubrics.
+                                    </label>
+                                </div>
+                                <div class="form-check mt-3 disabled">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="create1"
+                                           name="create"
+                                           value="per-user"
+                                           disabled
+                                           {% if create1_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="create1">
+                                        <strong>Some users</strong> can create rubrics,
+                                        depending on their account settings.
+                                        <em>Not implemented yet,</em>
+                                        but this will eventually be the default setting.
+                                    </label>
+                                </div>
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="create2"
+                                           name="create"
+                                           value="locked"
+                                           {% if create2_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="create2">
+                                        <strong>Locked-down:</strong> No users can create rubrics,
+                                        overriding any per-account settings.
+                                        <!-- TBD if manager-level users are effected. -->
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="col">
+                            <h5>Who can modify rubrics?</h5>
+                            <fieldset>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="modify0"
+                                           name="modify"
+                                           value="permissive"
+                                           {% if modify0_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify0">
+                                        <strong>Permissive:</strong> any user can modify
+                                        non-system rubrics rubrics.
+                                    </label>
+                                </div>
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="modify1"
+                                           name="modify"
+                                           value="per-user"
+                                           {% if modify1_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify1">
+                                        Users can modify rubrics <strong>they created.</strong>
+                                        <br />
+                                        <span class="text-muted">
+                                            <strong>Some users</strong> may modify all non-system rubrics,
+                                            depending on their account settings
+                                            <em>(Not implemented yet).</em>
+                                        </span>
+                                    </label>
+                                </div>
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="modify2"
+                                           name="modify"
+                                           value="locked"
+                                           {% if modify2_checked %}checked{% endif %} />
+                                    <label class="form-check-label" for="modify2">
+                                        <strong>Locked-down:</strong> No users can modify rubrics, overriding any per-account settings.
+                                        <!-- TBD if manager-level users are effected. -->
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button class="btn btn-primary" type="submit">Set rubric access preferences</button>
+                    {% if successful_post %}
+                        <!-- will be hidden in a few seconds by javascript -->
+                        <!-- should be an class-alert but it doesn't size right -->
+                        <div id="my_alert"
+                             class="alert-success fade show d-inline-block ms-1"
+                             role="alert">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Preferences saved
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Set a timeout to execute the animation after a few seconds
+        setTimeout(function () {
+            var alert_element = document.getElementById('my_alert');
+	    if (alert_element)  {
+		var bsAlert = new bootstrap.Alert(alert_element);
+		bsAlert.close();
+	    }
+        }, 4000);
+    </script>
+{% endblock main_content %}

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
 
 
@@ -138,6 +138,10 @@ class PlomNoClasslist(PlomServerNotReady):
     pass
 
 
+class PlomNoRubric(PlomSeriousException):
+    pass
+
+
 class PlomInconsistentRubric(PlomSeriousException):
     pass
 
@@ -158,6 +162,12 @@ class PlomTimeoutError(PlomSeriousException):
 
 class PlomNoPaper(PlomBenignException):
     """Plom doesn't have a paper."""
+
+    pass
+
+
+class PlomNoPermission(PlomBenignException):
+    """You don't have permission, e.g.., for that paper, rubric, etc."""
 
     pass
 

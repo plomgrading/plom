@@ -15,11 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Client respects Question Labels in more places.
 * Server container should automatically hotstart if a database exist.  Previously behaviour was to delete and start again.
+* Experimental support for users to modify each others' rubrics.
+* Server: new settings to control global create/modify rubric permissions.
 
 ### Fixed
 * Legacy server: fix crash when client asks to view images from paper which exists but has no scans.
 * Server: fix crash when client asks for non-existing Annotation images.
 * Client: popup error message when viewing non-existent images rather than empty blue dialog.
+* Client: fix a crash on sync when rubric's per-version was changed.
 
 
 ## [0.15.1] - 2024-02-16

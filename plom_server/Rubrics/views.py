@@ -10,6 +10,7 @@ from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
+from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
 from .forms import RubricAdminForm, RubricWipeForm
@@ -65,7 +66,7 @@ class RubricWipePageView(ManagerRequiredView):
                 "rubric_wipe_form": form,
                 "short_name": SpecificationService.get_shortname(),
                 "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "n_rubrics": RubricService().get_rubric_count(),
             }
         )
         return render(request, template_name, context=context)
@@ -86,7 +87,91 @@ class RubricWipePageView(ManagerRequiredView):
                 "rubric_wipe_form": form,
                 "short_name": SpecificationService.get_shortname(),
                 "long_name": SpecificationService.get_longname(),
-                "n_rubrics": len(RubricService().get_all_rubrics()),
+                "n_rubrics": RubricService().get_rubric_count(),
+            }
+        )
+        return render(request, template_name, context=context)
+
+
+class RubricAccessPageView(ManagerRequiredView):
+    """Highlevel control of who can modify/create rubrics."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_access.html"
+
+        settings = SettingsModel.load()
+
+        if settings.who_can_create_rubrics == "permissive":
+            create_checked = (True, False, False)
+        elif settings.who_can_create_rubrics == "locked":
+            create_checked = (False, False, True)
+        else:
+            create_checked = (False, True, False)
+
+        if settings.who_can_modify_rubrics == "permissive":
+            modify_checked = (True, False, False)
+        elif settings.who_can_modify_rubrics == "locked":
+            modify_checked = (False, False, True)
+        else:
+            modify_checked = (False, True, False)
+
+        context = self.build_context()
+        context.update(
+            {
+                "successful_post": False,
+                "create0_checked": create_checked[0],
+                "create1_checked": create_checked[1],
+                "create2_checked": create_checked[2],
+                "modify0_checked": modify_checked[0],
+                "modify1_checked": modify_checked[1],
+                "modify2_checked": modify_checked[2],
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_access.html"
+        create = request.POST.get("create", None)
+        modify = request.POST.get("modify", None)
+
+        settings = SettingsModel.load()
+
+        if create not in ("permissive", "per-user", "locked"):
+            # TODO: 406?
+            raise ValueError(f"create={create} is invalid")
+        settings.who_can_create_rubrics = create
+        settings.save()
+
+        if modify not in ("permissive", "per-user", "locked"):
+            # TODO: 406?
+            raise ValueError(f"modify={modify} is invalid")
+        settings.who_can_modify_rubrics = modify
+        settings.save()
+
+        if settings.who_can_create_rubrics == "permissive":
+            create_checked = (True, False, False)
+        elif settings.who_can_create_rubrics == "locked":
+            create_checked = (False, False, True)
+        else:
+            create_checked = (False, True, False)
+
+        if settings.who_can_modify_rubrics == "permissive":
+            modify_checked = (True, False, False)
+        elif settings.who_can_modify_rubrics == "locked":
+            modify_checked = (False, False, True)
+        else:
+            modify_checked = (False, True, False)
+
+        context = self.build_context()
+        context.update(
+            {
+                "successful_post": True,
+                "create0_checked": create_checked[0],
+                "create1_checked": create_checked[1],
+                "create2_checked": create_checked[2],
+                "modify0_checked": modify_checked[0],
+                "modify1_checked": modify_checked[1],
+                "modify2_checked": modify_checked[2],
             }
         )
         return render(request, template_name, context=context)
@@ -138,7 +223,7 @@ class RubricItemView(ManagerRequiredView):
         # we need to pad the number with zeros on the left since if the keystarts
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
-        rubric = rs.get_all_rubrics().get(key=rubric_key)
+        rubric = rs.get_rubric_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
@@ -163,7 +248,7 @@ class RubricItemView(ManagerRequiredView):
 
         if form.is_valid():
             rs = RubricService()
-            rubric = rs.get_all_rubrics().get(key=rubric_key)
+            rubric = rs.get_rubric_by_key(rubric_key)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
