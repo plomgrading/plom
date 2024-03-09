@@ -38,6 +38,26 @@ from ..models import RubricPane
 log = logging.getLogger("RubricServer")
 
 
+def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
+    return {
+        "id": r.key,
+        "kind": r.kind,
+        "display_delta": r.display_delta,
+        "value": r.value,
+        "out_of": r.out_of,
+        "text": r.text,
+        "tags": r.tags,
+        "meta": r.meta,
+        "username": r.user.username,
+        "question": r.question,
+        "versions": r.versions,
+        "parameters": r.parameters,
+        "system_rubric": r.system_rubric,
+        "published": r.published,
+        "_edition": r._edition,
+    }
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -183,7 +203,9 @@ class RubricService:
         rubric_instance = serializer.instance
         return rubric_instance
 
-    def get_rubrics(self, *, question: str | None = None) -> list[dict[str, Any]]:
+    def get_rubrics_as_dicts(
+        self, *, question: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question number.
 
         Keyword Args:
@@ -199,24 +221,7 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = {
-                "id": r.key,
-                "kind": r.kind,
-                "display_delta": r.display_delta,
-                "value": r.value,
-                "out_of": r.out_of,
-                "text": r.text,
-                "tags": r.tags,
-                "meta": r.meta,
-                "username": r.user.username,
-                "question": r.question,
-                "versions": r.versions,
-                "parameters": r.parameters,
-                "system_rubric": r.system_rubric,
-                "published": r.published,
-                "_edition": r._edition,
-            }
-            rubric_data.append(rubric_dict)
+            rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
@@ -258,27 +263,9 @@ class RubricService:
 
         Returns:
             Key-value pairs representing the rubric.
-
-        TODO: write dict-from-r helper use here and in the all-getter
         """
         r = Rubric.objects.get(key=rubric_key)
-        return {
-            "id": r.key,
-            "kind": r.kind,
-            "display_delta": r.display_delta,
-            "value": r.value,
-            "out_of": r.out_of,
-            "text": r.text,
-            "tags": r.tags,
-            "meta": r.meta,
-            "username": r.user.username,
-            "question": r.question,
-            "versions": r.versions,
-            "parameters": r.parameters,
-            "system_rubric": r.system_rubric,
-            "published": r.published,
-            "_edition": r._edition,
-        }
+        return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
