@@ -38,6 +38,26 @@ from ..models import RubricPane
 log = logging.getLogger("RubricServer")
 
 
+def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
+    return {
+        "id": r.key,
+        "kind": r.kind,
+        "display_delta": r.display_delta,
+        "value": r.value,
+        "out_of": r.out_of,
+        "text": r.text,
+        "tags": r.tags,
+        "meta": r.meta,
+        "username": r.user.username,
+        "question": r.question,
+        "versions": r.versions,
+        "parameters": r.parameters,
+        "system_rubric": r.system_rubric,
+        "published": r.published,
+        "_edition": r._edition,
+    }
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -154,15 +174,20 @@ class RubricService:
                 f"database content (edition = {rubric._edition}: most likely your "
                 "edits have collided with those of someone else."
             )
+
+        # Generally, omitting modifying_user bypasses checks
+        if modifying_user is None:
+            pass
+        elif rubric.system_rubric:
+            raise PermissionDenied(
+                f'User "{modifying_user}" is not allowed to modify system rubrics'
+            )
+
         s = SettingsModel.load()
         if modifying_user is None:
             pass
         elif s.who_can_modify_rubrics == "permissive":
-            # can modify system rubrics using modifying_user=None
-            if rubric.system_rubric:
-                raise PermissionDenied(
-                    f'You ("{modifying_user}") are not allowed to modify system rubrics'
-                )
+            pass
         elif s.who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
@@ -183,7 +208,9 @@ class RubricService:
         rubric_instance = serializer.instance
         return rubric_instance
 
-    def get_rubrics(self, *, question: str | None = None) -> list[dict[str, Any]]:
+    def get_rubrics_as_dicts(
+        self, *, question: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question number.
 
         Keyword Args:
@@ -199,24 +226,7 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = {
-                "id": r.key,
-                "kind": r.kind,
-                "display_delta": r.display_delta,
-                "value": r.value,
-                "out_of": r.out_of,
-                "text": r.text,
-                "tags": r.tags,
-                "meta": r.meta,
-                "username": r.user.username,
-                "question": r.question,
-                "versions": r.versions,
-                "parameters": r.parameters,
-                "system_rubric": r.system_rubric,
-                "published": r.published,
-                "_edition": r._edition,
-            }
-            rubric_data.append(rubric_dict)
+            rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
@@ -248,6 +258,19 @@ class RubricService:
             be read-only.
         """
         return Rubric.objects.get(key=rubric_key)
+
+    def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
+        """Get a rubric by its key/id and return as a dictionary.
+
+        Args:
+            rubric_key: which rubric.  Note currently the key/id is not
+                the same as the internal ``pk``.
+
+        Returns:
+            Key-value pairs representing the rubric.
+        """
+        r = Rubric.objects.get(key=rubric_key)
+        return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
@@ -502,6 +525,8 @@ class RubricService:
 
         Returns:
             HTML representation of the rubric.
+
+        TODO: code duplication from plom.client.rubrics.py.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)

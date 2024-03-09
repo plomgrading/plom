@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import json
@@ -109,7 +109,9 @@ class Command(BaseCommand):
         service = RubricService()
         return service.erase_all_rubrics()
 
-    def download_rubrics_to_file(self, filename, *, verbose=True, question=None):
+    def download_rubrics_to_file(
+        self, filename, *, verbose=True, question=None
+    ) -> None:
         """Download the rubrics from a server and save them to a file.
 
         Args:
@@ -127,7 +129,7 @@ class Command(BaseCommand):
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        rubrics = service.get_rubrics(question=question)
+        rubrics = service.get_rubrics_as_dicts(question=question)
 
         if not filename:
             if not rubrics and question:

@@ -17,16 +17,8 @@ from Papers.models.paper_structure import Paper
 from ..models import Rubric
 from ..services import RubricService
 
-
-# helper function: extract a rubric dict from Rubric model
-def _rubric_to_dict(x):
-    # convert to dict and discard hidden underscore fields
-    d = {k: v for k, v in x.__dict__.items() if not k.startswith("_")}
-    d.pop("user_id")
-    # overwrite id with key: client uses "id" not "key"
-    d.pop("id")
-    d["id"] = d.pop("key")
-    return d
+# helper fcn private to that service, but useful here
+from ..services.rubric_service import _Rubric_to_dict
 
 
 class RubricServiceTests_exceptions(TestCase):
@@ -370,7 +362,7 @@ class RubricServiceTests(TestCase):
         for kind in ("absolute", "relative", "neutral"):
             rubric = baker.make(Rubric, user=user, kind=kind)
             key = rubric.key
-            d = _rubric_to_dict(rubric)
+            d = _Rubric_to_dict(rubric)
 
             d["kind"] = "neutral"
             d["display_delta"] = "."
@@ -506,3 +498,9 @@ class RubricServiceTests(TestCase):
         rub.update({"_edition": 0})
         with self.assertRaises(PlomConflict):
             RubricService().modify_rubric(key, rub)
+
+    def test_rubrics_get_as_dicts(self) -> None:
+        rubrics = RubricService().get_rubrics_as_dicts()
+        self.assertEqual(len(rubrics), RubricService().get_rubric_count())
+        for r in rubrics:
+            assert isinstance(r, dict)

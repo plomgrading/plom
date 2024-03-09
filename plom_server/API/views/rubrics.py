@@ -19,7 +19,7 @@ from .utils import _error_response
 class MgetRubricsByQuestion(APIView):
     def get(self, request, question):
         rs = RubricService()
-        all_rubric_data = rs.get_rubrics(question=question)
+        all_rubric_data = rs.get_rubrics_as_dicts(question=question)
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
