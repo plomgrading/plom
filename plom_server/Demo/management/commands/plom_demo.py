@@ -33,8 +33,9 @@ class Command(BaseCommand):
 
         Some aspects of the server can be changed via command line
         arguments.  Others via environment variables, including
-        PLOM_DATABASE_BACKEND, PLOM_DB_NAME, and probably more
-        in the future.
+        ``PLOM_DATABASE_BACKEND``, ``PLOM_DATABASE_NAME``,
+        ``PLOM_DATABASE_USER``, ``PLOM_DATABASE_PASSWORD``, and other
+        ``PLOM_*`` variables.
     """
 
     def papers_and_db(self, dcs: DemoCreationService):
