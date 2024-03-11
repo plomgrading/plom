@@ -326,7 +326,7 @@ class MgetAnnotationImage(APIView):
         mts = MarkingTaskService()
         if edition is not None:
             try:
-                annotation = mts.get_annotation(paper, question, edition)
+                annotation = mts.get_annotation_by_edition(paper, question, edition)
             except ObjectDoesNotExist as e:
                 return _error_response(
                     f"No edition={edition} annotations for paper {paper}"

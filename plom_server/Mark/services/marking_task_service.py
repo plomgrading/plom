@@ -391,7 +391,9 @@ class MarkingTaskService:
             )
         return task.latest_annotation
 
-    def get_annotation(self, paper: int, question_idx: int, edition: int) -> Annotation:
+    def get_annotation_by_edition(
+        self, paper: int, question_idx: int, edition: int
+    ) -> Annotation:
         """Get a particular edition of the Annotations for a paper/question.
 
         Args:
