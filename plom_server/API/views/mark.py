@@ -292,6 +292,10 @@ class MgetAnnotationImage(APIView):
     server doesn't seem to send 406/416 for annotation image calls).
     I suspect here we have folded the "task deleted" case into the 404.
 
+    TODO: In the future, we might want to ensure that the username has
+    permission to look at these annotations: currently this is not
+    enforced or expected by the client.
+
     Returns:
         200: the image as a file.
         404: no such task (i.e., no such paper) or no annotations for the
