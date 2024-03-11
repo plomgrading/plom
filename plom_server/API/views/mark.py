@@ -284,7 +284,8 @@ class MgetAnnotations(APIView):
 class MgetAnnotationImage(APIView):
     """Get an annotation-image.
 
-    TODO: implement "edition".
+    Callers ask for paper number, questin index (one-indexed) and
+    optionally edition.  If edition is omitted, they get the latest.
 
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416 (although the legacy
@@ -302,9 +303,17 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
-        if edition is not None:
-            raise NotImplementedError('"edition" not implemented')
         mts = MarkingTaskService()
+        if edition is not None:
+            try:
+                annotation = mts.get_annotation(paper, question, edition)
+            except (ObjectDoesNotExist, ValueError) as e:
+                return _error_response(
+                    f"No edition={edition} annotations for paper {paper} question idx {question}: {e}",
+                    status.HTTP_404_NOT_FOUND,
+                )
+            return FileResponse(annotation.image.image, status=status.HTTP_200_OK)
+
         try:
             annotation = mts.get_latest_annotation(paper, question)
         except (ObjectDoesNotExist, ValueError) as e:
@@ -325,7 +334,6 @@ class MgetAnnotationImage(APIView):
                 "Integrity error: task has been modified by server.",
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
-
         return FileResponse(annotation_image.image, status=status.HTTP_200_OK)
 
 

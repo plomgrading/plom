@@ -391,6 +391,38 @@ class MarkingTaskService:
             )
         return task.latest_annotation
 
+    def get_annotation(self, paper: int, question_idx: int, edition: int) -> Annotation:
+        """Get a particular edition of the Annotations for a paper/question.
+
+        Args:
+            paper: the paper number.
+            question_idx: the question index, from one.
+            edition: papers can be annotated many times, this controls
+                which revision is wanted.  To get the latest,
+                see :method:`get_latest_annotation`
+
+        Returns:
+            The matching Annotation instance.
+
+        Raises:
+            TODO: wrong edition, etc?
+
+        TODO: this routine needs some help re: error handling and database nicety.
+        """
+        # try:
+        paper_obj = Paper.objects.get(paper_number=paper)
+        # TODO: question_number, sic, Issue #2716, Issue #3264.
+        # try: raise some not implemented if there is more than one?
+        task = MarkingTask.objects.filter(
+            paper=paper_obj, question_number=question_idx
+        ).get()
+        # try
+        return Annotation.objects.filter(task=task, edition=edition).get()
+        # raise ValueError(
+        #      f"Annotation edition={edition} for paper {paper}"
+        #      f" question index {question_idx} does not exist"
+        # )
+
     def get_all_tags(self):
         """Get all of the saved tags.
 
