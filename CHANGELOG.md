@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.15.2] - 2024-03-11
 
 ### Added
 * Server - scanner can now bulk-discard unknown pages from a bundle, and bulk change discards back to unknowns.
@@ -1144,7 +1144,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.1...main
+[0.15.2]: https://gitlab.com/plom/plom/-/compare/v0.15.1...v0.15.2
 [0.15.1]: https://gitlab.com/plom/plom/-/compare/v0.15.0...v0.15.1
 [0.15.0]: https://gitlab.com/plom/plom/-/compare/v0.14.8...v0.15.0
 [0.14.8]: https://gitlab.com/plom/plom/-/compare/v0.14.7...v0.14.8
