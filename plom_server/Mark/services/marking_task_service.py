@@ -406,16 +406,26 @@ class MarkingTaskService:
 
         Raises:
             ObjectDoesNotExist: paper does not exist, question index does
-                not exist or the requested edition does not exist.
-                TODO: the MarkingTask non-uniqueness may need work.
+                not exist or the requested edition does not exist within
+                a valid (not out-of-date) task.
+
+        TODO: we might consider raising ValueError if there is such an
+        edition for an OUT_OF_DATE task: for now that case is folded into
+        the task not existing.
+
+        TODO: work would also be required, here and elsewhere, for multiple
+        concurrent tasks.  Most likely we would replace this with a pk-based
+        getter before trying that.
         """
         paper_obj = Paper.objects.get(paper_number=paper)
         # TODO: question_number, sic, Issue #2716, Issue #3264.
-        # try: raise some not implemented if there is more than one?
-        # TODO: maybe we need to loop over all of them, to find the specific annotation edition?
-        task = MarkingTask.objects.filter(
+        tasks = MarkingTask.objects.filter(
             paper=paper_obj, question_number=question_idx
-        ).get()
+        )
+        # many tasks could match edition; we want the unique non-out-of-date one.
+        # TODO: in principle, we could do some try-except to detect the edition
+        # exists but is out-of-date: not sure its worth the effort.
+        task = tasks.exclude(status=MarkingTask.OUT_OF_DATE).get()
         return Annotation.objects.get(task=task, edition=edition)
 
     def get_all_tags(self):
