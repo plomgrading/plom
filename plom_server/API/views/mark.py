@@ -284,7 +284,7 @@ class MgetAnnotations(APIView):
 class MgetAnnotationImage(APIView):
     """Get an annotation-image.
 
-    Callers ask for paper number, questin index (one-indexed) and
+    Callers ask for paper number, question index (one-indexed) and
     optionally edition.  If edition is omitted, they get the latest.
 
     TODO: The legacy server sends 410 for "task deleted", and the client
