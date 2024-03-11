@@ -292,7 +292,7 @@ class MgetAnnotationImage(APIView):
 
     I think there is still a race condition because of the above::
 
-      1. client asks for latest annotation, get's json.
+      1. client asks for latest annotation, gets json.
       2. client looks and sees edition 1.
       3. During 2, new papers are uploaded AND very quickly someone
          annotates.
