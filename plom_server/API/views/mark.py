@@ -284,12 +284,33 @@ class MgetAnnotations(APIView):
 class MgetAnnotationImage(APIView):
     """Get an annotation-image.
 
-    TODO: implement "edition".
+    Callers ask for paper number, question index (one-indexed) and
+    optionally edition.  If edition is omitted, they get the latest.
+    The edition must be for a valid (non-out-of-date) task: for example
+    if someone adds new papers then this call could fail (currently
+    with 404 but maybe should be 410, see discussion below).
+
+    I think there is still a race condition because of the above::
+
+      1. client asks for latest annotation, gets json.
+      2. client looks and sees edition 1.
+      3. During 2, new papers are uploaded AND very quickly someone
+         annotates.
+      4. client adks for edition 1.  They get the new annotated image
+         which does not match their json data.  This would require
+         precise timing and a VERY slow client...  "Anyone that unlucky
+         has already been hit by a bus" -- Jim Wilkinson.
+
+    The fix here is probably to use a id/pk-based image get.
 
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416 (although the legacy
     server doesn't seem to send 406/416 for annotation image calls).
     I suspect here we have folded the "task deleted" case into the 404.
+
+    TODO: In the future, we might want to ensure that the username has
+    permission to look at these annotations: currently this is not
+    enforced or expected by the client.
 
     Returns:
         200: the image as a file.
@@ -302,9 +323,18 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
-        if edition is not None:
-            raise NotImplementedError('"edition" not implemented')
         mts = MarkingTaskService()
+        if edition is not None:
+            try:
+                annotation = mts.get_annotation_by_edition(paper, question, edition)
+            except ObjectDoesNotExist as e:
+                return _error_response(
+                    f"No edition={edition} annotations for paper {paper}"
+                    f" question idx {question}: {e}",
+                    status.HTTP_404_NOT_FOUND,
+                )
+            return FileResponse(annotation.image.image, status=status.HTTP_200_OK)
+
         try:
             annotation = mts.get_latest_annotation(paper, question)
         except (ObjectDoesNotExist, ValueError) as e:
@@ -325,7 +355,6 @@ class MgetAnnotationImage(APIView):
                 "Integrity error: task has been modified by server.",
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
-
         return FileResponse(annotation_image.image, status=status.HTTP_200_OK)
 
 
