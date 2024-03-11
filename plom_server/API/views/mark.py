@@ -286,6 +286,22 @@ class MgetAnnotationImage(APIView):
 
     Callers ask for paper number, question index (one-indexed) and
     optionally edition.  If edition is omitted, they get the latest.
+    The edition must be for a valid (non-out-of-date) task: for example
+    if someone adds new papers then this call could fail (currently
+    with 404 but maybe should be 410, see discussion below).
+
+    I think there is still a race condition because of the above::
+
+      1. client asks for latest annotation, get's json.
+      2. client looks and sees edition 1.
+      3. During 2, new papers are uploaded AND very quickly someone
+         annotates.
+      4. client adks for edition 1.  They get the new annotated image
+         which does not match their json data.  This would require
+         precise timing and a VERY slow client...  "Anyone that unlucky
+         has already been hit by a bus" -- Jim Wilkinson.
+
+    The fix here is probably to use a id/pk-based image get.
 
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416 (although the legacy
