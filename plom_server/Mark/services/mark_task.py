@@ -35,7 +35,7 @@ def get_latest_task(paper_number: int, question_number: int) -> MarkingTask:
         paper = Paper.objects.get(paper_number=paper_number)
     except ObjectDoesNotExist as e:
         # reraise with a more detailed error message
-        raise ObjectDoesNotExist(f"Paper {paper_number} does not exist") from e
+        raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
     r = (
         MarkingTask.objects.filter(paper=paper, question_number=question_number)
         .order_by("-time")
