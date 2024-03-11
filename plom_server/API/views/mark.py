@@ -307,9 +307,10 @@ class MgetAnnotationImage(APIView):
         if edition is not None:
             try:
                 annotation = mts.get_annotation(paper, question, edition)
-            except (ObjectDoesNotExist, ValueError) as e:
+            except ObjectDoesNotExist as e:
                 return _error_response(
-                    f"No edition={edition} annotations for paper {paper} question idx {question}: {e}",
+                    f"No edition={edition} annotations for paper {paper}"
+                    f" question idx {question}: {e}",
                     status.HTTP_404_NOT_FOUND,
                 )
             return FileResponse(annotation.image.image, status=status.HTTP_200_OK)

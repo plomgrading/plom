@@ -405,23 +405,18 @@ class MarkingTaskService:
             The matching Annotation instance.
 
         Raises:
-            TODO: wrong edition, etc?
-
-        TODO: this routine needs some help re: error handling and database nicety.
+            ObjectDoesNotExist: paper does not exist, question index does
+                not exist or the requested edition does not exist.
+                TODO: the MarkingTask non-uniqueness may need work.
         """
-        # try:
         paper_obj = Paper.objects.get(paper_number=paper)
         # TODO: question_number, sic, Issue #2716, Issue #3264.
         # try: raise some not implemented if there is more than one?
+        # TODO: maybe we need to loop over all of them, to find the specific annotation edition?
         task = MarkingTask.objects.filter(
             paper=paper_obj, question_number=question_idx
         ).get()
-        # try
-        return Annotation.objects.filter(task=task, edition=edition).get()
-        # raise ValueError(
-        #      f"Annotation edition={edition} for paper {paper}"
-        #      f" question index {question_idx} does not exist"
-        # )
+        return Annotation.objects.get(task=task, edition=edition)
 
     def get_all_tags(self):
         """Get all of the saved tags.
