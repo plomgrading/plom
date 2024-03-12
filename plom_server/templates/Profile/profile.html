@@ -26,6 +26,7 @@
                                  class="rounded-circle img-fluid"
                                  style="width: 100px" />
                         </div>
+                        <!-- we use django.contrib.auth's first_name field; last_name unused -->
                         <h3 class="mb-2">{{ request.user.first_name }}</h3>
                         <p class="mb-2">{{ request.user.username }}</p>
                         <p class="text-muted mb-4">
@@ -40,7 +41,7 @@
             <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
                 <form class="form" method="post">
                     {% csrf_token %}
-                    <p id="name-label">Prefer Name</p>
+                    <p id="name-label">Preferred Name</p>
                     {{ form.first_name }}
                     <br>
                     <br>
