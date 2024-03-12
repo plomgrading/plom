@@ -301,10 +301,13 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 # ----------------------------------------------
 
 # Max file size for bundle uploads (1 GB for now)
+# Note if NginX or another tool is proxying, its config will apply too
 MAX_BUNDLE_SIZE = 1e9
 
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
+# TODO: where is this enforced?
+# TODO: try uploading a bigger version1.pdf and see what happens?
 
 LOGGING: dict[str, Any] = {
     "version": 1,
