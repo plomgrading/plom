@@ -22,22 +22,22 @@ class Command(BaseCommand):
 
     Then we can map that bundle onto paper numbers and questions::
 
-        python3 manage.py plom_hwscan list_bundles
-        python3 manage.py plom_hwscan map foo --papernum 1234 --question all
-        python3 manage.py plom_hwscan map foo -t 20 -q [[1],[2],[2],[2],[3],[3]]
+        python3 manage.py plom_paper_scan list_bundles
+        python3 manage.py plom_paper_scan map foo --papernum 1234 --question all
+        python3 manage.py plom_paper_scan map foo -t 20 -q [[1],[2],[2],[2],[3],[3]]
 
     (currently "all" is broken and we can't share pages between questions.)
 
     Other design ideas, not implemented yet::
 
-        python3 manage.py hwscan foo.pdf --sid 12345678
-        python3 manage.py hwscan foo.pdf --sid 12345678 -q "[[1],[1,2],[2,3],[4]]"
-        python3 manage.py hwscan foo.pdf --sid 12345678 -q all
+        python3 manage.py plom_paper_scan foo.pdf --sid 12345678
+        python3 manage.py plom_paper_scan foo.pdf --sid 12345678 -q "[[1],[1,2],[2,3],[4]]"
+        python3 manage.py plom_paper_scan foo.pdf --sid 12345678 -q all
 
     I'd like to support q1.pdf, q2.pdf from one person::
 
-        python3 manage.py hwscan q1.pdf -q 1 --sid 12345678
-        python3 manage.py hwscan q2.pdf -q 2 --sid 12345678
+        python3 manage.py plom_paper_scan q1.pdf -q 1 --sid 12345678
+        python3 manage.py plom_paper_scan q2.pdf -q 2 --sid 12345678
 
     Perhaps we should use some query command to get the paper number and require
     other commands to use that (or ``--sid`` is just a helper to do that for you).
@@ -45,12 +45,12 @@ class Command(BaseCommand):
     Maybe we have an unknown paper with no obvious name, place in
     an unused papernumber or maybe create a new one (safest?)::
 
-        python3 manage.py hwscan foo.pdf -q all --unused-paper-num
+        python3 manage.py plom_paper_scan foo.pdf -q all --unused-paper-num
 
     Unlikely but possible: in multiversion mode, you'll have to tell us
     the versions of the questions (for DB row creation reasons)::
 
-        python3 manage.py hwscan foo.pdf -q all --unused-paper-num --versions
+        python3 manage.py plom_paper_scan foo.pdf -q all --unused-paper-num --versions
 
     (people use versions for different things other than randomly: its
     not impossible to know).
