@@ -305,7 +305,7 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 # Most likely the proxy server's limit should be used for security.
 # This limit is more for what we consider a reasonable limit, although
 # realisitically, limiting the page count (say, 2000) makes more sense
-# (however this is not yet implemeted: Issue #3312).
+# (however this is not yet implemented: Issue #3312).
 MAX_BUNDLE_SIZE = 536870912
 
 # Max file size for a single file upload (1 MB for now)
