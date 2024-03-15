@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from typing import Dict, Any
@@ -26,6 +26,12 @@ class SpecEditorView(ManagerRequiredView):
         """Serves the TOML editor template."""
         context = self.build_context()
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
+        if SpecificationService.is_there_a_spec():
+            context.update(
+                {
+                    "spec_toml": SpecificationService.get_the_spec_as_toml(),
+                }
+            )
         return render(request, "SpecCreator/launch-page.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
@@ -36,7 +42,15 @@ class SpecEditorView(ManagerRequiredView):
             "error_list": [],
         }
         data = request.POST
-        spec = data.get("spec")
+        gave_toml_file = data.get("which_action") == "upload_file"
+        if gave_toml_file:
+            # TODO: render any errors into a div at the top instead?
+            # TODO: error handling in None case or decoding?
+            f = request.FILES.get("toml_file")
+            d = f.file.getvalue()
+            spec = d.decode()
+        else:
+            spec = data.get("spec")
         if not spec:
             context["error_list"] = ["No spec provided"]
             return render(request, "SpecCreator/validation.html", context)
