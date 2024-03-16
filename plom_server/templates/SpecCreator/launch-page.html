@@ -11,12 +11,12 @@
     Create assessment specification
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="d-grid">
+    <div class="d-grid gap-3">
         <div>
-            <a class="btn btn-primary mb-3" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
         {% if is_there_a_spec %}
-            <div class="alert alert-primary mb-3" role="alert">
+            <div class="alert alert-primary" role="alert">
                 There is a spec in the database: <a href="{% url 'spec_summary' %}">view</a>
             </div>
         {% endif %}
@@ -50,21 +50,20 @@
                     </p>
                     <p>Or simply paste in your specification into the box below.</p>
                     <label for="spec-toml-input" class="form-label">Test specification</label>
-                    <textarea class="form-control mb-3"
+                    <textarea class="form-control"
                               id="spec-toml-input"
                               name="spec"
                               rows="12"
-                              spellcheck="false">{% if is_there_a_spec %}{{ spec_toml }}{% endif %}</textarea>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <!-- <button type="submit"
-         class="btn btn-primary"
-         name="which_action"
-         value="submit">Submit</button> -->
+                              spellcheck="false">{{ editable_toml }}</textarea>
+                    <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
+                    <!--
+			<button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
+		    -->
                     <button type="submit"
-                            class="btn btn-secondary"
+                            class="btn btn-secondary mt-2"
                             name="which_action"
                             value="validate">Validate</button>
-                    <div class="mt-3" id="saving-status"></div>
+                    <div class="mt-2" id="saving-status"></div>
                 </form>
             </div>
         </div>

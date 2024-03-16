@@ -3,8 +3,6 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Dict, Any
-
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from rest_framework.exceptions import ValidationError
@@ -25,11 +23,12 @@ class SpecEditorView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Serves the TOML editor template."""
         context = self.build_context()
+        context.update({"editable_toml": ""})
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
         if SpecificationService.is_there_a_spec():
             context.update(
                 {
-                    "spec_toml": SpecificationService.get_the_spec_as_toml(),
+                    "editable_toml": SpecificationService.get_the_spec_as_toml(),
                 }
             )
         return render(request, "SpecCreator/launch-page.html", context)
