@@ -141,7 +141,7 @@ def get_the_spec_as_toml():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic
@@ -169,7 +169,7 @@ def get_the_spec_as_toml_with_codes():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic

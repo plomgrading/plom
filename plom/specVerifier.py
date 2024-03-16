@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 
@@ -391,13 +391,16 @@ class SpecVerifier:
         with open(fname, "rb") as f:
             return cls(tomllib.load(f))
 
-    def as_toml_string(self):
+    def as_toml_string(self, *, _legacy: bool = True):
         """Return the spec as a string in the TOML format."""
         # TODO bit yuck, we hack questions back to a list before saving
         s = deepcopy(self.spec)
         s["question"] = []
         for g in range(len(self.spec["question"])):
             s["question"].append(self.spec["question"][str(g + 1)])
+        if not _legacy:
+            # this is deprecated; hide it from the new server
+            s.pop("numberToProduce", None)
         return tomlkit.dumps(s)
 
     def __getitem__(self, what):
