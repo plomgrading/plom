@@ -36,19 +36,29 @@ class SpecEditorView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         """Create or replace the test specification using a TOML sent from the browser."""
-        context: Dict[str, Any] = {
-            "success": False,
-            "msg": "Not able to accept that specification",
-            "error_list": [],
-        }
+        context = self.build_context()
+        context.update(
+            {
+                "success": False,
+                "msg": "Not able to accept that specification",
+                "error_list": [],
+            }
+        )
         data = request.POST
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
             # TODO: render any errors into a div at the top instead?
-            # TODO: error handling in None case or decoding?
+            # TODO: error handling in None case
             f = request.FILES.get("toml_file")
             d = f.file.getvalue()
-            spec = d.decode()
+            # TODO: doc somewhere we want this in utf-8?
+            try:
+                spec = d.decode()
+            except UnicodeDecodeError as e:
+                context["error_list"] = [
+                    f"Only utf-8 encoded toml files are accepted: {str(e)}"
+                ]
+                return render(request, "SpecCreator/validation.html", context)
         else:
             spec = data.get("spec")
         if not spec:
