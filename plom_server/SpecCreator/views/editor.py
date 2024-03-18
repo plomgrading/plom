@@ -51,11 +51,9 @@ class SpecEditorView(ManagerRequiredView):
         data = request.POST
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
-            # TODO: render any errors into a div at the top instead?
             # TODO: error handling in None case
             f = request.FILES.get("toml_file")
             d = f.file.getvalue()
-            # TODO: doc somewhere we want this in utf-8?
             try:
                 spec = d.decode()
             except UnicodeDecodeError as e:
