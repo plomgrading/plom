@@ -18,21 +18,12 @@ from Progress.services import ProgressOverviewService
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request):
         context = super().build_context()
-
-        if SpecificationService.is_there_a_spec():
-            num_versions = SpecificationService.get_n_versions()
-            num_questions = SpecificationService.get_n_questions()
-        else:
-            num_versions = 0
-            num_questions = 0
-
         context.update(
             {
-                "versions": [v + 1 for v in range(num_versions)],
-                "questions": [q + 1 for q in range(num_questions)],
+                "versions": SpecificationService.get_list_of_versions(),
+                "questions": SpecificationService.get_question_indices(),
             }
         )
-
         return render(request, "Progress/Mark/mark_home.html", context)
 
 

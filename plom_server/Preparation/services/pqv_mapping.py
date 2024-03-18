@@ -82,14 +82,12 @@ class PQVMappingService:
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
-        question_list = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]  # todo - replace with spec lookup
+        question_indices = SpecificationService.get_question_indices()
 
         for paper_number, qvmap in pqvmapping.items():
             pqv_table[paper_number] = {
                 "prename": None,
-                "qvlist": [qvmap[q] for q in question_list],
+                "qvlist": [qvmap[q] for q in question_indices],
             }
 
             # if prenaming then we need to put in those student details

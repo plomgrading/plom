@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.http import FileResponse
@@ -38,12 +39,9 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_list = [
-            str(q + 1) for q in range(SpecificationService.get_n_questions())
-        ]
-        version_list = [
-            str(v + 1) for v in range(SpecificationService.get_n_versions())
-        ]
+        question_list = SpecificationService.get_question_indices()
+        version_list = SpecificationService.get_list_of_versions()
+        # TODO: 10 even when no spec: why?
         mark_list = [
             str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
         ]
