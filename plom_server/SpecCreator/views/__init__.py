@@ -8,3 +8,4 @@ from .summary import SpecSummaryView, HTMXSummaryQuestion
 from .editor import SpecEditorView
 from .template_spec_builder import TemplateSpecBuilderView
 from .spec_download import SpecDownloadView
+from .spec_upload import SpecUploadView

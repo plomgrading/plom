@@ -37,18 +37,17 @@
                         in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
                     </p>
                     <p>
+                        <!-- TODO: moved to a new page: delete this later if we don't move it back
                         Or you can upload a file:
                         <div class="input-group">
-                            <input class="form-control"
-                                   type="file"
-                                   accept=".toml"
-                                   name="toml_file"
-                                   id="toml_file" />
-                            <button type="submit"
-                                    class="btn btn-primary"
-                                    name="which_action"
-                                    value="upload_file">Upload</button>
+                            <input class="form-control" type="file" accept=".toml" name="toml_file" id="toml_file" />
+                            <button type="submit" class="btn btn-primary" name="which_action" value="upload_file">Upload</button>
                         </div>
+                        -->
+                        Or you can
+                        <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload
+                        a <tt>.toml</tt> file</a>
+                        that you have prepared elsewhere.
                     </p>
                     <p>Or simply paste in your specification into the box below.</p>
                     <label for="spec-toml-input" class="form-label">Test specification</label>

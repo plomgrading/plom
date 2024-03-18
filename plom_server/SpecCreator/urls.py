@@ -11,6 +11,7 @@ from . import views
 urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
     path("download", views.SpecDownloadView.as_view(), name="spec_download"),
+    path("upload", views.SpecUploadView.as_view(), name="spec_upload"),
     path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),
     path(
         "summary/<int:question_number>",

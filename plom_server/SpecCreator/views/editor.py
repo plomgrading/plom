@@ -34,7 +34,12 @@ class SpecEditorView(ManagerRequiredView):
         return render(request, "SpecCreator/launch-page.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        """Create or replace the test specification using a TOML sent from the browser."""
+        """Create or replace the test specification using a TOML sent from the browser.
+
+        Caution: HTMX calls this, and from multiple views, to insert a
+        little blob of validation output, and (on success) to push the
+        spec.
+        """
         context = self.build_context()
         context.update(
             {
