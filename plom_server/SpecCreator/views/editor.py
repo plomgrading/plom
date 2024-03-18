@@ -7,6 +7,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from rest_framework.exceptions import ValidationError
 
+# from django.http import HttpResponseBadRequest
+
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
@@ -51,8 +53,13 @@ class SpecEditorView(ManagerRequiredView):
         data = request.POST
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
-            # TODO: error handling in None case
             f = request.FILES.get("toml_file")
+            if not f:
+                # TODO: I still don't understand HTMX error handling: this silently fails
+                # TODO: to see this, change the name="toml_file" to something else in the html
+                # return HttpResponseBadRequest("No toml file provided")
+                context["error_list"] = ["No toml file provided"]
+                return render(request, "SpecCreator/validation.html", context)
             d = f.file.getvalue()
             try:
                 spec = d.decode()
