@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 
@@ -19,17 +19,19 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request):
         context = super().build_context()
 
-        version_numbers = [
-            v + 1
-            for v in range(
-                SpecificationService.get_n_versions(),
-            )
-        ]
-        question_numbers = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
+        if SpecificationService.is_there_a_spec():
+            num_versions = SpecificationService.get_n_versions()
+            num_questions = SpecificationService.get_n_questions()
+        else:
+            num_versions = 0
+            num_questions = 0
 
-        context.update({"versions": version_numbers, "questions": question_numbers})
+        context.update(
+            {
+                "versions": [v + 1 for v in range(num_versions)],
+                "questions": [q + 1 for q in range(num_questions)],
+            }
+        )
 
         return render(request, "Progress/Mark/mark_home.html", context)
 
