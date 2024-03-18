@@ -24,7 +24,12 @@
         {% endif %}
         <div class="card">
             <h4 class="card-header">
-                Upload a <tt>.toml</tt> to use as the server spec
+                Upload a <tt>.toml</tt> to
+                {% if is_there_a_spec %}
+                    replace the current server spec
+                {% else %}
+                    use as the server spec
+                {% endif %}
             </h4>
             <div class="card-body">
                 <form enctype="multipart/form-data"
