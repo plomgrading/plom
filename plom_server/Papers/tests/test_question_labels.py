@@ -27,17 +27,17 @@ class SpecficiationServiceQuestionLabelTests(TestCase):
         serv.store_validated_spec(spec_dict)
         return super().setUp()
 
-    def test_qlabels(self):
+    def test_qlabels(self) -> None:
         assert serv.get_question_labels() == ["Q1", "Ex.2", "Q<3", "Q4"]
 
-    def test_qlabels_map(self):
+    def test_qlabels_map(self) -> None:
         m = serv.get_question_labels_map()
         labels = serv.get_question_labels()
         assert len(m) == len(labels)
         for i, label in enumerate(labels):
             assert m[i + 1] == label
 
-    def test_question_index_label_pairs(self):
+    def test_question_index_label_pairs(self) -> None:
         P = serv.get_question_index_label_pairs()
         m = serv.get_question_labels_map()
         assert len(P) == len(m)
@@ -45,16 +45,16 @@ class SpecficiationServiceQuestionLabelTests(TestCase):
             assert len(x) == 2
             assert m[x[0]] == x[1]
 
-    def test_render_qlabel_html(self):
+    def test_render_qlabel_html(self) -> None:
         assert "Q1" in serv.render_html_question_label(1)
         assert "Q&lt;3" in serv.render_html_question_label(3)
 
-    def test_render_qlabel_html_abbr(self):
+    def test_render_qlabel_html_abbr(self) -> None:
         assert "abbr" not in serv.render_html_question_label(1)
         assert "abbr" in serv.render_html_question_label(2)
         assert "abbr" in serv.render_html_question_label(3)
 
-    def test_render_html_list(self):
+    def test_render_html_list(self) -> None:
         s = serv.render_html_flat_question_label_list([1])
         assert s == "Q1"
 
@@ -67,13 +67,13 @@ class SpecficiationServiceQuestionLabelTests(TestCase):
         s = serv.render_html_flat_question_label_list([1, 3])
         assert s.startswith("Q1, ")
 
-    def test_render_html_list_None(self):
+    def test_render_html_list_None(self) -> None:
         s = serv.render_html_flat_question_label_list([])
         assert s == "None"
         s = serv.render_html_flat_question_label_list(None)
         assert s == "None"
 
-    def test_render_html_triplets(self):
+    def test_render_html_triplets(self) -> None:
         L = serv.get_question_html_label_triples()
         assert len(L) == 4
         for x in L:

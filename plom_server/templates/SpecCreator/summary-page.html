@@ -1,19 +1,27 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
     Create Specification - Summary
 {% endblock title %}
 {% block page_heading %}
-    Prepare assessment
+    Create Specification - Summary
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
-            <a type="button" class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+            <a type="button"
+               class="btn btn-primary me-2"
+               href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+            <a type="button"
+               class="btn btn-secondary"
+               href="{% url 'spec_download' %}">
+                Download <tt>.toml</tt>
+                <icon class="bi bi-file-earmark-arrow-down"></icon>
+            </a>
         </div>
         <div class="card">
             <div class="card-body">

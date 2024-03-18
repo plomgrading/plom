@@ -17,7 +17,9 @@
         </div>
         {% if is_there_a_spec %}
             <div class="alert alert-primary" role="alert">
-                There is a spec in the database: <a href="{% url 'spec_summary' %}">view</a>
+                There is a spec in the database:
+                <a href="{% url 'spec_summary' %}">view</a>,
+                <a href="{% url 'spec_download' %}">download</a>.
             </div>
         {% endif %}
         <div class="card">

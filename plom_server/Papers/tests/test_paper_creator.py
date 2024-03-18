@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.test import TestCase
 from django.db import IntegrityError
@@ -13,9 +13,7 @@ from ..models import Paper, IDPage, DNMPage, QuestionPage, FixedPage, Specificat
 
 
 class PaperCreatorTests(TestCase):
-    """
-    Tests for services.PaperCreatorService
-    """
+    """Tests for services.PaperCreatorService."""
 
     def setUp(self):
         spec_dict = {
@@ -36,9 +34,7 @@ class PaperCreatorTests(TestCase):
         return super().setUp()
 
     def get_n_models(self):
-        """
-        Helper function for getting the current number of papers/pages
-        """
+        """Helper function for getting the current number of papers/pages."""
 
         n_papers = Paper.objects.all().count()
         n_pages = FixedPage.objects.all().count()
@@ -48,7 +44,7 @@ class PaperCreatorTests(TestCase):
 
         return n_papers, n_pages, n_id, n_dnm, n_question
 
-    def test_create_with_qvmapping(self):
+    def test_create_with_qvmapping(self) -> None:
         """Basic tests for creating paper tables."""
         qv_map = {1: 2, 2: 1}
         PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
@@ -69,7 +65,7 @@ class PaperCreatorTests(TestCase):
         q_2 = QuestionPage.objects.get(paper=paper, question_number=2)
         self.assertEqual(q_2.version, 1)
 
-    def test_remake_paper_raises(self):
+    def test_remake_paper_raises(self) -> None:
         """Test creating paper tables raises an IntegrityError if called on a paper that already exists."""
         qv_map = {1: 2, 2: 1}
         PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
@@ -77,10 +73,8 @@ class PaperCreatorTests(TestCase):
         with self.assertRaises(IntegrityError):
             PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
 
-    def test_clear_papers(self):
-        """
-        Test PaperCreatorService.remove_papers_from_db()
-        """
+    def test_clear_papers(self) -> None:
+        """Test PaperCreatorService.remove_papers_from_db()."""
         baker.make(Specification)
 
         paper = baker.make(Paper)
