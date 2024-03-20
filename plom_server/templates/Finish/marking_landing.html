@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
@@ -17,13 +17,13 @@
             <table style="width: auto" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th scope="col">Question</th>
-                        {% for i in n_questions %}<th scope="col" colspan="{{ n_versions|length }}">Q{{ i }}</th>{% endfor %}
+                        <th scope="col">Question index</th>
+                        {% for i in question_indices %}<th scope="col" colspan="{{ version_list|length }}">{{ i }}</th>{% endfor %}
                     </tr>
                     <tr>
                         <th scope="col">Version</th>
-                        {% for i in n_questions %}
-                            {% for j in n_versions %}<th scope="col">V{{ j }}</th>{% endfor %}
+                        {% for i in question_indices %}
+                            {% for j in version_list %}<th scope="col">V{{ j }}</th>{% endfor %}
                         {% endfor %}
                     </tr>
                 </thead>
@@ -58,7 +58,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Time spent marking</th>
-                        {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
+                        {% for i in question_indices %}<th scope="col">Question idx {{ i }}</th>{% endfor %}
                     </tr>
                 </thead>
                 <tbody>
@@ -107,7 +107,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Estimate</th>
-                        {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
+                        {% for i in question_indices %}<th scope="col">Question idx {{ i }}</th>{% endfor %}
                     </tr>
                 </thead>
                 <tbody>
@@ -134,16 +134,16 @@
             <thead>
                 <tr>
                     <th scope="col">Paper Number</th>
-                    {% for i in n_questions %}<th scope="col">Question {{ i }}</th>{% endfor %}
+                    {% for i in question_indices %}<th scope="col">Question idx {{ i }}</th>{% endfor %}
                 </tr>
             </thead>
             <tbody>
                 {% for paper_num, paper_tasks in papers.items %}
                     <tr>
                         <td>{{ paper_num }}</td>
-                        {% if paper_tasks|length == n_questions|length %}
+                        {% if paper_tasks|length == question_indices|length %}
                             {% comment %}All tasks exist for paper{% endcomment %}
-                            {% for question_num, question_dict in paper_tasks.items %}
+                            {% for question_idx, question_dict in paper_tasks.items %}
                                 {% if question_dict.student_mark is not None %}
                                     <td class="bg-success text-white">{{ question_dict.student_mark }}</td>
                                 {% else %}
@@ -152,9 +152,9 @@
                             {% endfor %}
                         {% else %}
                             {% comment %}Not all tasks exist for paper{% endcomment %}
-                            {% for question_num in n_questions %}
-                                {% with paper_tasks|get_item:question_num as task %}
-                                    {% comment %}Equivalent to task = paper_tasks.get(question_num) where paper_tasks is a dict{% endcomment %}
+                            {% for question_idx in question_indices %}
+                                {% with paper_tasks|get_item:question_idx as task %}
+                                    {% comment %}Equivalent to task = paper_tasks.get(question_idx) where paper_tasks is a dict{% endcomment %}
                                     {% if task == None %}
                                         <td class="bg-danger text-white">Task missing</td>
                                     {% elif task.student_mark is not None %}
@@ -171,13 +171,13 @@
                     <tr>
                         <td>{{ p_key }}</td>
                         {% if not p_val %}
-                            {% for i in n_questions %}<td>None</td>{% endfor %}
-                        {% elif p_val|length == n_questions|length %}
+                            {% for i in question_indices %}<td>None</td>{% endfor %}
+                        {% elif p_val|length == questions_indices|length %}
                             {% comment %}Fully graded{% endcomment %}
                             {% for q_key, q_val in p_val.items %}<td>{{ q_val.student_mark }}</td>{% endfor %}
                         {% else %}
                             {% comment %}Partially graded{% endcomment %}
-                            {% for i in n_questions %}
+                            {% for i in question_indices %}
                                 <td>
                                     {% with p_val|get_item:i as dict %}
                                         {% if dict %}
