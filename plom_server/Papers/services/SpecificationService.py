@@ -209,7 +209,8 @@ def remove_spec() -> None:
     if PaperInfoService().is_paper_database_populated():
         raise MultipleObjectsReturned("Database is already populated with test-papers.")
 
-    Specification.objects.filter().delete()
+    Specification.objects.all().delete()
+    SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
