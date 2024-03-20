@@ -95,7 +95,8 @@ class PQVMappingView(ManagerRequiredView):
 
         context = {
             "number_of_questions": SpecificationService.get_n_questions(),
-            "question_list": range(1, 1 + SpecificationService.get_n_questions()),
+            "question_indices": SpecificationService.get_question_indices(),
+            "question_labels_html": SpecificationService.get_question_html_label_triples(),
             "prenaming": pss.get_prenaming_setting(),
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),

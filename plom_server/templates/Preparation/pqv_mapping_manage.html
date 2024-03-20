@@ -43,7 +43,7 @@
                     <thead>
                         <th>Paper number</th>
                         {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
-                        {% for q in question_list %}<th>Question {{ q }}</th>{% endfor %}
+                        {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
                     </thead>
                     <tbody>
                         {% for paper_number, info in pqv_table.items %}
@@ -178,7 +178,10 @@
                                                 a <tt>paper_number</tt> column
                                             </li>
                                             <li>
-                                                {{ number_of_questions }} columns with headers <tt>q{{ question_list|first }}.version</tt> up to <tt>q{{ question_list|last }}.version</tt>
+                                                {{ number_of_questions }} columns with headers
+                                                <tt>q{{ question_indices|first }}.version</tt>
+                                                up to
+                                                <tt>q{{ question_indices|last }}.version</tt>
                                             </li>
                                             {% if student_list_present %}
                                                 <li>
