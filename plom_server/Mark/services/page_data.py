@@ -28,7 +28,7 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
 
     Args:
         paper: exam paper number.
-        question: question index.
+        question_index: which question.
     """
     test_paper = Paper.objects.get(paper_number=paper)
     question_pages = QuestionPage.objects.filter(
