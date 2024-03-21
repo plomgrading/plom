@@ -14,6 +14,8 @@ class SpecSummaryView(ManagerRequiredView):
     """Display a read-only summary of the test specification in the browser."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        if not SpecificationService.is_there_a_spec():
+            raise Http404("Server has no spec")
         context = {
             "spec": SpecificationService.get_the_spec(),
         }
