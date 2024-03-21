@@ -41,10 +41,11 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
 
         question_list = SpecificationService.get_question_indices()
         version_list = SpecificationService.get_list_of_versions()
-        # TODO: 10 even when no spec: why?
-        mark_list = [
-            str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
-        ]
+        maxmark = SpecificationService.get_max_all_question_mark()
+        if not maxmark:
+            mark_list = []
+        else:
+            mark_list = [str(m) for m in range(maxmark + 1)]
         tag_list = sorted([X[1] for X in MarkingTaskService().get_all_tags()])
 
         context.update(
