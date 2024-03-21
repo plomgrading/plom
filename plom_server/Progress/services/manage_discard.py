@@ -379,11 +379,11 @@ class ManageDiscardService:
         "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
 
         Args:
-            user_obj:
-            image_pk:
-            paper_number:
+            user_obj: which user, as a database object.
+            image_pk: which image.
+            paper_number: which paper to assign it o.
             assign_to_question_indices: which questions, by a list of
-                one-based indices should we assign this discarded paper to.
+                one-based indices, should we assign this discarded page to.
         """
         try:
             image_obj = Image.objects.get(pk=image_pk)
