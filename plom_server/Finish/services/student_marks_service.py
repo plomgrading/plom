@@ -176,7 +176,6 @@ class StudentMarkService:
             warnings.append("[Not identified]")
         paper_dict["identified"] = paper_id_info is not None
 
-        n_questions = SpecificationService.get_n_questions()
         paper_marked = self.is_paper_marked(paper)
 
         paper_dict["marked"] = paper_marked
@@ -186,7 +185,7 @@ class StudentMarkService:
             warnings.append("[Not marked]")
             paper_dict["total_mark"] = None
 
-        for i in range(1, n_questions + 1):
+        for i in SpecificationService.get_question_indices():
             version, mark = self.get_question_version_and_mark(paper, i)
             paper_dict[f"q{i}_mark"] = mark
             paper_dict[f"q{i}_version"] = version

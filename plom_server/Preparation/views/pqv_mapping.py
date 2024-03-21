@@ -173,8 +173,7 @@ class PQVMappingReadOnlyView(ManagerRequiredView):
         context.update(
             {
                 "prenaming": pss.get_prenaming_setting(),
-                # TODO: this looks like question index
-                "question_list": range(1, 1 + SpecificationService.get_n_questions()),
+                "question_labels_html": SpecificationService.get_question_html_label_triples(),
                 "pqv_table": pqvs.get_pqv_map_as_table(pss.get_prenaming_setting()),
             }
         )

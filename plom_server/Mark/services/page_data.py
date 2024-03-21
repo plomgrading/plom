@@ -136,10 +136,10 @@ class PageDataService:
 
         # loops below do not actually check if the question is valid: do that first
         if question is not None:
-            numq = SpecificationService.get_n_questions()
-            if question not in range(1, numq + 1):
+            question_indices = SpecificationService.get_question_indices()
+            if question not in question_indices:
                 raise ObjectDoesNotExist(
-                    f"question {question} is out of bounds [1, {numq}]"
+                    f"question {question} is out of bounds {question_indices}"
                 )
 
         # get all the fixed pages of the test that have images - prefetch the related image
