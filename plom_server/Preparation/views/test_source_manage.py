@@ -2,11 +2,13 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import FileResponse, Http404
+from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django_htmx.http import HttpResponseClientRedirect
@@ -30,7 +32,7 @@ class TestSourceManageView(ManagerRequiredView):
 
         return {
             "form": TestSourceUploadForm(),
-            "test_versions": SpecificationService.get_n_versions(),
+            "num_versions": SpecificationService.get_n_versions(),
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
@@ -40,7 +42,7 @@ class TestSourceManageView(ManagerRequiredView):
             "user_group": "manager",
         }
 
-    def get(self, request, version=None):
+    def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
         if PapersPrinted.have_papers_been_printed():
             return redirect("prep_sources_view")
 
@@ -94,7 +96,7 @@ class TestSourceReadOnlyView(ManagerRequiredView):
         tss = TestSourceService()
         context.update(
             {
-                "test_versions": SpecificationService.get_n_versions(),
+                "num_versions": SpecificationService.get_n_versions(),
                 "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_test_sources": tss.get_list_of_sources(),
@@ -105,6 +107,6 @@ class TestSourceReadOnlyView(ManagerRequiredView):
         )
         return context
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         return render(request, "Preparation/test_paper_view.html", context)
