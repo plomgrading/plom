@@ -74,11 +74,14 @@ class Command(BaseCommand):
     # TODO: longer term, might be nice to have our own, even if we just call the functions
     # from "plom_staging_bundles".
 
-    def map_bundle_pages(self, bundle_name, *, papernum, username=None, questions=None):
+    def map_bundle_pages(
+        self, bundle_name: str, *, papernum: int, questions: str
+    ) -> None:
+        # many types possible for ``questions`` but here we always get a str
         scanner = ScanService()
         try:
             scanner.map_bundle_pages_cmd(
-                bundle_name, papernum=papernum, questions=questions
+                bundle_name, papernum=papernum, question_map=questions
             )
         except ValueError as err:
             raise CommandError(err)
@@ -137,8 +140,7 @@ class Command(BaseCommand):
                 question 1, pages 2-4 to question 2 and page 5 to question 3.
                 A common case is `-q [[1],[2],[3]]` to upload one page per
                 question.
-                And empty list will "discard" that particular page.
-                TODO: do we have discarded pages yet?
+                An empty list will "discard" that particular page.
             """,
         )
 

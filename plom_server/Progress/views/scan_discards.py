@@ -33,7 +33,10 @@ class ScanDiscardView(ManagerRequiredView):
 class ScanReassignView(ManagerRequiredView):
     def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         mss = ManageScanService()
-        img_angle = -mss.get_pushed_image(img_pk).rotation
+        tmp = mss.get_pushed_image(img_pk)
+        # MyPy worries tmp can be None
+        assert tmp is not None, "Unexpected got None for Image: can this happen?"
+        img_angle = -tmp.rotation
         context = self.build_context()
         context.update(
             {"current_page": "reassign", "image_pk": img_pk, "angle": img_angle}

@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020, 2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import ast
+from typing import Any
 
 
-def _parse_questions(s):
+def _parse_questions(s: Any) -> Any:
     if isinstance(s, str):
         if s.casefold() == "all":
             return "all"
@@ -56,16 +59,22 @@ def check_question_list(s, n_questions):
     return list(set(question_list))
 
 
-def canonicalize_page_question_map(s, pages, numquestions):
+def canonicalize_page_question_map(
+    # s: str | int | list[int] | list[list[int]],
+    s: Any,
+    pages: int,
+    numquestions: int,
+) -> list[list[int]]:
     """Make a canonical page-to-questions mapping from various shorthand inputs.
 
     Args:
-        s (str/list/tuple): the input, can be a special string "all"
+        s: the input, can be a special string "all"
             or a string which we will parse.  Or an integer.  Or a list
             of ints, or a list of list of ints.
-        pages (int): how many pages, used for checking input.
-        numquestins (int): how many questions total, used for checking
-            input.
+            So many types of input are supported, that its a bit tricky
+            to specify formal "typing"; currently set to ``All``.
+        pages: how many pages, used for checking input.
+        numquestions: how many questions total, used for checking input.
 
     Returns:
         A list of lists.
