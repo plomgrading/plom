@@ -315,7 +315,7 @@ class ManageDiscardService:
         user_obj: User,
         discard_pk: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
@@ -329,16 +329,16 @@ class ManageDiscardService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
-        for qn in question_list:
+        for qi in assign_to_question_indices:
             # get the version from an associated question-page
             version = (
-                QuestionPage.objects.filter(paper=paper_obj, question_number=qn)
+                QuestionPage.objects.filter(paper=paper_obj, question_number=qi)
                 .first()
                 .version
             )
             MobilePage.objects.create(
                 paper=paper_obj,
-                question_number=qn,
+                question_number=qi,
                 image=discard_obj.image,
                 version=version,
             )
@@ -346,8 +346,8 @@ class ManageDiscardService:
         # delete the discard page
         discard_obj.delete()
         # reset the associated marking tasks
-        for qn in question_list:
-            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+        for qi in assign_to_question_indices:
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
     def assign_discard_image_to_fixed_page(
         self, user_obj: User, image_pk: int, paper_number: int, page_number: int
@@ -367,15 +367,34 @@ class ManageDiscardService:
             ) from e
 
     def assign_discard_image_to_mobile_page(
-        self, user_obj: User, image_pk: int, paper_number: int, question_list: list[int]
+        self,
+        user_obj: User,
+        image_pk: int,
+        paper_number: int,
+        assign_to_question_indices: list[int],
     ) -> None:
+        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
+
+        Args:
+            user_obj:
+            image_pk:
+            paper_number:
+            assign_to_question_indices: which questions, by a list of
+                one-based indices should we assign this discarded paper to.
+        """
         try:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find image with pk = {image_pk}") from e
         try:
             self._assign_discard_to_mobile_page(
-                user_obj, image_obj.discardpage.pk, paper_number, question_list
+                user_obj,
+                image_obj.discardpage.pk,
+                paper_number,
+                assign_to_question_indices,
             )
         except DiscardPage.DoesNotExist as e:
             raise ValueError(

@@ -374,36 +374,32 @@ class ScanCastService:
             img.save()
 
     @transaction.atomic
-    def assign_extra_page(
+    def _assign_extra_page(
         self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
         """Fill in the missing information in a ExtraStagingImage.
 
         The command assigns the paper-number and question list to the
         given extra page.
 
-        This is a wrapper around the actual service command
-        "assign_extra_page" that does the work. Note that
-        "assign_extra_page_cmd" takes username and bundlename as
-        strings, while the "assign_extra_page" takes the corresponding
-        data-base objects.
-
         Args:
-            user_obj (danjgo auth user database mode instance): the database model instance representing the user assigning information
-            bundle_obj (danjgo staging bundle database mode instance): the database model instance representing the bundle being processed
-            bundle_order (int): which page of the bundle to edit.
-               Is 1-indexed.
-            paper_number (int)
-            question_list (list)
+            user_obj (django auth user database mode instance): the database
+                model instance representing the user assigning information.
+            bundle_obj (django staging bundle database mode instance): the
+                database model instance representing the bundle being
+                processed.
+            bundle_order: which page of the bundle to edit, 1-indexed.
+            paper_number: which paper.
+            assign_to_question_indices: which questions, by a list of
+                one-based indices should we assign this discarded paper to.
 
         Raises:
             ValueError: can't find things, or extra page already has information.
-
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
@@ -413,9 +409,11 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the question-numbers
-        for q in question_list:
-            if not QuestionPage.objects.filter(paper=paper, question_number=q).exists():
-                raise ValueError(f"No question {q} in database.")
+        for qi in assign_to_question_indices:
+            if not QuestionPage.objects.filter(
+                paper=paper, question_number=qi
+            ).exists():
+                raise ValueError(f"No question index {qi} in database.")
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
@@ -436,11 +434,12 @@ class ScanCastService:
         # Throw value error if data has already been set.
         if (eximg.paper_number is not None) or eximg.question_list:
             raise ValueError(
-                "Cannot overwrite existing extra-page info; potentially another user has set data."
+                "Cannot overwrite existing extra-page info; "
+                "potentially another user has set data."
             )
 
         eximg.paper_number = paper_number
-        eximg.question_list = question_list
+        eximg.question_list = assign_to_question_indices
         eximg.save()
 
     @transaction.atomic
@@ -450,11 +449,15 @@ class ScanCastService:
         bundle_id: int,
         bundle_order: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-        self.assign_extra_page(
-            user_obj, bundle_obj, bundle_order, paper_number, question_list
+        self._assign_extra_page(
+            user_obj,
+            bundle_obj,
+            bundle_order,
+            paper_number,
+            assign_to_question_indices,
         )
 
     @transaction.atomic
@@ -464,7 +467,7 @@ class ScanCastService:
         bundle_name: str,
         bundle_order: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
         """Fill in the missing information in a ExtraStagingImage.
 
@@ -472,9 +475,9 @@ class ScanCastService:
         given extra page.
 
         This is a wrapper around the actual service command
-        "assign_extra_page" that does the work. Note that
-        "assign_extra_page_cmd" takes username and bundlename as
-        strings, while the "assign_extra_page" takes the corresponding
+        :method:`_assign_extra_page` that does the work. Note that
+        here we pass username and ``bundle_name`` as
+        strings, while the :method:`_assign_extra_page` takes the corresponding
         data-base objects.
 
         Args:
@@ -482,12 +485,12 @@ class ScanCastService:
             bundle_name (str): the name of the bundle being processed
             bundle_order (int): which page of the bundle to edit.
                 Is 1-indexed.
-            paper_number (int)
-            question_list (list)
+            paper_number: which paper.
+            assign_to_question_indices: which questions, by a list of
+                one-based indices should we assign this discarded paper to.
 
         Raises:
             ValueError: can't find things.
-
         """
         try:
             user_obj = User.objects.get(
@@ -503,8 +506,12 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.assign_extra_page(
-            user_obj, bundle_obj, bundle_order, paper_number, question_list
+        self._assign_extra_page(
+            user_obj,
+            bundle_obj,
+            bundle_order,
+            paper_number,
+            assign_to_question_indices,
         )
 
     @transaction.atomic
