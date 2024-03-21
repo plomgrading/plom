@@ -37,7 +37,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
                 "version": version,
                 "stats": mss.get_basic_marking_stats(question, version=version),
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=version
+                    question, version
                 ),
             }
         )
@@ -81,7 +81,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=version
+                    question, version
                 ),
             }
         )
@@ -121,7 +121,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=None
+                    question, version=None
                 ),
             }
         )

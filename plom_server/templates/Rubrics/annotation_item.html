@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -19,7 +19,7 @@
                 <p>
                     Paper: <!-- TODO: ADD LINK TO PAPER PAGE HERE --> {{ annotation.task.paper.paper_number }}
                 </p>
-                <p>Question: {{ annotation.task.question_number }}</p>
+                <p>Question: {{ annotation.task.question_index }}</p>
                 <p>Version: {{ annotation.task.question_version }}</p>
                 <p>Score: {{ annotation.score }}</p>
                 <p>Edition: {{ annotation.edition }}</p>
@@ -27,7 +27,7 @@
             </div>
             <div class="col">
                 <img style="height: 50vh"
-                     src="{% url 'progress_annotation_img' annotation.task.paper.paper_number annotation.task.question_number %}" />
+                     src="{% url 'progress_annotation_img' annotation.task.paper.paper_number annotation.task.index %}" />
             </div>
         </div>
     </div>

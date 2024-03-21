@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from datetime import timedelta
 from typing import Dict, Tuple, Union
@@ -63,7 +63,7 @@ class UserInfoServices:
         """Retrieve annotations based on the combination of user, question number, and version.
 
         Returns a dictionary with users as keys and nested dictionaries as values.
-        The nested dictionaries have a tuple (question_number, question_version) as keys
+        The nested dictionaries have a tuple (question_index, question_version) as keys
         and the count of annotations and average marking time as values.
 
         Returns:

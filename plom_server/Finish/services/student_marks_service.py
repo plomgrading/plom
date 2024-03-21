@@ -146,7 +146,7 @@ class StudentMarkService:
             mark = (
                 MarkingTask.objects.filter(
                     paper=paper,
-                    question_number=question_idx,
+                    question_index=question_idx,
                     status=MarkingTask.COMPLETE,
                 )
                 .get()
@@ -265,18 +265,18 @@ class StudentMarkService:
             .exclude(status=MarkingTask.OUT_OF_DATE)
         )
         questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_number"):
+        for marking_task in marking_tasks.order_by("question_index"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
-                questions[marking_task.question_number] = {
-                    "question": marking_task.question_number,
+                questions[marking_task.question_index] = {
+                    "question": marking_task.question_index,
                     "version": marking_task.question_version,
                     "out_of": current_annotation.annotation_data["maxMark"],
                     "student_mark": current_annotation.score,
                 }
             else:
                 # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_number] = "Not marked"
+                questions[marking_task.question_index] = "Not marked"
 
         return {paper_num: questions}
 

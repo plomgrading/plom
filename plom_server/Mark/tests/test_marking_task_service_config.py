@@ -67,10 +67,10 @@ class MarkingTaskTestsWithConfig(TestCase):
         qvmap = "config_files/tiny_qvmap.toml"
         auto_init_tasks = true
         """
-        task1 = MarkingTask.objects.get(question_number=1, question_version=1)
-        task2 = MarkingTask.objects.get(question_number=1, question_version=2)
-        task3 = MarkingTask.objects.get(question_number=2, question_version=1)
-        task4 = MarkingTask.objects.get(question_number=2, question_version=2)
+        task1 = MarkingTask.objects.get(question_index=1, question_version=1)
+        task2 = MarkingTask.objects.get(question_index=1, question_version=2)
+        task3 = MarkingTask.objects.get(question_index=2, question_version=1)
+        task4 = MarkingTask.objects.get(question_index=2, question_version=2)
 
         self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
         self.assertEqual(

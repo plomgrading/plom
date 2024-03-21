@@ -113,7 +113,7 @@ class QuestionMarkingService:
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
         if self.question:
-            available = available.filter(question_number=self.question)
+            available = available.filter(question_index=self.question)
 
         if self.version:
             available = available.filter(question_version=self.version)
@@ -139,7 +139,7 @@ class QuestionMarkingService:
             return None
 
         first_task = available.order_by(
-            "-marking_priority", "paper__paper_number", "question_number"
+            "-marking_priority", "paper__paper_number", "question_index"
         ).first()
         self.task_pk = first_task.pk
         return first_task
@@ -155,8 +155,8 @@ class QuestionMarkingService:
         if self.task_pk:
             return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
         elif self.code:
-            paper_number, question_number = mark_task.unpack_code(self.code)
-            task_to_assign = mark_task.get_latest_task(paper_number, question_number)
+            paper_number, question_index = mark_task.unpack_code(self.code)
+            task_to_assign = mark_task.get_latest_task(paper_number, question_index)
             self.task_pk = task_to_assign.pk
             return self._get_task_for_update()
         else:
@@ -187,13 +187,13 @@ class QuestionMarkingService:
         if self.task_pk:
             task = MarkingTask.objects.get(pk=self.task_pk)
             paper_number = task.paper.paper_number
-            question_number = task.question_number
+            question_index = task.question_index
         elif self.code:
-            paper_number, question_number = mark_task.unpack_code(self.code)
+            paper_number, question_index = mark_task.unpack_code(self.code)
         else:
             raise ValueError("Cannot find task to read from.")
 
-        return page_data.get_question_pages_list(paper_number, question_number)
+        return page_data.get_question_pages_list(paper_number, question_index)
 
     @transaction.atomic
     def mark_task(self):

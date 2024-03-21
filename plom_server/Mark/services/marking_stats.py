@@ -48,12 +48,12 @@ class MarkingStatsService:
         }
 
         try:
-            all_tasks = MarkingTask.objects.filter(question_number=question).exclude(
+            all_tasks = MarkingTask.objects.filter(question_index=question).exclude(
                 status=MarkingTask.OUT_OF_DATE
             )
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related("latest_annotation")
             if version:
                 all_tasks = all_tasks.filter(question_version=version)
@@ -123,7 +123,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related("latest_annotation")
             if version:
                 completed_tasks = completed_tasks.filter(question_version=version)
@@ -150,7 +150,7 @@ class MarkingStatsService:
         """
         tasks = MarkingTask.objects.filter(
             status=MarkingTask.COMPLETE,
-            question_number=question,
+            question_index=question,
         )
         if version:
             tasks = tasks.filter(question_version=version)
@@ -179,7 +179,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
                 question_version=version,
             ).prefetch_related(
                 "latest_annotation",
@@ -237,7 +237,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related(
                 "latest_annotation",
             )
@@ -276,7 +276,7 @@ class MarkingStatsService:
             data[ver]["remaining"] = (
                 MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
                 .exclude(status=MarkingTask.COMPLETE)
-                .filter(question_number=question, question_version=ver)
+                .filter(question_index=question, question_version=ver)
                 .count()
             )
 
@@ -287,7 +287,7 @@ class MarkingStatsService:
         task_info = {}
         for task in (
             MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-            .filter(question_number=question, question_version=version)
+            .filter(question_index=question, question_version=version)
             .prefetch_related("latest_annotation", "paper", "assigned_user")
             .order_by("paper__paper_number")
         ):
@@ -329,7 +329,7 @@ class MarkingStatsService:
         if score_max:
             task_set = task_set.filter(latest_annotation__score__lte=score_max)
         if question:
-            task_set = task_set.filter(question_number=question)
+            task_set = task_set.filter(question_index=question)
         if version:
             task_set = task_set.filter(question_version=version)
         if username:
@@ -348,7 +348,7 @@ class MarkingStatsService:
             dat = {
                 "paper_number": task.paper.paper_number,
                 "status": task.get_status_display(),
-                "question": task.question_number,
+                "question": task.question_index,
                 "version": task.question_version,
                 "task_pk": task.pk,
             }

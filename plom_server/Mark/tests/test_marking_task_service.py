@@ -32,9 +32,9 @@ class MarkingTaskServiceTests(TestCase):
         with self.assertRaises(ValueError):
             mark_task.unpack_code("q000qge")
 
-        paper_number, question_number = mark_task.unpack_code("q0001g2")
+        paper_number, question_index = mark_task.unpack_code("q0001g2")
         self.assertEqual(paper_number, 1)
-        self.assertEqual(question_number, 2)
+        self.assertEqual(question_index, 2)
 
     def test_unpack_code_additional_tests(self) -> None:
         with self.assertRaises(AssertionError):
@@ -77,7 +77,7 @@ class MarkingTaskServiceTests(TestCase):
     def test_get_latest_task_has_paper_but_no_question(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
-            MarkingTask, question_number=1, paper__paper_number=42, code="q0042g1"
+            MarkingTask, question_index=1, paper__paper_number=42, code="q0042g1"
         )
         code = "q0042g9"
         assert task.code != code

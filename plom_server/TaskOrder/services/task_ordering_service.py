@@ -32,18 +32,18 @@ class TaskOrderService:
 
         Returns:
             A dictionary of task priorities, keyed by
-            (paper_number, question_number) pairs.
+            (paper_number, question_index) pairs.
         """
         _marking_tasks = MarkingTask.objects.filter(
             status=MarkingTask.TO_DO
         ).select_related("paper")
         marking_tasks = list(
-            _marking_tasks.order_by("paper__paper_number", "question_number")
+            _marking_tasks.order_by("paper__paper_number", "question_index")
         )
 
         task_priorities = {}
         for mt in marking_tasks:
-            task_priorities[(mt.paper.paper_number, mt.question_number)] = (
+            task_priorities[(mt.paper.paper_number, mt.question_index)] = (
                 mt.marking_priority
             )
 
@@ -59,10 +59,10 @@ class TaskOrderService:
         return [
             {
                 "Paper Number": paper_number,
-                "Question Number": question_number,
+                "Question Number": question_idx,
                 "Priority Value": priority,
             }
-            for (paper_number, question_number), priority in task_priorities.items()
+            for (paper_number, question_idx), priority in task_priorities.items()
         ]
 
     def handle_file_upload(self, csv_data) -> dict[tuple[int, int], int]:
@@ -73,7 +73,7 @@ class TaskOrderService:
 
         Returns:
             A dictionary of task priorities, keyed by
-            (paper_number, question_number) pairs.
+            (paper_number, question_index) pairs.
         """
         custom_priorities = {}
         for row in csv_data:

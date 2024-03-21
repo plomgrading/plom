@@ -17,12 +17,12 @@ from ..models import MarkingTask
 
 
 @transaction.atomic
-def get_latest_task(paper_number: int, question_number: int) -> MarkingTask:
+def get_latest_task(paper_number: int, question_idx: int) -> MarkingTask:
     """Get a marking task from its paper number and question number.
 
     Args:
-        paper_number: int
-        question_number: int
+        paper_number: which paper.
+        question_idx: which question, by 1-based question index.
 
     Returns:
         The MarkingTask.
@@ -37,7 +37,7 @@ def get_latest_task(paper_number: int, question_number: int) -> MarkingTask:
         # reraise with a more detailed error message
         raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
     r = (
-        MarkingTask.objects.filter(paper=paper, question_number=question_number)
+        MarkingTask.objects.filter(paper=paper, question_index=question_idx)
         .order_by("-time")
         .first()
     )
@@ -45,14 +45,14 @@ def get_latest_task(paper_number: int, question_number: int) -> MarkingTask:
     if r is None:
         raise ObjectDoesNotExist(
             f"Task does not exist: we have paper {paper_number} but "
-            f"not question index {question_number}"
+            f"not question index {question_idx}"
         )
     return r
 
 
 @transaction.atomic
 def unpack_code(code: str) -> tuple[int, int]:
-    """Return a tuple of (paper_number, question_number) from a task code string.
+    """Return a tuple of (paper_number, question_index) from a task code string.
 
     Args:
         code: a task code which is a string like "q0001g1".  Requires code to be
@@ -69,6 +69,6 @@ def unpack_code(code: str) -> tuple[int, int]:
     assert split_index != len(code) - 1, f'"g" cannot be last char in code "{code}"'
 
     paper_number = int(code[1:split_index])
-    question_number = int(code[split_index + 1 :])
+    question_idx = int(code[split_index + 1 :])
 
-    return paper_number, question_number
+    return paper_number, question_idx

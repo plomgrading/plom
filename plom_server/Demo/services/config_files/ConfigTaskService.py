@@ -23,12 +23,8 @@ def init_all_marking_tasks():
     all_papers = Paper.objects.all()
     mts = MarkingTaskService()
     for paper in all_papers:
-        for i in range(n_questions):
-            question_number = i + 1
-            mts.create_task(
-                paper=paper,
-                question_number=question_number,
-            )
+        for qidx in SpecificationService.get_question_indices():
+            mts.create_task(paper=paper, question_index=qidx)
 
 
 def init_all_id_tasks():

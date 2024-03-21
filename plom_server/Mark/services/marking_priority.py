@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -78,7 +78,7 @@ def set_marking_priority_custom(custom_order: Dict[Tuple[int, int], int]):
     """Set the priority to a custom ordering.
 
     Args:
-        custom_order: dict with tuple keys representing (paper_number, question_number)
+        custom_order: dict with tuple keys representing (paper_number, question_index)
             and values representing the task's custom priority. If a task is not included
             in custom_order, it remains the same. If the key is valid, but the corresponding
             task doesn't exist, the entry is ignored.
@@ -90,13 +90,13 @@ def set_marking_priority_custom(custom_order: Dict[Tuple[int, int], int]):
     tasks = get_tasks_to_update_priority()
     tasks_to_update = []
     for k, v in custom_order.items():
-        paper_number, question_number = k
+        paper_number, question_index = k
         if tasks.filter(
             paper__paper_number=paper_number,
-            question_number=question_number,
+            question_index=question_index,
         ).exists():
             task_to_update = tasks.get(
-                paper__paper_number=paper_number, question_number=question_number
+                paper__paper_number=paper_number, question_index=question_index
             )
             task_to_update.marking_priority = v
             tasks_to_update.append(task_to_update)

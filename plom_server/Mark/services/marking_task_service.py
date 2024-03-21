@@ -42,7 +42,7 @@ class MarkingTaskService:
     def create_task(
         self,
         paper: Paper,
-        question_number: int,
+        question_index: int,
         *,
         user: Optional[User] = None,
         copy_old_tags: bool = True,
@@ -51,7 +51,7 @@ class MarkingTaskService:
 
         Args:
             paper: a Paper instance, the test paper of the task.
-            question_number: the question of the task.
+            question_index: the question of the task, by 1-based index.
 
         Keyword Args
             user: optional, User instance of user assigned to the task.
@@ -65,9 +65,9 @@ class MarkingTaskService:
             raise RuntimeError("Server does not have a question-version map.")
 
         pqv_map = pqvs.get_pqv_map_dict()
-        question_version = pqv_map[paper.paper_number][question_number]
+        question_version = pqv_map[paper.paper_number][question_index]
 
-        task_code = f"q{paper.paper_number:04}g{question_number}"
+        task_code = f"q{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
         MarkingTask.objects.filter(code=task_code).exclude(
@@ -92,7 +92,7 @@ class MarkingTaskService:
             assigned_user=user,
             code=task_code,
             paper=paper,
-            question_number=question_number,
+            question_index=question_index,
             question_version=question_version,
             marking_priority=priority,
         )
@@ -119,11 +119,11 @@ class MarkingTaskService:
         try:
             completed = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
                 question_version=version,
             )
             total = MarkingTask.objects.filter(
-                question_number=question, question_version=version
+                question_index=question, question_version=version
             ).exclude(status=MarkingTask.OUT_OF_DATE)
         except MarkingTask.DoesNotExist:
             return (0, 0)
@@ -144,42 +144,42 @@ class MarkingTaskService:
             RuntimeError: code valid but task does not exist.
         """
         try:
-            paper_number, question_number = mark_task.unpack_code(code)
+            paper_number, question_idx = mark_task.unpack_code(code)
         except AssertionError as e:
             raise ValueError(f"{code} is not a valid task code: {e}") from e
         try:
-            return mark_task.get_latest_task(paper_number, question_number)
+            return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
     def get_user_tasks(
-        self, user, question=None, version=None
+        self, user: User, question_idx: int | None = None, version: int | None = None
     ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks that are assigned to this user.
 
         Args:
             user: User instance
-            question (optional): int, the question number
-            version (optional): int, the version number
+            question_idx (optional): the question index.
+            version (optional): the version number
 
         Returns:
             Marking tasks assigned to user
         """
         tasks = MarkingTask.objects.filter(assigned_user=user)
-        if question:
-            tasks = tasks.filter(question_number=question)
+        if question_idx:
+            tasks = tasks.filter(question_index=question_idx)
         if version:
             tasks = tasks.filter(question_version=version)
 
         return tasks
 
     def get_tasks_from_question_with_annotation(
-        self, question: int, version: int
+        self, question_idx: int, version: int
     ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
-            question: int, the question number
+            question_idx: the question index.
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
@@ -189,7 +189,7 @@ class MarkingTaskService:
             None expected
         """
         marking_tasks = MarkingTask.objects.filter(
-            question_number=question, status=MarkingTask.COMPLETE
+            question_index=question_idx, status=MarkingTask.COMPLETE
         )
         if version != 0:
             marking_tasks = marking_tasks.filter(question_version=version)
@@ -355,7 +355,7 @@ class MarkingTaskService:
             assigned_user=user, status=MarkingTask.COMPLETE
         )
         if question_idx:
-            complete_tasks = complete_tasks.filter(question_number=question_idx)
+            complete_tasks = complete_tasks.filter(question_index=question_idx)
         if version:
             complete_tasks = complete_tasks.filter(question_version=version)
 
@@ -420,10 +420,7 @@ class MarkingTaskService:
         getter before trying that.
         """
         paper_obj = Paper.objects.get(paper_number=paper)
-        # TODO: question_number, sic, Issue #2716, Issue #3264.
-        tasks = MarkingTask.objects.filter(
-            paper=paper_obj, question_number=question_idx
-        )
+        tasks = MarkingTask.objects.filter(paper=paper_obj, question_index=question_idx)
         # many tasks could match edition; we want the unique non-out-of-date one.
         # TODO: in principle, we could do some try-except to detect the edition
         # exists but is out-of-date: not sure its worth the effort.
@@ -595,7 +592,7 @@ class MarkingTaskService:
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
-        self, paper_number: int, question_number: int
+        self, paper_number: int, question_index: int
     ) -> None:
         """Set the marking task for the given paper/question as OUT_OF_DATE.
 
@@ -604,8 +601,8 @@ class MarkingTaskService:
         pages have changed). This function is called when such changes occur.
 
         Args:
-            paper_number (int): the paper
-            question_number (int): the question
+            paper_number: the paper
+            question_index: the question
 
         Raises:
             ValueError: when there is no such paper.
@@ -623,7 +620,7 @@ class MarkingTaskService:
         # now we know there is at least one task (either valid or out of date)
         valid_tasks = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).filter(paper=paper_obj, question_number=question_number)
+        ).filter(paper=paper_obj, question_index=question_index)
         valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
         # do a integrity check - there can only at most one valid task
         if valid_task_count > 1:
@@ -631,7 +628,8 @@ class MarkingTaskService:
             # Any given question should have **at most** one valid task.
             # If we ever arrive here it indicates that there is a corruption of the database
             raise MultipleObjectsReturned(
-                f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
+                "Very serious error - have found multiple valid Marking-tasks"
+                f" for paper {paper_number} question idx {question_index}"
             )
         # we know there is at most one valid task.
         if valid_task_count == 1:
@@ -645,5 +643,5 @@ class MarkingTaskService:
             pass
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
-        if ibs.is_given_paper_question_ready(paper_obj, question_number):
-            self.create_task(paper_obj, question_number)
+        if ibs.is_given_paper_question_ready(paper_obj, question_index):
+            self.create_task(paper_obj, question_index)
