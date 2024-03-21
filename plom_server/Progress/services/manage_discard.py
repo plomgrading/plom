@@ -211,7 +211,7 @@ class ManageDiscardService:
             "flagged the associated marking task as 'out of date'"
         )
 
-    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int):
+    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int) -> None:
         """Given pk of a pushed image, discard it."""
         try:
             image_obj = Image.objects.get(pk=image_pk)
@@ -264,23 +264,25 @@ class ManageDiscardService:
     @transaction.atomic
     def _assign_discard_to_fixed_page(
         self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"Cannot find a discard page with pk = {discard_pk}"
+            ) from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
         try:
             fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
                 f"Paper {paper_number} does not have a fixed page with page number {page_number}"
-            )
+            ) from e
 
         if fpage_obj.image:
             raise ValueError(
@@ -303,7 +305,8 @@ class ManageDiscardService:
             )
         else:
             raise RuntimeError(
-                f"Cannot identify the type of the fixed page with pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
+                f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
+                "in paper {paper_number} page {page_number}."
             )
 
     @transaction.atomic
@@ -313,16 +316,18 @@ class ManageDiscardService:
         discard_pk: int,
         paper_number: int,
         question_list: list[int],
-    ):
+    ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"Cannot find a discard page with pk = {discard_pk}"
+            ) from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
         for qn in question_list:
             # get the version from an associated question-page
@@ -346,39 +351,41 @@ class ManageDiscardService:
 
     def assign_discard_image_to_fixed_page(
         self, user_obj: User, image_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             image_obj = Image.objects.get(pk=image_pk)
-        except ObjectDoesNotExist:
-            raise ValueError("Cannot find image with pk = {image_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
         try:
             self._assign_discard_to_fixed_page(
                 user_obj, image_obj.discardpage.pk, paper_number, page_number
             )
-        except DiscardPage.DoesNotExist:
+        except DiscardPage.DoesNotExist as e:
             raise ValueError(
-                f"Cannot discard image with pk {image_pk}. It is not attached to a discard page."
-            )
+                f"Cannot discard image with pk {image_pk}."
+                " It is not attached to a discard page."
+            ) from e
 
     def assign_discard_image_to_mobile_page(
         self, user_obj: User, image_pk: int, paper_number: int, question_list: list[int]
-    ):
+    ) -> None:
         try:
             image_obj = Image.objects.get(pk=image_pk)
-        except ObjectDoesNotExist:
-            raise ValueError("Cannot find image with pk = {image_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
         try:
             self._assign_discard_to_mobile_page(
                 user_obj, image_obj.discardpage.pk, paper_number, question_list
             )
-        except DiscardPage.DoesNotExist:
+        except DiscardPage.DoesNotExist as e:
             raise ValueError(
-                "Cannot reassign image with pk {image_pk}. It is not attached to a discard page."
-            )
+                f"Cannot reassign image with pk {image_pk}."
+                " It is not attached to a discard page."
+            ) from e
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -398,7 +405,7 @@ class ManageDiscardService:
         discard_pk: int,
         paper_number: int,
         question_list: list[int],
-    ):
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
