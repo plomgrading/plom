@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.contrib.auth.models import User
-from django.http import FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework.exceptions import ValidationError
@@ -124,11 +124,7 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
 
 class AllTaskOverviewView(LeadMarkerOrManagerView):
-    def get(self, request):
-        question_indices = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
-
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         pos = ProgressOverviewService()  # acronym excellence
         id_task_overview, marking_task_overview = pos.get_task_overview()
@@ -142,7 +138,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         context.update(
             {
-                "question_indices": question_indices,
+                "question_indices": SpecificationService.get_question_indices(),
                 "question_labels": SpecificationService.get_question_index_label_pairs(),
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,

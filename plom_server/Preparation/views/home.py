@@ -79,7 +79,7 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_longname": SpecificationService.get_longname(),
                     "spec_shortname": SpecificationService.get_shortname(),
                     "slugged_spec_shortname": SpecificationService.get_short_name_slug(),
-                    "test_versions": SpecificationService.get_n_versions(),
+                    "num_versions": SpecificationService.get_n_versions(),
                 }
             )
         else:
@@ -87,7 +87,7 @@ class PreparationLandingView(ManagerRequiredView):
                 {
                     "valid_spec": False,
                     "can_upload_source_tests": False,
-                    "test_versions": 0,
+                    "num_versions": 0,
                     "can_qvmap": False,
                 }
             )
