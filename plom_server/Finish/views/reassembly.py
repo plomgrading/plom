@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
+from django.http import HttpRequest, HttpResponse, Http404
 from django.http import FileResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.text import slugify
@@ -15,8 +16,11 @@ from ..services import ReassembleService
 
 
 class ReassemblePapersView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         # Note: uses the symbolic constants defined in HueyTaskTracker
+
+        if not SpecificationService.is_there_a_spec():
+            raise Http404("No spec")
         reas = ReassembleService()
         context = self.build_context()
         all_paper_status = reas.get_all_paper_status_for_reassembly()

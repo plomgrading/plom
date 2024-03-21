@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
@@ -9,8 +11,10 @@ from ..services import SolnSourceService, BuildSolutionService
 
 
 class SolnHomeView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
+        if not SpecificationService.is_there_a_spec():
+            raise Http404("No spec")
         all_soln_pdf_present = SolnSourceService().are_all_solution_pdf_present()
         context.update(
             {
