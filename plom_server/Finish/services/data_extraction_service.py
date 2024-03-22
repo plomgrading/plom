@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from typing import Dict, List, Optional, Tuple
 
@@ -135,16 +135,16 @@ class DataExtractionService:
 
         return averages
 
-    def _get_average_grade_on_question(self, question_number: int) -> float:
+    def _get_average_grade_on_question(self, question_index: int) -> float:
         """Return the average grade on a specific question (not percentage).
 
         Args:
-            question_number: The question number to get the average grade for.
+            question_index: The question number to get the average grade for.
 
         Returns:
             The average grade on the question as a float.
         """
-        return self.student_df[f"q{question_number}_mark"].mean()
+        return self.student_df[f"q{question_index}_mark"].mean()
 
     def get_average_grade_on_all_questions(self) -> List[Tuple[int, str, float]]:
         """Return the average grade on each question (not percentage).
@@ -247,14 +247,14 @@ class DataExtractionService:
         return marks_by_ta
 
     def _get_ta_data_for_question(
-        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
+        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
 
         Args:
-            question_number: The question to get the data for.
+            question_index: The question to get the data for.
 
         Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
@@ -267,7 +267,7 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        question_df = ta_df[ta_df["question_number"] == question_number]
+        question_df = ta_df[ta_df["question_number"] == question_index]
         return question_df
 
     def _get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
@@ -276,13 +276,13 @@ class DataExtractionService:
         Warning: caller will need pandas installed as this method returns a dataframe.
 
         Returns:
-            A dictionary keyed by the question number, containing the
+            A dictionary keyed by the question index, containing the
             marking data for each question.
         """
         marks_by_question = {}
-        for question_num in self.ta_df["question_number"].unique():
-            marks_by_question[question_num] = self._get_ta_data_for_question(
-                question_num
+        for question_idx in self.ta_df["question_number"].unique():
+            marks_by_question[question_idx] = self._get_ta_data_for_question(
+                question_idx
             )
         return marks_by_question
 
@@ -292,12 +292,12 @@ class DataExtractionService:
         Warning: caller will need pandas installed as this method returns a pandas series.
 
         Returns:
-            A dictionary keyed by the question numbers, containing the
+            A dictionary keyed by the question indices, containing the
             marking times for each question.
         """
         times_by_question = {}
-        for q in self.ta_df["question_number"].unique():
-            times_by_question[q] = self._get_ta_data_for_question(q)[
+        for qi in self.ta_df["question_number"].unique():
+            times_by_question[qi] = self._get_ta_data_for_question(qi)[
                 "seconds_spent_marking"
             ]
         return times_by_question
@@ -329,12 +329,12 @@ class DataExtractionService:
         )
 
     def get_tas_that_marked_this_question(
-        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
+        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[str]:
         """Get the TAs that marked a specific question.
 
         Args:
-            question_number: The question to get the data for.
+            question_index: The question to get the data for.
 
         Keyword Args:
             ta_df: The dataframe containing the TA data. Should be a copy or
@@ -348,7 +348,7 @@ class DataExtractionService:
         assert isinstance(ta_df, pd.DataFrame)
 
         return (
-            ta_df[ta_df["question_number"] == question_number]["user"].unique().tolist()
+            ta_df[ta_df["question_number"] == question_index]["user"].unique().tolist()
         )
 
     def get_scores_for_question(
