@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -389,9 +389,11 @@ def render_page_to_bitmap(
     # z = random.uniform(1, 5)
     log.info(f"{basename}: Fitz render z={z:4.2f}.")
     pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
-    if not (W == pix.width or H == pix.height):
+    # TODO: sometimes width and height get mixed up: Issues #1148, #1935
+    # but one of them should match the target, without worrying which is which
+    if not (pix.width in (W, H) or pix.height in (W, H)):
         _m = (
-            "Debug: some kind of rounding error in scaling image?"
+            f"Debug: {p}: some kind of rounding error in scaling image?"
             f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
         )
         warn(_m)
