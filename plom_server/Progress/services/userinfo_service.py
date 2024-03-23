@@ -25,8 +25,7 @@ class UserInfoServices:
         """Return True if there are any annotations in the database.
 
         Returns:
-            bool : True if there are annotations or
-                False if there aren't any
+            True if there are annotations or False if there aren't any.
         """
         return Annotation.objects.exists()
 
@@ -35,7 +34,7 @@ class UserInfoServices:
         """Retrieve annotations based on user.
 
         Returns:
-            Dict[str, int]: A dictionary of all annotations(Value) corresponding with the markers(key).
+            A dictionary of all annotations (Value) corresponding with the markers (key).
 
         Raises:
             Not expected to raise any exceptions.
@@ -60,22 +59,19 @@ class UserInfoServices:
     def get_annotations_based_on_user(
         self, annotations
     ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
-        """Retrieve annotations based on the combination of user, question number, and version.
-
-        Returns a dictionary with users as keys and nested dictionaries as values.
-        The nested dictionaries have a tuple (question_index, question_version) as keys
-        and the count of annotations and average marking time as values.
+        """Retrieve annotations based on the combination of user, question index, and version.
 
         Returns:
-            Dict[str, Dict[Tuple[int, int], Dict[str, Union(int, str)]]]: A dictionary with users
-                as keys, and nested dictionaries as values containing the count of annotations
-                and average marking time for each (question_number, question_version) combination.
+            A dictionary with usernames as keys, and nested dictionaries
+            as values containing the count of annotations and average
+            marking time for each (question index, question version)
+            combination.
         """
         count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
         total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
 
         for annotation in annotations:
-            key = (annotation.task.question_number, annotation.task.question_version)
+            key = (annotation.task.question_index, annotation.task.question_version)
             count_data.setdefault(annotation.user.username, {}).setdefault(key, 0)
             count_data[annotation.user.username][key] += 1
 
@@ -111,7 +107,7 @@ class UserInfoServices:
                     "percentage_marked": int(
                         (
                             count
-                            / self.get_marking_task_count_based_on_question_number_and_version(
+                            / self._get_marking_task_count_based_on_question_and_version(
                                 question=key[0], version=key[1]
                             )
                         )
@@ -124,23 +120,24 @@ class UserInfoServices:
 
         return grouped_by_user
 
-    def get_annotations_based_on_question_number_version(
+    def get_annotations_based_on_question_and_version(
         self,
         grouped_by_user_annotations: Dict[
             str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
         ],
     ) -> Dict[Tuple[int, int], Dict[str, list]]:
-        """Group annotations by question number and version.
+        """Group annotations by question index and version.
 
         Args:
-            grouped_by_user_annotations: (Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]])
-                A dictionary with users as keys, and nested dictionaries as values containing the count
-                of annotations and average marking time for each (question_number, question_version)
-                combination.
+            grouped_by_user_annotations: A dictionary with usernames as keys,
+                and nested dictionaries as values containing the count
+                of annotations and average marking time for each
+                (question_index, question_version) combination.
 
         Returns:
-            Dict[Tuple[int, int], Dict[str, list]]: A dictionary containing annotations grouped by
-                question numbers and versions, with marker information and other data.
+            A dictionary containing annotations grouped by
+            question indices and versions, with marker information and
+            other data.
         """
         grouped_by_question: Dict[Tuple[int, int], Dict[str, list]] = dict()
 
@@ -182,20 +179,20 @@ class UserInfoServices:
             )
 
     @transaction.atomic
-    def get_marking_task_count_based_on_question_number_and_version(
+    def _get_marking_task_count_based_on_question_and_version(
         self, question: int, version: int
     ) -> int:
-        """Get the count of MarkingTasks based on the given question number and version.
+        """Get the count of MarkingTasks based on the given question index and version.
 
         Args:
-            question: (int) The question number.
-            version: (int) The question version.
+            question: which question by 1-based index.
+            version: which question version.
 
         Returns:
-            int: The count of MarkingTask for the specific question number and version.
+            The count of MarkingTask for the specific question index and version.
         """
         return MarkingTask.objects.filter(
-            question_number=question, question_version=version
+            question_index=question, question_version=version
         ).count()
 
     @transaction.atomic

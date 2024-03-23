@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 
@@ -45,8 +45,8 @@ class ProgressUserInfoHome(ManagerRequiredView):
         annotations_grouped_by_user = uis.get_annotations_based_on_user(
             filtered_annotations
         )
-        annotations_grouped_by_question_num_ver = (
-            uis.get_annotations_based_on_question_number_version(
+        annotations_grouped_by_question_ver = (
+            uis.get_annotations_based_on_question_and_version(
                 annotations_grouped_by_user
             )
         )
@@ -56,7 +56,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotations_exist": annotations_exist,
                 "annotation_count_dict": annotation_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
-                "annotations_grouped_by_question_num_ver": annotations_grouped_by_question_num_ver,
+                "annotations_grouped_by_question_num_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
             }
