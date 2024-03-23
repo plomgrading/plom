@@ -430,6 +430,20 @@ pydocstyle-server:
   allow_failure: true
 
 
+no-question-numbers:
+  image: python:3.12
+  stage: static_analysis
+  script:
+    - grep plom_server -rie "question.num"
+    - echo "Question number is ambiguous; generally we prefer index or the question label"
+    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
+    # For now, just ensure the total does not increase
+    - echo $HOW_MANY
+    # Future hackers: consider trying to decrease this number
+    - bash -c "[[ $HOW_MANY -le 152 ]]"
+  allow_failure: true
+
+
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
   stage: test
