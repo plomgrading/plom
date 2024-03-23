@@ -116,7 +116,7 @@ class PageDataService:
             paper (int): test-paper number
 
         Keyword Args:
-            question (int/None): question number, if not None.
+            question (int/None): question index, if not None.
             include_idpage (bool): whether to include ID pages in this
                 request (default: False)
 
@@ -195,7 +195,7 @@ class PageDataService:
         # make a dict which counts how many mobile pages for each
         # question as we iterate through the list. We use this so that
         # we can "name" each mobile page according to both its
-        # question number, and its order within the mobiles pages for
+        # question index, and its order within the mobiles pages for
         # that question. Hence mobile pages for question 2 would be named as
         # e2.1, e2.2, e2.3, and so on.
         # but since those pages are not necessarily in order in the system we

@@ -58,8 +58,8 @@ class QuestionMarkingService:
 
         Keyword Args:
             task_pk: public key of a task instance
-            code: string representing a paper number + question number pair
-            question: question number of task
+            code: string representing a paper number + question index pair
+            question: question index of task
             version: question version of task
             user: reference to a user instance
             min_paper_num: the minimum paper number of the task
@@ -96,7 +96,7 @@ class QuestionMarkingService:
         range (including end points) are required.
 
         The results are sorted by priority.
-        If the priority is the same, defer to paper number and then question number.
+        If the priority is the same, defer to paper number and then question index.
 
         Keyword Args:
             tags: a task must match at least one of the strings in this

@@ -136,7 +136,7 @@ class DataExtractionService:
         """Return the average grade on a specific question (not percentage).
 
         Args:
-            question_index: The question number to get the average grade for.
+            question_index: The question to get the average grade for.
 
         Returns:
             The average grade on the question as a float.

@@ -134,7 +134,7 @@ class MarkingTaskService:
         """Get a marking task from its code.
 
         Args:
-            code: a unique string that includes the paper number and question number.
+            code: a unique string that includes the paper number and question index.
 
         Returns:
             The marking task object the matches the code.

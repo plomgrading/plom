@@ -350,7 +350,7 @@ def get_question_label(question_one_index: str | int) -> str:
     """Get the question label from its one-index.
 
     Args:
-        question_one_index: question number indexed from 1.
+        question_one_index: question indexed from 1.
             TODO: does it really accept string input?
 
     Returns:
@@ -405,7 +405,7 @@ def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
 
 
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
-    """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
+    """Convert a list of question dictionaries to a nested dict with question index as str keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}
 
 

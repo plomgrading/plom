@@ -99,7 +99,7 @@ class TaMarkingService:
         """Get the total time spent on a question by all markers.
 
         Args:
-            question: The question number to get the total time spent on.
+            question: The question index to get the total time spent on.
 
         Keyword Args:
             version: The version of the question to get the total time spent on.
@@ -125,7 +125,7 @@ class TaMarkingService:
         """Get the average time spent on a question by all markers.
 
         Args:
-            question: The question number to get the average time spent on.
+            question: The question index to get the average time spent on.
 
         Keyword Args:
             version: The version of the question to get the average time spent on.
@@ -151,7 +151,7 @@ class TaMarkingService:
         """Get the standard deviation of time spent on a question by all markers.
 
         Args:
-            question: The question number to get the standard deviation time spent on.
+            question: The question index to get the standard deviation time spent on.
 
         Keyword Args:
             version: The version of the question to get the standard deviation time

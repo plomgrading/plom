@@ -18,7 +18,7 @@ from ..models import MarkingTask
 
 @transaction.atomic
 def get_latest_task(paper_number: int, question_idx: int) -> MarkingTask:
-    """Get a marking task from its paper number and question number.
+    """Get a marking task from its paper number and question index.
 
     Args:
         paper_number: which paper.

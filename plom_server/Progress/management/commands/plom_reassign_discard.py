@@ -12,9 +12,13 @@ from plom.scan.question_list_utils import check_question_list
 
 
 class Command(BaseCommand):
-    """python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -p page_number.
+    """Reassign discarded pages.
 
-    python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -q question_number.
+    Examples:
+
+    python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -p page_number.
+
+    python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -q question_index.
     """
 
     help = "Reassign a (pushed) discarded page as a given fixed or mobile page."

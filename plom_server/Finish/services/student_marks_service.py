@@ -317,7 +317,7 @@ class StudentMarkService:
         """Get the count of how many papers have marked a specific question.
 
         Args:
-            question: The question number.
+            question: The question index.
 
         Keyword Args:
             version: The version of the question.
