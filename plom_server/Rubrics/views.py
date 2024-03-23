@@ -253,19 +253,3 @@ class RubricItemView(ManagerRequiredView):
                 rubric.__setattr__(key, value)
             rubric.save()
         return redirect("rubric_item", rubric_key=rubric_key)
-
-
-class AnnotationItemView(ManagerRequiredView):
-    """A page for displaying a single annotation."""
-
-    def get(self, request, annotation_key):
-        template_name = "Rubrics/annotation_item.html"
-        rs = RubricService()
-
-        context = self.build_context()
-
-        annotation = rs.get_all_annotations().get(pk=annotation_key)
-        rubrics = rs.get_rubrics_from_annotation(annotation)
-        context.update({"annotation": annotation, "rubrics": rubrics})
-
-        return render(request, template_name, context=context)
