@@ -56,7 +56,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotations_exist": annotations_exist,
                 "annotation_count_dict": annotation_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
-                "annotations_grouped_by_question_num_ver": annotations_grouped_by_question_ver,
+                "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
             }

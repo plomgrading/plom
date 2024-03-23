@@ -13,13 +13,14 @@
 {% endblock page_heading %}
 {% block main_content %}
     {% comment %} Flex box for image on the right {% endcomment %}
+    <!-- TODO: this page seems very similar to task_details.html... need both? -->
     <div class="container mx-0">
         <div class="row">
             <div class="col">
                 <p>
                     Paper: <!-- TODO: ADD LINK TO PAPER PAGE HERE --> {{ annotation.task.paper.paper_number }}
                 </p>
-                <p>Question: {{ annotation.task.question_index }}</p>
+                <p>Question index: {{ annotation.task.question_index }}</p>
                 <p>Version: {{ annotation.task.question_version }}</p>
                 <p>Score: {{ annotation.score }}</p>
                 <p>Edition: {{ annotation.edition }}</p>
