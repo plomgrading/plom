@@ -294,15 +294,14 @@ class RubricService:
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
-        spec = SpecificationService.get_the_spec()
-        self._build_system_rubrics(spec, username)
+        self._build_system_rubrics(username)
         return True
 
-    def _build_system_rubrics(self, spec: dict[str, Any], username: str) -> None:
+    def _build_system_rubrics(self, username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
-        for q in range(1, 1 + spec["numberOfQuestions"]):
-            mx = spec["question"]["{}".format(q)]["mark"]
+        for q in SpecificationService.get_question_indices():
+            mx = SpecificationService.get_question_max_mark(q)
             # make zero mark and full mark rubrics
             rubric = {
                 "kind": "absolute",

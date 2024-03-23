@@ -301,7 +301,7 @@ def get_n_pages() -> int:
 
 
 @transaction.atomic
-def get_question_mark(question_one_index: str | int) -> int:
+def get_question_max_mark(question_one_index: str | int) -> int:
     """Get the max mark of a given question.
 
     Args:
@@ -315,6 +315,10 @@ def get_question_mark(question_one_index: str | int) -> int:
     """
     question = SpecQuestion.objects.get(question_number=question_one_index)
     return question.mark
+
+
+# Some code uses this older synonym but it confuses me without the word "max"
+get_question_mark = get_question_max_mark
 
 
 @transaction.atomic

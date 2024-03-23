@@ -6,7 +6,7 @@ import csv
 from io import StringIO
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -17,7 +17,7 @@ from .services.task_ordering_service import TaskOrderService
 class TaskOrderPageView(ManagerRequiredView):
     """A page for setting the task marking priorities."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "TaskOrder/task_order_landing.html"
         tos = TaskOrderService()
 
@@ -41,7 +41,7 @@ class TaskOrderPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     @staticmethod
-    def upload_task_priorities(request):
+    def upload_task_priorities(request: HttpRequest) -> HttpResponse:
         """Upload the task priorities as a CSV file and update the database."""
         if request.method == "POST":
             tos = TaskOrderService()
@@ -66,22 +66,20 @@ class TaskOrderPageView(ManagerRequiredView):
         return redirect("task_order_landing")
 
     @staticmethod
-    def download_priorities(request):
+    def download_priorities(request: HttpRequest) -> HttpResponse:
         """Download the task priorities."""
+        shortname = SpecificationService.get_short_name_slug()
         tos = TaskOrderService()
-        spec = SpecificationService.get_the_spec()
         keys = tos.get_csv_header()
         priorities = tos.get_task_priorities_download()
 
         f = StringIO()
-
         w = csv.DictWriter(f, keys)
         w.writeheader()
         w.writerows(priorities)
-
         f.seek(0)
 
-        filename = "task-order--" + spec["name"] + ".csv"
+        filename = f"task-order--{shortname}.csv"
 
         response = HttpResponse(f, content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename={filename}".format(

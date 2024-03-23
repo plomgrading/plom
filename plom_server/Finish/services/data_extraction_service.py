@@ -28,13 +28,12 @@ class DataExtractionService:
     def __init__(self):
         sms = StudentMarkService()
         tms = TaMarkingService()
-        self.spec = SpecificationService.get_the_spec()
 
         student_dict = sms.get_all_students_download(
             version_info=True, timing_info=False, warning_info=False
         )
         student_keys = sms.get_csv_header(
-            self.spec, version_info=True, timing_info=False, warning_info=False
+            version_info=True, timing_info=False, warning_info=False
         )
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
@@ -81,7 +80,7 @@ class DataExtractionService:
         return (
             100
             * self.student_df[f"q{question_index}_mark"].mean()
-            / self.spec["question"][str(question_index)]["mark"]
+            / SpecificationService.get_question_max_mark(question_index)
         )
 
     def _get_average_on_question_version_as_percentage(
@@ -94,14 +93,13 @@ class DataExtractionService:
         return (
             100
             * version_df[f"q{question_index}_mark"].mean()
-            / self.spec["question"][str(question_index)]["mark"]
+            / SpecificationService.get_question_max_mark(question_index)
         )
 
     def get_averages_on_all_questions_as_percentage(self) -> List[float]:
         """Return the average mark on each question as a percentage."""
         averages = []
-        for q in self.spec["question"].keys():
-            q = int(q)
+        for q in SpecificationService.get_question_indices():
             averages.append(self._get_average_on_question_as_percentage(q))
         return averages
 
@@ -124,10 +122,9 @@ class DataExtractionService:
         if overall:
             averages.append(self.get_averages_on_all_questions_as_percentage())
 
-        for v in range(1, self.spec["numberOfVersions"] + 1):
+        for v in SpecificationService.get_list_of_versions():
             _averages = []
-            for q in self.spec["question"].keys():
-                q = int(q)
+            for q in SpecificationService.get_question_indices():
                 _averages.append(
                     self._get_average_on_question_version_as_percentage(q, v)
                 )
