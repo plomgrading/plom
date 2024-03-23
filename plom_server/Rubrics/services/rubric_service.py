@@ -211,10 +211,10 @@ class RubricService:
     def get_rubrics_as_dicts(
         self, *, question: str | None = None
     ) -> list[dict[str, Any]]:
-        """Get the rubrics, possibly filtered by question number.
+        """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
-            question: question number or None for all.
+            question: question index or ``None`` for all.
 
         Returns:
             Collection of dictionaries, one for each rubric.
@@ -409,7 +409,7 @@ class RubricService:
 
         Args:
             user: a User instance
-            question: the question number
+            question: which question index.
 
         Returns:
             dict: the JSON representation of the pane.
@@ -424,7 +424,7 @@ class RubricService:
 
         Args:
             user: a User instance
-            question: question number associated with the rubric pane
+            question: question index associated with the rubric pane.
             data: dict representing the new pane
         """
         pane = RubricPane.objects.get(user=user, question=question)
