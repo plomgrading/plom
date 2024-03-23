@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 from pathlib import Path
 import sys
 
@@ -112,20 +113,23 @@ class Command(BaseCommand):
         return service.erase_all_rubrics()
 
     def download_rubrics_to_file(
-        self, filename, *, verbose=True, question=None
+        self,
+        filename: None | str | pathlib.Path,
+        *,
+        verbose: bool = True,
+        question: int | None = None,
     ) -> None:
         """Download the rubrics from a server and save them to a file.
 
         Args:
-            filename (None/str/pathlib.Path): A filename to save to.  The
-                extension is used to determine what format, supporting:
+            filename: What filename to save to or None to display to stdout.
+                The extension is used to determine what format, supporting:
                 `.json`, `.toml`, and `.csv`.
                 If no extension is included, default to `.toml`.
-                If None, display on stdout.
 
         Keyword Args:
-            verbose (bool):
-            question (int/None): download for question index
+            verbose: print stuff.
+            question: download for question index, or ``None`` for all.
 
         Returns:
             None: but saves a file as a side effect.

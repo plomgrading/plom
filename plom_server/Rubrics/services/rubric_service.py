@@ -209,7 +209,7 @@ class RubricService:
         return rubric_instance
 
     def get_rubrics_as_dicts(
-        self, *, question: str | None = None
+        self, *, question: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
