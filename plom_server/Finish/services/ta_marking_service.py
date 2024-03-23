@@ -114,7 +114,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(Sum("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__sum"
         ]
@@ -140,7 +140,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(Avg("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__avg"
         ]
@@ -168,7 +168,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(StdDev("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__stddev"
         ]
@@ -190,15 +190,15 @@ class TaMarkingService:
         present = arrow.utcnow()
 
         total_seconds = [
-            service.get_total_time_spent_on_question(question=q)
+            service.get_total_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
         average_seconds = [
-            service.get_average_time_spent_on_question(question=q)
+            service.get_average_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
         std_seconds = [
-            service.get_stdev_time_spent_on_question(question=q)
+            service.get_stdev_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
 
@@ -238,7 +238,7 @@ class TaMarkingService:
             None expected
         """
         service = StudentMarkService()
-        num_questions_marked = service.get_n_of_question_marked(question)
+        num_questions_marked = service.get_n_of_question_marked(question_idx)
 
         marking_task = (
             MarkingTask.objects.filter(question_index=question_idx)
@@ -276,7 +276,7 @@ class TaMarkingService:
             .count()
         )
 
-        avg_per_day = self.get_avg_n_of_questions_marked_per_day(question=question)
+        avg_per_day = self.get_avg_n_of_questions_marked_per_day(question_idx)
         assert avg_per_day >= 0
         if avg_per_day == 0:
             return None
@@ -297,9 +297,7 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        avg_time_on_question = self.get_average_time_spent_on_question(
-            question=question
-        )
+        avg_time_on_question = self.get_average_time_spent_on_question(question_idx)
         num_questions_remaining = (
             MarkingTask.objects.filter(question_index=question_idx)
             .exclude(status=MarkingTask.COMPLETE)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -102,7 +102,7 @@ def pdf_builder(
         histogram_of_grades_q.append(  # add to the list
             # each base64-encoded image
             mpls.histogram_of_grades_on_question_version(  # of the histogram
-                question=question_idx, versions=versions
+                question_idx, versions=versions
             )
         )
 
@@ -131,7 +131,7 @@ def pdf_builder(
 
             histogram_of_grades_m_q.append(
                 mpls.histogram_of_grades_on_question_by_ta(
-                    question=question_idx,
+                    question_idx,
                     ta_name=marker,
                     ta_df=scores_for_user_for_question,
                     versions=versions,
@@ -150,7 +150,7 @@ def pdf_builder(
     ):
         histogram_of_time.append(
             mpls.histogram_of_time_spent_marking_each_question(
-                question_number=question,
+                question,
                 marking_times_df=marking_times_df,
                 versions=versions,
                 max_time=max_time,
@@ -183,13 +183,11 @@ def pdf_builder(
             times_for_question = (
                 marking_times_df["seconds_spent_marking"].div(60).to_list()
             )
-            marks_given_for_question = des.get_scores_for_question(
-                question_number=question,
-            )
+            marks_given_for_question = des.get_scores_for_question(question)
 
         scatter_of_time.append(
             mpls.scatter_time_spent_vs_mark_given(
-                question_number=question,
+                question,
                 times_spent_minutes=times_for_question,
                 marks_given=marks_given_for_question,
                 versions=versions,
@@ -209,11 +207,7 @@ def pdf_builder(
             des.get_tas_that_marked_this_question(question_index, ta_df=question_df)
         )
         # add the overall marks
-        marks_given.append(
-            des.get_scores_for_question(
-                question_number=question_index,
-            )
-        )
+        marks_given.append(des.get_scores_for_question(question_index))
 
         for marker_name in marker_names[1:]:
             marks_given.append(

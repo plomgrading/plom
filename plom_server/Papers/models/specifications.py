@@ -48,7 +48,11 @@ class Specification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in test specification.")
 
     def get_question_dict(self):
-        """Return all the questions in the form of a dictionary, where keys are question numbers."""
+        """Return all the questions in the form of a dictionary, where keys are question indices.
+
+        TODO: for some reason, the keys are strings.
+        TODO: is this used?
+        """
         return {str(q.question_number): q for q in SpecQuestion.objects.all()}
 
     def get_question_list(self):

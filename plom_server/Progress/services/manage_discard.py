@@ -64,7 +64,7 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded paper "
                 f"{qpage_obj.paper.paper_number} page {qpage_obj.page_number} "
-                f"question {qpage_obj.question_number}."
+                f"question index {qpage_obj.question_number}."
             ),
         )
         # Set the original question page to have no image, but **DO NOT** delete the question page
@@ -94,7 +94,7 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded mobile "
                 f"paper {paper_number} "
-                f"question {mpage_obj.question_number}."
+                f"question index {mpage_obj.question_number}."
             ),
         )
 
@@ -161,7 +161,7 @@ class ManageDiscardService:
             )
         elif isinstance(fp_obj, QuestionPage):
             msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
-            f"page {fp_obj.page_number} question {fp_obj.question_number}"
+            f"page {fp_obj.page_number} question index {fp_obj.question_number}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
             self._discard_question_page(user_obj, fp_obj)
@@ -201,7 +201,7 @@ class ManageDiscardService:
 
         msg = (
             f"a MobilePage for paper {mp_obj.paper.paper_number} "
-            f"question {mp_obj.question_number}"
+            f"question index {mp_obj.question_number}"
         )
         if dry_run:
             return f"DRY-RUN: would drop {msg}"

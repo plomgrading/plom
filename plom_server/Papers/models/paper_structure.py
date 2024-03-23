@@ -107,6 +107,7 @@ class QuestionPage(FixedPage):
     """Table to store information about the pages in Question groups.
 
     question_number (int): the question that this page belongs to.
+        TODO: rename to question_index, Issue #3264, Issue #2716.
     """
 
     question_number = models.PositiveIntegerField(null=False)

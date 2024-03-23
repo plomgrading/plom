@@ -76,25 +76,25 @@ class DataExtractionService:
         """
         return self.student_df["total_mark"].tolist()
 
-    def get_average_on_question_as_percentage(self, question_number: int) -> float:
+    def _get_average_on_question_as_percentage(self, question_index: int) -> float:
         """Return the average mark on a specific question as a percentage."""
         return (
             100
-            * self.student_df[f"q{question_number}_mark"].mean()
-            / self.spec["question"][str(question_number)]["mark"]
+            * self.student_df[f"q{question_index}_mark"].mean()
+            / self.spec["question"][str(question_index)]["mark"]
         )
 
-    def get_average_on_question_version_as_percentage(
-        self, question_number: int, version_number: int
+    def _get_average_on_question_version_as_percentage(
+        self, question_index: int, version_number: int
     ) -> float:
         """Return the average mark on a specific question as a percentage."""
         version_df = self.student_df[
-            (self.student_df[f"q{question_number}_version"] == version_number)
+            (self.student_df[f"q{question_index}_version"] == version_number)
         ]
         return (
             100
-            * version_df[f"q{question_number}_mark"].mean()
-            / self.spec["question"][str(question_number)]["mark"]
+            * version_df[f"q{question_index}_mark"].mean()
+            / self.spec["question"][str(question_index)]["mark"]
         )
 
     def get_averages_on_all_questions_as_percentage(self) -> List[float]:
@@ -102,7 +102,7 @@ class DataExtractionService:
         averages = []
         for q in self.spec["question"].keys():
             q = int(q)
-            averages.append(self.get_average_on_question_as_percentage(q))
+            averages.append(self._get_average_on_question_as_percentage(q))
         return averages
 
     def get_averages_on_all_questions_versions_as_percentage(
@@ -129,7 +129,7 @@ class DataExtractionService:
             for q in self.spec["question"].keys():
                 q = int(q)
                 _averages.append(
-                    self.get_average_on_question_version_as_percentage(q, v)
+                    self._get_average_on_question_version_as_percentage(q, v)
                 )
             averages.append(_averages)
 
@@ -352,12 +352,12 @@ class DataExtractionService:
         )
 
     def get_scores_for_question(
-        self, question_number: int, *, ta_df: Optional[pd.DataFrame] = None
+        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
     ) -> List[int]:
         """Get the marks assigned for a specific question.
 
         Args:
-            question_number: The question to get the data for.
+            question_index: The question to get the data for.
 
         Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
@@ -370,9 +370,7 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        return ta_df[ta_df["question_number"] == question_number][
-            "score_given"
-        ].tolist()
+        return ta_df[ta_df["question_number"] == question_index]["score_given"].tolist()
 
     def get_scores_for_ta(
         self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None

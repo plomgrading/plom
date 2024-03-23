@@ -328,10 +328,11 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
-        ).count()
+        return (
+            MarkingTaskService()
+            .get_tasks_from_question_with_annotation(question, version)
+            .count()
+        )
 
     def get_student_info_from_paper(
         self,
