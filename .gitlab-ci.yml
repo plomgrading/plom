@@ -386,7 +386,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 7 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 6 ]]"
 
 
 pydocstyle-plom-count:
@@ -440,7 +440,7 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 152 ]]"
+    - bash -c "[[ $HOW_MANY -le 148 ]]"
   allow_failure: true
 
 
