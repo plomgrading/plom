@@ -170,7 +170,7 @@ class MgetPageDataQuestionInContext(APIView):
 
     `included`
         boolean, did the server *originally* have this page
-        included in question number `question`?.  Note that clients
+        included in question index `question`?.  Note that clients
         may pull other pages into their annotating; you can only
         rely on this information for initializing a new annotating
         session.  If you're e.g., editing an existing annotation,

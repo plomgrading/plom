@@ -88,7 +88,7 @@ class SolnSpecification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in solution Specification.")
 
     def get_solution_dict(self):
-        """Return all the solution questions in the form of a dictionary, where keys are question numbers."""
+        """Return all the solution questions in the form of a dictionary, where keys are str question indices."""
         return {str(s.solution_number): s for s in SolnSpecQuestion.objects.all()}
 
     def get_soltion_list(self):
