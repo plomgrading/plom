@@ -15,10 +15,8 @@ class Command(BaseCommand):
     """Reassign discarded pages.
 
     Examples:
-
-    python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -p page_number.
-
-    python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -q question_index.
+        python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -p page_number.
+        python3 manage.py plom_reassign_discard (username) (discardpage pk) -n paper_number -q question_index.
     """
 
     help = "Reassign a (pushed) discarded page as a given fixed or mobile page."
