@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
@@ -34,8 +34,8 @@ class ScanReassignView(ManagerRequiredView):
     def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         mss = ManageScanService()
         tmp = mss.get_pushed_image(img_pk)
-        # MyPy worries tmp can be None
-        assert tmp is not None, "Unexpected got None for Image: can this happen?"
+        if tmp is None:
+            return Http404(f"Unexpected could not find pushed image with pk {img_pk}")
         img_angle = -tmp.rotation
         context = self.build_context()
         context.update(
