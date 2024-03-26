@@ -136,13 +136,18 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
 
 
 def uploadImages(
-    bundle_name, *, msgr, do_unknowns=False, do_collisions=False, prompt=True
-):
+    bundle_name: str,
+    *,
+    msgr,
+    do_unknowns: bool = False,
+    do_collisions: bool = False,
+    prompt: bool = True,
+) -> None:
     """Upload processed images from bundle.
 
     Args:
-        bundle_name (str): usually the PDF filename but in general
-            whatever string was used to define a bundle.
+        bundle_name: usually the PDF filename but in general whatever
+            string was used to define a bundle.  Do not send a path.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
@@ -164,7 +169,10 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-    bundledir = Path("bundles") / bundle_name
+    assert (
+        Path(bundle_name).name == bundle_name
+    ), f'bundle name "{bundle_name}" should be just the filename, no path'
+    bundledir = get_bundle_dir(bundle_name)
     with open(bundledir / "source.toml", "rb") as f:
         info = tomllib.load(f)
     md5 = info["md5"]

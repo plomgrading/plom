@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you do keep path info out of bundle names.
 
 
 ## [0.15.2] - 2024-03-11
