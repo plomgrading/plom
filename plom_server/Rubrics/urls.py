@@ -16,9 +16,4 @@ urlpatterns = [
     path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
-    path(
-        "annotation/<int:annotation_key>/",
-        views.AnnotationItemView.as_view(),
-        name="annotation_item",
-    ),
 ]

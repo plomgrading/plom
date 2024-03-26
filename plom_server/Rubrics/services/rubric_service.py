@@ -508,14 +508,6 @@ class RubricService:
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def get_all_annotations(self) -> QuerySet[Annotation]:
-        """Gets all annotations.
-
-        Returns:
-            Lazy queryset of all rubrics.
-        """
-        return Annotation.objects.all()
-
     def get_rubric_as_html(self, rubric: Rubric) -> str:
         """Gets a rubric as HTML.
 
