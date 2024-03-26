@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import logging
 from typing import List
@@ -60,21 +60,25 @@ class PaperInfoService:
         return page.version
 
     @transaction.atomic
-    def get_version_from_paper_question(self, paper_number, question_number) -> int:
-        """Given a paper_number and question_number, return the version of that question."""
+    def get_version_from_paper_question(
+        self, paper_number: int, question_idx: int
+    ) -> int:
+        """Given a paper number and question index, return the version of that question."""
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
         try:
-            # to find the version, find the first fixed question page of that paper with the question-number
+            # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
+            # TODO: why not .first()?
             page = QuestionPage.objects.filter(
-                paper=paper, question_number=question_number
+                paper=paper, question_number=question_idx
             )[0]
             # This will either fail with a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
-                f"Question {question_number} of paper {paper_number} does not exist in the database."
+                f"Question {question_idx} of paper {paper_number}"
+                " does not exist in the database."
             )
         return page.version

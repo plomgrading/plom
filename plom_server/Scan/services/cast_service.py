@@ -408,7 +408,7 @@ class ScanCastService:
             paper = Paper.objects.get(paper_number=paper_number)
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
-        # now check all the question-numbers
+        # now check all the questions
         for qi in assign_to_question_indices:
             if not QuestionPage.objects.filter(
                 paper=paper, question_number=qi

@@ -83,7 +83,7 @@ class Command(BaseCommand):
 
             rub["username"] = username
 
-            # Multiply rubrics w/o question numbers, avoids repetition in demo file
+            # Multiply rubrics w/o questions, avoids repetition in demo file
             if rub.get("question") is None:
                 for q in question_indices:
                     r = rub.copy()
