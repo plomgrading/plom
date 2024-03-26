@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -37,7 +38,7 @@ class ManageScanServiceTests(TestCase):
             for qn in [1]:
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(MobilePage, paper=paper, question_number=qn, image=img)
+                baker.make(MobilePage, paper=paper, question_index=qn, image=img)
         # now make the other 4 papers, all fixed, but no mobile pages
         for paper_number in [2, 3, 4, 5]:
             paper = baker.make(Paper, paper_number=paper_number)
@@ -80,7 +81,7 @@ class ManageScanServiceTests(TestCase):
             for qn in range(1, 3):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(MobilePage, paper=paper, question_number=qn, image=img)
+                baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
         # make 4 papers with 3 mobile pages and all fixed pages unscanned
         for paper_number in [12, 13, 14, 15]:
@@ -92,7 +93,7 @@ class ManageScanServiceTests(TestCase):
             for qn in range(1, 4):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(MobilePage, paper=paper, question_number=qn, image=img)
+                baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
         return super().setUp()
 
@@ -175,7 +176,7 @@ class ManageScanServiceTests(TestCase):
         # should return a dict of papers and their pages
         # paper 1 has 6 fixed and 1 mobile.
         # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order
-        # papers 12,13,14,15 should have 3 mobile pages (one each for q 1,2,3) - returned in question-number order
+        # papers 12,13,14,15 should have 3 mobile pages (one each for q 1,2,3) - returned in question order
         assert len(mss_complete) == 9
 
         for pn in [1]:

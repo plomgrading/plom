@@ -2,12 +2,14 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from __future__ import annotations
+
 import io
 from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import arrow
 import fitz
@@ -39,13 +41,13 @@ from .student_marks_service import StudentMarkService
 class BuildSolutionService:
     """Class that contains helper functions for sending data to plom-finish."""
 
-    def get_all_paper_status_for_solution_build(self) -> List[Dict[str, Any]]:
+    def get_all_paper_status_for_solution_build(self) -> list[dict[str, Any]]:
         """Get the status information for all papers for solution build.
 
         Returns:
             List of dicts representing each row of the data.
         """
-        status: Dict[str, Any] = {}
+        status: dict[str, Any] = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
@@ -123,7 +125,7 @@ class BuildSolutionService:
 
     def assemble_solution_for_paper(
         self, paper_number: int, *, watermark: Optional[bool] = False
-    ) -> Tuple[bytes, str]:
+    ) -> tuple[bytes, str]:
         """Reassemble the solutions for a particular question into a PDF file, returning bytes.
 
         Args:
@@ -147,7 +149,7 @@ class BuildSolutionService:
         # get the version of each question
         qv_map = {}
         for qp_obj in QuestionPage.objects.filter(paper=paper_obj):
-            qv_map[qp_obj.question_number] = qp_obj.version
+            qv_map[qp_obj.question_index] = qp_obj.version
         # get the solution pdfs
         soln_doc = {}
         for spdf_obj in SolutionSourcePDF.objects.all():
@@ -378,7 +380,7 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> List[File]:
+    def get_completed_pdf_files(self) -> list[File]:
         """Get list of paths of pdf-files of solutions that are not obsolete.
 
         Returns:

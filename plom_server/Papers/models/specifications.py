@@ -19,8 +19,7 @@ class SpecQuestion(models.Model):
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)
-    # TODO: rename to question_index, Issue #3264, Issue #2716.
-    question_number = models.PositiveIntegerField(null=False, unique=True)
+    question_index = models.PositiveIntegerField(null=False, unique=True)
 
 
 class Specification(SingletonBaseModel):
@@ -53,7 +52,7 @@ class Specification(SingletonBaseModel):
         TODO: for some reason, the keys are strings.
         TODO: is this used?
         """
-        return {str(q.question_number): q for q in SpecQuestion.objects.all()}
+        return {str(q.question_index): q for q in SpecQuestion.objects.all()}
 
     def get_question_list(self):
         """Return the questions in the form of a list."""

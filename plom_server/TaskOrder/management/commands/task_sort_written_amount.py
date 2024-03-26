@@ -75,7 +75,7 @@ class Command(BaseCommand):
             )
 
         pages = QuestionPage.objects.filter(
-            question_number=question_index
+            question_index=question_index
         ).select_related("image", "paper")
         pages = pages.filter(image__isnull=False)
 
@@ -146,13 +146,13 @@ class Command(BaseCommand):
             )
 
             paper_num = page.paper.paper_number
-            question_num = page.question_number
+            question_idx = page.question_index
 
             # add the sum of the pixels in the thresholded image to a list corresponding
-            # to the paper and question number (to handle multiple pages for the same question)
-            if imgs_threshold_list.get((paper_num, question_num)) is None:
-                imgs_threshold_list[(paper_num, question_num)] = []
-            imgs_threshold_list[(paper_num, question_num)].append(np.sum(threshold_im))
+            # to the paper and question index (to handle multiple pages for the same question)
+            if imgs_threshold_list.get((paper_num, question_idx)) is None:
+                imgs_threshold_list[(paper_num, question_idx)] = []
+            imgs_threshold_list[(paper_num, question_idx)].append(np.sum(threshold_im))
 
             # Uncomment to save images for debugging
             # paper_list = []  # <-- put pages you want to look at here
@@ -160,12 +160,12 @@ class Command(BaseCommand):
             #     cv.imwrite(f"TEST_ORIG_{paper_num}.jpg", image)
             #     cv.imwrite(f"TEST_THRESH_{paper_num}.jpg", threshold_im)
 
-        # get the average of the pixel sums for each paper and question number
+        # get the average of the pixel sums for each paper and question index
         pixel_avgs = {}
-        for (paper_number, question_num), list_of_th in imgs_threshold_list.items():
+        for (paper_number, question_idx), list_of_th in imgs_threshold_list.items():
             # avereage of the pixel sums for all pages of the same question
             avg = np.average(list_of_th)
-            pixel_avgs[(paper_number, question_num)] = avg
+            pixel_avgs[(paper_number, question_idx)] = avg
 
         sorted_imgs = dict(
             sorted(pixel_avgs.items(), key=lambda item: item[1], reverse=reverse),
@@ -182,8 +182,8 @@ class Command(BaseCommand):
             writer = csv.writer(f)
             writer.writerow(["Paper Number", "Question Number", "Priority Value"])
             for i, (k, th_sum) in enumerate(sorted_imgs.items()):
-                paper_number, question_number = k  # unpack key
+                paper_number, question_idx = k  # unpack key
                 # TODO: could save grey value th_sum in new column...
-                writer.writerow((paper_number, question_number, i))
+                writer.writerow((paper_number, question_idx, i))
 
         print(f"Saved to {filename}")

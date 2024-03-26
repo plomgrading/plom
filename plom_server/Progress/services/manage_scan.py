@@ -142,7 +142,7 @@ class ManageScanService:
             ),
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_number"),
+                queryset=MobilePage.objects.order_by("question_index"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
@@ -170,7 +170,7 @@ class ManageScanService:
         ).prefetch_related(
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_number"),
+                queryset=MobilePage.objects.order_by("question_index"),
             ),
             "mobilepage_set__image",
         )
@@ -193,7 +193,7 @@ class ManageScanService:
             for mp in paper.mobilepage_set.all():
                 complete[paper.paper_number]["mobile"].append(
                     {
-                        "question_number": mp.question_number,
+                        "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                     }
                 )
@@ -203,7 +203,7 @@ class ManageScanService:
             for mp in paper.mobilepage_set.all():
                 complete[paper.paper_number]["mobile"].append(
                     {
-                        "question_number": mp.question_number,
+                        "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                     }
                 )
@@ -233,7 +233,7 @@ class ManageScanService:
             ),
             Prefetch(
                 "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_number"),
+                queryset=MobilePage.objects.order_by("question_index"),
             ),
             "fixedpage_set__image",
             "mobilepage_set__image",
@@ -261,7 +261,7 @@ class ManageScanService:
             for mp in paper.mobilepage_set.all():
                 incomplete[paper.paper_number]["mobile"].append(
                     {
-                        "question_number": mp.question_number,
+                        "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                     }
                 )
@@ -406,8 +406,7 @@ class ManageScanService:
                 MobilePage.objects.filter(image=img).first().paper.paper_number
             )
             q_idx_list = [
-                mp_obj.question_number
-                for mp_obj in MobilePage.objects.filter(image=img)
+                mp_obj.question_index for mp_obj in MobilePage.objects.filter(image=img)
             ]
             _render = SpecificationService.render_html_flat_question_label_list
             return {
@@ -464,7 +463,7 @@ class ManageScanService:
             the given paper. For each fixed page a dict with
             page-number, page-type (ie fixed), the page pk, and the
             image pk is given (if it exists). For each mobile page the
-            page-type (mobile), the question-number, the page pk and
+            page-type (mobile), the question index, the page pk and
             image pk is given. Note that a mobile page *must* have an
             associated image, while a fixed page may not.
 
@@ -488,10 +487,10 @@ class ManageScanService:
             else:
                 dat.update({"image": None})
             page_images.append(dat)
-        for mp_obj in paper_obj.mobilepage_set.all().order_by("question_number"):
+        for mp_obj in paper_obj.mobilepage_set.all().order_by("question_index"):
             dat = {
                 "page_type": "mobile",
-                "question_number": mp_obj.question_number,
+                "question_number": mp_obj.question_index,
                 "page_pk": mp_obj.pk,
             }
             dat.update({"image": mp_obj.image.pk})

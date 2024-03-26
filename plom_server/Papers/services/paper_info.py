@@ -73,7 +73,7 @@ class PaperInfoService:
             # and extract the version from that. Note - use "filter" and not "get" here.
             # TODO: why not .first()?
             page = QuestionPage.objects.filter(
-                paper=paper, question_number=question_idx
+                paper=paper, question_index=question_idx
             )[0]
             # This will either fail with a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):

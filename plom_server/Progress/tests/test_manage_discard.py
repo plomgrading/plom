@@ -76,10 +76,10 @@ class ManageScanTests(TestCase):
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_number=1)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_number=2)
-        mp1 = baker.make(MobilePage, paper=self.paper1, question_number=1, image=img1)
-        mp1 = baker.make(MobilePage, paper=self.paper1, question_number=2, image=img1)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
 
         mds.discard_pushed_mobile_page(self.user0, mp1.pk, dry_run=True)
         mds.discard_pushed_mobile_page(self.user0, mp1.pk, dry_run=False)
@@ -106,8 +106,8 @@ class ManageScanTests(TestCase):
         mds.discard_pushed_image_from_pk(self.user0, img2.pk)
         # test when mobile page (need an associate question page)
         img3 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=4, question_number=1)
-        baker.make(MobilePage, paper=self.paper1, question_number=1, image=img3)
+        baker.make(QuestionPage, paper=self.paper1, page_number=4, question_index=1)
+        baker.make(MobilePage, paper=self.paper1, question_index=1, image=img3)
         mds.discard_pushed_image_from_pk(self.user0, img3.pk)
         # test when discard page (no action required)
         img4 = baker.make(Image)
@@ -124,14 +124,14 @@ class ManageScanTests(TestCase):
             QuestionPage,
             paper=self.paper1,
             page_number=2,
-            question_number=1,
+            question_index=1,
             image=None,
         )
         baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=3,
-            question_number=2,
+            question_index=2,
             image=None,
         )
 
@@ -181,14 +181,14 @@ class ManageScanTests(TestCase):
             QuestionPage,
             paper=self.paper1,
             page_number=2,
-            question_number=1,
+            question_index=1,
             image=img0,
         )
         baker.make(
             QuestionPage,
             paper=self.paper1,
             page_number=3,
-            question_number=2,
+            question_index=2,
             image=None,
         )
         baker.make(

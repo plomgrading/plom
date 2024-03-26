@@ -32,10 +32,10 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     """
     test_paper = Paper.objects.get(paper_number=paper)
     question_pages = QuestionPage.objects.filter(
-        paper=test_paper, question_number=question_index
+        paper=test_paper, question_index=question_index
     ).prefetch_related("image")
     mobile_pages = MobilePage.objects.filter(
-        paper=test_paper, question_number=question_index
+        paper=test_paper, question_index=question_index
     ).prefetch_related("image")
 
     page_list = []
@@ -169,7 +169,7 @@ class PageDataService:
                 included = True
             else:
                 if isinstance(page, QuestionPage):
-                    included = page.question_number == question
+                    included = page.question_index == question
                 else:
                     included = False
             if isinstance(page, QuestionPage):
@@ -208,13 +208,13 @@ class PageDataService:
             .order_by("pk")
             .prefetch_related("image")
         ):
-            question_mobile_page_count.setdefault(page.question_number, 0)
-            question_mobile_page_count[page.question_number] += 1
+            question_mobile_page_count.setdefault(page.question_index, 0)
+            question_mobile_page_count[page.question_index] += 1
             pages_metadata.append(
                 {
-                    "pagename": f"e{page.question_number}.{question_mobile_page_count[page.question_number]}",
+                    "pagename": f"e{page.question_index}.{question_mobile_page_count[page.question_index]}",
                     "md5": page.image.hash,
-                    "included": page.question_number == question,
+                    "included": page.question_index == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
