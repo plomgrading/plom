@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import hashlib
 import logging
+import pathlib
 from pathlib import Path
 import shutil
 import sys
@@ -20,7 +23,7 @@ log = logging.getLogger("scan")
 archivedir = Path("archivedPDFs")
 
 
-def make_base_directories():
+def make_base_directories() -> None:
     """Make various directories that bundle uploading will need.
 
     TODO: not needed?  bundle and archive codes make their own
@@ -29,11 +32,11 @@ def make_base_directories():
     Path("bundles").mkdir(exist_ok=True)
 
 
-def make_bundle_dir(bundledir):
+def make_bundle_dir(bundledir: pathlib.Path) -> None:
     """Make various subdirectories that processing/uploading will need.
 
     Args:
-        bundledir (pathlib.Path): the path to the bundle, either relative
+        bundledir: the path to the bundle, either relative
             to the CWD or a full path.
     """
     for d in (
@@ -50,27 +53,28 @@ def make_bundle_dir(bundledir):
         (bundledir / d).mkdir(parents=True, exist_ok=True)
 
 
-def get_bundle_dir(bundle_name, *, basedir=Path(".")):
+def get_bundle_dir(
+    bundle_name: str, *, basedir: pathlib.Path = Path(".")
+) -> pathlib.Path:
     """Make a filesystem for processing/uploading a bundle.
 
     Args:
-        bundle_name (str): the name of the bundle (not a path).
+        bundle_name: the name of the bundle, a string not a path.
 
     Keyword Args:
-        basedir (pathlib.Path): default's to the current working
+        basedir: defaults to the current working
             directory.  The bundle directory ``bundle_dir`` will be
             ``basedir / bundles / bundle_name``.
 
     Returns:
-        pathlib.Path: `bundle_dir`, the bundle directory, something
-            like `<basedir>/bundles/<bundle_name>`.
+        The bundle directory, something like `<basedir>/bundles/<bundle_name>`.
     """
     bundle_dir = basedir / "bundles" / bundle_name
     make_bundle_dir(bundle_dir)
     return bundle_dir
 
 
-def bundle_name_from_file(filename):
+def bundle_name_from_file(filename: str | pathlib.Path) -> str:
     """Return the bundle name for a file.
 
     Args:
@@ -84,14 +88,14 @@ def bundle_name_from_file(filename):
     return filename.name.replace(" ", "_")
 
 
-def bundle_name_and_md5_from_file(filename):
+def bundle_name_and_md5_from_file(filename: str | pathlib.Path) -> tuple[str, str]:
     """Return the bundle name and md5sum checksum for a file.
 
     Args:
         filename (str/Path): name of file.
 
     Returns
-        tuple: (str, str) for bundle_name and md5sum.
+        The bundle name and md5sum.
 
     Exceptions:
         FileNotFoundError: file does not exist.
