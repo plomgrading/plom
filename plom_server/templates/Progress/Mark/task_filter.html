@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
   -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -19,7 +19,7 @@
     {% endif %}
     {% if question == "*" %}
     {% else %}
-        of q.{{ question }}
+        of qi.{{ question }}
     {% endif %}
     {% if version == "*" %}
     {% else %}
@@ -37,7 +37,7 @@
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
     <div class="w-100">
-        {% if warning %}<div class="alert alert-info w-25 my-2">Please set at least one  filter.</div>{% endif %}
+        {% if warning %}<div class="alert alert-info w-25 my-2">Please set at least one filter.</div>{% endif %}
         <div class="row border rounded my-4">
             <form class="p-4 mb-2 w-75"
                   action="{% url 'progress_marking_task_filter' %}"
@@ -52,7 +52,8 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <label class="col-sm-1 col-form-label" for="question">Question:</label>
+                    <!-- TODO: use Question labels here Issue #3322 -->
+                    <label class="col-sm-1 col-form-label" for="question">Question index:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option>*</option>
