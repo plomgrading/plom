@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you do keep path info out of bundle names.
+* Processing PDF scans: don't complain about rounding errors when instead some metadata mixup about width/height has occurred.
 
 
 ## [0.15.2] - 2024-03-11
