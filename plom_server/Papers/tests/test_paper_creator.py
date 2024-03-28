@@ -59,10 +59,10 @@ class PaperCreatorTests(TestCase):
 
         paper = Paper.objects.get(paper_number=1)
 
-        q_1 = QuestionPage.objects.get(paper=paper, question_number=1)
+        q_1 = QuestionPage.objects.get(paper=paper, question_index=1)
         self.assertEqual(q_1.version, 2)
 
-        q_2 = QuestionPage.objects.get(paper=paper, question_number=2)
+        q_2 = QuestionPage.objects.get(paper=paper, question_index=2)
         self.assertEqual(q_2.version, 1)
 
     def test_remake_paper_raises(self) -> None:

@@ -197,7 +197,7 @@ class ImageBundleService:
                         extra.paper_number, q
                     )
                     MobilePage.objects.create(
-                        paper=paper, image=image, question_number=q, version=v
+                        paper=paper, image=image, question_index=q, version=v
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -373,8 +373,8 @@ class ImageBundleService:
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
         papers_in_bundle = list(
-            question_pages.values_list("paper__paper_number", "question_number")
-        ) + list(extras.values_list("paper__paper_number", "question_number"))
+            question_pages.values_list("paper__paper_number", "question_index")
+        ) + list(extras.values_list("paper__paper_number", "question_index"))
         # remove duplicates by casting to a set
         papers_questions_updated_by_bundle = set(papers_in_bundle)
 
@@ -386,7 +386,7 @@ class ImageBundleService:
 
         for paper_number, question_index in papers_questions_updated_by_bundle:
             q_pages = QuestionPage.objects.filter(
-                paper__paper_number=paper_number, question_number=question_index
+                paper__paper_number=paper_number, question_index=question_index
             )
             pages_no_img = q_pages.filter(image__isnull=True).count()
             if pages_no_img == 0:  # all fixed pages have images
@@ -402,7 +402,7 @@ class ImageBundleService:
             # all fixed pages without images - check if has any mobile pages
             if (
                 MobilePage.objects.filter(
-                    paper__paper_number=paper_number, question_number=question_index
+                    paper__paper_number=paper_number, question_index=question_index
                 ).count()
                 > 0
             ):
@@ -454,10 +454,11 @@ class ImageBundleService:
             True when the question of the given paper is ready for marking, false otherwise.
 
         Raises:
-            ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
+            ValueError: when there does not exist any question pages for
+                that paper (eg when the question index is out of range).
         """
         q_pages = QuestionPage.objects.filter(
-            paper=paper_obj, question_number=question_index
+            paper=paper_obj, question_index=question_index
         )
         # todo - this should likely be replaced with a spec check
         if not q_pages.exists():
@@ -470,7 +471,7 @@ class ImageBundleService:
         qp_with_img = q_pages.filter(image__isnull=False).exists()
         # note that (qp_no_img or qp_with_img == True)
         mp_present = MobilePage.objects.filter(
-            paper=paper_obj, question_number=question_index
+            paper=paper_obj, question_index=question_index
         ).exists()
 
         if qp_with_img:

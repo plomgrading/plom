@@ -64,7 +64,7 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded paper "
                 f"{qpage_obj.paper.paper_number} page {qpage_obj.page_number} "
-                f"question index {qpage_obj.question_number}."
+                f"question index {qpage_obj.question_index}."
             ),
         )
         # Set the original question page to have no image, but **DO NOT** delete the question page
@@ -74,7 +74,7 @@ class ManageDiscardService:
         # set the associated Markinging task to "OUT_OF_DATE"
         # this also tries to make a new task if possible
         MarkingTaskService().set_paper_marking_task_outdated(
-            qpage_obj.paper.paper_number, qpage_obj.question_number
+            qpage_obj.paper.paper_number, qpage_obj.question_index
         )
 
     @transaction.atomic
@@ -94,15 +94,13 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded mobile "
                 f"paper {paper_number} "
-                f"question index {mpage_obj.question_number}."
+                f"question index {mpage_obj.question_index}."
             ),
         )
 
         # find all the mobile pages associated with this image
         # set the associated marking tasks to "OUT_OF_DATE"
-        qn_to_outdate = [
-            mpg.question_number for mpg in img_to_disc.mobilepage_set.all()
-        ]
+        qn_to_outdate = [mpg.question_index for mpg in img_to_disc.mobilepage_set.all()]
         # and now delete each of those mobile pages
         for mpg in img_to_disc.mobilepage_set.all():
             mpg.delete()
@@ -161,7 +159,7 @@ class ManageDiscardService:
             )
         elif isinstance(fp_obj, QuestionPage):
             msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
-            f"page {fp_obj.page_number} question index {fp_obj.question_number}"
+            f"page {fp_obj.page_number} question index {fp_obj.question_index}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
             self._discard_question_page(user_obj, fp_obj)
@@ -201,7 +199,7 @@ class ManageDiscardService:
 
         msg = (
             f"a MobilePage for paper {mp_obj.paper.paper_number} "
-            f"question index {mp_obj.question_number}"
+            f"question index {mp_obj.question_index}"
         )
         if dry_run:
             return f"DRY-RUN: would drop {msg}"
@@ -301,7 +299,7 @@ class ManageDiscardService:
             IdentifyTaskService().set_paper_idtask_outdated(paper_number)
         elif isinstance(fpage_obj, QuestionPage):
             MarkingTaskService().set_paper_marking_task_outdated(
-                paper_number, fpage_obj.question_number
+                paper_number, fpage_obj.question_index
             )
         else:
             raise RuntimeError(
@@ -332,13 +330,13 @@ class ManageDiscardService:
         for qi in assign_to_question_indices:
             # get the version from an associated question-page
             version = (
-                QuestionPage.objects.filter(paper=paper_obj, question_number=qi)
+                QuestionPage.objects.filter(paper=paper_obj, question_index=qi)
                 .first()
                 .version
             )
             MobilePage.objects.create(
                 paper=paper_obj,
-                question_number=qi,
+                question_index=qi,
                 image=discard_obj.image,
                 version=version,
             )

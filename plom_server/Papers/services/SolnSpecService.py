@@ -172,7 +172,7 @@ def n_pages_for_question(question_one_index: int) -> int:
 
 
 def soln_list_to_dict(solns: list[dict]) -> dict[str, dict]:
-    """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
+    """Convert a list of question dictionaries to a nested dict with question indices as str keys."""
     if not isinstance(solns, list):
         raise ValueError("'solution' field should be a list")
     return {str(i + 1): s for i, s in enumerate(solns)}

@@ -69,7 +69,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
 
         task = baker.make(
             MarkingTask,

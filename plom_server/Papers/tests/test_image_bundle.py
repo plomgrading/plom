@@ -305,7 +305,7 @@ class ImageBundleTests(TestCase):
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        baker.make(QuestionPage, paper=paper2, page_number=1, question_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=1, question_index=1)
         baker.make(DNMPage, paper=paper3, page_number=2)
 
         img1 = baker.make(
@@ -358,7 +358,7 @@ class ImageBundleTests(TestCase):
             QuestionPage,
             paper=paper2,
             page_number=2,
-            question_number=1,
+            question_index=1,
             version=1,
             image=fp_img_1,
         )
@@ -366,20 +366,20 @@ class ImageBundleTests(TestCase):
             QuestionPage,
             paper=paper2,
             page_number=3,
-            question_number=2,
+            question_index=2,
             version=1,
             image=fp_img_2,
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=4, question_number=2, version=1
+            QuestionPage, paper=paper2, page_number=4, question_index=2, version=1
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=5, question_number=3, version=1
+            QuestionPage, paper=paper2, page_number=5, question_index=3, version=1
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=6, question_number=4, version=1
+            QuestionPage, paper=paper2, page_number=6, question_index=4, version=1
         )
-        baker.make(MobilePage, paper=paper2, question_number=4, image=mp_img_1)
+        baker.make(MobilePage, paper=paper2, question_index=4, image=mp_img_1)
 
         self.assertTrue(ibs.is_given_paper_question_ready(paper2, 1))
         self.assertFalse(ibs.is_given_paper_question_ready(paper2, 2))
