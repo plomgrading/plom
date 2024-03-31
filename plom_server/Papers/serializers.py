@@ -76,7 +76,7 @@ class SpecSerializer(serializers.ModelSerializer):
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
             vlad = SpecVerifier(data_with_dummy_num_to_produce)
-            vlad.verify()
+            vlad.verify(_legacy=False)
             return True
         except ValueError as e:
             if raise_exception:

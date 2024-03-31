@@ -509,14 +509,14 @@ class SpecVerifier:
     def group_label_from_page(self, pagenum):
         return build_page_to_group_dict(self)[pagenum]
 
-    def verify(self, verbose: str | None | bool = False) -> None:
+    def verify(self, *, verbose: str | None | bool = False, _legacy: bool = True) -> None:
         """Check that spec contains required attributes and insert default values."""
         self.verifySpec(verbose=verbose)
 
-    def verifySpec(self, *, verbose: str | None | bool = True) -> None:
+    def verifySpec(self, *, verbose: str | None | bool = True, _legacy: bool = True) -> None:
         """Check that spec contains required attributes and insert default values.
 
-        Args:
+        Keyword Args:
             verbose: ``None``/``False`` for don't print; ``True`` is print to
                 standard output; ``"log"`` means use logging mechanism.
 
@@ -526,6 +526,7 @@ class SpecVerifier:
         Exceptions:
             ValueError: with a message indicating the problem.
         """
+
         if verbose == "log":
             prnt = log.info  # type: ignore
         elif verbose:
@@ -561,7 +562,7 @@ class SpecVerifier:
         if any(len(x) > 24 for x in labels):
             raise ValueError(f'Question labels should be at most 24 chars: "{labels}"')
 
-        self._check_pages(print=prnt)
+        self._check_pages(print=prnt, _legacy=_legacy)
 
     def checkCodes(self, *, verbose: bool | str = True) -> None:
         """Add public and private codes if the spec doesn't already have them.
@@ -820,7 +821,7 @@ class SpecVerifier:
             )
         print('    select is "fix" or "shuffle"' + chk)
 
-    def _check_pages(self, print=print) -> None:
+    def _check_pages(self, *, print=print, _legacy: bool = True) -> None:
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
@@ -834,8 +835,10 @@ class SpecVerifier:
             if pageUse[p] == 0:
                 raise ValueError(f"Page {p} unused, perhaps it should be DNM?")
             elif pageUse[p] != 1:
-                raise ValueError(f"Page {p} overused - {pageUse[p]} times")
-            print("  Page {} used once{}".format(p, chk))
+                if _legacy:
+                    raise ValueError(f"Page {p} overused - {pageUse[p]} times")
+                # TODO: perhaps this should be a warning, once we have such a mechanism
+            print(f"  Page {p} used at least once{chk}")
 
 
 def checkSolutionSpec(testSpec, solutionSpec):
