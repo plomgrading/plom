@@ -45,19 +45,45 @@ class PaperInfoService:
         return page.image is not None
 
     @transaction.atomic
-    def get_version_from_paper_page(self, paper_number, page_number) -> int:
-        """Given a paper_number and page_number, return the version of that page."""
+    def get_version_from_paper_page(self, paper_number: int, page_number: int) -> int:
+        """Given a paper_number and page_number, return the version of that page.
+
+        .. warning::
+            This is a bit poorly defined; if two questions share a page
+            their versions could (theoretically) differ.  Our tooling
+            does not allow this situation but someone doing something
+            exotic creating their own PDF tests could: they will get
+            a NotImplementedError.
+
+        Args:
+            paper_number: which paper.
+            page_number: which page.
+
+        Returns:
+            The version.
+
+        Raises:
+            ValueError: paper and/or page does not exist.
+            NotImplementedError: multiple versions on the page that do not agree.
+        """
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
-        try:
-            page = FixedPage.objects.get(paper=paper, page_number=page_number)
-        except FixedPage.DoesNotExist:
+        pages = FixedPage.objects.filter(paper=paper, page_number=page_number)
+        if not pages:
             raise ValueError(
                 f"Page {page_number} of paper {paper_number} does not exist in the database."
             )
-        return page.version
+        vers = [pg.version for pg in pages]
+        try:
+            (ver,) = set(vers)
+            return ver
+        except ValueError:
+            raise NotImplementedError(
+                f"Heterogenous versions per page not supported: got versions {vers}"
+                f" for page {page_number} of paper {paper_number}"
+            ) from None
 
     @transaction.atomic
     def get_version_from_paper_question(
