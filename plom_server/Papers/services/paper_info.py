@@ -81,7 +81,7 @@ class PaperInfoService:
             return ver
         except ValueError:
             raise NotImplementedError(
-                f"Heterogenous versions per page not supported: got versions {vers}"
+                f"Heterogeneous versions per page not supported: got versions {vers}"
                 f" for page {page_number} of paper {paper_number}"
             ) from None
 
