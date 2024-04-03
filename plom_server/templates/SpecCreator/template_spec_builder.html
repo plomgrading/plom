@@ -102,18 +102,15 @@
                     </div>
                     <button type="submit"
                             class="btn btn-primary"
-                            x-bind:disabled="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
+                            x-bind:disabled="(pages%2==1) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
                         Generate template toml
                     </button>
                 </form>
             </div>
-            <template x-if="(pages%2==1) || (pages <= questions) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
+            <template x-if="(pages%2==1) || (score < questions) || (!RegExp('^[A-Za-z0-9_\.\-]+$').test(shortName))">
                 <span class="alert alert-danger m-2 w-50">
                     <template x-if="pages%2==1">
                         <p>The number of pages should be even.</p>
-                    </template>
-                    <template x-if="pages <= questions">
-                        <p>You should have at least one page per question, plus one for the ID page.</p>
                     </template>
                     <template x-if="score < questions">
                         <p>
