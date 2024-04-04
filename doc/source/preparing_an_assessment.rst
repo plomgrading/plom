@@ -38,10 +38,12 @@ questions.
 You can use the ``label`` field in the specification (see :ref:`Creating a spec`) to
 *display* the two questions as "5(a)" and "5(b)".
 
-Currently there is an additional constraint: each question must begin
-on a new page.  We anticipate relaxing this requirement in the future.
+There can be more than one question on a page; any shared pages will
+be duplicated during marking (that is, each marker will get their own
+copy for annotating).
+Any questions sharing a page will be drawn from the same version.
 
-Note that questions can span multiple pages, even in a multi-versioned
+Questions can also span multiple pages, even in a multi-versioned
 assessment.
 
 

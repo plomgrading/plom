@@ -51,7 +51,7 @@ def check_for_shared_pages(spec: dict[str, Any], question_idx: int) -> str:
             &ldquo;crop to region&rdquo; feature.</li>
           <li>You will not see any annotations to {rendered_shared_with};
             see
-            <a href="https://example.com">TODO: link to a longer FAQ entry</a>.
+            <a href="https://plom.readthedocs.io/en/latest/preparing_an_exam.html#what-should-each-question-be">docs about Plom questions</a>.
           </li>
         </ul>
         <p>
