@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
 
@@ -137,7 +137,8 @@ class SceneParent(QWidget):
         c = random.choice([CommandPen, CommandHighlight, CommandPenArrow])
         self.scene.undoStack.push(c(self.scene, pth))
 
-    def doRubric(self):
+    def do_rubric_any(self) -> None:
+        """Place some rubric or maybe just some text, randomly."""
         if random.choice([-1, 1]) == 1:
             rubric = random.choice(positiveRubrics[self.question])
         else:
@@ -155,6 +156,23 @@ class SceneParent(QWidget):
                 CommandText(self.scene, self.rpt(), rubric["text"])
             )
 
+    def do_rubric_change_score(self) -> None:
+        """Keep trying to place score-changing rubric until we succeed."""
+        while True:
+            if random.choice([-1, 1]) == 1:
+                rubric = random.choice(positiveRubrics[self.question])
+            else:
+                rubric = random.choice(negativeRubrics[self.question])
+
+            self.scene.changeTheRubric(rubric)
+
+            if self.scene.isLegalRubric(rubric):
+                if rubric["value"] > 0 or rubric["value"] < 0:
+                    self.scene.undoStack.push(
+                        CommandGroupDeltaText(self.scene, self.rpt(), rubric)
+                    )
+                    return
+
     def doRandomAnnotations(self):
         br = self.scene.underImage.boundingRect()
         self.X = br.width()
@@ -162,9 +180,10 @@ class SceneParent(QWidget):
 
         for k in range(8):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
-        for k in range(5):
-            # self.GDT()
-            self.doRubric()
+        #  we must do *something* to set the score, Issue #3323
+        self.do_rubric_change_score()
+        for k in range(4):
+            self.do_rubric_any()
         self.scene.undoStack.push(
             CommandText(
                 self.scene, QPointF(200, 100), "Random annotations for testing only."
