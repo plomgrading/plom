@@ -16,7 +16,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import TestSourceService, PapersPrinted
+from ..services import SourceService, TestSourceService, PapersPrinted
 
 
 class TestSourceUploadForm(forms.Form):
@@ -72,8 +72,7 @@ class TestSourceManageView(ManagerRequiredView):
                 {"success": False, "message": "Form invalid", "version": version}
             )
         else:
-            tss = TestSourceService()
-            success, message = tss.take_source_from_upload(
+            success, message = SourceService.take_source_from_upload(
                 version, SpecificationService.get_n_pages(), request.FILES["source_pdf"]
             )
             context.update({"version": version, "success": success, "message": message})

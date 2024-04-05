@@ -9,6 +9,7 @@ from collections import defaultdict
 import hashlib
 from pathlib import Path
 import tempfile
+from warnings import warn
 
 import fitz
 
@@ -20,11 +21,90 @@ from Papers.services import SpecificationService
 from ..models import PaperSourcePDF
 
 
+@transaction.atomic
+def store_source_pdf(source_version: int, source_pdf: Path) -> None:
+    """Store one of the source PDF files into the database.
+
+    Args:
+        source_version: which version, indexed from one.
+        source_pdf: a path to an actual file.
+
+    Returns:
+        None
+
+    Raises:
+        MultipleObjectsReturned: tried to store when already present.
+        ObjectDoesNotExist: TODO: unsure when this is called but some
+            callers seem to think it can happen.  Consider refactoring...
+    """
+    try:
+        PaperSourcePDF.objects.get(version=source_version)
+        raise MultipleObjectsReturned(
+            f"Source pdf with version {source_version} already present."
+        )
+    except PaperSourcePDF.DoesNotExist:
+        pass
+
+    with open(source_pdf, "rb") as fh:
+        bytes = fh.read()  # read entire file as bytes
+        hashed = hashlib.sha256(bytes).hexdigest()
+
+    with open(source_pdf, "rb") as fh:
+        dj_file = File(fh, name=f"version{source_version}.pdf")
+        pdf_obj = PaperSourcePDF(
+            version=source_version, source_pdf=dj_file, hash=hashed
+        )
+        pdf_obj.save()
+
+
+def take_source_from_upload(
+    version: int, required_pages: int, in_memory_file: File
+) -> tuple[bool, str]:
+    """Store a PDF file as one of the source versions, after doing some checks.
+
+    Args:
+        version: which version, one-based index.
+        required_pages: how many pages we expect.
+            TODO: consider refactoring to ask the SpecService directly.
+        in_memory_file: File-object containing the pdf
+            (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
+            TODO: I'm still very uncertain about the types of these, see
+            also :py:`ScanService.upload_bundle`.  This one is also called by
+            `Preparation/management/commands/plom_preperation_test_source.py`
+            which passes a plain-old open file handle.
+
+    Returns:
+        A tuple with a boolean for success and a message or error message.
+    """
+    # save the file to a temp directory
+    # TODO - size limits please
+    with tempfile.TemporaryDirectory() as td:
+        tmp_pdf = Path(td) / "unvalidated.pdf"
+        with open(tmp_pdf, "wb") as fh:
+            for chunk in in_memory_file:
+                fh.write(chunk)
+        # now check it has correct number of pages
+        doc = fitz.open(tmp_pdf)
+        if doc.page_count != int(required_pages):
+            return (
+                False,
+                f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
+            )
+        # now try to store it
+        try:
+            store_source_pdf(version, tmp_pdf)
+        except (ObjectDoesNotExist, MultipleObjectsReturned) as err:
+            return (False, str(err))
+
+        return (True, "PDF successfully uploaded")
+
+
+# TODO: remove one ported to stateless SourceService
 class TestSourceService:
     """Deprecated class for dealing with source PDF files.  Use SourceService instead."""
 
     def __init__(self):
-        print("deprecated: use SourceService instead!")
+        warn("TestSourceService is DEPRECATED: use SourceService instead!")
 
     @transaction.atomic
     def get_source_pdf_path(self, source_version: int):
@@ -73,81 +153,11 @@ class TestSourceService:
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
 
-    @transaction.atomic
-    def store_source_pdf(self, source_version: int, source_pdf: Path) -> None:
-        """Store one of the source PDF files into the database.
+    def store_source_pdf(self, *args, **kwargs):
+        return store_source_pdf(*args, **kwargs)
 
-        Args:
-            source_version: which version, indexed from one.
-            source_pdf: a path to an actual file.
-
-        Returns:
-            None
-
-        Raises:
-            MultipleObjectsReturned: tried to store when already present.
-            ObjectDoesNotExist: TODO: unsure when this is called but some
-                callers seem to think it can happen.  Consider refactoring...
-        """
-        try:
-            PaperSourcePDF.objects.get(version=source_version)
-            raise MultipleObjectsReturned(
-                f"Source pdf with version {source_version} already present."
-            )
-        except PaperSourcePDF.DoesNotExist:
-            pass
-
-        with open(source_pdf, "rb") as fh:
-            bytes = fh.read()  # read entire file as bytes
-            hashed = hashlib.sha256(bytes).hexdigest()
-
-        with open(source_pdf, "rb") as fh:
-            dj_file = File(fh, name=f"version{source_version}.pdf")
-            pdf_obj = PaperSourcePDF(
-                version=source_version, source_pdf=dj_file, hash=hashed
-            )
-            pdf_obj.save()
-
-    def take_source_from_upload(
-        self, version: int, required_pages: int, in_memory_file: File
-    ) -> tuple[bool, str]:
-        """
-
-        Args:
-            version: which version, one-based index.
-            required_pages: how many pages we expect.
-                TODO: consider refactoring to ask the SpecService directly.
-            in_memory_file: File-object containing the pdf
-                (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
-                TODO: I'm still very uncertain about the types of these, see
-                also :py:`ScanService.upload_bundle`.  This one is also called by
-                `Preparation/management/commands/plom_preperation_test_source.py`
-                which passes a plain-old open file handle.
-
-        Returns:
-            A tuple with a boolean for success and a message or error message.
-        """
-        # save the file to a temp directory
-        # TODO - size limits please
-        with tempfile.TemporaryDirectory() as td:
-            tmp_pdf = Path(td) / "unvalidated.pdf"
-            with open(tmp_pdf, "wb") as fh:
-                for chunk in in_memory_file:
-                    fh.write(chunk)
-            # now check it has correct number of pages
-            doc = fitz.open(tmp_pdf)
-            if doc.page_count != int(required_pages):
-                return (
-                    False,
-                    f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
-                )
-            # now try to store it
-            try:
-                self.store_source_pdf(version, tmp_pdf)
-            except (ObjectDoesNotExist, MultipleObjectsReturned) as err:
-                return (False, str(err))
-
-            return (True, "PDF successfully uploaded")
+    def take_source_from_upload(self, *args, **kwargs):
+        return take_source_from_upload(*args, **kwargs)
 
     @transaction.atomic()
     def delete_test_source(self, source_version):
