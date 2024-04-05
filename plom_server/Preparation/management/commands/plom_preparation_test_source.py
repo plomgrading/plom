@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -134,7 +134,6 @@ class Command(BaseCommand):
             raise CommandError(f"Cannot open file {source_path}.")
 
         # send the PDF
-        # TODO - fix 6 to get the required number of pages from the spec.
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
             success, msg = tss.take_source_from_upload(
