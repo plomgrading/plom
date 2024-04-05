@@ -29,7 +29,7 @@ from Papers.services import (
 )
 from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
-    TestSourceService,
+    SourceService,
     PrenameSettingService,
     StagingStudentService,
     PQVMappingService,
@@ -66,7 +66,7 @@ def upload_test_sources(config: PlomServerConfig) -> None:
     assert isinstance(source_paths, list)
     try:
         for i, path in enumerate(source_paths):
-            TestSourceService().store_source_pdf(i + 1, path)
+            SourceService.store_source_pdf(i + 1, path)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 

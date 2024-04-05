@@ -153,12 +153,6 @@ class TestSourceService:
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
 
-    def store_source_pdf(self, *args, **kwargs):
-        return store_source_pdf(*args, **kwargs)
-
-    def take_source_from_upload(self, *args, **kwargs):
-        return take_source_from_upload(*args, **kwargs)
-
     @transaction.atomic()
     def delete_test_source(self, source_version):
         # delete the DB entry and the file

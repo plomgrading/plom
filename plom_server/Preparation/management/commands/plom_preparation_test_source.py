@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import TestSourceService, PapersPrinted
+from ...services import SourceService, TestSourceService, PapersPrinted
 
 
 class Command(BaseCommand):
@@ -138,7 +138,7 @@ class Command(BaseCommand):
         with open(source_path, "rb") as fh:
             # TODO: confused by the type of fh: here we have a plain
             # file handle but the function talks about "in memory file"...
-            success, msg = tss.take_source_from_upload(
+            success, msg = SourceService.take_source_from_upload(
                 version, SpecificationService.get_n_pages(), fh
             )
             if success:

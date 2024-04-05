@@ -14,6 +14,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.conf import settings
 from model_bakery import baker
 
+from ..services import SourceService
 from ..services import TestSourceService
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files
@@ -21,11 +22,10 @@ from .. import useful_files_for_testing as useful_files
 
 class SourceServiceTests(TestCase):
     def test_store_source_pdf(self) -> None:
-        tss = TestSourceService()
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         # TODO: this writes to settings.MEDIA_ROOT
         # TODO: would one normally use a special "tests" settings?
-        tss.store_source_pdf(1, upload_path)
+        SourceService.store_source_pdf(1, upload_path)
 
         n_sources = len(PaperSourcePDF.objects.all())
         self.assertEqual(n_sources, 1)
@@ -34,7 +34,7 @@ class SourceServiceTests(TestCase):
         self.assertTrue(pdf_save_path.exists())
 
         with self.assertRaises(MultipleObjectsReturned):
-            tss.store_source_pdf(1, upload_path)
+            SourceService.store_source_pdf(1, upload_path)
 
     def test_source_check_duplicates(self) -> None:
         tss = TestSourceService()
