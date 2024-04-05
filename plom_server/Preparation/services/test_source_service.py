@@ -105,8 +105,7 @@ class TestSourceService:
 
     def take_source_from_upload(
         self, version: int, required_pages: int, in_memory_file
-    ) -> tuple[bool, str | Exception]:
-        # TODO: is the raw Exception return intended?
+    ) -> tuple[bool, str]:
         # save the file to a temp directory
         # TODO - size limits please
         with tempfile.TemporaryDirectory() as td:
@@ -125,7 +124,7 @@ class TestSourceService:
             try:
                 self.store_source_pdf(version, tmp_pdf)
             except (ObjectDoesNotExist, MultipleObjectsReturned) as err:
-                return (False, err)
+                return (False, str(err))
 
             return (True, "PDF successfully uploaded")
 

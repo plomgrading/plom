@@ -36,8 +36,7 @@ class SourceServiceTests(TestCase):
         with self.assertRaises(MultipleObjectsReturned):
             tss.store_source_pdf(1, upload_path)
 
-    def test_check_duplicates(self) -> None:
-        """Test TestSourceService.check_pdf_duplication()."""
+    def test_source_check_duplicates(self) -> None:
         tss = TestSourceService()
         duplicates = tss.check_pdf_duplication()
         self.assertEqual(duplicates, {})
