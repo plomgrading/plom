@@ -21,6 +21,11 @@ from ..models import PaperSourcePDF
 
 
 class TestSourceService:
+    """Deprecated class for dealing with source PDF files.  Use SourceService instead."""
+
+    def __init__(self):
+        print("deprecated: use SourceService instead!")
+
     @transaction.atomic
     def get_source_pdf_path(self, source_version: int):
         """Return the path to the given source test version pdf.
