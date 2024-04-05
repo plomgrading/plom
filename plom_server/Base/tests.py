@@ -1,15 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-from django.test import TestCase
+from __future__ import annotations
 
-from typing import Optional, Union
 from functools import wraps
 from pathlib import Path
 import pydoc
 import re
 from inspect import getfile
+
+from django.test import TestCase
 
 from Demo.services import (
     ConfigFileService,
@@ -22,9 +24,9 @@ from Demo.services import (
 class ConfigTestCase(TestCase):
     """Populate the test database with models following a .toml file."""
 
-    config_file: Optional[str] = None
+    config_file: str | None = None
 
-    def setUp(self):
+    def setUp(self) -> None:
         if self.config_file is None:
             return
 
@@ -33,7 +35,7 @@ class ConfigTestCase(TestCase):
         ConfigTaskService.init_all_tasks(config)
 
 
-def config_test(config_input: Optional[Union[str, dict]] = None):
+def config_test(config_input: str | dict | None = None):
     def config_test_decorator(method):
         @wraps(method)
         def wrapper_config_test(self, *args, **kwargs):
@@ -57,7 +59,7 @@ def config_test(config_input: Optional[Union[str, dict]] = None):
                 config = ConfigFileService.read_server_config_from_string(
                     config_str, parent_dir=parent_dir
                 )
-            elif type(config_input) is str:
+            elif isinstance(config_input, str):
                 config = ConfigFileService.read_server_config(config_input)
             else:
                 config_input["parent_dir"] = Path(getfile(method)).parent

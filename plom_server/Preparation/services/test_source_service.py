@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from collections import defaultdict
 import hashlib
 from pathlib import Path
@@ -20,12 +22,13 @@ from ..models import PaperSourcePDF
 
 class TestSourceService:
     @transaction.atomic
-    def get_source_pdf_path(self, source_version):
+    def get_source_pdf_path(self, source_version: int):
         """Return the path to the given source test version pdf.
 
         In practice this would instead return the URL.
 
-        source_version (int): The version of the pdf.
+        Args:
+            source_version: The version of the pdf.
         """
         try:
             pdf_obj = PaperSourcePDF.objects.get(version=source_version)
@@ -36,11 +39,11 @@ class TestSourceService:
             )
 
     @transaction.atomic
-    def how_many_test_versions_uploaded(self):
+    def how_many_test_versions_uploaded(self) -> int:
         return PaperSourcePDF.objects.count()
 
     @transaction.atomic
-    def are_all_test_versions_uploaded(self):
+    def are_all_test_versions_uploaded(self) -> bool:
         if SpecificationService.is_there_a_spec():
             return (
                 PaperSourcePDF.objects.count() == SpecificationService.get_n_versions()
@@ -49,22 +52,38 @@ class TestSourceService:
             return False
 
     @transaction.atomic
-    def get_list_of_uploaded_sources(self):
+    def get_list_of_uploaded_sources(self) -> dict[int, tuple[str, str]]:
         """Return a dict of uploaded source versions and their urls."""
         status = {}
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
 
-    def get_list_of_sources(self):
+    def get_list_of_sources(self) -> dict[int, None | tuple[str, str]]:
         """Return a dict of all versions, uploaded or not."""
-        status = {v: None for v in SpecificationService.get_list_of_versions()}
+        status: dict[int, None | tuple[str, str]] = {
+            v: None for v in SpecificationService.get_list_of_versions()
+        }
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
 
     @transaction.atomic
-    def store_test_source(self, source_version, source_pdf):
+    def store_source_pdf(self, source_version: int, source_pdf: Path) -> None:
+        """Store one of the source PDF files into the database.
+
+        Args:
+            source_version: which version, indexed from one.
+            source_pdf: a path to an actual file.
+
+        Returns:
+            None
+
+        Raises:
+            MultipleObjectsReturned: tried to store when already present.
+            ObjectDoesNotExist: TODO: unsure when this is called but some
+                callers seem to think it can happen.  Consider refactoring...
+        """
         try:
             PaperSourcePDF.objects.get(version=source_version)
             raise MultipleObjectsReturned(
@@ -84,7 +103,10 @@ class TestSourceService:
             )
             pdf_obj.save()
 
-    def take_source_from_upload(self, version, required_pages, in_memory_file):
+    def take_source_from_upload(
+        self, version: int, required_pages: int, in_memory_file
+    ) -> tuple[bool, str | Exception]:
+        # TODO: is the raw Exception return intended?
         # save the file to a temp directory
         # TODO - size limits please
         with tempfile.TemporaryDirectory() as td:
@@ -101,7 +123,7 @@ class TestSourceService:
                 )
             # now try to store it
             try:
-                self.store_test_source(version, tmp_pdf)
+                self.store_source_pdf(version, tmp_pdf)
             except (ObjectDoesNotExist, MultipleObjectsReturned) as err:
                 return (False, err)
 
