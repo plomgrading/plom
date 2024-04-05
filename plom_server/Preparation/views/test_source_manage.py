@@ -36,7 +36,7 @@ class TestSourceManageView(ManagerRequiredView):
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
-            "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+            "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
@@ -84,8 +84,7 @@ class TestSourceManageView(ManagerRequiredView):
             return redirect("prep_sources_view")
 
         if version:
-            tss = TestSourceService()
-            tss.delete_test_source(version)
+            SourceService.delete_source_pdf(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
 
 
@@ -99,7 +98,7 @@ class TestSourceReadOnlyView(ManagerRequiredView):
                 "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_test_sources": tss.get_list_of_sources(),
-                "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+                "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
                 "navbar_colour": "#AD9CFF",
                 "user_group": "manager",
             }

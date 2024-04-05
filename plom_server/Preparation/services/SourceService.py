@@ -22,6 +22,33 @@ from ..models import PaperSourcePDF
 
 
 @transaction.atomic
+def are_all_sources_uploaded() -> bool:
+    if SpecificationService.is_there_a_spec():
+        return PaperSourcePDF.objects.count() == SpecificationService.get_n_versions()
+    else:
+        return False
+
+
+@transaction.atomic()
+def delete_source_pdf(source_version: int) -> None:
+    # delete the DB entry and the file
+    try:
+        pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
+        Path(pdf_obj.source_pdf.path).unlink()
+        pdf_obj.delete()
+    except PaperSourcePDF.DoesNotExist:
+        pass
+
+
+@transaction.atomic()
+def delete_all_source_pdfs() -> None:
+    # delete the DB entry and the file
+    for pdf_obj in PaperSourcePDF.objects.all():
+        Path(pdf_obj.source_pdf.path).unlink()
+        pdf_obj.delete()
+
+
+@transaction.atomic
 def store_source_pdf(source_version: int, source_pdf: Path) -> None:
     """Store one of the source PDF files into the database.
 
@@ -128,15 +155,6 @@ class TestSourceService:
         return PaperSourcePDF.objects.count()
 
     @transaction.atomic
-    def are_all_test_versions_uploaded(self) -> bool:
-        if SpecificationService.is_there_a_spec():
-            return (
-                PaperSourcePDF.objects.count() == SpecificationService.get_n_versions()
-            )
-        else:
-            return False
-
-    @transaction.atomic
     def get_list_of_uploaded_sources(self) -> dict[int, tuple[str, str]]:
         """Return a dict of uploaded source versions and their urls."""
         status = {}
@@ -152,23 +170,6 @@ class TestSourceService:
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
-
-    @transaction.atomic()
-    def delete_test_source(self, source_version):
-        # delete the DB entry and the file
-        try:
-            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-            Path(pdf_obj.source_pdf.path).unlink()
-            pdf_obj.delete()
-        except PaperSourcePDF.DoesNotExist:
-            pass
-
-    @transaction.atomic()
-    def delete_all_test_sources(self):
-        # delete the DB entry and the file
-        for pdf_obj in PaperSourcePDF.objects.all():
-            Path(pdf_obj.source_pdf.path).unlink()
-            pdf_obj.delete()
 
     @transaction.atomic
     def check_pdf_duplication(self):

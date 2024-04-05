@@ -92,13 +92,11 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Removing all {len(up_list)} test source pdfs on server."
             )
-            tss.delete_all_test_sources()
+            SourceService.delete_all_source_pdfs()
             return
         if version in up_list:
-            tss.delete_test_source(version)
-            self.stdout.write(
-                f"Removing test pdf source version {version} from server."
-            )
+            SourceService.delete_source_pdf(version)
+            self.stdout.write(f"Removed test pdf source version {version} from server.")
         else:
             self.stderr.write(
                 f"Test pdf source Version {version} is not on the server."

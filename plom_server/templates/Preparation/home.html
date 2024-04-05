@@ -3,7 +3,7 @@
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -71,7 +71,7 @@
                     <div class="flex-fill">
                         <p class="fs-4 mb-0">
                             2. Upload sources ({{ uploaded_test_versions }} of {{ num_versions }})
-                            {% if all_source_tests_uploaded %}<i class="bi bi-check-circle text-success"></i>{% endif %}
+                            {% if all_sources_uploaded %}<i class="bi bi-check-circle text-success"></i>{% endif %}
                         </p>
                         <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
                     </div>
@@ -222,7 +222,7 @@
                     </p>
                     <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>
                 </div>
-                {% if not all_source_tests_uploaded %}
+                {% if not all_sources_uploaded %}
                     <a>
                         Needs test sources
                         <i class="bi bi-chevron-up"></i>

@@ -18,14 +18,14 @@
             <div class="card-body">
                 <h4 class="card-title">
                     You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
-                    {% if all_test_sources_uploaded %}
+                    {% if all_sources_uploaded %}
                         <i class="bi bi-check-circle text-success"></i>
                     {% else %}
                         <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                     {% endif %}
                 </h4>
                 <div class="card-text">
-                    {% if not all_test_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages</p>{% endif %}
+                    {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages</p>{% endif %}
                     {% if duplicates %}
                         <div class="alert alert-danger" role="alert">
                             There appear to be duplicate PDFs - please check
