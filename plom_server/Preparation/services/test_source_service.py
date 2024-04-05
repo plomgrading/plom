@@ -104,8 +104,24 @@ class TestSourceService:
             pdf_obj.save()
 
     def take_source_from_upload(
-        self, version: int, required_pages: int, in_memory_file
+        self, version: int, required_pages: int, in_memory_file: File
     ) -> tuple[bool, str]:
+        """
+
+        Args:
+            version: which version, one-based index.
+            required_pages: how many pages we expect.
+                TODO: consider refactoring to ask the SpecService directly.
+            in_memory_file: File-object containing the pdf
+                (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
+                TODO: I'm still very uncertain about the types of these, see
+                also :py:`ScanService.upload_bundle`.  This one is also called by
+                `Preparation/management/commands/plom_preperation_test_source.py`
+                which passes a plain-old open file handle.
+
+        Returns:
+            A tuple with a boolean for success and a message or error message.
+        """
         # save the file to a temp directory
         # TODO - size limits please
         with tempfile.TemporaryDirectory() as td:

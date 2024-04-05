@@ -136,6 +136,8 @@ class Command(BaseCommand):
         # send the PDF
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
+            # TODO: confused by the type of fh: here we have a plain
+            # file handle but the function talks about "in memory file"...
             success, msg = tss.take_source_from_upload(
                 version, SpecificationService.get_n_pages(), fh
             )
