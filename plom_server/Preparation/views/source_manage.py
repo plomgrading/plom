@@ -43,10 +43,7 @@ class SourceManageView(ManagerRequiredView):
         }
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_source_view")
-
-        if version:
+        if version is not None:
             tss = TestSourceService()
             try:
                 source_path = tss.get_source_pdf_path(version)
@@ -58,9 +55,10 @@ class SourceManageView(ManagerRequiredView):
             except ObjectDoesNotExist:
                 raise Http404("No such file")
 
-        else:
-            context = self.build_context()
-            return render(request, "Preparation/source_manage.html", context)
+        if PapersPrinted.have_papers_been_printed():
+            return redirect("prep_source_view")
+        context = self.build_context()
+        return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
