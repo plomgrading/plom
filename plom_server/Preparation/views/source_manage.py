@@ -26,7 +26,7 @@ class TestSourceUploadForm(forms.Form):
     )
 
 
-class TestSourceManageView(ManagerRequiredView):
+class SourceManageView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
 
@@ -44,7 +44,7 @@ class TestSourceManageView(ManagerRequiredView):
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
         if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
+            return redirect("prep_source_view")
 
         if version:
             tss = TestSourceService()
@@ -60,11 +60,11 @@ class TestSourceManageView(ManagerRequiredView):
 
         else:
             context = self.build_context()
-            return render(request, "Preparation/test_source_manage.html", context)
+            return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
+            return redirect("prep_source_view")
 
         context = self.build_context()
         if not request.FILES["source_pdf"]:
@@ -81,14 +81,14 @@ class TestSourceManageView(ManagerRequiredView):
 
     def delete(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
+            return redirect("prep_source_view")
 
         if version:
             SourceService.delete_source_pdf(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
 
 
-class TestSourceReadOnlyView(ManagerRequiredView):
+class SourceReadOnlyView(ManagerRequiredView):
     def build_context(self):
         context = super().build_context()
         tss = TestSourceService()
@@ -107,4 +107,4 @@ class TestSourceReadOnlyView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        return render(request, "Preparation/test_paper_view.html", context)
+        return render(request, "Preparation/source_view.html", context)

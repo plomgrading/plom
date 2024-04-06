@@ -5,10 +5,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Create papers
+    View source versions
 {% endblock title %}
 {% block page_heading %}
-    View test source versions
+    View source versions
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -21,7 +21,7 @@
                     You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
                     <i class="bi bi-check-circle text-success"></i>
                 </h4>
-                {% for version, test_source in uploaded_test_sources.items %}
+                {% for version, source in uploaded_test_sources.items %}
                     <div class="row row-cols-auto mt-3">
                         <div class="p1 col">
                             <h5>Version {{ version }}:</h5>

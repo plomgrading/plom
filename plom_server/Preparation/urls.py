@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.urls import path
 from .views import (
@@ -12,8 +12,8 @@ from .views import (
     LandingResetClasslist,
     LandingResetQVmap,
     LandingFinishedToggle,
-    TestSourceManageView,
-    TestSourceReadOnlyView,
+    SourceManageView,
+    SourceReadOnlyView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
@@ -41,16 +41,14 @@ urlpatterns = [
         "reset/classlist/", LandingResetClasslist.as_view(), name="prep_reset_classlist"
     ),
     path("reset/qvmap/", LandingResetQVmap.as_view(), name="prep_reset_qvmap"),
-    path("test_source/", TestSourceManageView.as_view(), name="prep_sources"),
+    path("source/", SourceManageView.as_view(), name="prep_sources"),
     path(
-        "test_source/<int:version>",
-        TestSourceManageView.as_view(),
+        "source/<int:version>",
+        SourceManageView.as_view(),
         name="prep_source_upload",
     ),
-    path("test_source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
-    path(
-        "test_source/view/", TestSourceReadOnlyView.as_view(), name="prep_sources_view"
-    ),
+    path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
+    path("source/view/", SourceReadOnlyView.as_view(), name="prep_source_view"),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(

@@ -6,8 +6,11 @@
     Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% block title %}
+    Manage source versions
+{% endblock title %}
 {% block page_heading %}
-    Manage test source versions
+    Manage source versions
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -42,17 +45,17 @@
                 </div>
             </div>
         </div>
-        {% for version,test_source in uploaded_test_sources.items %}
+        {% for version, source in uploaded_test_sources.items %}
             <div>
                 <div class="card">
                     <div class="card-body">
-                        {% if test_source %}
+                        {% if source %}
                             <h5 class="card-title">
                                 PDF for version {{ version }} uploaded
                                 <i class="bi bi-check-circle text-success"></i>
                             </h5>
                             <p class="card-text">
-                                sha256: <span class="badge bg-info">{{ test_source.1 }}</span>
+                                sha256: <span class="badge bg-info">{{ source.1 }}</span>
                             </p>
                             <div class="row row-cols-auto">
                                 <div class="p-1 col">
