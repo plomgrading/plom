@@ -35,6 +35,16 @@ class SourceServiceTests(TestCase):
         with self.assertRaises(MultipleObjectsReturned):
             SourceService.store_source_pdf(1, upload_path)
 
+    def test_source_pdf_misc(self) -> None:
+        upload_path = resources.files(useful_files) / "test_version1.pdf"
+        SourceService.store_source_pdf(1, upload_path)
+        d = SourceService.get_list_of_sources()
+        assert isinstance(d, list)
+        assert len(d) >= 1
+        assert isinstance(d[0], dict)
+        assert d[0]["version"] == 1
+        assert len(d[0]["hash"]) > 50
+
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})

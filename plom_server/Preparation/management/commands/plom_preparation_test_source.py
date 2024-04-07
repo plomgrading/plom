@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
@@ -28,12 +30,14 @@ class Command(BaseCommand):
             self.stdout.write(f"{vup} test source pdf(s) uploaded.")
         else:
             self.stdout.write("No test source pdfs uploaded.")
-        up_list = SourceService.get_list_of_sources()
-        for v, source in up_list.items():
-            if source:  # source = None or (internal filepath, sha256)
-                self.stdout.write(f"Version {v} - pdf with sha256:{source[1]}")
+        src_list = SourceService.get_list_of_sources()
+        for src in src_list:
+            if src["uploaded"]:
+                self.stdout.write(
+                    f"Version {src['version']} - pdf with sha256:{src['hash']}"
+                )
             else:
-                self.stdout.write(f"Version {v} - no pdf uploaded")
+                self.stdout.write(f"Version {src['version']} - no pdf uploaded")
         # Now report any duplicated hashes
         self.check_duplicates()
 
@@ -52,51 +56,54 @@ class Command(BaseCommand):
         with open(save_path, "wb") as fh:
             fh.write(pdf_file_bytes)
 
-    def download_source(self, version=None, all=False):
-        up_list = SourceService.get_list_of_uploaded_sources()
+    def download_source(self, version: int | None = None, all: bool = False) -> None:
+        src_list = SourceService.get_list_of_sources()
+        up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
             self.stdout.write("There are no test sources on the server.")
             return
 
         if all:
+            if version is not None:
+                raise CommandError("Cannot specify 'all' and 'version'")
             self.stdout.write("Downloading all versions on the server.")
-            for v, source in up_list.items():
+            for src in up_list:
+                v = src["version"]
                 self.copy_source_into_place(v, SourceService.get_source_as_bytes(v))
             return
 
-        if version in up_list:
+        if version in [x["version"] for x in up_list]:
             self.copy_source_into_place(
                 version, SourceService.get_source_as_bytes(version)
             )
         else:
-            self.stderr.write(
-                f"Test pdf source Version {version} is not on the server."
-            )
+            raise CommandError(f"Source PDF version {version} is not on the server.")
 
-    def remove_source(self, version=None, all=False):
+    def remove_source(self, version: int | None = None, all: bool = False) -> None:
         if PapersPrinted.have_papers_been_printed():
             raise CommandError(
                 "Papers have been printed. You cannot change the sources."
             )
 
-        up_list = SourceService.get_list_of_uploaded_sources()
+        src_list = SourceService.get_list_of_sources()
+        up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
-            self.stdout.write("There are no test sources on the server.")
+            self.stdout.write("There are no sources on the server.")
             return
 
         if all:
+            if version is not None:
+                raise CommandError("Cannot specify 'all' and 'version'")
             self.stdout.write(
                 f"Removing all {len(up_list)} test source pdfs on server."
             )
             SourceService.delete_all_source_pdfs()
             return
-        if version in up_list:
+        if version in [x["version"] for x in up_list]:
             SourceService.delete_source_pdf(version)
             self.stdout.write(f"Removed test pdf source version {version} from server.")
         else:
-            self.stderr.write(
-                f"Test pdf source Version {version} is not on the server."
-            )
+            raise CommandError(f"Source PDF version {version} is not on the server.")
 
     def upload_source(self, version=None, source_pdf=None):
         if PapersPrinted.have_papers_been_printed():
@@ -110,16 +117,17 @@ class Command(BaseCommand):
             )
 
         src_list = SourceService.get_list_of_sources()
-        if version not in src_list:
-            version_list = sorted(list(src_list.keys()))
+        version_list = [x["version"] for x in src_list]
+        if version not in version_list:
             raise CommandError(
                 f"Version {version} is invalid - must be one of {version_list}"
             )
 
-        existing_src = src_list[version]
+        (existing_src,) = [x for x in src_list if x["version"] == version]
         if existing_src is not None:
             raise CommandError(
-                f"Version {version} already on server with sha256 = {existing_src[1]}. Delete or upload to a different version."
+                f"Version {version} already on server with sha256 {existing_src['hash']}."
+                "  Delete or upload to a different version."
             )
 
         source_path = Path(source_pdf)

@@ -10,6 +10,7 @@ import hashlib
 import pathlib
 from pathlib import Path
 import tempfile
+from typing import Any
 
 import fitz
 
@@ -75,21 +76,29 @@ def delete_all_source_pdfs() -> None:
 
 
 @transaction.atomic
-def get_list_of_uploaded_sources() -> dict[int, tuple[str, str]]:
-    """Return a dict of uploaded source versions and their urls."""
-    status = {}
-    for pdf_obj in PaperSourcePDF.objects.all():
-        status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
-    return status
+def get_list_of_sources() -> list[dict[str, Any]]:
+    """Return a list of sources, indicating if each is uploaded or not along with other info.
 
-
-def get_list_of_sources() -> dict[int, None | tuple[str, str]]:
-    """Return a dict of all versions, uploaded or not."""
-    status: dict[int, None | tuple[str, str]] = {
-        v: None for v in SpecificationService.get_list_of_versions()
-    }
+    The list is sorted by the version.
+    """
+    status = [
+        {"version": v, "uploaded": False}
+        for v in SpecificationService.get_list_of_versions()
+    ]
     for pdf_obj in PaperSourcePDF.objects.all():
-        status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
+        # TODO: not super happy about explicit indexing into this list
+        item = {
+            "version": pdf_obj.version,
+            "uploaded": True,
+            "hash": pdf_obj.hash,
+        }
+        # TODO: what should happen if there is no spec?  above is empty...
+        # We hit this in testing...
+        try:
+            status[pdf_obj.version - 1] = item
+        except IndexError:
+            # TODO: surely not the right fix if index is meaningful!
+            status.append(item)
     return status
 
 
