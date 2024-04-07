@@ -15,7 +15,6 @@ from django.conf import settings
 from model_bakery import baker
 
 from ..services import SourceService
-from ..services import TestSourceService
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files
 
@@ -37,14 +36,13 @@ class SourceServiceTests(TestCase):
             SourceService.store_source_pdf(1, upload_path)
 
     def test_source_check_duplicates(self) -> None:
-        tss = TestSourceService()
-        duplicates = tss.check_pdf_duplication()
+        duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
         baker.make(PaperSourcePDF, version=1, hash="abcde123")
-        duplicates = tss.check_pdf_duplication()
+        duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {})
 
         baker.make(PaperSourcePDF, version=2, hash="abcde123")
-        duplicates = tss.check_pdf_duplication()
+        duplicates = SourceService.check_pdf_duplication()
         self.assertEqual(duplicates, {"abcde123": [1, 2]})

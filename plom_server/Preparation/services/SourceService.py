@@ -9,7 +9,6 @@ from collections import defaultdict
 import hashlib
 from pathlib import Path
 import tempfile
-from warnings import warn
 
 import fitz
 
@@ -19,6 +18,37 @@ from django.db import transaction
 
 from Papers.services import SpecificationService
 from ..models import PaperSourcePDF
+
+
+@transaction.atomic
+def get_source_pdf_path(source_version: int) -> str:
+    """Return the path to the given source test version pdf.
+
+    In practice this would instead return the URL.
+
+    Args:
+        source_version: The version of the pdf.
+
+    Returns:
+        A string, apparently (from experiment).  TODO: perhaps
+        we should cast it to ``pathlib.Path`` and document
+        accordingly.
+
+    Raises:
+        ObjectDoesNotExist: if this one is not yet uploaded.
+            (Well also, if version is out of range and error
+            message will be wrong in this case).
+    """
+    try:
+        pdf_obj = PaperSourcePDF.objects.get(version=source_version)
+        return pdf_obj.source_pdf.path
+    except PaperSourcePDF.DoesNotExist:
+        raise ObjectDoesNotExist(f"Source version {source_version} not yet uploaded")
+
+
+@transaction.atomic
+def how_many_source_versions_uploaded() -> int:
+    return PaperSourcePDF.objects.count()
 
 
 @transaction.atomic
@@ -46,6 +76,25 @@ def delete_all_source_pdfs() -> None:
     for pdf_obj in PaperSourcePDF.objects.all():
         Path(pdf_obj.source_pdf.path).unlink()
         pdf_obj.delete()
+
+
+@transaction.atomic
+def get_list_of_uploaded_sources() -> dict[int, tuple[str, str]]:
+    """Return a dict of uploaded source versions and their urls."""
+    status = {}
+    for pdf_obj in PaperSourcePDF.objects.all():
+        status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
+    return status
+
+
+def get_list_of_sources() -> dict[int, None | tuple[str, str]]:
+    """Return a dict of all versions, uploaded or not."""
+    status: dict[int, None | tuple[str, str]] = {
+        v: None for v in SpecificationService.get_list_of_versions()
+    }
+    for pdf_obj in PaperSourcePDF.objects.all():
+        status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
+    return status
 
 
 @transaction.atomic
@@ -126,67 +175,23 @@ def take_source_from_upload(
         return (True, "PDF successfully uploaded")
 
 
-# TODO: remove one ported to stateless SourceService
-class TestSourceService:
-    """Deprecated class for dealing with source PDF files.  Use SourceService instead."""
+@transaction.atomic
+def check_pdf_duplication() -> dict[str, list[int]]:
+    hashes = defaultdict(list)
+    for pdf_obj in PaperSourcePDF.objects.all():
+        hashes[pdf_obj.hash].append(pdf_obj.version)
+    duplicates = {}
+    for hash, versions in hashes.items():
+        if len(versions) > 1:
+            duplicates[hash] = versions
+    return duplicates
 
-    def __init__(self):
-        warn("TestSourceService is DEPRECATED: use SourceService instead!")
 
-    @transaction.atomic
-    def get_source_pdf_path(self, source_version: int):
-        """Return the path to the given source test version pdf.
-
-        In practice this would instead return the URL.
-
-        Args:
-            source_version: The version of the pdf.
-        """
-        try:
-            pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-            return pdf_obj.source_pdf.path
-        except PaperSourcePDF.DoesNotExist:
-            raise ObjectDoesNotExist(
-                f"Source version {source_version} not yet uploaded"
-            )
-
-    @transaction.atomic
-    def how_many_test_versions_uploaded(self) -> int:
-        return PaperSourcePDF.objects.count()
-
-    @transaction.atomic
-    def get_list_of_uploaded_sources(self) -> dict[int, tuple[str, str]]:
-        """Return a dict of uploaded source versions and their urls."""
-        status = {}
-        for pdf_obj in PaperSourcePDF.objects.all():
-            status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
-        return status
-
-    def get_list_of_sources(self) -> dict[int, None | tuple[str, str]]:
-        """Return a dict of all versions, uploaded or not."""
-        status: dict[int, None | tuple[str, str]] = {
-            v: None for v in SpecificationService.get_list_of_versions()
-        }
-        for pdf_obj in PaperSourcePDF.objects.all():
-            status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
-        return status
-
-    @transaction.atomic
-    def check_pdf_duplication(self):
-        hashes = defaultdict(list)
-        for pdf_obj in PaperSourcePDF.objects.all():
-            hashes[pdf_obj.hash].append(pdf_obj.version)
-        duplicates = {}
-        for hash, versions in hashes.items():
-            if len(versions) > 1:
-                duplicates[hash] = versions
-        return duplicates
-
-    @transaction.atomic
-    def get_source_as_bytes(self, source_version):
-        try:
-            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-            with pdf_obj.source_pdf.open("rb") as fh:
-                return fh.read()
-        except PaperSourcePDF.DoesNotExist:
-            raise ValueError("Version does not exist")
+@transaction.atomic
+def get_source_as_bytes(source_version: int) -> bytes:
+    try:
+        pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
+        with pdf_obj.source_pdf.open("rb") as fh:
+            return fh.read()
+    except PaperSourcePDF.DoesNotExist:
+        raise ValueError("Version does not exist")

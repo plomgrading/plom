@@ -9,28 +9,26 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import SourceService, TestSourceService, PapersPrinted
+from ...services import SourceService, PapersPrinted
 
 
 class Command(BaseCommand):
-    help = "Displays the uploaded test source pdfs and allows users to upload/download/remove test source pdfs."
+    help = "Displays the uploaded source pdfs and allows users to upload/download/remove source pdfs."
 
     def check_duplicates(self):
-        tss = TestSourceService()
-        duplicates = tss.check_pdf_duplication()
+        duplicates = SourceService.check_pdf_duplication()
         if duplicates:
             self.stderr.write("There appear to be duplicate source pdfs on the server:")
             for sha, versions in duplicates.items():
                 self.stderr.write(f"\tVersions {versions} have sha256 {sha}")
 
     def show_status(self):
-        tss = TestSourceService()
-        vup = tss.how_many_test_versions_uploaded()
+        vup = SourceService.how_many_source_versions_uploaded()
         if vup:
             self.stdout.write(f"{vup} test source pdf(s) uploaded.")
         else:
             self.stdout.write("No test source pdfs uploaded.")
-        up_list = tss.get_list_of_sources()
+        up_list = SourceService.get_list_of_sources()
         for v, source in up_list.items():
             if source:  # source = None or (internal filepath, sha256)
                 self.stdout.write(f"Version {v} - pdf with sha256:{source[1]}")
@@ -57,8 +55,7 @@ class Command(BaseCommand):
             fh.write(pdf_file_bytes)
 
     def download_source(self, version=None, all=False):
-        tss = TestSourceService()
-        up_list = tss.get_list_of_uploaded_sources()
+        up_list = SourceService.get_list_of_uploaded_sources()
         if len(up_list) == 0:
             self.stdout.write("There are no test sources on the server.")
             return
@@ -66,11 +63,13 @@ class Command(BaseCommand):
         if all:
             self.stdout.write("Downloading all versions on the server.")
             for v, source in up_list.items():
-                self.copy_source_into_place(v, tss.get_source_as_bytes(v))
+                self.copy_source_into_place(v, SourceService.get_source_as_bytes(v))
             return
 
         if version in up_list:
-            self.copy_source_into_place(version, tss.get_source_as_bytes(version))
+            self.copy_source_into_place(
+                version, SourceService.get_source_as_bytes(version)
+            )
         else:
             self.stderr.write(
                 f"Test pdf source Version {version} is not on the server."
@@ -82,8 +81,7 @@ class Command(BaseCommand):
                 "Papers have been printed. You cannot change the sources."
             )
 
-        tss = TestSourceService()
-        up_list = tss.get_list_of_uploaded_sources()
+        up_list = SourceService.get_list_of_uploaded_sources()
         if len(up_list) == 0:
             self.stdout.write("There are no test sources on the server.")
             return
@@ -113,8 +111,7 @@ class Command(BaseCommand):
                 "There is not a valid test specification on the server. Cannot upload."
             )
 
-        tss = TestSourceService()
-        src_list = tss.get_list_of_sources()
+        src_list = SourceService.get_list_of_sources()
         if version not in src_list:
             version_list = sorted(list(src_list.keys()))
             raise CommandError(

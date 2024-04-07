@@ -16,7 +16,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import SourceService, TestSourceService, PapersPrinted
+from ..services import SourceService, PapersPrinted
 
 
 class TestSourceUploadForm(forms.Form):
@@ -28,25 +28,22 @@ class TestSourceUploadForm(forms.Form):
 
 class SourceManageView(ManagerRequiredView):
     def build_context(self):
-        tss = TestSourceService()
-
         return {
             "form": TestSourceUploadForm(),
             "num_versions": SpecificationService.get_n_versions(),
-            "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "uploaded_test_sources": tss.get_list_of_sources(),
+            "uploaded_test_sources": SourceService.get_list_of_sources(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
-            "duplicates": tss.check_pdf_duplication(),
+            "duplicates": SourceService.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
         if version is not None:
-            tss = TestSourceService()
             try:
-                source_path = tss.get_source_pdf_path(version)
+                source_path = SourceService.get_source_pdf_path(version)
                 return FileResponse(
                     open(source_path, "rb"),
                     as_attachment=True,
@@ -89,13 +86,12 @@ class SourceManageView(ManagerRequiredView):
 class SourceReadOnlyView(ManagerRequiredView):
     def build_context(self):
         context = super().build_context()
-        tss = TestSourceService()
         context.update(
             {
                 "num_versions": SpecificationService.get_n_versions(),
-                "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+                "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
-                "uploaded_test_sources": tss.get_list_of_sources(),
+                "uploaded_test_sources": SourceService.get_list_of_sources(),
                 "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
                 "navbar_colour": "#AD9CFF",
                 "user_group": "manager",
