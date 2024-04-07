@@ -33,7 +33,7 @@ class SourceManageView(ManagerRequiredView):
             "num_versions": SpecificationService.get_n_versions(),
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "uploaded_test_sources": SourceService.get_list_of_sources(),
+            "uploaded_sources": SourceService.get_list_of_sources(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
@@ -43,14 +43,13 @@ class SourceManageView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
         if version is not None:
             try:
-                source_path = SourceService.get_source_pdf_path(version)
                 return FileResponse(
-                    open(source_path, "rb"),
+                    SourceService._get_source_file(version),
                     as_attachment=True,
                     filename=f"source{version}.pdf",
                 )
-            except ObjectDoesNotExist:
-                raise Http404("No such file")
+            except ObjectDoesNotExist as e:
+                raise Http404(e)
 
         if PapersPrinted.have_papers_been_printed():
             return redirect("prep_source_view")
@@ -91,7 +90,7 @@ class SourceReadOnlyView(ManagerRequiredView):
                 "num_versions": SpecificationService.get_n_versions(),
                 "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
-                "uploaded_test_sources": SourceService.get_list_of_sources(),
+                "uploaded_sources": SourceService.get_list_of_sources(),
                 "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
                 "navbar_colour": "#AD9CFF",
                 "user_group": "manager",

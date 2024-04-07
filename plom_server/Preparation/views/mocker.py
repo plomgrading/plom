@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from pathlib import Path
 import shutil
 
 from django.http import HttpRequest, HttpResponse, FileResponse
@@ -19,7 +20,7 @@ class MockExamView(ManagerRequiredView):
 
     def post(self, request: HttpRequest, *, version: int) -> HttpResponse:
         mocker = ExamMockerService()
-        source_path = SourceService.get_source_pdf_path(version)
+        source_path = Path(SourceService._get_source_file(version).path)
 
         n_pages = SpecificationService.get_n_pages()
         pdf_path = mocker.mock_exam(

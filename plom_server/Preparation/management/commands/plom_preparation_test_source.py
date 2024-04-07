@@ -38,10 +38,8 @@ class Command(BaseCommand):
         self.check_duplicates()
 
     def copy_source_into_place(self, version, pdf_file_bytes):
-        self.stdout.write(
-            f"Downloading version {version} to 'test_source.{version}.pdf'"
-        )
-        save_path = Path(f"test_source.{version}.pdf")
+        self.stdout.write(f"Downloading version {version} to 'source{version}.pdf'")
+        save_path = Path(f"source{version}.pdf")
         if save_path.exists():
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 import hashlib
+import pathlib
 from pathlib import Path
 import tempfile
 
@@ -20,30 +21,19 @@ from Papers.services import SpecificationService
 from ..models import PaperSourcePDF
 
 
-@transaction.atomic
-def get_source_pdf_path(source_version: int) -> str:
-    """Return the path to the given source test version pdf.
-
-    In practice this would instead return the URL.
+def _get_source_file(source_version: int) -> File:
+    """Return the Django-file for a specified source version.
 
     Args:
-        source_version: The version of the pdf.
+        source_version: which source version.
 
     Returns:
-        A string, apparently (from experiment).  TODO: perhaps
-        we should cast it to ``pathlib.Path`` and document
-        accordingly.
+        Some sort of file abstraction, not for use outside Django.
 
     Raises:
-        ObjectDoesNotExist: if this one is not yet uploaded.
-            (Well also, if version is out of range and error
-            message will be wrong in this case).
+        ObjectDoesNotExist: not yet uploaded or out of range.
     """
-    try:
-        pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-        return pdf_obj.source_pdf.path
-    except PaperSourcePDF.DoesNotExist:
-        raise ObjectDoesNotExist(f"Source version {source_version} not yet uploaded")
+    return PaperSourcePDF.objects.get(version=source_version).source_pdf
 
 
 @transaction.atomic
@@ -61,6 +51,11 @@ def are_all_sources_uploaded() -> bool:
 
 @transaction.atomic()
 def delete_source_pdf(source_version: int) -> None:
+    """Delete a particular version of the source PDF files.
+
+    If no such version exists (either out of range or never uploaded)
+    then silently return (no error is raised).
+    """
     # delete the DB entry and the file
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
@@ -72,6 +67,7 @@ def delete_source_pdf(source_version: int) -> None:
 
 @transaction.atomic()
 def delete_all_source_pdfs() -> None:
+    """Delete all versions of the source PDF files."""
     # delete the DB entry and the file
     for pdf_obj in PaperSourcePDF.objects.all():
         Path(pdf_obj.source_pdf.path).unlink()
@@ -98,7 +94,7 @@ def get_list_of_sources() -> dict[int, None | tuple[str, str]]:
 
 
 @transaction.atomic
-def store_source_pdf(source_version: int, source_pdf: Path) -> None:
+def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
     """Store one of the source PDF files into the database.
 
     Args:
@@ -122,15 +118,14 @@ def store_source_pdf(source_version: int, source_pdf: Path) -> None:
         pass
 
     with open(source_pdf, "rb") as fh:
-        bytes = fh.read()  # read entire file as bytes
-        hashed = hashlib.sha256(bytes).hexdigest()
+        the_bytes = fh.read()  # read entire file as bytes
+        hashed = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{source_version}.pdf")
-        pdf_obj = PaperSourcePDF(
+        PaperSourcePDF.objects.create(
             version=source_version, source_pdf=dj_file, hash=hashed
         )
-        pdf_obj.save()
 
 
 def take_source_from_upload(

@@ -26,7 +26,7 @@ class SourceServiceTests(TestCase):
         # TODO: would one normally use a special "tests" settings?
         SourceService.store_source_pdf(1, upload_path)
 
-        n_sources = len(PaperSourcePDF.objects.all())
+        n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
 
         pdf_save_path = settings.MEDIA_ROOT / "sourceVersions" / "version1.pdf"
