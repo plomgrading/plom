@@ -124,7 +124,7 @@ class Command(BaseCommand):
             )
 
         (existing_src,) = [x for x in src_list if x["version"] == version]
-        if existing_src is not None:
+        if existing_src["uploaded"]:
             raise CommandError(
                 f"Version {version} already on server with sha256 {existing_src['hash']}."
                 "  Delete or upload to a different version."
