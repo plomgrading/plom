@@ -29,11 +29,27 @@ class SourceServiceTests(TestCase):
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
 
-        pdf_save_path = settings.MEDIA_ROOT / "sourceVersions" / "version1.pdf"
-        self.assertTrue(pdf_save_path.exists())
-
         with self.assertRaises(MultipleObjectsReturned):
             SourceService.store_source_pdf(1, upload_path)
+
+        SourceService.delete_all_source_pdfs()
+        n_sources = SourceService.how_many_source_versions_uploaded()
+        self.assertEqual(n_sources, 0)
+
+    def test_store_source_pdf_location(self) -> None:
+        # This test is sus: DB might store as version1_abc123.pdf
+        upload_path = resources.files(useful_files) / "test_version1.pdf"
+        SourceService.store_source_pdf(1, upload_path)
+        pdf_save_path = settings.MEDIA_ROOT / "sourceVersions" / "version1.pdf"
+        self.assertTrue(pdf_save_path.exists())
+        # TODO: indeed, this fails if there is an actual server running:
+        # f = SourceService._get_source_file(1)
+        # print(f)
+        # assert f.path == pdf_save_path
+
+    def test_delete_non_existing_source_pdf(self) -> None:
+        # documented as a non-error
+        SourceService.delete_source_pdf(1)
 
     def test_source_pdf_misc(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
