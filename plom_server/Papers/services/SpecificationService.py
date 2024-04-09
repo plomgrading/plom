@@ -125,11 +125,14 @@ def get_the_spec() -> dict:
 
 
 @transaction.atomic
-def get_the_spec_as_toml():
+def get_the_spec_as_toml() -> str:
     """Return the test-specification from the database.
 
     If present, remove the private seed.  But the public code
     is included (if present).
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
     """
     spec = get_the_spec()
     spec.pop("id", None)
@@ -141,7 +144,7 @@ def get_the_spec_as_toml():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic
@@ -152,8 +155,11 @@ def get_private_seed() -> str:
 
 
 @transaction.atomic
-def get_the_spec_as_toml_with_codes():
+def get_the_spec_as_toml_with_codes() -> str:
     """Return the test-specification from the database.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
 
     .. warning::
         Note this includes both the public code and the private
@@ -169,7 +175,7 @@ def get_the_spec_as_toml_with_codes():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic

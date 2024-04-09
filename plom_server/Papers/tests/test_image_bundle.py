@@ -25,9 +25,7 @@ from Preparation.models import StagingPQVMapping
 
 
 class ImageBundleTests(TestCase):
-    """
-    Tests for Papers.services.ImageBundelService
-    """
+    """Tests for Papers.services.ImageBundelService."""
 
     def setUp(self) -> None:
         # make a spec and a paper
