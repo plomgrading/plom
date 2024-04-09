@@ -2,10 +2,12 @@
 # Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import json
+import pathlib
 from pathlib import Path
 import sys
-from typing import Optional
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -37,7 +39,7 @@ class Command(BaseCommand):
     help = "Manipulate rubrics"
 
     def upload_demo_rubrics(
-        self, username: str, *, numquestions: Optional[int] = None
+        self, username: str, *, _numquestions: int | None = None
     ) -> int:
         """Load some demo rubrics and upload to server.
 
@@ -45,8 +47,8 @@ class Command(BaseCommand):
             username: rubrics need to be associated to a rubric.
 
         Keyword Args:
-            numquestions (None/int): how many questions should we build for.
-                Get it from the spec if omitted.
+            _numquestions: how many questions should we build for.
+                Get it from the spec if omitted / None.
 
         Returns:
             The number of rubrics uploaded.
@@ -54,9 +56,10 @@ class Command(BaseCommand):
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
         """
-        if numquestions is None:
-            spec = SpecificationService.get_the_spec()
-            numquestions = spec["numberOfQuestions"]
+        if _numquestions is None:
+            question_indices = SpecificationService.get_question_indices()
+        else:
+            question_indices = list(range(1, _numquestions + 1))
 
         with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
             rubrics_in = tomllib.load(f)["rubric"]
@@ -80,9 +83,9 @@ class Command(BaseCommand):
 
             rub["username"] = username
 
-            # Multiply rubrics w/o question numbers, avoids repetition in demo file
+            # Multiply rubrics w/o questions, avoids repetition in demo file
             if rub.get("question") is None:
-                for q in range(1, numquestions + 1):
+                for q in question_indices:
                     r = rub.copy()
                     r["question"] = q
                     rubrics.append(r)
@@ -110,20 +113,23 @@ class Command(BaseCommand):
         return service.erase_all_rubrics()
 
     def download_rubrics_to_file(
-        self, filename, *, verbose=True, question=None
+        self,
+        filename: None | str | pathlib.Path,
+        *,
+        verbose: bool = True,
+        question: int | None = None,
     ) -> None:
         """Download the rubrics from a server and save them to a file.
 
         Args:
-            filename (None/str/pathlib.Path): A filename to save to.  The
-                extension is used to determine what format, supporting:
+            filename: What filename to save to or None to display to stdout.
+                The extension is used to determine what format, supporting:
                 `.json`, `.toml`, and `.csv`.
                 If no extension is included, default to `.toml`.
-                If None, display on stdout.
 
         Keyword Args:
-            verbose (bool):
-            question (int/None): download for question index
+            verbose: print stuff.
+            question: download for question index, or ``None`` for all.
 
         Returns:
             None: but saves a file as a side effect.

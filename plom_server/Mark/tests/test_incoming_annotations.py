@@ -35,7 +35,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
-            question_number=1,
+            question_index=1,
         )
         baker.make(
             MarkingTask,
@@ -43,7 +43,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper1,
-            question_number=1,
+            question_index=1,
         )
         self.assertRaises(
             MultipleObjectsReturned, mts.set_paper_marking_task_outdated, 1, 1
@@ -59,7 +59,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             status=MarkingTask.OUT_OF_DATE,
             assigned_user=user0,
             paper=paper1,
-            question_number=2,
+            question_index=2,
         )
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 2)
 
@@ -69,7 +69,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         paper2 = baker.make(Paper, paper_number=2)
         # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
         # todo - this should likely be replaced with a spec check
-        baker.make(QuestionPage, paper=paper2, page_number=3, question_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
 
         task = baker.make(
             MarkingTask,
@@ -77,7 +77,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             status=MarkingTask.TO_DO,
             assigned_user=user0,
             paper=paper2,
-            question_number=1,
+            question_index=1,
         )
         mts.assign_task_to_user(user0, task)
         img1 = baker.make(AnnotationImage)

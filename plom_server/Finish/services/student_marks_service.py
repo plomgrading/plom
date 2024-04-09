@@ -146,7 +146,7 @@ class StudentMarkService:
             mark = (
                 MarkingTask.objects.filter(
                     paper=paper,
-                    question_number=question_idx,
+                    question_index=question_idx,
                     status=MarkingTask.COMPLETE,
                 )
                 .get()
@@ -265,18 +265,18 @@ class StudentMarkService:
             .exclude(status=MarkingTask.OUT_OF_DATE)
         )
         questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_number"):
+        for marking_task in marking_tasks.order_by("question_index"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
-                questions[marking_task.question_number] = {
-                    "question": marking_task.question_number,
+                questions[marking_task.question_index] = {
+                    "question": marking_task.question_index,
                     "version": marking_task.question_version,
                     "out_of": current_annotation.annotation_data["maxMark"],
                     "student_mark": current_annotation.score,
                 }
             else:
                 # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_number] = "Not marked"
+                questions[marking_task.question_index] = "Not marked"
 
         return {paper_num: questions}
 
@@ -317,7 +317,7 @@ class StudentMarkService:
         """Get the count of how many papers have marked a specific question.
 
         Args:
-            question: The question number.
+            question: The question index.
 
         Keyword Args:
             version: The version of the question.
@@ -328,10 +328,11 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
-        ).count()
+        return (
+            MarkingTaskService()
+            .get_tasks_from_question_with_annotation(question, version)
+            .count()
+        )
 
     def get_student_info_from_paper(
         self,
@@ -381,12 +382,11 @@ class StudentMarkService:
         return csv_data
 
     def get_csv_header(
-        self, spec: dict, version_info: bool, timing_info: bool, warning_info: bool
-    ) -> list:
+        self, version_info: bool, timing_info: bool, warning_info: bool
+    ) -> list[str]:
         """Get the header for the csv file.
 
         Args:
-            spec: The specification for the paper.
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
@@ -399,11 +399,10 @@ class StudentMarkService:
             None expected
         """
         keys = ["student_id", "student_name", "paper_number", "total_mark"]
-        numberOfQuestions = spec["numberOfQuestions"]
-        for q in range(1, numberOfQuestions + 1):
+        for q in SpecificationService.get_question_indices():
             keys.append(f"q{q}_mark")
         if version_info:
-            for q in range(1, numberOfQuestions + 1):
+            for q in SpecificationService.get_question_indices():
                 keys.append(f"q{q}_version")
         if timing_info:
             keys.extend(["last_update"])
@@ -415,9 +414,8 @@ class StudentMarkService:
     def build_marks_csv_as_string(
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> str:
-        spec = SpecificationService.get_the_spec()
         sms = StudentMarkService()
-        keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
+        keys = sms.get_csv_header(version_info, timing_info, warning_info)
         student_marks = sms.get_all_students_download(
             version_info, timing_info, warning_info
         )

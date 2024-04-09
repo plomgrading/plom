@@ -160,7 +160,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
             {
                 "task_pk": task_pk,
                 "paper_number": task_obj.paper.paper_number,
-                "question": task_obj.question_number,
+                "question": task_obj.question_index,
                 "version": task_obj.question_version,
                 "status": task_obj.get_status_display(),
                 "lead_markers": User.objects.filter(groups__name="lead_marker"),
@@ -269,8 +269,8 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
         # then find the latest task for that pn, qn.
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
-        qn = task_obj.question_number
-        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        qi = task_obj.question_index
+        new_task_pk = mark_task.get_latest_task(pn, qi).pk
         return redirect("progress_marking_task_details", task_pk=new_task_pk)
 
 
@@ -278,12 +278,12 @@ class MarkingTaskResetView(ManagerRequiredView):
     def put(self, request, task_pk: int):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
-        qn = task_obj.question_number
+        qi = task_obj.question_index
         MarkingTaskService().set_paper_marking_task_outdated(
-            paper_number=pn, question_number=qn
+            paper_number=pn, question_index=qi
         )
         # now grab the pk of the new task with that paper,question and redirect the user there.
-        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        new_task_pk = mark_task.get_latest_task(pn, qi).pk
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[new_task_pk])
         )

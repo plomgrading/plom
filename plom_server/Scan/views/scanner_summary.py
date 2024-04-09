@@ -2,9 +2,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.shortcuts import render
 
 from Base.base_group_views import ScannerRequiredView
 from Progress.services import ManageScanService
@@ -57,7 +58,7 @@ class ScannerSummaryView(ScannerRequiredView):
 class ScannerPushedImageView(ScannerRequiredView):
     """Return a pushed image given by its pk."""
 
-    def get(self, request: HttpRequest, img_pk: int) -> FileResponse:
+    def get(self, request: HttpRequest, *, img_pk: int) -> FileResponse:
         img = ManageScanService().get_pushed_image(img_pk)
         if img is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
@@ -67,7 +68,7 @@ class ScannerPushedImageView(ScannerRequiredView):
 class ScannerPushedImageWrapView(ScannerRequiredView):
     """Return the simple html wrapper around the pushed image with correct rotation."""
 
-    def get(self, request: HttpRequest, img_pk: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         pushed_img = ManageScanService().get_pushed_image(img_pk)
         if pushed_img is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")

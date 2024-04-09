@@ -209,12 +209,12 @@ class RubricService:
         return rubric_instance
 
     def get_rubrics_as_dicts(
-        self, *, question: str | None = None
+        self, *, question: int | None = None
     ) -> list[dict[str, Any]]:
-        """Get the rubrics, possibly filtered by question number.
+        """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
-            question: question number or None for all.
+            question: question index or ``None`` for all.
 
         Returns:
             Collection of dictionaries, one for each rubric.
@@ -294,15 +294,14 @@ class RubricService:
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
-        spec = SpecificationService.get_the_spec()
-        self._build_system_rubrics(spec, username)
+        self._build_system_rubrics(username)
         return True
 
-    def _build_system_rubrics(self, spec: dict[str, Any], username: str) -> None:
+    def _build_system_rubrics(self, username: str) -> None:
         log.info("Building special manager-generated rubrics")
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
-        for q in range(1, 1 + spec["numberOfQuestions"]):
-            mx = spec["question"]["{}".format(q)]["mark"]
+        for q in SpecificationService.get_question_indices():
+            mx = SpecificationService.get_question_max_mark(q)
             # make zero mark and full mark rubrics
             rubric = {
                 "kind": "absolute",
@@ -410,7 +409,7 @@ class RubricService:
 
         Args:
             user: a User instance
-            question: the question number
+            question: which question index.
 
         Returns:
             dict: the JSON representation of the pane.
@@ -425,7 +424,7 @@ class RubricService:
 
         Args:
             user: a User instance
-            question: question number associated with the rubric pane
+            question: question index associated with the rubric pane.
             data: dict representing the new pane
         """
         pane = RubricPane.objects.get(user=user, question=question)
@@ -508,14 +507,6 @@ class RubricService:
         """
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
-
-    def get_all_annotations(self) -> QuerySet[Annotation]:
-        """Gets all annotations.
-
-        Returns:
-            Lazy queryset of all rubrics.
-        """
-        return Annotation.objects.all()
 
     def get_rubric_as_html(self, rubric: Rubric) -> str:
         """Gets a rubric as HTML.

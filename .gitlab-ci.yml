@@ -386,7 +386,7 @@ flake8:
     - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 7 ]]"
+    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 6 ]]"
 
 
 pydocstyle-plom-count:
@@ -427,6 +427,20 @@ pydocstyle-server:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pydocstyle -s -e plom_server
+  allow_failure: true
+
+
+no-question-numbers:
+  image: python:3.12
+  stage: static_analysis
+  script:
+    - grep plom_server -rie "question.num"
+    - echo "Question number is ambiguous; generally we prefer index or the question label"
+    - HOW_MANY=`grep plom_server -rie "question.num" | wc -l`
+    # For now, just ensure the total does not increase
+    - echo $HOW_MANY
+    # Future hackers: consider trying to decrease this number
+    - bash -c "[[ $HOW_MANY -le 35 ]]"
   allow_failure: true
 
 

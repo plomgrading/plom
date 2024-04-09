@@ -58,7 +58,7 @@ class TaMarkingService:
             .order_by(
                 "latest_annotation__user__username",
                 "paper__paper_number",
-                "question_number",
+                "question_index",
             )
         )
         csv_data = []
@@ -69,7 +69,7 @@ class TaMarkingService:
                 {
                     "user": task.latest_annotation.user.username,
                     "paper_number": task.paper.paper_number,
-                    "question_number": task.question_number,
+                    "question_number": task.question_index,
                     "question_version": task.question_version,
                     "score_given": task.latest_annotation.score,
                     "max_score": task.latest_annotation.annotation_data["maxMark"],
@@ -99,7 +99,7 @@ class TaMarkingService:
         """Get the total time spent on a question by all markers.
 
         Args:
-            question: The question number to get the total time spent on.
+            question: The question index to get the total time spent on.
 
         Keyword Args:
             version: The version of the question to get the total time spent on.
@@ -114,7 +114,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(Sum("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__sum"
         ]
@@ -125,7 +125,7 @@ class TaMarkingService:
         """Get the average time spent on a question by all markers.
 
         Args:
-            question: The question number to get the average time spent on.
+            question: The question index to get the average time spent on.
 
         Keyword Args:
             version: The version of the question to get the average time spent on.
@@ -140,7 +140,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(Avg("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__avg"
         ]
@@ -151,7 +151,7 @@ class TaMarkingService:
         """Get the standard deviation of time spent on a question by all markers.
 
         Args:
-            question: The question number to get the standard deviation time spent on.
+            question: The question index to get the standard deviation time spent on.
 
         Keyword Args:
             version: The version of the question to get the standard deviation time
@@ -168,7 +168,7 @@ class TaMarkingService:
         """
         service = MarkingTaskService()
         return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
+            question, version
         ).aggregate(StdDev("latest_annotation__marking_time"))[
             "latest_annotation__marking_time__stddev"
         ]
@@ -190,15 +190,15 @@ class TaMarkingService:
         present = arrow.utcnow()
 
         total_seconds = [
-            service.get_total_time_spent_on_question(question=q)
+            service.get_total_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
         average_seconds = [
-            service.get_average_time_spent_on_question(question=q)
+            service.get_average_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
         std_seconds = [
-            service.get_stdev_time_spent_on_question(question=q)
+            service.get_stdev_time_spent_on_question(q)
             for q in range(1, n_questions + 1)
         ]
 
@@ -224,12 +224,12 @@ class TaMarkingService:
 
         return total_times_spent, average_times_spent, std_times_spent
 
-    def get_avg_n_of_questions_marked_per_day(self, question: int) -> float:
+    def get_avg_n_of_questions_marked_per_day(self, question_idx: int) -> float:
         """Get the average number of questions marked per day for a given question.
 
         Args:
-            question: (int) The question number to get the average number of questions
-                marked per day for.
+            question_idx: Which question to get the average number of questions
+                marked per day for.  1-based question index.
 
         Returns:
             The average number of questions marked per day for a given question as a float.
@@ -238,10 +238,10 @@ class TaMarkingService:
             None expected
         """
         service = StudentMarkService()
-        num_questions_marked = service.get_n_of_question_marked(question)
+        num_questions_marked = service.get_n_of_question_marked(question_idx)
 
         marking_task = (
-            MarkingTask.objects.filter(question_number=question)
+            MarkingTask.objects.filter(question_index=question_idx)
             .order_by("time")
             .first()
         )
@@ -256,12 +256,12 @@ class TaMarkingService:
 
         return num_questions_marked / num_days
 
-    def get_estimate_days_remaining(self, question: int) -> float | None:
+    def get_estimate_days_remaining(self, question_idx: int) -> float | None:
         """Get the estimated number of days remaining to mark a given question.
 
         Args:
-            question: The question number to get the estimated number of days remaining
-                to mark.
+            question_idx: Which question to get the estimated number of days remaining
+                to mark.  1-based question index.
 
         Returns:
             None if no questions have been marked yet otherwise, the estimated number of days
@@ -271,23 +271,24 @@ class TaMarkingService:
             None expected
         """
         num_questions_remaining = (
-            MarkingTask.objects.filter(question_number=question)
+            MarkingTask.objects.filter(question_index=question_idx)
             .exclude(status=MarkingTask.COMPLETE)
             .count()
         )
 
-        avg_per_day = self.get_avg_n_of_questions_marked_per_day(question=question)
+        avg_per_day = self.get_avg_n_of_questions_marked_per_day(question_idx)
         assert avg_per_day >= 0
         if avg_per_day == 0:
             return None
 
         return round(num_questions_remaining / avg_per_day, 2)
 
-    def get_estimate_hours_remaining(self, question: int) -> float | None:
+    def get_estimate_hours_remaining(self, question_idx: int) -> float | None:
         """Get the estimated number of hours remaining to mark a given question.
 
         Args:
-            question: The question number to get the estimated number of hours remaining to mark.
+            question_idx: Which question to get the estimated number of
+                hours remaining to mark.  1-based question index.
 
         Returns:
             None if no questions have been marked yet otherwise, the estimated number of hours
@@ -296,11 +297,9 @@ class TaMarkingService:
         Raises:
             None expected
         """
-        avg_time_on_question = self.get_average_time_spent_on_question(
-            question=question
-        )
+        avg_time_on_question = self.get_average_time_spent_on_question(question_idx)
         num_questions_remaining = (
-            MarkingTask.objects.filter(question_number=question)
+            MarkingTask.objects.filter(question_index=question_idx)
             .exclude(status=MarkingTask.COMPLETE)
             .count()
         )

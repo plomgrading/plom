@@ -19,8 +19,7 @@ class SpecQuestion(models.Model):
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)
-    # TODO: rename to question_index, Issue #3264, Issue #2716.
-    question_number = models.PositiveIntegerField(null=False, unique=True)
+    question_index = models.PositiveIntegerField(null=False, unique=True)
 
 
 class Specification(SingletonBaseModel):
@@ -48,8 +47,12 @@ class Specification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in test specification.")
 
     def get_question_dict(self):
-        """Return all the questions in the form of a dictionary, where keys are question numbers."""
-        return {str(q.question_number): q for q in SpecQuestion.objects.all()}
+        """Return all the questions in the form of a dictionary, where keys are question indices.
+
+        TODO: for some reason, the keys are strings.
+        TODO: is this used?
+        """
+        return {str(q.question_index): q for q in SpecQuestion.objects.all()}
 
     def get_question_list(self):
         """Return the questions in the form of a list."""
@@ -84,7 +87,7 @@ class SolnSpecification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in solution Specification.")
 
     def get_solution_dict(self):
-        """Return all the solution questions in the form of a dictionary, where keys are question numbers."""
+        """Return all the solution questions in the form of a dictionary, where keys are str question indices."""
         return {str(s.solution_number): s for s in SolnSpecQuestion.objects.all()}
 
     def get_soltion_list(self):

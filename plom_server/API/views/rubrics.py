@@ -17,19 +17,19 @@ from .utils import _error_response
 
 
 class MgetRubricsByQuestion(APIView):
-    def get(self, request, question):
+    def get(self, request: Request, *, question: int) -> Response:
         rs = RubricService()
         all_rubric_data = rs.get_rubrics_as_dicts(question=question)
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
 class MgetRubricPanes(APIView):
-    def get(self, request, username, question):
+    def get(self, request: Request, username: str, question: int) -> Response:
         rs = RubricService()
         pane = rs.get_rubric_pane(request.user, question)
         return Response(pane, status=status.HTTP_200_OK)
 
-    def put(self, request, username, question):
+    def put(self, request: Request, *, username: str, question: int) -> Response:
         rs = RubricService()
         config = request.data["rubric_config"]
         rs.update_rubric_pane(request.user, question, config)

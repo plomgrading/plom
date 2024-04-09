@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -94,19 +94,19 @@ def pdf_builder(
     # histogram of grades for each question
     histogram_of_grades_q = []
     marks_for_questions = des._get_marks_for_all_questions()
-    for question, _ in tqdm(
+    for _q, _ in tqdm(
         enumerate(marks_for_questions),
         desc="Histograms of marks by question",
     ):
-        question += 1  # 1-indexing
+        question_idx = _q + 1  # 1-indexing
         histogram_of_grades_q.append(  # add to the list
             # each base64-encoded image
             mpls.histogram_of_grades_on_question_version(  # of the histogram
-                question=question, versions=versions
+                question_idx, versions=versions
             )
         )
 
-    del marks_for_questions, question, _  # clean up
+    del marks_for_questions, question_idx, _  # clean up
 
     # correlation heatmap
     if verbose:
@@ -124,14 +124,14 @@ def pdf_builder(
         )
         histogram_of_grades_m_q = []
 
-        for question in questions_marked_by_this_ta:
+        for question_idx in questions_marked_by_this_ta:
             scores_for_user_for_question = des._get_ta_data_for_question(
-                question_number=question, ta_df=scores_for_user
+                question_index=question_idx, ta_df=scores_for_user
             )
 
             histogram_of_grades_m_q.append(
                 mpls.histogram_of_grades_on_question_by_ta(
-                    question=question,
+                    question_idx,
                     ta_name=marker,
                     ta_df=scores_for_user_for_question,
                     versions=versions,
@@ -150,7 +150,7 @@ def pdf_builder(
     ):
         histogram_of_time.append(
             mpls.histogram_of_time_spent_marking_each_question(
-                question_number=question,
+                question,
                 marking_times_df=marking_times_df,
                 versions=versions,
                 max_time=max_time,
@@ -183,13 +183,11 @@ def pdf_builder(
             times_for_question = (
                 marking_times_df["seconds_spent_marking"].div(60).to_list()
             )
-            marks_given_for_question = des.get_scores_for_question(
-                question_number=question,
-            )
+            marks_given_for_question = des.get_scores_for_question(question)
 
         scatter_of_time.append(
             mpls.scatter_time_spent_vs_mark_given(
-                question_number=question,
+                question,
                 times_spent_minutes=times_for_question,
                 marks_given=marks_given_for_question,
                 versions=versions,
@@ -198,7 +196,7 @@ def pdf_builder(
 
     # Box plot of the grades given by each marker for each question
     boxplots = []
-    for question_number, question_df in tqdm(
+    for question_index, question_df in tqdm(
         des._get_all_ta_data_by_question().items(),
         desc="Box plots of marks given by marker by question",
     ):
@@ -206,14 +204,10 @@ def pdf_builder(
         # add overall to names
         marker_names = ["Overall"]
         marker_names.extend(
-            des.get_tas_that_marked_this_question(question_number, ta_df=question_df)
+            des.get_tas_that_marked_this_question(question_index, ta_df=question_df)
         )
         # add the overall marks
-        marks_given.append(
-            des.get_scores_for_question(
-                question_number=question_number,
-            )
-        )
+        marks_given.append(des.get_scores_for_question(question_index))
 
         for marker_name in marker_names[1:]:
             marks_given.append(
@@ -221,9 +215,7 @@ def pdf_builder(
             )
 
         boxplots.append(
-            mpls.boxplot_of_marks_given_by_ta(
-                marks_given, marker_names, question_number
-            )
+            mpls.boxplot_of_marks_given_by_ta(marks_given, marker_names, question_index)
         )
 
     if verbose:

@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
 
 import pathlib
 import uuid
@@ -196,7 +197,7 @@ class ImageBundleService:
                         extra.paper_number, q
                     )
                     MobilePage.objects.create(
-                        paper=paper, image=image, question_number=q, version=v
+                        paper=paper, image=image, question_index=q, version=v
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -359,9 +360,9 @@ class ImageBundleService:
 
         Returns:
             Dict with two keys, each to a list of ints.
-            "ready" is the list of paper_number/question_number pairs
+            "ready" is the list of paper_number/question_index pairs
             that have pages in this bundle, and are now ready to be marked.
-            "not_ready" are paper_number/question_number pairs that have pages
+            "not_ready" are paper_number/question_index pairs that have pages
             in this bundle, but are not ready to be marked yet.
         """
         # find all question-pages (ie fixed pages) that attach to images in the current bundle.
@@ -372,8 +373,8 @@ class ImageBundleService:
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
         papers_in_bundle = list(
-            question_pages.values_list("paper__paper_number", "question_number")
-        ) + list(extras.values_list("paper__paper_number", "question_number"))
+            question_pages.values_list("paper__paper_number", "question_index")
+        ) + list(extras.values_list("paper__paper_number", "question_index"))
         # remove duplicates by casting to a set
         papers_questions_updated_by_bundle = set(papers_in_bundle)
 
@@ -383,29 +384,29 @@ class ImageBundleService:
 
         result: Dict[str, List[Tuple[int, int]]] = {"ready": [], "not_ready": []}
 
-        for paper_number, question_number in papers_questions_updated_by_bundle:
+        for paper_number, question_index in papers_questions_updated_by_bundle:
             q_pages = QuestionPage.objects.filter(
-                paper__paper_number=paper_number, question_number=question_number
+                paper__paper_number=paper_number, question_index=question_index
             )
             pages_no_img = q_pages.filter(image__isnull=True).count()
             if pages_no_img == 0:  # all fixed pages have images
-                result["ready"].append((paper_number, question_number))
+                result["ready"].append((paper_number, question_index))
                 continue
             # question has some images
             pages_with_img = q_pages.filter(image__isnull=False).count()
             if (
                 pages_with_img > 0
             ):  # question has some pages with and some without images - not ready
-                result["not_ready"].append((paper_number, question_number))
+                result["not_ready"].append((paper_number, question_index))
                 continue
             # all fixed pages without images - check if has any mobile pages
             if (
                 MobilePage.objects.filter(
-                    paper__paper_number=paper_number, question_number=question_number
+                    paper__paper_number=paper_number, question_index=question_index
                 ).count()
                 > 0
             ):
-                result["ready"].append((paper_number, question_number))
+                result["ready"].append((paper_number, question_index))
 
         return result
 
@@ -435,7 +436,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def is_given_paper_question_ready(
-        self, paper_obj: Paper, question_number: int
+        self, paper_obj: Paper, question_index: int
     ) -> bool:
         """Check if a given paper/question is ready for marking.
 
@@ -446,28 +447,31 @@ class ImageBundleService:
 
 
         Args:
-            paper_obj (Paper): the database paper object to check
-            question_number (int): the question number to check
-        Returns:
-            bool: true when the question of the given paper is ready for marking, false otherwise
-        Raises:
-            ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
+            paper_obj: the database paper object to check.
+            question_index: the question to check.
 
+        Returns:
+            True when the question of the given paper is ready for marking, false otherwise.
+
+        Raises:
+            ValueError: when there does not exist any question pages for
+                that paper (eg when the question index is out of range).
         """
         q_pages = QuestionPage.objects.filter(
-            paper=paper_obj, question_number=question_number
+            paper=paper_obj, question_index=question_index
         )
         # todo - this should likely be replaced with a spec check
         if not q_pages.exists():
             raise ValueError(
-                f"There are no question_pages at all for paper {paper_obj.paper_number} question {question_number}"
+                f"There are no question_pages at all for paper {paper_obj.paper_number}"
+                f"question index {question_index}"
             )
 
         qp_no_img = q_pages.filter(image__isnull=True).exists()
         qp_with_img = q_pages.filter(image__isnull=False).exists()
         # note that (qp_no_img or qp_with_img == True)
         mp_present = MobilePage.objects.filter(
-            paper=paper_obj, question_number=question_number
+            paper=paper_obj, question_index=question_index
         ).exists()
 
         if qp_with_img:

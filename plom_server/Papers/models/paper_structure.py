@@ -34,8 +34,7 @@ class Paper(models.Model):
 class MobilePage(models.Model):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
-    # TODO: rename to question_index, Issue #3264, Issue #2716.
-    question_number = models.PositiveIntegerField(null=False)
+    question_index = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
     # NOTE  - no ordering.
 
@@ -45,11 +44,11 @@ class FixedPage(PolymorphicModel):
 
     Since every "fixed" page has a definite page-number and version-number,
     these appear here in the base class. However, only certain pages have
-    question-numbers, so we use polymorphism to put that information in
+    question indices, so we use polymorphism to put that information in
     various derived classes.
 
     IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
-    QuestionPage = has question-number and a non-trivial version
+    QuestionPage = has question index and a non-trivial version
 
     The base class should contain all info common to these
     classes. Searching on this base class allows us to search over all
@@ -106,7 +105,7 @@ class IDPage(FixedPage):
 class QuestionPage(FixedPage):
     """Table to store information about the pages in Question groups.
 
-    question_number (int): the question that this page belongs to.
+    question_index (int): the question that this page belongs to.
     """
 
-    question_number = models.PositiveIntegerField(null=False)
+    question_index = models.PositiveIntegerField(null=False)

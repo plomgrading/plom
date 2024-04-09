@@ -43,7 +43,7 @@ class ProgressOverviewService:
             dat = {
                 "paper": task.paper.paper_number,
                 "status": task.get_status_display(),
-                "question": task.question_number,
+                "question": task.question_index,
                 "version": task.question_version,
             }
             if task.status in [MarkingTask.OUT, MarkingTask.COMPLETE]:
@@ -106,7 +106,7 @@ class ProgressOverviewService:
         """Return dict of number of completed marking tasks for each question."""
         return {
             qi: MarkingTask.objects.filter(
-                question_number=qi, status=PaperIDTask.COMPLETE
+                question_index=qi, status=PaperIDTask.COMPLETE
             ).count()
             for qi in SpecificationService.get_question_indices()
         }
@@ -157,10 +157,10 @@ class ProgressOverviewService:
         }
         for X in (
             MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-            .values("status", "question_number")
+            .values("status", "question_index")
             .annotate(the_count=Count("status"))
         ):
-            dat[X["question_number"]][
+            dat[X["question_index"]][
                 MarkingTask(status=X["status"]).get_status_display()
             ] = X["the_count"]
         if n_papers:
@@ -171,7 +171,7 @@ class ProgressOverviewService:
 
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(
-        self, question_number: int, version: int | None = None
+        self, question_index: int, version: int | None = None
     ) -> dict[str, int]:
         """Return a dict of counts of marking tasks by their status for the given question/version.
 
@@ -181,7 +181,7 @@ class ProgressOverviewService:
         """
         dat = {"To Do": 0, "Complete": 0, "Out": 0}
         query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
-            question_number=question_number
+            question_index=question_index
         )
         # filter by version if supplied
         if version:

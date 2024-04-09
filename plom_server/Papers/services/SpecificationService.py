@@ -301,11 +301,12 @@ def get_n_pages() -> int:
 
 
 @transaction.atomic
-def get_question_mark(question_one_index: str | int) -> int:
+def get_question_max_mark(question_index: str | int) -> int:
     """Get the max mark of a given question.
 
     Args:
-        question_one_index: question index, indexed from 1.
+        question_index: question index, indexed from 1.
+            TODO: is str really allowed/encouraged?
 
     Returns:
         The maximum mark.
@@ -313,8 +314,12 @@ def get_question_mark(question_one_index: str | int) -> int:
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
     """
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+    question = SpecQuestion.objects.get(question_index=question_index)
     return question.mark
+
+
+# Some code uses this older synonym but it confuses me without the word "max"
+get_question_mark = get_question_max_mark
 
 
 @transaction.atomic
@@ -336,17 +341,17 @@ def get_total_marks() -> int:
 
 
 @transaction.atomic
-def n_pages_for_question(question_one_index) -> int:
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+def n_pages_for_question(question_index) -> int:
+    question = SpecQuestion.objects.get(question_index=question_index)
     return len(question.pages)
 
 
 @transaction.atomic
-def get_question_label(question_one_index: str | int) -> str:
+def get_question_label(question_index: str | int) -> str:
     """Get the question label from its one-index.
 
     Args:
-        question_one_index: question number indexed from 1.
+        question_index: question indexed from 1.
             TODO: does it really accept string input?
 
     Returns:
@@ -356,9 +361,9 @@ def get_question_label(question_one_index: str | int) -> str:
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
     """
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+    question = SpecQuestion.objects.get(question_index=question_index)
     if question.label is None:
-        return f"Q{question_one_index}"
+        return f"Q{question_index}"
     return question.label
 
 
@@ -401,7 +406,7 @@ def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
 
 
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
-    """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
+    """Convert a list of question dictionaries to a nested dict with question index as str keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}
 
 

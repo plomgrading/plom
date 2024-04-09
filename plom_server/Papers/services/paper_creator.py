@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
@@ -41,7 +41,7 @@ def huey_create_paper_with_qvmapping(
 
     Args:
         paper_number: The number of the paper being created
-        qv_mapping: Mapping from each question-number to
+        qv_mapping: Mapping from each question index to
             version for this particular paper. Of the form ``{q: v}``.
 
     Keyword Args:
@@ -86,7 +86,7 @@ class PaperCreatorService:
 
         Args:
             paper_number: The number of the paper being created
-            qv_mapping: Mapping from each question-number to
+            qv_mapping: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
 
         Returns:
@@ -122,7 +122,7 @@ class PaperCreatorService:
                     paper=paper_obj,
                     image=None,
                     page_number=int(q_page),
-                    question_number=index,
+                    question_index=index,
                     version=version,  # I don't like having to double-up here, but....
                 )
                 question_page.save()

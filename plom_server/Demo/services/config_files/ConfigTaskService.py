@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 """Handle creating task-related server state from a config file.
 
@@ -19,16 +20,11 @@ from . import PlomServerConfig
 
 def init_all_marking_tasks():
     """Create marking tasks from a config."""
-    n_questions = SpecificationService.get_n_questions()
     all_papers = Paper.objects.all()
     mts = MarkingTaskService()
     for paper in all_papers:
-        for i in range(n_questions):
-            question_number = i + 1
-            mts.create_task(
-                paper=paper,
-                question_number=question_number,
-            )
+        for qidx in SpecificationService.get_question_indices():
+            mts.create_task(paper=paper, question_index=qidx)
 
 
 def init_all_id_tasks():

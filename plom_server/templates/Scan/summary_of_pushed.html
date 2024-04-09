@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -108,7 +108,7 @@
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
                                                             class="btn btn-outline-info">
-                                                        q.{{ mp.question_number }}
+                                                        qi.{{ mp.question_number }}
                                                     </button>
                                                 {% endfor %}
                                             </td>
@@ -164,7 +164,7 @@
                                                             hx-target="#incompleteImageHere"
                                                             hx-replace="incompletInnerHTML"
                                                             class="btn btn-outline-info">
-                                                        q.{{ mp.question_number }}
+                                                        qi.{{ mp.question_number }}
                                                     </button>
                                                 {% endfor %}
                                             </td>
