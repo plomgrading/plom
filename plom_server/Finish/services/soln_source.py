@@ -2,9 +2,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import hashlib
 import io
-from typing import Dict
 
 import fitz
 
@@ -34,19 +35,20 @@ class SolnSourceService:
             == SpecificationService.get_n_versions()
         )
 
-    def get_solution_pdf_hashes(self) -> Dict:
-        soln_pdfs = {
-            v: None for v in range(1, SpecificationService.get_n_versions() + 1)
+    def get_solution_pdf_hashes(self) -> dict[int, None | str]:
+        soln_pdfs: dict[int, None | str] = {
+            v: None for v in SpecificationService.get_list_of_versions()
         }
         for spdf in SolutionSourcePDF.objects.all():
             soln_pdfs[spdf.version] = spdf.pdf_hash
-
         return soln_pdfs
 
     @transaction.atomic
-    def get_list_of_sources(self):
+    def get_list_of_sources(self) -> dict[int, None | tuple[str, str]]:
         """Return a dict of all versions, uploaded or not."""
-        status = {(v + 1): None for v in range(SpecificationService.get_n_versions())}
+        status: dict[int, None | tuple[str, str]] = {
+            v: None for v in SpecificationService.get_list_of_versions()
+        }
         for soln_pdf_obj in SolutionSourcePDF.objects.all():
             status[soln_pdf_obj.version] = (
                 soln_pdf_obj.source_pdf.url,
@@ -82,7 +84,7 @@ class SolnSourceService:
             si_obj.delete()
 
     def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
-        if version < 1 or version > SpecificationService.get_n_versions():
+        if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
         try:
             soln_pdf_obj = SolutionSourcePDF.objects.get(version=version)
@@ -97,7 +99,7 @@ class SolnSourceService:
         self, version: int, in_memory_file
     ) -> None:
         """Take the given solution source pdf and save it to the DB."""
-        if version < 1 or version > SpecificationService.get_n_versions():
+        if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
         if not SolnSpecService.is_there_a_soln_spec():
             raise ValueError("Cannot upload pdf until there is a solution spec")

@@ -589,7 +589,7 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, 4.2), tight_layout=True)
 
-        numquestions = SpecificationService.get_n_questions()
+        question_indices = SpecificationService.get_question_indices()
         if versions is True:
             averages = self.des.get_averages_on_all_questions_versions_as_percentage(
                 overall=True
@@ -597,21 +597,21 @@ class MatplotlibService:
             for i, v in enumerate(averages):
                 if i == 0:
                     plt.plot(
-                        range(1, numquestions + 1),
+                        question_indices,
                         v,
                         marker="o",
                         label="Overall",
                     )
                 else:
                     plt.plot(
-                        range(1, numquestions + 1),
+                        question_indices,
                         v,
                         marker="x",
                         label="Version " + str(i),
                     )
         else:
             plt.plot(
-                range(1, numquestions + 1),
+                question_indices,
                 self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
                 label="All versions",
@@ -629,7 +629,7 @@ class MatplotlibService:
         # plt.xlabel("Question")
         plt.ylabel("Average mark (%)")
         plt.xticks(
-            range(1, numquestions + 1),
+            question_indices,
             labels=SpecificationService.get_question_labels(),
         )
 

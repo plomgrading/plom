@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -58,7 +58,7 @@ class TestSourceService:
 
     def get_list_of_sources(self):
         """Return a dict of all versions, uploaded or not."""
-        status = {(v + 1): None for v in range(SpecificationService.get_n_versions())}
+        status = {v: None for v in SpecificationService.get_list_of_versions()}
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status

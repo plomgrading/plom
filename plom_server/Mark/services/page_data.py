@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
-from typing import List
+from __future__ import annotations
+
+from typing import Any
 
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,19 +23,19 @@ from Papers.models import (
 
 
 @transaction.atomic
-def get_question_pages_list(paper: int, question: int) -> List[dict]:
+def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, Any]]:
     """Return a list of objects describing pages in a paper related to a question.
 
     Args:
-        paper: exam paper number
-        question: question number
+        paper: exam paper number.
+        question_index: which question.
     """
     test_paper = Paper.objects.get(paper_number=paper)
     question_pages = QuestionPage.objects.filter(
-        paper=test_paper, question_number=question
+        paper=test_paper, question_number=question_index
     ).prefetch_related("image")
     mobile_pages = MobilePage.objects.filter(
-        paper=test_paper, question_number=question
+        paper=test_paper, question_number=question_index
     ).prefetch_related("image")
 
     page_list = []
@@ -101,19 +103,25 @@ class PageDataService:
 
     @transaction.atomic
     def get_question_pages_metadata(
-        self, paper, *, question=None, include_idpage=False, include_dnmpages=True
-    ):
+        self,
+        paper: int,
+        *,
+        question: int | None = None,
+        include_idpage: bool = False,
+        include_dnmpages: bool = True,
+    ) -> list[dict[str, Any]]:
         """Return a list of metadata for all pages in a paper.
 
         Args:
             paper (int): test-paper number
+
+        Keyword Args:
             question (int/None): question number, if not None.
             include_idpage (bool): whether to include ID pages in this
                 request (default: False)
+
             include_dnmpages (bool): whether to include any DNM pages in
                 this request (default: True)
-
-        The ``included`` key is not meaningful if ``question`` was not passed.
 
         Returns:
             list, e.g. [
@@ -127,6 +135,7 @@ class PageDataService:
                     'server_path' (str) path to the image in the server's filesystem,
                 }
             ]
+            The ``included`` key is not meaningful if ``question`` was not passed.
 
         Raises:
             ObjectDoesNotExist: paper does not exist or question is out of range.
@@ -136,10 +145,10 @@ class PageDataService:
 
         # loops below do not actually check if the question is valid: do that first
         if question is not None:
-            numq = SpecificationService.get_n_questions()
-            if question not in range(1, numq + 1):
+            question_indices = SpecificationService.get_question_indices()
+            if question not in question_indices:
                 raise ObjectDoesNotExist(
-                    f"question {question} is out of bounds [1, {numq}]"
+                    f"question {question} is out of bounds {question_indices}"
                 )
 
         # get all the fixed pages of the test that have images - prefetch the related image
@@ -191,7 +200,7 @@ class PageDataService:
         # e2.1, e2.2, e2.3, and so on.
         # but since those pages are not necessarily in order in the system we
         # need to keep count as we go.
-        question_mobile_page_count = {}
+        question_mobile_page_count: dict[int, int] = {}
 
         # add mobile-pages in pk order (is creation order)
         for page in (

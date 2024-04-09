@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.contrib.auth.models import User
-from django.http import FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework.exceptions import ValidationError
@@ -38,15 +39,13 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_list = [
-            str(q + 1) for q in range(SpecificationService.get_n_questions())
-        ]
-        version_list = [
-            str(v + 1) for v in range(SpecificationService.get_n_versions())
-        ]
-        mark_list = [
-            str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
-        ]
+        question_list = SpecificationService.get_question_indices()
+        version_list = SpecificationService.get_list_of_versions()
+        maxmark = SpecificationService.get_max_all_question_mark()
+        if not maxmark:
+            mark_list = []
+        else:
+            mark_list = [str(m) for m in range(maxmark + 1)]
         tag_list = sorted([X[1] for X in MarkingTaskService().get_all_tags()])
 
         context.update(
@@ -125,11 +124,7 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
 
 class AllTaskOverviewView(LeadMarkerOrManagerView):
-    def get(self, request):
-        question_indices = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
-
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         pos = ProgressOverviewService()  # acronym excellence
         id_task_overview, marking_task_overview = pos.get_task_overview()
@@ -143,7 +138,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         context.update(
             {
-                "question_indices": question_indices,
+                "question_indices": SpecificationService.get_question_indices(),
                 "question_labels": SpecificationService.get_question_index_label_pairs(),
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,

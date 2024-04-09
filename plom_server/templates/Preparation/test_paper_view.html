@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -17,7 +18,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
-                    You have uploaded {{ number_test_sources_uploaded }} of {{ test_versions }} source pdfs
+                    You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
                     <i class="bi bi-check-circle text-success"></i>
                 </h4>
                 {% for version, test_source in uploaded_test_sources.items %}

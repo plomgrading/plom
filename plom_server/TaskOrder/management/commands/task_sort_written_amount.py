@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import csv
 
@@ -60,15 +60,15 @@ class Command(BaseCommand):
         question_index = question_index[0]
         question_version = question_version[0]
 
-        q_range = range(1, SpecificationService.get_n_questions() + 1)
-        # zero has special meaning here
-        v_range = range(0, SpecificationService.get_n_versions() + 1)
-
-        if question_index not in q_range:
+        q_idx_range = SpecificationService.get_question_indices()
+        if question_index not in q_idx_range:
             raise CommandError(
-                f"Question index {question_index} out of valid range. Valid range: {list(q_range)}."
+                f"Question index {question_index} out of valid range."
+                f" Valid range: {q_idx_range}."
             )
 
+        # zero has special meaning here
+        v_range = range(0, SpecificationService.get_n_versions() + 1)
         if question_version not in v_range:
             raise CommandError(
                 f"Version {question_version} out of valid range. Valid range: {list(v_range)}."

@@ -14,7 +14,7 @@ urlpatterns = [
     path("upload", views.SpecUploadView.as_view(), name="spec_upload"),
     path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),
     path(
-        "summary/<int:question_number>",
+        "summary/<int:question_index>",
         views.HTMXSummaryQuestion.as_view(),
         name="spec_summary_q",
     ),

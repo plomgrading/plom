@@ -38,13 +38,12 @@ class MarkingInformationView(ManagerRequiredView):
 
         papers = self.sms.get_all_marks()
         n_questions = SpecificationService.get_n_questions()
-        n_versions = SpecificationService.get_n_versions()
         marked_question_counts = [
             [
-                self.mts.get_marking_progress(version=v, question=q)
-                for v in range(1, n_versions + 1)
+                self.mts.get_marking_progress(version=v, question=q_idx)
+                for v in SpecificationService.get_list_of_versions()
             ]
-            for q in range(1, n_questions + 1)
+            for q_idx in SpecificationService.get_question_indices()
         ]
         (
             total_times_spent,
@@ -53,7 +52,8 @@ class MarkingInformationView(ManagerRequiredView):
         ) = self.tms.all_marking_times_for_web(n_questions)
 
         hours_estimate = [
-            self.tms.get_estimate_hours_remaining(q) for q in range(1, n_questions + 1)
+            self.tms.get_estimate_hours_remaining(qi)
+            for qi in SpecificationService.get_question_indices()
         ]
 
         total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
@@ -82,8 +82,8 @@ class MarkingInformationView(ManagerRequiredView):
         context.update(
             {
                 "papers": papers,
-                "n_questions": range(1, n_questions + 1),
-                "n_versions": range(1, n_versions + 1),
+                "question_indices": SpecificationService.get_question_indices(),
+                "version_list": SpecificationService.get_list_of_versions(),
                 "marked_question_counts": marked_question_counts,
                 "total_times_spent": total_times_spent,
                 "average_times_spent": average_times_spent,

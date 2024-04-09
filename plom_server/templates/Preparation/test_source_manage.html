@@ -3,7 +3,7 @@
     Copyright (C) 2022 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block page_heading %}
@@ -17,7 +17,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
-                    You have uploaded {{ number_test_sources_uploaded }} of {{ test_versions }} source pdfs
+                    You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
                     {% if all_test_sources_uploaded %}
                         <i class="bi bi-check-circle text-success"></i>
                     {% else %}

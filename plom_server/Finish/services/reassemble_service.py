@@ -68,8 +68,7 @@ class ReassembleService:
         sms = StudentMarkService()
         cover_page_info = []
 
-        n_questions = SpecificationService.get_n_questions()
-        for i in range(1, n_questions + 1):
+        for i in SpecificationService.get_question_indices():
             question_label = SpecificationService.get_question_label(i)
             max_mark = SpecificationService.get_question_mark(i)
             version, mark = sms.get_question_version_and_mark(paper, i)
@@ -163,14 +162,11 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.
         """
-        n_questions = SpecificationService.get_n_questions()
         marked_pages = []
-
         mts = MarkingTaskService()
-        for i in range(1, n_questions + 1):
-            annotation = mts.get_latest_annotation(paper.paper_number, i)
+        for qi in SpecificationService.get_question_indices():
+            annotation = mts.get_latest_annotation(paper.paper_number, qi)
             marked_pages.append(annotation.image.image.path)
-
         return marked_pages
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:

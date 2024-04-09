@@ -73,9 +73,7 @@ class ProgressOverviewService:
         """
         id_task_overview: dict[int, None | dict[str, Any]] = {}
         marking_task_overview: dict[int, dict[int, None | dict[str, Any]]] = {}
-        question_numbers = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
+        question_indices = SpecificationService.get_question_indices()
 
         id_info = self.get_id_task_status()
         marking_info = self.get_marking_task_status()
@@ -88,7 +86,7 @@ class ProgressOverviewService:
         # now set up the over-view dicts so that we know about any missing tasks
         for paper_number in papers_with_some_task:
             id_task_overview[paper_number] = None
-            marking_task_overview[paper_number] = {qn: None for qn in question_numbers}
+            marking_task_overview[paper_number] = {qn: None for qn in question_indices}
         # now put the data into those dictionaries
         # we will have Nones where the tasks are missing
         for dat in id_info:
@@ -110,7 +108,7 @@ class ProgressOverviewService:
             qi: MarkingTask.objects.filter(
                 question_number=qi, status=PaperIDTask.COMPLETE
             ).count()
-            for qi in range(1, SpecificationService.get_n_questions() + 1)
+            for qi in SpecificationService.get_question_indices()
         }
 
     def get_completed_task_counts(self) -> dict:
@@ -155,7 +153,7 @@ class ProgressOverviewService:
         # exclude OUT OF DATE tasks
         dat = {
             qi: {"To Do": 0, "Complete": 0, "Out": 0}
-            for qi in range(1, SpecificationService.get_n_questions() + 1)
+            for qi in SpecificationService.get_question_indices()
         }
         for X in (
             MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
@@ -166,7 +164,7 @@ class ProgressOverviewService:
                 MarkingTask(status=X["status"]).get_status_display()
             ] = X["the_count"]
         if n_papers:
-            for qi in range(1, SpecificationService.get_n_questions() + 1):
+            for qi in SpecificationService.get_question_indices():
                 present = sum([v for x, v in dat[qi].items()])
                 dat[qi].update({"Missing": n_papers - present})
         return dat

@@ -209,7 +209,8 @@ def remove_spec() -> None:
     if PaperInfoService().is_paper_database_populated():
         raise MultipleObjectsReturned("Database is already populated with test-papers.")
 
-    Specification.objects.filter().delete()
+    Specification.objects.all().delete()
+    SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
@@ -266,6 +267,28 @@ def get_n_versions() -> int:
     return spec.numberOfVersions
 
 
+def get_list_of_versions() -> list[int]:
+    """Get a list of the versions.
+
+    If there is no spec, an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [v + 1 for v in range(get_n_versions())]
+
+
+def get_question_indices() -> list[int]:
+    """Get a list of the question indices.
+
+    Question indices start at one, not zero.
+
+    If there is no spec, return an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [n + 1 for n in range(get_n_questions())]
+
+
 @transaction.atomic
 def get_n_pages() -> int:
     """Get the number of pages in the test.
@@ -296,7 +319,7 @@ def get_question_mark(question_one_index: str | int) -> int:
 
 @transaction.atomic
 def get_max_all_question_mark() -> int:
-    """Get the maximum mark of all questions."""
+    """Get the maximum mark of all questions, or None if no questions."""
     # the aggregate function returns dict {"mark__max": n}
     return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
@@ -346,7 +369,7 @@ def get_question_index_label_pairs() -> list[Tuple[int, str]]:
         The question indices and labels as pairs of tuples in a list.
         The pairs are ordered by their indices.
     """
-    return [(i, get_question_label(i)) for i in range(1, get_n_questions() + 1)]
+    return [(i, get_question_label(i)) for i in get_question_indices()]
 
 
 def get_question_labels() -> list[str]:
@@ -373,7 +396,7 @@ def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
     """Get the question indices, string labels and fancy HTML labels as a list of triples."""
     return [
         (i, get_question_label(i), render_html_question_label(i))
-        for i in range(1, get_n_questions() + 1)
+        for i in get_question_indices()
     ]
 
 
