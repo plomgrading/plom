@@ -247,13 +247,11 @@ class ExtraliseImageView(ScannerRequiredView):
 
         if extra_page_data.get("questionAll", "off") == "all":
             # set all the questions
-            question_list = [
-                n + 1 for n in range(SpecificationService.get_n_questions())
-            ]
+            to_questions = SpecificationService.get_question_indices()
         else:
             if len(extra_page_data.get("questions", [])):
                 # NOTE - must use getlist here instead of a simple get so that return is a list
-                question_list = [int(q) for q in extra_page_data.getlist("questions")]
+                to_questions = [int(q) for q in extra_page_data.getlist("questions")]
             else:
                 return HttpResponse(
                     """<span class="alert alert-danger">At least one question</span>"""
@@ -261,7 +259,7 @@ class ExtraliseImageView(ScannerRequiredView):
 
         try:
             ScanCastService().assign_extra_page_from_bundle_pk_and_order(
-                request.user, bundle_id, index, paper_number, question_list
+                request.user, bundle_id, index, paper_number, to_questions
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(

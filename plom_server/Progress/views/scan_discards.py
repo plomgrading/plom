@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
-from django.http import HttpResponse
 
 
 from Base.base_group_views import ManagerRequiredView
@@ -15,7 +16,7 @@ from Progress.services import ManageScanService, ManageDiscardService
 class ScanDiscardView(ManagerRequiredView):
     """View the table of discarded images."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         mss = ManageScanService()
         context = self.build_context()
         discards = mss.get_discarded_images()
@@ -30,31 +31,32 @@ class ScanDiscardView(ManagerRequiredView):
 
 
 class ScanReassignView(ManagerRequiredView):
-    def get(self, request, img_pk):
+    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         mss = ManageScanService()
-        img_angle = -mss.get_pushed_image(img_pk).rotation
+        tmp = mss.get_pushed_image(img_pk)
+        # MyPy worries tmp can be None
+        assert tmp is not None, "Unexpected got None for Image: can this happen?"
+        img_angle = -tmp.rotation
         context = self.build_context()
         context.update(
             {"current_page": "reassign", "image_pk": img_pk, "angle": img_angle}
         )
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
-        question_labels = [
-            f"Q.{n+1}" for n in range(SpecificationService.get_n_questions())
-        ]
         used_papers = mss.get_all_used_test_papers()
+        question_html_labels = SpecificationService.get_question_html_label_triples()
 
         context.update(
             {
                 "papers_missing_fixed_pages": papers_missing_fixed_pages,
-                "question_labels": question_labels,
+                "question_html_labels": question_html_labels,
                 "used_papers": used_papers,
             }
         )
 
         return render(request, "Progress/scan_reassign.html", context)
 
-    def post(self, request, img_pk):
+    def post(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         reassignment_data = request.POST
         mds = ManageDiscardService()
 
@@ -86,19 +88,17 @@ class ScanReassignView(ManagerRequiredView):
                 )
             if reassignment_data.get("questionAll", "off") == "all":
                 # set all the questions
-                question_list = [
-                    n + 1 for n in range(SpecificationService.get_n_questions())
-                ]
+                to_questions = SpecificationService.get_question_indices()
             else:
                 if len(reassignment_data.get("questions", [])):
-                    question_list = [int(q) for q in reassignment_data["questions"]]
+                    to_questions = [int(q) for q in reassignment_data["questions"]]
                 else:
                     return HttpResponse(
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
             try:
                 mds.assign_discard_image_to_mobile_page(
-                    request.user, img_pk, paper_number, question_list
+                    request.user, img_pk, paper_number, to_questions
                 )
             except ValueError as e:
                 return HttpResponse(

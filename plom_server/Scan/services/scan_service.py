@@ -496,17 +496,26 @@ class ScanService:
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
-    def map_bundle_pages(self, bundle_pk: int, *, papernum: int, questions) -> None:
-        """WIP support for hwscan.
+    def map_bundle_pages(
+        self,
+        bundle_pk: int,
+        *,
+        papernum: int,
+        pages_to_question_indices: list[list[int]],
+    ) -> None:
+        """Maps an entire bundle's pages onto zero or more questions per page.
 
         Args:
             bundle_pk: primary key of bundle DB object.
 
         Keyword args:
             papernum (int): the number of the test-paper
-            questions (list): doc elsewhere, but a list same length
-                as the bundle, each element is list of which questions
-                to attach that page too.
+            pages_to_question_indices: a list same length
+                as the bundle, each element is variable-length list
+                of which questions (by one-based question index)
+                to attach that page too.  If one of those inner
+                lists is empty, it means to drop (discard) that
+                particular page.
 
         Returns:
             None
@@ -514,14 +523,17 @@ class ScanService:
         root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
 
-        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        bundle_obj = (
+            StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
+        )
 
         # TODO: assert the length of question is same as pages in bundle
 
         with transaction.atomic():
             # TODO: how do we walk them in order?
             for page_img, qlist in zip(
-                bundle_obj.stagingimage_set.all().order_by("bundle_order"), questions
+                bundle_obj.stagingimage_set.all().order_by("bundle_order"),
+                pages_to_question_indices,
             ):
                 if not qlist:
                     page_img.image_type = StagingImage.DISCARD
@@ -691,8 +703,40 @@ class ScanService:
 
     @transaction.atomic
     def map_bundle_pages_cmd(
-        self, bundle_name: str, *, papernum: int, questions
+        self,
+        bundle_name: str,
+        *,
+        papernum: int,
+        question_map: str | list[int] | list[list[int]],
     ) -> None:
+        """Maps an entire bundle's pages onto zero or more questions per page.
+
+        Args:
+            bundle_name: which bundle.
+
+        Keyword Args:
+            papernum: which paper.
+            question_map: specifies how pages of this bundle should be mapped
+                onto questions.  In principle it can be many different things,
+                although the current single caller passes only strings.
+                You can pass a single integer, or a list like `[1,2,3]`
+                which updates each page to questions 1, 2 and 3.
+                You can also pass the special string `all` which uploads
+                each page to all questions.
+                If you need to specify questions per page, you can pass a list
+                of lists: each list gives the questions for each page.
+                For example, `[[1],[2],[2],[2],[3]]` would upload page 1 to
+                question 1, pages 2-4 to question 2 and page 5 to question 3.
+                A common case is `-q [[1],[2],[3]]` to upload one page per
+                question.
+                An empty list will "discard" that particular page.
+
+        Returns:
+            None.
+
+        This is the command "front-end" to :method:`map_bundle_pages`,
+        see also docs there.
+        """
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist as e:
@@ -705,13 +749,11 @@ class ScanService:
         # TODO: ensure papernum exists, here or in the none-cmd?
 
         numpages = bundle_obj.number_of_pages
-        print(f"DEBUG: numpages in bundle: {numpages}")
         numquestions = SpecificationService.get_n_questions()
-        print(f"DEBUG: pre-canonical question:  {questions}")
-        questions = canonicalize_page_question_map(questions, numpages, numquestions)
-        print(f"DEBUG: canonical question list: {questions}")
-
-        self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)
+        mymap = canonicalize_page_question_map(question_map, numpages, numquestions)
+        self.map_bundle_pages(
+            bundle_obj.pk, papernum=papernum, pages_to_question_indices=mymap
+        )
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk: int) -> bool:
