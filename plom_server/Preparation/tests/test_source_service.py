@@ -48,6 +48,12 @@ class SourceServiceTests(TestCase):
         # This test is sus: DB might store as version1_abc123.pdf
         # assert f.path == pdf_source_path / "version1.pdf"
 
+    def test_delete_existing_source_pdf_by_version(self) -> None:
+        upload_path = resources.files(useful_files) / "test_version1.pdf"
+        SourceService.store_source_pdf(1, upload_path)
+        SourceService.delete_source_pdf(1)
+        self.assertEqual(SourceService.how_many_source_versions_uploaded(), 0)
+
     def test_delete_non_existing_source_pdf(self) -> None:
         # documented as a non-error
         SourceService.delete_source_pdf(1)
@@ -61,6 +67,13 @@ class SourceServiceTests(TestCase):
         assert isinstance(d[0], dict)
         assert d[0]["version"] == 1
         assert len(d[0]["hash"]) > 50
+
+    def test_get_as_bytes(self) -> None:
+        upload_path = resources.files(useful_files) / "test_version1.pdf"
+        original_bytes = upload_path.read_bytes()
+        SourceService.store_source_pdf(1, upload_path)
+        stored_bytes = SourceService.get_source_as_bytes(1)
+        self.assertEqual(original_bytes, stored_bytes)
 
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
