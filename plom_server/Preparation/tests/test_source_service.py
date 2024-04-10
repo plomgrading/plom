@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+import pathlib
 import sys
 
 if sys.version_info >= (3, 10):
@@ -37,15 +38,15 @@ class SourceServiceTests(TestCase):
         self.assertEqual(n_sources, 0)
 
     def test_store_source_pdf_location(self) -> None:
-        # This test is sus: DB might store as version1_abc123.pdf
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
-        pdf_save_path = settings.MEDIA_ROOT / "sourceVersions" / "version1.pdf"
-        self.assertTrue(pdf_save_path.exists())
-        # TODO: indeed, this fails if there is an actual server running:
-        # f = SourceService._get_source_file(1)
-        # print(f)
-        # assert f.path == pdf_save_path
+        f = SourceService._get_source_file(1)
+        pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
+        self.assertTrue(pdf_source_path.exists())
+        location_on_disc = pathlib.Path(f.path).parent
+        self.assertTrue(location_on_disc == pdf_source_path)
+        # This test is sus: DB might store as version1_abc123.pdf
+        # assert f.path == pdf_source_path / "version1.pdf"
 
     def test_delete_non_existing_source_pdf(self) -> None:
         # documented as a non-error

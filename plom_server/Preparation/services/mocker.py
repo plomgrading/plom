@@ -8,6 +8,7 @@ from __future__ import annotations
 import pathlib
 import shutil
 
+from django.core.files import File
 from django.conf import settings
 import fitz
 
@@ -20,7 +21,7 @@ class ExamMockerService:
     def mock_exam(
         self,
         version: int,
-        source_path: str | pathlib.Path,
+        source_path: str | pathlib.Path | File,
         n_pages: int,
         short_name: str,
     ) -> pathlib.Path:
