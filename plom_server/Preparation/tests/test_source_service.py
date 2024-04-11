@@ -11,7 +11,6 @@ else:
     import importlib_resources as resources
 
 from django.test import TestCase
-from django.core.exceptions import MultipleObjectsReturned
 from django.conf import settings
 from model_bakery import baker
 
@@ -108,7 +107,7 @@ class SourceServiceTests(TestCase):
     def test_store_source_pdf_already_there(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
-        with self.assertRaises(MultipleObjectsReturned):
+        with self.assertRaises(ValueError):
             SourceService.store_source_pdf(1, upload_path)
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)

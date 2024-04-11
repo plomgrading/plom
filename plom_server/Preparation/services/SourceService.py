@@ -14,7 +14,6 @@ from typing import Any
 
 import fitz
 
-from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 from django.db import transaction
 
@@ -103,7 +102,7 @@ def get_list_of_sources() -> list[dict[str, Any]]:
 
 
 @transaction.atomic
-def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
+def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
     """Store one of the source PDF files into the database.
 
     This does little error checked; its perhaps intended for internal use.
@@ -116,25 +115,22 @@ def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
         None
 
     Raises:
-        MultipleObjectsReturned: tried to store when already present.
+        ValueError: source already present for that version.
     """
     try:
-        PaperSourcePDF.objects.get(version=source_version)
-        raise MultipleObjectsReturned(
-            f"Source pdf with version {source_version} already present."
-        )
+        PaperSourcePDF.objects.get(version=version)
     except PaperSourcePDF.DoesNotExist:
         pass
+    else:
+        raise ValueError(f"Source pdf with version {version} already present.")
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
         hashed = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
-        dj_file = File(fh, name=f"version{source_version}.pdf")
-        PaperSourcePDF.objects.create(
-            version=source_version, source_pdf=dj_file, hash=hashed
-        )
+        dj_file = File(fh, name=f"version{version}.pdf")
+        PaperSourcePDF.objects.create(version=version, source_pdf=dj_file, hash=hashed)
 
 
 def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
@@ -172,7 +168,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         # now try to store it
         try:
             store_source_pdf(version, tmp_pdf)
-        except MultipleObjectsReturned as err:
+        except ValueError as err:
             return (False, str(err))
 
         return (True, "PDF successfully uploaded")
