@@ -71,6 +71,18 @@ class SourceServiceTests(TestCase):
         assert "uploaded" in msg
         assert "success" in msg
 
+    @config_test({"test_spec": "demo"})
+    def test_store_source_pdfs_out_of_range(self) -> None:
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with open(pdf, "rb") as f:
+            r, msg = SourceService.take_source_from_upload(0, f)
+            assert not r
+            assert "range" in msg
+        with open(pdf, "rb") as f:
+            r, msg = SourceService.take_source_from_upload(3, f)
+            assert not r
+            assert "range" in msg
+
     @config_test({"test_spec": "config_files/tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
         # tiny_spec has 3 pages but the pdf here has 6

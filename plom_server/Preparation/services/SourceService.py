@@ -152,6 +152,8 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
     Returns:
         A tuple with a boolean for success and a message or error message.
     """
+    if version not in SpecificationService.get_list_of_versions():
+        return (False, f"Version {version} is out of range")
     required_pages = SpecificationService.get_n_pages()
     # save the file to a temp directory
     # TODO - size limits please
