@@ -14,7 +14,7 @@ from typing import Any
 
 import fitz
 
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 from django.db import transaction
 
@@ -117,8 +117,6 @@ def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
 
     Raises:
         MultipleObjectsReturned: tried to store when already present.
-        ObjectDoesNotExist: TODO: unsure when this is called but some
-            callers seem to think it can happen.  Consider refactoring...
     """
     try:
         PaperSourcePDF.objects.get(version=source_version)
@@ -174,7 +172,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         # now try to store it
         try:
             store_source_pdf(version, tmp_pdf)
-        except (ObjectDoesNotExist, MultipleObjectsReturned) as err:
+        except MultipleObjectsReturned as err:
             return (False, str(err))
 
         return (True, "PDF successfully uploaded")
