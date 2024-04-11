@@ -22,7 +22,7 @@ from .. import useful_files_for_testing as useful_files
 
 
 class SourceServiceTests(TestCase):
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "demo"})
     def test_store_and_list_source_pdfs(self) -> None:
         ver1pdf = resources.files(useful_files) / "test_version1.pdf"
         ver2pdf = resources.files(useful_files) / "test_version2.pdf"
@@ -62,7 +62,25 @@ class SourceServiceTests(TestCase):
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 0)
 
+    @config_test({"test_spec": "demo"})
+    def test_store_source_pdfs_checks(self) -> None:
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with open(pdf, "rb") as f:
+            r, msg = SourceService.take_source_from_upload(1, f)
+        assert r
+        assert "uploaded" in msg
+        assert "success" in msg
+
     @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    def test_store_source_pdfs_wrong_page_count(self) -> None:
+        # tiny_spec has 3 pages but the pdf here has 6
+        pdf = resources.files(useful_files) / "test_version1.pdf"
+        with open(pdf, "rb") as f:
+            r, msg = SourceService.take_source_from_upload(1, f)
+        assert not r
+        assert "pages" in msg
+
+    @config_test({"test_spec": "demo"})
     def test_store_source_pdf_location(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
@@ -74,7 +92,7 @@ class SourceServiceTests(TestCase):
         # This test is sus: DB might store as version1_abc123.pdf
         # assert f.path == pdf_source_path / "version1.pdf"
 
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "demo"})
     def test_store_source_pdf_already_there(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
@@ -87,14 +105,14 @@ class SourceServiceTests(TestCase):
         # documented as a non-error
         SourceService.delete_source_pdf(1)
 
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "demo"})
     def test_source_pdf_list_has_hash(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
         d = SourceService.get_list_of_sources()
         assert len(d[0]["hash"]) > 50
 
-    @config_test({"test_spec": "config_files/tiny_spec.toml"})
+    @config_test({"test_spec": "demo"})
     def test_get_as_bytes(self) -> None:
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         original_bytes = upload_path.read_bytes()
