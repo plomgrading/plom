@@ -80,24 +80,17 @@ def get_list_of_sources() -> list[dict[str, Any]]:
 
     The list is sorted by the version.
     """
-    status = [
-        {"version": v, "uploaded": False}
-        for v in SpecificationService.get_list_of_versions()
-    ]
+    vers = SpecificationService.get_list_of_versions()
+    status = [{"version": v, "uploaded": False} for v in vers]
+    # pdf_objs exist, and we slot them in the above constructed lists
     for pdf_obj in PaperSourcePDF.objects.all():
-        # TODO: not super happy about explicit indexing into this list
-        item = {
+        # in theory, all versions must match spec
+        assert pdf_obj.version in vers, f"ver {pdf_obj.version} out of range {vers}"
+        status[pdf_obj.version - 1] = {
             "version": pdf_obj.version,
             "uploaded": True,
             "hash": pdf_obj.hash,
         }
-        # TODO: what should happen if there is no spec?  above is empty...
-        # We hit this in testing...
-        try:
-            status[pdf_obj.version - 1] = item
-        except IndexError:
-            # TODO: surely not the right fix if index is meaningful!
-            status.append(item)
     return status
 
 
