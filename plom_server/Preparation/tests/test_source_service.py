@@ -74,6 +74,8 @@ class SourceServiceTests(TestCase):
         SourceService.store_source_pdf(1, upload_path)
         stored_bytes = SourceService.get_source_as_bytes(1)
         self.assertEqual(original_bytes, stored_bytes)
+        with self.assertRaises(ValueError):
+            SourceService.get_source_as_bytes(2)
 
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
