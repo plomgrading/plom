@@ -139,9 +139,7 @@ class Command(BaseCommand):
         with open(source_path, "rb") as fh:
             # TODO: confused by the type of fh: here we have a plain
             # file handle but the function talks about "in memory file"...
-            success, msg = SourceService.take_source_from_upload(
-                version, SpecificationService.get_n_pages(), fh
-            )
+            success, msg = SourceService.take_source_from_upload(version, fh)
             if success:
                 self.stdout.write(
                     f"Upload of source pdf for version {version} succeeded."

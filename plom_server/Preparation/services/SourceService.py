@@ -137,15 +137,11 @@ def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
         )
 
 
-def take_source_from_upload(
-    version: int, required_pages: int, in_memory_file: File
-) -> tuple[bool, str]:
+def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, str]:
     """Store a PDF file as one of the source versions, after doing some checks.
 
     Args:
         version: which version, one-based index.
-        required_pages: how many pages we expect.
-            TODO: consider refactoring to ask the SpecService directly.
         in_memory_file: File-object containing the pdf
             (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             TODO: I'm still very uncertain about the types of these, see
@@ -156,6 +152,7 @@ def take_source_from_upload(
     Returns:
         A tuple with a boolean for success and a message or error message.
     """
+    required_pages = SpecificationService.get_n_pages()
     # save the file to a temp directory
     # TODO - size limits please
     with tempfile.TemporaryDirectory() as td:
@@ -164,12 +161,12 @@ def take_source_from_upload(
             for chunk in in_memory_file:
                 fh.write(chunk)
         # now check it has correct number of pages
-        doc = fitz.open(tmp_pdf)
-        if doc.page_count != int(required_pages):
-            return (
-                False,
-                f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
-            )
+        with fitz.open(tmp_pdf) as doc:
+            if doc.page_count != int(required_pages):
+                return (
+                    False,
+                    f"Uploaded pdf has {doc.page_count} pages, but spec requires {required_pages}",
+                )
         # now try to store it
         try:
             store_source_pdf(version, tmp_pdf)
