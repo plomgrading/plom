@@ -47,7 +47,7 @@ opencv-python-headless==4.9.0.80
 packaging==23.2
 pandas==2.1.4
 passlib==1.7.4
-Pillow==10.2.0
+Pillow==10.3.0
 psycopg2-binary==2.9.9
 pymupdf==1.23.8
 PyMySQL==1.1.0
