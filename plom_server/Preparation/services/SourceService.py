@@ -106,6 +106,8 @@ def get_list_of_sources() -> list[dict[str, Any]]:
 def store_source_pdf(source_version: int, source_pdf: pathlib.Path) -> None:
     """Store one of the source PDF files into the database.
 
+    This does little error checked; its perhaps intended for internal use.
+
     Args:
         source_version: which version, indexed from one.
         source_pdf: a path to an actual file.
