@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import List, Optional, Union
 
 import matplotlib
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -516,8 +515,10 @@ class MatplotlibService:
         # create boxplot and set colours
         for i, mark in reversed(list(enumerate(marks))):
             bp = ax.boxplot(mark, positions=[i], vert=False)
-            self._boxplot_set_colors(bp, i / len(marks))
-            (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=marker_names[i])
+            # Issue #3262: MyPy complains about this line, after upgrading to say 3.8
+            colour = matplotlib.cm.hsv(i / len(marks))  # type: ignore[attr-defined]
+            self._boxplot_set_colors(bp, colour)
+            (hL,) = plt.plot([], c=colour, label=marker_names[i])
 
         # set legend
         plt.legend(
@@ -555,20 +556,20 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
-    def _boxplot_set_colors(self, bp, colour):
+    def _boxplot_set_colors(self, bp, colour: tuple) -> None:
         """Set the colours of a boxplot.
 
         Args:
             bp: The boxplot to set the colours of.
             colour: The colour to set the boxplot to.
         """
-        plt.setp(bp["boxes"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][1], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
-        plt.setp(bp["fliers"][0], color=cm.hsv(colour))
-        plt.setp(bp["medians"][0], color=cm.hsv(colour))
+        plt.setp(bp["boxes"][0], color=colour)
+        plt.setp(bp["caps"][0], color=colour)
+        plt.setp(bp["caps"][1], color=colour)
+        plt.setp(bp["whiskers"][0], color=colour)
+        plt.setp(bp["whiskers"][1], color=colour)
+        plt.setp(bp["fliers"][0], color=colour)
+        plt.setp(bp["medians"][0], color=colour)
 
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
