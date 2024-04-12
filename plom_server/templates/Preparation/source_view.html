@@ -5,10 +5,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Create papers
+    View source versions
 {% endblock title %}
 {% block page_heading %}
-    View test source versions
+    View source versions
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -18,21 +18,23 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
-                    You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
+                    You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
                     <i class="bi bi-check-circle text-success"></i>
                 </h4>
-                {% for version, test_source in uploaded_test_sources.items %}
+                {% for src in uploaded_sources %}
                     <div class="row row-cols-auto mt-3">
-                        <div class="p1 col">
-                            <h5>Version {{ version }}:</h5>
+                        <div class="p-1 col">
+                            <h5>Version {{ src.version }}:</h5>
                         </div>
                         <div class="p-1 col">
                             <a class="btn btn-success"
                                target="_blank"
-                               href="{% url 'prep_source_upload' version %}">View</a>
+                               href="{% url 'prep_source_upload' src.version %}">View</a>
                         </div>
                         <div class="p-1 col">
-                            <form action="{% url 'prep_mock' version %}" target="_blank" method="post">
+                            <form action="{% url 'prep_mock' src.version %}"
+                                  target="_blank"
+                                  method="post">
                                 {% csrf_token %}
                                 <input class="btn btn-primary" type="submit" value="Mock">
                             </form>

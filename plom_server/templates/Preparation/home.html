@@ -56,13 +56,12 @@
                 {% if have_papers_been_printed %}
                     <div class="flex-fill">
                         <p class="fs-4 mb-0">
-                            2. Uploaded ({{ uploaded_test_versions }} of {{ num_versions }}) sources
+                            2. Uploaded ({{ num_uploaded_source_versions }} of {{ num_versions }}) sources
                             <i class="bi bi-check-circle text-success"></i>
                         </p>
                         <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
                     </div>
-                    <a class="btn btn-success float-end"
-                       href="{% url 'prep_sources_view' %}">View</a>
+                    <a class="btn btn-success float-end" href="{% url 'prep_source_view' %}">View</a>
                     <a>
                         Papers have been printed
                         <i class="bi bi-chevron-down"></i>
@@ -70,12 +69,12 @@
                 {% elif can_upload_source_tests %}
                     <div class="flex-fill">
                         <p class="fs-4 mb-0">
-                            2. Upload sources ({{ uploaded_test_versions }} of {{ num_versions }})
+                            2. Upload sources ({{ num_uploaded_source_versions }} of {{ num_versions }})
                             {% if all_sources_uploaded %}<i class="bi bi-check-circle text-success"></i>{% endif %}
                         </p>
                         <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
                     </div>
-                    {% if uploaded_test_versions %}
+                    {% if nun_uploaded_source_versions > 0 %}
                         <a class="btn btn-danger float-end"
                            hx-delete="{% url 'prep_reset_sources' %}"
                            hx-confirm="Are you sure?">Reset</a>

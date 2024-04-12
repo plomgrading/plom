@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperInfoService, SpecificationService
 from ...services import (
-    TestSourceService,
+    SourceService,
     PrenameSettingService,
     PQVMappingService,
     PapersPrinted,
@@ -38,9 +38,9 @@ class Command(BaseCommand):
             self.stdout.write(f"Test specification present: {spec_status}")
 
             sources_total = SpecificationService.get_n_versions()
-            sources_present = TestSourceService().how_many_test_versions_uploaded()
+            num_sources_present = SourceService.how_many_source_versions_uploaded()
             self.stdout.write(
-                f"{sources_present} of {sources_total} test source(s) present"
+                f"{num_sources_present} of {sources_total} test source(s) present"
             )
 
             prename_status = PrenameSettingService().get_prenaming_setting()

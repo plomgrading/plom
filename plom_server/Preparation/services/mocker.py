@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
+import pathlib
 import shutil
 
+from django.core.files import File
 from django.conf import settings
 import fitz
 
@@ -13,7 +18,13 @@ from plom.create.mergeAndCodePages import create_QR_codes, pdf_page_add_labels_Q
 class ExamMockerService:
     """Take an uploaded source file and stamp dummy QR codes/text."""
 
-    def mock_exam(self, version: int, source_path: str, n_pages: int, short_name: str):
+    def mock_exam(
+        self,
+        version: int,
+        source_path: str | pathlib.Path | File,
+        n_pages: int,
+        short_name: str,
+    ) -> pathlib.Path:
         """Create the mock exam.
 
         Returns: path to the exam on disk.

@@ -16,7 +16,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import SourceService, TestSourceService, PapersPrinted
+from ..services import SourceService, PapersPrinted
 
 
 class TestSourceUploadForm(forms.Form):
@@ -26,45 +26,39 @@ class TestSourceUploadForm(forms.Form):
     )
 
 
-class TestSourceManageView(ManagerRequiredView):
+class SourceManageView(ManagerRequiredView):
     def build_context(self):
-        tss = TestSourceService()
-
         return {
             "form": TestSourceUploadForm(),
             "num_versions": SpecificationService.get_n_versions(),
-            "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
-            "uploaded_test_sources": tss.get_list_of_sources(),
+            "uploaded_sources": SourceService.get_list_of_sources(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
-            "duplicates": tss.check_pdf_duplication(),
+            "duplicates": SourceService.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
-
-        if version:
-            tss = TestSourceService()
+        if version is not None:
             try:
-                source_path = tss.get_source_pdf_path(version)
                 return FileResponse(
-                    open(source_path, "rb"),
+                    SourceService._get_source_file(version),
                     as_attachment=True,
                     filename=f"source{version}.pdf",
                 )
-            except ObjectDoesNotExist:
-                raise Http404("No such file")
+            except ObjectDoesNotExist as e:
+                raise Http404(e)
 
-        else:
-            context = self.build_context()
-            return render(request, "Preparation/test_source_manage.html", context)
+        if PapersPrinted.have_papers_been_printed():
+            return redirect("prep_source_view")
+        context = self.build_context()
+        return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
+            return redirect("prep_source_view")
 
         context = self.build_context()
         if not request.FILES["source_pdf"]:
@@ -73,7 +67,7 @@ class TestSourceManageView(ManagerRequiredView):
             )
         else:
             success, message = SourceService.take_source_from_upload(
-                version, SpecificationService.get_n_pages(), request.FILES["source_pdf"]
+                version, request.FILES["source_pdf"]
             )
             context.update({"version": version, "success": success, "message": message})
 
@@ -81,23 +75,22 @@ class TestSourceManageView(ManagerRequiredView):
 
     def delete(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_sources_view")
+            return redirect("prep_source_view")
 
         if version:
             SourceService.delete_source_pdf(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
 
 
-class TestSourceReadOnlyView(ManagerRequiredView):
+class SourceReadOnlyView(ManagerRequiredView):
     def build_context(self):
         context = super().build_context()
-        tss = TestSourceService()
         context.update(
             {
                 "num_versions": SpecificationService.get_n_versions(),
-                "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
+                "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
-                "uploaded_test_sources": tss.get_list_of_sources(),
+                "uploaded_sources": SourceService.get_list_of_sources(),
                 "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
                 "navbar_colour": "#AD9CFF",
                 "user_group": "manager",
@@ -107,4 +100,4 @@ class TestSourceReadOnlyView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        return render(request, "Preparation/test_paper_view.html", context)
+        return render(request, "Preparation/source_view.html", context)

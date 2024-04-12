@@ -6,8 +6,11 @@
     Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% block title %}
+    Manage source versions
+{% endblock title %}
 {% block page_heading %}
-    Manage test source versions
+    Manage source versions
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -17,7 +20,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
-                    You have uploaded {{ number_test_sources_uploaded }} of {{ num_versions }} source pdfs
+                    You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
                     {% if all_sources_uploaded %}
                         <i class="bi bi-check-circle text-success"></i>
                     {% else %}
@@ -42,31 +45,33 @@
                 </div>
             </div>
         </div>
-        {% for version,test_source in uploaded_test_sources.items %}
+        {% for src in uploaded_sources %}
             <div>
                 <div class="card">
                     <div class="card-body">
-                        {% if test_source %}
+                        {% if src.uploaded %}
                             <h5 class="card-title">
-                                PDF for version {{ version }} uploaded
+                                PDF for version {{ src.version }} uploaded
                                 <i class="bi bi-check-circle text-success"></i>
                             </h5>
                             <p class="card-text">
-                                sha256: <span class="badge bg-info">{{ test_source.1 }}</span>
+                                sha256: <span class="badge bg-info">{{ src.hash }}</span>
                             </p>
                             <div class="row row-cols-auto">
                                 <div class="p-1 col">
-                                    <a class="btn btn-success" target="_blank" href="{{ version }}">View</a>
+                                    <a class="btn btn-success" target="_blank" href="{{ src.version }}">View</a>
                                 </div>
                                 <div class="p-1 col">
-                                    <form action="{% url 'prep_mock' version %}" target="_blank" method="post">
+                                    <form action="{% url 'prep_mock' src.version %}"
+                                          target="_blank"
+                                          method="post">
                                         {% csrf_token %}
                                         <input class="btn btn-primary" type="submit" value="Mock">
                                     </form>
                                 </div>
                                 <div class="p-1 col">
                                     <button class="btn btn-danger"
-                                            hx-delete="{{ version }}"
+                                            hx-delete="{{ src.version }}"
                                             hx-confirm="Are you sure?"
                                             hx-target="body"
                                             hx-swap="outerHTML">Delete</button>
@@ -74,14 +79,14 @@
                             </div>
                         {% else %}
                             <h5 class="card-title">
-                                Upload PDF for version {{ version }}
+                                Upload PDF for version {{ src.version }}
                                 <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                             </h5>
                             <div class="card-text">
                                 <form enctype="multipart/form-data"
                                       id="form"
                                       method="post"
-                                      action="{% url 'prep_source_upload' version %}">
+                                      action="{% url 'prep_source_upload' src.version %}">
                                     {% csrf_token %}
                                     <div>
                                         <input type="file" accepts=".pdf" name="source_pdf" required />

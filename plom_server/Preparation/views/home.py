@@ -16,7 +16,6 @@ from Papers.services import (
 )
 from ..services import (
     SourceService,
-    TestSourceService,
     PrenameSettingService,
     StagingStudentService,
     PQVMappingService,
@@ -28,7 +27,6 @@ from ..services import (
 
 class PreparationLandingView(ManagerRequiredView):
     def build_context(self):
-        tss = TestSourceService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
         pqvs = PQVMappingService()
@@ -36,7 +34,7 @@ class PreparationLandingView(ManagerRequiredView):
         pinfo = PaperInfoService()
 
         context = {
-            "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
+            "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": False,
