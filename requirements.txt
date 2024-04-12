@@ -32,7 +32,7 @@ canvasapi==3.2.0
 debugpy==1.8.1
 django==4.2.11
 django-braces==1.15.0
-django-filter==24.1
+django-filter==24.2
 django-htmx==1.17.3
 django-huey==1.1.2
 django-humanize==0.1.2
@@ -61,7 +61,7 @@ PyMySQL==1.1.0
 random-username==1.0.2
 requests==2.31.0
 requests-toolbelt==1.0.0
-scikit-learn==1.4.0
+scikit-learn==1.4.2
 scipy==1.12.0
 seaborn==0.13.2
 segno==1.6.1
