@@ -1564,7 +1564,7 @@ def huey_child_get_page_image(
         _lanczos = Image.Resampling.LANCZOS
     except AttributeError:
         # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
-        _lanczos = Image.LANCZOS
+        _lanczos = Image.LANCZOS  # type: ignore
     pil_img.thumbnail(size, _lanczos)
     thumb_path = basedir / ("thumb-" + basename + ".png")
     pil_img.save(thumb_path)
