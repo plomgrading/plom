@@ -16,7 +16,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import TestSourceService, PapersPrinted
+from ..services import SourceService, TestSourceService, PapersPrinted
 
 
 class TestSourceUploadForm(forms.Form):
@@ -36,7 +36,7 @@ class TestSourceManageView(ManagerRequiredView):
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
             "number_of_pages": SpecificationService.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
-            "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+            "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
@@ -72,8 +72,7 @@ class TestSourceManageView(ManagerRequiredView):
                 {"success": False, "message": "Form invalid", "version": version}
             )
         else:
-            tss = TestSourceService()
-            success, message = tss.take_source_from_upload(
+            success, message = SourceService.take_source_from_upload(
                 version, SpecificationService.get_n_pages(), request.FILES["source_pdf"]
             )
             context.update({"version": version, "success": success, "message": message})
@@ -85,8 +84,7 @@ class TestSourceManageView(ManagerRequiredView):
             return redirect("prep_sources_view")
 
         if version:
-            tss = TestSourceService()
-            tss.delete_test_source(version)
+            SourceService.delete_source_pdf(version)
         return HttpResponseClientRedirect(reverse("prep_sources"))
 
 
@@ -100,7 +98,7 @@ class TestSourceReadOnlyView(ManagerRequiredView):
                 "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_test_sources": tss.get_list_of_sources(),
-                "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
+                "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
                 "navbar_colour": "#AD9CFF",
                 "user_group": "manager",
             }

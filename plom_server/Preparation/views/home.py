@@ -15,6 +15,7 @@ from Papers.services import (
     PaperInfoService,
 )
 from ..services import (
+    SourceService,
     TestSourceService,
     PrenameSettingService,
     StagingStudentService,
@@ -36,7 +37,7 @@ class PreparationLandingView(ManagerRequiredView):
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
-            "all_source_tests_uploaded": tss.are_all_test_versions_uploaded(),
+            "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
@@ -110,8 +111,7 @@ class LandingResetSpec(ManagerRequiredView):
     def delete(self, request):
         SpecificationService.remove_spec()
 
-        sources_service = TestSourceService()
-        sources_service.delete_all_test_sources()
+        SourceService.delete_all_source_pdfs()
 
         qv_service = PQVMappingService()
         qv_service.remove_pqv_map()
@@ -121,8 +121,7 @@ class LandingResetSpec(ManagerRequiredView):
 
 class LandingResetSources(ManagerRequiredView):
     def delete(self, request):
-        sources_service = TestSourceService()
-        sources_service.delete_all_test_sources()
+        SourceService.delete_all_source_pdfs()
         return HttpResponseClientRefresh()
 
 

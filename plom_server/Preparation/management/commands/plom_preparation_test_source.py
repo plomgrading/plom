@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import TestSourceService, PapersPrinted
+from ...services import SourceService, TestSourceService, PapersPrinted
 
 
 class Command(BaseCommand):
@@ -92,13 +92,11 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Removing all {len(up_list)} test source pdfs on server."
             )
-            tss.delete_all_test_sources()
+            SourceService.delete_all_source_pdfs()
             return
         if version in up_list:
-            tss.delete_test_source(version)
-            self.stdout.write(
-                f"Removing test pdf source version {version} from server."
-            )
+            SourceService.delete_source_pdf(version)
+            self.stdout.write(f"Removed test pdf source version {version} from server.")
         else:
             self.stderr.write(
                 f"Test pdf source Version {version} is not on the server."
@@ -134,10 +132,11 @@ class Command(BaseCommand):
             raise CommandError(f"Cannot open file {source_path}.")
 
         # send the PDF
-        # TODO - fix 6 to get the required number of pages from the spec.
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
-            success, msg = tss.take_source_from_upload(
+            # TODO: confused by the type of fh: here we have a plain
+            # file handle but the function talks about "in memory file"...
+            success, msg = SourceService.take_source_from_upload(
                 version, SpecificationService.get_n_pages(), fh
             )
             if success:
