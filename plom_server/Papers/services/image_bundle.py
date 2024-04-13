@@ -290,18 +290,22 @@ class ImageBundleService:
         return True
 
     @transaction.atomic
-    def find_internal_collisions(self, staged_imgs):
+    def find_internal_collisions(
+        self, staged_imgs: QuerySet[StagingImage]
+    ) -> list[list[int]]:
         """Check for collisions *within* a bundle.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk]]: list
-                of unordered collisions so that in each sub-list each image (as
-                determined by its primary key) collides with others in that sub-list.
+            A list of unordered collisions so that in each sub-list each image (as
+            determined by its primary key) collides with others in that sub-list.
+            Looks something like:
+            ``[[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk], ...]``
         """
-        known_imgs = {}  # dict of short-tpv to list of known-images with that tpv
+        # temporary dict of short-tpv to list of known-images with that tpv
+        known_imgs: dict[str, list[int]] = {}
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
 
