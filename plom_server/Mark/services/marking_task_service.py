@@ -273,13 +273,6 @@ class MarkingTaskService:
         """Return the total number of tasks in the database, excluding out of date tasks."""
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
-    def mark_task_as_complete(self, code: str) -> None:
-        """Set a task as complete - assuming a client has made a successful request."""
-        # TODO: this should redone somehow, with select_for_update
-        task = self.get_task_from_code(code)
-        task.status = MarkingTask.COMPLETE
-        task.save()
-
     def validate_and_clean_marking_data(
         self, user: User, code: str, data: dict[str, Any], plomfile: str
     ) -> tuple[dict[str, Any], dict, list[Rubric]]:
