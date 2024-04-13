@@ -225,6 +225,7 @@ class MarkingTaskService:
         if task.status == MarkingTask.OUT:
             raise RuntimeError("Task is currently assigned.")
 
+        # TODO: needs ported to select_for_update, or is this dead code?
         task.assigned_user = user
         task.status = MarkingTask.OUT
         task.save()
@@ -480,8 +481,7 @@ class MarkingTaskService:
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        new_tag = MarkingTaskTag(user=user, text=tag_text)
-        new_tag.save()
+        new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
     def add_tag(self, tag, task):
@@ -491,6 +491,7 @@ class MarkingTaskService:
             tag: reference to a MarkingTaskTag instance
             task: reference to a MarkingTask instance
         """
+        # TODO: port to select_for_update?
         tag.task.add(task)
         tag.save()
 
@@ -570,6 +571,7 @@ class MarkingTaskService:
             tag: reference to a MarkingTaskTag instance
             task: reference to a MarkingTask instance
         """
+        # TODO: is tag opened with select_for_update?
         try:
             tag.task.remove(task)
             tag.save()
