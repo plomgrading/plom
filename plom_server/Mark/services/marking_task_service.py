@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import pathlib
 import random
+from typing import Any
 
 from rest_framework.exceptions import ValidationError
 
@@ -279,7 +280,9 @@ class MarkingTaskService:
         task.status = MarkingTask.COMPLETE
         task.save()
 
-    def validate_and_clean_marking_data(self, user, code, data, plomfile):
+    def validate_and_clean_marking_data(
+        self, user: User, code: str, data: dict[str, Any], plomfile: str
+    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
         """Validate the incoming marking data.
 
         Args:
@@ -296,7 +299,7 @@ class MarkingTaskService:
             keys found inside the `annot_data`.
         """
         annot_data = json.loads(plomfile)
-        cleaned_data = {}
+        cleaned_data: dict[str, Any] = {}
 
         if not self.user_can_update_task(user, code):
             raise RuntimeError("User cannot update task.")
