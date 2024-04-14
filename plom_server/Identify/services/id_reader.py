@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pathlib
+from typing import Any
 from warnings import warn
 
 from django.conf import settings
@@ -92,7 +93,9 @@ class IDReaderService:
         return paper_list
 
     @transaction.atomic
-    def get_ID_predictions(self, predictor=None):
+    def get_ID_predictions(
+        self, predictor: str | None = None
+    ) -> dict[int, dict[str, Any]] | dict[int, list[dict[str, Any]]]:
         """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
 
         Keyword Args:
@@ -114,19 +117,22 @@ class IDReaderService:
                     "certainty": pred.certainty,
                     "predictor": pred.predictor,
                 }
-        else:
-            pred_query = IDPrediction.objects.all()
-            for pred in pred_query:
-                if predictions.get(pred.paper.paper_number) is None:
-                    predictions[pred.paper.paper_number] = []
-                predictions[pred.paper.paper_number].append(
-                    {
-                        "student_id": pred.student_id,
-                        "certainty": pred.certainty,
-                        "predictor": pred.predictor,
-                    }
-                )
-        return predictions
+            return predictions
+
+        # else we want all predictors
+        allpred: dict[int, list[dict[str, Any]]] = {}
+        pred_query = IDPrediction.objects.all()
+        for pred in pred_query:
+            if allpred.get(pred.paper.paper_number) is None:
+                allpred[pred.paper.paper_number] = []
+            allpred[pred.paper.paper_number].append(
+                {
+                    "student_id": pred.student_id,
+                    "certainty": pred.certainty,
+                    "predictor": pred.predictor,
+                }
+            )
+        return allpred
 
     @transaction.atomic
     def add_or_change_ID_prediction(
