@@ -34,20 +34,12 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_students(self) -> list[dict[str, str | int]]:
+        """Get a list of students, empty if there are none."""
         return list(
             StagingStudent.objects.all().values(
                 "student_id", "student_name", "paper_number"
             )
         )
-
-    def get_classdict(self):
-        students = self.get_students()
-        for s in students:
-            s["id"] = s.pop("student_id")
-            s["studentName"] = s.pop("student_name")
-            if s["paper_number"] is None:
-                s["paper_number"] = -1
-        return students
 
     @transaction.atomic()
     def get_first_last_prenamed_paper(self):
@@ -154,14 +146,6 @@ class StagingStudentService:
             return max(N1, N2, N3)
         else:
             return max(N1, N2)
-
-    def get_classlist_sids_for_ID_matching(self) -> list[str]:
-        """Returns a list containing all student IDs on the classlist."""
-        students = []
-        classlist = self.get_students()
-        for entry in classlist:
-            students.append(entry.pop("student_id"))
-        return students
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""
