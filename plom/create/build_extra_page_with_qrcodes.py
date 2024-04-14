@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from pathlib import Path
-import segno
 import shutil
 import subprocess
 import sys
 import tempfile
+
+import segno
 
 import plom.create
 from plom.tpv_utils import encodeExtraPageCode
@@ -19,7 +20,7 @@ else:
     import importlib_resources as resources
 
 
-def build_extra_page_pdf(destination_dir=None):
+def build_extra_page_pdf(destination_dir=None) -> None:
     if destination_dir is None:
         destination_dir = Path.cwd()
 
@@ -31,7 +32,8 @@ def build_extra_page_pdf(destination_dir=None):
 
         for crn in range(1, 9):
             qr = segno.make_micro(encodeExtraPageCode(crn))
-            qr.save(tmp_path / f"qr_crn_{crn}.png", border=2, scale=4)
+            # MyPy complains about pathlib.Path here but it works
+            qr.save(tmp_path / f"qr_crn_{crn}.png", border=2, scale=4)  # type: ignore[arg-type]
 
         subprocess.run(
             (

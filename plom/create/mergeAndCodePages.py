@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
+from __future__ import annotations
+
 import tempfile
 import math
+import pathlib
 from pathlib import Path
 
 # import pyqrcode
@@ -23,18 +26,20 @@ from plom.tpv_utils import encodeTPV
 # from plom.misc_utils import run_length_encoding
 
 
-def create_QR_codes(papernum, pagenum, ver, code, dur):
+def create_QR_codes(
+    papernum: int, pagenum: int, ver: int, code: str, dur: pathlib.Path
+) -> list[pathlib.Path]:
     """Creates QR codes as png files and a dictionary of their filenames.
 
     Arguments:
-        papernum (int): the paper/test number.
-        pagenum (int): the page number.
-        ver (int): the version of this page.
-        code (str): 6 digits distinguishing this document from others.
-        dur (pathlib.Path): a directory to save the QR codes.
+        papernum: the paper/test number.
+        pagenum: the page number.
+        ver: the version of this page.
+        code: short digit code distinguishing this document from others.
+        dur: a directory to save the QR codes.
 
     Returns:
-        list: of ``pathlib.Path` for PNG files for each corner's QR code.
+        List of ``pathlib.Path` for PNG files for each corner's QR code.
         The corners are indexed counterclockwise from the top-right:
 
             index | meaning
@@ -54,7 +59,8 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         # qr_code.png(filename, scale=4)
 
         qr_code = segno.make(tpv, error="H")
-        qr_code.save(filename, scale=4)
+        # MyPy complains about pathlib.Path here but it works
+        qr_code.save(filename, scale=4)  # type: ignore[arg-type]
 
         qr_file.append(filename)
 
@@ -69,7 +75,7 @@ def create_exam_and_insert_QR(
     *,
     no_qr=False,
     source_versions_path=None,
-):
+) -> fitz.Document:
     """Creates the exam objects and insert the QR codes.
 
     Creates the exams objects from the pdfs stored at sourceVersions.
@@ -139,10 +145,10 @@ def create_exam_and_insert_QR(
         # name of the group to which page belongs
         group = page_to_group[p]
         text = f"Test {papernum:04} {group:5} p. {p}"
-        odd = (p - 1) % 2 == 0
+        odd: bool | None = (p - 1) % 2 == 0
         if no_qr:
             odd = None
-            qr_files = {}
+            qr_files = []
         else:
             ver = page_to_version[p]
             qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
@@ -154,15 +160,15 @@ def create_exam_and_insert_QR(
     return exam
 
 
-def pdf_page_add_stamp(page, stamp):
+def pdf_page_add_stamp(page: fitz.Page, stamp: str) -> None:
     """Add top-middle stamp to a PDF page.
 
     Args:
-        page (fitz.Page): a particular page of a PDF file.
-        stamp (str): text for the top-middle
+        page: a particular page of a PDF file.
+        stamp: text for the top-middle
 
     Returns:
-        None: but modifies page as a side-effect.
+        None, but modifies page as a side-effect.
     """
     w = 70  # box width
     mx, my = (15, 20)  # margins
@@ -183,16 +189,22 @@ def pdf_page_add_stamp(page, stamp):
     tw.write_text(page)
 
 
-def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
+def pdf_page_add_labels_QRs(
+    page: fitz.Page,
+    shortname: str,
+    stamp: str,
+    qr_code: list[pathlib.Path],
+    odd: bool | None = True,
+) -> None:
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
     Args:
-        page (fitz.Page): a particular page of a PDF file.
-        shortname (str): a short string that we will write on the staple
+        page: a particular page of an open PDF file.  We will modify it.
+        shortname: a short string that we will write on the staple
             indicator.
-        stamp (str): text for the top-middle
-        qr_code (dict): QR images, if empty, don't do corner work.
-        odd (bool/None): True for an odd page number (counting from 1),
+        stamp: text for the top-middle
+        qr_code: QR images, if empty, don't do corner work.
+        odd: True for an odd page number (counting from 1),
             False for an even page, and None if you don't want to draw a
             staple corner.
 

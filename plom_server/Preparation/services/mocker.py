@@ -36,7 +36,7 @@ class ExamMockerService:
             shutil.rmtree(qr_code_temp_dir)
         qr_code_temp_dir.mkdir()
 
-        qr_codes = create_QR_codes(1, 1, 1, 11111, qr_code_temp_dir)  # dummy values
+        qr_codes = create_QR_codes(1, 1, 1, "11111", qr_code_temp_dir)  # dummy values
         pdf_doc = fitz.open(source_path)
         for i in range(n_pages):
             page = pdf_doc[i]
