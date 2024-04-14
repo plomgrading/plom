@@ -310,7 +310,6 @@ class MarkingTaskService:
         except (ValueError, TypeError):
             raise ValidationError(f"Could not cast {val} as int: {elem}")
 
-        # TODO: decide int or float
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
         except (ValueError, TypeError) as e:
