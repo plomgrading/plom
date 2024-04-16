@@ -35,6 +35,15 @@ class Rubric(models.Model):
         user: which user "owns" this Rubric.  Generally, currently, who
             first created it, although in some circumstances other users
             can modify it.
+        display_delta: short string to display, such as "+3" or "2 of 3",
+            that illustrates to recipients how their score is changed by
+            this rubric.
+        value: the internal change associated with this rubric, not shown
+            to recipients.  This should generally be somehow related to
+            the display delta, although the exact calculation depends on
+            ``kind`` and there maybe be hypothetical future circumstances
+            such as mastery grading where the ``display_delta`` might
+            differ substantially from ``value``.
         TODO: document other fields.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
