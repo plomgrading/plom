@@ -54,6 +54,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "parameters": r.parameters,
         "system_rubric": r.system_rubric,
         "published": r.published,
+        "last_modified": r.last_modified,
         "_edition": r._edition,
     }
 

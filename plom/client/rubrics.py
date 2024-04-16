@@ -324,12 +324,12 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
         rval = False
         out += _diff_line(str(p.get("parameters")), str(r.get("parameters")))
     if not rval:
-        mod = r.get("modified")
-        if mod:
-            when = arrow.get(mod).humanize()
+        mod = r.get("last_modified")
+        if mod == "unknown":
+            # TODO: special support for legacy
+            when = mod
         else:
-            # TODO: or force input to have modified?
-            when = arrow.now().humanize()
+            when = arrow.get(mod).humanize()
         out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
     if rval:
         return True, ""

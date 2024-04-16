@@ -11,6 +11,7 @@ import html
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+import arrow
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
 from PyQt6.QtWidgets import (
@@ -1722,6 +1723,9 @@ class RubricWidget(QWidget):
                     r for r in tmp_rubrics if r["id"] == new_rubric["id"]
                 )
                 same, their_diff = diff_rubric(old_rubric, their_rubric)
+                # server hasn't seen it to change timestamp, so we'll (temporarily) do
+                # it ourselves.  TODO: might want to revisit once we can choose "ours"
+                new_rubric["last_modified"] = str(arrow.now())
                 same, our_diff = diff_rubric(old_rubric, new_rubric)
                 InfoMsg(
                     self,

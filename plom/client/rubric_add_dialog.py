@@ -12,6 +12,8 @@ import re
 import sys
 from typing import Any
 
+import arrow
+
 if sys.version_info >= (3, 9):
     from importlib import resources
 else:
@@ -191,7 +193,11 @@ class AddRubricBox(QDialog):
         self.version = version
         self.maxver = maxver
 
+        self._is_edit = False
         if com:
+            self._is_edit = True
+
+        if self.is_edit():
             self.setWindowTitle("Modify rubric")
         else:
             self.setWindowTitle("Add new rubric")
@@ -428,6 +434,10 @@ class AddRubricBox(QDialog):
         flay.addRow("Rubric ID", self.label_rubric_id)
         flay.addRow("Created by", self.Luser)
 
+        self.last_modified_label = QLabel("")
+        if self.is_edit():
+            flay.addRow("Last modified", self.last_modified_label)
+
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
@@ -475,6 +485,7 @@ class AddRubricBox(QDialog):
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
             self.Luser.setText(com.get("username", ""))
+            self.last_modified_label.setText(arrow.get(com["last_modified"]).humanize())
             if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
@@ -549,6 +560,10 @@ class AddRubricBox(QDialog):
                 self.scopeButton.animateClick()
         self.subsRemakeGridUI(params)
         self.hiliter.setSubs([x for x, _ in params])
+
+    def is_edit(self):
+        """Answer true if we are editting a rubric (rather than making a new one)."""
+        return self._is_edit
 
     def subsMakeGridUI(self, params):
         maxver = self.maxver

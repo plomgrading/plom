@@ -1051,6 +1051,9 @@ class BaseMessenger:
                     r["system_rubric"] = True
                 else:
                     r["system_rubric"] = False
+                # A special sentinel value for legacy server
+                # TODO: annoying b/c downstream needs to detect and not send to arrow
+                r.setdefault("last_modified", "unknown")
             return rubrics
 
     def MmodifyRubric(self, key, new_rubric):
