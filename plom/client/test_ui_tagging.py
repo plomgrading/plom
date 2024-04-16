@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
 from plom.client.tagging import AddRemoveTagDialog
 
 
-def test_tag_add(qtbot):
+def test_tag_add(qtbot) -> None:
     d = AddRemoveTagDialog(None, [], [])
     d.show()
     qtbot.addWidget(d)
@@ -15,7 +15,7 @@ def test_tag_add(qtbot):
     assert d.return_values == ("add", "tag!")
 
 
-def test_tag_cancel_dialog(qtbot):
+def test_tag_cancel_dialog(qtbot) -> None:
     d = AddRemoveTagDialog(None, [], [])
     d.show()
     qtbot.addWidget(d)
@@ -24,7 +24,7 @@ def test_tag_cancel_dialog(qtbot):
     assert not d.isVisible()
 
 
-def test_tag_choices_but_still_freeform(qtbot):
+def test_tag_choices_but_still_freeform(qtbot) -> None:
     d = AddRemoveTagDialog(None, [], ["old"])
     d.show()
     qtbot.addWidget(d)
@@ -33,7 +33,7 @@ def test_tag_choices_but_still_freeform(qtbot):
     assert d.return_values == ("add", "tag!")
 
 
-def test_tag_choices(qtbot):
+def test_tag_choices(qtbot) -> None:
     d = AddRemoveTagDialog(None, [], ["me", "too"])
     d.show()
     qtbot.addWidget(d)
@@ -42,7 +42,7 @@ def test_tag_choices(qtbot):
     assert d.return_values == ("add", "me")
 
 
-def test_tag_remove(qtbot, monkeypatch):
+def test_tag_remove(qtbot, monkeypatch) -> None:
     monkeypatch.setattr(
         QMessageBox, "question", lambda *args: QMessageBox.StandardButton.Yes
     )
@@ -54,7 +54,7 @@ def test_tag_remove(qtbot, monkeypatch):
     assert not d.isVisible()
 
 
-def test_tag_remove_dangerous_chars(qtbot, monkeypatch):
+def test_tag_remove_dangerous_chars(qtbot, monkeypatch) -> None:
     monkeypatch.setattr(
         QMessageBox, "question", lambda *args: QMessageBox.StandardButton.Yes
     )

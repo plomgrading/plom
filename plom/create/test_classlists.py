@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2022 Andrew Rechnitzer
 
 from pytest import raises
@@ -12,7 +12,7 @@ from .buildClasslist import clean_non_canvas_csv
 from ..misc_utils import working_directory
 
 
-def test_ok_to_contain_unused_column_names(tmpdir):
+def test_ok_to_contain_unused_column_names(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -28,7 +28,7 @@ def test_ok_to_contain_unused_column_names(tmpdir):
         assert warn_err == []
 
 
-def test_no_ID_column_fails(tmpdir):
+def test_no_ID_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -48,7 +48,7 @@ def test_no_ID_column_fails(tmpdir):
         assert warn_err[0]["werr_text"].startswith("Missing 'id' column")
 
 
-def test_two_ID_column_fails(tmpdir):
+def test_two_ID_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -72,7 +72,7 @@ def test_two_ID_column_fails(tmpdir):
             assert X in warn_err
 
 
-def test_no_name_column_fails(tmpdir):
+def test_no_name_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -92,7 +92,7 @@ def test_no_name_column_fails(tmpdir):
         assert warn_err[0]["werr_text"].startswith("Missing 'name' column")
 
 
-def test_two_name_column_fails(tmpdir):
+def test_two_name_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -116,7 +116,7 @@ def test_two_name_column_fails(tmpdir):
             assert X in warn_err
 
 
-def test_two_papernumber_column_fails(tmpdir):
+def test_two_papernumber_column_fails(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -140,7 +140,7 @@ def test_two_papernumber_column_fails(tmpdir):
             assert X in warn_err
 
 
-def test_casefold_column_names1(tmpdir):
+def test_casefold_column_names1(tmpdir) -> None:
     # for #1140
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -160,7 +160,7 @@ def test_casefold_column_names1(tmpdir):
         assert warn_err == []
 
 
-def test_casefold_column_names2(tmpdir):
+def test_casefold_column_names2(tmpdir) -> None:
     # for #1140
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -179,7 +179,7 @@ def test_casefold_column_names2(tmpdir):
         assert warn_err == []
 
 
-def test_casefold_column_names3(tmpdir):
+def test_casefold_column_names3(tmpdir) -> None:
     # for #1140
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -198,7 +198,7 @@ def test_casefold_column_names3(tmpdir):
         assert warn_err == []
 
 
-def test_missing_student_info(tmpdir):
+def test_missing_student_info(tmpdir) -> None:
     # testing for #1314
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -246,7 +246,7 @@ def test_missing_student_info(tmpdir):
             assert X in warn_err
 
 
-def test_check_classlist_length(tmpdir):
+def test_check_classlist_length(tmpdir) -> None:
     # Check that classlist is not longer than number to produce
     # should warn that we are not producing enough tests.
     tmpdir = Path(tmpdir)
@@ -275,7 +275,7 @@ def test_check_classlist_length(tmpdir):
             assert X in warn_err
 
 
-def test_short_name_warning1(tmpdir):
+def test_short_name_warning1(tmpdir) -> None:
     # for #2052
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -309,7 +309,7 @@ def test_short_name_warning1(tmpdir):
             assert X in warn_err
 
 
-def test_non_latin_name(tmpdir):
+def test_non_latin_name(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -323,7 +323,7 @@ def test_non_latin_name(tmpdir):
     assert not warn_err
 
 
-def test_partial_papernumbers(tmpdir):
+def test_partial_papernumbers(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -337,7 +337,7 @@ def test_partial_papernumbers(tmpdir):
     assert warn_err == []
 
 
-def test_repeated_papernumbers(tmpdir):
+def test_repeated_papernumbers(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -361,7 +361,7 @@ def test_repeated_papernumbers(tmpdir):
         assert X in warn_err
 
 
-def test_leading_zero_sid(tmp_path):
+def test_leading_zero_sid(tmp_path) -> None:
     vlad = PlomClasslistValidator()
     foo = tmp_path / "foo.csv"
     with open(foo, "w") as f:

@@ -54,14 +54,14 @@ def test_stamp_QRs(tmp_path) -> None:
         pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr[:3])
 
     # place them on the page
-    pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr, odd=(p % 2))
+    pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr, odd=bool(p % 2))
 
     p = 4
     qr2 = create_QR_codes(6, p, 1, "12345", tmp_path)
     # QR codes are different for the new page
     for k in range(4):
         assert qr[k] != qr2[k]
-    pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr2, odd=(p % 2))
+    pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr2, odd=bool(p % 2))
 
     out = tmp_path / "debug_QR_codes.pdf"
     d.save(out)

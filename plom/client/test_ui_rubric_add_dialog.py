@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020, 2023 Colin B. Macdonald
+# Copyright (C) 2020, 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pytest import raises
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
@@ -10,7 +13,7 @@ from plom.client.rubric_list import AddRubricBox
 from plom.client.useful_classes import WarnMsg, SimpleQuestion
 
 
-def test_AddRubricBox_add_new(qtbot):
+def test_AddRubricBox_add_new(qtbot) -> None:
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
     assert d.windowTitle().startswith("Add")
@@ -34,7 +37,7 @@ def test_AddRubricBox_add_new(qtbot):
     assert out["text"] == "new rubric"
 
 
-def test_AddRubricBox_modify(qtbot):
+def test_AddRubricBox_modify(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -70,13 +73,13 @@ def test_AddRubricBox_modify(qtbot):
     assert out["text"] == "some text-more"
 
 
-def test_AddRubricBox_modify_invalid(qtbot):
-    rub = {
+def test_AddRubricBox_modify_invalid(qtbot) -> None:
+    rub0 = {
         "text": "no id, lots of missing fields",
     }
     with raises(KeyError):
-        AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
-    rub = {
+        AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub0)
+    rub: dict[str, Any] = {
         "id": 1234,
         "kind": "man_unkind",
         "display_delta": "+1",
@@ -88,7 +91,7 @@ def test_AddRubricBox_modify_invalid(qtbot):
         AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
 
 
-def test_AddRubricBox_absolute_rubrics(qtbot):
+def test_AddRubricBox_absolute_rubrics(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "absolute",
@@ -113,7 +116,7 @@ def test_AddRubricBox_absolute_rubrics(qtbot):
     assert out["out_of"] == 5
 
 
-def test_AddRubricBox_harvest(qtbot):
+def test_AddRubricBox_harvest(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -129,7 +132,7 @@ def test_AddRubricBox_harvest(qtbot):
     assert out["text"] == "BBB"
 
 
-def test_AddRubricBox_optional_meta_field(qtbot):
+def test_AddRubricBox_optional_meta_field(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "neutral",
@@ -144,7 +147,7 @@ def test_AddRubricBox_optional_meta_field(qtbot):
     assert out["meta"] == "meta very meta"
 
 
-def test_AddRubricBox_optional_username(qtbot):
+def test_AddRubricBox_optional_username(qtbot) -> None:
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None)
     qtbot.addWidget(d)
     qtbot.keyClicks(d.TE, "text")
@@ -161,7 +164,7 @@ def test_AddRubricBox_optional_username(qtbot):
     assert out["username"] == "user"
 
 
-def test_AddRubricBox_parameterize(qtbot):
+def test_AddRubricBox_parameterize(qtbot) -> None:
     for v in (1, 2):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 2, None, experimental=True)
         qtbot.addWidget(d)
@@ -193,8 +196,8 @@ def test_AddRubricBox_parameterize(qtbot):
         assert out["parameters"] == [("<param1>", ["", ""]), ("<param2>", exp)]
 
 
-def test_AddRubricBox_modify_parameterized(qtbot):
-    rub = {
+def test_AddRubricBox_modify_parameterized(qtbot) -> None:
+    rub: dict[str, Any] = {
         "id": 1234,
         "kind": "neutral",
         "text": "some text",
@@ -210,7 +213,7 @@ def test_AddRubricBox_modify_parameterized(qtbot):
     assert out["parameters"] == rub["parameters"] + [("{param3}", ["", ""])]
 
 
-def test_AddRubricBox_modify_parameterized_remove(qtbot):
+def test_AddRubricBox_modify_parameterized_remove(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "neutral",
@@ -235,7 +238,7 @@ def test_AddRubricBox_modify_parameterized_remove(qtbot):
     assert out["parameters"] == [("{param1}", ["x", "y"])]
 
 
-def test_AddRubricBox_specific_to_version(qtbot):
+def test_AddRubricBox_specific_to_version(qtbot) -> None:
     for v in (1, 2):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 3, None)
         qtbot.addWidget(d)
@@ -250,7 +253,7 @@ def test_AddRubricBox_specific_to_version(qtbot):
         assert out["versions"] == [v, 3]
 
 
-def test_AddRubricBox_change_existing_versions(qtbot):
+def test_AddRubricBox_change_existing_versions(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "neutral",
@@ -275,7 +278,7 @@ def test_AddRubricBox_change_existing_versions(qtbot):
     assert set(out["versions"]) == set([1, 2, 3])
 
 
-def test_AddRubricBox_add_to_group(qtbot):
+def test_AddRubricBox_add_to_group(qtbot) -> None:
     groups = ("(a)", "(b")
     for group in groups:
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None, groups=groups)
@@ -289,7 +292,7 @@ def test_AddRubricBox_add_to_group(qtbot):
         assert out["tags"] == f"group:{group}"
 
 
-def test_AddRubricBox_add_to_group_exclusive(qtbot):
+def test_AddRubricBox_add_to_group_exclusive(qtbot) -> None:
     groups = ("(a)", "(b")
     for group in groups:
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None, groups=groups)
@@ -304,7 +307,7 @@ def test_AddRubricBox_add_to_group_exclusive(qtbot):
         assert out["tags"] == f"group:{group} exclusive:{group}"
 
 
-def test_AddRubricBox_group_without_group_list(qtbot):
+def test_AddRubricBox_group_without_group_list(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -323,7 +326,7 @@ def test_AddRubricBox_group_without_group_list(qtbot):
     assert "group:(bar) exclusive:(bar)" in out["tags"]
 
 
-def test_AddRubricBox_change_group_make_exclusive(qtbot):
+def test_AddRubricBox_change_group_make_exclusive(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -344,7 +347,7 @@ def test_AddRubricBox_change_group_make_exclusive(qtbot):
         assert out["tags"] == f"group:{group} exclusive:{group}"
 
 
-def test_AddRubricBox_change_group_remove_exclusive(qtbot):
+def test_AddRubricBox_change_group_remove_exclusive(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -367,7 +370,7 @@ def test_AddRubricBox_change_group_remove_exclusive(qtbot):
         assert out["tags"] == f"group:{group}"
 
 
-def test_AddRubricBox_group_too_complicated(qtbot):
+def test_AddRubricBox_group_too_complicated(qtbot) -> None:
     rub = {
         "id": 1234,
         "kind": "relative",
@@ -438,7 +441,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     assert out["tags"] == rub["tags"]
 
 
-def test_AddRubricBox_empty_text_opens_dialog(qtbot, monkeypatch):
+def test_AddRubricBox_empty_text_opens_dialog(qtbot, monkeypatch) -> None:
     def _raise(*args, **kwargs):
         raise RuntimeError()
 
@@ -449,7 +452,7 @@ def test_AddRubricBox_empty_text_opens_dialog(qtbot, monkeypatch):
         d.accept()
 
 
-def test_AddRubricBox_dot_sentinel_issue2421(qtbot, monkeypatch):
+def test_AddRubricBox_dot_sentinel_issue2421(qtbot, monkeypatch) -> None:
     def _raise(*args, **kwargs):
         raise RuntimeError()
 
@@ -461,7 +464,7 @@ def test_AddRubricBox_dot_sentinel_issue2421(qtbot, monkeypatch):
         d.accept()
 
 
-def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
+def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch) -> None:
     monkeypatch.setattr(
         SimpleQuestion, "ask", lambda *args, **kwargs: QMessageBox.StandardButton.Yes
     )
@@ -487,7 +490,7 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     assert out["text"] == txt
 
 
-def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
+def test_AddRubricBox_shift_enter_accepts_dialog(qtbot) -> None:
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
     d.show()
@@ -502,7 +505,7 @@ def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
     assert out["text"] == "text"
 
 
-def test_AddRubricBox_ctrl_enter_adds_tex(qtbot):
+def test_AddRubricBox_ctrl_enter_adds_tex(qtbot) -> None:
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
     d.show()
