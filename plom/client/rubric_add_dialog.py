@@ -486,7 +486,7 @@ class AddRubricBox(QDialog):
                 self.label_rubric_id.setText(str(com["id"]))
             self.Luser.setText(com.get("username", ""))
             lastmod = com.get("last_modified")
-            # Note sure if would be None be seems harmless (or no more harmful
+            # Note sure if would be None but seems harmless (or no more harmful
             # than "unknown" sentintel from legacy anyway)
             if lastmod is not None and lastmod != "unknown":
                 self.last_modified_label.setText(
@@ -569,7 +569,7 @@ class AddRubricBox(QDialog):
         self.hiliter.setSubs([x for x, _ in params])
 
     def is_edit(self):
-        """Answer true if we are editting a rubric (rather than making a new one)."""
+        """Answer true if we are editing a rubric (rather than making a new one)."""
         return self._is_edit
 
     def subsMakeGridUI(self, params):
