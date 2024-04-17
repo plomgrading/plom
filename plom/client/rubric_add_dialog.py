@@ -436,7 +436,7 @@ class AddRubricBox(QDialog):
 
         self.last_modified_label = QLabel("")
         if self.is_edit():
-            flay.addRow("Last modified", self.last_modified_label)
+            flay.addRow("", self.last_modified_label)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -486,8 +486,15 @@ class AddRubricBox(QDialog):
                 self.label_rubric_id.setText(str(com["id"]))
             self.Luser.setText(com.get("username", ""))
             lastmod = com.get("last_modified")
+            # TODO: why would it be None?
+            if lastmod is None:
+                print(com)
+                raise NotImplementedError("not supposed to happen")
             if lastmod is not None and lastmod != "unknown":
-                self.last_modified_label.setText(arrow.get(lastmod).humanize())
+                self.last_modified_label.setText(
+                    f'revision {com["_edition"]}, '
+                    f"last modified {arrow.get(lastmod).humanize()}"
+                )
             if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
