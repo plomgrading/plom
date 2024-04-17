@@ -1770,9 +1770,15 @@ class RubricWidget(QWidget):
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert key == new_rubric["id"]
+            # Issue #3329: ensure edition, mod time, etc get updated
+            tmp_rubrics = self._parent.getRubricsFromServer()
+            (new_rubric,) = (r for r in tmp_rubrics if r["id"] == new_rubric["id"])
+            # keys match still match.
+            assert key == new_rubric["id"]
             assert self.rubrics[index]["id"] == new_rubric["id"]
-            # then replace
+            # then replace in our local list
             self.rubrics[index] = new_rubric
+            # TODO: probably should do full refresh: already had to grab everything
         else:
             new_rubric.pop("id")
             new_rubric["id"] = self._parent.createNewRubric(new_rubric)
