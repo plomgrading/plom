@@ -1004,8 +1004,8 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: list of dicts, possibly an empty list if server has no
-                rubrics for this question.
+            List of dicts, possibly an empty list if server has no
+            rubrics for this question.
         """
         if self.is_legacy_server():
             return self._legacy_getRubrics(question)

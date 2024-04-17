@@ -171,7 +171,6 @@ class AddRubricBox(QDialog):
                 Otherwise, this has the current comment data.
 
         Keyword Args:
-            annotator_size (QSize/None): size of the parent annotator
             groups (list): optional list of existing/recommended group
                 names that the rubric could be added to.
             add_to_group (str/None): preselect this group in the scope
