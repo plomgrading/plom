@@ -300,12 +300,11 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
         time).
     """
     rval = True
-    mod = r.get("last_modified")
+    mod = r.get("last_modified", "unknown")
     if mod == "unknown":
         # TODO: special support for legacy
         when = mod
     else:
-        assert mod is not None  # happy MyPy?
         when = arrow.get(mod).humanize()
     prefix = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}'
     out = ""

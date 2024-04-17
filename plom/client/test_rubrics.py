@@ -29,7 +29,7 @@ def test_rubric_diff() -> None:
     r.update({"text": "DEF"})
     same, diff = diff_rubric(p, p)
     assert same
-    assert diff == ""
+    assert "no visible changes" in diff
     same, diff = diff_rubric(p, r)
     assert not same
     assert re.match(r"(?s).*\-.*ABC", diff)
