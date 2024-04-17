@@ -1742,12 +1742,18 @@ class RubricWidget(QWidget):
                         <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
                           <h4>Their's</h4>
                           {render_rubric_as_html(their_rubric)}
-                          <b>changes</b><br />
-                          {their_diff}
                         </td>
                         <td style="padding-left: 2ex;">
                           <h4>Your's</h4>
                           {render_rubric_as_html(new_rubric)}
+                        </td>
+                        </tr>
+                        <tr>
+                        <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
+                          <b>changes</b><br />
+                          {their_diff}
+                        </td>
+                        <td style="padding-left: 2ex;">
                           <b>changes</b><br />
                           {our_diff}
                         </td>
