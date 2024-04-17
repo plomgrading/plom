@@ -486,10 +486,8 @@ class AddRubricBox(QDialog):
                 self.label_rubric_id.setText(str(com["id"]))
             self.Luser.setText(com.get("username", ""))
             lastmod = com.get("last_modified")
-            # TODO: why would it be None?
-            if lastmod is None:
-                print(com)
-                raise NotImplementedError("not supposed to happen")
+            # Note sure if would be None be seems harmless (or no more harmful
+            # than "unknown" sentintel from legacy anyway)
             if lastmod is not None and lastmod != "unknown":
                 self.last_modified_label.setText(
                     f'revision {com["_edition"]}, '
