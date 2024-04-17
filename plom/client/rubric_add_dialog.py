@@ -485,7 +485,9 @@ class AddRubricBox(QDialog):
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
             self.Luser.setText(com.get("username", ""))
-            self.last_modified_label.setText(arrow.get(com["last_modified"]).humanize())
+            lastmod = com.get("last_modified")
+            if lastmod is not None and lastmod != "unknown":
+                self.last_modified_label.setText(arrow.get(lastmod).humanize())
             if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
