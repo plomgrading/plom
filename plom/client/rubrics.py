@@ -305,6 +305,7 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
         # TODO: special support for legacy
         when = mod
     else:
+        assert mod is not None  # happy MyPy?
         when = arrow.get(mod).humanize()
     prefix = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}'
     out = ""
