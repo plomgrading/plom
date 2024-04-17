@@ -170,8 +170,8 @@ class RubricService:
         if not new_rubric_data["_edition"] == rubric._edition:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
-                f"database content (edition = {rubric._edition}: most likely your "
+                f"Your rubric edition {new_rubric_data['_edition']} does not match "
+                f"database content (edition {rubric._edition}): most likely your "
                 "edits have collided with those of someone else."
             )
 
