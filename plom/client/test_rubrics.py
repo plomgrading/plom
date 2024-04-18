@@ -3,6 +3,8 @@
 
 import re
 
+import arrow
+
 from plom.client.rubrics import diff_rubric, render_rubric_as_html
 
 
@@ -52,3 +54,21 @@ def test_rubric_diff_version_change_issue3295() -> None:
     same, diff = diff_rubric(p, r)
     assert not same
     assert "[1, 2]" in diff
+
+
+def test_rubric_diff_tags() -> None:
+    p = _make_ex()
+    r = _make_ex()
+    r.update({"tags": "foo"})
+    same, diff = diff_rubric(p, r)
+    assert not same
+    assert "foo" in diff
+
+
+def test_rubric_diff_when() -> None:
+    p = _make_ex()
+    r = _make_ex()
+    r.update({"last_modified": arrow.now(), "text": "meh"})
+    same, diff = diff_rubric(p, r)
+    assert not same
+    assert "just now" in diff
