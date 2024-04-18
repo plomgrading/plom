@@ -25,6 +25,10 @@ class RubricConflictDialog(InfoMsg):
         common_ancestor: The common ancestor of both, we will display
             how each rubric differs from this one.
 
+    Keyword Args:
+        ours_right_now: override the "last_modified" time of our_rubric
+            to be "now", on by default.
+
     For now, it just explains the situation but offers no resolution.
     """
 
@@ -35,13 +39,16 @@ class RubricConflictDialog(InfoMsg):
         their_rubric: dict[str, Any],
         our_rubric: dict[str, Any],
         common_ancestor: dict[str, Any],
+        *,
+        ours_right_now: bool = True,
         **kwargs,
     ):
         same, their_diff = diff_rubric(common_ancestor, their_rubric)
-        # server hasn't seen it to change timestamp, so we'll (temporarily) do
-        # it ourselves.
-        our_rubric = our_rubric.copy()
-        our_rubric["last_modified"] = str(arrow.now())
+        if ours_right_now:
+            # server hasn't seen it to change timestamp, so we'll (temporarily)
+            # do it ourselves.
+            our_rubric = our_rubric.copy()
+            our_rubric["last_modified"] = str(arrow.now())
         same, our_diff = diff_rubric(common_ancestor, our_rubric)
         txt = f"""
             <h3>Rubric change conflict</h3>
