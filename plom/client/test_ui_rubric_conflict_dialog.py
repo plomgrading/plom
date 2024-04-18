@@ -12,7 +12,7 @@ from .rubric_conflict_dialog import RubricConflictDialog
 
 def test_rubric_conflict_dialog_insufficient_args(qtbot) -> None:
     with raises(TypeError, match="missing"):
-        RubricConflictDialog(None, "foo")
+        RubricConflictDialog(None, "foo")  # type: ignore[call-arg]
 
 
 def test_rubric_conflict_dialog(qtbot) -> None:
