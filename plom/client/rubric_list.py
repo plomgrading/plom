@@ -8,6 +8,7 @@
 
 from datetime import datetime
 import logging
+import random
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -1723,6 +1724,7 @@ class RubricWidget(QWidget):
                     self, str(e), theirs, new_rubric, old_rubric
                 ).exec()
                 return
+
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert key == new_rubric["id"]
@@ -1735,6 +1737,14 @@ class RubricWidget(QWidget):
             # then replace in our local list
             self.rubrics[index] = new_rubric
             # TODO: probably should do full refresh: already had to grab everything
+
+            # Debugging: change to True to slip in an unexpected change by another client
+            # so that our *next* change will generate a conflict.
+            if False and random.random() < 0.33:
+                _tmp = new_rubric.copy()
+                _tmp["text"] = _tmp["text"] + " [simulated offline comment change]"
+                self._parent.modifyRubric(_tmp["id"], _tmp)
+
         else:
             new_rubric.pop("id")
             new_rubric["id"] = self._parent.createNewRubric(new_rubric)
