@@ -10,7 +10,6 @@ from datetime import datetime
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-import arrow
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
 from PyQt6.QtWidgets import (
