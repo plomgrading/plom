@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020, 2023 Colin B. Macdonald
+# Copyright (C) 2020, 2023-2024 Colin B. Macdonald
 
 from pytest import raises
 
@@ -12,7 +12,7 @@ from plom.client.useful_classes import CustomDetailsDialog
 from plom.client.useful_classes import BigMessageDialog
 
 
-def test_BlankIDBoxDialog(qtbot):
+def test_BlankIDBoxDialog(qtbot) -> None:
     d = BlankIDBox(None, 16)
     d.show()
     qtbot.addWidget(d)
@@ -20,7 +20,7 @@ def test_BlankIDBoxDialog(qtbot):
     assert d.testNumber == 16
 
 
-def test_BlankIDBoxDialog2(qtbot):
+def test_BlankIDBoxDialog2(qtbot) -> None:
     d = BlankIDBox(None, 32)
     d.show()
     qtbot.addWidget(d)
@@ -28,7 +28,7 @@ def test_BlankIDBoxDialog2(qtbot):
     assert d.testNumber == 32
 
 
-def DISABLE_test_Chooser(qtbot):
+def DISABLE_test_Chooser(qtbot) -> None:
     app = QApplication([])
     window = Chooser(app)
     window.show()
@@ -43,7 +43,7 @@ def DISABLE_test_Chooser(qtbot):
     qtbot.mouseClick(window.ui.closeButton, Qt.MouseButton.LeftButton)
 
 
-def DISABLE_test_Chooser_again(qtbot):
+def DISABLE_test_Chooser_again(qtbot) -> None:
     # TODO: disabled as we cannot open another, maybe b/c this:
     # TODO: https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
     app = QApplication([])
@@ -53,19 +53,19 @@ def DISABLE_test_Chooser_again(qtbot):
     qtbot.mouseClick(window.ui.closeButton, Qt.MouseButton.LeftButton)
 
 
-def test_BigMessageDialog_no_details(qtbot):
+def test_BigMessageDialog_no_details(qtbot) -> None:
     d = BigMessageDialog(None, "foo")
     d.show()
     qtbot.addWidget(d)
     assert not d.toggle_button.isVisible()
 
 
-def test_CustomDetailsDialog_not_both(qtbot):
+def test_CustomDetailsDialog_not_both(qtbot) -> None:
     with raises(ValueError, match="Cannot.*both.*"):
         CustomDetailsDialog(None, "foo", details="bar", details_html="<p>bar</p>")
 
 
-def test_CustomDetailsDialog_gets_taller_then_shorter(qtbot):
+def test_CustomDetailsDialog_gets_taller_then_shorter(qtbot) -> None:
     d = CustomDetailsDialog(None, "foo", details="bar")
     d.show()
     qtbot.addWidget(d)
@@ -82,7 +82,7 @@ def test_CustomDetailsDialog_gets_taller_then_shorter(qtbot):
     d.accept()
 
 
-def test_BigMessageDialog_gets_big_then_small(qtbot):
+def test_BigMessageDialog_gets_big_then_small(qtbot) -> None:
     d = BigMessageDialog(None, "foo", details="bar")
     d.show()
     qtbot.addWidget(d)
@@ -102,7 +102,7 @@ def test_BigMessageDialog_gets_big_then_small(qtbot):
     d.accept()
 
 
-def test_BigMessageDialog_starts_big_then_small(qtbot):
+def test_BigMessageDialog_starts_big_then_small(qtbot) -> None:
     d = BigMessageDialog(None, "foo", details="bar", show=True)
     d.show()
     qtbot.addWidget(d)

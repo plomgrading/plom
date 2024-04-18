@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pytest import raises
+from typing import Any
 
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 from plom.client.rubrics import compute_score_naive as naive
@@ -9,7 +12,7 @@ from plom.client.rubrics import compute_score_legacy2022 as lg
 from plom.client.rubrics import compute_score_locabs as s
 
 
-def test_naive_score():
+def test_naive_score() -> None:
     r = [
         {"kind": "absolute", "value": 10},
         {"kind": "relative", "value": -2},
@@ -19,7 +22,7 @@ def test_naive_score():
     assert naive(r, 10) == 9
 
 
-def test_naive_legacy_out_of_range():
+def test_naive_legacy_out_of_range() -> None:
     r = [
         {"kind": "relative", "value": 4},
         {"kind": "relative", "value": 3},
@@ -30,52 +33,52 @@ def test_naive_legacy_out_of_range():
         lg(r, 5)
 
 
-def test_legacy_score():
+def test_legacy_score() -> None:
     r = [{"kind": "absolute", "value": 10}]
     assert lg(r, 10) == 10
 
 
-def test_legacy_accepts_string_values():
+def test_legacy_accepts_string_values() -> None:
     # not sure if future will but legacy should
     assert lg([{"kind": "absolute", "value": "5"}], 5) == 5
     assert lg([{"kind": "relative", "value": "+1"}], 5) == 1
     assert lg([{"kind": "relative", "value": "-1"}], 5) == 4
 
 
-def test_legacy_none():
+def test_legacy_none() -> None:
     assert lg([], 10) is None
     assert lg([{"kind": "neutral"}], 10) is None
     assert lg([{"kind": "neutral", "value": 0}], 10) is None
 
 
-def test_legacy_score_out_range():
+def test_legacy_score_out_range() -> None:
     with raises(ValueError):
         lg([{"kind": "absolute", "value": -1}], 5)
     with raises(ValueError):
         lg([{"kind": "absolute", "value": 6}], 5)
 
 
-def test_legacy_score_no_partial_absolute_rubrics():
+def test_legacy_score_no_partial_absolute_rubrics() -> None:
     with raises(ValueError):
         lg([{"kind": "absolute", "value": 10}], 12)
 
 
-def test_legacy_score_only_one_absolute_rubric():
+def test_legacy_score_only_one_absolute_rubric() -> None:
     with raises(PlomInconsistentRubric):
         lg([{"kind": "absolute", "value": 0}, {"kind": "absolute", "value": 0}], 5)
 
 
-def test_legacy_score_no_mix_relative_absolute_rubric():
+def test_legacy_score_no_mix_relative_absolute_rubric() -> None:
     with raises(PlomInconsistentRubric):
         lg([{"kind": "absolute", "value": 0}, {"kind": "relative", "value": -1}], 5)
 
 
-def test_legacy_score_no_mix_up_down_rubrics():
+def test_legacy_score_no_mix_up_down_rubrics() -> None:
     with raises(PlomInconsistentRubric):
         lg([{"kind": "relative", "value": 2}, {"kind": "relative", "value": -1}], 5)
 
 
-def test_legacy_score_relative():
+def test_legacy_score_relative() -> None:
     assert lg([{"kind": "relative", "value": -1}], 5) == 4
     assert lg([{"kind": "relative", "value": 1}], 5) == 1
     assert (
@@ -87,21 +90,21 @@ def test_legacy_score_relative():
     )
 
 
-def test_score_sum_too_large_or_small():
+def test_score_sum_too_large_or_small() -> None:
     with raises(ValueError):
         s([{"kind": "relative", "value": 2}, {"kind": "relative", "value": 4}], 5)
     with raises(ValueError):
         s([{"kind": "relative", "value": -2}, {"kind": "relative", "value": -4}], 5)
 
 
-def test_score_out_range():
+def test_score_out_range() -> None:
     with raises(ValueError):
         s([{"kind": "absolute", "value": -1, "out_of": 5}], 5)
     with raises(ValueError):
         s([{"kind": "absolute", "value": 6, "out_of": 5}], 5)
 
 
-def test_score_multiple_absolute_rubric():
+def test_score_multiple_absolute_rubric() -> None:
     def mk_rubrics(a, b, c, d):
         return [
             {"kind": "absolute", "value": a, "out_of": b},
@@ -124,7 +127,7 @@ def test_score_multiple_absolute_rubric():
         s(mk_rubrics(1, 4, 1, 4), 5)
 
 
-def test_score_mix_absolute_rubric_with_relative():
+def test_score_mix_absolute_rubric_with_relative() -> None:
     def mk_rubrics(a, b, c):
         return [
             {"kind": "absolute", "value": a, "out_of": b},
@@ -172,13 +175,13 @@ def test_score_mix_absolute_rubric_with_relative():
         s(mk_rubrics(2, 3, -5), 5)
 
 
-def test_score_none():
+def test_score_none() -> None:
     assert s([], 10) is None
     assert s([{"kind": "neutral"}], 10) is None
     assert s([{"kind": "neutral", "value": 0}], 10) is None
 
 
-def test_score_ambiguous_mix_up_down():
+def test_score_ambiguous_mix_up_down() -> None:
     r = [
         {"kind": "relative", "value": 4},
         {"kind": "relative", "value": -3},
@@ -187,14 +190,14 @@ def test_score_ambiguous_mix_up_down():
         s(r, 10)
 
 
-def test_score_invalid_kind():
+def test_score_invalid_kind() -> None:
     with raises(PlomInvalidRubric, match="kind"):
         lg([{"kind": "sHiFtY"}], 5)
     with raises(PlomInvalidRubric, match="kind"):
         s([{"kind": "sHiFtY"}], 5)
 
 
-def test_score_exclusive():
+def test_score_exclusive() -> None:
     # TODO: group storage still in-flux: adjust test if it moves out of tags
     r = [
         {"kind": "absolute", "value": 2, "out_of": 5, "tags": "exclusive:foo"},
@@ -204,9 +207,9 @@ def test_score_exclusive():
         s(r, 10)
 
 
-def test_score_exclusive_not_only_absolute():
+def test_score_exclusive_not_only_absolute() -> None:
     # TODO: group storage still in-flux: adjust test if it moves out of tags
-    r = [
+    r: list[dict[str, Any]] = [
         {"kind": "neutral", "tags": "exclusive:bar"},
         {"kind": "relative", "value": -1, "tags": "exclusive:bar"},
     ]
@@ -214,9 +217,9 @@ def test_score_exclusive_not_only_absolute():
         s(r, 10)
 
 
-def test_score_exclusive_diff_groups_ok():
+def test_score_exclusive_diff_groups_ok() -> None:
     # TODO: group storage still in-flux: adjust test if it moves out of tags
-    r = [
+    r: list[dict[str, Any]] = [
         {"kind": "neutral", "tags": "exclusive:foo"},
         {"kind": "neutral", "tags": "exclusive:baz"},
     ]

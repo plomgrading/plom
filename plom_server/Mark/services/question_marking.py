@@ -4,7 +4,9 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Optional, List
+from __future__ import annotations
+
+from typing import Optional
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
@@ -85,7 +87,7 @@ class QuestionMarkingService:
     def get_first_available_task(
         self,
         *,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         exclude_tagged_for_others: bool = True,
     ) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
@@ -182,7 +184,7 @@ class QuestionMarkingService:
         task_to_assign.save()
 
     @transaction.atomic
-    def get_page_data(self) -> List[dict]:
+    def get_page_data(self) -> list[dict]:
         """Return the relevant data for rendering task pages on the client."""
         if self.task_pk:
             task = MarkingTask.objects.get(pk=self.task_pk)
@@ -196,7 +198,7 @@ class QuestionMarkingService:
         return page_data.get_question_pages_list(paper_number, question_index)
 
     @transaction.atomic
-    def mark_task(self):
+    def mark_task(self) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database."""
         task = self._get_task_for_update()
 
@@ -211,6 +213,9 @@ class QuestionMarkingService:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
+
+        # keep MyPy happy but honestly I think its a sign we should refactor with args
+        assert self.marking_data is not None
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.

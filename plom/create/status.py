@@ -22,7 +22,7 @@ check_mark = "[" + ansi_green + "\N{Check Mark}" + ansi_off + "]"
 
 
 @with_manager_messenger
-def status(*, msgr):
+def status(*, msgr) -> None:
     """Status information about a server.
 
     Keyword Args:
@@ -120,7 +120,9 @@ def status(*, msgr):
             check_mark
             + f" {len(not_named)} unassigned paper numbers (these will not be prenamed):"
         )
-        print("    " + "\n    ".join(wrap(format_int_list_with_runs(not_named), 72)))
+        print(
+            "    " + "\n    ".join(wrap(format_int_list_with_runs(list(not_named)), 72))
+        )
 
     print("\nDatabase")
     print("--------\n")

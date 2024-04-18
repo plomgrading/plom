@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+
+from __future__ import annotations
 
 import csv
 from multiprocessing import Pool
 import os
 from pathlib import Path
+from typing import Any, Iterable
 
 from tqdm import tqdm
 
@@ -17,7 +20,7 @@ from plom.specVerifier import build_page_to_version_dict
 from .mergeAndCodePages import make_PDF
 
 
-def _make_PDF(x):
+def _make_PDF(x) -> None:
     """Call make_PDF from mergeAndCodePages with arguments expanded.
 
     *Note*: this is a little bit of glue to make the parallel Pool code
@@ -29,7 +32,7 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-def outputProductionCSV(spec, make_PDF_args):
+def outputProductionCSV(spec, make_PDF_args) -> None:
     """Output a csv with info on produced papers.
 
     Take the make_PDF_args that were used and dump them in a csv.
@@ -69,16 +72,16 @@ def outputProductionCSV(spec, make_PDF_args):
 
 
 def build_papers_backend(
-    spec,
-    global_question_version_map,
+    spec: dict[str, Any],
+    global_question_version_map: dict[int, dict[int, int]],
     *,
-    classlist_by_papernum=None,
-    fakepdf=False,
-    no_qr=False,
-    indexToMake=None,
-    xcoord=None,
-    ycoord=None,
-):
+    classlist_by_papernum: dict[int, dict[str, str]] = {},
+    fakepdf: bool = False,
+    no_qr: bool = False,
+    indexToMake: int | None = None,
+    xcoord: float | None = None,
+    ycoord: float | None = None,
+) -> None:
     """Builds the papers using _make_PDF, optionally prenamed.
 
     Arguments:
@@ -91,7 +94,7 @@ def build_papers_backend(
             Each value is a dicts with keys ``id`` and ``name``.  Any
             paper numbers corresponding to keys in `classlists_by_papernum`
             will be have names and IDs stamped on the front.  Can be an empty
-            dict or None to not use this feature.
+            dict or omitted to not use this feature.
         fakepdf (bool): when true, the build empty pdfs (actually empty files)
             for use when students upload homework or similar (and only 1 version).
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
@@ -109,6 +112,7 @@ def build_papers_backend(
     """
     # mapping from pages to groups for labelling top of pages
     make_PDF_args = []
+    papersToMake: Iterable = []
     if indexToMake is None:
         papersToMake = range(1, spec["numberToProduce"] + 1)
     else:
@@ -143,13 +147,13 @@ def build_papers_backend(
 
 
 def check_pdf_and_prename_if_needed(
-    spec,
+    spec: dict[str, Any],
     msgr,
     *,
-    classlist_by_papernum=None,
-    paperdir=Path(paperdir_name),
-    indexToCheck=None,
-):
+    classlist_by_papernum: dict[int, dict[str, str]] = {},
+    paperdir: Path | None = None,
+    indexToCheck: int | None = None,
+) -> None:
     """Check pdf(s) are present on disk and id papers that are prenamed.
 
     Arguments:
@@ -161,16 +165,22 @@ def check_pdf_and_prename_if_needed(
             Each value is a dicts with keys ``id`` and ``name``.  Any
             paper numbers corresponding to keys in `classlists_by_papernum`
             should have names and IDs stamped on the front.  Can be an empty
-            dict or None to not use this feature.
-        paperdir (pathlib.Path): where to find the papers to print.
-        indexToCheck (int,None): the index of single paper to prename or (if none), then prename all.
+            dict or omitted.
+        paperdir: where to find the papers to print; if None then use a
+            default value.
+        indexToCheck: the index of single paper to prename or (if None),
+            then prename all.
+
+    Returns:
+        None
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
     """
+    if paperdir is None:
+        paperdir = Path(paperdir_name)
     paperdir = Path(paperdir)
-    if classlist_by_papernum is None:
-        classlist_by_papernum = {}
+    range_to_check: Iterable = []
     if indexToCheck:
         range_to_check = [indexToCheck]
     else:  # check production of all papers

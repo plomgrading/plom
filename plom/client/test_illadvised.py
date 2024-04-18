@@ -1,15 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pytest import raises
+from typing import Any
 
 from plom.client.rubrics import compute_score_locabs as score
 from plom.client.rubrics import check_for_illadvised
 
 
-def test_ill_no_warnings():
+def test_ill_no_warnings() -> None:
     maxscore = 10
-    for rublist in (
+    things: list[list[dict[str, Any]]] = [
         [],
         [
             {"kind": "absolute", "value": 10, "out_of": 10},
@@ -18,7 +21,8 @@ def test_ill_no_warnings():
             {"kind": "absolute", "value": 2, "out_of": 5},
             {"kind": "absolute", "value": 3, "out_of": 5},
         ],
-    ):
+    ]
+    for rublist in things:
         # any good situation here should not be an error from the scoring function
         score(rublist, maxscore)
         ok, code, msg = check_for_illadvised(rublist, maxscore)
@@ -27,7 +31,7 @@ def test_ill_no_warnings():
         assert msg is None
 
 
-def test_ill_must_have_keys():
+def test_ill_must_have_keys() -> None:
     with raises(KeyError, match="out_of"):
         check_for_illadvised([{"kind": "absolute", "value": 10}], 10)
     with raises(KeyError, match="kind"):
@@ -36,14 +40,16 @@ def test_ill_must_have_keys():
         check_for_illadvised([{"kind": "relative"}], 10)
 
 
-def test_ill_not_enough_out_of():
+def test_ill_not_enough_out_of() -> None:
     maxscore = 10
     rublist = [
         {"kind": "absolute", "value": 2, "out_of": 4},
         {"kind": "absolute", "value": 3, "out_of": 4},
     ]
     # example should be legal
-    assert score(rublist, maxscore) <= maxscore
+    s = score(rublist, maxscore)
+    assert s is not None
+    assert s <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
@@ -51,7 +57,7 @@ def test_ill_not_enough_out_of():
     assert msg
 
 
-def test_ill_too_much_out_of():
+def test_ill_too_much_out_of() -> None:
     maxscore = 10
     rublist = [
         {"kind": "absolute", "value": 2, "out_of": 4},
@@ -66,7 +72,7 @@ def test_ill_too_much_out_of():
     assert msg
 
 
-def test_ill_dont_mix_abs_minus_relative():
+def test_ill_dont_mix_abs_minus_relative() -> None:
     maxscore = 10
     rublist = [
         {
@@ -79,7 +85,9 @@ def test_ill_dont_mix_abs_minus_relative():
         {"kind": "relative", "value": -1, "display_delta": "-1", "text": "C"},
     ]
     # example should be legal
-    assert score(rublist, maxscore) <= maxscore
+    s = score(rublist, maxscore)
+    assert s is not None
+    assert s <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
@@ -89,7 +97,7 @@ def test_ill_dont_mix_abs_minus_relative():
     assert msg
 
 
-def test_ill_dont_mix_abs_plus_relative():
+def test_ill_dont_mix_abs_plus_relative() -> None:
     maxscore = 10
     rublist = [
         {
@@ -102,7 +110,9 @@ def test_ill_dont_mix_abs_plus_relative():
         {"kind": "relative", "value": 1, "display_delta": "+1", "text": "C"},
     ]
     # example should be legal
-    assert score(rublist, maxscore) <= maxscore
+    s = score(rublist, maxscore)
+    assert s is not None
+    assert s <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import os
@@ -9,7 +9,7 @@ from .demotools import buildDemoSourceFiles
 from ..misc_utils import working_directory
 
 
-def test_latex_demofiles(tmpdir):
+def test_latex_demofiles(tmpdir) -> None:
     """Builds the demo LaTeX source files and confirms the setup worked.
 
     Arguments:
@@ -22,7 +22,7 @@ def test_latex_demofiles(tmpdir):
         )
 
 
-def test_latex_demofiles_dir(tmpdir):
+def test_latex_demofiles_dir(tmpdir) -> None:
     tmp = Path(tmpdir)
     assert buildDemoSourceFiles(tmp)
     pdfs = [x.name for x in (tmp / "sourceVersions").glob("*.pdf")]

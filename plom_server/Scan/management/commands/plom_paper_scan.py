@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
@@ -75,8 +77,10 @@ class Command(BaseCommand):
     # from "plom_staging_bundles".
 
     def map_bundle_pages(
-        self, bundle_name: str, *, papernum: int, questions: str
+        self, bundle_name: str, *, papernum: int, questions: str | None
     ) -> None:
+        if questions is None:
+            questions = "all"
         # many types possible for ``questions`` but here we always get a str
         scanner = ScanService()
         try:
@@ -144,7 +148,7 @@ class Command(BaseCommand):
             """,
         )
 
-    def handle(self, *args, **opt):
+    def handle(self, *args, **opt) -> None:
         self.stdout.write(
             self.style.WARNING("CAUTION: paper_scan is an experimental tool")
         )
@@ -153,8 +157,6 @@ class Command(BaseCommand):
             self.staging_bundle_status()
 
         if opt["command"] == "map":
-            if opt["question"] is None:
-                opt["question"] = "all"
             self.map_bundle_pages(
                 opt["bundle_name"], papernum=opt["papernum"], questions=opt["question"]
             )

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import pathlib
 import random
-from typing import Optional, Tuple
+from typing import Any
 
 from rest_framework.exceptions import ValidationError
 
@@ -44,7 +44,7 @@ class MarkingTaskService:
         paper: Paper,
         question_index: int,
         *,
-        user: Optional[User] = None,
+        user: User | None = None,
         copy_old_tags: bool = True,
     ) -> MarkingTask:
         """Create a marking task.
@@ -103,7 +103,7 @@ class MarkingTaskService:
             the_task.save()
         return the_task
 
-    def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
+    def get_marking_progress(self, question: int, version: int) -> tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -208,7 +208,7 @@ class MarkingTaskService:
             markingtask__status=MarkingTask.COMPLETE
         ).filter(markingtask__latest_annotation__isnull=False)
 
-    def are_there_tasks(self):
+    def are_there_tasks(self) -> bool:
         """Return True if there is at least one marking task in the database."""
         return MarkingTask.objects.exists()
 
@@ -225,6 +225,7 @@ class MarkingTaskService:
         if task.status == MarkingTask.OUT:
             raise RuntimeError("Task is currently assigned.")
 
+        # TODO: needs ported to select_for_update, or is this dead code?
         task.assigned_user = user
         task.status = MarkingTask.OUT
         task.save()
@@ -239,7 +240,7 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def user_can_update_task(self, user, code):
+    def user_can_update_task(self, user: User, code: str) -> bool:
         """Return true if a user is allowed to update a certain task, false otherwise.
 
         TODO: should be possible to remove the "assigned user" and "status" fields
@@ -261,25 +262,21 @@ class MarkingTaskService:
 
         return True
 
-    def get_n_marked_tasks(self):
+    def get_n_marked_tasks(self) -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
-    def get_n_total_tasks(self):
+    def get_n_total_tasks(self) -> int:
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
 
-    def get_n_valid_tasks(self):
+    def get_n_valid_tasks(self) -> int:
         """Return the total number of tasks in the database, excluding out of date tasks."""
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
-    def mark_task_as_complete(self, code):
-        """Set a task as complete - assuming a client has made a successful request."""
-        task = self.get_task_from_code(code)
-        task.status = MarkingTask.COMPLETE
-        task.save()
-
-    def validate_and_clean_marking_data(self, user, code, data, plomfile):
+    def validate_and_clean_marking_data(
+        self, user: User, code: str, data: dict[str, Any], plomfile: str
+    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
         """Validate the incoming marking data.
 
         Args:
@@ -296,7 +293,7 @@ class MarkingTaskService:
             keys found inside the `annot_data`.
         """
         annot_data = json.loads(plomfile)
-        cleaned_data = {}
+        cleaned_data: dict[str, Any] = {}
 
         if not self.user_can_update_task(user, code):
             raise RuntimeError("User cannot update task.")
@@ -451,7 +448,7 @@ class MarkingTaskService:
         task = self.get_task_from_code(code)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
-    def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[Tuple[int, str]]:
+    def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[tuple[int, str]]:
         """Get a list of tag (text and pk) assigned to this marking task."""
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
@@ -484,8 +481,7 @@ class MarkingTaskService:
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        new_tag = MarkingTaskTag(user=user, text=tag_text)
-        new_tag.save()
+        new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
     def add_tag(self, tag, task):
@@ -495,11 +491,12 @@ class MarkingTaskService:
             tag: reference to a MarkingTaskTag instance
             task: reference to a MarkingTask instance
         """
+        # TODO: port to select_for_update?
         tag.task.add(task)
         tag.save()
 
     @transaction.atomic
-    def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int):
+    def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
         """Add existing tag with given pk to the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
@@ -574,6 +571,7 @@ class MarkingTaskService:
             tag: reference to a MarkingTaskTag instance
             task: reference to a MarkingTask instance
         """
+        # TODO: is tag opened with select_for_update?
         try:
             tag.task.remove(task)
             tag.save()
@@ -581,7 +579,7 @@ class MarkingTaskService:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
 
     @transaction.atomic
-    def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int):
+    def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
         """Add existing tag with given pk to the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
