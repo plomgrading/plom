@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional, Union, Dict, Any
+from typing import Any
 
 from django.db import transaction
 
@@ -45,8 +47,8 @@ class SpecificationUploadService:
     def __init__(
         self,
         *,
-        toml_file_path: Union[str, Path, None] = None,
-        toml_string: Optional[str] = None,
+        toml_file_path: str | Path | None = None,
+        toml_string: str | None = None,
     ):
         """Construct service with paths and/or model instances.
 
@@ -62,7 +64,7 @@ class SpecificationUploadService:
         Raises:
             ValueError on failure to parse the TOML.
         """
-        self.spec_dict: Optional[Dict[str, Any]] = None
+        self.spec_dict: dict[str, Any] = {}
 
         if toml_file_path:
             try:
@@ -76,6 +78,8 @@ class SpecificationUploadService:
                 raise ValueError(f"Unable to parse TOML: {e}") from e
 
     def validate_spec(self):
+        if not self.spec_dict:
+            raise ValueError("Cannot find specification to validate.")
         SpecificationService.validate_spec_from_dict(
             self.spec_dict,
         )
@@ -84,7 +88,7 @@ class SpecificationUploadService:
     def save_spec(
         self,
         *,
-        custom_public_code: Optional[str] = None,
+        custom_public_code: str | None = None,
     ):
         """Save the specification to the database if possible.
 

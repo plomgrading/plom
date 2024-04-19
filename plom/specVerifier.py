@@ -4,6 +4,8 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 
+from __future__ import annotations
+
 from copy import deepcopy
 import logging
 from math import ceil
@@ -11,6 +13,7 @@ from pathlib import Path
 import random
 import re
 import sys
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -46,16 +49,17 @@ MAX_PAPERS_TO_PRODUCE = 9999
 # Some helper functions
 
 
-def get_question_label(spec, n):
+def get_question_label(spec, n: int | str) -> str:
     """Print question label for the nth question from spec dict.
 
     Args:
         spec (dict/SpecVerifier): a spec dict or a SpecVerifier
             object.
-        n (int/str): which question, current indexed from 1.
+        n: which question, current indexed from 1.  For historical
+            reasons it can be a str.
 
     Returns:
-        str: the custom label of a question or "Qn" if one is not set.
+        The custom label of a question or "Qn" if one is not set.
 
     Raises:
         ValueError: `n` is out of range.
@@ -411,28 +415,32 @@ class SpecVerifier:
         return self.spec[what]
 
     @property
-    def number_to_produce(self):
+    def number_to_produce(self) -> int:
         return self.spec["numberToProduce"]
 
     # aliases to match the toml file
     numberToProduce = number_to_produce
 
-    def get_question_label(self, n):
+    def get_question_label(self, n: int | str) -> str:
         """Get the question label of the nth question, indexed from 1.
 
         Args:
-            spec (dict/SpecVerifier): a spec dict or a SpecVerifier
-                object.
-            n (int/str): which question, current indexed from 1.
+            n: which question, current indexed from 1.  For historical
+                reasons it can be a str.
 
         Returns:
-            str: the custom label of a question or "Qn" if one is not set.
+            The custom label of a question or "Qn" if one is not set.
         """
         return get_question_label(self.spec, n)
 
     def set_number_papers_add_spares(
-        self, n, spare_percent=10, min_extra=5, max_extra=100
-    ):
+        self,
+        n: int,
+        *,
+        spare_percent: int | float = 10,
+        min_extra: int = 5,
+        max_extra: int = 100,
+    ) -> None:
         """Set previously-deferred number of papers to produce and add spares.
 
         By default this will add 10% extra "spare" papers.
@@ -454,13 +462,11 @@ class SpecVerifier:
         """
         extra = ceil(spare_percent * n / 100)
         extra = min(max(extra, min_extra), max_extra)  # threshold
-        if self.numberToProduce >= 0:
+        if self.number_to_produce >= 0:
             # TODO: consider relaxing this?
             raise ValueError("Number of papers already set: read-only")
         self.spec["numberToProduce"] = n + extra
-        log.info(
-            "deferred number of papers is now set to {}".format(self.numberToProduce)
-        )
+        log.info(f"deferred number of papers is now set to {self.number_to_produce}")
 
     def __str__(self):
         """Convert ourselves to a string."""
@@ -473,7 +479,7 @@ class SpecVerifier:
                 "Number of source versions = {}".format(self.spec["numberOfVersions"]),
                 # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
                 # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
-                "Number of tests to produce = {}".format(self.numberToProduce),
+                f"Number of tests to produce = {self.number_to_produce}",
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMarkPages"]),
@@ -503,16 +509,16 @@ class SpecVerifier:
     def group_label_from_page(self, pagenum):
         return build_page_to_group_dict(self)[pagenum]
 
-    def verify(self, verbose=False):
+    def verify(self, verbose: str | None | bool = False) -> None:
         """Check that spec contains required attributes and insert default values."""
         self.verifySpec(verbose=verbose)
 
-    def verifySpec(self, verbose=True):
+    def verifySpec(self, *, verbose: str | None | bool = True) -> None:
         """Check that spec contains required attributes and insert default values.
 
         Args:
-            verbose: `None`/`False` for don't print; `True` is print to
-                standard output; `"log"` means use logging mechanism.
+            verbose: ``None``/``False`` for don't print; ``True`` is print to
+                standard output; ``"log"`` means use logging mechanism.
 
         Returns:
             None
@@ -521,21 +527,21 @@ class SpecVerifier:
             ValueError: with a message indicating the problem.
         """
         if verbose == "log":
-            prnt = log.info
+            prnt = log.info  # type: ignore
         elif verbose:
-            prnt = print
+            prnt = print  # type: ignore
         else:
+            prnt: Any = lambda x: None  # type: ignore
+            # def prnt(x):
+            #     return None  # no-op
 
-            def prnt(x):
-                return None  # no-op
-
-        self.check_keys(print=prnt)
-        self.check_name_and_production_numbers(print=prnt)
+        self._check_keys(print=prnt)
+        self._check_name_and_production_numbers(print=prnt)
         lastPage = self.spec["numberOfPages"]
-        self.check_IDPage(lastPage, print=prnt)
-        self.check_doNotMarkPages(lastPage, print=prnt)
+        self._check_IDPage(lastPage, print=prnt)
+        self._check_doNotMarkPages(lastPage, print=prnt)
         prnt("Checking question groups")
-        self.check_questions(print=prnt)
+        self._check_questions(print=prnt)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -555,9 +561,9 @@ class SpecVerifier:
         if any(len(x) > 24 for x in labels):
             raise ValueError(f'Question labels should be at most 24 chars: "{labels}"')
 
-        self.check_pages(print=prnt)
+        self._check_pages(print=prnt)
 
-    def checkCodes(self, *, verbose=True):
+    def checkCodes(self, *, verbose: bool | str = True) -> None:
         """Add public and private codes if the spec doesn't already have them.
 
         Keywords Args:
@@ -570,11 +576,11 @@ class SpecVerifier:
         if verbose == "log":
             prnt = log.info
         elif verbose:
-            prnt = print
+            prnt = print  # type: ignore
         else:
-
-            def prnt(x):
-                return None  # no-op
+            prnt: Any = lambda x: None  # type: ignore
+            # def prnt(x):
+            #     return None  # no-op
 
         if "privateSeed" in self.spec:
             prnt("NOTE: this spec has a 'privateSeed': no need to autogenerate")
@@ -613,7 +619,7 @@ class SpecVerifier:
             )
             fh.write(tomlkit.dumps(s))
 
-    def check_keys(self, print=print):
+    def _check_keys(self, print=print):
         """Check that spec contains required keys."""
         print("Checking mandatory specification keys")
         for x in [
@@ -641,7 +647,7 @@ class SpecVerifier:
                 ' of the "paper_number" column in the classlist.'
             )
 
-    def check_name_and_production_numbers(self, print=print):
+    def _check_name_and_production_numbers(self, print=print) -> None:
         print("Checking specification name and numbers")
         print("  Checking names")
         if not re.match(r"[\w\-\.]+$", self.spec["name"]):
@@ -681,15 +687,15 @@ class SpecVerifier:
                     )
                 )
 
-        if self.numberToProduce == 0:
+        if self.number_to_produce == 0:
             raise ValueError('Specification error - "numberToProduce" cannot be zero.')
 
-        if self.numberToProduce > MAX_PAPERS_TO_PRODUCE:
+        if self.number_to_produce > MAX_PAPERS_TO_PRODUCE:
             raise ValueError(
                 f'Specification error - "numberToProduce" cannot be greater than {MAX_PAPERS_TO_PRODUCE}.'
             )
 
-    def check_questions(self, print=print):
+    def _check_questions(self, print=print) -> None:
         if "numberOfQuestions" not in self.spec:
             N = len(self.spec["question"])
             self.spec["numberOfQuestions"] = N
@@ -709,9 +715,7 @@ class SpecVerifier:
             print(f"    Found question {k} of {N}{chk}")
 
         for k in range(1, N + 1):
-            # TODO: why not integers for key k?  See also elsewhere
-            k = str(k)
-            self.check_question_group(k, self.spec["numberOfPages"], print=print)
+            self._check_question_group(k, self.spec["numberOfPages"], print=print)
 
         print("  Checking mark totals")
         K = sum(m["mark"] for m in self.spec["question"].values())
@@ -728,7 +732,7 @@ class SpecVerifier:
                 )
             print(f'    "totalMarks" = {total} matches question sum {K}{chk}')
 
-    def check_IDPage(self, lastPage, print=print):
+    def _check_IDPage(self, lastPage, print=print) -> None:
         print("Checking IDpage")
         if not (1 <= self.spec["idPage"] <= lastPage):
             raise ValueError(
@@ -744,7 +748,7 @@ class SpecVerifier:
                 + warn_mark
             )
 
-    def check_doNotMarkPages(self, lastPage, print=print):
+    def _check_doNotMarkPages(self, lastPage, print=print) -> None:
         print("Checking DoNotMark-pages")
         if "doNotMarkPages" not in self.spec:
             print("    DoNotMark pages is missing: defaulting to empty" + chk)
@@ -769,7 +773,7 @@ class SpecVerifier:
         else:
             print("    DoNotMark pages is list of positive integers" + chk)
 
-    def check_question_group(self, g, lastPage, print=print):
+    def _check_question_group(self, g, lastPage, print=print) -> None:
         """Check and in some cases modify the spec of one particular question group."""
         g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
@@ -816,7 +820,7 @@ class SpecVerifier:
             )
         print('    select is "fix" or "shuffle"' + chk)
 
-    def check_pages(self, print=print):
+    def _check_pages(self, print=print) -> None:
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
