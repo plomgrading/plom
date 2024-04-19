@@ -427,12 +427,15 @@ def render_page_to_bitmap(
     # WebP here is also an option, Issue #1864.
 
 
-def make_mucked_up_jpeg(f, outname):
+def make_mucked_up_jpeg(f: Path, outname: Path) -> Path:
     """Given an input file, do horrid things to it in the name of debugging.
 
     Args:
-        f (pathlib.Path): input
-        outname (pathlib.Path): output file
+        f: input
+        outname: output file to be created.
+
+    Returns:
+        The output file again.
     """
     img = pil_load_with_jpeg_exif_rot_applied(f)
 
@@ -443,7 +446,7 @@ def make_mucked_up_jpeg(f, outname):
     except AttributeError:
         # Remove this workaround once minimum Pillow is 9.1.x
         # pylint: disable=no-member
-        bilinear = PIL.Image.BILINEAR
+        bilinear = PIL.Image.BILINEAR  # type: ignore
     img = img.rotate(
         angle,
         resample=bilinear,
@@ -462,8 +465,9 @@ def make_mucked_up_jpeg(f, outname):
     # im_shell.set("user_comment", generate_metadata_str(bundle_name, p.number))
     if r:
         im_shell.set("orientation", r)
-    with open(outname, "wb") as f:
-        f.write(im_shell.get_file())
+    # TODO: MyPy seems concerned with these lines
+    with open(outname, "wb") as f:  # type: ignore
+        f.write(im_shell.get_file())  # type: ignore
     # add_metadata_jpeg_comment(outname, file_name, p.number)
     return outname
 

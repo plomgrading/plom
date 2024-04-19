@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from typing import Any
 
 from django.db.models import QuerySet
@@ -66,7 +68,7 @@ class TagService:
             dict: keyed by papers objects whose values are their tags that are
             present in the given queryset.
         """
-        papers = {}
+        papers: dict[Paper, set[MarkingTaskTag]] = {}
         for task_tag in task_tags.prefetch_related("task__paper"):
             for task in task_tag.task.all():
                 if task.paper not in papers:
