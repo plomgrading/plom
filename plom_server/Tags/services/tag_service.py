@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from typing import Any
 
+from django.db.models import QuerySet
+
 from Mark.models import MarkingTaskTag
+from Papers.models import Paper
 
 
 class TagService:
@@ -25,7 +28,7 @@ class TagService:
         """
         return MarkingTaskTag.objects.get(pk=tag_id)
 
-    def get_task_tags_with_tag(self, tag_text: str):
+    def get_task_tags_with_tag(self, tag_text: str) -> QuerySet[MarkingTaskTag]:
         """Get all task tags that contain the given text.
 
         Case insensitive. Text can be anywhere in the tag.
@@ -38,7 +41,7 @@ class TagService:
         """
         return MarkingTaskTag.objects.filter(text__icontains=tag_text)
 
-    def get_task_tags_with_tag_exact(self, tag_text: str):
+    def get_task_tags_with_tag_exact(self, tag_text: str) -> QuerySet[MarkingTaskTag]:
         """Get all task tags that contain the given text.
 
         Case insensitive. Text must match exactly.
@@ -51,7 +54,9 @@ class TagService:
         """
         return MarkingTaskTag.objects.filter(text__in=[tag_text])
 
-    def get_papers_from_task_tags(self, task_tags):
+    def get_papers_from_task_tags(
+        self, task_tags: QuerySet[MarkingTaskTag]
+    ) -> dict[Paper, set[MarkingTaskTag]]:
         """Get all papers that have a tag with a task tag in the given queryset.
 
         Args:
@@ -69,7 +74,7 @@ class TagService:
                 papers[task.paper].add(task_tag)
         return papers
 
-    def get_task_tags_counts(self):
+    def get_task_tags_counts(self) -> dict[MarkingTaskTag, int]:
         """Get a dictionary of the counts of each tag."""
         task_tags = MarkingTaskTag.objects.all()
         counts = {}
@@ -78,7 +83,7 @@ class TagService:
         return counts
 
     # TODO: create_tag is defined in `marking_tasks.py`
-    def delete_tag(self, tag_id: int):
+    def delete_tag(self, tag_id: int) -> None:
         """Delete a tag by its id.
 
         Args:
