@@ -60,7 +60,7 @@ dependencies = [
     "djangorestframework>=3.14.0",
     "exif>=1.2.2",
     "fonttools>=4.37.1",
-    "gunicorn==22.0.0",
+    "gunicorn>=21.1.0",
     'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
     "matplotlib>=3.5.3",
