@@ -6,6 +6,8 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+from __future__ import annotations
+
 from datetime import datetime
 import logging
 import random  # optionally used for debugging
@@ -615,7 +617,7 @@ class RubricTable(QTableWidget):
                 self.selectRow(s)
                 return
 
-    def selectRubricByKey(self, key: str) -> bool:
+    def selectRubricByKey(self, key: int | str | None) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
@@ -1347,6 +1349,9 @@ class RubricWidget(QWidget):
 
         self.update_tab_names()
 
+        # force a blue ghost update
+        self.handleClick()
+
     def reorder_tabs(self, target_order):
         """Change the order of the tabs to match a target order.
 
@@ -1756,9 +1761,6 @@ class RubricWidget(QWidget):
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
-        # finally - select that rubric and simulate a click
-        self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
-        self.handleClick()
 
     def get_tab_rubric_lists(self) -> Dict[str, List[Any]]:
         """Returns a dict of lists of the current rubrics."""
