@@ -1754,10 +1754,12 @@ class RubricWidget(QWidget):
                 self._parent.modifyRubric(_tmp["id"], _tmp)
 
         else:
-            new_rubric.pop("id")
-            new_rubric["id"] = self._parent.createNewRubric(new_rubric)
-            # at this point we have an accepted new rubric
-            # add it to the internal list of rubrics
+            new_id = self._parent.createNewRubric(new_rubric)
+            # The new_rubric itself may not be complete: get it from the server
+            # TODO: might be nicer to get just the new rubric rather than its ID
+            # TODO: or we can add a API call to get one rubric
+            tmp_rubrics = self._parent.getRubricsFromServer()
+            (new_rubric,) = (r for r in tmp_rubrics if r["id"] == new_id)
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())

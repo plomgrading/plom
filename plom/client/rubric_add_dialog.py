@@ -875,8 +875,6 @@ class AddRubricBox(QDialog):
             display_delta = f"{value} of {out_of}"
         else:
             raise RuntimeError("no radio was checked")
-        # only meaningful if we're modifying
-        rubricID = self.label_rubric_id.text().strip()
 
         vers = self.get_versions_list()
 
@@ -885,7 +883,6 @@ class AddRubricBox(QDialog):
         rubric = self._old_rubric
         rubric.update(
             {
-                "id": rubricID,
                 "kind": kind,
                 "display_delta": display_delta,
                 "value": value,
