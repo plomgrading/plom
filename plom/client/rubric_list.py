@@ -661,14 +661,15 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
 
-        rubric = self.selected_row_as_rubric(r).copy()
+        rubric = self.get_row_as_rubric(r).copy()
         # unfortunate parent access to get version
         rubric["text"] = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
         self._parent.rubricSignal.emit(rubric)
 
-    def selected_row_as_rubric(self, r: int) -> Dict[str, Any]:
+    def get_row_as_rubric(self, r: int) -> Dict[str, Any]:
+        """Get the rth row of the rubric table."""
         item = self.item(r, 0)
         assert item
         rid = item.text()
@@ -691,7 +692,7 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r):
         legal = isLegalRubric(
-            self.selected_row_as_rubric(r),
+            self.get_row_as_rubric(r),
             scene=self._parent._parent.scene,
             version=self._parent.version,
             maxMark=self._parent.maxMark,
