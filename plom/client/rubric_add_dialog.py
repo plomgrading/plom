@@ -480,7 +480,7 @@ class AddRubricBox(QDialog):
                     self.typeRB_absolute.setChecked(True)
                 else:
                     raise RuntimeError(f"unexpected kind in {com}")
-            if com["id"]:
+            if com.get("id"):
                 self.label_rubric_id.setText(str(com["id"]))
             s = f'Created by {com.get("username", "unknown")}'
             lastmod = com.get("last_modified", "unknown")
