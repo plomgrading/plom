@@ -473,7 +473,7 @@ class RubricTable(QTableWidget):
         *,
         alt_order: Optional[List[str]] = None,
     ) -> None:
-        """Clear table and re-populate rubrics.
+        """Clear table and re-populate rubrics, keep selection if possible.
 
         Args:
             rubric_list (list): all the rubrics, which are dicts with
@@ -506,6 +506,7 @@ class RubricTable(QTableWidget):
         self._setRubricsByKeys(rubric_list, id_list)
 
     def _setRubricsByKeys(self, rubric_list, id_list) -> None:
+        prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -517,11 +518,13 @@ class RubricTable(QTableWidget):
             except (ValueError, KeyError, IndexError):
                 continue
             self.appendNewRubric(rb)
-
+        if not self.selectRubricByKey(prev_selected_rubric_id):
+            self.selectRubricByVisibleRow(0)
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics, positive=True):
-        """Clear table and repopulate with delta-rubrics."""
+        """Clear table and repopulate with delta-rubrics, keep selection if possible."""
+        prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -541,6 +544,9 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             if rb["username"] == "manager" and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
+        if not self.selectRubricByKey(prev_selected_rubric_id):
+            self.selectRubricByVisibleRow(0)
+        self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row: int) -> str:
         item = self.item(row, 0)
@@ -567,6 +573,7 @@ class RubricTable(QTableWidget):
         return self.selectedIndexes()[0].row()
 
     def getCurrentRubricKey(self) -> Union[str, None]:
+        """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
         item = self.item(self.selectedIndexes()[0].row(), 0)
@@ -1188,7 +1195,9 @@ class RubricWidget(QWidget):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
-        The rubrics themselves are uneffected.
+        The rubrics themselves are uneffected.  The currently-selected
+        rubric in each is preserved, provided that rubric is still
+        present.
 
         Args:
             wranglerState (dict/None): a representation of the state of
@@ -1336,14 +1345,6 @@ class RubricWidget(QWidget):
             log.error("Unexpected failure sorting tabs: %s", str(e))
 
         self.update_tab_names()
-
-        # make sure something selected in each tab
-        self.tabHide.selectRubricByVisibleRow(0)
-        self.tabDeltaP.selectRubricByVisibleRow(0)
-        self.tabDeltaN.selectRubricByVisibleRow(0)
-        self.tabS.selectRubricByVisibleRow(0)
-        for tab in self.user_tabs:
-            tab.selectRubricByVisibleRow(0)
 
     def reorder_tabs(self, target_order):
         """Change the order of the tabs to match a target order.
