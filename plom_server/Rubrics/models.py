@@ -48,7 +48,9 @@ class Rubric(models.Model):
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
         published: for future use.
-        user: who created this rubric.
+        user: generally who created the rubric, although at least in
+            principle, users could "gift" a rubric to another user.
+            No one is doing that as of mid 2024.
             TODO: consider renaming to ``created_by_user``?
             Currently, once this makes it to the client, its called
             ``username`` and is a string.  This needs to be dealt with

@@ -893,10 +893,16 @@ class AddRubricBox(QDialog):
                 "text": txt,
                 "tags": tags,
                 "meta": meta,
-                "username": self._username,
                 "question": self.question_number,
                 "versions": vers,
                 "parameters": params,
             }
         )
+        if not self.is_edit():
+            rubric.update(
+                {
+                    "username": self._username,
+                }
+            )
+
         return rubric
