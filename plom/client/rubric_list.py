@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 import random  # optionally used for debugging
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
@@ -50,13 +50,13 @@ from plom.plom_exceptions import (
 log = logging.getLogger("annotr")
 
 
-def rubric_is_naked_delta(r: Dict[str, Any]) -> bool:
+def rubric_is_naked_delta(r: dict[str, Any]) -> bool:
     if r["kind"] == "relative" and r["text"] == ".":
         return True
     return False
 
 
-def isLegalRubric(rubric: Dict[str, Any], *, scene, version: int, maxMark: int) -> int:
+def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) -> int:
     """Checks the 'legality' of a particular rubric - returning one of several possible indicators.
 
     Those states are:
@@ -100,7 +100,7 @@ def isLegalRubric(rubric: Dict[str, Any], *, scene, version: int, maxMark: int) 
 
 def render_params(
     template: str,
-    params: Sequence[Tuple[str, Sequence[str]]],
+    params: Sequence[tuple[str, Sequence[str]]],
     ver: int,
 ) -> str:
     """Perform version-dependent substitutions on a template text."""
@@ -426,7 +426,7 @@ class RubricTable(QTableWidget):
         (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
         self.appendNewRubric(rubric)
 
-    def appendNewRubric(self, rubric: Dict[str, Any]) -> None:
+    def appendNewRubric(self, rubric: dict[str, Any]) -> None:
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -470,10 +470,10 @@ class RubricTable(QTableWidget):
 
     def setRubricsByKeys(
         self,
-        rubric_list: List[Dict[str, Any]],
-        id_list: List[str],
+        rubric_list: list[dict[str, Any]],
+        id_list: list[str],
         *,
-        alt_order: Optional[List[str]] = None,
+        alt_order: list[str] | None = None,
     ) -> None:
         """Clear table and re-populate rubrics, keep selection if possible.
 
@@ -559,7 +559,7 @@ class RubricTable(QTableWidget):
     def getKeyList(self):
         return [self.item(r, 0).text() for r in range(self.rowCount())]
 
-    def getRowFromKey(self, key: str) -> Union[int, None]:
+    def getRowFromKey(self, key: str) -> int | None:
         for r in range(self.rowCount()):
             # TODO: mypy is concerned self.item() could return None
             # perhaps there is a better way to iterate over items?
@@ -570,12 +570,12 @@ class RubricTable(QTableWidget):
         else:
             return None
 
-    def getCurrentRubricRow(self) -> Union[int, None]:
+    def getCurrentRubricRow(self) -> int | None:
         if not self.selectedIndexes():
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self) -> Union[str, None]:
+    def getCurrentRubricKey(self) -> str | None:
         """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
@@ -593,7 +593,7 @@ class RubricTable(QTableWidget):
             r = 0
         self.selectRubricByVisibleRow(r)
 
-    def selectRubricByRow(self, r: Union[int, None]) -> None:
+    def selectRubricByRow(self, r: int | None) -> None:
         """Select the r'th rubric in the list.
 
         Args:
@@ -678,7 +678,7 @@ class RubricTable(QTableWidget):
         )
         self._parent.rubricSignal.emit(rubric)
 
-    def get_row_as_rubric(self, r: int) -> Dict[str, Any]:
+    def get_row_as_rubric(self, r: int) -> dict[str, Any]:
         """Get the rth row of the rubric table."""
         item = self.item(r, 0)
         assert item
@@ -688,13 +688,13 @@ class RubricTable(QTableWidget):
                 return rubric
         raise RuntimeError(f"Cannot find rubric {rid}. Corrupted rubric lists?")
 
-    def firstUnhiddenRow(self) -> Union[int, None]:
+    def firstUnhiddenRow(self) -> int | None:
         for r in range(self.rowCount()):
             if not self.isRowHidden(r):
                 return r
         return None
 
-    def lastUnhiddenRow(self) -> Union[int, None]:
+    def lastUnhiddenRow(self) -> int | None:
         for r in reversed(range(self.rowCount())):
             if not self.isRowHidden(r):
                 return r
@@ -1430,7 +1430,7 @@ class RubricWidget(QWidget):
             self.RTW.currentIndex(),
         ]
 
-    def setCurrentRubricKeyAndTab(self, key: Union[str, None], tab: int) -> bool:
+    def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
         """Set the current rubric key and the current tab.
 
         Args
@@ -1664,11 +1664,11 @@ class RubricWidget(QWidget):
 
     def _new_or_edit_rubric(
         self,
-        com: Union[Dict[str, Any], None],
+        com: dict[str, Any] | None,
         *,
         edit: bool = False,
-        index: Optional[int] = None,
-        add_to_group: Optional[str] = None,
+        index: int | None = None,
+        add_to_group: str | None = None,
     ) -> None:
         """Open a dialog to edit a comment or make a new one.
 
@@ -1762,7 +1762,7 @@ class RubricWidget(QWidget):
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
 
-    def get_tab_rubric_lists(self) -> Dict[str, List[Any]]:
+    def get_tab_rubric_lists(self) -> dict[str, list[Any]]:
         """Returns a dict of lists of the current rubrics."""
         return {
             "shown": self.tabS.getKeyList(),
