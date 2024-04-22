@@ -32,9 +32,6 @@ class Rubric(models.Model):
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
             implementation-specific.
-        user: which user "owns" this Rubric.  Generally, currently, who
-            first created it, although in some circumstances other users
-            can modify it.
         display_delta: short string to display, such as "+3" or "2 of 3",
             that illustrates to recipients how their score is changed by
             this rubric.
@@ -51,7 +48,15 @@ class Rubric(models.Model):
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
         published: for future use.
-        last_modified = When was this rubric last modified.
+        user: who created this rubric.
+            TODO: consider renaming to ``created_by_user``?
+            Currently, once this makes it to the client, its called
+            ``username`` and is a string.  This needs to be dealt with
+            on the way in and out (perhaps what a "serializer" is for).
+        last_modified: when was this rubric last modified.
+        modified_by_user: who last modified this rubric.  Currently, once
+            this makes it to the client, its called ``modified_by_username``
+            and is a string.
         _edition: a monontonically-increasing integer used to detect mid-air
             collisions.  At this point not really intended for clients
             (hence the underscore).  Modifying a rubric will increase
@@ -66,7 +71,6 @@ class Rubric(models.Model):
     out_of = models.IntegerField(null=False, default=0)
     text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, default=list)
@@ -74,7 +78,13 @@ class Rubric(models.Model):
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_modified = models.DateTimeField(auto_now=True)
+    # TODO: "If you'd prefer Django not to create a backwards relation, set
+    # related_name to +."  Without this, it clashes with the user field.
+    modified_by_user = models.ForeignKey(
+        User, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
     _edition = models.IntegerField(null=False, default=0)
 
 

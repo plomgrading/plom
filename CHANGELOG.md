@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Rubrics now keep more careful records about who modified them and when.
 
 ### Fixed
 * Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you do keep path info out of bundle names.

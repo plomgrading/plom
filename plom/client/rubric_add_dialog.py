@@ -492,6 +492,7 @@ class AddRubricBox(QDialog):
                 self.last_modified_label.setText(
                     f'revision {com["_edition"]}, '
                     f"last modified {arrow.get(lastmod).humanize()}"
+                    f' by {com["modified_by_username"]}'
                 )
             if com.get("versions"):
                 self.version_specific_cb.setChecked(True)

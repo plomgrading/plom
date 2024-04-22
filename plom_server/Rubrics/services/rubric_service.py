@@ -55,6 +55,9 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "system_rubric": r.system_rubric,
         "published": r.published,
         "last_modified": r.last_modified,
+        "modified_by_username": (
+            None if not r.modified_by_user else r.modified_by_user.username
+        ),
         "_edition": r._edition,
     }
 
@@ -202,6 +205,8 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
+        new_rubric_data.pop("modified_by_username")
+        new_rubric_data["modified_by_user"] = modifying_user.pk
         new_rubric_data["_edition"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()

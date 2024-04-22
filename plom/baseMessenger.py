@@ -1054,6 +1054,7 @@ class BaseMessenger:
                 # A special sentinel value for legacy server
                 # TODO: annoying b/c downstream needs to detect and not send to arrow
                 r.setdefault("last_modified", "unknown")
+                r.setdefault("modified_by_username", None)
             return rubrics
 
     def MmodifyRubric(self, key, new_rubric):
