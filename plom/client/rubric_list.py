@@ -541,8 +541,9 @@ class RubricTable(QTableWidget):
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["value"]))):
             self.appendNewRubric(rb)
         # finally append the manager-created absolute rubrics
+        # TODO: bit fragile, but roughly we want the "0 of 10" etc
         for rb in rubrics:
-            if rb["username"] == "manager" and rb["kind"] == "absolute":
+            if rb["system_rubric"] and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
         if not self.selectRubricByKey(prev_selected_rubric_id):
             self.selectRubricByVisibleRow(0)
