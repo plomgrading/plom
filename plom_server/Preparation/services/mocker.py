@@ -37,6 +37,10 @@ class ExamMockerService:
                 page = pdf_doc[i]
                 odd = i % 2 == 0
                 pdf_page_add_labels_QRs(
-                    page, short_name, f"Mock exam version {version}", qr_codes, odd=odd
+                    page,
+                    short_name,
+                    f"Mock exam v {version} pg {i+1}",
+                    qr_codes,
+                    odd=odd,
                 )
         return pdf_doc.tobytes()

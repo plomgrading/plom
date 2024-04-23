@@ -232,3 +232,21 @@ def store_reference_images(source_version: int):
                     parsed_qr=page_data,
                     source_pdf=source_pdf_obj,
                 )
+
+
+def _get_reference_image_file(source_version: int, page_number: int) -> File:
+    """Return the Django-file for a specified reference image page / version.
+
+    Args:
+        source_version: which source version.
+        page_number: which page
+
+    Returns:
+        Some sort of file abstraction, not for use outside Django.
+
+    Raises:
+        ObjectDoesNotExist: not yet uploaded or out of range.
+    """
+    return ReferenceImage.objects.get(
+        version=source_version, page_number=page_number
+    ).image_file
