@@ -205,8 +205,9 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        new_rubric_data.pop("modified_by_username")
-        new_rubric_data["modified_by_user"] = modifying_user.pk
+        new_rubric_data.pop("modified_by_username", None)
+        if modifying_user is not None:
+            new_rubric_data["modified_by_user"] = modifying_user.pk
         new_rubric_data["revision"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
