@@ -487,9 +487,9 @@ class AddRubricBox(QDialog):
             # Note sure if would be None but seems harmless (or no more harmful
             # than "unknown" sentintel from legacy anyway)
             if lastmod is not None and lastmod != "unknown":
-                edition = com.get("_edition", 0)
-                s += f", revision {edition}"
-                if edition > 0:
+                rev = com.get("revision", 0)
+                s += f", revision {rev}"
+                if rev > 0:
                     s += f", last modified {arrow.get(lastmod).humanize()}"
                     s += f' by {com["modified_by_username"]}'
             self.last_modified_label.setText(s)

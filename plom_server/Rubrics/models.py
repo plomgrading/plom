@@ -59,11 +59,10 @@ class Rubric(models.Model):
         modified_by_user: who last modified this rubric.  Currently, once
             this makes it to the client, its called ``modified_by_username``
             and is a string.
-        _edition: a monontonically-increasing integer used to detect mid-air
-            collisions.  At this point not really intended for clients
-            (hence the underscore).  Modifying a rubric will increase
-            this by one.  If you are messing with this, presumably you
-            are doing something creative/hacky.
+        revision: a monontonically-increasing integer used to detect mid-air
+            collisions.  Modifying a rubric will increase this by one.
+            If you are messing with this, presumably you are doing something
+            creative/hacky.
     """
 
     key = models.TextField(null=False, default=generate_unique_key)
@@ -87,7 +86,7 @@ class Rubric(models.Model):
     modified_by_user = models.ForeignKey(
         User, null=True, on_delete=models.SET_NULL, related_name="+"
     )
-    _edition = models.IntegerField(null=False, default=0)
+    revision = models.IntegerField(null=False, default=0)
 
 
 class RubricPane(models.Model):
