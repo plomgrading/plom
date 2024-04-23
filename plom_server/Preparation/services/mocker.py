@@ -6,11 +6,9 @@
 from __future__ import annotations
 
 import pathlib
-import shutil
 import tempfile
 
 from django.core.files import File
-from django.conf import settings
 import fitz
 
 from plom.create.mergeAndCodePages import create_QR_codes, pdf_page_add_labels_QRs
@@ -30,7 +28,6 @@ class ExamMockerService:
 
         Returns: a bytes object containing the document.
         """
-        sources_dir = settings.MEDIA_ROOT / "sourceVersions"
         with tempfile.TemporaryDirectory() as tmpdirname:
             pdf_doc = fitz.open(source_path)
             for i in range(n_pages):
