@@ -1,24 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from __future__ import annotations
-
 from collections import defaultdict
 import hashlib
 import pathlib
 from pathlib import Path
 import tempfile
 from typing import Any
-
 import fitz
-
 from django.core.files import File
 from django.db import transaction
-
 from Papers.services import SpecificationService
 from ..models import PaperSourcePDF
+from Preparation.services.mocker import ExamMockerService
+from plom.scan import QRextract
+from Scan.services import ScanService
+from Papers.models import ReferenceImage
 
 
 def _get_source_file(source_version: int) -> File:
@@ -164,6 +164,8 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         except ValueError as err:
             return (False, str(err))
 
+        store_reference_images(version)
+
         return (True, "PDF successfully uploaded")
 
 
@@ -187,3 +189,46 @@ def get_source_as_bytes(source_version: int) -> bytes:
             return fh.read()
     except PaperSourcePDF.DoesNotExist:
         raise ValueError("Version does not exist")
+
+
+@transaction.atomic
+def store_reference_images(source_version: int):
+    """From an uploaded source pdf create reference images of each page.
+
+    Uses the exam mocker to put qr codes stamps in correct pages.
+    Then stores the images with that qr-code information.
+    """
+    mocker = ExamMockerService()
+    scanner = ScanService()
+
+    # remove any existing reference images for this version
+    for ri_obj in ReferenceImage.objects.filter(version=source_version):
+        ri_obj.image_file.path.unlink(missing_ok=True)
+        ri_obj.delete()
+
+    source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
+    source_path = Path(source_pdf_obj.source_pdf.path)
+
+    n_pages = SpecificationService.get_n_pages()
+    mock_exam_pdf_bytes = mocker.mock_exam(
+        source_version, source_path, n_pages, SpecificationService.get_short_name_slug()
+    )
+    doc = fitz.Document(stream=mock_exam_pdf_bytes)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = pathlib.Path(tmpdir)
+        for n, pg in enumerate(doc.pages()):
+            pix = pg.get_pixmap(dpi=200, annots=True)
+            fname = save_path / f"ref_{source_version}_{n+1}.png"
+            pix.save(fname)
+            code_dict = QRextract(fname)
+            page_data = scanner.parse_qr_code([code_dict])
+            with open(fname, "rb") as fh:
+                pix_file = File(fh, name=fname.name)
+                ReferenceImage.objects.create(
+                    page_number=n + 1,
+                    version=source_version,
+                    image_file=pix_file,
+                    parsed_qr=page_data,
+                    source_pdf=source_pdf_obj,
+                )
