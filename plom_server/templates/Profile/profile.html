@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -29,9 +29,9 @@
                         <h3 class="mb-2">{{ request.user.first_name }}</h3>
                         <p class="mb-2">{{ request.user.username }}</p>
                         <p class="text-muted mb-4">
-                            @{{ user_group }} <span class="mx-2">|</span> <a href="">{{ email }}</a>
+                            &ldquo;{{ user_group }}&rdquo; group <span class="mx-2">|</span> <a href="mailto:{{ email }}">{{ email }}</a>
                         </p>
-                        <button style="background-color: grey; color: white" id="edit" type="button">Edit Profile</button>
+                        <button class="btn btn-secondary" id="edit" type="button">Edit Profile</button>
                     </div>
                 </div>
             </div>
@@ -49,11 +49,8 @@
                     <br>
                     <br>
                     <button class="btn btn-success" type="submit">Save</button>
+                    <button class="btn btn-secondary" id="cancel" type="button">Cancel</button>
                 </form>
-                <button id="cancel"
-                        style="background-color: grey;
-                               color: white;
-                               margin-top: 3px">Cancel</button>
             </div>
         </div>
     </div>

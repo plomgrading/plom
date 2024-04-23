@@ -36,8 +36,6 @@ class SourceManageView(ManagerRequiredView):
             "uploaded_sources": SourceService.get_list_of_sources(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "duplicates": SourceService.check_pdf_duplication(),
-            "navbar_colour": "#AD9CFF",
-            "user_group": "manager",
         }
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
@@ -92,8 +90,6 @@ class SourceReadOnlyView(ManagerRequiredView):
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_sources": SourceService.get_list_of_sources(),
                 "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
-                "navbar_colour": "#AD9CFF",
-                "user_group": "manager",
             }
         )
         return context

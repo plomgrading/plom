@@ -41,8 +41,6 @@ class PreparationLandingView(ManagerRequiredView):
             "student_list_present": sss.are_there_students(),
             "papers_staged": pinfo.is_paper_database_populated(),
             "papers_built": bps.are_all_papers_built(),
-            "navbar_colour": "#AD9CFF",
-            "user_group": "manager",
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
             "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
