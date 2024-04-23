@@ -8,7 +8,7 @@
 
 from datetime import datetime
 import logging
-import random
+import random  # optionally used for debugging
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
