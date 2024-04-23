@@ -14,6 +14,7 @@
 {% block main_content %}
     <p>Rubric ID: {{ rubric.key }}</p>
     <p>Kind: {{ rubric.kind }}</p>
+    <p>Revision: {{ rubric.revision }}, last modified {{ rubric.last_modified }} by {{ rubric.modified_by_user }}</p>
     <p>System rubric: {{ rubric.system_rubric }}</p>
     <p># used: TODO</p>
     {{ rubric_as_html|safe }}
