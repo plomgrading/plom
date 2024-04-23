@@ -106,5 +106,4 @@ class SourceReadOnlyView(ManagerRequiredView):
 
 class ReferenceImageView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
-        context = self.build_context()
         return FileResponse(SourceService._get_reference_image_file(version, page))
