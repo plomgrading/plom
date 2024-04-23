@@ -5,6 +5,7 @@
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% load humanize %}
 {% block title %}
     Rubric Info
 {% endblock title %}
@@ -14,7 +15,10 @@
 {% block main_content %}
     <p>Rubric ID: {{ rubric.key }}</p>
     <p>Kind: {{ rubric.kind }}</p>
-    <p>Revision: {{ rubric.revision }}, last modified {{ rubric.last_modified }} by {{ rubric.modified_by_user }}</p>
+    <p>Created by: {{ rubric.user }}</p>
+    <p>
+        Revision: {{ rubric.revision }}, last modified {{ rubric.last_modified|naturaltime }} by {{ rubric.modified_by_user }}
+    </p>
     <p>System rubric: {{ rubric.system_rubric }}</p>
     <p># used: {{ marking_tasks|length }}</p>
     {{ rubric_as_html|safe }}
