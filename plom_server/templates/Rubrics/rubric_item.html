@@ -16,7 +16,7 @@
     <p>Kind: {{ rubric.kind }}</p>
     <p>Revision: {{ rubric.revision }}, last modified {{ rubric.last_modified }} by {{ rubric.modified_by_user }}</p>
     <p>System rubric: {{ rubric.system_rubric }}</p>
-    <p># used: TODO</p>
+    <p># used: {{ marking_tasks|length }}</p>
     {{ rubric_as_html|safe }}
     <br>
     <form action="{% url 'rubric_edit' rubric.key %}" method="post">
