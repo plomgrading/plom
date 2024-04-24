@@ -1,0 +1,31 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Rectangles from v {{ version }} p {{ page_number }}
+{% endblock title %}
+{% block page_heading %}
+    Rectangles from v {{ version }} p {{ page_number }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'rectangle_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to choose version/page
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+    <h5 class="card-title">Version {{ version }} page {{ page_number }} selected rectangles<h5>
+      <p>Rectangle top-left to bottom-right: ({{left}}, {{top}}) to ({{right}}, {{bottom}})</p>
+      <ul>
+        {% for pn in papers %}
+        <li>{{pn}}: <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{left}}&top={{top}}&right={{right}}&bottom={{bottom}}"/> </li>
+        {% endfor %}
+        </ul>
+       </div>
+    </div>
+{% endblock main_content %}
