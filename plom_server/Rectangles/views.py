@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 from Papers.services import SpecificationService, PaperInfoService
@@ -91,7 +91,6 @@ class ExtractedRectangleView(ManagerRequiredView):
         top = float(request.GET.get("top"))
         bottom = float(request.GET.get("bottom"))
 
-        rect_region_bytes = rex.extract_rect_region(
-            paper, left, top, right, bottom)
+        rect_region_bytes = rex.extract_rect_region(paper, left, top, right, bottom)
 
         return FileResponse(ContentFile(rect_region_bytes))

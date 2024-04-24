@@ -88,7 +88,6 @@ class PaperInfoService:
         self, version, page_number, *, scanned=True
     ) -> List[int]:
         """Given the version and page-number, return list of paper numbers that contain that page/version."""
-
         if scanned:
             return sorted(
                 list(

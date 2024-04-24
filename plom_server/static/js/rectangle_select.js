@@ -1,5 +1,10 @@
-// taken from 
-// hhttps://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
+/*
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+*/
+
+// Code idea copied from 
+// https://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
 var image = document.getElementById('reference_image');
 var canvas = document.getElementById('canvas');
