@@ -1,0 +1,62 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Select rectangles from v {{ version }} p {{ page_number }}
+{% endblock title %}
+{% block page_heading %}
+    Select rectangles from v {{ version }} p {{ page_number }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'rectangle_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to choose version/page
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Version {{ version }} page {{ page_number }}</h5>
+            <div class="row mb-4">
+                <div class="col w-50 md-7">
+                    <img id="reference_image"
+                         class="h-50 border"
+                         src="{% url 'reference_image' version page_number %}">
+                </img>
+                <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+            </div>
+            <div class="col">
+                <p>The coordinates of the selection.</p>
+                Left
+                <input class="form-control"
+                       type="text"
+                       id="thb_left"
+                       name="thb_left"
+                       value="0"
+                       readonly>
+                <input class="form-control"
+                       type="text"
+                       id="thb_top"
+                       name="thb_top"
+                       value="0"
+                       readonly>
+                <input class="form-control"
+                       type="text"
+                       id="thb_right"
+                       name="thb_right"
+                       value="0"
+                       readonly>
+                <input class="form-control"
+                       type="text"
+                       id="thb_bottom"
+                       name="thb_bottom"
+                       value="0"
+                       readonly>
+            </div>
+        </div>
+    </div>
+    <script src="{% static '/js/rectangle_select.js' %}"></script>
+{% endblock main_content %}

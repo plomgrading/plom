@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     "Finish",
     "Contrib",
     "TaskOrder",
+    "Rectangles",
 ]
 
 MIDDLEWARE = [
