@@ -2,15 +2,19 @@
 // hhttps://medium.com/variance-digital/interactive-rectangular-selection-on-a-responsive-image-761ebe24280
 
 var image = document.getElementById('reference_image');
-var canvas = document.getElementById('canvas')
+var canvas = document.getElementById('canvas');
 
-//hidden or text inputs
-var h_th_left = document.getElementById('thb_left')
-var h_th_top = document.getElementById('thb_top')
-var h_th_right = document.getElementById('thb_right')
-var h_th_bottom = document.getElementById('thb_bottom')
+var h_th_left = document.getElementById('thb_left');
+var h_th_top = document.getElementById('thb_top');
+var h_th_right = document.getElementById('thb_right');
+var h_th_bottom = document.getElementById('thb_bottom');
 
-var handleRadius = 10
+var h_plom_tl_x= document.getElementById('plom_left');
+var h_plom_tl_y= document.getElementById('plom_top');
+var h_plom_br_x= document.getElementById('plom_bottom');
+var h_plom_br_y= document.getElementById('plom_right');
+
+var handleRadius = 5 
 
 var dragTL = dragBL = dragTR = dragBR = false;
 var dragWholeRect = false;
@@ -21,6 +25,7 @@ var current_canvas_rect={}
 var mouseX, mouseY
 var startX, startY
 
+// some starting values
 var th_left = 32;
 var th_top = 32;
 var th_right = 32+256;
@@ -29,8 +34,14 @@ var th_bottom = 32+128;
 var th_width = th_right - th_left;
 var th_height = th_bottom - th_top;
 
+// some starting values
 var effective_image_width = 1700;
 var effective_image_height = 2200;
+// update these values after the image has loaded
+image.onload = function(){
+effective_image_width = image.naturalWidth;
+effective_image_height = image.naturalHeight;
+}
 
 //drawRectInCanvas() connected functions -- START
 function updateHiddenInputs(){
@@ -40,6 +51,15 @@ function updateHiddenInputs(){
   h_th_top.value = Math.round(rect.top * inverse_ratio_h)
   h_th_right.value = Math.round((rect.left + rect.width) * inverse_ratio_w)
   h_th_bottom.value = Math.round((rect.top + rect.height) * inverse_ratio_h)
+
+  var w = bottom_right_coord[0] - top_left_coord[0];
+  var h = bottom_right_coord[1] - top_left_coord[1];
+
+  h_plom_tl_x.value = (h_th_left.value - top_left_coord[0])/w;
+  h_plom_tl_y.value = (h_th_top.value - top_left_coord[1])/h;
+  h_plom_br_x.value = (h_th_right.value - top_left_coord[0])/w;
+  h_plom_br_y.value = (h_th_bottom.value - top_left_coord[1])/h;
+
 }
 
 function drawCircle(x, y, radius) {
@@ -57,19 +77,40 @@ function drawHandles() {
   drawCircle(rect.left, rect.top + rect.height, handleRadius);
 }
 
-
+function drawPlomBits() 
+{
+// draw our coordinate system
+  var ctx = canvas.getContext("2d");
+  var ratio_w = canvas.width / effective_image_width;
+  var ratio_h = canvas.height / effective_image_height;
+  ctx.strokeStyle = "#a00000";
+  ctx.fillStyle = "#a00000";
+  for (let [k,v] of Object.entries(corner_dat)) {
+    ctx.beginPath();
+    ctx.arc(v[0]*ratio_w,v[1]*ratio_h,8, 0,2*Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.lineWidth = "2";
+  ctx.rect(top_left_coord[0]*ratio_w, top_left_coord[1]*ratio_h, (bottom_right_coord[0]-top_left_coord[0])*ratio_w, (bottom_right_coord[1]-top_left_coord[1])*ratio_h);
+  ctx.stroke();
+ 
+}
 function drawRectInCanvas()
 {
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
-  ctx.lineWidth = "6";
+  ctx.lineWidth = "2";
   ctx.fillStyle = "#00808050";
   ctx.strokeStyle = "#008080";
   ctx.rect(rect.left, rect.top, rect.width, rect.height);
   ctx.fill();
   ctx.stroke();
   drawHandles();
+  drawPlomBits();
+
   updateHiddenInputs()
 }
 //drawRectInCanvas() connected functions -- END

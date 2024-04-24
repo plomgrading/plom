@@ -5,10 +5,10 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Select rectangles from v {{ version }} p {{ page_number }}
+    Select rectangle from v {{ version }} p {{ page_number }}
 {% endblock title %}
 {% block page_heading %}
-    Select rectangles from v {{ version }} p {{ page_number }}
+    Select rectangle from v {{ version }} p {{ page_number }}
 {% endblock page_heading %}
 {% block main_content %}
     <div>
@@ -29,34 +29,47 @@
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>
             <div class="col">
-                <p>The coordinates of the selection.</p>
-                Left
-                <input class="form-control"
-                       type="text"
-                       id="thb_left"
-                       name="thb_left"
-                       value="0"
-                       readonly>
-                <input class="form-control"
-                       type="text"
-                       id="thb_top"
-                       name="thb_top"
-                       value="0"
-                       readonly>
-                <input class="form-control"
-                       type="text"
-                       id="thb_right"
-                       name="thb_right"
-                       value="0"
-                       readonly>
-                <input class="form-control"
-                       type="text"
-                       id="thb_bottom"
-                       name="thb_bottom"
-                       value="0"
-                       readonly>
+                <p>The absolute coordinates of the selection.</p>
+                <ul>
+                    <li>
+                        Top-left (
+                        <input id="thb_left" readonly />
+                        ,
+                        <input id="thb_top" readonly />
+                        )
+                    </li>
+                    <li>
+                        Bottom-right (
+                        <input id="thb_right" readonly />
+                        ,
+                        <input id="thb_bottom" readonly />
+                        )
+                    </li>
+                </ul>
+                <p>The scaled coordinates of the selection.</p>
+                <ul>
+                    <li>
+                        Top-left (
+                        <input id="plom_left" readonly />
+                        ,
+                        <input id="plom_top" readonly />
+                        )
+                    </li>
+                    <li>
+                        Bottom-right (
+                        <input id="plom_right" readonly />
+                        ,
+                        <input id="plom_bottom" readonly />
+                        )
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
+    <script type="text/javascript">
+  var corner_dat = {{qr_info|safe}};
+  var top_left_coord = {{top_left|safe}};
+  var bottom_right_coord = {{bottom_right|safe}};
+    </script>
     <script src="{% static '/js/rectangle_select.js' %}"></script>
 {% endblock main_content %}

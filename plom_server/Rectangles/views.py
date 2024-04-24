@@ -9,6 +9,8 @@ from Preparation.services import SourceService
 
 from Base.base_group_views import ManagerRequiredView
 
+from Rectangles.services.rectangle import get_reference_rectangle
+
 
 class RectangleHomeView(ManagerRequiredView):
     def build_context(self):
@@ -34,7 +36,21 @@ class RectangleHomeView(ManagerRequiredView):
 class SelectRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
-        context.update({"version": version, "page_number": page})
+        qr_info = get_reference_rectangle(version, page)
+        x_coords = [X[0] for X in qr_info.values()]
+        y_coords = [X[1] for X in qr_info.values()]
+        rect_top_left = [min(x_coords), min(y_coords)]
+        rect_bottom_right = [max(x_coords), max(y_coords)]
+        context.update(
+            {
+                "version": version,
+                "page_number": page,
+                "qr_info": qr_info,
+                "top_left": rect_top_left,
+                "bottom_right": rect_bottom_right,
+            }
+        )
+
         return render(request, "Rectangles/select.html", context)
 
 
