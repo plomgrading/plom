@@ -11,8 +11,8 @@ var h_th_bottom = document.getElementById('thb_bottom');
 
 var h_plom_tl_x= document.getElementById('plom_left');
 var h_plom_tl_y= document.getElementById('plom_top');
-var h_plom_br_x= document.getElementById('plom_bottom');
-var h_plom_br_y= document.getElementById('plom_right');
+var h_plom_br_x= document.getElementById('plom_right');
+var h_plom_br_y= document.getElementById('plom_bottom');
 
 var handleRadius = 5 
 
@@ -83,8 +83,9 @@ function drawPlomBits()
   var ctx = canvas.getContext("2d");
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
-  ctx.strokeStyle = "#a00000";
-  ctx.fillStyle = "#a00000";
+  ctx.strokeStyle = "#ff8000";
+  ctx.setLineDash([2,4])
+  ctx.fillStyle = "#ff8000";
   for (let [k,v] of Object.entries(corner_dat)) {
     ctx.beginPath();
     ctx.arc(v[0]*ratio_w,v[1]*ratio_h,8, 0,2*Math.PI);

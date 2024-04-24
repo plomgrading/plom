@@ -2,14 +2,15 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 
-from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.http import HttpRequest, HttpResponse
+from django.core.files.base import ContentFile
 from django.shortcuts import render
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import SourceService
 
 from Base.base_group_views import ManagerRequiredView
 
-from Rectangles.services.rectangle import get_reference_rectangle
+from Rectangles.services import get_reference_rectangle, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
@@ -53,5 +54,44 @@ class SelectRectangleView(ManagerRequiredView):
 
         return render(request, "Rectangles/select.html", context)
 
+    def post(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
+        context = self.build_context()
+        left = round(float(request.POST.get("plom_left")), 6)
+        top = round(float(request.POST.get("plom_top")), 6)
+        right = round(float(request.POST.get("plom_right")), 6)
+        bottom = round(float(request.POST.get("plom_bottom")), 6)
+        # get all scanned papers with that page,version
+        paper_numbers = (
+            PaperInfoService().get_paper_numbers_containing_given_page_version(
+                version, page, scanned=True
+            )
+        )
+        context.update(
+            {
+                "version": version,
+                "page_number": page,
+                "left": left,
+                "top": top,
+                "right": right,
+                "bottom": bottom,
+                "papers": paper_numbers,
+            }
+        )
+        return render(request, "Rectangles/show_rectangles.html", context)
 
-# Create your views here.
+
+class ExtractedRectangleView(ManagerRequiredView):
+    def get(
+        self, request: HttpRequest, paper: int, version: int, page: int
+    ) -> HttpResponse:
+        rex = RectangleExtractor(version, page)
+
+        left = float(request.GET.get("left"))
+        right = float(request.GET.get("right"))
+        top = float(request.GET.get("top"))
+        bottom = float(request.GET.get("bottom"))
+
+        rect_region_bytes = rex.extract_rect_region(
+            paper, left, top, right, bottom)
+
+        return FileResponse(ContentFile(rect_region_bytes))

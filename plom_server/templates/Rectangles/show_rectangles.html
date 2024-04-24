@@ -19,13 +19,16 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-    <h5 class="card-title">Version {{ version }} page {{ page_number }} selected rectangles<h5>
-      <p>Rectangle top-left to bottom-right: ({{left}}, {{top}}) to ({{right}}, {{bottom}})</p>
-      <ul>
-        {% for pn in papers %}
-        <li>{{pn}}: <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{left}}&top={{top}}&right={{right}}&bottom={{bottom}}"/> </li>
-        {% endfor %}
-        </ul>
-       </div>
+            <h5 class="card-title">Version {{ version }} page {{ page_number }} selected rectangles</h5>
+            <p>Rectangle top-left to bottom-right: ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})</p>
+            <ul>
+                {% for pn in papers %}
+                    <li>
+                        {{ pn }}:
+                        <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 {% endblock main_content %}

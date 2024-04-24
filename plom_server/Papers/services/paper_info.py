@@ -82,3 +82,28 @@ class PaperInfoService:
                 " does not exist in the database."
             )
         return page.version
+
+    @transaction.atomic
+    def get_paper_numbers_containing_given_page_version(
+        self, version, page_number, *, scanned=True
+    ) -> List[int]:
+        """Given the version and page-number, return list of paper numbers that contain that page/version."""
+
+        if scanned:
+            return sorted(
+                list(
+                    FixedPage.objects.filter(
+                        page_number=page_number, version=version, image__isnull=False
+                    )
+                    .prefetch_related("paper")
+                    .values_list("paper__paper_number", flat=True)
+                )
+            )
+        else:
+            return sorted(
+                list(
+                    FixedPage.objects.filter(page_number=page_number, version=version)
+                    .prefetch_related("paper")
+                    .values_list("paper__paper_number", flat=True)
+                )
+            )
