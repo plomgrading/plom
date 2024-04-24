@@ -41,14 +41,13 @@
             <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
                 <form class="form" method="post">
                     {% csrf_token %}
-                    <p id="name-label">Preferred Name</p>
-                    {{ form.first_name }}
-                    <br>
-                    <br>
-                    <p id="email-label">Email</p>
-                    {{ form.email }}
-                    <br>
-                    <br>
+                    <p>Username: {{ request.user.username }}</p>
+                    <p id="name-label">Preferred name: {{ form.first_name }}</p>
+                    <p class="text-muted lh-1">
+                        <small>(Note: your username may appear to other users, in URLs and other places)</small>
+                    </p>
+                    <p id="email-label">Email: {{ form.email }}</p>
+                    <br />
                     <button class="btn btn-success" type="submit">Save</button>
                     <button class="btn btn-secondary" id="cancel" type="button">Cancel</button>
                 </form>
