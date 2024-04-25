@@ -20,15 +20,25 @@
     <div class="card m-2">
         <div class="card-body">
             <h5 class="card-title">Version {{ version }} page {{ page_number }} selected rectangles</h5>
-            <p>Rectangle top-left to bottom-right: ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})</p>
-            <ul>
-                {% for pn in papers %}
+            {% if papers %}
+                <p>Rectangle top-left to bottom-right: ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})</p>
+                <ul>
+                    {% for pn in papers %}
+                        <li>
+                            {{ pn }}:
+                            <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                There are no papers with version {{ version }} of page {{ page_number }}. This could be because
+                <ul>
+                    <li>You have not finished uploading scans</li>
                     <li>
-                        {{ pn }}:
-                        <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
+                        Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
                     </li>
-                {% endfor %}
-            </ul>
+                </ul>
+            {% endif %}
         </div>
     </div>
 {% endblock main_content %}
