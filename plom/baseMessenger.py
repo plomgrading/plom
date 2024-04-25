@@ -958,40 +958,43 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def McreateRubric(self, new_rubric):
+    def McreateRubric(self, new_rubric: dict[str, Any]) -> str:
         """Ask server to make a new rubric and get key back.
 
         Args:
-            new_rubric (dict): the new rubric info as dict.
+            new_rubric: the new rubric info as dict.  The server will
+                probably add other fields so you should not consider
+                this input data as canonical.  Instead, call back and
+                get the new rubric.
 
         Raises:
             PlomAuthenticationException: Authentication error.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            str: the key/id of the new rubric.
+            The key/id of the new rubric.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/MK/rubric",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-            )
-            response.raise_for_status()
-            new_key = response.json()
-            return new_key
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/MK/rubric",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "rubric": new_rubric,
+                    },
+                )
+                response.raise_for_status()
+                new_key = response.json()
+                return new_key
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(
+                    f"Error when creating new rubric: {e}"
+                ) from None
 
     def MgetRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         """Retrieve list of all rubrics from server for given question.
@@ -1053,14 +1056,15 @@ class BaseMessenger:
                     r["system_rubric"] = False
             return rubrics
 
-    def MmodifyRubric(self, key, new_rubric):
+    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> str:
         """Ask server to modify a rubric and get key back.
 
         Args:
-            rubric (dict): the modified rubric info as dict.
+            key: the key/id of the rubric to change.
+            new_rubric: the changes we want to make as a key-value dict.
 
         Returns:
-            str: the key/id of the rubric.  Currently should be unchanged
+            The key/id of the rubric.  Currently should be unchanged
             from what you sent.  But this behaviour might change in the future.
 
         Raises:
@@ -1071,40 +1075,38 @@ class BaseMessenger:
             PlomConflict: two users try to modify the rubric.
             PlomSeriousException: Other error types, possible needs fix or debugging.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/rubric/{key}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-            )
-            response.raise_for_status()
-            new_key = response.json()
-            return new_key
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            elif response.status_code == 400:
-                raise PlomSeriousException(response.reason) from None
-            elif response.status_code == 403:
-                raise PlomNoPermission(response.reason) from None
-            elif response.status_code == 404:
-                raise PlomNoRubric(response.reason) from None
-            elif response.status_code == 406:
-                raise PlomInconsistentRubric(response.reason) from None
-            elif response.status_code == 409:
-                if self.is_legacy_server():
-                    # legacy sends 409 for not-found
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    f"/MK/rubric/{key}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "rubric": new_rubric,
+                    },
+                )
+                response.raise_for_status()
+                new_key = response.json()
+                return new_key
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                elif response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                elif response.status_code == 404:
                     raise PlomNoRubric(response.reason) from None
-                raise PlomConflict(response.reason) from None
-            raise PlomSeriousException(
-                f"Error of type {e} when creating new rubric"
-            ) from None
-        finally:
-            self.SRmutex.release()
+                elif response.status_code == 406:
+                    raise PlomInconsistentRubric(response.reason) from None
+                elif response.status_code == 409:
+                    if self.is_legacy_server():
+                        # legacy sends 409 for not-found
+                        raise PlomNoRubric(response.reason) from None
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(
+                    f"Error of type {e} when creating new rubric"
+                ) from None
 
     def get_pagedata(self, code):
         """Get metadata about the images in this paper."""

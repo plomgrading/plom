@@ -153,6 +153,8 @@ class QuestionMarkingViewSet(ViewSet):
             service.mark_task()
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
+        except RuntimeError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
