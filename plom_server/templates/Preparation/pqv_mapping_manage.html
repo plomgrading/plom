@@ -33,10 +33,12 @@
                    target="_blank"
                    class="btn btn-info">download</a>
                 <button class="btn btn-danger"
+                        {% if have_papers_been_printed %}disabled{% endif %}
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the question-version map?"
                         hx-target="body"
                         hx-swap="outerHTML">delete question-version map</button>
+                {% if have_papers_been_printed %}<small class="text-muted">(cannot delete because papers printed)</small>{% endif %}
             </div>
             <div>
                 <table class="table table-striped border">

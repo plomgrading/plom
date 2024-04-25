@@ -102,6 +102,7 @@ class PQVMappingView(ManagerRequiredView):
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),
             "student_list_present": sss.are_there_students(),
+            "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
         }
 
         prenamed_papers_list = list(
