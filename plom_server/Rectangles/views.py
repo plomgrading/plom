@@ -85,7 +85,10 @@ class ExtractedRectangleView(ManagerRequiredView):
     def get(
         self, request: HttpRequest, paper: int, version: int, page: int
     ) -> HttpResponse:
-        rex = RectangleExtractor(version, page)
+        try:
+            rex = RectangleExtractor(version, page)
+        except ValueError as err:
+            raise Http404(err)
 
         left = float(request.GET.get("left"))
         right = float(request.GET.get("right"))

@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperInfoService
 from ...services import RectangleExtractor
@@ -31,7 +31,10 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Extracting version {version} page {page} from papers {paper_numbers}"
         )
-        rex = RectangleExtractor(version, page)
+        try:
+            rex = RectangleExtractor(version, page)
+        except ValueError as err:
+            raise CommandError(err)
 
         for pn in paper_numbers:
             fname = er_dir / f"ex_rect_v{version}_pg{page}_{pn}.png"

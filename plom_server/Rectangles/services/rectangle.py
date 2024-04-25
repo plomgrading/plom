@@ -44,7 +44,11 @@ class RectangleExtractor:
     def __init__(self, version: int, page: int):
         self.page_number = page
         self.version = version
-        rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+        try:
+            rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+        except ReferenceImage.DoesNotExist:
+            raise ValueError(f"There is no reference image for v{version} pg{page}.")
+
         x_coords = []
         y_coords = []
         for cnr in ["NE", "SE", "NW", "SW"]:
