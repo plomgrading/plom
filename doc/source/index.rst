@@ -24,13 +24,14 @@ Welcome to Plom's documentation!
 
    marking.rst
 
+   manage.rst
+
    hw_processing.rst
 
    rubrics.rst
 
    solutions.rst
 
-   manage.rst
 
    returning.rst
 
