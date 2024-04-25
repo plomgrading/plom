@@ -163,7 +163,8 @@ class AddRubricBox(QDialog):
 
         Args:
             parent (QWidget): the parent window.
-            username (str)
+            username (str): who is creating this rubric or who is
+                modifying this rubric.
             maxMark (int)
             question_number (int)
             question_label (str)
@@ -192,6 +193,7 @@ class AddRubricBox(QDialog):
         self.question_number = question_number
         self.version = version
         self.maxver = maxver
+        self._username = username
 
         self._is_edit = False
         if com:
@@ -210,7 +212,7 @@ class AddRubricBox(QDialog):
         self.TEmeta = WideTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
-        self.Luser = QLabel()
+        self.last_modified_label = QLabel()
 
         sizePolicy = QSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding
@@ -432,11 +434,7 @@ class AddRubricBox(QDialog):
         flay.addRow("Meta", self.TEmeta)
 
         flay.addRow("Rubric ID", self.label_rubric_id)
-        flay.addRow("Created by", self.Luser)
-
-        self.last_modified_label = QLabel("")
-        if self.is_edit():
-            flay.addRow("", self.last_modified_label)
+        flay.addRow("", self.last_modified_label)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -482,17 +480,20 @@ class AddRubricBox(QDialog):
                     self.typeRB_absolute.setChecked(True)
                 else:
                     raise RuntimeError(f"unexpected kind in {com}")
-            if com["id"]:
+            if com.get("id"):
                 self.label_rubric_id.setText(str(com["id"]))
-            self.Luser.setText(com.get("username", ""))
-            lastmod = com.get("last_modified")
+            s = f'Created by {com.get("username", "unknown")}'
+            lastmod = com.get("last_modified", "unknown")
             # Note sure if would be None but seems harmless (or no more harmful
             # than "unknown" sentintel from legacy anyway)
             if lastmod is not None and lastmod != "unknown":
-                self.last_modified_label.setText(
-                    f'revision {com["_edition"]}, '
-                    f"last modified {arrow.get(lastmod).humanize()}"
-                )
+                rev = com.get("revision", 0)
+                s += f", revision {rev}"
+                if rev > 0:
+                    s += f", last modified {arrow.get(lastmod).humanize()}"
+                    s += f' by {com["modified_by_username"]}'
+            self.last_modified_label.setText(s)
+            self.last_modified_label.setWordWrap(True)
             if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
@@ -558,7 +559,9 @@ class AddRubricBox(QDialog):
                 "Notes about this rubric such as hints on when to use it.\n\n"
                 "Not shown to student!"
             )
-            self.Luser.setText(username)
+            self.last_modified_label.setText(
+                f"You ({self._username}) are creating a new rubric"
+            )
             if add_to_group:
                 assert add_to_group in groups, f"{add_to_group} not in groups={groups}"
                 self.group_checkbox.setChecked(True)
@@ -872,9 +875,6 @@ class AddRubricBox(QDialog):
             display_delta = f"{value} of {out_of}"
         else:
             raise RuntimeError("no radio was checked")
-        username = self.Luser.text().strip()
-        # only meaningful if we're modifying
-        rubricID = self.label_rubric_id.text().strip()
 
         vers = self.get_versions_list()
 
@@ -883,7 +883,6 @@ class AddRubricBox(QDialog):
         rubric = self._old_rubric
         rubric.update(
             {
-                "id": rubricID,
                 "kind": kind,
                 "display_delta": display_delta,
                 "value": value,
@@ -891,10 +890,16 @@ class AddRubricBox(QDialog):
                 "text": txt,
                 "tags": tags,
                 "meta": meta,
-                "username": username,
                 "question": self.question_number,
                 "versions": vers,
                 "parameters": params,
             }
         )
+        if not self.is_edit():
+            rubric.update(
+                {
+                    "username": self._username,
+                }
+            )
+
         return rubric

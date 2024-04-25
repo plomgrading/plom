@@ -422,7 +422,8 @@ class RubricTable(QTableWidget):
         Raises
             what happens on invalid key?
         """
-        # TODO: hmmm, should be dict?
+        # ensure there is exactly one matching rubric in the list and grab it
+        # TODO: should the local storage be a dict to make this easy?
         (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
         self.appendNewRubric(rubric)
 
@@ -1726,8 +1727,9 @@ class RubricWidget(QWidget):
                 return
             except PlomConflict as e:
                 _tmp_rubrics = self._parent.getRubricsFromServer()
-                (old_rubric,) = (r for r in self.rubrics if r["id"] == new_rubric["id"])
-                (theirs,) = (r for r in _tmp_rubrics if r["id"] == new_rubric["id"])
+                # ensure there is exactly one matching rubric in each list and grab it
+                (old_rubric,) = [r for r in self.rubrics if r["id"] == new_rubric["id"]]
+                (theirs,) = [r for r in _tmp_rubrics if r["id"] == new_rubric["id"]]
                 RubricConflictDialog(
                     self, str(e), theirs, new_rubric, old_rubric
                 ).exec()
@@ -1738,7 +1740,8 @@ class RubricWidget(QWidget):
             assert key == new_rubric["id"]
             # Issue #3329: ensure edition, mod time, etc get updated
             tmp_rubrics = self._parent.getRubricsFromServer()
-            (new_rubric,) = (r for r in tmp_rubrics if r["id"] == new_rubric["id"])
+            # ensure there is exactly one matching rubric in the list and grab it
+            (new_rubric,) = [r for r in tmp_rubrics if r["id"] == new_rubric["id"]]
             # keys match still match.
             assert key == new_rubric["id"]
             assert self.rubrics[index]["id"] == new_rubric["id"]
@@ -1754,10 +1757,13 @@ class RubricWidget(QWidget):
                 self._parent.modifyRubric(_tmp["id"], _tmp)
 
         else:
-            new_rubric.pop("id")
-            new_rubric["id"] = self._parent.createNewRubric(new_rubric)
-            # at this point we have an accepted new rubric
-            # add it to the internal list of rubrics
+            new_id = self._parent.createNewRubric(new_rubric)
+            # The new_rubric itself may not be complete: get it from the server
+            # TODO: might be nicer to get just the new rubric rather than its ID
+            # TODO: or we can add a API call to get one rubric
+            tmp_rubrics = self._parent.getRubricsFromServer()
+            # ensure there is exactly one matching rubric in the list and grab it
+            (new_rubric,) = [r for r in tmp_rubrics if r["id"] == new_id]
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
