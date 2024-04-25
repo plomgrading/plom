@@ -79,10 +79,13 @@ class Rubric(models.Model):
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
+    # ForeignKey automatically creates a backreference from the User table
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_modified = models.DateTimeField(auto_now=True)
-    # TODO: "If you'd prefer Django not to create a backwards relation, set
-    # related_name to +."  Without this, it clashes with the user field.
+    # This ``modified_by_user`` field would also automatically create a backref
+    # from User which would clash with the ``user`` field.  Setting ``related_name``
+    # to ``+`` prevents the backref creation, to be revisited it we need the backref
+    # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.ForeignKey.related_name "
     modified_by_user = models.ForeignKey(
         User, null=True, on_delete=models.SET_NULL, related_name="+"
     )
