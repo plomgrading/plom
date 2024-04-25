@@ -1,5 +1,5 @@
 .. Plom documentation main file
-   Copyright (C) 2020-2023 Colin B. Macdonald
+   Copyright (C) 2020-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 ################################
@@ -14,7 +14,7 @@ Welcome to Plom's documentation!
 
    running_a_server.rst
 
-   preparing_an_exam.rst
+   preparing_an_assessment.rst
 
    scanning
 
