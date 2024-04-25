@@ -22,6 +22,8 @@ Welcome to Plom's documentation!
 
    identifying_papers.rst
 
+   marking.rst
+
    hw_processing.rst
 
    rubrics.rst
