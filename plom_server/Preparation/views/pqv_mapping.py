@@ -83,6 +83,7 @@ class PQVMappingDownloadView(ManagerRequiredView):
 class PQVMappingDeleteView(ManagerRequiredView):
     def delete(self, request: HttpRequest) -> HttpResponse:
         pqvs = PQVMappingService()
+        # fails with ValueError if state disallows delete
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
 
