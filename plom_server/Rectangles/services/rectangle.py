@@ -9,7 +9,6 @@ from io import BytesIO
 import numpy as np
 from pathlib import Path
 from PIL import Image
-from tempfile import TemporaryDirectory
 from typing import Any, Dict, List
 from warnings import warn
 import zipfile

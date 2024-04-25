@@ -9,7 +9,6 @@ from django.http import (
     HttpResponse,
     FileResponse,
     Http404,
-    StreamingHttpResponse,
 )
 from django.core.files.base import ContentFile
 from django.shortcuts import render
