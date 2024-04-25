@@ -202,7 +202,9 @@ def store_reference_images(source_version: int):
     scanner = ScanService()
 
     # remove any existing reference images for this version
-    for ri_obj in ReferenceImage.objects.filter(version=source_version):
+    for ri_obj in ReferenceImage.objects.filter(
+        version=source_version
+    ).select_for_update():
         ri_obj.image_file.path.unlink(missing_ok=True)
         ri_obj.delete()
 
