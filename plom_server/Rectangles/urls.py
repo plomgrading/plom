@@ -2,7 +2,12 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 from django.urls import path
 
-from .views import RectangleHomeView, SelectRectangleView, ExtractedRectangleView
+from .views import (
+    RectangleHomeView,
+    SelectRectangleView,
+    ExtractedRectangleView,
+    ZipExtractedRectangleView,
+)
 
 urlpatterns = [
     path("", RectangleHomeView.as_view(), name="rectangle_home"),
@@ -15,5 +20,10 @@ urlpatterns = [
         "extract/<int:paper>/<int:version>/<int:page>",
         ExtractedRectangleView.as_view(),
         name="extracted_rectangle",
+    ),
+    path(
+        "zip/<int:version>/<int:page>",
+        ZipExtractedRectangleView.as_view(),
+        name="zip_rectangles",
     ),
 ]

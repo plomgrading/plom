@@ -7,11 +7,15 @@ from Papers.models import ReferenceImage
 import cv2 as cv
 from io import BytesIO
 import numpy as np
+from pathlib import Path
 from PIL import Image
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List
 from warnings import warn
+import zipfile
 
 from Papers.models import Paper, FixedPage
+from Papers.services import PaperInfoService
 from plom.scan import rotate
 
 
@@ -189,3 +193,27 @@ class RectangleExtractor:
         with BytesIO() as fh:
             resulting_img.save(fh, format="png")
             return fh.getvalue()
+
+    def build_zipfile(
+        self,
+        dest_filename: str | Path,
+        left_f: float,
+        top_f: float,
+        right_f: float,
+        bottom_f: float,
+    ):
+        """Construct a zipfile of the extracted rectangular regions and save in dest_filename.
+
+        Warning: This constructs the pngs for each extracted region in memory, but then saves the resulting (potentially very large) zipfile on disc. This could cause problems if large rectangles are selected from many pages.
+        """
+        paper_numbers = (
+            PaperInfoService().get_paper_numbers_containing_given_page_version(
+                self.version, self.page_number, scanned=True
+            )
+        )
+
+        with zipfile.ZipFile(dest_filename, mode="w") as archive:
+            for pn in paper_numbers:
+                fname = f"extracted_rectangle_pn{pn}.png"
+                dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
+                archive.writestr(fname, dat)

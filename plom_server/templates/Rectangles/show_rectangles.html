@@ -19,25 +19,33 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">Version {{ version }} page {{ page_number }} selected rectangles</h5>
+            <h5 class="card-title">
+                Version {{ version }} page {{ page_number }} selected rectangles: top-left to bottom-right = ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})
+            </h5>
             {% if papers %}
-                <p>Rectangle top-left to bottom-right: ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})</p>
-                <ul>
-                    {% for pn in papers %}
-                        <li>
-                            {{ pn }}:
-                            <img src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
-                        </li>
-                    {% endfor %}
-                </ul>
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'zip_rectangles' version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}">download zip of images</a>
+                    <ul>
+                        {% for pn in papers %}
+                            <li>
+                                Paper {{ pn }}:
+                                <img class="border p-2 m-2"
+                                     src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </p>
             {% else %}
-                There are no papers with version {{ version }} of page {{ page_number }}. This could be because
-                <ul>
-                    <li>You have not finished uploading scans</li>
-                    <li>
-                        Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
-                    </li>
-                </ul>
+                <p>
+                    There are no papers with version {{ version }} of page {{ page_number }}. This could be because
+                    <ul>
+                        <li>You have not finished uploading scans</li>
+                        <li>
+                            Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
+                        </li>
+                    </ul>
+                </p>
             {% endif %}
         </div>
     </div>

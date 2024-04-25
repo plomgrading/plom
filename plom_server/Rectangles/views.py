@@ -1,8 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
-from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    FileResponse,
+    Http404,
+    StreamingHttpResponse,
+)
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 from Papers.services import SpecificationService, PaperInfoService
@@ -98,3 +106,26 @@ class ExtractedRectangleView(ManagerRequiredView):
         rect_region_bytes = rex.extract_rect_region(paper, left, top, right, bottom)
 
         return FileResponse(ContentFile(rect_region_bytes))
+
+
+class ZipExtractedRectangleView(ManagerRequiredView):
+    def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
+        try:
+            rex = RectangleExtractor(version, page)
+        except ValueError as err:
+            raise Http404(err)
+
+        left = float(request.GET.get("left"))
+        right = float(request.GET.get("right"))
+        top = float(request.GET.get("top"))
+        bottom = float(request.GET.get("bottom"))
+
+        tmpzip = NamedTemporaryFile(delete=False)
+        try:
+            rex.build_zipfile(tmpzip.name, left, top, right, bottom)
+
+            return FileResponse(
+                tmpzip, filename="extracted_rectangles_v{version}_pg{page}.zip"
+            )
+        finally:
+            Path(tmpzip.name).unlink()
