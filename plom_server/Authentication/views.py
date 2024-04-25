@@ -29,7 +29,6 @@ from Base.base_group_views import (
 )
 
 
-# Create your views here.
 # Set User Password
 class SetPassword(View):
     template_name = "Authentication/set_password.html"

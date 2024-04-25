@@ -1007,8 +1007,8 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: list of dicts, possibly an empty list if server has no
-                rubrics for this question.
+            List of dicts, possibly an empty list if server has no
+            rubrics for this question.
         """
         if self.is_legacy_server():
             return self._legacy_getRubrics(question)
@@ -1054,6 +1054,10 @@ class BaseMessenger:
                     r["system_rubric"] = True
                 else:
                     r["system_rubric"] = False
+                # A special sentinel value for legacy server
+                # TODO: annoying b/c downstream needs to detect and not send to arrow
+                r.setdefault("last_modified", "unknown")
+                r.setdefault("modified_by_username", "")
             return rubrics
 
     def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> str:

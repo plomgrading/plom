@@ -54,7 +54,11 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "parameters": r.parameters,
         "system_rubric": r.system_rubric,
         "published": r.published,
-        "_edition": r._edition,
+        "last_modified": r.last_modified,
+        "modified_by_username": (
+            None if not r.modified_by_user else r.modified_by_user.username
+        ),
+        "revision": r.revision,
     }
 
 
@@ -165,13 +169,13 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
-        # default edition if missing from incoming data
-        new_rubric_data.setdefault("_edition", 0)
-        if not new_rubric_data["_edition"] == rubric._edition:
+        # default revision if missing from incoming data
+        new_rubric_data.setdefault("revision", 0)
+        if not new_rubric_data["revision"] == rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
-                f"database content (edition = {rubric._edition}: most likely your "
+                f'Your rubric revision {new_rubric_data["revision"]} does not match '
+                f"database content (revision {rubric.revision}): most likely your "
                 "edits have collided with those of someone else."
             )
 
@@ -201,7 +205,10 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        new_rubric_data["_edition"] += 1
+        new_rubric_data.pop("modified_by_username", None)
+        if modifying_user is not None:
+            new_rubric_data["modified_by_user"] = modifying_user.pk
+        new_rubric_data["revision"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()

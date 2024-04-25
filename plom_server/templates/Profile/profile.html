@@ -26,6 +26,7 @@
                                  class="rounded-circle img-fluid"
                                  style="width: 100px" />
                         </div>
+                        <!-- we use django.contrib.auth's first_name field; last_name unused -->
                         <h3 class="mb-2">{{ request.user.first_name }}</h3>
                         <p class="mb-2">{{ request.user.username }}</p>
                         <p class="text-muted mb-4">
@@ -40,14 +41,17 @@
             <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
                 <form class="form" method="post">
                     {% csrf_token %}
-                    <p id="name-label">Prefer Name</p>
-                    {{ form.first_name }}
-                    <br>
-                    <br>
-                    <p id="email-label">Email</p>
-                    {{ form.email }}
-                    <br>
-                    <br>
+                    <p>Username: {{ request.user.username }}</p>
+                    <p id="name-label">Preferred name: {{ form.first_name }}</p>
+                    <p class="text-muted lh-1">
+                        <small>
+                            (Note: your username may appear to other
+                            users, in URLs and other places: we're
+                            working on fixing this, patience please)
+                        </small>
+                    </p>
+                    <p id="email-label">Email: {{ form.email }}</p>
+                    <br />
                     <button class="btn btn-success" type="submit">Save</button>
                     <button class="btn btn-secondary" id="cancel" type="button">Cancel</button>
                 </form>

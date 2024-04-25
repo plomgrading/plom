@@ -32,9 +32,15 @@ class Rubric(models.Model):
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
             implementation-specific.
-        user: which user "owns" this Rubric.  Generally, currently, who
-            first created it, although in some circumstances other users
-            can modify it.
+        display_delta: short string to display, such as "+3" or "2 of 3",
+            that illustrates to recipients how their score is changed by
+            this rubric.
+        value: the internal change associated with this rubric, not shown
+            to recipients.  This should generally be somehow related to
+            the display delta, although the exact calculation depends on
+            ``kind`` and there maybe be hypothetical future circumstances
+            such as mastery grading where the ``display_delta`` might
+            differ substantially from ``value``.
         TODO: document other fields.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
@@ -42,11 +48,21 @@ class Rubric(models.Model):
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
         published: for future use.
-        _edition: a monontonically-increasing integer used to detect mid-air
-            collisions.  At this point not really intended for clients
-            (hence the underscore).  Modifying a rubric will increase
-            this by one.  If you are messing with this, presumably you
-            are doing something creative/hacky.
+        user: generally who created the rubric, although at least in
+            principle, users could "gift" a rubric to another user.
+            No one is doing that as of mid 2024.
+            TODO: consider renaming to ``created_by_user``?
+            Currently, once this makes it to the client, its called
+            ``username`` and is a string.  This needs to be dealt with
+            on the way in and out (perhaps what a "serializer" is for).
+        last_modified: when was this rubric last modified.
+        modified_by_user: who last modified this rubric.  Currently, once
+            this makes it to the client, its called ``modified_by_username``
+            and is a string.
+        revision: a monontonically-increasing integer used to detect mid-air
+            collisions.  Modifying a rubric will increase this by one.
+            If you are messing with this, presumably you are doing something
+            creative/hacky.
     """
 
     key = models.TextField(null=False, default=generate_unique_key)
@@ -56,7 +72,6 @@ class Rubric(models.Model):
     out_of = models.IntegerField(null=False, default=0)
     text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, default=list)
@@ -64,7 +79,17 @@ class Rubric(models.Model):
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
-    _edition = models.IntegerField(null=False, default=0)
+    # ForeignKey automatically creates a backreference from the User table
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    last_modified = models.DateTimeField(auto_now=True)
+    # This ``modified_by_user`` field would also automatically create a backref
+    # from User which would clash with the ``user`` field.  Setting ``related_name``
+    # to ``+`` prevents the backref creation, to be revisited it we need the backref
+    # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.ForeignKey.related_name "
+    modified_by_user = models.ForeignKey(
+        User, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    revision = models.IntegerField(null=False, default=0)
 
 
 class RubricPane(models.Model):
