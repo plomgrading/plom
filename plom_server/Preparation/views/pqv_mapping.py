@@ -134,8 +134,6 @@ class PQVMappingView(ManagerRequiredView):
         return context
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_qvmapping_view")
         context = self.build_context()
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
@@ -162,23 +160,3 @@ class PQVMappingView(ManagerRequiredView):
         pqvs = PQVMappingService()
         pqvs.generate_and_set_pqvmap(number_to_produce, first=first)
         return HttpResponseRedirect(".")
-
-
-class PQVMappingReadOnlyView(ManagerRequiredView):
-    def build_context(self):
-        context = super().build_context()
-        pqvs = PQVMappingService()
-        pss = PrenameSettingService()
-
-        context.update(
-            {
-                "prenaming": pss.get_prenaming_setting(),
-                "question_labels_html": SpecificationService.get_question_html_label_triples(),
-                "pqv_table": pqvs.get_pqv_map_as_table(pss.get_prenaming_setting()),
-            }
-        )
-        return context
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        return render(request, "Preparation/pqv_mapping_view.html", context)
