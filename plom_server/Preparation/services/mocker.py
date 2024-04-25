@@ -43,4 +43,4 @@ class ExamMockerService:
                     qr_codes,
                     odd=odd,
                 )
-        return pdf_doc.tobytes()
+            return pdf_doc.tobytes()
