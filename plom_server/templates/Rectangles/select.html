@@ -21,14 +21,14 @@
         <div class="card-body">
             <h5 class="card-title">Version {{ version }} page {{ page_number }}</h5>
             <div class="row mb-4">
-                <div class="col w-50 md-7">
+                <div class="col-6">
                     <img id="reference_image"
-                         class="h-50 border"
+                         class="border w-100"
                          src="{% url 'reference_image' version page_number %}">
                 </img>
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>
-            <div class="col">
+            <div class="col-6">
                 <p>The absolute coordinates of the selection.</p>
                 <ul>
                     <li>
