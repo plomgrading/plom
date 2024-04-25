@@ -4,14 +4,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from Papers.services import PaperInfoService
-from ...services import RectangleExtractor, get_reference_rectangle
+from ...services import RectangleExtractor
 
 
 class Command(BaseCommand):
-    """python3 manage.py plom_extract_rectangle -v 1 -p 3 -n 12"""
+    """Command to extract a rectangle from all papers with given page/version.
+
+    python3 manage.py plom_extract_rectangle -v 1 -p 3 -n 12
+    """
 
     help = "Extract the rectangle from the given page/version of each paper."
 
