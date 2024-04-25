@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
@@ -298,6 +298,16 @@ def get_n_pages() -> int:
     """
     spec = Specification.objects.get()
     return spec.numberOfPages
+
+
+def get_list_of_pages() -> list[int]:
+    """Get a list of the pages.
+
+    If there is no spec, an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [p + 1 for p in range(get_n_pages())]
 
 
 @transaction.atomic

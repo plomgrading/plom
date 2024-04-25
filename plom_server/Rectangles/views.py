@@ -21,10 +21,8 @@ class RectangleHomeView(ManagerRequiredView):
                 "num_versions": SpecificationService.get_n_versions(),
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_sources": SourceService.get_list_of_sources(),
-                "version_list": [
-                    v + 1 for v in range(SpecificationService.get_n_versions())
-                ],
-                "page_list": [p + 1 for p in range(SpecificationService.get_n_pages())],
+                "version_list": SpecificationService.get_list_of_versions(),
+                "page_list": SpecificationService.get_list_of_pages,
             }
         )
         return context
@@ -54,7 +52,7 @@ class SelectRectangleView(ManagerRequiredView):
 
         return render(request, "Rectangles/select.html", context)
 
-    def post(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
+    def post(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
         left = round(float(request.POST.get("plom_left")), 6)
         top = round(float(request.POST.get("plom_top")), 6)
