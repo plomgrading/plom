@@ -8,15 +8,29 @@ import cv2 as cv
 from io import BytesIO
 import numpy as np
 from PIL import Image
-from typing import Any, Dict
+from typing import Any, Dict, List
 from warnings import warn
 
 from Papers.models import Paper, FixedPage
 from plom.scan import rotate
 
 
-def get_reference_rectangle(version: int, page: int) -> Dict:
-    rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
+    """Given the version and page number, return the x/y coords of the qr codes on the reference image.
+
+    Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
+
+    Args:
+        version: the version of the source pdf to look at.
+        page: the number of the page from which to extract the reference rectangle.
+
+    Returns:
+        dict: {corner: [x,y]}, where corner is three of NE,SE,NW,SW, and x,y are floats.
+    """
+    try:
+        rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+    except ReferenceImage.DoesNotExist:
+        raise ValueError(f"There is no reference image for v{version} pg{page}.")
     corner_dat = {}
     for cnr in ["NE", "SE", "NW", "SW"]:
         val = rimg_obj.parsed_qr.get(cnr, None)

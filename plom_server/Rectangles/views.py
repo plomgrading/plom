@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 
-from django.http import HttpRequest, HttpResponse, FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 from Papers.services import SpecificationService, PaperInfoService
@@ -35,7 +35,10 @@ class RectangleHomeView(ManagerRequiredView):
 class SelectRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
-        qr_info = get_reference_rectangle(version, page)
+        try:
+            qr_info = get_reference_rectangle(version, page)
+        except ValueError as err:
+            raise Http404(err)
         x_coords = [X[0] for X in qr_info.values()]
         y_coords = [X[1] for X in qr_info.values()]
         rect_top_left = [min(x_coords), min(y_coords)]
