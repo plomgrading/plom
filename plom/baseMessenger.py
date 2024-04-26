@@ -958,7 +958,7 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def McreateRubric(self, new_rubric: dict[str, Any]) -> str:
+    def McreateRubric(self, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to make a new rubric and get key back.
 
         Args:
@@ -972,7 +972,9 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            The key/id of the new rubric.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.
         """
         with self.SRmutex:
             try:
@@ -986,7 +988,6 @@ class BaseMessenger:
                 )
                 response.raise_for_status()
                 new_key = response.json()
-                return new_key
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -995,6 +996,8 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
+        # TODO: change the endpoint instead, and only do this on legacy
+        return self.get_one_rubric(new_key)
 
     def get_one_rubric(self, key: str) -> dict[str, Any]:
         """Retrieve one rubric from its key.
@@ -1085,7 +1088,7 @@ class BaseMessenger:
                 r.setdefault("modified_by_username", "")
             return rubrics
 
-    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> str:
+    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to modify a rubric and get key back.
 
         Args:
@@ -1093,8 +1096,9 @@ class BaseMessenger:
             new_rubric: the changes we want to make as a key-value dict.
 
         Returns:
-            The key/id of the rubric.  Currently should be unchanged
-            from what you sent.  But this behaviour might change in the future.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.  You should use this returned rubric and discard the input.
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -1116,7 +1120,6 @@ class BaseMessenger:
                 )
                 response.raise_for_status()
                 new_key = response.json()
-                return new_key
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -1136,6 +1139,8 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error of type {e} when creating new rubric"
                 ) from None
+        # TODO: change the endpoint instead, and only do this on legacy
+        return self.get_one_rubric(new_key)
 
     def get_pagedata(self, code):
         """Get metadata about the images in this paper."""

@@ -1715,7 +1715,7 @@ class RubricWidget(QWidget):
 
         if edit:
             try:
-                key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+                new_rubric = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
@@ -1735,14 +1735,8 @@ class RubricWidget(QWidget):
                 return
 
             # update the rubric in the current internal rubric list
-            # make sure that keys match.
-            assert key == new_rubric["id"]
-            # Issue #3329: ensure edition, mod time, etc get updated
-            new_rubric = self._parent.getOneRubricFromServer(new_rubric["id"])
-            assert self.rubrics[index]["id"] == new_rubric["id"]
-            # then replace in our local list
             self.rubrics[index] = new_rubric
-            # TODO: probably should do full refresh: already had to grab everything
+            # TODO: possibly a good time to do full refresh (?)
 
             # Debugging: change to True to slip in an unexpected change by another client
             # so that our *next* change will generate a conflict.
@@ -1752,10 +1746,7 @@ class RubricWidget(QWidget):
                 self._parent.modifyRubric(_tmp["id"], _tmp)
 
         else:
-            new_id = self._parent.createNewRubric(new_rubric)
-            # The new_rubric itself may not be complete: get it from the server
-            # TODO: might be nicer to get just the new rubric rather than its ID
-            new_rubric = self._parent.getOneRubricFromServer(new_id)
+            new_rubric = self._parent.createNewRubric(new_rubric)
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
