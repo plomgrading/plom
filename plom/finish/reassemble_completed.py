@@ -228,6 +228,7 @@ def reassemble_paper(
     with tempfile.TemporaryDirectory() as _td:
         if tmpdir:
             # note in this case we don't use the _td temp dir
+            # (and the files will not be deleted)
             print(f"Downloading temporary images to {tmpdir}")
             tmpdir = Path(tmpdir)
         else:
@@ -282,9 +283,12 @@ def reassemble_all_papers(
     identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
 
+    # This should be a conditional context manager, which can be done
+    # using contextlib.ExitStack, but I found the result hard to read.
     with tempfile.TemporaryDirectory() as _td:
         if tmpdir:
             # note in this case we don't use the _td temp dir
+            # (and the files will not be deleted)
             print(f"Downloading temporary images to {tmpdir}")
             tmpdir = Path(tmpdir)
         else:
