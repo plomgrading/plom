@@ -107,8 +107,9 @@ def get_parser():
         help="""
             By default, we use OS-provided temporary space for downloads.
             You can override that.  Then its your reasponsible to clean up.
-            Caution: its undefined whether two runs will re-use the images
-            etc, although currently it probably redownloads them.
+            Caution: its undefined whether two runs will reuse the images
+            etc, although currently it probably downloads them again
+            (because they could have changed).
         """,
     )
     spAssemble.add_argument(
