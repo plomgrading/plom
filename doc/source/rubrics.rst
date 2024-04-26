@@ -55,7 +55,8 @@ rubrics, and some users can modify all rubrics.
    affected by modifying a rubric.  For example if you change "-1 not
    the chain rule" into "-2 not the chain rule" then previously-marked
    papers will still have the "-1" version.  Developing a workflow for
-   updating for such changes is of considerable interest.
+   updating for such changes is of considerable interest:
+   see `Issue #3351 <https://gitlab.com/plom/plom/-/issues/3351>`_.
 
 
 Rubric Scope
@@ -66,7 +67,7 @@ Question scope
 
 By default, rubrics are not shared between questions.
 Currently this is not changeable,
-see `Issue #3253 <https://gitlab.com/plom/plom/-/issues/3253>`.
+see `Issue #3253 <https://gitlab.com/plom/plom/-/issues/3253>`_.
 
 
 Version-level scoping
@@ -112,4 +113,8 @@ Managing rubrics
 It also possible to populate the rubric database in bulk from external
 tools such as a spreadsheet.  For example, this could be done before
 marking begins or by re-using rubrics from a previous assessment.
-See the :doc:`plom-create` command-line tool or the :doc:`module-plom-create`.
+This still needs to be implemented:
+see `Issue #3352 <https://gitlab.com/plom/plom/-/issues/3352>`_.
+
+If you're using the legacy server,
+see the :doc:`plom-create` command-line tool or the :doc:`module-plom-create`.
