@@ -231,6 +231,7 @@ def reassemble_paper(
             # (and the files will not be deleted)
             print(f"Downloading temporary images to {tmpdir}")
             tmpdir = Path(tmpdir)
+            tmpdir.mkdir(exist_ok=True)
         else:
             tmpdir = Path(_td)
 
@@ -291,6 +292,7 @@ def reassemble_all_papers(
             # (and the files will not be deleted)
             print(f"Downloading temporary images to {tmpdir}")
             tmpdir = Path(tmpdir)
+            tmpdir.mkdir(exist_ok=True)
         else:
             tmpdir = Path(_td)
 
