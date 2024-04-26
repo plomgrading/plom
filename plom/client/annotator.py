@@ -1790,6 +1790,10 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
+    def getOneRubricFromServer(self, key):
+        """Request a latest rubric list for current question."""
+        return self.parentMarkerUI.getOneRubricFromServer(key)
+
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
         self.parentMarkerUI.saveTabStateToServer(tab_state)

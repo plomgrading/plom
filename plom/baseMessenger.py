@@ -996,6 +996,31 @@ class BaseMessenger:
                     f"Error when creating new rubric: {e}"
                 ) from None
 
+    def get_one_rubric(self, key: str) -> dict[str, Any]:
+        """Retrieve one rubric from its key.
+
+        I don't think we actually have an endpoint for this.  For now
+        we fake it by getting all rubrics and filtering.
+
+        Args:
+            The key/id of the rubric we want.
+
+        Raises:
+            PlomNoRubric: no such rubric.
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            Dict representation of the rubric.
+        """
+        rubrics = self.MgetRubrics(None)
+        try:
+            # ensure there is exactly one matching rubric in each list and grab it
+            (r,) = [r for r in rubrics if r["id"] == key]
+        except ValueError:
+            raise PlomNoRubric(f"No rubric with key={key}") from None
+        return r
+
     def MgetRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         """Retrieve list of all rubrics from server for given question.
 

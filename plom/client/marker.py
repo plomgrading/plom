@@ -1815,6 +1815,20 @@ class MarkerClient(QWidget):
         """
         return self.msgr.MgetRubrics(question)
 
+    def getOneRubricFromServer(self, key: str) -> dict[str, Any]:
+        """Get one rubric from server.
+
+        Args:
+            key: which rubric.
+
+        Returns:
+            Dictionary representation of the rubric..
+
+        Raises:
+            PlomNoRubric
+        """
+        return self.msgr.get_one_rubric(key)
+
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)
 

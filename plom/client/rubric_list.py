@@ -1726,10 +1726,9 @@ class RubricWidget(QWidget):
                 ErrorMsg(self, f"{e}").exec()
                 return
             except PlomConflict as e:
-                _tmp_rubrics = self._parent.getRubricsFromServer()
+                theirs = self._parent.getOneRubricFromServer(new_rubric["id"])
                 # ensure there is exactly one matching rubric in each list and grab it
                 (old_rubric,) = [r for r in self.rubrics if r["id"] == new_rubric["id"]]
-                (theirs,) = [r for r in _tmp_rubrics if r["id"] == new_rubric["id"]]
                 RubricConflictDialog(
                     self, str(e), theirs, new_rubric, old_rubric
                 ).exec()
@@ -1739,11 +1738,7 @@ class RubricWidget(QWidget):
             # make sure that keys match.
             assert key == new_rubric["id"]
             # Issue #3329: ensure edition, mod time, etc get updated
-            tmp_rubrics = self._parent.getRubricsFromServer()
-            # ensure there is exactly one matching rubric in the list and grab it
-            (new_rubric,) = [r for r in tmp_rubrics if r["id"] == new_rubric["id"]]
-            # keys match still match.
-            assert key == new_rubric["id"]
+            new_rubric = self._parent.getOneRubricFromServer(new_rubric["id"])
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace in our local list
             self.rubrics[index] = new_rubric
@@ -1760,10 +1755,7 @@ class RubricWidget(QWidget):
             new_id = self._parent.createNewRubric(new_rubric)
             # The new_rubric itself may not be complete: get it from the server
             # TODO: might be nicer to get just the new rubric rather than its ID
-            # TODO: or we can add a API call to get one rubric
-            tmp_rubrics = self._parent.getRubricsFromServer()
-            # ensure there is exactly one matching rubric in the list and grab it
-            (new_rubric,) = [r for r in tmp_rubrics if r["id"] == new_id]
+            new_rubric = self._parent.getOneRubricFromServer(new_id)
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
