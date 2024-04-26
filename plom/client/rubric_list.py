@@ -172,10 +172,6 @@ class RubricTable(QTableWidget):
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
-        # could use a subclass
-        if self.tabType == "delta":
-            self.hideColumn(3)
-            # self.verticalHeader().setVisible(False)
         if sort:
             self.setSortingEnabled(True)
         self.shortname = shortname
@@ -450,6 +446,9 @@ class RubricTable(QTableWidget):
         render = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
+        # Does anyone like this special dot sentinel?  Can we just use empty?
+        if render == ".":
+            render = ""
         self.setItem(rc, 3, QTableWidgetItem(render))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
