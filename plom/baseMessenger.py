@@ -1040,9 +1040,9 @@ class BaseMessenger:
 
         with self.SRmutex:
             if question is None:
-                url = "/MK/rubric"
+                url = "/MK/rubrics"
             else:
-                url = f"/MK/rubric/{question}"
+                url = f"/MK/rubrics/{question}"
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()

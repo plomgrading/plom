@@ -9,6 +9,7 @@ from API.views import (
     MgetDoneTasks,
     MarkingProgressCount,
     MgetOneImage,
+    MgetAllRubrics,
     MgetRubricsByQuestion,
     MgetRubricPanes,
     McreateRubric,
@@ -61,8 +62,13 @@ class MarkURLPatterns:
 
         # Rubric management
         rubrics = [
+            path(
+                "rubrics",
+                MgetAllRubrics.as_view(),
+                name="api_MK_get_rubric",
+            ),
             re_path(
-                r"rubric/(?P<question>[0-9]{,5})$",
+                r"rubrics/(?P<question>[0-9]{,5})$",
                 MgetRubricsByQuestion.as_view(),
                 name="api_MK_get_rubric",
             ),

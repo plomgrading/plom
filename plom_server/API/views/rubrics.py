@@ -16,6 +16,13 @@ from Rubrics.services import RubricService
 from .utils import _error_response
 
 
+class MgetAllRubrics(APIView):
+    def get(self, request: Request) -> Response:
+        rs = RubricService()
+        all_rubric_data = rs.get_rubrics_as_dicts(question=None)
+        return Response(all_rubric_data, status=status.HTTP_200_OK)
+
+
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
         rs = RubricService()
