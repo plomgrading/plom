@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2023 Colin B. Macdonald
+   Copyright (C) 2023-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -23,23 +23,32 @@ Rubrics can be associated spatially with a particular region of the
 page by dragging to create a box then clicking again to place the
 rubric.
 
-Rubrics are shared between markers.  When you create a new rubric, it
-is immediately created server-side and shared with all users.
+.. note::
+   Rubrics are shared between markers.  When you create a new rubric, it
+   is immediately created server-side and shared with all users.
+   Depending on server settings, you might be able to modify rubrics.
+   created by others.  Consult with your instructor.
 
 .. note::
    Currently rubrics are pulled from the server on Annotator start,
    or when users click the ``Sync`` button in the lower-left.
    We anticipate more automatic synchronization in the future.
 
-One of Plom's goals is that a group of markers can collaboratively
-construct and consistently apply a set of fair rubrics.  There are
-several important caveats to be aware of in the current
-implementation:
 
-.. note::
-   Currently, rubrics are owned by the user who created them.  If you
-   need to modify someone else's rubric, Plom will instead offer to
-   make a copy.  We anticipate relaxing this restriction in the future
+Creating and modifying rubrics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One of Plom's goals is that a group of markers can collaboratively
+construct and consistently apply a set of fair rubrics.
+
+Managers can control who can create new rubrics and modify existing
+ones.
+For example, you might want to carefully construct rubrics yourself
+and require your markers to apply your grading scheme exactly as is.
+At the other extreme, you might want to allow everyone to modify any
+rubric as they see fit.
+The default is somewhere in the middle; anyone can create their own
+rubrics, and some users can modify all rubrics.
 
 .. warning::
    Currently, there is no mechanism to revisit papers that were
@@ -56,7 +65,9 @@ Question scope
 ^^^^^^^^^^^^^^
 
 By default, rubrics are not shared between questions.
-Currently this is not changeable, there is an [issue for that](TODO://).
+Currently this is not changeable,
+see `Issue #3253 <https://gitlab.com/plom/plom/-/issues/3253>`.
+
 
 Version-level scoping
 ^^^^^^^^^^^^^^^^^^^^^
@@ -68,11 +79,10 @@ versions of a question.  There are two ways of restricting things:
    substitutions on a per-version basis.  This works well, for
    example, if one question has "x" while another has "y".
 
-
 2. You can restrict rubrics to a particular version (or versions).
 
 .. warning::
-   Parameterized rubrics are a new feature: please discuss whether
+   Parameterized rubrics are a relative new feature: please discuss whether
    or not to use them with senior members of your grading team.
 
 
