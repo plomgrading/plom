@@ -987,7 +987,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                new_key = response.json()
+                new_rubric = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -996,8 +996,11 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
-        # TODO: change the endpoint instead, and only do this on legacy
-        return self.get_one_rubric(new_key)
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
 
     def get_one_rubric(self, key: str) -> dict[str, Any]:
         """Retrieve one rubric from its key.
@@ -1119,7 +1122,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                new_key = response.json()
+                new_rubric = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -1139,8 +1142,11 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error of type {e} when creating new rubric"
                 ) from None
-        # TODO: change the endpoint instead, and only do this on legacy
-        return self.get_one_rubric(new_key)
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
 
     def get_pagedata(self, code):
         """Get metadata about the images in this paper."""
