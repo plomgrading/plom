@@ -16,6 +16,13 @@ from Rubrics.services import RubricService
 from .utils import _error_response
 
 
+class MgetAllRubrics(APIView):
+    def get(self, request: Request) -> Response:
+        rs = RubricService()
+        all_rubric_data = rs.get_rubrics_as_dicts(question=None)
+        return Response(all_rubric_data, status=status.HTTP_200_OK)
+
+
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
         rs = RubricService()
@@ -38,12 +45,26 @@ class MgetRubricPanes(APIView):
 
 class McreateRubric(APIView):
     def put(self, request: Request) -> Response:
+        """Create a new rubric on the server.
+
+        Args:
+            request: a request.  The data of the request should contain
+                appropriate key-value pairs to define a new rubric.
+
+        Returns:
+            On success, responds with the JSON key-value representation
+            of the new rubric.
+            Responds with 406 not acceptable if the proposed data is
+            invalid in some way.
+            Responds with 403 if you are
+            not allowed to create new rubrics.  TODO: check this.
+        """
         rs = RubricService()
         try:
-            rubric = rs.create_rubric(
+            rubric_as_dict = rs.create_rubric(
                 request.data["rubric"], creating_user=request.user
             )
-            return Response(rubric.key, status=status.HTTP_200_OK)
+            return Response(rubric_as_dict, status=status.HTTP_200_OK)
         except (ValidationError, NotImplementedError) as e:
             return _error_response(
                 f"Invalid rubric: {e}", status.HTTP_406_NOT_ACCEPTABLE
@@ -55,7 +76,8 @@ class MmodifyRubric(APIView):
         """Change a rubric on the server.
 
         Args:
-            request: a request.
+            request: a request containing data of key-value pairs
+                representing the changes you'd like to make.
 
         Keyword Args:
             key: the "key" or "id" of the rubric to modify.  This is not
@@ -63,7 +85,8 @@ class MmodifyRubric(APIView):
                 fact currently it is not.
 
         Returns:
-            On success, responds with a string, the rubric id/key.
+            On success, responds with the JSON key-value representation
+            of the modified rubric.
             Responds with 404 if the rubric is not found.
             Responds with 406 not acceptable if the proposed
             data is invalid in some way.  Responds with 403 if you are
@@ -73,10 +96,11 @@ class MmodifyRubric(APIView):
         """
         rs = RubricService()
         try:
-            rubric = rs.modify_rubric(
+            rubric_as_dict = rs.modify_rubric(
                 key, request.data["rubric"], modifying_user=request.user
             )
-            return Response(rubric.key, status=status.HTTP_200_OK)
+            # TODO: use a serializer to get automatic conversion from Rubric object?
+            return Response(rubric_as_dict, status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
             # Django also intercepts invalid (too short) keys before we see them
             # and uses 404 for those (see the regex in ``mark_patterns.py``).

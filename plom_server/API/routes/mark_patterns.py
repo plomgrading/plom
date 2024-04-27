@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 from django.urls import path, re_path
 
@@ -9,6 +9,7 @@ from API.views import (
     MgetDoneTasks,
     MarkingProgressCount,
     MgetOneImage,
+    MgetAllRubrics,
     MgetRubricsByQuestion,
     MgetRubricPanes,
     McreateRubric,
@@ -61,8 +62,13 @@ class MarkURLPatterns:
 
         # Rubric management
         rubrics = [
+            path(
+                "rubrics",
+                MgetAllRubrics.as_view(),
+                name="api_MK_get_rubric",
+            ),
             re_path(
-                r"rubric/(?P<question>[0-9]{,5})$",
+                r"rubrics/(?P<question>[0-9]{,5})$",
                 MgetRubricsByQuestion.as_view(),
                 name="api_MK_get_rubric",
             ),

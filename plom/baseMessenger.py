@@ -958,7 +958,7 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def McreateRubric(self, new_rubric: dict[str, Any]) -> str:
+    def McreateRubric(self, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to make a new rubric and get key back.
 
         Args:
@@ -972,7 +972,9 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            The key/id of the new rubric.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.
         """
         with self.SRmutex:
             try:
@@ -985,8 +987,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                new_key = response.json()
-                return new_key
+                new_rubric = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -995,6 +996,36 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
+
+    def get_one_rubric(self, key: str) -> dict[str, Any]:
+        """Retrieve one rubric from its key.
+
+        I don't think we actually have an endpoint for this.  For now
+        we fake it by getting all rubrics and filtering.
+
+        Args:
+            The key/id of the rubric we want.
+
+        Raises:
+            PlomNoRubric: no such rubric.
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            Dict representation of the rubric.
+        """
+        rubrics = self.MgetRubrics(None)
+        try:
+            # ensure there is exactly one matching rubric in each list and grab it
+            (r,) = [r for r in rubrics if r["id"] == key]
+        except ValueError:
+            raise PlomNoRubric(f"No rubric with key={key}") from None
+        return r
 
     def MgetRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         """Retrieve list of all rubrics from server for given question.
@@ -1015,9 +1046,9 @@ class BaseMessenger:
 
         with self.SRmutex:
             if question is None:
-                url = "/MK/rubric"
+                url = "/MK/rubrics"
             else:
-                url = f"/MK/rubric/{question}"
+                url = f"/MK/rubrics/{question}"
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()
@@ -1060,7 +1091,7 @@ class BaseMessenger:
                 r.setdefault("modified_by_username", "")
             return rubrics
 
-    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> str:
+    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to modify a rubric and get key back.
 
         Args:
@@ -1068,8 +1099,9 @@ class BaseMessenger:
             new_rubric: the changes we want to make as a key-value dict.
 
         Returns:
-            The key/id of the rubric.  Currently should be unchanged
-            from what you sent.  But this behaviour might change in the future.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.  You should use this returned rubric and discard the input.
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -1090,8 +1122,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
-                new_key = response.json()
-                return new_key
+                new_rubric = response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
@@ -1111,6 +1142,11 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     f"Error of type {e} when creating new rubric"
                 ) from None
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
 
     def get_pagedata(self, code):
         """Get metadata about the images in this paper."""
