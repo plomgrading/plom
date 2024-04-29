@@ -4,6 +4,21 @@
 # In the future, some of these might be relaxed/tightened on a
 # per-server basis.
 #
+# Fields:
+#     explanation: an html string that describes the situation.  This
+#         can include substituations such as ``{max_mark}``.  The
+#         variables in these should be readable if the explanation
+#         is viewed in a generic way.
+#     allowed: this situation is not allowed.  Users should be shown
+#         an explanation but prevented from submitting.
+#     warn: this situation is questionable.  Users can make a choice
+#         after reading (hah) an explanation and making an informed
+#         well-considered choice (hah!)
+#     dama_allowed: users can choose to "don't ask me again".  If False,
+#         users will have to answer the question every time, which can
+#         get very repetitive so consider carefully before deploying the
+#         case of ``warn=True`` and ``dama_allowed=False``.
+#
 # Notes:
 #   - It might be possible for some of these to be difficult/impossible
 #     to realize from the client: that is ok, they are still useful
