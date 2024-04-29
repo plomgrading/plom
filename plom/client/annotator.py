@@ -1451,7 +1451,6 @@ class Annotator(QWidget):
                 (other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>
                 <p>This may make it difficult for students to learn from this
                 feedback.</p>
-                <p>Are you sure you wish to continue?</p>
             """
             code = "lost-marks-but-insufficient-feedback"
             if not self._continue_after_warning(code, msg):
@@ -1487,6 +1486,10 @@ class Annotator(QWidget):
 
     def _continue_after_warning(self, code: str, msg: str) -> bool:
         from .dama import dama_data
+
+        # The msg might already be phrased as a question such as "will this
+        # be understandable?" but we end with a concrete question
+        msg += "\n<p>Do you wish to submit?</p>"
 
         info = dama_data[code]
         if not info["allowed"]:
@@ -1533,7 +1536,6 @@ class Annotator(QWidget):
             code = "zero-marks-but-has-ticks"
         if code:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
-            msg += "\n<p>Do you wish to submit?</p>"
             if not self._continue_after_warning(code, msg):
                 return False
         return True
@@ -1562,7 +1564,6 @@ class Annotator(QWidget):
             code = "full-marks-but-other-annotations-contradictory"
         if code:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
-            msg += "\n<p>Do you wish to submit?</p>"
             if not self._continue_after_warning(code, msg):
                 return False
         return True

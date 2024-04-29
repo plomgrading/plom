@@ -413,7 +413,6 @@ def check_for_illadvised(
             <p>is potentially confusing.</p>
             <p>You may want to <b>check with your team</b>
             to decide if this case is acceptable or not.</p>
-            <p>Do you want to continue?</p>
         """
         return False, "confusing-to-mix-abs-plus-relative", msg
 
