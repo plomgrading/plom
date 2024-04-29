@@ -139,7 +139,7 @@ annotation_situations = {
         "warn": True,
         "dama_allowed": True,
     },
-    # These not implemented yet
+    # These not implemented yet: Issue #2037
     "mix-up-and-down-rubrics-unambiguous-case": {
         "explanation": "Mixing up and down",
         "allowed": False,
