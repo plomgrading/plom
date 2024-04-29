@@ -1492,7 +1492,8 @@ class Annotator(QWidget):
             user choose to edit further.
         """
         if msg is None:
-            msg = annotation_situations[code]["explanation"]
+            # str() to shutup MyPy: we unit test that is a string
+            msg = str(annotation_situations[code]["explanation"])
 
         # The msg might already be phrased as a question such as "will this
         # be understandable?" but we end with a concrete question
