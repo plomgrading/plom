@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2024 Colin B. Macdonald
+
 # This file tracks the various warnings that are presented to users
 # when annotating, and whether they can "don't-ask-me-again".
 #
@@ -25,7 +28,7 @@
 #     rules to enforce in case the client changed.  E.g., not possible
 #     to get to ``zero-marks-but-has-only-ticks``?
 
-dama_data = {
+annotation_situations = {
     "lost-marks-but-insufficient-feedback": {
         "explanation": """
             <p>You have given neither comments nor detailed annotations

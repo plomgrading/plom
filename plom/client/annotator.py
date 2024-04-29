@@ -67,7 +67,7 @@ from .pageview import PageView
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 from .about_dialog import show_about_dialog
-from .dama import dama_data
+from plom.annotation_situations import annotation_situations
 
 
 log = logging.getLogger("annotr")
@@ -1492,13 +1492,13 @@ class Annotator(QWidget):
             user choose to edit further.
         """
         if msg is None:
-            msg = dama_data[code]["explanation"]
+            msg = annotation_situations[code]["explanation"]
 
         # The msg might already be phrased as a question such as "will this
         # be understandable?" but we end with a concrete question
         msg += "\n<p>Do you wish to submit?</p>"
 
-        info = dama_data[code]
+        info = annotation_situations[code]
         if not info["allowed"]:
             InfoMsg(self, msg).exec()
             return False
@@ -1541,7 +1541,7 @@ class Annotator(QWidget):
         elif self.scene.hasAnyTicks():
             code = "zero-marks-but-has-ticks"
         if code:
-            msg = dama_data[code]["explanation"]
+            msg = annotation_situations[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
@@ -1570,7 +1570,7 @@ class Annotator(QWidget):
         else:
             code = "full-marks-but-other-annotations-contradictory"
         if code:
-            msg = dama_data[code]["explanation"]
+            msg = annotation_situations[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
