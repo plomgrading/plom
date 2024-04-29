@@ -1485,12 +1485,25 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
-    def _continue_after_warning(
-        self, code: str, msg: str, *, force: bool = False
-    ) -> bool:
-        if self._config.get("dama-" + code):
+    def _continue_after_warning(self, code: str, msg: str) -> bool:
+        from .dama import dama_data
+
+        info = dama_data[code]
+        if not info["allowed"]:
+            InfoMsg(self, msg).exec()
+            return False
+
+        if not info["warn"]:
             return True
-        if force:
+
+        dama = False
+        if info["dama_allowed"]:
+            dama = self._config.get("dama-" + code, False)
+
+        if dama:
+            return True
+
+        if not info["dama_allowed"]:
             if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
             return True
@@ -1501,63 +1514,56 @@ class Annotator(QWidget):
             self._config["dama-" + code] = True
         return True
 
-    def _zeroMarksWarn(self):
+    def _zeroMarksWarn(self) -> bool:
         """A helper method for saveAnnotations.
 
-        Controls warnings for when paper has 0 marks. If there are only-ticks or some-ticks then warns user.
+        Controls warnings for when paper has 0 marks.  If there are
+        only ticks or some ticks then warns user.
 
         Returns:
             False if user cancels, True otherwise.
         """
-        warn = False
-        forceWarn = False
+        code: str | None = None
         msg = f"<p>You have given <b>0/{self.maxMark}</b>,"
         if self.scene.hasOnlyTicks():
-            warn = True
-            forceWarn = True
             msg += " but there are <em>only ticks on the page!</em>"
             code = "zero-marks-but-has-only-ticks"
         elif self.scene.hasAnyTicks():
-            warn = True
             msg += " but there are some ticks on the page."
             code = "zero-marks-but-has-ticks"
-        if warn:
+        if code:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
-            if not self._continue_after_warning(code, msg, force=forceWarn):
+            if not self._continue_after_warning(code, msg):
                 return False
         return True
 
-    def _fullMarksWarn(self):
+    def _fullMarksWarn(self) -> bool:
         """A helper method for saveAnnotations.
 
-        Controls warnings for when paper has full marks. If there are some crosses or only crosses then warns user.
+        Controls warnings for when paper has full marks.  If there are
+        some crosses or only crosses then warns user.
 
         Returns:
             False if user cancels, True otherwise.
         """
+        code: str | None = None
         msg = f"<p>You have given full {self.maxMark}/{self.maxMark},"
-        warn = False
-        forceWarn = False
         if self.scene.hasOnlyCrosses():
-            warn = True
-            forceWarn = True
             msg += " <em>but there are only crosses on the page!</em>"
             code = "full-marks-but-has-only-crosses"
         elif self.scene.hasAnyCrosses():
-            warn = True
             msg += " but there are crosses on the page."
             code = "full-marks-but-has-crosses"
         elif self.scene.hasAnyComments():
-            warn = False
+            pass
         else:
-            warn = True
             msg += " but there are other annotations on the page which might be contradictory."
             code = "full-marks-but-other-annotations-contradictory"
-        if warn:
+        if code:
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
-            if not self._continue_after_warning(code, msg, force=forceWarn):
+            if not self._continue_after_warning(code, msg):
                 return False
         return True
 

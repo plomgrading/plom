@@ -1,0 +1,124 @@
+# This file tracks the various warnings that are presented to users
+# when annotating, and whether they can "don't-ask-me-again".
+#
+# In the future, some of these might be relaxed/tightened on a
+# per-server basis.
+#
+# Notes:
+#   - It might be possible for some of these to be difficult/impossible
+#     to realize from the client: that is ok, they are still useful
+#     rules to enforce in case the client changed.  E.g., not possible
+#     to get to ``zero-marks-but-has-only-ticks``?
+
+dama_data = {
+    "lost-marks-but-insufficient-feedback": {
+        "explanation": """
+            <p>You have given neither comments nor detailed annotations
+            (other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>
+            <p>This may make it difficult for students to learn from this
+            feedback.</p>
+            """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "zero-marks-but-has-only-ticks": {
+        "explanation": """
+            <p>You have given <b>0/{max_mark}</b>
+            but there are <em>only ticks on the page!</em>
+            Please confirm, or consider using comments to clarify.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": False,
+    },
+    "zero-marks-but-has-ticks": {
+        "explanation": """
+            <p>You have given <b>0/{max_mark}</b>
+            but there are some ticks on the page.
+            Please confirm, or consider using comments to clarify.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "full-marks-but-has-only-crosses": {
+        "explanation": """
+            <p>You have given full {max_mark}/{max_mark}
+            <em>but there are only crosses on the page!</em>
+            Please confirm, or consider using comments to clarify.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": False,
+    },
+    "full-marks-but-has-crosses": {
+        "explanation": """
+            <p>You have given full {max_mark}/{max_mark}
+            but there are crosses on the page.
+            Please confirm, or consider using comments to clarify.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "full-marks-but-other-annotations-contradictory": {
+        "explanation": """
+            <p>You have given full {max_mark}/{max_mark}
+            but there are other annotations on the page which might be contradictory.
+            Please confirm, or consider using comments to clarify.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "out-of-does-not-match-max-mark": {
+        "explanation": """
+            <p>This question is out of {max_mark}.
+            You used {num_absolute_rubrics} absolute rubrics for a
+            total &ldquo;out of&rdquo; of {out_of}.</p>
+            <p>Are you sure you finished marking this question?</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "confusing-to-mix-abs-minus-relative": {
+        "explanation": """
+            <p>Its probably confusing to combine absolute rubrics such as</p>
+            <blockquote>
+              {exemplar}
+            </blockquote>
+            <p>with negative relative rubrics such as</p>
+            <blockquote>
+              {exemplar2}
+            </blockquote>
+            <p>because the reader may be uncertain what is changed by the
+              &ldquo;<b>{exemplar2_display_delta}</b>&rdquo;.
+            </p>
+            <p>Are you sure this feedback will be understandable?</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+    "confusing-to-mix-abs-plus-relative": {
+        "explanation": """
+            <p>Combining absolute rubrics such as</p>
+            <blockquote>
+              {exemplar1}
+            </blockquote>
+            <p>with positive relative rubrics such as</p>
+            <blockquote>
+              {exemplar2}
+            </blockquote>
+            <p>is potentially confusing.</p>
+            <p>You may want to <b>check with your team</b>
+            to decide if this case is acceptable or not.</p>
+            <p>Do you want to continue?</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
+}

@@ -377,7 +377,7 @@ def check_for_illadvised(
                 total &ldquo;out of&rdquo; of {out_of}.</p>
                 <p>Are you sure you finished marking this question?</p>
             """
-            return False, "out-of-not-max-score", msg
+            return False, "out-of-does-not-match-max-mark", msg
 
     if absolutes and downrs:
         exemplar1 = absolutes[0]
@@ -396,7 +396,7 @@ def check_for_illadvised(
             </p>
             <p>Are you sure this feedback will be understandable?</p>
         """
-        return False, "dont-mix-abs-minus-relative", msg
+        return False, "confusing-to-mix-abs-minus-relative", msg
 
     if absolutes and uppers:
         exemplar1 = absolutes[0]
@@ -415,6 +415,6 @@ def check_for_illadvised(
             to decide if this case is acceptable or not.</p>
             <p>Do you want to continue?</p>
         """
-        return False, "dont-mix-abs-plus-relative", msg
+        return False, "confusing-to-mix-abs-plus-relative", msg
 
     return True, None, None
