@@ -67,6 +67,7 @@ from .pageview import PageView
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 from .about_dialog import show_about_dialog
+from .dama import dama_data
 
 
 log = logging.getLogger("annotr")
@@ -1431,29 +1432,19 @@ class Annotator(QWidget):
 
         assert self.getScore() is not None
 
-        # do some checks when score is zero
-        if self.getScore() == 0:
-            if not self._zeroMarksWarn():
-                return False
-
-        # do similar checks when score is full
-        if self.getScore() == self.maxMark:
-            if not self._fullMarksWarn():
-                return False
+        # do some checks when score is zero or full
+        if not self._zeroMarksWarn():
+            return False
+        if not self._fullMarksWarn():
+            return False
 
         # warn if points where lost but insufficient annotations
         # note spatial annotations (drag-box) is enough to sneak past this
         if (
             0 < self.getScore() < self.maxMark
         ) and self.scene.hasOnlyTicksCrossesDeltas():
-            msg = """
-                <p>You have given neither comments nor detailed annotations
-                (other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>
-                <p>This may make it difficult for students to learn from this
-                feedback.</p>
-            """
             code = "lost-marks-but-insufficient-feedback"
-            if not self._continue_after_warning(code, msg):
+            if not self._continue_after_warning(code):
                 return False
 
         # some combinations of rubrics may seem ambiguous or potentially confusing
@@ -1484,8 +1475,24 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
-    def _continue_after_warning(self, code: str, msg: str) -> bool:
-        from .dama import dama_data
+    def _continue_after_warning(self, code: str, msg: str | None = None) -> bool:
+        """Notify user about warnings/errors in their annotations.
+
+        Handle "don't ask me again" and associated settings.
+
+        Args:
+            code: a string code that identified the situation.
+            msg: an optional description of the situation.  If omitted
+                or ``None``, we'll load one from a central config.
+                You might need this if you need to fill in a templated
+                explanation, which we don't (yet) do for you.
+
+        Returns:
+            True if we should continue or False if either settings or
+            user choose to edit further.
+        """
+        if msg is None:
+            msg = dama_data[code]["explanation"]
 
         # The msg might already be phrased as a question such as "will this
         # be understandable?" but we end with a concrete question
@@ -1526,16 +1533,17 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
-        code: str | None = None
-        msg = f"<p>You have given <b>0/{self.maxMark}</b>,"
+        if self.getScore() != 0:
+            return True
+        code = None
         if self.scene.hasOnlyTicks():
-            msg += " but there are <em>only ticks on the page!</em>"
             code = "zero-marks-but-has-only-ticks"
         elif self.scene.hasAnyTicks():
-            msg += " but there are some ticks on the page."
             code = "zero-marks-but-has-ticks"
         if code:
-            msg += "  Please confirm, or consider using comments to clarify.</p>"
+            msg = dama_data[code]["explanation"]
+            assert isinstance(msg, str)
+            msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
                 return False
         return True
@@ -1549,21 +1557,22 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
-        code: str | None = None
-        msg = f"<p>You have given full {self.maxMark}/{self.maxMark},"
+        if self.getScore() != self.maxMark:
+            return True
+
+        code = None
         if self.scene.hasOnlyCrosses():
-            msg += " <em>but there are only crosses on the page!</em>"
             code = "full-marks-but-has-only-crosses"
         elif self.scene.hasAnyCrosses():
-            msg += " but there are crosses on the page."
             code = "full-marks-but-has-crosses"
         elif self.scene.hasAnyComments():
             pass
         else:
-            msg += " but there are other annotations on the page which might be contradictory."
             code = "full-marks-but-other-annotations-contradictory"
         if code:
-            msg += "  Please confirm, or consider using comments to clarify.</p>"
+            msg = dama_data[code]["explanation"]
+            assert isinstance(msg, str)
+            msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
                 return False
         return True
