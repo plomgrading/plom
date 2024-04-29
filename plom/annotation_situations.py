@@ -9,7 +9,7 @@
 #
 # Fields:
 #     explanation: an html string that describes the situation.  This
-#         can include substituations such as ``{max_mark}``.  The
+#         can include substitutions such as ``{max_mark}``.  The
 #         variables in these should be readable if the explanation
 #         is viewed in a generic way.
 #     allowed: this situation is not allowed.  Users should be shown
