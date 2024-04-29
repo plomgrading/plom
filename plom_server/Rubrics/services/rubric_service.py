@@ -54,7 +54,11 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "parameters": r.parameters,
         "system_rubric": r.system_rubric,
         "published": r.published,
-        "_edition": r._edition,
+        "last_modified": r.last_modified,
+        "modified_by_username": (
+            None if not r.modified_by_user else r.modified_by_user.username
+        ),
+        "revision": r.revision,
     }
 
 
@@ -65,7 +69,7 @@ class RubricService:
 
     def create_rubric(
         self, rubric_data: dict[str, Any], *, creating_user: User | None = None
-    ) -> Rubric:
+    ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
         Args:
@@ -78,7 +82,7 @@ class RubricService:
                 ``None`` also bypasses the rubric access settings.
 
         Returns:
-            The created and saved rubric instance.
+            The new rubric data, in dict key-value format.
 
         Raises:
             KeyError: if rubric_data contains missing username or kind fields.
@@ -87,6 +91,13 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
+        rubric_obj = self._create_rubric(rubric_data, creating_user=creating_user)
+        return _Rubric_to_dict(rubric_obj)
+
+    # implementation detail of the above, independently testable
+    def _create_rubric(
+        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+    ) -> Rubric:
         rubric_data = rubric_data.copy()
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
@@ -118,9 +129,8 @@ class RubricService:
         serializer = RubricSerializer(data=rubric_data)
         serializer.is_valid()
         serializer.save()
-        rubric = serializer.instance
-
-        return rubric
+        rubric_obj = serializer.instance
+        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
@@ -129,7 +139,7 @@ class RubricService:
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
-    ) -> Rubric:
+    ) -> dict[str, Any]:
         """Modify a rubric.
 
         Args:
@@ -146,7 +156,7 @@ class RubricService:
                 no checking will be done (probably for internal use).
 
         Returns:
-            The modified rubric instance.
+            The modified rubric data, in dict key-value format.
 
         Exceptions:
             ValueError: wrong "kind" or invalid rubric data.
@@ -165,13 +175,13 @@ class RubricService:
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
-        # default edition if missing from incoming data
-        new_rubric_data.setdefault("_edition", 0)
-        if not new_rubric_data["_edition"] == rubric._edition:
+        # default revision if missing from incoming data
+        new_rubric_data.setdefault("revision", 0)
+        if not new_rubric_data["revision"] == rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f"Your rubric edition = {new_rubric_data['_edition']} does not match "
-                f"database content (edition = {rubric._edition}: most likely your "
+                f'Your rubric revision {new_rubric_data["revision"]} does not match '
+                f"database content (revision {rubric.revision}): most likely your "
                 "edits have collided with those of someone else."
             )
 
@@ -201,12 +211,15 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        new_rubric_data["_edition"] += 1
+        new_rubric_data.pop("modified_by_username", None)
+        if modifying_user is not None:
+            new_rubric_data["modified_by_user"] = modifying_user.pk
+        new_rubric_data["revision"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
         serializer.is_valid()
         serializer.save()
-        rubric_instance = serializer.instance
-        return rubric_instance
+        rubric_obj = serializer.instance
+        return _Rubric_to_dict(rubric_obj)
 
     def get_rubrics_as_dicts(
         self, *, question: int | None = None
@@ -374,7 +387,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
+                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["id"])
                 # make negative delta
                 rubric = {
                     "display_delta": "-{}".format(m),
@@ -389,7 +402,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
+                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
 
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.

@@ -17,7 +17,7 @@ from plom.version_maps import version_map_to_csv, check_version_map
 from Papers.services import SpecificationService
 
 from ..models import StagingPQVMapping
-from ..services import StagingStudentService
+from ..services import StagingStudentService, PapersPrinted
 
 
 class PQVMappingService:
@@ -36,7 +36,17 @@ class PQVMappingService:
         return paper_numbers
 
     @transaction.atomic()
-    def remove_pqv_map(self):
+    def remove_pqv_map(self) -> None:
+        """Erase the question-version map.
+
+        Raises:
+            ValueError: cannot erase for example b/c papers already printed.
+        """
+        # TODO: better more precise logic to protect this?
+        if PapersPrinted.have_papers_been_printed():
+            raise ValueError(
+                "You cannot erase the QV map b/c you indicated papers have been printed"
+            )
         StagingPQVMapping.objects.all().delete()
 
     @transaction.atomic()

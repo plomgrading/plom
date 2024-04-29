@@ -6,10 +6,12 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+from __future__ import annotations
+
 from datetime import datetime
-import html
 import logging
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+import random  # optionally used for debugging
+from typing import Any, Sequence
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
@@ -36,6 +38,7 @@ from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
+from .rubric_conflict_dialog import RubricConflictDialog
 from plom.plom_exceptions import (
     PlomConflict,
     PlomInconsistentRubric,
@@ -47,13 +50,13 @@ from plom.plom_exceptions import (
 log = logging.getLogger("annotr")
 
 
-def rubric_is_naked_delta(r: Dict[str, Any]) -> bool:
+def rubric_is_naked_delta(r: dict[str, Any]) -> bool:
     if r["kind"] == "relative" and r["text"] == ".":
         return True
     return False
 
 
-def isLegalRubric(rubric: Dict[str, Any], *, scene, version: int, maxMark: int) -> int:
+def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) -> int:
     """Checks the 'legality' of a particular rubric - returning one of several possible indicators.
 
     Those states are:
@@ -97,7 +100,7 @@ def isLegalRubric(rubric: Dict[str, Any], *, scene, version: int, maxMark: int) 
 
 def render_params(
     template: str,
-    params: Sequence[Tuple[str, Sequence[str]]],
+    params: Sequence[tuple[str, Sequence[str]]],
     ver: int,
 ) -> str:
     """Perform version-dependent substitutions on a template text."""
@@ -419,11 +422,12 @@ class RubricTable(QTableWidget):
         Raises
             what happens on invalid key?
         """
-        # TODO: hmmm, should be dict?
+        # ensure there is exactly one matching rubric in the list and grab it
+        # TODO: should the local storage be a dict to make this easy?
         (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
         self.appendNewRubric(rubric)
 
-    def appendNewRubric(self, rubric: Dict[str, Any]) -> None:
+    def appendNewRubric(self, rubric: dict[str, Any]) -> None:
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -467,12 +471,12 @@ class RubricTable(QTableWidget):
 
     def setRubricsByKeys(
         self,
-        rubric_list: List[Dict[str, Any]],
-        id_list: List[str],
+        rubric_list: list[dict[str, Any]],
+        id_list: list[str],
         *,
-        alt_order: Optional[List[str]] = None,
+        alt_order: list[str] | None = None,
     ) -> None:
-        """Clear table and re-populate rubrics.
+        """Clear table and re-populate rubrics, keep selection if possible.
 
         Args:
             rubric_list (list): all the rubrics, which are dicts with
@@ -505,6 +509,7 @@ class RubricTable(QTableWidget):
         self._setRubricsByKeys(rubric_list, id_list)
 
     def _setRubricsByKeys(self, rubric_list, id_list) -> None:
+        prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -516,11 +521,13 @@ class RubricTable(QTableWidget):
             except (ValueError, KeyError, IndexError):
                 continue
             self.appendNewRubric(rb)
-
+        if not self.selectRubricByKey(prev_selected_rubric_id):
+            self.selectRubricByVisibleRow(0)
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics, positive=True):
-        """Clear table and repopulate with delta-rubrics."""
+        """Clear table and repopulate with delta-rubrics, keep selection if possible."""
+        prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -537,9 +544,13 @@ class RubricTable(QTableWidget):
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["value"]))):
             self.appendNewRubric(rb)
         # finally append the manager-created absolute rubrics
+        # TODO: bit fragile, but roughly we want the "0 of 10" etc
         for rb in rubrics:
-            if rb["username"] == "manager" and rb["kind"] == "absolute":
+            if rb["system_rubric"] and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
+        if not self.selectRubricByKey(prev_selected_rubric_id):
+            self.selectRubricByVisibleRow(0)
+        self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row: int) -> str:
         item = self.item(row, 0)
@@ -549,7 +560,7 @@ class RubricTable(QTableWidget):
     def getKeyList(self):
         return [self.item(r, 0).text() for r in range(self.rowCount())]
 
-    def getRowFromKey(self, key: str) -> Union[int, None]:
+    def getRowFromKey(self, key: str) -> int | None:
         for r in range(self.rowCount()):
             # TODO: mypy is concerned self.item() could return None
             # perhaps there is a better way to iterate over items?
@@ -560,12 +571,13 @@ class RubricTable(QTableWidget):
         else:
             return None
 
-    def getCurrentRubricRow(self) -> Union[int, None]:
+    def getCurrentRubricRow(self) -> int | None:
         if not self.selectedIndexes():
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self) -> Union[str, None]:
+    def getCurrentRubricKey(self) -> str | None:
+        """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
         item = self.item(self.selectedIndexes()[0].row(), 0)
@@ -582,7 +594,7 @@ class RubricTable(QTableWidget):
             r = 0
         self.selectRubricByVisibleRow(r)
 
-    def selectRubricByRow(self, r: Union[int, None]) -> None:
+    def selectRubricByRow(self, r: int | None) -> None:
         """Select the r'th rubric in the list.
 
         Args:
@@ -606,7 +618,7 @@ class RubricTable(QTableWidget):
                 self.selectRow(s)
                 return
 
-    def selectRubricByKey(self, key: str) -> bool:
+    def selectRubricByKey(self, key: int | str | None) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
@@ -660,14 +672,15 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
 
-        rubric = self.selected_row_as_rubric(r).copy()
+        rubric = self.get_row_as_rubric(r).copy()
         # unfortunate parent access to get version
         rubric["text"] = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
         self._parent.rubricSignal.emit(rubric)
 
-    def selected_row_as_rubric(self, r: int) -> Dict[str, Any]:
+    def get_row_as_rubric(self, r: int) -> dict[str, Any]:
+        """Get the rth row of the rubric table."""
         item = self.item(r, 0)
         assert item
         rid = item.text()
@@ -676,13 +689,13 @@ class RubricTable(QTableWidget):
                 return rubric
         raise RuntimeError(f"Cannot find rubric {rid}. Corrupted rubric lists?")
 
-    def firstUnhiddenRow(self) -> Union[int, None]:
+    def firstUnhiddenRow(self) -> int | None:
         for r in range(self.rowCount()):
             if not self.isRowHidden(r):
                 return r
         return None
 
-    def lastUnhiddenRow(self) -> Union[int, None]:
+    def lastUnhiddenRow(self) -> int | None:
         for r in reversed(range(self.rowCount())):
             if not self.isRowHidden(r):
                 return r
@@ -690,7 +703,7 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r):
         legal = isLegalRubric(
-            self.selected_row_as_rubric(r),
+            self.get_row_as_rubric(r),
             scene=self._parent._parent.scene,
             version=self._parent.version,
             maxMark=self._parent.maxMark,
@@ -1186,7 +1199,9 @@ class RubricWidget(QWidget):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
-        The rubrics themselves are uneffected.
+        The rubrics themselves are uneffected.  The currently-selected
+        rubric in each is preserved, provided that rubric is still
+        present.
 
         Args:
             wranglerState (dict/None): a representation of the state of
@@ -1335,13 +1350,8 @@ class RubricWidget(QWidget):
 
         self.update_tab_names()
 
-        # make sure something selected in each tab
-        self.tabHide.selectRubricByVisibleRow(0)
-        self.tabDeltaP.selectRubricByVisibleRow(0)
-        self.tabDeltaN.selectRubricByVisibleRow(0)
-        self.tabS.selectRubricByVisibleRow(0)
-        for tab in self.user_tabs:
-            tab.selectRubricByVisibleRow(0)
+        # force a blue ghost update
+        self.handleClick()
 
     def reorder_tabs(self, target_order):
         """Change the order of the tabs to match a target order.
@@ -1421,7 +1431,7 @@ class RubricWidget(QWidget):
             self.RTW.currentIndex(),
         ]
 
-    def setCurrentRubricKeyAndTab(self, key: Union[str, None], tab: int) -> bool:
+    def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
         """Set the current rubric key and the current tab.
 
         Args
@@ -1655,11 +1665,11 @@ class RubricWidget(QWidget):
 
     def _new_or_edit_rubric(
         self,
-        com: Union[Dict[str, Any], None],
+        com: dict[str, Any] | None,
         *,
         edit: bool = False,
-        index: Optional[int] = None,
-        add_to_group: Optional[str] = None,
+        index: int | None = None,
+        add_to_group: str | None = None,
     ) -> None:
         """Open a dialog to edit a comment or make a new one.
 
@@ -1705,7 +1715,7 @@ class RubricWidget(QWidget):
 
         if edit:
             try:
-                key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+                new_rubric = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
@@ -1716,66 +1726,32 @@ class RubricWidget(QWidget):
                 ErrorMsg(self, f"{e}").exec()
                 return
             except PlomConflict as e:
-                tmp_rubrics = self._parent.getRubricsFromServer()
-                (old_rubric,) = (r for r in self.rubrics if r["id"] == new_rubric["id"])
-                (their_rubric,) = (
-                    r for r in tmp_rubrics if r["id"] == new_rubric["id"]
-                )
-                same, their_diff = diff_rubric(old_rubric, their_rubric)
-                same, our_diff = diff_rubric(old_rubric, new_rubric)
-                InfoMsg(
-                    self,
-                    f"""
-                        <h3>Rubric change conflict</h3>
-                        <br />
-                        <quote>
-                        <small>
-                        <tt>{html.escape(str(e))}</tt>
-                        </small>
-                        </quote>
-                        <br />
-                        <table><tr>
-                        <td style="padding-right: 2ex; border-right-width: 1px; border-right-style: solid;">
-                          <h4>Their's</h4>
-                          {render_rubric_as_html(their_rubric)}
-                          <b>changes</b><br />
-                          {their_diff}
-                        </td>
-                        <td style="padding-left: 2ex;">
-                          <h4>Your's</h4>
-                          {render_rubric_as_html(new_rubric)}
-                          <b>changes</b><br />
-                          {our_diff}
-                        </td>
-                        </tr></table>
-                        <p>
-                          This is work-in-progress,
-                          for now we always keep &ldquo;Their's&rdquo;.
-                        </p>
-                    """,
-                    # "Do you want to keep their's or your's?",
+                theirs = self._parent.getOneRubricFromServer(new_rubric["id"])
+                # ensure there is exactly one matching rubric in each list and grab it
+                (old_rubric,) = [r for r in self.rubrics if r["id"] == new_rubric["id"]]
+                RubricConflictDialog(
+                    self, str(e), theirs, new_rubric, old_rubric
                 ).exec()
-                # TODO: future buttons: [Cancel (and keep theirs)], [further edit theirs], [force submit your's], [edit your's]
                 return
+
             # update the rubric in the current internal rubric list
-            # make sure that keys match.
-            assert key == new_rubric["id"]
-            assert self.rubrics[index]["id"] == new_rubric["id"]
-            # then replace
             self.rubrics[index] = new_rubric
+            # TODO: possibly a good time to do full refresh (?)
+
+            # Debugging: change to True to slip in an unexpected change by another client
+            # so that our *next* change will generate a conflict.
+            if False and random.random() < 0.33:
+                _tmp = new_rubric.copy()
+                _tmp["text"] = _tmp["text"] + " [simulated offline comment change]"
+                self._parent.modifyRubric(_tmp["id"], _tmp)
+
         else:
-            new_rubric.pop("id")
-            new_rubric["id"] = self._parent.createNewRubric(new_rubric)
-            # at this point we have an accepted new rubric
-            # add it to the internal list of rubrics
+            new_rubric = self._parent.createNewRubric(new_rubric)
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
-        # finally - select that rubric and simulate a click
-        self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
-        self.handleClick()
 
-    def get_tab_rubric_lists(self) -> Dict[str, List[Any]]:
+    def get_tab_rubric_lists(self) -> dict[str, list[Any]]:
         """Returns a dict of lists of the current rubrics."""
         return {
             "shown": self.tabS.getKeyList(),

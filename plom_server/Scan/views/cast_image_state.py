@@ -27,7 +27,6 @@ class DiscardImageView(ScannerRequiredView):
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         try:
-            # TODO: Eventually bundle_id will be the arg, Issue #2621
             ScanCastService().discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )

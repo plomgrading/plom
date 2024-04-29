@@ -6,10 +6,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Manage question-version mapping
+    Question-version mapping
 {% endblock title %}
 {% block page_heading %}
-    Manage number of papers and question-version mapping
+    Question-version mapping
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -33,10 +33,12 @@
                    target="_blank"
                    class="btn btn-info">download</a>
                 <button class="btn btn-danger"
+                        {% if have_papers_been_printed %}disabled{% endif %}
                         hx-delete="delete"
                         hx-confirm="Are you sure you want to delete the question-version map?"
                         hx-target="body"
                         hx-swap="outerHTML">delete question-version map</button>
+                {% if have_papers_been_printed %}<small class="text-muted">(cannot delete because papers printed)</small>{% endif %}
             </div>
             <div>
                 <table class="table table-striped border">
@@ -54,7 +56,7 @@
                                         {% if info.prename %}
                                             {{ info.prename.0 }}: {{ info.prename.1 }}
                                         {% else %}
-                                            ●
+                                            &bull;
                                         {% endif %}
                                     </td>
                                 {% endif %}

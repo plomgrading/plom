@@ -258,7 +258,7 @@ def _diff_line(a: str, b: str) -> str:
         lines.append(f'<span style="color:#AA0000;"><b>-</b> {a}</span>')
     if b:
         lines.append(f'<span style="color:#00AA00;"><b>+</b> {b}</span>')
-    return f"""<br />
+    return f"""
       <tt>
         {"<br />".join(lines)}
       </tt>
@@ -268,7 +268,7 @@ def _diff_line(a: str, b: str) -> str:
 def _diff_compact(a: str, b: str, *, label: str = "") -> str:
     a = html.escape(a)
     b = html.escape(b)
-    return f"""<br />
+    return f"""
       <tt>&nbsp; </tt>{label} <span style="color:#AA0000;">{a}</span>
       &rarr;
       <span style="color:#00AA00;">{b}</span>
@@ -277,7 +277,7 @@ def _diff_compact(a: str, b: str, *, label: str = "") -> str:
 
 def _context(a: str) -> str:
     a = html.escape(a)
-    return f"""<br />
+    return f"""
       <tt>
         <span style="color:#777777;">&nbsp; {a}</span>
       </tt>
@@ -300,40 +300,46 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
         time).
     """
     rval = True
+    mod = r.get("last_modified", "unknown")
+    if mod == "unknown":
+        # TODO: special support for legacy
+        when = mod
+    else:
+        when = arrow.get(mod).humanize()
+    prefix = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}'
     out = ""
+    br = "<br />"
     if p["display_delta"] != r["display_delta"]:
         rval = False
+        out += br
         out += _diff_compact(p["display_delta"], r["display_delta"])
     else:
         if r["display_delta"] != ".":
             out += _context(r["display_delta"])
     if p["text"] != r["text"]:
         rval = False
+        out += br
         out += _diff_line(p["text"], r["text"])
     else:
         out += _context(r["text"])
     if p.get("tags") != r.get("tags"):
         rval = False
+        out += br
         out += _diff_line(str(p.get("tags")), str(r.get("tags")))
     if p.get("versions") != r.get("versions"):
         rval = False
+        out += br
         out += _diff_compact(
             str(p.get("versions")), str(r.get("versions")), label="versions:"
         )
     if p.get("parameters") != r.get("parameters"):
         rval = False
+        out += br
         out += _diff_line(str(p.get("parameters")), str(r.get("parameters")))
-    if not rval:
-        mod = r.get("modified")
-        if mod:
-            when = arrow.get(mod).humanize()
-        else:
-            # TODO: or force input to have modified?
-            when = arrow.now().humanize()
-        out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
     if rval:
-        return True, ""
-    return False, out
+        # out = "<i>Not visibly changed</i>"
+        out = _context("<no visible changes>")
+    return rval, prefix + br + out
 
 
 def check_for_illadvised(

@@ -24,7 +24,6 @@ from .pqv_mapping import (
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
-    PQVMappingReadOnlyView,
 )
 from .mocker import MockExamView
 from .create_papers import PaperCreationView

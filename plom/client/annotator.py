@@ -1790,6 +1790,10 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
+    def getOneRubricFromServer(self, key):
+        """Request a latest rubric list for current question."""
+        return self.parentMarkerUI.getOneRubricFromServer(key)
+
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
         self.parentMarkerUI.saveTabStateToServer(tab_state)
@@ -1802,11 +1806,11 @@ class Annotator(QWidget):
         """Ask the rubric widget to refresh rubrics."""
         self.rubric_widget.refreshRubrics()
 
-    def createNewRubric(self, new_rubric):
+    def createNewRubric(self, new_rubric) -> dict[str, Any]:
         """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
-    def modifyRubric(self, key, updated_rubric):
+    def modifyRubric(self, key, updated_rubric) -> dict[str, Any]:
         """Ask server to modify an existing rubric with the new data supplied."""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
 
