@@ -136,4 +136,17 @@ dama_data = {
         "warn": True,
         "dama_allowed": True,
     },
+    # These not implemented yet
+    "mix-up-and-down-rubrics-unambiguous-case": {
+        "explanation": "Mixing up and down",
+        "allowed": False,
+        "warn": True,
+        "dama_allowed": False,
+    },
+    "mix-up-and-down-rubrics-ambiguous-case": {
+        "explanation": "",
+        "allowed": False,
+        "warn": True,
+        "dama_allowed": False,
+    },
 }
