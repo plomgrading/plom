@@ -19,7 +19,7 @@ var h_plom_tl_y= document.getElementById('plom_top');
 var h_plom_br_x= document.getElementById('plom_right');
 var h_plom_br_y= document.getElementById('plom_bottom');
 
-var handleRadius = 5 
+var handleRadius = 8 
 
 var dragTL = dragBL = dragTR = dragBR = false;
 var dragWholeRect = false;
