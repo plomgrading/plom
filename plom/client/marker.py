@@ -952,9 +952,11 @@ class MarkerClient(QWidget):
         # Get the number of Tests, Pages, Questions and Versions
         # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
-        stuff = self.msgr.get_exam_info()
+        d = self.msgr.get_exam_info()
         # TODO: is never changed even if server changes it
-        self.max_papernum = stuff["current_largest_paper_num"]
+        self.max_papernum = d["current_largest_paper_num"]
+        # legacy won't provide this; we'll get None
+        self.annotatorSettings["annotation_situations"] = d.get("annotation_situations")
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)

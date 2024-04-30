@@ -1475,6 +1475,13 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
+    @property
+    def _annotation_situations(self) -> dict[str, Any]:
+        d = self.parentMarkerUI.annotatorSettings.get("annotation_situations")
+        if not d:
+            d = annotation_situations
+        return d
+
     def _continue_after_warning(self, code: str, msg: str | None = None) -> bool:
         """Notify user about warnings/errors in their annotations.
 
@@ -1491,30 +1498,30 @@ class Annotator(QWidget):
             True if we should continue or False if either settings or
             user choose to edit further.
         """
+        situation = self._annotation_situations[code]
+
         if msg is None:
             # str() to shutup MyPy: we unit test that is a string
-            msg = str(annotation_situations[code]["explanation"])
+            msg = str(situation["explanation"])
 
         # The msg might already be phrased as a question such as "will this
         # be understandable?" but we end with a concrete question
         msg += "\n<p>Do you wish to submit?</p>"
 
-        info = annotation_situations[code]
-        if not info["allowed"]:
+        if not situation["allowed"]:
             InfoMsg(self, msg).exec()
             return False
 
-        if not info["warn"]:
+        if not situation["warn"]:
             return True
 
         dama = False
-        if info["dama_allowed"]:
+        if situation["dama_allowed"]:
             dama = self._config.get("dama-" + code, False)
-
         if dama:
             return True
 
-        if not info["dama_allowed"]:
+        if not situation["dama_allowed"]:
             if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
             return True
@@ -1542,7 +1549,7 @@ class Annotator(QWidget):
         elif self.scene.hasAnyTicks():
             code = "zero-marks-but-has-ticks"
         if code:
-            msg = annotation_situations[code]["explanation"]
+            msg = self._annotation_situations[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
@@ -1571,7 +1578,7 @@ class Annotator(QWidget):
         else:
             code = "full-marks-but-other-annotations-contradictory"
         if code:
-            msg = annotation_situations[code]["explanation"]
+            msg = self._annotation_situations[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):

@@ -20,6 +20,7 @@ from rest_framework import status
 
 from plom import __version__
 from plom import Plom_API_Version
+from plom.annotation_situations import annotation_situations
 
 from API.permissions import AllowAnyReadOnly
 
@@ -100,6 +101,7 @@ class ExamInfo(APIView):
         # TODO: suggest progress info here too
         info: dict[str, Any] = {
             "current_largest_paper_num": 9999,
+            "annotation_situations": annotation_situations,
         }
         return Response(info)
 
