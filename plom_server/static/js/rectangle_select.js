@@ -30,7 +30,8 @@ var current_canvas_rect={}
 var mouseX, mouseY
 var startX, startY
 
-var initial_rect = [128,128,128+256,128+128];
+// the initial rectangle should be given in [0,1] coords.
+var initial_rect = [0.1,0.1,0.1+0.2,0.1+0.1]
 function setInitialIDBoxRectangle(id_box_rect) {
   initial_rect = id_box_rect;
 }
@@ -52,11 +53,16 @@ var effective_image_height = 2200;
 image.onload = function(){
   effective_image_width = image.naturalWidth;
   effective_image_height = image.naturalHeight;
-  
-  th_left = initial_rect[0];
-  th_top = initial_rect[1];
-  th_right = initial_rect[2];
-  th_bottom = initial_rect[3];
+
+  var w = bottom_right_coord[0] - top_left_coord[0];
+  var h = bottom_right_coord[1] - top_left_coord[1];
+
+
+
+  th_left = initial_rect[0]*w+top_left_coord[0];
+  th_right = initial_rect[2]*w+top_left_coord[0];
+  th_top = initial_rect[1]*h+top_left_coord[1];
+  th_bottom = initial_rect[3]*h+top_left_coord[1];
 
   th_width = th_right - th_left;
   th_height = th_bottom - th_top;

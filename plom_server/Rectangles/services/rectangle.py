@@ -220,15 +220,19 @@ class RectangleExtractor:
                 dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
                 archive.writestr(fname, dat)
 
-    def get_largest_rectangle_contour(self):
+    def get_largest_rectangle_contour(
+        self, region: None | Dict[str, float] = None
+    ) -> None | Dict[str, float]:
         """Helper function for extracting the largest box from an image.
 
         Args:
             filename: the image where the largest box is extracted from.
 
         Returns:
-            The image, cropped to only include the contour region
-            or `None` if an error occurred.
+            A dict of the coordinates of the top-left and bottom-right corners of the rectangle
+            encoded as {'left_f':blah, 'top_f':blah} etc or `None` if an error occurred. The coordinates
+            are relative to positions of the qr-codes, and so values in the interval [0,1] (plus
+            some overhang for the margins).
         """
         try:
             rimg_obj = ReferenceImage.objects.get(
@@ -242,10 +246,23 @@ class RectangleExtractor:
         img_bytes = rimg_obj.image_file.read()
         np_arr = np.fromstring(img_bytes, np.uint8)
         src_image = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+        # if a region is specified then cut it out from the original image,
+        # but we need to remember to map the resulting rectangle back to the
+        # original coordinate system.
+        if region:
+            img_left = int(region["left_f"] * self.WIDTH + self.LEFT)
+            img_right = int(region["right_f"] * self.WIDTH + self.LEFT) + 1
+            img_top = int(region["top_f"] * self.HEIGHT + self.TOP)
+            img_bottom = int(region["bottom_f"] * self.HEIGHT + self.TOP) + 1
+            src_image = src_image[img_top:img_bottom, img_left:img_right]
+        else:
+            img_left = 0
+            img_top = 0
         # Process the image so as to find the contours.
+        # TODO = improve this - it seems pretty clunky.
         # Grey, Blur and Edging are standard processes for text detection.
         grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
-        blurred_image = cv.GaussianBlur(grey_image, (5, 5), 0)
+        blurred_image = cv.GaussianBlur(grey_image, (7, 7), 0)
         edged_image = cv.Canny(blurred_image, threshold1=50, threshold2=200)
         contours = cv.findContours(
             edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
@@ -265,10 +282,22 @@ class RectangleExtractor:
         if box_contour is not None:
             corners_as_array = box_contour.reshape(4, 2)
             # the box contour will be 4 points - take min/max of x and y to get the corners.
-            left = min([X[0] for X in corners_as_array])
-            right = max([X[0] for X in corners_as_array])
-            top = min([X[1] for X in corners_as_array])
-            bottom = max([X[1] for X in corners_as_array])
-            return {"left": left, "top": top, "right": right, "bottom": bottom}
+            # this is in image pixels
+            left = min([X[0] for X in corners_as_array]) + img_left
+            right = max([X[0] for X in corners_as_array]) + img_left
+            top = min([X[1] for X in corners_as_array]) + img_top
+            bottom = max([X[1] for X in corners_as_array]) + img_top
+            # convert to [0,1] ranges relative to qr code positions
+            left_f = (left - self.LEFT) / self.WIDTH
+            right_f = (right - self.LEFT) / self.WIDTH
+            top_f = (top - self.TOP) / self.HEIGHT
+            bottom_f = (bottom - self.TOP) / self.HEIGHT
+
+            return {
+                "left_f": left_f,
+                "top_f": top_f,
+                "right_f": right_f,
+                "bottom_f": bottom_f,
+            }
 
         return None

@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 
+
+from __future__ import annotations
+
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Dict
 
 from django.http import (
     HttpRequest,
@@ -11,7 +15,7 @@ from django.http import (
     Http404,
 )
 from django.core.files.base import ContentFile
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import SourceService
 
@@ -131,7 +135,7 @@ class ZipExtractedRectangleView(ManagerRequiredView):
 
 
 class GetIDBoxRectangleView(ManagerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
+    def get_id_box_context(self, region: None | Dict[str, float]) -> Dict:
         context = self.build_context()
         id_page_number = SpecificationService.get_id_page_number()
         context.update({"page_number": id_page_number})
@@ -152,17 +156,44 @@ class GetIDBoxRectangleView(ManagerRequiredView):
             }
         )
         rex = RectangleExtractor(1, id_page_number)
-        initial_rectangle = rex.get_largest_rectangle_contour()
+        # note that this rectangle is stated [0,1] coords relative to qr-code positions
+        initial_rectangle = rex.get_largest_rectangle_contour(region)
         if initial_rectangle:
             context.update(
                 {
                     "initial_rectangle": [
-                        initial_rectangle["left"],
-                        initial_rectangle["top"],
-                        initial_rectangle["right"],
-                        initial_rectangle["bottom"],
+                        initial_rectangle["left_f"],
+                        initial_rectangle["top_f"],
+                        initial_rectangle["right_f"],
+                        initial_rectangle["bottom_f"],
                     ]
                 }
             )
+        return context
 
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.get_id_box_context(region=None)
         return render(request, "Rectangles/find_id_rect.html", context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        # get the rectangle coordiantes
+        left_f = round(float(request.POST.get("plom_left")), 6)
+        top_f = round(float(request.POST.get("plom_top")), 6)
+        right_f = round(float(request.POST.get("plom_right")), 6)
+        bottom_f = round(float(request.POST.get("plom_bottom")), 6)
+        # either find a rectangle within those coords or process.
+        if "find_rect" in request.POST:
+            context = self.get_id_box_context(
+                {
+                    "left_f": left_f,
+                    "right_f": right_f,
+                    "top_f": top_f,
+                    "bottom_f": bottom_f,
+                }
+            )
+            return render(request, "Rectangles/find_id_rect.html", context)
+        elif "submit" in request.POST:
+            print("SUBMIT")
+            return redirect("get_id_box_rectangle")
+        else:
+            return redirect("get_id_box_rectangle")
