@@ -9,6 +9,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 
+from plom.annotation_situations import annotation_situations
+
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
@@ -253,3 +255,20 @@ class RubricItemView(ManagerRequiredView):
                 rubric.__setattr__(key, value)
             rubric.save()
         return redirect("rubric_item", rubric_key=rubric_key)
+
+
+class RubricAnnotationSituationsView(ManagerRequiredView):
+    """Viewing and possibly changing the defaults around potentially problem cases in annotation.
+
+    For now, view only.  TODO: add post.
+    """
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/rubrics_annotation_situations.html"
+        context = self.build_context()
+        context.update(
+            {
+                "annotation_situations": annotation_situations,
+            }
+        )
+        return render(request, template_name, context=context)

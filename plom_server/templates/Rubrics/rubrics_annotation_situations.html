@@ -1,0 +1,64 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Annotation situations
+{% endblock title %}
+{% block page_heading %}
+    Annotation situations
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <p>
+            Certain combinations of rubrics and other annotations
+            might provide poor, ambiguous or misleading feedback to
+            students.
+            Plom marking clients try to identify such cases and warn
+            (or outright refuse) to submit.  This page allows you to
+            customize such behaviour.
+            <em>(TODO: well, in the future, right now its read-only!)</em>
+        </p>
+        <p>
+            In many cases, the marker can read an explanation, and
+            after careful consideration, they might toggle
+            &ldquo;Don't ask me again&ldquo;
+            (<abbr title="Don't ask me again">DAMA</abbr>).
+            You can disable this feature if you wish.
+        </p>
+    </div>
+    <hr />
+    <div>
+        <table class="table table-striped sortable">
+            <thead>
+                <tr>
+                    <!-- TODO: add tooltips or some other explanation -->
+                    <th scope="col">Code</th>
+                    <th scope="col">Explanation</th>
+                    <th scope="col">Allowed</th>
+                    <th scope="col">Warn</th>
+                    <th scope="col">
+                        <abbr title="Don't ask me again">DAMA</abbr> allowed
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code, data in annotation_situations.items %}
+                    <tr>
+                        <td>
+                            <small>{{ code }}</small>
+                        </td>
+                        <td>
+                            <!-- lh-1 for tighter line-spacing -->
+                            <small class="lh-1">{{ data.explanation|safe }}</small>
+                        </td>
+                        <td>{{ data.allowed }}</td>
+                        <td>{{ data.warn }}</td>
+                        <td>{{ data.dama_allowed }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock main_content %}
