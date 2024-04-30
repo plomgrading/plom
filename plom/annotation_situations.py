@@ -141,13 +141,16 @@ annotation_situations = {
     },
     # These not implemented yet: Issue #2037
     "mix-up-and-down-rubrics-unambiguous-case": {
-        "explanation": "Mixing up and down",
+        "explanation": """
+            Mixing up and down.
+            TODO: not implemented.  Well, its forbidden just not connected to this system.
+        """,
         "allowed": False,
         "warn": True,
         "dama_allowed": False,
     },
     "mix-up-and-down-rubrics-ambiguous-case": {
-        "explanation": "",
+        "explanation": "TODO: not implemented within this system",
         "allowed": False,
         "warn": True,
         "dama_allowed": False,

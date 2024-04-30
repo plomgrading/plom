@@ -53,9 +53,33 @@
                             <!-- lh-1 for tighter line-spacing -->
                             <small class="lh-1">{{ data.explanation|safe }}</small>
                         </td>
-                        <td>{{ data.allowed }}</td>
-                        <td>{{ data.warn }}</td>
-                        <td>{{ data.dama_allowed }}</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="{{ code }}-allowed"
+                                       {% if data.allowed %}checked{% endif %}
+                                       disabled>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="{{ code }}-warn"
+                                       {% if data.warn %}checked{% endif %}
+                                       disabled>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="{{ code }}-dama-allowed"
+                                       {% if data.dama_allowed %}checked{% endif %}
+                                       disabled>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
