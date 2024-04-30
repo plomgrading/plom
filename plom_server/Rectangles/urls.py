@@ -7,6 +7,7 @@ from .views import (
     SelectRectangleView,
     ExtractedRectangleView,
     ZipExtractedRectangleView,
+    GetIDBoxRectangleView,
 )
 
 urlpatterns = [
@@ -26,4 +27,5 @@ urlpatterns = [
         ZipExtractedRectangleView.as_view(),
         name="zip_rectangles",
     ),
+    path("id_rectangle", GetIDBoxRectangleView.as_view(), name="get_id_box_rectangle"),
 ]

@@ -7,6 +7,7 @@
 from __future__ import annotations
 from Papers.models import ReferenceImage
 import cv2 as cv
+import imutils
 from io import BytesIO
 import numpy as np
 from pathlib import Path
@@ -218,3 +219,56 @@ class RectangleExtractor:
                 fname = f"extracted_rectangle_pn{pn}.png"
                 dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
                 archive.writestr(fname, dat)
+
+    def get_largest_rectangle_contour(self):
+        """Helper function for extracting the largest box from an image.
+
+        Args:
+            filename: the image where the largest box is extracted from.
+
+        Returns:
+            The image, cropped to only include the contour region
+            or `None` if an error occurred.
+        """
+        try:
+            rimg_obj = ReferenceImage.objects.get(
+                version=self.version, page_number=self.page_number
+            )
+        except ReferenceImage.DoesNotExist:
+            raise ValueError(
+                f"There is no reference image for v{self.version} pg{self.page_number}."
+            )
+        # read the ref-image into a cv image.
+        img_bytes = rimg_obj.image_file.read()
+        np_arr = np.fromstring(img_bytes, np.uint8)
+        src_image = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+        # Process the image so as to find the contours.
+        # Grey, Blur and Edging are standard processes for text detection.
+        grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
+        blurred_image = cv.GaussianBlur(grey_image, (5, 5), 0)
+        edged_image = cv.Canny(blurred_image, threshold1=50, threshold2=200)
+        contours = cv.findContours(
+            edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
+        )
+        contour_lists = imutils.grab_contours(contours)
+        sorted_contour_list = sorted(contour_lists, key=cv.contourArea, reverse=True)
+
+        box_contour = None
+        for contour in sorted_contour_list:
+            perimeter = cv.arcLength(contour, True)
+            # Approximate the contour
+            third_order_moment = cv.approxPolyDP(contour, 0.02 * perimeter, True)
+            # check that the contour is a quadrilateral
+            if len(third_order_moment) == 4:
+                box_contour = third_order_moment
+                break
+        if box_contour is not None:
+            corners_as_array = box_contour.reshape(4, 2)
+            # the box contour will be 4 points - take min/max of x and y to get the corners.
+            left = min([X[0] for X in corners_as_array])
+            right = max([X[0] for X in corners_as_array])
+            top = min([X[1] for X in corners_as_array])
+            bottom = max([X[1] for X in corners_as_array])
+            return {"left": left, "top": top, "right": right, "bottom": bottom}
+
+        return None

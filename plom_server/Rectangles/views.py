@@ -128,3 +128,41 @@ class ZipExtractedRectangleView(ManagerRequiredView):
             )
         finally:
             Path(tmpzip.name).unlink()
+
+
+class GetIDBoxRectangleView(ManagerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        id_page_number = SpecificationService.get_id_page_number()
+        context.update({"page_number": id_page_number})
+
+        try:
+            qr_info = get_reference_rectangle(1, id_page_number)
+        except ValueError as err:
+            raise Http404(err)
+        x_coords = [X[0] for X in qr_info.values()]
+        y_coords = [X[1] for X in qr_info.values()]
+        rect_top_left = [min(x_coords), min(y_coords)]
+        rect_bottom_right = [max(x_coords), max(y_coords)]
+        context.update(
+            {
+                "qr_info": qr_info,
+                "top_left": rect_top_left,
+                "bottom_right": rect_bottom_right,
+            }
+        )
+        rex = RectangleExtractor(1, id_page_number)
+        initial_rectangle = rex.get_largest_rectangle_contour()
+        if initial_rectangle:
+            context.update(
+                {
+                    "initial_rectangle": [
+                        initial_rectangle["left"],
+                        initial_rectangle["top"],
+                        initial_rectangle["right"],
+                        initial_rectangle["bottom"],
+                    ]
+                }
+            )
+
+        return render(request, "Rectangles/find_id_rect.html", context)

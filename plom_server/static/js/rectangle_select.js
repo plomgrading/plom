@@ -30,11 +30,17 @@ var current_canvas_rect={}
 var mouseX, mouseY
 var startX, startY
 
+var initial_rect = [128,128,128+256,128+128];
+function setInitialIDBoxRectangle(id_box_rect) {
+  initial_rect = id_box_rect;
+}
+
+
 // some starting values
-var th_left = 32;
-var th_top = 32;
-var th_right = 32+256;
-var th_bottom = 32+128;
+var th_left = 0;
+var th_top = 0;
+var th_right = 256;
+var th_bottom = 128;
 
 var th_width = th_right - th_left;
 var th_height = th_bottom - th_top;
@@ -44,11 +50,19 @@ var effective_image_width = 1700;
 var effective_image_height = 2200;
 // update these values after the image has loaded
 image.onload = function(){
-effective_image_width = image.naturalWidth;
-effective_image_height = image.naturalHeight;
+  effective_image_width = image.naturalWidth;
+  effective_image_height = image.naturalHeight;
+  
+  th_left = initial_rect[0];
+  th_top = initial_rect[1];
+  th_right = initial_rect[2];
+  th_bottom = initial_rect[3];
+
+  th_width = th_right - th_left;
+  th_height = th_bottom - th_top;
 }
 
-//drawRectInCanvas() connected functions -- START
+// drawRectInCanvas() connected functions -- START
 function updateHiddenInputs(){
   var inverse_ratio_w =  effective_image_width / canvas.width;
   var inverse_ratio_h = effective_image_height / canvas.height ;
@@ -64,7 +78,6 @@ function updateHiddenInputs(){
   h_plom_tl_y.value = (h_th_top.value - top_left_coord[1])/h;
   h_plom_br_x.value = (h_th_right.value - top_left_coord[0])/w;
   h_plom_br_y.value = (h_th_bottom.value - top_left_coord[1])/h;
-
 }
 
 function drawCircle(x, y, radius) {
@@ -84,7 +97,7 @@ function drawHandles() {
 
 function drawPlomBits() 
 {
-// draw our coordinate system
+// draw plom coordinate system
   var ctx = canvas.getContext("2d");
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
@@ -101,7 +114,6 @@ function drawPlomBits()
   ctx.lineWidth = "2";
   ctx.rect(top_left_coord[0]*ratio_w, top_left_coord[1]*ratio_h, (bottom_right_coord[0]-top_left_coord[0])*ratio_w, (bottom_right_coord[1]-top_left_coord[1])*ratio_h);
   ctx.stroke();
- 
 }
 function drawRectInCanvas()
 {
@@ -279,12 +291,13 @@ function initCanvas(){
 function initRect(){
   var ratio_w = canvas.width / effective_image_width;
   var ratio_h = canvas.height / effective_image_height;
-  //BORDER OF SIZE 6!
-  rect.height = th_height*ratio_h-6
-  rect.width = th_width*ratio_w-6
-  rect.top = th_top*ratio_h+3
-  rect.left = th_left*ratio_w+3
+
+  rect.height = th_height*ratio_h;
+  rect.width = th_width*ratio_w;
+  rect.top = th_top*ratio_h;
+  rect.left = th_left*ratio_w;
 }
+
 
 function init(){
   canvas.addEventListener('mousedown', mouseDown, false);
