@@ -176,7 +176,7 @@ class GetIDBoxRectangleView(ManagerRequiredView):
         return render(request, "Rectangles/find_id_rect.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        # get the rectangle coordiantes
+        # get the rectangle coordinates
         left_f = round(float(request.POST.get("plom_left")), 6)
         top_f = round(float(request.POST.get("plom_top")), 6)
         right_f = round(float(request.POST.get("plom_right")), 6)
