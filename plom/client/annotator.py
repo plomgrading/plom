@@ -67,7 +67,6 @@ from .pageview import PageView
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 from .about_dialog import show_about_dialog
-from plom.annotation_situations import annotation_situations
 
 
 log = logging.getLogger("annotr")
@@ -1477,10 +1476,7 @@ class Annotator(QWidget):
 
     @property
     def _annotation_situations(self) -> dict[str, Any]:
-        d = self.parentMarkerUI.annotatorSettings.get("annotation_situations")
-        if not d:
-            d = annotation_situations
-        return d
+        return self.parentMarkerUI.annotatorSettings.get("annotation_situations")
 
     def _continue_after_warning(self, code: str, msg: str | None = None) -> bool:
         """Notify user about warnings/errors in their annotations.
