@@ -262,8 +262,8 @@ class RectangleExtractor:
         # TODO = improve this - it seems pretty clunky.
         # Grey, Blur and Edging are standard processes for text detection.
         grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
-        blurred_image = cv.GaussianBlur(grey_image, (7, 7), 0)
-        edged_image = cv.Canny(blurred_image, threshold1=50, threshold2=200)
+        blurred_image = cv.GaussianBlur(grey_image, (3, 3), 0)
+        edged_image = cv.Canny(blurred_image, threshold1=5, threshold2=255)
         contours = cv.findContours(
             edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
         )

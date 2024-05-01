@@ -5,6 +5,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from .id_tasks import IdentifyTaskService
-from .id_reader import IDReaderService
+from .id_reader import IDReaderService, IDBoxProcessorService
 from .id_progress import IDProgressService
 from .id_direct import IDDirectService

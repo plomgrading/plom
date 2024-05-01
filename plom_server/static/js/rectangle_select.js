@@ -57,8 +57,6 @@ image.onload = function(){
   var w = bottom_right_coord[0] - top_left_coord[0];
   var h = bottom_right_coord[1] - top_left_coord[1];
 
-
-
   th_left = initial_rect[0]*w+top_left_coord[0];
   th_right = initial_rect[2]*w+top_left_coord[0];
   th_top = initial_rect[1]*h+top_left_coord[1];
