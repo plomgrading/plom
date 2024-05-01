@@ -28,7 +28,7 @@
 #     rules to enforce in case the client changed.  E.g., not possible
 #     to get to ``zero-marks-but-has-only-ticks``?
 
-annotation_situations = {
+feedback_rules = {
     "lost-marks-but-insufficient-feedback": {
         "explanation": """
             <p>You have given neither comments nor detailed annotations

@@ -1475,8 +1475,8 @@ class Annotator(QWidget):
         return True
 
     @property
-    def _annotation_situations(self) -> dict[str, Any]:
-        return self.parentMarkerUI.annotatorSettings.get("annotation_situations")
+    def _feedback_rules(self) -> dict[str, Any]:
+        return self.parentMarkerUI.annotatorSettings.get("feedback_rules")
 
     def _continue_after_warning(self, code: str, msg: str | None = None) -> bool:
         """Notify user about warnings/errors in their annotations.
@@ -1494,7 +1494,7 @@ class Annotator(QWidget):
             True if we should continue or False if either settings or
             user choose to edit further.
         """
-        situation = self._annotation_situations[code]
+        situation = self._feedback_rules[code]
 
         if msg is None:
             # str() to shutup MyPy: we unit test that is a string
@@ -1545,7 +1545,7 @@ class Annotator(QWidget):
         elif self.scene.hasAnyTicks():
             code = "zero-marks-but-has-ticks"
         if code:
-            msg = self._annotation_situations[code]["explanation"]
+            msg = self._annotation_feedback_rules[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
@@ -1574,7 +1574,7 @@ class Annotator(QWidget):
         else:
             code = "full-marks-but-other-annotations-contradictory"
         if code:
-            msg = self._annotation_situations[code]["explanation"]
+            msg = self._feedback_rules[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):

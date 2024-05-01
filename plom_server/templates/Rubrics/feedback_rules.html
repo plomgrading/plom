@@ -4,10 +4,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Annotation situations
+    Feedback Rules
 {% endblock title %}
 {% block page_heading %}
-    Annotation situations
+    Feedback Rules
 {% endblock page_heading %}
 {% block main_content %}
     <div>
@@ -44,7 +44,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for code, data in annotation_situations.items %}
+                {% for code, data in feedback_rules.items %}
                     <tr>
                         <td>
                             <small>{{ code }}</small>

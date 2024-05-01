@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 
-from plom.annotation_situations import annotation_situations
+from plom.feedback_rules import feedback_rules
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
@@ -257,18 +257,18 @@ class RubricItemView(ManagerRequiredView):
         return redirect("rubric_item", rubric_key=rubric_key)
 
 
-class RubricAnnotationSituationsView(ManagerRequiredView):
-    """Viewing and possibly changing the defaults around potentially problem cases in annotation.
+class FeedbackRulesView(ManagerRequiredView):
+    """Viewing and changing the defaults around potentially problem cases in annotation.
 
     For now, view only.  TODO: add post.
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        template_name = "Rubrics/rubrics_annotation_situations.html"
+        template_name = "Rubrics/feedback_rules.html"
         context = self.build_context()
         context.update(
             {
-                "annotation_situations": annotation_situations,
+                "feedback_rules": feedback_rules,
             }
         )
         return render(request, template_name, context=context)

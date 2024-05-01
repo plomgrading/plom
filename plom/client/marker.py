@@ -78,7 +78,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
-from plom.annotation_situations import annotation_situations as static_situation_data
+from plom.feedback_rules import feedback_rules as static_feedback_rules_data
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectPaperQuestion
@@ -957,8 +957,8 @@ class MarkerClient(QWidget):
         # TODO: is never changed even if server changes it
         self.max_papernum = info["current_largest_paper_num"]
         # legacy won't provide this; fallback to a static value
-        self.annotatorSettings["annotation_situations"] = info.get(
-            "annotation_situations", static_situation_data
+        self.annotatorSettings["feedback_rules"] = info.get(
+            "feedback_rules", static_feedback_rules_data
         )
 
         self.UIInitialization()
