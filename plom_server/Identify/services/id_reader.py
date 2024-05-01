@@ -377,7 +377,8 @@ class IDBoxProcessorService:
             cv.imwrite(str(p), ID_box)
         processed_digits_images = self.get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
-            self.stdout.write("Trouble finding digits inside the ID box")
+            # TODO - put in warning
+            # self.stdout.write("Trouble finding digits inside the ID box")
             return []
         if debugdir:
             for n, digit_image in enumerate(processed_digits_images):
@@ -410,14 +411,16 @@ class IDBoxProcessorService:
                 prediction_model, image_file, num_digits
             )
             if len(prob_lists) == 0:
-                self.stdout.write(
-                    f"Test{paper_number}: could not read digits, excluding from calculations"
-                )
+                # TODO - put in warning
+                # self.stdout.write(
+                #     f"Test{paper_number}: could not read digits, excluding from calculations"
+                # )
                 continue
             elif len(prob_lists) != num_digits:
-                self.stdout.write(
-                    f"Test{paper_number}: unexpectedly len={len(prob_lists)}: {prob_lists}"
-                )
+                # TODO - put in warning
+                # self.stdout.write(
+                #     f"Test{paper_number}: unexpectedly len={len(prob_lists)}: {prob_lists}"
+                # )
                 probabilities[paper_number] = prob_lists
             else:
                 probabilities[paper_number] = prob_lists
