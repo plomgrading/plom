@@ -30,9 +30,7 @@
                         <table class="table table-striped sortable">
                             <tr>
                                 <th>Paper</th>
-                                <th>
-                                    Identified
-                                </td>
+                                <th>Identified</th>
                                 <th>Prenamed ID</th>
                                 <th>Predicted ID (LAP)</th>
                                 <th>Certainty</th>
@@ -40,7 +38,7 @@
                                 <th>Certainty</th>
                             </tr>
                             {% for pn, dat in predictions.items %}
-                                <tr {% if 'identified' in dat %} class="table-success" {% elif 'prename' in dat %} class="table-secondary" {% endif %}>
+                                <tr {% if 'identified' in dat %}class="table-success" {% elif 'prename' in dat %}class="table-secondary" {% endif %}>
                                     <td>
                                         {{ pn }}
                                         {% if dat.image_pk %}
@@ -74,15 +72,15 @@
                                         <td></td>
                                         <td></td>
                                     {% endif %}
-                                {% endfor %}
-                            </table>
-                        </div>
+                                </tr>
+                            {% endfor %}
+                        </table>
                     </div>
                 </div>
             </div>
-            <div class="col m-2">
-                <div id="imageHere"></div>
-            </div>
+        </div>
+        <div class="col m-2">
+            <div id="imageHere"></div>
         </div>
     </div>
 {% endblock main_content %}

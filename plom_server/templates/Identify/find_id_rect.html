@@ -48,7 +48,7 @@
                         </li>
                     </ul>
                 </p>
-                <form method="post">
+                <form method="post" class="form my-2">
                     {% csrf_token %}
                     <ul hidden>
                         <li>
@@ -91,6 +91,11 @@
                            name="submit"
                            value="Submit">
                 </form>
+                {% if initial_rectangle %}
+                    <div class="alert alert-success">Found rectangle</div>
+                {% else %}
+                    <div class="alert alert-warning">Could not find rectangle</div>
+                {% endif %}
             </div>
         </div>
     </div>

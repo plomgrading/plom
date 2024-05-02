@@ -249,11 +249,17 @@ class RectangleExtractor:
         # if a region is specified then cut it out from the original image,
         # but we need to remember to map the resulting rectangle back to the
         # original coordinate system.
+        # make sure region is padded by a few pixels.
+        pad = 16
         if region:
-            img_left = int(region["left_f"] * self.WIDTH + self.LEFT)
-            img_right = int(region["right_f"] * self.WIDTH + self.LEFT) + 1
-            img_top = int(region["top_f"] * self.HEIGHT + self.TOP)
-            img_bottom = int(region["bottom_f"] * self.HEIGHT + self.TOP) + 1
+            img_left = max(int(region["left_f"] * self.WIDTH + self.LEFT) - pad, 0)
+            img_right = min(
+                int(region["right_f"] * self.WIDTH + self.LEFT) + pad, self.FULL_WIDTH
+            )
+            img_top = max(int(region["top_f"] * self.HEIGHT + self.TOP) - pad, 0)
+            img_bottom = min(
+                int(region["bottom_f"] * self.HEIGHT + self.TOP) + pad, self.FULL_WIDTH
+            )
             src_image = src_image[img_top:img_bottom, img_left:img_right]
         else:
             img_left = 0
@@ -287,6 +293,10 @@ class RectangleExtractor:
             right = max([X[0] for X in corners_as_array]) + img_left
             top = min([X[1] for X in corners_as_array]) + img_top
             bottom = max([X[1] for X in corners_as_array]) + img_top
+            # make sure the box is not too small
+            if (right - left) < 16 or (bottom - top) < 16:
+                return None
+
             # convert to [0,1] ranges relative to qr code positions
             left_f = (left - self.LEFT) / self.WIDTH
             right_f = (right - self.LEFT) / self.WIDTH

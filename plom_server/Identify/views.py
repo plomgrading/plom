@@ -17,12 +17,11 @@ from Papers.services import SpecificationService
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDReaderService, IDProgressService
-from Progress.services import ProgressOverviewService
+from Identify.services import IDReaderService, IDProgressService, IDBoxProcessorService
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
 
 
-class IDPredictionView(ManagerRequiredView):
+class IDPredictionViev(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
@@ -124,7 +123,6 @@ class GetIDBoxRectangleView(ManagerRequiredView):
             )
             return render(request, "Identify/find_id_rect.html", context)
         elif "submit" in request.POST:
-            from Identify.services import IDBoxProcessorService
 
             id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(
                 [left_f, top_f, right_f, bottom_f]
