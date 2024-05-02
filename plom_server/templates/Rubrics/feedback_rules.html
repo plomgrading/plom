@@ -71,10 +71,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for code, data in feedback_rules.items %}
+                    {% for data in feedback_rules %}
                         <tr>
                             <td>
-                                <small>{{ code }}</small>
+                                <small>{{ data.code }}</small>
                             </td>
                             <td>
                                 <!-- lh-1 for tighter line-spacing -->
@@ -84,7 +84,7 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input"
                                            type="checkbox"
-                                           name="{{ code }}-allowed"
+                                           name="{{ data.code }}-allowed"
                                            {% if data.allowed %}checked{% endif %}
                                            {% if data.server_changeable %}disabled{% endif %}>
                                 </div>
@@ -93,7 +93,7 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input"
                                            type="checkbox"
-                                           name="{{ code }}-warn"
+                                           name="{{ data.code }}-warn"
                                            {% if data.warn %}checked{% endif %}
                                            {% if data.server_changeable %}disabled{% endif %}>
                                 </div>
@@ -102,7 +102,7 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input"
                                            type="checkbox"
-                                           name="{{ code }}-dama_allowed"
+                                           name="{{ data.code }}-dama_allowed"
                                            {% if data.dama_allowed %}checked{% endif %}
                                            {% if data.server_changeable %}disabled{% endif %}>
                                 </div>
