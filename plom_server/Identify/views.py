@@ -11,11 +11,58 @@ from django.http import (
     Http404,
 )
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect
 from Papers.services import SpecificationService
 
 from Base.base_group_views import ManagerRequiredView
 
+from Identify.services import IDReaderService, IDProgressService
+from Progress.services import ProgressOverviewService
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
+
+
+class IDPredictionView(ManagerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+
+        # get all predictions.
+        all_predictions = IDReaderService().get_ID_predictions()
+        id_task_info = IDProgressService().get_all_id_task_info()
+        # massage it into a table
+        prediction_table = {}
+        for pn, dat in all_predictions.items():
+            # dat is list of dict [{id, cert, predictor}]
+            # rearrange this dat as multiple columns.
+            prediction_table[pn] = {
+                X["predictor"]: (X["student_id"], X["certainty"]) for X in dat
+            }
+            if pn in id_task_info:
+                prediction_table[pn].update(
+                    {
+                        "image_pk": id_task_info[pn]["idpageimage_pk"],
+                    }
+                )
+                # check if the paper has been identified
+                if "student_id" in id_task_info[pn]:
+                    prediction_table[pn].update(
+                        {"identified": id_task_info[pn]["student_id"]}
+                    )
+
+        context.update({"predictions": prediction_table})
+
+        return render(request, "Identify/id_prediction_home.html", context)
+
+
+class IDPredictionHXDeleteView(ManagerRequiredView):
+    # this view is accessed by hx-delete
+    def delete(self, request: HttpRequest, predictor: str) -> HttpResponse:
+        if predictor == "MLLAP":
+            IDReaderService().delete_ID_predictions("MLLAP")
+        elif predictor == "MLGreedy":
+            IDReaderService().delete_ID_predictions("MLGreedy")
+
+        return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
 class GetIDBoxRectangleView(ManagerRequiredView):
@@ -86,6 +133,6 @@ class GetIDBoxRectangleView(ManagerRequiredView):
                 request.user, id_box_image_dict, recompute_heatmap=True
             )
 
-            return redirect("get_id_box_rectangle")
+            return redirect("id_prediction_home")
         else:
             return redirect("get_id_box_rectangle")

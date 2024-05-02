@@ -1,0 +1,88 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    ID Predictions
+{% endblock title %}
+{% block page_heading %}
+    ID Predictions
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-primary" href="{% url 'get_id_box_rectangle' %}">Run ID auto-reader tool</a>
+        <button class="btn btn-warning"
+                hx-confirm="Are you sure?"
+                hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
+        <button class="btn btn-warning"
+                hx-confirm="Are you sure?"
+                hx-delete="{% url 'id_prediction_delete' "MLGreedy" %}">Delete Greedy predictions</button>
+    </div>
+    <div class="row">
+        <div class="col-8">
+            <div class="card m-2">
+                <div class="card-body">
+                    <h5 class="card-title">Auto-read paper IDs</h5>
+                    <p>Note that this table only shows papers which are prenamed or have predicted IDs</p>
+                    <div style="max-height: 80vh; overflow-y: auto;">
+                        <table class="table table-striped sortable">
+                            <tr>
+                                <th>Paper</th>
+                                <th>
+                                    Identified
+                                </td>
+                                <th>Prenamed ID</th>
+                                <th>Predicted ID (LAP)</th>
+                                <th>Certainty</th>
+                                <th>Predicted ID (Greedy)</th>
+                                <th>Certainty</th>
+                            </tr>
+                            {% for pn, dat in predictions.items %}
+                                <tr {% if 'identified' in dat %} class="table-success" {% elif 'prename' in dat %} class="table-secondary" {% endif %}>
+                                    <td>
+                                        {{ pn }}
+                                        {% if dat.image_pk %}
+                                            <button hx-get="{% url 'ID_img_wrap' dat.image_pk %}"
+                                                    hx-target="#imageHere"
+                                                    hx-replace="innerHTML"
+                                                    class="btn btn-outline-success">view</button>
+                                        {% endif %}
+                                    </td>
+                                    {% if 'identified' in dat %}
+                                        <td>{{ dat.identified }}</td>
+                                    {% else %}
+                                        <td>{{ dat.status }}</td>
+                                    {% endif %}
+                                    {% if 'prename' in dat %}
+                                        <td>{{ dat.prename.0 }}</td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                    {% if 'MLLAP' in dat %}
+                                        <td>{{ dat.MLLAP.0 }}</td>
+                                        <td>{{ dat.MLLAP.1 }}</td>
+                                    {% else %}
+                                        <td></td>
+                                        <td></td>
+                                    {% endif %}
+                                    {% if 'MLGreedy' in dat %}
+                                        <td>{{ dat.MLGreedy.0 }}</td>
+                                        <td>{{ dat.MLGreedy.1 }}</td>
+                                    {% else %}
+                                        <td></td>
+                                        <td></td>
+                                    {% endif %}
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col m-2">
+                <div id="imageHere"></div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

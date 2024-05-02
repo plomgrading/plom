@@ -54,6 +54,13 @@ class IDReaderService:
             paper_list.append(task.paper.paper_number)
         return paper_list
 
+    def get_prenamed_paper_numbers(self) -> List[int]:
+        return list(
+            IDPrediction.objects.filter(predictor="prename").values_list(
+                "paper__paper_number", flat=True
+            )
+        )
+
     @transaction.atomic
     def get_ID_predictions(
         self, predictor: str | None = None
@@ -193,6 +200,7 @@ class IDBoxProcessorService:
         self,
         box: tuple[float, float, float, float],
         *,
+        exlude_prenamed_papers: bool | None = True,
         save_dir: Path | None = None,
     ) -> dict[int, Path]:
         """Extract the id box, or really any rectangular part of the id page.
@@ -206,6 +214,7 @@ class IDBoxProcessorService:
                 much of the page as a float ``[0.0, 1.0]``.
 
         Keyword Args:
+            exlude_prenamed_papers: by default we don't extract the id box from prenamed papers.
             save_dir: what directory to save to, or a default if omitted.
 
         Returns:
@@ -218,11 +227,19 @@ class IDBoxProcessorService:
         id_box_folder.mkdir(exist_ok=True, parents=True)
         # get the ID page-number and the papers which have it scanned.
         id_page_number = SpecificationService.get_id_page_number()
-        paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
+        # but exclude any prenamed papers
+        if exlude_prenamed_papers:
+            prenamed_papers = IDReaderService().get_prenamed_paper_numbers()
+        else:
+            prenamed_papers = []
+        paper_numbers = [
+            pn
+            for pn in PaperInfoService().get_paper_numbers_containing_given_page_version(
                 1, id_page_number, scanned=True
             )
-        )
+            if pn not in prenamed_papers
+        ]
+
         # use the rectangle extractor to then get all the rectangles from those pages and save them
         rex = RectangleExtractor(1, id_page_number)
         img_file_dict = {}
@@ -481,9 +498,8 @@ class IDBoxProcessorService:
                 student_ids.remove(ided_stu)
             except ValueError:
                 pass
-        # only use papers that are yet to be ID'd
+        # do not use papers that are already ID'd
         unidentified_papers = id_reader_service.get_unidentified_papers()
-        # and then only use those which are in our heatmap
         papers_to_id = [n for n in unidentified_papers if n in probabilities]
         if len(papers_to_id) == 0 or len(student_ids) == 0:
             raise IndexError(
@@ -534,7 +550,9 @@ class IDBoxProcessorService:
 
             # choose the sid with the highest mean digit probability
             largest_prob = sid_probs.index(max(sid_probs))
-            predictions.append((paper_num, student_IDs[largest_prob], max(sid_probs)))
+            predictions.append(
+                (paper_num, student_IDs[largest_prob], round(max(sid_probs), 2))
+            )
 
         return predictions
 
@@ -606,5 +624,5 @@ class IDBoxProcessorService:
                 i_prob = probabilities[pn][i][int(sid[i])]
                 digit_probs.append(i_prob)
             certainty = np.array(digit_probs).prod() ** (1.0 / len(digit_probs))
-            predictions.append((pn, sid, certainty))
+            predictions.append((pn, sid, round(certainty, 2)))
         return predictions
