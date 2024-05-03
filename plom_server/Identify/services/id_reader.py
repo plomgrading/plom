@@ -124,8 +124,7 @@ class IDReaderService:
         """
         paper = Paper.objects.get(paper_number=paper_num)
         try:
-            existing_pred = IDPrediction.objects.get(
-                paper=paper, predictor=predictor)
+            existing_pred = IDPrediction.objects.get(paper=paper, predictor=predictor)
         except IDPrediction.DoesNotExist:
             existing_pred = None
         if not existing_pred:
@@ -168,8 +167,7 @@ class IDReaderService:
             ValueError: if the username provided is not valid, or is not part of the manager group.
         """
         try:
-            user = User.objects.get(
-                username__iexact=username, groups__name="manager")
+            user = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
@@ -190,8 +188,7 @@ class IDReaderService:
         self, user: User, student_id: str, paper_number: int
     ) -> None:
         """Add ID prediction for a prenamed paper."""
-        self.add_or_change_ID_prediction(
-            user, paper_number, student_id, 0.9, "prename")
+        self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
 
 
 class IDBoxProcessorService:
@@ -262,8 +259,7 @@ class IDBoxProcessorService:
         template_id_box_width = 1250
         # read the given file into an np.array.
         id_box = cv.imread(str(id_box_file))
-        assert len(id_box.shape) in (
-            2, 3), f"Unexpected numpy shape {id_box.shape}"
+        assert len(id_box.shape) in (2, 3), f"Unexpected numpy shape {id_box.shape}"
         # third entry 1 (grayscale) or 3 (colour)
         height: int = id_box.shape[0]
         width: int = id_box.shape[1]
@@ -272,8 +268,7 @@ class IDBoxProcessorService:
         # scale height to retain aspect ratio of image
         new_height = int(template_id_box_width * height / width)
         scaled_id_box = cv.resize(
-            id_box, (template_id_box_width,
-                     new_height), interpolation=cv.INTER_CUBIC
+            id_box, (template_id_box_width, new_height), interpolation=cv.INTER_CUBIC
         )
         # extract the top strip of the IDBox template
         # which only contains the digits
@@ -301,38 +296,14 @@ class IDBoxProcessorService:
             left = int(digit_index * digit_box_width + side_crop)
             right = int((digit_index + 1) * digit_box_width - side_crop)
             single_digit = ID_box[0:ID_box_height, left:right]
-            # Find the contours and centre digit based on the largest contour (by area)
             blurred_digit = cv.GaussianBlur(single_digit, (3, 3), 0)
-            # edged_digit = cv.Canny(
-            #     blurred_digit, threshold1=50, threshold2=255)
-            # contours = cv.findContours(
-            #     edged_digit, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
-            # )
-            # contour_lists = imutils.grab_contours(contours)
-            # # sort by bounding box area
-            # sorted_contours = sorted(
-            #     contour_lists, key=cv.contourArea, reverse=True)
-            #
-            # # can't make a prediction if there are no contours
-            # if len(sorted_contours) == 0:
-            #     return []
-            # get bounding rectangle of biggest contour
-            # (x, y) are the coordinates of the rectangle's top-left corner
-            # x, y, rect_width, rect_height = cv.boundingRect(sorted_contours[0])
-            # add padding around this rectangle
-            # pad = 10
-            # padded_digit = blurred_digit[
-            #     max(0, y - pad): y + rect_height + pad,
-            #     max(0, x - pad): x + rect_width + pad,
-            # ]
-            # Do some clean-up by thresholding pixels
             thresholded_digit = cv.adaptiveThreshold(
                 # cv.cvtColor(padded_digit, cv.COLOR_BGR2GRAY),
                 cv.cvtColor(blurred_digit, cv.COLOR_BGR2GRAY),
                 255,
                 cv.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv.THRESH_BINARY_INV,
-                5,
+                127,
                 1,
             )
             # more blurring, which helps get rid of "dust" artifacts
@@ -412,8 +383,7 @@ class IDBoxProcessorService:
         for digit_image in processed_digits_images:
             # get it into format needed by model predictor
             digit_vector = np.expand_dims(digit_image, 0)
-            digit_vector = digit_vector.reshape(
-                (1, np.prod(digit_image.shape)))
+            digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
             number_pred_prob = prediction_model.predict_proba(digit_vector)
             prob_lists.append(number_pred_prob[0])
         return prob_lists
@@ -464,8 +434,7 @@ class IDBoxProcessorService:
             id_box_files, student_number_length
         )
 
-        probs_as_list = {k: [x.tolist() for x in v]
-                         for k, v in heatmap.items()}
+        probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
         with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
             json.dump(probs_as_list, fh, indent="  ")
         return heatmap
@@ -478,8 +447,7 @@ class IDBoxProcessorService:
         recompute_heatmap: bool = True,
     ):
         if recompute_heatmap:
-            probabilities = self.compute_and_save_probability_heatmap(
-                id_box_files)
+            probabilities = self.compute_and_save_probability_heatmap(id_box_files)
         else:
             heatmaps_file = settings.MEDIA_ROOT / "id_prob_heatmaps.json"
             with open(heatmaps_file, "r") as fh:
@@ -516,8 +484,7 @@ class IDBoxProcessorService:
                 f"Assignment problem is degenerate: {len(papers_to_id)} unidentified "
                 f"machine-read papers and {len(student_ids)} unused students."
             )
-        lap_predictions = self._lap_predictor(
-            papers_to_id, student_ids, probabilities)
+        lap_predictions = self._lap_predictor(papers_to_id, student_ids, probabilities)
         for prediction in lap_predictions:
             id_reader_service.add_or_change_ID_prediction_cmd(
                 username, prediction[0], prediction[1], prediction[2], "MLLAP"
@@ -562,8 +529,7 @@ class IDBoxProcessorService:
             # choose the sid with the highest mean digit probability
             largest_prob = sid_probs.index(max(sid_probs))
             predictions.append(
-                (paper_num, student_IDs[largest_prob],
-                 round(max(sid_probs), 2))
+                (paper_num, student_IDs[largest_prob], round(max(sid_probs), 2))
             )
 
         return predictions
@@ -635,7 +601,6 @@ class IDBoxProcessorService:
             for i in range(len(sid)):
                 i_prob = probabilities[pn][i][int(sid[i])]
                 digit_probs.append(i_prob)
-            certainty = np.array(
-                digit_probs).prod() ** (1.0 / len(digit_probs))
+            certainty = np.array(digit_probs).prod() ** (1.0 / len(digit_probs))
             predictions.append((pn, sid, round(certainty, 2)))
         return predictions

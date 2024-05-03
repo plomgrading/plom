@@ -21,7 +21,7 @@ from Identify.services import IDReaderService, IDProgressService, IDBoxProcessor
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
 
 
-class IDPredictionViev(ManagerRequiredView):
+class IDPredictionView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
 
