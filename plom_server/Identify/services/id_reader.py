@@ -293,24 +293,38 @@ class IDBoxProcessorService:
             ID_box_height, ID_box_width, _ = ID_box.shape
             digit_box_width = ID_box_width / num_digits
             side_crop = 5
+            top_bottom_crop = 4
             left = int(digit_index * digit_box_width + side_crop)
             right = int((digit_index + 1) * digit_box_width - side_crop)
-            single_digit = ID_box[0:ID_box_height, left:right]
+            single_digit = ID_box[
+                0 + top_bottom_crop : ID_box_height - top_bottom_crop, left:right
+            ]
             blurred_digit = cv.GaussianBlur(single_digit, (3, 3), 0)
             thresholded_digit = cv.adaptiveThreshold(
-                # cv.cvtColor(padded_digit, cv.COLOR_BGR2GRAY),
                 cv.cvtColor(blurred_digit, cv.COLOR_BGR2GRAY),
                 255,
                 cv.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv.THRESH_BINARY_INV,
-                127,
+                127,  # pretty agressively threshold here to get rid of dust
                 1,
             )
-            # more blurring, which helps get rid of "dust" artifacts
-            final_blurred_digit = cv.blur(thresholded_digit, (3, 3))
+            # extract the bounding box around largest 3 contours
+            contours, _ = cv.findContours(
+                thresholded_digit, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
+            )
+            # get the largest contour (by area)
+            contours = sorted(contours, key=cv.contourArea, reverse=True)
+            bbox = cv.boundingRect(contours[0])
+            crop_pad = 4
+            xrange = (max(bbox[0] - crop_pad, 0), bbox[0] + bbox[2] + crop_pad)
+            yrange = (max(bbox[1] - crop_pad, 0), bbox[1] + bbox[3] + crop_pad)
+            cropped_digit = thresholded_digit[
+                yrange[0] : yrange[1], xrange[0] : xrange[1]
+            ]
+
             # now need to resize image to height or width =28 (depending on aspect ratio)
             # the "28" comes from mnist dataset, mnist digits are 28 x 28
-            digit_img_height, digit_img_width = final_blurred_digit.shape
+            digit_img_height, digit_img_width = cropped_digit.shape
             aspect_ratio = digit_img_height / digit_img_width
             if aspect_ratio > 1:
                 h = 28
@@ -319,7 +333,7 @@ class IDBoxProcessorService:
                 h = int(28 * aspect_ratio)
                 w = 28
             resized_digit = cv.resize(
-                final_blurred_digit, (w, h), interpolation=cv.INTER_AREA
+                cropped_digit, (w, h), interpolation=cv.INTER_AREA
             )
             # add black border around the digit image to make the dimensions 28 x 28 pixels
             top_border = int((28 - h) // 2)
