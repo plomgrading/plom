@@ -1545,7 +1545,7 @@ class Annotator(QWidget):
         elif self.scene.hasAnyTicks():
             code = "zero-marks-but-has-ticks"
         if code:
-            msg = self._annotation_feedback_rules[code]["explanation"]
+            msg = self._feedback_rules[code]["explanation"]
             assert isinstance(msg, str)
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
