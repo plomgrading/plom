@@ -1455,6 +1455,9 @@ class Annotator(QWidget):
             if not self._continue_after_warning(_code, _msg):
                 return False
 
+        if not self._check_all_pages_touched():
+            return False
+
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()
 
@@ -1579,6 +1582,24 @@ class Annotator(QWidget):
             msg = msg.format(max_mark=self.maxMark)
             if not self._continue_after_warning(code, msg):
                 return False
+        return True
+
+    def _check_all_pages_touched(self) -> bool:
+        """A helper method for saveAnnotations.
+
+        Are all pages touched by the hand of the annotator?
+
+        Returns:
+            False if user cancels, True otherwise.
+        """
+        indices = self.scene.get_list_of_non_annotated_underimages()
+        if not indices:
+            return True
+        code = "each-page-should-be-annotated"
+        msg = self._feedback_rules[code]["explanation"]
+        msg = msg.format(which_pages=", ".join([str(p + 1) for p in indices]))
+        if not self._continue_after_warning(code, msg):
+            return False
         return True
 
     def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:

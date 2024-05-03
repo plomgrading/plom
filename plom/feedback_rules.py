@@ -139,6 +139,20 @@ feedback_rules = {
         "warn": True,
         "dama_allowed": True,
     },
+    "each-page-should-be-annotated": {
+        "explanation": """
+            <p>A page without annotation may leave students wondering
+            if their work was considered or even noticed.</p>
+            <p>Page(s) {which_pages} of those shown have no annotations.</p>
+            <p>Consider leaving some sort of feedback on each
+            page: for example, a highlighted rectangle around
+            a paragraph acknowledges that you saw it, without
+            committing you to commenting on its correctness.</p>
+        """,
+        "allowed": True,
+        "warn": True,
+        "dama_allowed": True,
+    },
     # These not implemented yet: Issue #2037
     "mix-up-and-down-rubrics-unambiguous-case": {
         "explanation": """

@@ -2549,6 +2549,28 @@ class PageScene(QGraphicsScene):
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
 
+    def get_list_of_non_annotated_underimages(self) -> list[int]:
+        """Which images in the scene are not yet annotated.
+
+        Note these are indexed from zero.  Thinking of them as pages is
+        potentially misleading: we are annotating a scene made of a list
+        of images: which of those images are not yet annotated?
+        """
+        lst = []
+        for n in range(len(self.underImage.images)):
+            img = self.underImage.images[n]
+            page_annotated = False
+            for x in self.items():
+                if not getattr(x, "saveable", None):
+                    continue
+                if x.collidesWithItem(img):
+                    page_annotated = True
+                    # no need to further check this img
+                    break
+            if not page_annotated:
+                lst.append(n)
+        return lst
+
     def itemWithinBounds(self, item) -> bool:
         """Check if given item is within the margins or not."""
         return item.collidesWithItem(
