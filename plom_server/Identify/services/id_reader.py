@@ -305,7 +305,7 @@ class IDBoxProcessorService:
                 255,
                 cv.ADAPTIVE_THRESH_GAUSSIAN_C,
                 cv.THRESH_BINARY_INV,
-                127,  # pretty agressively threshold here to get rid of dust
+                127,  # pretty aggressively threshold here to get rid of dust
                 1,
             )
             # extract the bounding box around largest 3 contours
