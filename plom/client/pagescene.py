@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
+
+# a different kind of annotations... this is about code typing
+from __future__ import annotations
 
 from copy import deepcopy
 from itertools import cycle
@@ -866,12 +869,11 @@ class PageScene(QGraphicsScene):
                 count += 1
         return count
 
-    def countRubrics(self):
-        """
-        Counts current rubrics (comments) associated with the paper.
+    def countRubrics(self) -> int:
+        """Counts current rubrics (comments) associated with the paper.
 
         Returns:
-            (int): total number of rubrics associated with this paper.
+            Total number of rubrics associated with this paper.
         """
         count = 0
         for X in self.items():
@@ -904,13 +906,12 @@ class PageScene(QGraphicsScene):
         """
         return not self.undoStack.isClean()
 
-    def hasAnnotations(self):
-        """
-        Checks for pickleable annotations.
+    def hasAnnotations(self) -> bool:
+        """Checks for pickleable annotations.
 
         Returns
-            (bool): True if page scene has any pickle-able annotations,
-                False otherwise.
+            True if page scene has any pickle-able annotations.
+            False otherwise.
         """
         for X in self.items():
             if getattr(X, "saveable", False):
@@ -2493,14 +2494,14 @@ class PageScene(QGraphicsScene):
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
 
-    def hasAnyCrosses(self):
+    def hasAnyCrosses(self) -> bool:
         """Returns True if scene has any crosses, False otherwise."""
         for X in self.items():
             if isinstance(X, CrossItem):
                 return True
         return False
 
-    def hasOnlyCrosses(self):
+    def hasOnlyCrosses(self) -> bool:
         """Returns True if scene has only crosses, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
@@ -2508,24 +2509,21 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
-    def hasAnyComments(self):
-        """
-        Returns True if scene has any rubrics or text items,
-        False otherwise.
-        """
+    def hasAnyComments(self) -> bool:
+        """Returns True if scene has any rubrics or text items, False otherwise."""
         for X in self.items():
             if isinstance(X, (TextItem, GroupDeltaTextItem)):
                 return True
         return False
 
-    def hasAnyTicks(self):
+    def hasAnyTicks(self) -> bool:
         """Returns True if scene has any ticks. False otherwise."""
         for X in self.items():
             if isinstance(X, TickItem):
                 return True
         return False
 
-    def hasOnlyTicks(self):
+    def hasOnlyTicks(self) -> bool:
         """Returns True if scene has only ticks, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
@@ -2533,12 +2531,11 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
-    def hasOnlyTicksCrossesDeltas(self):
-        """
-        Checks if the image only has crosses, ticks or deltas.
+    def hasOnlyTicksCrossesDeltas(self) -> bool:
+        """Checks if the image only has crosses, ticks or deltas.
 
         Returns:
-             True if scene only has ticks/crosses/deltas, False otherwise.
+            True if scene only has ticks/crosses/deltas, False otherwise.
         """
         for x in self.items():
             if getattr(x, "saveable", None):
@@ -2552,18 +2549,17 @@ class PageScene(QGraphicsScene):
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
 
-    def itemWithinBounds(self, item):
+    def itemWithinBounds(self, item) -> bool:
         """Check if given item is within the margins or not."""
         return item.collidesWithItem(
             self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
         )
 
-    def check_all_saveable_objects_inside(self):
-        """
-        Checks that all objects are within the boundary of the page.
+    def check_all_saveable_objects_inside(self) -> list:
+        """Checks that all objects are within the boundary of the page.
 
         Returns:
-            list: All annotation (saveable) objects that are outside
+            All annotation (saveable) objects that are outside
             of the boundaries of the margin box (annotable area).
             The list will be empty in the good case of no objects being
             outside.
@@ -2585,7 +2581,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         self.ghostItem.changeComment(dlt, txt, legal)
 
