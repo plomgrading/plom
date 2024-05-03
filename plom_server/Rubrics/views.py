@@ -262,7 +262,7 @@ class RubricItemView(ManagerRequiredView):
         return redirect("rubric_item", rubric_key=rubric_key)
 
 
-def _rules_as_list(rules: dict[str, Any]) -> list[str, Any]:
+def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     # something (possible jsonfield) is randomly re-ordering the Python
     # dict, so use a list, sorted alphabetically by code (TODO: for now!)
     L = []
