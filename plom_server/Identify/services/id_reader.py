@@ -424,7 +424,7 @@ class IDBoxProcessorService:
     def compute_and_save_probability_heatmap(self, id_box_files: Dict[int:Path]):
         """Use classifier to compute and save a probability heatmap for the ids.
 
-        This downloads a pre-trained random forest classier to compute the probablity
+        This downloads a pre-trained random forest classier to compute the probability
         that the given number in the ID on the given paper is a particular digit.
         The resulting heatmap is saved for use by predictor algorithms.
         """
