@@ -89,8 +89,8 @@ log = logging.getLogger("pagescene")
 
 
 class ScoreBox(QGraphicsTextItem):
-    """A simple graphics item which is place on the top-left
-    corner of the group-image to indicate the current total mark.
+    """Indicate the current total mark in the top-left.
+
     Drawn with a rounded-rectangle border.
     """
 
@@ -189,8 +189,7 @@ class ScoreBox(QGraphicsTextItem):
 
 
 class UnderlyingRect(QGraphicsRectItem):
-    """
-    A simple white rectangle with dotted border
+    """A simple white rectangle with dotted border.
 
     Used to add a nice white margin with dotted border around everything.
     """
@@ -204,9 +203,7 @@ class UnderlyingRect(QGraphicsRectItem):
 
 
 class MaskingOverlay(QGraphicsItemGroup):
-    """
-    A transparent rectangular border to place over the images.
-    """
+    """A transparent rectangular border to place over the images."""
 
     def __init__(self, outer_rect, inner_rect):
         super().__init__()
@@ -292,15 +289,13 @@ class MaskingOverlay(QGraphicsItemGroup):
 
 
 class UnderlyingImages(QGraphicsItemGroup):
-    """
-    Group for the images of the underlying pages being marked.
+    """Group for the images of the underlying pages being marked.
 
     Puts a dotted border around all the images.
     """
 
     def __init__(self, image_data):
-        """
-        Initialize a new series of underlying images.
+        """Initialize a new series of underlying images.
 
         Args:
             image_data (list[dict]): each dict has keys 'filename'
@@ -407,14 +402,15 @@ minimum_box_side_length = 24
 
 
 class PageScene(QGraphicsScene):
-    """Extend the graphics scene so that it knows how to translate
+    """An extended QGraphicsScene for interacting with annotations on top of underlying images.
+
+    Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
     QTextItems.
     """
 
     def __init__(self, parent, src_img_data, maxMark, question_label):
-        """
-        Initialize a new PageScene.
+        """Initialize a new PageScene.
 
         Args:
             parent (Annotator): the parent of the scene.  Currently
@@ -648,7 +644,7 @@ class PageScene(QGraphicsScene):
     def getScore(self):
         return self.score
 
-    def is_neutral_state(self):
+    def is_neutral_state(self) -> bool:
         """Has the mark has been changed from the unmarked state?
 
         No annotations is a neutral state.  Annotations that do not change the
@@ -658,7 +654,7 @@ class PageScene(QGraphicsScene):
         neutral to non-neutral.
 
         Returns:
-            bool
+            True if the mark has been changed to a concrete value.
         """
         return self.getScore() is None
 
@@ -698,7 +694,8 @@ class PageScene(QGraphicsScene):
         return rubrics
 
     def refreshScore(self):
-        """Compute the current score by adding up the rubric items on the page
+        """Compute the current score by adding up the rubric items on the page.
+
         Note that this assumes that the rubrics are consistent as per currentMarkingState
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
@@ -707,7 +704,7 @@ class PageScene(QGraphicsScene):
         return self.src_img_data
 
     def how_many_underlying_images_wide(self):
-        """How many images wide is the bottom layer?
+        """Count how many images wide the bottom layer is.
 
         Currently this is just the number of images (because we layout
         in one long row) but future revisions might support alternate
@@ -716,7 +713,7 @@ class PageScene(QGraphicsScene):
         return len(self.src_img_data)
 
     def how_many_underlying_images_high(self):
-        """How many images high is the bottom layer?
+        """How many images high is the bottom layer.
 
         Currently this is always 1 because we align the images in a
         single row but future revisions might support alternate layouts.
@@ -768,7 +765,7 @@ class PageScene(QGraphicsScene):
     def set_annotation_color(self, c):
         """Set the colour of annotations.
 
-        args:
+        Args:
             c (QColor/tuple): a QColor or an RGB triplet describing
                 athe new colour.
         """
@@ -1641,31 +1638,26 @@ class PageScene(QGraphicsScene):
         # self.update()
 
     def mouseReleasePan(self, event):
-        """
-        Handles mouse releases for pan tool by setting cursor to an open hand.
+        """Handles mouse releases for pan tool by setting cursor to an open hand.
 
         Args:
             event (QMouseEvent): given mouse release.
 
         Returns:
             None.
-
         """
         self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
-        """
-        Adds the selected image at the location the mouse is pressed and
-        shows a message box with instructions.
+        """Adds the selected image at the location the mouse is pressed and shows a message box with instructions.
 
         Args:
             event (QMouseEvent): given mouse click.
 
         Returns:
             None
-
         """
         if self.tempImagePath is not None:
             imageFilePath = self.tempImagePath
