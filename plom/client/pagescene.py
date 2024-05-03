@@ -1763,13 +1763,13 @@ class PageScene(QGraphicsScene):
         for k in range(c):
             print(k, self.undoStack.text(k))
 
-    def is_user_placed(self, item):
+    def is_user_placed(self, item) -> bool:
         """Tell me if the user placed it or if its some autogen junk.
 
         Let's try to isolate this unpleasantness in one place.
 
         Returns:
-            bool: True if this is a user-generated object, False if not.
+            True if this is a user-generated object, False if not.
         """
         from plom.client.tools import (
             CrossItem,
@@ -2561,9 +2561,7 @@ class PageScene(QGraphicsScene):
             img = self.underImage.images[n]
             page_annotated = False
             for x in self.items():
-                if not getattr(x, "saveable", None):
-                    continue
-                if x.collidesWithItem(img):
+                if self.is_user_placed(x) and x.collidesWithItem(img):
                     page_annotated = True
                     # no need to further check this img
                     break
