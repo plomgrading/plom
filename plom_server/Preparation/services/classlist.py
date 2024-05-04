@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Colin B. Macdonald
@@ -125,8 +125,13 @@ class StagingStudentService:
                 assert old_headers is not None
                 csv_reader.fieldnames = [x.lower() for x in old_headers]
                 # now we have lower case field names
+                # Note that the paper_number field is optional, so we
+                # need to get that value or stick in a None.
+                # related to #2274 and MR <<TODO>>
                 for row in csv_reader:
-                    self.add_student(row["id"], row["name"], row["paper_number"])
+                    self.add_student(
+                        row["id"], row["name"], row.get("paper_number", None)
+                    )
 
         # don't forget to unlink the temp file
         tmp_csv.unlink()
