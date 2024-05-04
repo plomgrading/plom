@@ -17,7 +17,7 @@ from Papers.services import SpecificationService
 
 from Base.base_group_views import ManagerRequiredView
 
-from Identify.services import IDReaderService, IDProgressService, IDBoxProcessorService
+from Identify.services import IDReaderService, IDProgressService
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
 
 
