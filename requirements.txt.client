@@ -21,8 +21,8 @@ packaging==24.0
 pandas==2.0.3
 passlib==1.7.4
 Pillow==10.3.0
-platformdirs==4.2.0
-pymupdf==1.24.1
+platformdirs==4.2.1
+pymupdf==1.24.2
 PyMySQL==1.1.0
 requests==2.31.0
 requests-toolbelt==1.0.0
@@ -30,5 +30,5 @@ segno==1.6.1
 stdiomask==0.0.6
 tomli==2.0.1
 tomlkit==0.12.4
-tqdm==4.66.2
+tqdm==4.66.4
 urllib3==2.2.1
