@@ -20,9 +20,11 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django_huey import db_task
 
-from ..models import PaperIDTask, IDPrediction
+from ..models import PaperIDTask, IDPrediction, IDReadingHueyTask
 from ..services import IdentifyTaskService
+from Base.models import HueyTaskTracker
 from Papers.models import Paper
 from Papers.services import SpecificationService, PaperInfoService
 from Rectangles.services import RectangleExtractor
@@ -189,6 +191,81 @@ class IDReaderService:
     ) -> None:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
+
+    def run_the_id_reader_in_foreground(
+        self,
+        user: User,
+        box: tuple[float, float, float, float],
+        recompute_heatmap: bool | None = True,
+    ):
+        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+        IDBoxProcessorService().make_id_predictions(
+            user, id_box_image_dict, recompute_heatmap=recompute_heatmap
+        )
+
+    def run_the_id_reader_in_background_via_huey(
+        self,
+        user: User,
+        box: tuple[float, float, float, float],
+        recompute_heatmap: bool | None = True,
+    ):
+        # TODO - need to make sure only 1 such task exists.
+        # ADD guards here to stop us creating a new such task
+        # if one exists and is running.
+        with transaction.atomic(durable=True):
+            x = IDReadingHueyTask.objects.create(
+                left=box[0],
+                top=box[1],
+                right=box[2],
+                bottom=box[3],
+                status=IDReadingHueyTask.STARTING,
+            )
+            tracker_pk = x.pk
+
+        res = huey_id_reading_task(
+            user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
+        )
+        print(f"Just enqueued Huey id_reading_task id={res.id}")
+        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
+
+
+@db_task(queue="tasks", context=True)
+def huey_id_reading_task(
+    user: User,
+    box: tuple[float, float, float, float],
+    recompute_heatmap: bool,
+    *,
+    tracker_pk: int,
+    task=None,
+) -> bool:
+    """Run the id reading process in the background via huey.
+
+    It is important to understand that running this function starts an
+    async task in queue that will run sometime in the future.
+
+    Args:
+        user: the user who triggered this process and so who will be associated with the predictions.
+        box: the coordinates of the ID box to extract.
+        recompute_heatmap: whether or not to recompute the digit probability heatmap.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
+    print(tracker_pk, " meh", task, "bah")
+    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
+
+    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+    IDBoxProcessorService().make_id_predictions(
+        user, id_box_image_dict, recompute_heatmap=recompute_heatmap
+    )
+    HueyTaskTracker.transition_to_complete(tracker_pk)
+    return True
 
 
 class IDBoxProcessorService:
@@ -469,19 +546,19 @@ class IDBoxProcessorService:
             probabilities = {int(k): v for k, v in probabilities.items()}
 
         student_ids = StagingStudentService().get_classlist_sids_for_ID_matching()
-        self.run_greedy(user.username, student_ids, probabilities)
-        self.run_lap_solver(user.username, student_ids, probabilities)
+        self.run_greedy(user, student_ids, probabilities)
+        self.run_lap_solver(user, student_ids, probabilities)
 
-    def run_greedy(self, username, student_ids, probabilities):
+    def run_greedy(self, user: User, student_ids, probabilities):
         id_reader_service = IDReaderService()
         # Different predictors go here.
         greedy_predictions = self._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
-            id_reader_service.add_or_change_ID_prediction_cmd(
-                username, prediction[0], prediction[1], prediction[2], "MLGreedy"
+            id_reader_service.add_or_change_ID_prediction(
+                user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
-    def run_lap_solver(self, username, student_ids, probabilities):
+    def run_lap_solver(self, user: User, student_ids, probabilities):
 
         # start by removing any IDs that have already been used.
         id_reader_service = IDReaderService()
@@ -500,8 +577,8 @@ class IDBoxProcessorService:
             )
         lap_predictions = self._lap_predictor(papers_to_id, student_ids, probabilities)
         for prediction in lap_predictions:
-            id_reader_service.add_or_change_ID_prediction_cmd(
-                username, prediction[0], prediction[1], prediction[2], "MLLAP"
+            id_reader_service.add_or_change_ID_prediction(
+                user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 
     def _greedy_predictor(self, student_IDs, probabilities):

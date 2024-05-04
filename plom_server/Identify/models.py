@@ -7,7 +7,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from Base.models import BaseTask, BaseAction
+from Base.models import BaseTask, BaseAction, HueyTaskTracker
 from Papers.models import Paper
 
 
@@ -68,3 +68,16 @@ class IDPrediction(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     predictor = models.CharField(null=False, max_length=255)
     certainty = models.FloatField(null=False, default=0.0)
+
+
+class IDReadingHueyTask(HueyTaskTracker):
+    """Run the ID-box extraction and ID prediction in the background.
+
+    left: left edge of extracted rectangle. top,right,bottom similar.
+    completed_pages: how many ID pages have been processed.
+    """
+
+    left = models.FloatField(null=False, default=0.0)
+    top = models.FloatField(null=False, default=0.0)
+    right = models.FloatField(null=False, default=1.0)
+    bottom = models.FloatField(null=False, default=1.0)

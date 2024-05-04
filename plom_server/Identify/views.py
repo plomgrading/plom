@@ -123,12 +123,8 @@ class GetIDBoxRectangleView(ManagerRequiredView):
             )
             return render(request, "Identify/find_id_rect.html", context)
         elif "submit" in request.POST:
-
-            id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(
-                [left_f, top_f, right_f, bottom_f]
-            )
-            IDBoxProcessorService().make_id_predictions(
-                request.user, id_box_image_dict, recompute_heatmap=True
+            IDReaderService().run_the_id_reader_in_background_via_huey(
+                request.user, [left_f, top_f, right_f, bottom_f], recompute_heatmap=True
             )
 
             return redirect("id_prediction_home")
