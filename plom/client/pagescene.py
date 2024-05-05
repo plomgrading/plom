@@ -671,11 +671,7 @@ class PageScene(QGraphicsScene):
 
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
-            self.updateGhost(
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-                self.isLegalRubric(self.current_rubric),
-            )
+            self._updateGhost(self.current_rubric)
 
     def get_rubrics(self):
         """A list of the rubrics current used in the scene.
@@ -2589,17 +2585,18 @@ class PageScene(QGraphicsScene):
                     out_objs.append(X)
         return out_objs
 
-    def updateGhost(self, dlt, txt, legal=True):
+    def _updateGhost(self, rubric: dict[str, Any]) -> None:
         """Updates the ghost object based on the delta and text.
 
         Args:
-            dlt (int): given mark-delta.
-            txt (str): the given text.
+            rubric, we need its delta, its text and whether its legal.
 
         Returns:
             None
         """
-        self.ghostItem.changeComment(dlt, txt, legal)
+        self.ghostItem.changeComment(
+            rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
+        )
 
     def _exposeGhost(self) -> None:
         """Exposes the ghost object."""
@@ -2692,9 +2689,7 @@ class PageScene(QGraphicsScene):
             None
         """
         self.current_rubric = rubric
-        self.updateGhost(
-            rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
-        )
+        self._updateGhost(rubric)
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
