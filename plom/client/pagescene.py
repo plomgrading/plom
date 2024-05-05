@@ -767,7 +767,7 @@ class PageScene(QGraphicsScene):
 
         Args:
             c (QColor/tuple): a QColor or an RGB triplet describing
-                athe new colour.
+                the new colour.
         """
         try:
             c = QColor(c)
