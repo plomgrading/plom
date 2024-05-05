@@ -940,6 +940,7 @@ class Annotator(QWidget):
         if self.scene:
             self.scene.setToolMode(newMode)
             self.view.setCursor(cursor)
+        self.setModeLabels(newMode)
         # refresh everything.
         self.repaint()
 

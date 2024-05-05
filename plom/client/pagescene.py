@@ -793,12 +793,11 @@ class PageScene(QGraphicsScene):
         if self.scoreBox:
             self.scoreBox.update_style()
 
-    def setToolMode(self, mode):
-        """
-        Sets the current toolMode.
+    def setToolMode(self, mode: str) -> None:
+        """Sets the current toolMode.
 
         Args:
-            mode (str): One of "rubric", "pan", "move" etc..
+            mode: One of "rubric", "pan", "move" etc..
 
         Returns:
             None
@@ -807,12 +806,12 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
         self.mode = mode
-        # if current mode is not rubric, make sure the ghostcomment is hidden
 
         # To fix issues with changing mode mid-draw - eg #1540
         # trigger this
         self.stopMidDraw()
 
+        # if current mode is not rubric, make sure the ghostcomment is hidden
         if self.mode != "rubric":
             self.hideGhost()
 
@@ -821,8 +820,6 @@ class PageScene(QGraphicsScene):
             self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         else:
             self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
-        # update the modelabels
-        self.parent().setModeLabels(self.mode)
 
     def get_nonrubric_text_from_page(self):
         """
