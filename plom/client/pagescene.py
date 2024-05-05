@@ -9,8 +9,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 from itertools import cycle
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Any
 
 import PIL.Image
 
@@ -481,7 +482,7 @@ class PageScene(QGraphicsScene):
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
-        self.hideGhost()
+        self._hideGhost()
         self.addItem(self.ghostItem)
 
         # cache some data about the currently selected rubric
@@ -813,7 +814,14 @@ class PageScene(QGraphicsScene):
 
         # if current mode is not rubric, make sure the ghostcomment is hidden
         if self.mode != "rubric":
-            self.hideGhost()
+            self._hideGhost()
+        else:
+            # Careful, don't want it to appear at an old location
+            gpt = QCursor.pos()  # global mouse pos
+            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+            self.ghostItem.setPos(spt)
+            self._exposeGhost()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -955,7 +963,7 @@ class PageScene(QGraphicsScene):
         # TODO: or setVisible(False) instead of remove?
         self.remove_page_hack_buttons()
 
-        self.hideGhost()
+        self._hideGhost()
 
         # Get the width and height of the image
         br = self.getSaveableRectangle()
@@ -2582,8 +2590,7 @@ class PageScene(QGraphicsScene):
         return out_objs
 
     def updateGhost(self, dlt, txt, legal=True):
-        """
-        Updates the ghost object based on the delta and text.
+        """Updates the ghost object based on the delta and text.
 
         Args:
             dlt (int): given mark-delta.
@@ -2594,11 +2601,11 @@ class PageScene(QGraphicsScene):
         """
         self.ghostItem.changeComment(dlt, txt, legal)
 
-    def exposeGhost(self):
+    def _exposeGhost(self) -> None:
         """Exposes the ghost object."""
         self.ghostItem.setVisible(True)
 
-    def hideGhost(self):
+    def _hideGhost(self) -> None:
         """Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
@@ -2665,9 +2672,12 @@ class PageScene(QGraphicsScene):
             return False
         return True
 
-    def changeTheRubric(self, rubric):
-        """
-        Changes the new rubric for the paper based on the delta and text.
+    def setCurrentRubric(self, rubric: dict[str, Any]) -> None:
+        """Changes the new rubric for the paper based on the delta and text.
+
+        This doesn't effect what is shown in the scene: its just a setter.
+        To force an update, see ``setToolMode``, which you likely want to call
+        after this method.
 
         Args:
             rubric (dict): must have at least the keys and values::
@@ -2682,13 +2692,6 @@ class PageScene(QGraphicsScene):
             None
         """
         self.current_rubric = rubric
-
-        gpt = QCursor.pos()  # global mouse pos
-        vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-        spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-        self.ghostItem.setPos(spt)
-        self.setToolMode("rubric")
-        self.exposeGhost()
         self.updateGhost(
             rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
         )

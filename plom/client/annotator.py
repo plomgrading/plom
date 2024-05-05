@@ -940,9 +940,9 @@ class Annotator(QWidget):
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
-            self.scene.setToolMode(newMode)
             if rubric:
-                self.scene.changeTheRubric(rubric)
+                self.scene.setCurrentRubric(rubric)
+            self.scene.setToolMode(newMode)
             self.view.setCursor(cursor)
         self.setModeLabels(newMode)
         # refresh everything.

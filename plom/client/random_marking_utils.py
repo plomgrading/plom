@@ -144,7 +144,8 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        self.scene.changeTheRubric(rubric)
+        self.scene.setCurrentRubric(rubric)
+        self.scene.setToolMode("rubric")
 
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
@@ -164,7 +165,8 @@ class SceneParent(QWidget):
             else:
                 rubric = random.choice(negativeRubrics[self.question])
 
-            self.scene.changeTheRubric(rubric)
+            self.scene.setCurrentRubric(rubric)
+            self.scene.setToolMode("rubric")
 
             if self.scene.isLegalRubric(rubric):
                 if rubric["value"] > 0 or rubric["value"] < 0:
