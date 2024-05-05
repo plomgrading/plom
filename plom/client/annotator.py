@@ -903,7 +903,7 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, *, cursor=None, imagePath=None):
+    def setToolMode(self, newMode, *, cursor=None, imagePath=None, rubric=None):
         """Changes the current tool mode and cursor.
 
         Args:
@@ -912,6 +912,8 @@ class Annotator(QWidget):
         Keyword Args:
             imagePath (?): an argument for the "image" tool, used
                 used only by the image tool.
+            rubric (dict[str, Any] | None): if we're changing to rubric,
+                use this include the rubric.
             cursor (str): if None or omitted default cursors are used
                for each tool.  If needed you could override this.
                (currently unused, semi-deprecated).
@@ -939,6 +941,8 @@ class Annotator(QWidget):
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setToolMode(newMode)
+            if rubric:
+                self.scene.changeTheRubric(rubric)
             self.view.setCursor(cursor)
         self.setModeLabels(newMode)
         # refresh everything.
@@ -1304,10 +1308,7 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene
         """
-        self.setToolMode("rubric")
-        # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
-        if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(rubric)
+        self.setToolMode("rubric", rubric=rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""
