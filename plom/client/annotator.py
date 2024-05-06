@@ -496,15 +496,12 @@ class Annotator(QWidget):
         self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
-        # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.setToolMode(self.modeInformation[0])
-        # TODO: refactor, see also self.handleRubric() and self.rubricMode()
         if self.modeInformation[0] == "rubric":
             extra = self.modeInformation[1]
-            if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
-                self.rubric_widget.handleClick()
-            else:  # if that rubric-mode-set fails (eg - no such rubric)
+            if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
+                # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.updateLegalityOfRubrics()

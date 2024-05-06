@@ -1443,7 +1443,7 @@ class RubricWidget(QWidget):
         ]
 
     def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
-        """Set the current rubric key and the current tab.
+        """Set the current rubric key and the current tab, as if it was clicked on.
 
         Args
             key: which rubric to highlight.  If None, no action.
@@ -1459,7 +1459,9 @@ class RubricWidget(QWidget):
         if tab not in range(0, self.RTW.count()):
             return False
         self.RTW.setCurrentIndex(tab)
-        return self.RTW.currentWidget().selectRubricByKey(key)
+        is_success = self.RTW.currentWidget().selectRubricByKey(key)
+        self.handleClick()  # force blue ghost update
+        return is_success
 
     def setQuestion(self, num, label):
         """Set relevant question number and label.
