@@ -345,7 +345,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def removeRubricByKey(self, key) -> None:
@@ -353,7 +353,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def hideCurrentRubric(self) -> None:
@@ -366,7 +366,7 @@ class RubricTable(QTableWidget):
         assert item
         key = item.text()
         self._parent.hideRubricByKey(key)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def unhideCurrentRubric(self) -> None:
@@ -379,7 +379,7 @@ class RubricTable(QTableWidget):
         assert item
         key = item.text()
         self._parent.unhideRubricByKey(key)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def dropEvent(self, event):
@@ -521,7 +521,7 @@ class RubricTable(QTableWidget):
                 continue
             self.appendNewRubric(rb)
         if not self.selectRubricByKey(prev_selected_rubric_id):
-            self.selectRubricByVisibleRow(0)
+            self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics, positive=True):
@@ -548,7 +548,7 @@ class RubricTable(QTableWidget):
             if rb["system_rubric"] and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
         if not self.selectRubricByKey(prev_selected_rubric_id):
-            self.selectRubricByVisibleRow(0)
+            self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row: int) -> str:
@@ -617,6 +617,10 @@ class RubricTable(QTableWidget):
                 self.selectRow(s)
                 return
 
+    def selectFirstVisibleRubric(self) -> None:
+        """Select the first visible row."""
+        self.selectRubricByVisibleRow(0)
+
     def selectRubricByKey(self, key: int | str | None) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
@@ -636,7 +640,7 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                self.selectRubricByVisibleRow(0)
+                self.selectFirstVisibleRubric()
                 self.handleClick()  # actually force a click
             return
         rs = r  # get start row
@@ -1507,7 +1511,7 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
         self.handleClick()
 
-    def selectRubricByVisibleRow(self, rowNumber):
+    def selectRubricByVisibleRow(self, rowNumber: int) -> None:
         self.RTW.currentWidget().selectRubricByVisibleRow(rowNumber)
         self.handleClick()
 
