@@ -2589,7 +2589,7 @@ class PageScene(QGraphicsScene):
         """Updates the ghost object based on the delta and text.
 
         Args:
-            rubric, we need its delta, its text and whether its legal.
+            rubric: we need its delta, its text and whether its legal.
 
         Returns:
             None
