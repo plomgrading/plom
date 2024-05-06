@@ -498,14 +498,16 @@ class Annotator(QWidget):
 
         log.debug("Restore mode info = {}".format(self.modeInformation))
         which_mode = self.modeInformation[0]
-        extra = self.modeInformation[1:]
+        cdr = self.modeInformation[1:]
         if which_mode == "rubric":
-            # unpack what should be a single tuple:
-            (extra,) = extra
+            # the remaining part of list should be a tuple in this case
+            (extra,) = cdr
             if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
                 # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
         else:
+            # ensure we get an error on unexpected extra info
+            assert not cdr
             self.setToolMode(which_mode)
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.updateLegalityOfRubrics()
