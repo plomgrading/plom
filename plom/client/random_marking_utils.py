@@ -200,10 +200,6 @@ class SceneParent(QWidget):
         # needed for compat with pagescene.py
         pass
 
-    def setModeLabels(self, mode) -> None:
-        # needed for compat with pagescene.py
-        pass
-
 
 def annotatePaper(
     question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication

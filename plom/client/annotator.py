@@ -944,11 +944,11 @@ class Annotator(QWidget):
                 self.scene.setCurrentRubric(rubric)
             self.scene.setToolMode(newMode)
             self.view.setCursor(cursor)
-        self.setModeLabels(newMode)
+        self._setModeLabels(newMode)
         # refresh everything.
         self.repaint()
 
-    def setModeLabels(self, mode):
+    def _setModeLabels(self, mode):
         if mode == "rubric":
             self.ui.narrowModeLabel.setText(
                 " rubric \n {} ".format(self.rubric_widget.getCurrentTabName())
