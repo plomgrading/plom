@@ -591,7 +591,7 @@ class RubricTable(QTableWidget):
             if self.rowCount() == 0:
                 return
             r = 0
-        self.selectRubricByVisibleRow(r)
+        self.selectRubricByRow(r)
 
     def selectRubricByRow(self, r: int | None) -> None:
         """Select the r'th rubric in the list.
