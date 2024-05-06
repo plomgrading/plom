@@ -640,6 +640,21 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
 
+    def next_rubric_or_reselect_rubric_tool(self):
+        """Changes the tool to rubric or pick the next rubric.
+
+        This allows the same key to switch back to rubrics (from say tick
+        or delete tool) as is used to select the next rubric.
+        """
+        if not self.scene:
+            self.rubric_widget.nextRubric()
+            return
+        if self.scene.mode == "rubric":
+            self.rubric_widget.nextRubric()
+        else:
+            self.rubric_widget.reselectCurrentRubric()
+
+    # currently no key bound to this; above used instead
     def next_rubric(self):
         self.rubric_widget.nextRubric()
 
@@ -1057,7 +1072,7 @@ class Annotator(QWidget):
         actions_and_methods = (
             ("undo", self.toUndo),
             ("redo", self.toRedo),
-            ("next-rubric", self.rubricMode),
+            ("next-rubric", self.next_rubric_or_reselect_rubric_tool),
             ("prev-rubric", self.prev_rubric),
             ("next-tab", self.next_tab),
             ("prev-tab", self.prev_tab),
@@ -1182,16 +1197,6 @@ class Annotator(QWidget):
         if not self.scene:
             return
         self.scene.redo()
-
-    def rubricMode(self):
-        """Changes the tool to rubric."""
-        if not self.scene:
-            self.rubric_widget.nextRubric()
-            return
-        if self.scene.mode == "rubric":
-            self.rubric_widget.nextRubric()
-        else:
-            self.rubric_widget.reselectCurrentRubric()
 
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
