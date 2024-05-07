@@ -2286,9 +2286,12 @@ class PageScene(QGraphicsScene):
         """
         if self.zoomFlag == 0:
             return
+
         # check to see if box is quite small (since very hard
         # to click button without moving a little)
         # if small then set flag to 1 and treat like a click
+        # TODO: These thresholds are in physical units ("page pixels"?) so are effected by zoom
+        # TODO: it would be much better to express them in (screen) pixels b/c they are a UI threshold
         if self.zoomBoxItem.rect().height() < 8 and self.zoomBoxItem.rect().width() < 8:
             self.zoomFlag = 1
 
