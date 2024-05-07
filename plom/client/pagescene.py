@@ -474,6 +474,7 @@ class PageScene(QGraphicsScene):
         # Builds path for different tool items.
         self.path = QPainterPath()
         self.pathItem = QGraphicsPathItem()
+        # TODO: should we be reusing these instead of instantiating new ones later?
         self.boxItem = QGraphicsRectItem()
         self.delBoxItem = QGraphicsRectItem()
         self.zoomBoxItem = QGraphicsRectItem()
