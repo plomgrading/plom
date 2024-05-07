@@ -1196,7 +1196,9 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 1
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem = QGraphicsRectItem(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
@@ -1232,10 +1234,12 @@ class PageScene(QGraphicsScene):
             if self.boxItem is None:
                 # oops - it isn't there yet, so start it
                 self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
+                    QRectF(self.originPos, self.currentPos).normalized()
                 )
             else:  # update the box
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.boxItem.setRect(
+                    QRectF(self.originPos, self.currentPos).normalized()
+                )
             return
         elif (
             self.boxLineStampState == 2
@@ -1275,8 +1279,8 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.boxItem)
             # make sure box is large enough
             if (
-                abs(self.boxItem.rect().width()) < minimum_box_side_length
-                or abs(self.boxItem.rect().height()) < minimum_box_side_length
+                self.boxItem.rect().width() < minimum_box_side_length
+                or self.boxItem.rect().height() < minimum_box_side_length
             ):
                 # is small box, so ignore it and draw no connecting path, just stamp final object
                 self.boxLineStampState = 3
@@ -1922,7 +1926,9 @@ class PageScene(QGraphicsScene):
             # Create a temp box item for animating the drawing as the
             # user moves the mouse.
             # Do not push command onto undoStack until drawing finished.
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem = QGraphicsRectItem(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
@@ -1956,10 +1962,12 @@ class PageScene(QGraphicsScene):
         elif self.boxFlag == 1:
             if self.boxItem is None:
                 self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
+                    QRectF(self.originPos, self.currentPos).normalized()
                 )
             else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.boxItem.setRect(
+                    QRectF(self.originPos, self.currentPos).normalized()
+                )
         else:
             return
 
@@ -2231,7 +2239,9 @@ class PageScene(QGraphicsScene):
 
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.zoomBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
         self.zoomBoxItem.setPen(QColor("blue"))
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
@@ -2255,13 +2265,15 @@ class PageScene(QGraphicsScene):
                 log.error("EEK: the zoombox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.zoomBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
+                    QRectF(self.originPos, self.currentPos).normalized()
                 )
                 self.zoomBoxItem.setPen(self.ink)
                 self.zoomBoxItem.setBrush(self.zoomBrush)
                 self.addItem(self.zoomBoxItem)
             else:
-                self.zoomBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.zoomBoxItem.setRect(
+                    QRectF(self.originPos, self.currentPos).normalized()
+                )
 
     def mouseReleaseZoom(self, event):
         """Handle when the mouse is released after drawing a new zoom box.
@@ -2317,7 +2329,9 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
@@ -2341,13 +2355,15 @@ class PageScene(QGraphicsScene):
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
+                    QRectF(self.originPos, self.currentPos).normalized()
                 )
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
-                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.delBoxItem.setRect(
+                    QRectF(self.originPos, self.currentPos).normalized()
+                )
 
     def deleteIfLegal(self, item):
         """Deletes the annotation item if that is a legal action.
@@ -2778,7 +2794,9 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
@@ -2802,13 +2820,15 @@ class PageScene(QGraphicsScene):
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
+                    QRectF(self.originPos, self.currentPos).normalized()
                 )
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
-                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.delBoxItem.setRect(
+                    QRectF(self.originPos, self.currentPos).normalized()
+                )
 
     def mouseReleaseCrop(self, event):
         """Handle when the mouse is released after drawing a new delete box.
