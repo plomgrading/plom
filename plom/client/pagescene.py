@@ -141,11 +141,11 @@ class ScoreBox(QGraphicsTextItem):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
 
-    def changeScore(self, x: int) -> None:
+    def changeScore(self, x: int | None) -> None:
         """Set the score to x.
 
         Args:
-            x (int): A non-zero, positive new score.
+            x: a value or zero for no score yet assigned.
 
         Returns:
             None
