@@ -1578,6 +1578,7 @@ macos_server_webplom:
   - shared-windows
   - windows
   - windows-1809
+  - saas-windows-medium-amd64
 
 
 # winmintest:
