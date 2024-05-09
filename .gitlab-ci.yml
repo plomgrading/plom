@@ -1573,17 +1573,9 @@ macos_server_webplom:
   - popd
 
 
-.shared_windows_runners:
-  tags:
-  - shared-windows
-  - windows
-  - windows-1809
-  - saas-windows-medium-amd64
-
-
 # winmintest:
-#   extends:
-#   - .shared_windows_runners
+#   tags:
+#   - saas-windows-medium-amd64
 #   stage: test
 #   needs: []
 #   script:
@@ -1598,8 +1590,8 @@ macos_server_webplom:
 # Build Windows client binaries
 # This section written in PowerShell
 winpyinst:
-  extends:
-  - .shared_windows_runners
+  tags:
+  - saas-windows-medium-amd64
   stage: packaging
   before_script:
   - choco install -y python311
