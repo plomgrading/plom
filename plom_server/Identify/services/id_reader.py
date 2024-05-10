@@ -23,14 +23,13 @@ from django.db import transaction
 from django_huey import db_task
 
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTask
-from ..services import IdentifyTaskService
+from ..services import IdentifyTaskService, ClasslistService
 from Base.models import HueyTaskTracker
 from Papers.models import Paper
 from Papers.services import SpecificationService, PaperInfoService
 from Rectangles.services import RectangleExtractor
-from Preparation.services import StagingStudentService
 
-from plom.idreader.model_utils import load_model, download_model
+from plom.idreader.model_utils import load_model, download_model, is_model_present
 
 
 class IDReaderService:
@@ -196,7 +195,8 @@ class IDReaderService:
         self,
         user: User,
         box: tuple[float, float, float, float],
-        recompute_heatmap: bool | None = True,
+        *,
+        recompute_heatmap: bool = True,
     ):
         id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
         IDBoxProcessorService().make_id_predictions(
@@ -329,7 +329,7 @@ class IDBoxProcessorService:
 
     def resize_ID_box_and_extract_digit_strip(
         self, id_box_file: Path
-    ) -> np.ndarray | None:
+    ) -> cv.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
         # template is changed.
@@ -351,16 +351,21 @@ class IDBoxProcessorService:
         # which only contains the digits
         return scaled_id_box[25:130, 355:1230]
 
-    def get_digit_images(self, ID_box: np.array, num_digits: int) -> List[np.array]:
+    # note that numpy and mypy typing don't always play nicely together
+    # thankfully cv2 has some typing that will take care of us passing
+    # these images as np arrays.
+    # see https://stackoverflow.com/questions/73260250/how-do-i-type-hint-opencv-images-in-python
+    def get_digit_images(
+        self, ID_box: cv.typing.MatLike, num_digits: int
+    ) -> List[cv.typing.MatLike]:
         """Find the digit images and return them in a list.
 
         Args:
-            ID_box (numpy.ndarray): Image containing the student ID.
-            num_digits (int): Number of digits in the student ID.
+            ID_box: Image containing the student ID.
+            num_digits: Number of digits in the student ID.
 
         Returns:
-            list: A list of numpy.ndarray which are the images for each digit.
-            In case of errors, returns an empty list
+            list: A list of images for each digit. In case of errors, returns an empty list
         """
         # WARNING - contains many magic numbers. Will need updating if the
         # IDBox template is changed.
@@ -389,7 +394,7 @@ class IDBoxProcessorService:
             contours, _ = cv.findContours(
                 thresholded_digit, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
             )
-            # if couldnt find contours then return an empty list.
+            # if couldn't find contours then return an empty list.
             if len(contours) == 0:
                 return []
 
@@ -440,7 +445,7 @@ class IDBoxProcessorService:
         num_digits: int,
         *,
         debug: bool = True,
-    ) -> List[float]:
+    ) -> List[List[float]]:
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
@@ -459,7 +464,11 @@ class IDBoxProcessorService:
         """
         debugdir = None
         id_page_file = Path(id_box_file)
-        ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
+        ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+            id_page_file
+        )
+        if ID_box is None:
+            return []
         if debug:
             debugdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
             debugdir.mkdir(exist_ok=True)
@@ -485,7 +494,7 @@ class IDBoxProcessorService:
 
     def compute_probability_heatmap_for_idbox_images(
         self, image_file_paths: Dict[int, Path], num_digits: int
-    ) -> Dict[List[List[float]]]:
+    ) -> Dict[int, List[List[float]]]:
         """Return probabilities for digits for each paper in the given dictionary of images files.
 
         Args:
@@ -516,20 +525,21 @@ class IDBoxProcessorService:
                 probabilities[paper_number] = prob_lists
         return probabilities
 
-    def compute_and_save_probability_heatmap(self, id_box_files: Dict[int:Path]):
+    def compute_and_save_probability_heatmap(self, id_box_files: Dict[int, Path]):
         """Use classifier to compute and save a probability heatmap for the ids.
 
         This downloads a pre-trained random forest classier to compute the probability
         that the given number in the ID on the given paper is a particular digit.
         The resulting heatmap is saved for use by predictor algorithms.
         """
-        download_model()
+        if not is_model_present():
+            download_model()
         student_number_length = 8
         heatmap = self.compute_probability_heatmap_for_idbox_images(
             id_box_files, student_number_length
         )
 
-        probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
+        probs_as_list = {k: [x for x in v] for k, v in heatmap.items()}
         with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
             json.dump(probs_as_list, fh, indent="  ")
         return heatmap
@@ -537,7 +547,7 @@ class IDBoxProcessorService:
     def make_id_predictions(
         self,
         user: User,
-        id_box_files: Dict[int:Path],
+        id_box_files: Dict[int, Path],
         *,
         recompute_heatmap: bool = True,
     ):
@@ -549,7 +559,7 @@ class IDBoxProcessorService:
                 probabilities = json.load(fh)
             probabilities = {int(k): v for k, v in probabilities.items()}
 
-        student_ids = StagingStudentService().get_classlist_sids_for_ID_matching()
+        student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
         self.run_greedy(user, student_ids, probabilities)
         self.run_lap_solver(user, student_ids, probabilities)
 

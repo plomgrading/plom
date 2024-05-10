@@ -249,7 +249,7 @@ class RectangleExtractor:
             )
         # read the ref-image into a cv image.
         img_bytes = rimg_obj.image_file.read()
-        np_arr = np.fromstring(img_bytes, np.uint8)
+        np_arr = np.frombuffer(img_bytes, np.uint8)
         src_image = cv.imdecode(np_arr, cv.IMREAD_COLOR)
         # if a region is specified then cut it out from the original image,
         # but we need to remember to map the resulting rectangle back to the

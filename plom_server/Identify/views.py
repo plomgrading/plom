@@ -124,7 +124,7 @@ class GetIDBoxRectangleView(ManagerRequiredView):
             return render(request, "Identify/find_id_rect.html", context)
         elif "submit" in request.POST:
             IDReaderService().run_the_id_reader_in_background_via_huey(
-                request.user, [left_f, top_f, right_f, bottom_f], recompute_heatmap=True
+                request.user, (left_f, top_f, right_f, bottom_f), recompute_heatmap=True
             )
 
             return redirect("id_prediction_home")
