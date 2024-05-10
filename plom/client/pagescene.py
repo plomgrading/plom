@@ -2548,6 +2548,7 @@ class PageScene(QGraphicsScene):
         potentially misleading: we are annotating a scene made of a list
         of images: which of those images are not yet annotated?
         """
+        # TODO: Issue #3367: do nicer code without explicit N^2
         lst = []
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
