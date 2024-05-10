@@ -584,13 +584,15 @@ class RubricTable(QTableWidget):
         return item.text()
 
     def reselectCurrentRubric(self) -> None:
-        # If no selected row, then select row 0.
-        # else select current row - triggers a signal.
+        """Reselect the current rubric row, triggering redraws (for example).
+
+        If no selected row, then select the first visible row, or perhaps
+        no row if there are no rows.
+        """
         r = self.getCurrentRubricRow()
         if r is None:
-            if self.rowCount() == 0:
-                return
-            r = 0
+            self.selectFirstVisibleRubric()
+            return
         self.selectRubricByRow(r)
 
     def selectRubricByRow(self, r: int | None) -> None:
@@ -608,6 +610,9 @@ class RubricTable(QTableWidget):
 
         Args:
             r: The row-number in the rubric-table.
+
+        If r is out-of-range, then do nothing.  If there are no rows,
+        do nothing.
         """
         rc = -1  # start here, so that correctly test after-increment
         for s in range(self.rowCount()):
@@ -618,7 +623,10 @@ class RubricTable(QTableWidget):
                 return
 
     def selectFirstVisibleRubric(self) -> None:
-        """Select the first visible row."""
+        """Select the first visible row.
+
+        If there are no rows, or no visible rows, then do nothing.
+        """
         self.selectRubricByVisibleRow(0)
 
     def selectRubricByKey(self, key: int | str | None) -> bool:
