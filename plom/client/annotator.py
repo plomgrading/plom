@@ -496,16 +496,19 @@ class Annotator(QWidget):
         self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
-        # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.setToolMode(self.modeInformation[0])
-        # TODO: refactor, see also self.handleRubric() and self.rubricMode()
-        if self.modeInformation[0] == "rubric":
-            extra = self.modeInformation[1]
-            if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
-                self.rubric_widget.handleClick()
-            else:  # if that rubric-mode-set fails (eg - no such rubric)
+        which_mode = self.modeInformation[0]
+        cdr = self.modeInformation[1:]
+        if which_mode == "rubric":
+            # the remaining part of list should be a tuple in this case
+            (extra,) = cdr
+            if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
+                # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
+        else:
+            # ensure we get an error on unexpected extra info
+            assert not cdr
+            self.setToolMode(which_mode)
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.updateLegalityOfRubrics()
 
@@ -640,6 +643,21 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
 
+    def next_rubric_or_reselect_rubric_tool(self):
+        """Changes the tool to rubric or pick the next rubric.
+
+        This allows the same key to switch back to rubrics (from say tick
+        or delete tool) as is used to select the next rubric.
+        """
+        if not self.scene:
+            self.rubric_widget.nextRubric()
+            return
+        if self.scene.mode == "rubric":
+            self.rubric_widget.nextRubric()
+        else:
+            self.rubric_widget.reselectCurrentRubric()
+
+    # currently no key bound to this; above used instead
     def next_rubric(self):
         self.rubric_widget.nextRubric()
 
@@ -903,7 +921,7 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, *, cursor=None, imagePath=None):
+    def setToolMode(self, newMode, *, cursor=None, imagePath=None, rubric=None):
         """Changes the current tool mode and cursor.
 
         Args:
@@ -912,6 +930,8 @@ class Annotator(QWidget):
         Keyword Args:
             imagePath (?): an argument for the "image" tool, used
                 used only by the image tool.
+            rubric (dict[str, Any] | None): if we're changing to rubric,
+                use this include the rubric.
             cursor (str): if None or omitted default cursors are used
                for each tool.  If needed you could override this.
                (currently unused, semi-deprecated).
@@ -938,12 +958,15 @@ class Annotator(QWidget):
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
+            if rubric:
+                self.scene.setCurrentRubric(rubric)
             self.scene.setToolMode(newMode)
             self.view.setCursor(cursor)
+        self._setModeLabels(newMode)
         # refresh everything.
         self.repaint()
 
-    def setModeLabels(self, mode):
+    def _setModeLabels(self, mode):
         if mode == "rubric":
             self.ui.narrowModeLabel.setText(
                 " rubric \n {} ".format(self.rubric_widget.getCurrentTabName())
@@ -1052,7 +1075,7 @@ class Annotator(QWidget):
         actions_and_methods = (
             ("undo", self.toUndo),
             ("redo", self.toRedo),
-            ("next-rubric", self.rubricMode),
+            ("next-rubric", self.next_rubric_or_reselect_rubric_tool),
             ("prev-rubric", self.prev_rubric),
             ("next-tab", self.next_tab),
             ("prev-tab", self.prev_tab),
@@ -1178,16 +1201,6 @@ class Annotator(QWidget):
             return
         self.scene.redo()
 
-    def rubricMode(self):
-        """Changes the tool to rubric."""
-        if not self.scene:
-            self.rubric_widget.nextRubric()
-            return
-        if self.scene.mode == "rubric":
-            self.rubric_widget.nextRubric()
-        else:
-            self.rubric_widget.reselectCurrentRubric()
-
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
 
@@ -1303,10 +1316,7 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene
         """
-        self.setToolMode("rubric")
-        # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
-        if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(rubric)
+        self.setToolMode("rubric", rubric=rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""

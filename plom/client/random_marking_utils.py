@@ -144,7 +144,8 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        self.scene.changeTheRubric(rubric)
+        self.scene.setCurrentRubric(rubric)
+        self.scene.setToolMode("rubric")
 
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
@@ -164,7 +165,8 @@ class SceneParent(QWidget):
             else:
                 rubric = random.choice(negativeRubrics[self.question])
 
-            self.scene.changeTheRubric(rubric)
+            self.scene.setCurrentRubric(rubric)
+            self.scene.setToolMode("rubric")
 
             if self.scene.isLegalRubric(rubric):
                 if rubric["value"] > 0 or rubric["value"] < 0:
@@ -195,10 +197,6 @@ class SceneParent(QWidget):
         return self.scene.score, self.scene.get_rubric_ids(), aname, plomfile
 
     def refreshDisplayedMark(self, score) -> None:
-        # needed for compat with pagescene.py
-        pass
-
-    def setModeLabels(self, mode) -> None:
         # needed for compat with pagescene.py
         pass
 
