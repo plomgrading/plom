@@ -389,6 +389,10 @@ class IDBoxProcessorService:
             contours, _ = cv.findContours(
                 thresholded_digit, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
             )
+            # if couldnt find contours then return an empty list.
+            if len(contours) == 0:
+                return []
+
             # get the largest contour (by area)
             contours = sorted(contours, key=cv.contourArea, reverse=True)
             bbox = cv.boundingRect(contours[0])

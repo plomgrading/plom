@@ -85,6 +85,11 @@ class RectangleExtractor:
         Returns:
             numpy.ndarray: the affine transformation matrix for correcting the image
         """
+        # We need 3 qr codes in the dict, so if missing SE or SW
+        # then just return an identify matrix
+        if "SE" not in qr_dict or "SW" not in qr_dict:
+            return np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+
         if "NW" in qr_dict:
             dest_three_points = np.array(
                 [
