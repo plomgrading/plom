@@ -78,6 +78,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
+from plom.feedback_rules import feedback_rules as static_feedback_rules_data
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectPaperQuestion
@@ -952,9 +953,13 @@ class MarkerClient(QWidget):
         # Get the number of Tests, Pages, Questions and Versions
         # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
-        stuff = self.msgr.get_exam_info()
+        info = self.msgr.get_exam_info()
         # TODO: is never changed even if server changes it
-        self.max_papernum = stuff["current_largest_paper_num"]
+        self.max_papernum = info["current_largest_paper_num"]
+        # legacy won't provide this; fallback to a static value
+        self.annotatorSettings["feedback_rules"] = info.get(
+            "feedback_rules", static_feedback_rules_data
+        )
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)

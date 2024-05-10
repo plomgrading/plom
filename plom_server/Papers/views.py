@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from django.urls import reverse
@@ -39,7 +39,7 @@ class CreateTestPapers(ManagerRequiredView):
             print(err)
         # note that adding the papers does not automatically create the associated pdf build tasks
         # for that we need the classlist, hence the following.
-        # classdict = StagingStudentService().get_classdict()
+        # classdict = ClasslistService.get_classdict()
         # BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
 
         progress_url = reverse("papers_progress")

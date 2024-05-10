@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Colin B. Macdonald
@@ -34,20 +34,12 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_students(self) -> list[dict[str, str | int]]:
+        """Get a list of students, empty if there are none."""
         return list(
             StagingStudent.objects.all().values(
                 "student_id", "student_name", "paper_number"
             )
         )
-
-    def get_classdict(self):
-        students = self.get_students()
-        for s in students:
-            s["id"] = s.pop("student_id")
-            s["studentName"] = s.pop("student_name")
-            if s["paper_number"] is None:
-                s["paper_number"] = -1
-        return students
 
     @transaction.atomic()
     def get_first_last_prenamed_paper(self):
@@ -125,8 +117,13 @@ class StagingStudentService:
                 assert old_headers is not None
                 csv_reader.fieldnames = [x.lower() for x in old_headers]
                 # now we have lower case field names
+                # Note that the paper_number field is optional, so we
+                # need to get that value or stick in a None.
+                # related to #2274 and MR <<TODO>>
                 for row in csv_reader:
-                    self.add_student(row["id"], row["name"], row["paper_number"])
+                    self.add_student(
+                        row["id"], row["name"], row.get("paper_number", None)
+                    )
 
         # don't forget to unlink the temp file
         tmp_csv.unlink()
@@ -154,14 +151,6 @@ class StagingStudentService:
             return max(N1, N2, N3)
         else:
             return max(N1, N2)
-
-    def get_classlist_sids_for_ID_matching(self) -> list[str]:
-        """Returns a list containing all student IDs on the classlist."""
-        students = []
-        classlist = self.get_students()
-        for entry in classlist:
-            students.append(entry.pop("student_id"))
-        return students
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""

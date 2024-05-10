@@ -27,10 +27,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:24.0.7
+image: docker:25.0.5
 
 services:
-  - docker:24.0.7-dind
+  - docker:25.0.5-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -403,7 +403,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 254 ]]"
+    - bash -c "[[ $NUMERR -le 173 ]]"
   allow_failure: true
 
 
@@ -415,7 +415,7 @@ pydocstyle-plom:
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
-    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish plom/solution plom/idreader plom/manager
+    - pydocstyle -s -e plom/client plom/create plom/scan plom/demo plom/finish plom/solution plom/idreader plom/manager
   allow_failure: true
 
 
@@ -741,7 +741,7 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  image: fedora:39
+  image: fedora:40
   when: manual
   allow_failure: true
   before_script:
@@ -826,11 +826,10 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:39
+  image: fedora:40
   when: manual
   allow_failure: true
   before_script:
-    # removed python3-PyMuPDF for Issue #2874
     - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
@@ -844,7 +843,7 @@ fedora_webplom:
           python3-aiohttp python3-peewee python3-cryptography
           python3-zxing-cpp
           python3-pytest
-          python3-scikit-learn python3-PyMySQL
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
           iproute
           python3-django
@@ -1574,16 +1573,9 @@ macos_server_webplom:
   - popd
 
 
-.shared_windows_runners:
-  tags:
-  - shared-windows
-  - windows
-  - windows-1809
-
-
 # winmintest:
-#   extends:
-#   - .shared_windows_runners
+#   tags:
+#   - saas-windows-medium-amd64
 #   stage: test
 #   needs: []
 #   script:
@@ -1598,8 +1590,8 @@ macos_server_webplom:
 # Build Windows client binaries
 # This section written in PowerShell
 winpyinst:
-  extends:
-  - .shared_windows_runners
+  tags:
+  - saas-windows-medium-amd64
   stage: packaging
   before_script:
   - choco install -y python311

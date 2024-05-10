@@ -2,19 +2,20 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
 
 import json
+import time
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from Identify.services import IDReaderService, IdentifyTaskService
-from Preparation.services import StagingStudentService
+from Identify.services import ClasslistService
 
 
 class Command(BaseCommand):
@@ -85,8 +86,7 @@ class Command(BaseCommand):
     def get_sids(self):
         """Returns a list containing student ID numbers to use for matching."""
         self.stdout.write("Getting the classlist")
-        student_service = StagingStudentService()
-        return student_service.get_classlist_sids_for_ID_matching()
+        return ClasslistService.get_classlist_sids_for_ID_matching()
 
     def get_probabilities(self):
         """Retrieve probability data from `id_prob_heatmaps.json`.

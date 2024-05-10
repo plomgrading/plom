@@ -292,6 +292,7 @@ class SettingsModel(SingletonBaseModel):
     # TODO: intention is a tri-state: "permissive", "per-user", "locked"
     who_can_create_rubrics = models.TextField(default="permissive")
     who_can_modify_rubrics = models.TextField(default="per-user")
+    feedback_rules = models.JSONField(default=dict)
 
 
 # ---------------------------------

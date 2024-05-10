@@ -1,10 +1,10 @@
 .. Plom documentation
-   Copyright (C) 2022-2023 Colin B. Macdonald
+   Copyright (C) 2022-2024 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-Preparing an Exam
-=================
+Preparing an assessment
+=======================
 
 .. note::
 
@@ -12,14 +12,14 @@ Preparing an Exam
    For now, see https://plomgrading.org/docs/walkthrough/create.html
 
 
-Designing your test
--------------------
+Designing your assessment
+-------------------------
 
 
 What software should I use?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Its up to you.  Plom will need a PDF file of your test (PDF files if
+Its up to you.  Plom will need a PDF file of your assessment (PDF files if
 you are using multiple versions).  Plom came out of the mathematics
 community where LaTeX is commonly used, and we provide a template.
 But you can use any software you like.
@@ -34,7 +34,8 @@ What should each "question" be?
 
 So if 5(a) and 5(b) can be marked by TAs Jane and Austin
 *simultaneously* and *independently*, then those can be separate
-questions.  You can use the ``label`` field in the test spec (see :ref:`Creating a spec`) to
+questions.
+You can use the ``label`` field in the specification (see :ref:`Creating a spec`) to
 *display* the two questions as "5(a)" and "5(b)".
 
 Currently there is an additional constraint: each question must begin
@@ -57,7 +58,7 @@ Technical docs
 --------------
 
 * On legacy servers, the command-line tool :doc:`plom-create` is used for
-  most tasks related starting a new test.
+  most tasks related starting a new assessment.
 
 * For scripting or other advanced usage, you can ``import plom.create``
   in your own Python code.  See :doc:`module-plom-create`.

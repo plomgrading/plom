@@ -14,6 +14,11 @@ urlpatterns = [
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),
     path("admin/wipe/", views.RubricWipePageView.as_view(), name="rubrics_wipe"),
     path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
+    path(
+        "admin/feedback_rules/",
+        views.FeedbackRulesView.as_view(),
+        name="feedback_rules",
+    ),
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
 ]

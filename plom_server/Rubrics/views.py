@@ -4,10 +4,17 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Any
+
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
+
+from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
@@ -253,3 +260,67 @@ class RubricItemView(ManagerRequiredView):
                 rubric.__setattr__(key, value)
             rubric.save()
         return redirect("rubric_item", rubric_key=rubric_key)
+
+
+def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    # something (possible jsonfield) is randomly re-ordering the Python
+    # dict, so use a list, sorted alphabetically by code (TODO: for now!)
+    L = []
+    for code in sorted(rules.keys()):
+        data = rules[code].copy()
+        data.update({"code": code})
+        L.append(data)
+    return L
+
+
+class FeedbackRulesView(ManagerRequiredView):
+    """Viewing and changing the defaults around potentially problem cases in annotation."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/feedback_rules.html"
+        context = self.build_context()
+        settings = SettingsModel.load()
+        rules = settings.feedback_rules
+        if not rules:
+            rules = static_feedback_rules
+        context.update(
+            {
+                "feedback_rules": _rules_as_list(rules),
+            }
+        )
+        return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/feedback_rules.html"
+        settings = SettingsModel.load()
+        # decide if we are resetting or updating the rules from the form
+        if request.POST.get("_whut_do") == "reset":
+            rules = {}
+        else:
+            rules = settings.feedback_rules
+            if not rules:
+                # carefully make a copy so we don't mess with the static data
+                rules = deepcopy(static_feedback_rules)
+            for code in rules.keys():
+                x = request.POST.get(f"{code}-allowed", None)
+                rules[code]["allowed"] = True if x is not None else False
+                x = request.POST.get(f"{code}-warn", None)
+                rules[code]["warn"] = True if x is not None else False
+                x = request.POST.get(f"{code}-dama_allowed", None)
+                rules[code]["dama_allowed"] = True if x is not None else False
+        settings.feedback_rules = rules
+        settings.save()
+
+        # essentially a copy-paste of get from here :(
+        context = self.build_context()
+        settings = SettingsModel.load()
+        rules = settings.feedback_rules
+        if not rules:
+            rules = static_feedback_rules
+        context.update(
+            {
+                "successful_post": True,
+                "feedback_rules": _rules_as_list(rules),
+            }
+        )
+        return render(request, template_name, context=context)
