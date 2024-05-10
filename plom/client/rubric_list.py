@@ -172,10 +172,6 @@ class RubricTable(QTableWidget):
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
-        # could use a subclass
-        if self.tabType == "delta":
-            self.hideColumn(3)
-            # self.verticalHeader().setVisible(False)
         if sort:
             self.setSortingEnabled(True)
         self.shortname = shortname
@@ -349,7 +345,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def removeRubricByKey(self, key) -> None:
@@ -357,7 +353,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def hideCurrentRubric(self) -> None:
@@ -370,7 +366,7 @@ class RubricTable(QTableWidget):
         assert item
         key = item.text()
         self._parent.hideRubricByKey(key)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def unhideCurrentRubric(self) -> None:
@@ -383,7 +379,7 @@ class RubricTable(QTableWidget):
         assert item
         key = item.text()
         self._parent.unhideRubricByKey(key)
-        self.selectRubricByVisibleRow(0)
+        self.selectFirstVisibleRubric()
         self.handleClick()
 
     def dropEvent(self, event):
@@ -450,6 +446,9 @@ class RubricTable(QTableWidget):
         render = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
+        # Does anyone like this special dot sentinel?  Can we just use empty?
+        if render == ".":
+            render = ""
         self.setItem(rc, 3, QTableWidgetItem(render))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
@@ -522,7 +521,7 @@ class RubricTable(QTableWidget):
                 continue
             self.appendNewRubric(rb)
         if not self.selectRubricByKey(prev_selected_rubric_id):
-            self.selectRubricByVisibleRow(0)
+            self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics, positive=True):
@@ -549,7 +548,7 @@ class RubricTable(QTableWidget):
             if rb["system_rubric"] and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
         if not self.selectRubricByKey(prev_selected_rubric_id):
-            self.selectRubricByVisibleRow(0)
+            self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row: int) -> str:
@@ -585,14 +584,16 @@ class RubricTable(QTableWidget):
         return item.text()
 
     def reselectCurrentRubric(self) -> None:
-        # If no selected row, then select row 0.
-        # else select current row - triggers a signal.
+        """Reselect the current rubric row, triggering redraws (for example).
+
+        If no selected row, then select the first visible row, or perhaps
+        no row if there are no rows.
+        """
         r = self.getCurrentRubricRow()
         if r is None:
-            if self.rowCount() == 0:
-                return
-            r = 0
-        self.selectRubricByVisibleRow(r)
+            self.selectFirstVisibleRubric()
+            return
+        self.selectRubricByRow(r)
 
     def selectRubricByRow(self, r: int | None) -> None:
         """Select the r'th rubric in the list.
@@ -609,6 +610,9 @@ class RubricTable(QTableWidget):
 
         Args:
             r: The row-number in the rubric-table.
+
+        If r is out-of-range, then do nothing.  If there are no rows,
+        do nothing.
         """
         rc = -1  # start here, so that correctly test after-increment
         for s in range(self.rowCount()):
@@ -617,6 +621,13 @@ class RubricTable(QTableWidget):
             if rc == r:
                 self.selectRow(s)
                 return
+
+    def selectFirstVisibleRubric(self) -> None:
+        """Select the first visible row.
+
+        If there are no rows, or no visible rows, then do nothing.
+        """
+        self.selectRubricByVisibleRow(0)
 
     def selectRubricByKey(self, key: int | str | None) -> bool:
         """Select row with given key, returning True if works, else False."""
@@ -637,7 +648,7 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                self.selectRubricByVisibleRow(0)
+                self.selectFirstVisibleRubric()
                 self.handleClick()  # actually force a click
             return
         rs = r  # get start row
@@ -1432,7 +1443,7 @@ class RubricWidget(QWidget):
         ]
 
     def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
-        """Set the current rubric key and the current tab.
+        """Set the current rubric key and the current tab, as if it was clicked on.
 
         Args
             key: which rubric to highlight.  If None, no action.
@@ -1448,7 +1459,9 @@ class RubricWidget(QWidget):
         if tab not in range(0, self.RTW.count()):
             return False
         self.RTW.setCurrentIndex(tab)
-        return self.RTW.currentWidget().selectRubricByKey(key)
+        is_success = self.RTW.currentWidget().selectRubricByKey(key)
+        self.handleClick()  # force blue ghost update
+        return is_success
 
     def setQuestion(self, num, label):
         """Set relevant question number and label.
@@ -1508,7 +1521,7 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
         self.handleClick()
 
-    def selectRubricByVisibleRow(self, rowNumber):
+    def selectRubricByVisibleRow(self, rowNumber: int) -> None:
         self.RTW.currentWidget().selectRubricByVisibleRow(rowNumber)
         self.handleClick()
 

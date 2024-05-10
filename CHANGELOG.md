@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Server can now show and in some cases customize the feedback rules that nag clients before they submit annotations.
+* New feedback rule checks that each page is annotated.
 
 ### Changed
 * Rubrics now keep more careful records about who modified them and when.

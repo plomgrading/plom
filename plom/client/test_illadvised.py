@@ -53,7 +53,7 @@ def test_ill_not_enough_out_of() -> None:
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
-    assert code == "out-of-not-max-score"
+    assert code == "out-of-does-not-match-max-mark"
     assert msg
 
 
@@ -68,7 +68,7 @@ def test_ill_too_much_out_of() -> None:
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
-    assert code == "out-of-not-max-score"
+    assert code == "out-of-does-not-match-max-mark"
     assert msg
 
 
@@ -92,8 +92,8 @@ def test_ill_dont_mix_abs_minus_relative() -> None:
     assert not ok
     assert code
     # note the rubrics out_of here is < maxscore but we nonetheless want a specific error
-    assert code != "out-of-not-max-score"
-    assert code == "dont-mix-abs-minus-relative"
+    assert code != "out-of-does-not-match-max-mark"
+    assert code == "confusing-to-mix-abs-minus-relative"
     assert msg
 
 
@@ -117,6 +117,6 @@ def test_ill_dont_mix_abs_plus_relative() -> None:
     assert not ok
     assert code
     # note the rubrics out_of here is < maxscore but we nonetheless want a specific error
-    assert code != "out-of-not-max-score"
-    assert code == "dont-mix-abs-plus-relative"
+    assert code != "out-of-does-not-match-max-mark"
+    assert code == "confusing-to-mix-abs-plus-relative"
     assert msg

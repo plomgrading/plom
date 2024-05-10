@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
-from Preparation.services import StagingStudentService
+from Identify.services import ClasslistService
 from Identify.services import IdentifyTaskService, IDReaderService
 
 from .utils import _error_response
@@ -21,13 +21,7 @@ class GetClasslist(APIView):
     """Get the classlist."""
 
     def get(self, request: Request) -> Response:
-        sstu = StagingStudentService()
-        students = sstu.get_students()
-        # TODO: new StudentService or ClasslistService that implements
-        # the loop below?
-        for s in students:
-            s["id"] = s.pop("student_id")
-            s["name"] = s.pop("student_name")
+        students = ClasslistService.get_students_in_api_format()
         return Response(students)
 
 
