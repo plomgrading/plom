@@ -29,6 +29,6 @@ requests-toolbelt==1.0.0
 segno==1.6.1
 stdiomask==0.0.6
 tomli==2.0.1
-tomlkit==0.12.4
+tomlkit==0.12.5
 tqdm==4.66.4
 urllib3==2.2.1
