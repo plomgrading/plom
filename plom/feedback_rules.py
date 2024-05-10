@@ -142,12 +142,14 @@ feedback_rules = {
     "each-page-should-be-annotated": {
         "explanation": """
             <p>A page without annotation may leave students wondering
-            if their work was considered or even noticed.</p>
+            if you saw their work on this page.</p>
             <p>Page(s) {which_pages} of those shown have no annotations.</p>
             <p>Consider leaving some sort of feedback on each
-            page: for example, a highlighted rectangle around
-            a paragraph acknowledges that you saw it, without
-            committing you to commenting on its correctness.</p>
+            part of a student's work: for example, a highlighted
+            rectangle around a paragraph acknowledges that you saw it,
+            without committing you to commenting on its correctness.</p>
+            <p>If a page is blank then we suggest drawing a diagonal
+            red line across the page.</p>
         """,
         "allowed": True,
         "warn": True,
