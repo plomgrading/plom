@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import hashlib
+from math import ceil
 import pathlib
 import random
 import tempfile
@@ -166,7 +167,7 @@ class ScanService:
         )
 
     def split_and_save_bundle_images(
-        self, bundle_pk: int, *, debug_jpeg: bool = False
+        self, bundle_pk: int, *, number_of_chunks: int = 16, debug_jpeg: bool = False
     ) -> None:
         """Read a PDF document and save page images to filesystem/database.
 
@@ -174,6 +175,8 @@ class ScanService:
             bundle_pk: StagingBundle object primary key
 
         Keyword Args:
+            number_of_chunks (int): the number of page-splitting jobs to run;
+                each huey-page-split-task will process number_of_pages_in_bundle / number_of_chunks pages.
             debug_jpeg (bool): off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
@@ -190,7 +193,10 @@ class ScanService:
             tracker_pk = x.pk
 
         res = huey_parent_split_bundle_task(
-            bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
+            bundle_pk,
+            number_of_chunks=number_of_chunks,
+            debug_jpeg=debug_jpeg,
+            tracker_pk=tracker_pk,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -1344,6 +1350,7 @@ class ScanService:
 def huey_parent_split_bundle_task(
     bundle_pk,
     *,
+    number_of_chunks: int = 16,
     debug_jpeg: bool = False,
     tracker_pk: int,
     # TODO - CBM - what type should task have?
@@ -1358,7 +1365,10 @@ def huey_parent_split_bundle_task(
         bundle_pk: StagingBundle object primary key
 
     Keyword Args:
-        tracker_pk: a key into the database for anyone interested in
+         number_of_chunks (int): the number of page-splitting jobs to run;
+                each huey-page-split-task will handle 1/number_of_chunks of the
+                pages in the bundle.
+         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
 
@@ -1372,26 +1382,42 @@ def huey_parent_split_bundle_task(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
+    # cut the list of all indices into chunks
+    n_pages = bundle_obj.number_of_pages
+    assert n_pages is not None
+    chunk_length = ceil(n_pages / number_of_chunks)
+    # note page indices are 1-indexed.
+    all_page_indices = [pg + 1 for pg in range(n_pages)]
+    index_chunks = [
+        all_page_indices[idx : idx + chunk_length]
+        for idx in range(0, n_pages, chunk_length)
+    ]
+
     # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
-        n_pages = bundle_obj.number_of_pages
-        assert n_pages is not None
         task_list = [
-            huey_child_get_page_image(
+            huey_child_get_page_images(
                 bundle_pk,
-                pg,  # note pg is 1-indexed
+                idx_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
-                f"page{pg:05}",  # filename matches our 1-index
                 debug_jpeg=debug_jpeg,
             )
-            for pg in range(1, n_pages + 1)
+            for idx_chnk in index_chunks
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
         n_tasks = len(task_list)
         while True:
-            results = [X.get() for X in task_list]
-            count = sum(1 for X in results if X is not None)
+            # list items are None (if not completed) or list [dict of page info]
+            result_chunks = [X.get() for X in task_list]
+            # remove all the nones to get list of completed tasks
+            not_none_result_chunks = [
+                chunk for chunk in result_chunks if chunk is not None
+            ]
+            completed_tasks = len(not_none_result_chunks)
+            # flatten that list of lists to get a list of rendered pages
+            results = [X for chunk in not_none_result_chunks for X in chunk]
+            rendered_page_count = len(results)
 
             # TODO - check for error status here.
 
@@ -1399,10 +1425,10 @@ def huey_parent_split_bundle_task(
                 _task = PagesToImagesHueyTask.objects.select_for_update().get(
                     bundle=bundle_obj
                 )
-                _task.completed_pages = count
+                _task.completed_pages = rendered_page_count
                 _task.save()
 
-            if count == n_tasks:
+            if completed_tasks == n_tasks:
                 break
             else:
                 sleep(1)
@@ -1508,24 +1534,22 @@ def huey_parent_read_qr_codes_task(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_get_page_image(
+def huey_child_get_page_images(
     bundle_pk: int,
-    index: int,
+    index_list: List[int],
     basedir: pathlib.Path,
-    basename: str,
     *,
     debug_jpeg: bool = False,
 ) -> dict[str, Any]:
-    """Render a page image and save to disk in the background.
+    """Render page images and save to disk in the background.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
 
     Args:
         bundle_pk: bundle DB object's primary key
-        index (int): bundle order of page - 1-indexed
+        index_list: a ist of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
-        basename (str): a basic filename without the extension
 
     Keyword Args:
         debug_jpeg (bool): off by default.  If True then we make some rotations by
@@ -1541,47 +1565,59 @@ def huey_child_get_page_image(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
-        save_path = render_page_to_bitmap(
-            pdf_doc[index - 1],  # PyMuPDF is 0-indexed
-            basedir,
-            basename,
-            bundle_obj.pdf_file,
-            add_metadata=True,
-        )
-    # For testing, randomly make jpegs, rotated a bit, of various qualities
-    if debug_jpeg and random.uniform(0, 1) <= 0.5:
-        _ = make_mucked_up_jpeg(save_path, basedir / ("muck-" + basename + ".jpg"))
-        save_path.unlink()
-        save_path = _
-    with open(save_path, "rb") as f:
-        image_hash = hashlib.sha256(f.read()).hexdigest()
+    rendered_page_info = []
 
-    # make sure we load with exif rotations if required
-    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
-    size = 256, 256
-    try:
-        _lanczos = Image.Resampling.LANCZOS
-    except AttributeError:
-        # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
-        _lanczos = Image.LANCZOS  # type: ignore
-    pil_img.thumbnail(size, _lanczos)
-    thumb_path = basedir / ("thumb-" + basename + ".png")
-    pil_img.save(thumb_path)
+    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
+        for index in index_list:
+            basename = f"page{index:05}"
+            save_path = render_page_to_bitmap(
+                pdf_doc[index - 1],  # PyMuPDF is 0-indexed
+                basedir,
+                basename,
+                bundle_obj.pdf_file,
+                add_metadata=True,
+            )
+            # For testing, randomly make jpegs, rotated a bit, of various qualities
+            if debug_jpeg and random.uniform(0, 1) <= 0.5:
+                _ = make_mucked_up_jpeg(
+                    save_path, basedir / ("muck-" + basename + ".jpg")
+                )
+                save_path.unlink()
+                save_path = _
+            with open(save_path, "rb") as f:
+                image_hash = hashlib.sha256(f.read()).hexdigest()
+
+            # make sure we load with exif rotations if required
+            pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
+            size = 256, 256
+            try:
+                _lanczos = Image.Resampling.LANCZOS
+            except AttributeError:
+                # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
+                _lanczos = Image.LANCZOS  # type: ignore
+            pil_img.thumbnail(size, _lanczos)
+            thumb_path = basedir / ("thumb-" + basename + ".png")
+            pil_img.save(thumb_path)
+
+            rendered_page_info.append(
+                {
+                    "index": index,
+                    "file_name": save_path.name,
+                    "file_path": str(save_path),
+                    "image_hash": image_hash,
+                    "thumb_name": thumb_path.name,
+                    "thumb_path": str(thumb_path),
+                }
+            )
 
     # TODO - return an error of some sort here if problems
 
-    return {
-        "index": index,
-        "file_name": save_path.name,
-        "file_path": str(save_path),
-        "image_hash": image_hash,
-        "thumb_name": thumb_path.name,
-        "thumb_path": str(thumb_path),
-    }
+    return rendered_page_info
 
 
 # The decorated function returns a ``huey.api.Result``
+
+
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
