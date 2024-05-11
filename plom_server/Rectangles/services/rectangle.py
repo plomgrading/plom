@@ -3,25 +3,26 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Andrew Rechnitzer
 
-
 from __future__ import annotations
-from Papers.models import ReferenceImage
+
+from io import BytesIO
+from pathlib import Path
+from typing import Any
+from warnings import warn
+
 import cv2 as cv
 import imutils
-from io import BytesIO
 import numpy as np
-from pathlib import Path
 from PIL import Image
-from typing import Any, Dict, List
-from warnings import warn
 import zipfile
 
+from Papers.models import ReferenceImage
 from Papers.models import Paper, FixedPage
 from Papers.services import PaperInfoService
 from plom.scan import rotate
 
 
-def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
+def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
     """Given the version and page number, return the x/y coords of the qr codes on the reference image.
 
     Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
@@ -234,8 +235,8 @@ class RectangleExtractor:
                 archive.writestr(fname, dat)
 
     def get_largest_rectangle_contour(
-        self, region: None | Dict[str, float] = None
-    ) -> None | Dict[str, float]:
+        self, region: None | dict[str, float] = None
+    ) -> None | dict[str, float]:
         """Helper function for extracting the largest box from an image.
 
         Args:
