@@ -47,6 +47,14 @@ def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
 
 
 class RectangleExtractor:
+    """Provides operations on scanned images based on a reference image.
+
+    Instances are particalar to a page/version reference image.  They
+    stores information and cached calculations about a coordinate system
+    in the QR-code locations, enabling information to be looked up in a
+    scanned image based on locations choosen from the reference image.
+    """
+
     def __init__(self, version: int, page: int):
         self.page_number = page
         self.version = version
@@ -62,15 +70,15 @@ class RectangleExtractor:
                 x_coords.append(rimg_obj.parsed_qr[cnr]["x_coord"])
                 y_coords.append(rimg_obj.parsed_qr[cnr]["y_coord"])
 
-        # rectangle described by location of the 3 qr-code stamp centres.
+        # rectangle described by location of the 3 qr-code stamp centres of the reference image
         self.LEFT = min(x_coords)
         self.RIGHT = max(x_coords)
         self.TOP = min(y_coords)
         self.BOTTOM = max(y_coords)
-        # width and height of the qr-code bounded region
+        # width and height of the qr-code bounded region of the reference image
         self.WIDTH = self.RIGHT - self.LEFT
         self.HEIGHT = self.BOTTOM - self.TOP
-        # width and height of the actual image
+        # overall width and height of the actual reference image
         self.FULL_WIDTH = rimg_obj.width
         self.FULL_HEIGHT = rimg_obj.height
 
@@ -143,7 +151,7 @@ class RectangleExtractor:
             left_f (float): same as top, defining the left boundary
             top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
-                the image.
+                the image.  Measured relative to the centres of the QR codes.
             bottom_f (float): same as top, defining the bottom boundary
             right_f (float): same as top, defining the right boundary
 
