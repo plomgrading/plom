@@ -530,7 +530,6 @@ class SpecVerifier:
         Exceptions:
             ValueError: with a message indicating the problem.
         """
-
         if verbose == "log":
             prnt = log.info  # type: ignore
         elif verbose:
