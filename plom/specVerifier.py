@@ -509,11 +509,15 @@ class SpecVerifier:
     def group_label_from_page(self, pagenum):
         return build_page_to_group_dict(self)[pagenum]
 
-    def verify(self, *, verbose: str | None | bool = False, _legacy: bool = True) -> None:
+    def verify(
+        self, *, verbose: str | None | bool = False, _legacy: bool = True
+    ) -> None:
         """Check that spec contains required attributes and insert default values."""
         self.verifySpec(verbose=verbose, _legacy=_legacy)
 
-    def verifySpec(self, *, verbose: str | None | bool = True, _legacy: bool = True) -> None:
+    def verifySpec(
+        self, *, verbose: str | None | bool = True, _legacy: bool = True
+    ) -> None:
         """Check that spec contains required attributes and insert default values.
 
         Keyword Args:
