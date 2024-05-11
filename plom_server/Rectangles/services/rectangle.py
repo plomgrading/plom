@@ -53,10 +53,10 @@ def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
 class RectangleExtractor:
     """Provides operations on scanned images based on a reference image.
 
-    Instances are particalar to a page/version reference image.  They
+    Instances are particular to a page/version reference image.  They
     stores information and cached calculations about a coordinate system
     in the QR-code locations, enabling information to be looked up in a
-    scanned image based on locations choosen from the reference image.
+    scanned image based on locations chosen from the reference image.
     """
 
     def __init__(self, version: int, page: int):
