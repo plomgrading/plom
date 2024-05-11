@@ -33,6 +33,9 @@ def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
 
     Returns:
         dict: {corner: [x,y]}, where corner is three of NE,SE,NW,SW, and x,y are floats.
+
+    Raises:
+        ValueError: no reference image.
     """
     try:
         rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
@@ -149,15 +152,15 @@ class RectangleExtractor:
 
         Args:
             paper_number (int): the number of the paper from which to extract the rectangle of the given version, page
-            left_f (float): same as top, defining the left boundary
             top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
                 the image.  Measured relative to the centres of the QR codes.
-            bottom_f (float): same as top, defining the bottom boundary
-            right_f (float): same as top, defining the right boundary
+            left_f (float): same as top, defining the left boundary.
+            bottom_f (float): same as top, defining the bottom boundary.
+            right_f (float): same as top, defining the right boundary.
 
         Returns:
-            the bytes of the image in png format
+            The bytes of the image in png format.
         """
         paper_obj = Paper.objects.get(paper_number=paper_number)
         img_obj = FixedPage.objects.get(
@@ -178,11 +181,14 @@ class RectangleExtractor:
             flags=cv.INTER_LINEAR,
         )
 
+        # these values are in the pixel space of the reference image
         top = round(self.TOP + top_f * self.HEIGHT)
         bottom = round(self.TOP + bottom_f * self.HEIGHT)
         left = round(self.LEFT + left_f * self.WIDTH)
         right = round(self.LEFT + right_f * self.WIDTH)
 
+        # in theory, the new image has been rescaled to be the same size as ref img
+        # TODO: but I don't understand how that can be if the aspect ratio differs.
         if top < 0:
             warn(f"Top input of {top} is outside of image pixel range, capping at 0.")
         top = max(top, 0)
