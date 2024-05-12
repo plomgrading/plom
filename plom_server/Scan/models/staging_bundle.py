@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -10,11 +11,12 @@ from django.contrib.auth.models import User
 class StagingBundle(models.Model):
     """A user-uploaded bundle that isn't validated.
 
-    Fields;
-        TODO:
-        time_to_make_page_images: overall milliseconds to convert from
+    TODO: document other fields.
+
+    Fields:
+        time_to_make_page_images: overall seconds to convert from
             PDF to images, including IO overhead (wall-clock time).
-        time_to_read_qr: milliseconds of wall-clock to read all QR codes.
+        time_to_read_qr: seconds of wall-clock to read all QR codes.
     """
 
     def _staging_bundle_upload_path(self, filename):
