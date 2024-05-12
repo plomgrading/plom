@@ -175,8 +175,9 @@ class ScanService:
             bundle_pk: StagingBundle object primary key
 
         Keyword Args:
-            number_of_chunks (int): the number of page-splitting jobs to run;
-                each huey-page-split-task will process number_of_pages_in_bundle / number_of_chunks pages.
+            number_of_chunks: the number of page-splitting jobs to run;
+                each huey-page-split-task will process approximately
+                number_of_pages_in_bundle / number_of_chunks pages.
             debug_jpeg (bool): off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
@@ -1365,10 +1366,10 @@ def huey_parent_split_bundle_task(
         bundle_pk: StagingBundle object primary key
 
     Keyword Args:
-         number_of_chunks (int): the number of page-splitting jobs to run;
-                each huey-page-split-task will handle 1/number_of_chunks of the
-                pages in the bundle.
-         tracker_pk: a key into the database for anyone interested in
+        number_of_chunks: the number of page-splitting jobs to run;
+            each huey-page-split-task will handle 1/number_of_chunks of the
+            pages in the bundle.
+        tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
 
