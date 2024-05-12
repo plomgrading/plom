@@ -1616,14 +1616,11 @@ def huey_child_get_page_images(
                 }
             )
 
-    # TODO - return an error of some sort here if problems
-
+    # TODO - return an error of some sort here if problems?
     return rendered_page_info
 
 
 # The decorated function returns a ``huey.api.Result``
-
-
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
