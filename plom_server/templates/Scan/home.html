@@ -63,6 +63,28 @@
                               action="{% url 'scan_home' %}">
                             {% csrf_token %}
                             <input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="force_render"
+                                       name="force_render" />
+                                <label class="form-check-label" for="force_render">
+                                    Force safe mode rendering of each page
+                                    <!-- lh-1 for tighter line-spacing -->
+                                    <p class="lh-1">
+                                        <small class="text-muted">
+                                            (by default, Plom checks each page for a single large
+                                            image, for lossless extraction.  This is fast and
+                                            high quality, but in rare circumstances could miss
+                                            overlaid annotations in student self-scanned work.
+                                            It also could give unreasonably-large files, for
+                                            unreasonable scanner settings.
+                                            Slower safe-mode rendering
+                                            <a href="https://todo.example.com">might be safer in such cases</a>)
+                                        </small>
+                                    </p>
+                                </label>
+                            </div>
                             <input type="submit" class="btn btn-secondary" value="Upload">
                         </form>
                     {% else %}
