@@ -8,7 +8,14 @@ from django.contrib.auth.models import User
 
 
 class StagingBundle(models.Model):
-    """A user-uploaded bundle that isn't validated."""
+    """A user-uploaded bundle that isn't validated.
+
+    Fields;
+        TODO:
+        time_to_make_page_images: overall milliseconds to convert from
+            PDF to images, including IO overhead (wall-clock time).
+        time_to_read_qr: milliseconds of wall-clock to read all QR codes.
+    """
 
     def _staging_bundle_upload_path(self, filename):
         # save bundle as "//media/staging/bundles/username/bundle-id/filename"
@@ -25,3 +32,5 @@ class StagingBundle(models.Model):
     is_push_locked = models.BooleanField(default=False)
     pushed = models.BooleanField(default=False)
     time_of_last_update = models.DateTimeField(auto_now=True)
+    time_to_make_page_images = models.FloatField(default=0.0)
+    time_to_read_qr = models.FloatField(default=0.0)
