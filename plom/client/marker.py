@@ -1567,7 +1567,7 @@ class MarkerClient(QWidget):
             self.ui.frameTechnical.setVisible(True)
             ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
             self.ui.frameTechnical.setStyleSheet(
-                f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
+                f"QWidget {{ font-size: {0.7 * ptsz}pt; }}"
             )
             # future use
             self.ui.labelTech4.setVisible(False)
