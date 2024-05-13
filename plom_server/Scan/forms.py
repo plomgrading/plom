@@ -56,7 +56,9 @@ class BundleUploadForm(forms.Form):
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF.")
                 if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
-                    raise ValidationError("File exceeds {settings.MAX_BUNDLE_PAGES} page limit.")
+                    raise ValidationError(
+                        f"File exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+                    )
                 data.update(
                     {
                         "number_of_pages": pdf_doc.page_count,
