@@ -5,7 +5,6 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy 
 
-
 import hashlib
 import pathlib
 
