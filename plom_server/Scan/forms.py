@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy 
+# Copyright (C) 2024 Aidan Murphy
 
 import hashlib
 import pathlib
