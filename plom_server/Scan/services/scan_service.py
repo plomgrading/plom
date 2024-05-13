@@ -195,7 +195,7 @@ class ScanService:
 
         res = huey_parent_split_bundle_task(
             bundle_pk,
-            number_of_chunks=number_of_chunks,
+            number_of_chunks,
             debug_jpeg=debug_jpeg,
             tracker_pk=tracker_pk,
         )
@@ -1349,9 +1349,9 @@ class ScanService:
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_parent_split_bundle_task(
-    bundle_pk,
+    bundle_pk: int,
+    number_of_chunks: int,
     *,
-    number_of_chunks: int = 16,
     debug_jpeg: bool = False,
     tracker_pk: int,
     # TODO - CBM - what type should task have?
@@ -1364,11 +1364,11 @@ def huey_parent_split_bundle_task(
 
     Args:
         bundle_pk: StagingBundle object primary key
-
-    Keyword Args:
         number_of_chunks: the number of page-splitting jobs to run;
             each huey-page-split-task will handle 1/number_of_chunks of the
             pages in the bundle.
+
+    Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
@@ -1385,26 +1385,30 @@ def huey_parent_split_bundle_task(
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # cut the list of all indices into chunks
-    n_pages = bundle_obj.number_of_pages
-    assert n_pages is not None
-    chunk_length = ceil(n_pages / number_of_chunks)
-    # note page indices are 1-indexed.
-    all_page_indices = [pg + 1 for pg in range(n_pages)]
-    index_chunks = [
-        all_page_indices[idx : idx + chunk_length]
-        for idx in range(0, n_pages, chunk_length)
+    bundle_length = bundle_obj.number_of_pages
+    assert bundle_length is not None
+    chunk_length = ceil(bundle_length / number_of_chunks)
+    # be careful with 0/1 indexing here.
+    # pymupdf (which we use to process pdfs) 0-indexes pages within
+    # a pdf while we 1-index bundle-positions. So at some point
+    # in our code we need to add/subtract one to translate between
+    # these. We add one here to make sure "order" is 1-indexed.
+    all_bundle_orders = [ord + 1 for ord in range(bundle_length)]
+    order_chunks = [
+        all_bundle_orders[ord : ord + chunk_length]
+        for ord in range(0, bundle_length, chunk_length)
     ]
 
-    # note that we index bundle images from 1 not zero,
+    # note that we index bundle images from zero,
     with tempfile.TemporaryDirectory() as tmpdir:
         task_list = [
             huey_child_get_page_images(
                 bundle_pk,
-                idx_chnk,  # note pg is 1-indexed
+                ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
                 debug_jpeg=debug_jpeg,
             )
-            for idx_chnk in index_chunks
+            for ord_chnk in order_chunks
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
@@ -1440,7 +1444,7 @@ def huey_parent_split_bundle_task(
                 with open(X["file_path"], "rb") as fh:
                     img = StagingImage.objects.create(
                         bundle=bundle_obj,
-                        bundle_order=X["index"],
+                        bundle_order=X["order"],
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
                     )
@@ -1542,7 +1546,7 @@ def huey_parent_read_qr_codes_task(
 @db_task(queue="tasks")
 def huey_child_get_page_images(
     bundle_pk: int,
-    index_list: List[int],
+    order_list: List[int],
     basedir: pathlib.Path,
     *,
     debug_jpeg: bool = False,
@@ -1554,7 +1558,7 @@ def huey_child_get_page_images(
 
     Args:
         bundle_pk: bundle DB object's primary key
-        index_list: a ist of bundle orders of pages to extract - 1-indexed
+        order_list: a ist of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
 
     Keyword Args:
@@ -1574,10 +1578,12 @@ def huey_child_get_page_images(
     rendered_page_info = []
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
-        for index in index_list:
-            basename = f"page{index:05}"
+        for order in order_list:
+            basename = f"page{order:05}"
+            # pymupdf is 0-indexed, but our orders are 1-indexed, so
+            # we subtract one here.
             save_path = render_page_to_bitmap(
-                pdf_doc[index - 1],  # PyMuPDF is 0-indexed
+                pdf_doc[order - 1],  # PyMuPDF is 0-indexed,
                 basedir,
                 basename,
                 bundle_obj.pdf_file,
@@ -1607,7 +1613,7 @@ def huey_child_get_page_images(
 
             rendered_page_info.append(
                 {
-                    "index": index,
+                    "order": order,
                     "file_name": save_path.name,
                     "file_path": str(save_path),
                     "image_hash": image_hash,
