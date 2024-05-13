@@ -29,6 +29,7 @@ class StagingBundle(models.Model):
     timestamp = models.FloatField(default=0)
     pdf_hash = models.CharField(null=False, max_length=64)
     number_of_pages = models.PositiveIntegerField(null=True)
+    force_page_render = models.BooleanField(default=False)
     has_page_images = models.BooleanField(default=False)
     has_qr_codes = models.BooleanField(default=False)
     is_push_locked = models.BooleanField(default=False)

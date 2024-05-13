@@ -23,7 +23,7 @@ from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 
 from plom.scan import QRextract
-from plom.scan import render_page_to_bitmap
+from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
@@ -1579,16 +1579,31 @@ def huey_child_get_page_images(
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
-            basename = f"page{order:05}"
-            # pymupdf is 0-indexed, but our orders are 1-indexed, so
-            # we subtract one here.
-            save_path = render_page_to_bitmap(
-                pdf_doc[order - 1],  # PyMuPDF is 0-indexed,
-                basedir,
-                basename,
-                bundle_obj.pdf_file,
-                add_metadata=True,
-            )
+            basename = f"page{index:05}"
+            if bundle_obj.force_page_render:
+                save_path = None
+                msgs = ["Force render"]
+            else:
+                save_path, msgs = try_to_extract_image(
+                    pdf_doc[order - 1],  # PyMuPDF is 0-indexed
+                    pdf_doc,
+                    basedir,
+                    basename,
+                    bundle_obj.pdf_file,
+                    do_not_extract=False,
+                    add_metadata=True,
+                )
+            if save_path is None:
+                # log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+                # TODO: log and consider storing in the StagingImage as well
+                save_path = render_page_to_bitmap(
+                    pdf_doc[order - 1],  # PyMuPDF is 0-indexed
+                    basedir,
+                    basename,
+                    bundle_obj.pdf_file,
+                    add_metadata=True,
+                )
+
             # For testing, randomly make jpegs, rotated a bit, of various qualities
             if debug_jpeg and random.uniform(0, 1) <= 0.5:
                 _ = make_mucked_up_jpeg(
