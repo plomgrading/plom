@@ -70,6 +70,7 @@ class ScanService:
         pdf_hash: str,
         number_of_pages: int,
         *,
+        force_render: bool = False,
         debug_jpeg: bool = False,
     ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
@@ -88,6 +89,8 @@ class ScanService:
             number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
+            force_render: Don't try to extract large bitmaps; always
+                render the page.
             debug_jpeg (bool): off by default.  If True then we make some
                 rotations by non-multiples of 90, and save some
                 low-quality jpegs.
@@ -105,6 +108,7 @@ class ScanService:
                 user=user,
                 timestamp=timestamp,
                 pushed=False,
+                force_page_render=force_render,
             )
             with uploaded_pdf_file.open() as fh:
                 bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
