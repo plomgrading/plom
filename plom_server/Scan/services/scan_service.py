@@ -1554,7 +1554,7 @@ def huey_child_get_page_images(
     basedir: pathlib.Path,
     *,
     debug_jpeg: bool = False,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
     It is important to understand that running this function starts an
@@ -1583,7 +1583,7 @@ def huey_child_get_page_images(
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
-            basename = f"page{index:05}"
+            basename = f"page{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
                 msgs = ["Force render"]
