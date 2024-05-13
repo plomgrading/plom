@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
+# Copyright (C) 2024 Aden Chan
 
 
 """Exceptions for the Plom software.
