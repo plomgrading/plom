@@ -176,3 +176,9 @@ class PlomBundleLockedException(PlomBenignException):
     """For when a bundle is locked or pushed."""
 
     pass
+
+
+class PlomNoServerSupportException(PlomBenignException):
+    """For when an action is not supported by the server."""
+
+    pass
