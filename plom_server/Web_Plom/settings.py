@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aidan Murphy
 
 """Django settings for Plom project.
 
