@@ -1558,7 +1558,7 @@ def huey_child_get_page_images(
 
     Args:
         bundle_pk: bundle DB object's primary key
-        order_list: a ist of bundle orders of pages to extract - 1-indexed
+        order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
 
     Keyword Args:
