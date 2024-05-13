@@ -12,7 +12,7 @@ from math import ceil
 import pathlib
 import random
 import tempfile
-from typing import Any, List
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -331,12 +331,12 @@ class ScanService:
         return bundle.stagingimage_set.count()
 
     @transaction.atomic
-    def get_user_bundles(self, user: User) -> List[StagingBundle]:
+    def get_user_bundles(self, user: User) -> list[StagingBundle]:
         """Return all of the staging bundles that the given user uploaded."""
         return list(StagingBundle.objects.filter(user=user))
 
     @transaction.atomic
-    def get_all_staging_bundles(self) -> List[StagingBundle]:
+    def get_all_staging_bundles(self) -> list[StagingBundle]:
         """Return all of the staging bundles."""
         return list(StagingBundle.objects.all())
 
@@ -1550,7 +1550,7 @@ def huey_parent_read_qr_codes_task(
 @db_task(queue="tasks")
 def huey_child_get_page_images(
     bundle_pk: int,
-    order_list: List[int],
+    order_list: list[int],
     basedir: pathlib.Path,
     *,
     debug_jpeg: bool = False,
