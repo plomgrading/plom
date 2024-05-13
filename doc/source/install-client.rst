@@ -51,7 +51,7 @@ want to verify your download.)
 For GNU/Linux
 -------------
 
-Users of various distributions can install from `from Flathub`_.
+Users of various distributions can install `from Flathub`_.
 
 .. _from Flathub: https://flathub.org/apps/details/org.plomgrading.PlomClient
 
