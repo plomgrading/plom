@@ -300,13 +300,11 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 # Configurable variables for Web Plom
 # ----------------------------------------------
 
-# Max file size for bundle uploads in bytes (currently 512MiB)
+# Max file size for bundle uploads in bytes (currently 512MiB), and other restrictions
 # Note if Nginx or another tool is proxying, its limit will apply too.
 # Most likely the proxy server's limit should be used for security.
-# This limit is more for what we consider a reasonable limit, although
-# realisitically, limiting the page count (say, 2000) makes more sense
-# (however this is not yet implemented: Issue #3312).
 MAX_BUNDLE_SIZE = 536870912
+MAX_BUNDLE_PAGES = 2500
 
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
