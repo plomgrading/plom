@@ -308,6 +308,10 @@ class RectangleExtractor:
         img_bytes = rimg_obj.image_file.read()
         raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
         src_image = cv.imdecode(raw_bytes_as_1d_array, cv.IMREAD_COLOR)
+        if src_image is None:
+            raise ValueError(
+                f"Could not read reference image v{self.version} pg{self.page_number}."
+            )
         # if a region is specified then cut it out from the original image,
         # but we need to remember to map the resulting rectangle back to the
         # original coordinate system.
