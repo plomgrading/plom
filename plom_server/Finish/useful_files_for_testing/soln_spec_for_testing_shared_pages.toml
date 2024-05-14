@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+# See spec_with_shared_pages.toml in Preparation
+
+numberOfPages = 5
+
+[[solution]]
+pages = [3]
+
+[[solution]]
+pages = [3]
+
+[[solution]]
+pages = [4]
+
+[[solution]]
+pages = [5]
+
+[[solution]]
+pages = [5]
