@@ -304,10 +304,10 @@ class RectangleExtractor:
             raise ValueError(
                 f"There is no reference image for v{self.version} pg{self.page_number}."
             )
-        # read the ref-image into a cv image.
+        # ref-image into cv image: cannot just use imread b/c of DB abstraction
         img_bytes = rimg_obj.image_file.read()
-        np_arr = np.frombuffer(img_bytes, np.uint8)
-        src_image = cv.imdecode(np_arr, cv.IMREAD_COLOR)
+        raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
+        src_image = cv.imdecode(raw_bytes_as_1d_array, cv.IMREAD_COLOR)
         # if a region is specified then cut it out from the original image,
         # but we need to remember to map the resulting rectangle back to the
         # original coordinate system.
