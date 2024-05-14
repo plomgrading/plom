@@ -1,15 +1,11 @@
 .. Plom documentation
    Copyright (C) 2022-2024 Colin B. Macdonald
+   Copyright (C) 2018 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
 Preparing an assessment
 =======================
-
-.. note::
-
-   This page of documentation is incomplete.
-   For now, see https://plomgrading.org/docs/walkthrough/create.html
 
 
 Designing your assessment
@@ -21,8 +17,9 @@ What software should I use?
 
 Its up to you.  Plom will need a PDF file of your assessment (PDF files if
 you are using multiple versions).  Plom came out of the mathematics
-community where LaTeX is commonly used, and we provide a template.
+community where LaTeX is commonly used, and we provide a template below.
 But you can use any software you like.
+
 
 
 What should each "question" be?
@@ -38,7 +35,8 @@ questions.
 You can use the ``label`` field in the specification (see :ref:`Creating a spec`) to
 *display* the two questions as "5(a)" and "5(b)".
 
-There can be more than one question on a page; any shared pages will
+If you enable shared pages (see below), there can be more than one
+question on a page; any shared pages will
 be duplicated during marking (that is, each marker will get their own
 copy for annotating).
 Any questions sharing a page will be drawn from the same version.
@@ -47,12 +45,83 @@ Questions can also span multiple pages, even in a multi-versioned
 assessment.
 
 
+Be careful with your margins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Plom needs space on the corners of every page to stamp QR-codes and a
+gap in the middle of the page for general information.
+One way to check your margins is to upload your PDF file(s) to Plom,
+and use the "Mock" feature to quickly mock-up how your paper will look
+with QR codes.
+
+
+A LaTeX template
+^^^^^^^^^^^^^^^^
+
+Our example assessment consists of 6 pages and 3 questions:
+`LaTeX source version 1 <https://gitlab.com/plom/plom/-/blob/main/testTemplates/latexTemplate.tex>`_.
+The second version of the same assessment has **exactly** the same structure, just different question text:
+`source version 2 <https://gitlab.com/plom/plom/-/blob/main/testTemplates/latexTemplatev2.tex>`_.
+To compile these files you will also need the
+`ID Box image <https://gitlab.com/plom/plom/-/blob/main/testTemplates/idBox4.pdf>`_.
+
+.. note::
+   The example The test consists of 6 pages:
+
+    * page 1 is an "ID-page" on which students write their name and ID-number.
+    * page 2 consists of further instructions to students and also a formula sheet;
+      students should not write anything on this page.
+    * page 3 is question 1 worth 5 marks,
+    * page 4 is question 2 worth 5 marks, and
+    * pages 5-6 are question 3 worth 10 marks.
+
+
+
+
 .. _Creating a spec:
 
 Creating a "spec file"
 ----------------------
 
-For now, see https://plomgrading.org/docs/walkthrough/testspec.html
+The specification is stored as a TOML file, and describes the
+structure of your assessment (which questions on are on which pages;
+how many marks is each question worth, etc).  You can use the Plom
+interface to help you create a specification, by answering a few
+questions, or you can prepare one in a file on your own computer.
+
+The ``spec.toml`` for the template assessment above looks like::
+
+    name = "plomdemo"
+    longName = "Midterm Demo using Plom"
+
+    numberOfVersions = 2
+    numberOfPages = 6
+    totalMarks = 20
+    numberOfQuestions = 3
+    idPage = 1
+    doNotMarkPages = [2]
+
+    [[question]]
+    pages = [3]
+    mark = 5
+
+    [[question]]
+    pages = [4]
+    mark = 3
+
+    [[question]]
+    pages = [5, 6]
+    mark = 10
+
+
+There are other fields which can be added to this file, for example,
+each question can have ``label = ...`` to specify a label other than
+the "Q1" default.
+The file can also contain comments starting with ``# ...``
+
+.. tip::
+   Shared pages are a new experimental feature: you can enable them by
+   explicitly putting ``allowSharedPages = true`` in your specification.
 
 
 
