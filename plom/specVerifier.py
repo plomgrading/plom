@@ -837,11 +837,14 @@ class SpecVerifier:
         for p in range(1, self.spec["numberOfPages"] + 1):
             if pageUse[p] == 0:
                 raise ValueError(f"Page {p} unused, perhaps it should be DNM?")
-            elif pageUse[p] != 1:
-                if _legacy:
-                    raise ValueError(f"Page {p} overused - {pageUse[p]} times")
-                # TODO: perhaps this should be a warning, once we have such a mechanism
             print(f"  Page {p} used at least once{chk}")
+        if _legacy or not self.spec.get("allowSharedPages"):
+            for p in range(1, self.spec["numberOfPages"] + 1):
+                if pageUse[p] > 1:
+                    # or perhaps this should be a warning, if we had such a mechanism
+                    raise ValueError(
+                        f"Page {p} overused {pageUse[p]} times but shared pages disabled"
+                    )
 
 
 def checkSolutionSpec(testSpec, solutionSpec):

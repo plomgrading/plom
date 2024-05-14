@@ -226,8 +226,18 @@ def test_spec_label_too_long():
         SpecVerifier(r).verify()
 
 
-def test_spec_shared_page():
+def test_spec_shared_page_not_allowed():
     r = deepcopy(raw)
+    r["question"]["2"]["pages"] = [3, 4]
+    with raises(ValueError):
+        SpecVerifier(r).verify(_legacy=True)
+    with raises(ValueError):
+        SpecVerifier(r).verify(_legacy=False)
+
+
+def test_spec_shared_page_must_be_explicitly_allowed():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = True
     r["question"]["2"]["pages"] = [3, 4]
     SpecVerifier(r).verify(_legacy=False)
 
