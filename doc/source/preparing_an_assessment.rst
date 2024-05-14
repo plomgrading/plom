@@ -55,26 +55,46 @@ and use the "Mock" feature to quickly mock-up how your paper will look
 with QR codes.
 
 
-A LaTeX template
-^^^^^^^^^^^^^^^^
+A template assessment
+^^^^^^^^^^^^^^^^^^^^^
 
-Our example assessment consists of 6 pages and 3 questions:
-`LaTeX source version 1 <https://gitlab.com/plom/plom/-/blob/main/testTemplates/latexTemplate.tex>`_.
-The second version of the same assessment has **exactly** the same structure, just different question text:
+.. note::
+   The example exam
+   (`PDF file <https://plomgrading.org/images/demoTest/latexTemplate.pdf>`_)
+   consists of 6 pages and 3 questions:
+
+   .. image:: https://plomgrading.org/images/demoTest/lt1-0.png
+     :width: 104
+     :alt: example page 1
+   .. image:: https://plomgrading.org/images/demoTest/lt1-1.png
+     :width: 104
+     :alt: example page 2
+   .. image:: https://plomgrading.org/images/demoTest/lt1-2.png
+     :width: 104
+     :alt: example page 3
+   .. image:: https://plomgrading.org/images/demoTest/lt1-3.png
+     :width: 104
+     :alt: example page 4
+   .. image:: https://plomgrading.org/images/demoTest/lt1-4.png
+     :width: 104
+     :alt: example page 5
+   .. image:: https://plomgrading.org/images/demoTest/lt1-5.png
+     :width: 104
+     :alt: example page 6
+
+   * page 1 is an "ID-page" on which students write their name and ID-number.
+   * page 2 consists of further instructions to students and also a formula sheet;
+     students should not write anything on this page.
+   * page 3 is question 1 worth 5 marks,
+   * page 4 is question 2 worth 5 marks, and
+   * pages 5-6 are question 3 worth 10 marks.
+
+You can download the `LaTeX source version 1 <https://gitlab.com/plom/plom/-/blob/main/testTemplates/latexTemplate.tex>`_.
+The second version of the same exam has **exactly** the same structure, just different question text:
+`PDF version 2 <https://plomgrading.org/images/demoTest/latexTemplatev2.pdf>`_,
 `source version 2 <https://gitlab.com/plom/plom/-/blob/main/testTemplates/latexTemplatev2.tex>`_.
 To compile these files you will also need the
 `ID Box image <https://gitlab.com/plom/plom/-/blob/main/testTemplates/idBox4.pdf>`_.
-
-.. note::
-   The example The test consists of 6 pages:
-
-    * page 1 is an "ID-page" on which students write their name and ID-number.
-    * page 2 consists of further instructions to students and also a formula sheet;
-      students should not write anything on this page.
-    * page 3 is question 1 worth 5 marks,
-    * page 4 is question 2 worth 5 marks, and
-    * pages 5-6 are question 3 worth 10 marks.
-
 
 
 
@@ -115,8 +135,8 @@ The ``spec.toml`` for the template assessment above looks like::
 
 
 There are other fields which can be added to this file, for example,
-each question can have ``label = ...`` to specify a label other than
-the "Q1" default.
+each question can have ``label = ...`` to specify something other than
+the "Qn" default.
 The file can also contain comments starting with ``# ...``
 
 .. tip::
