@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+
+## [0.15.3] - 2024-05-11
+
+### Added
 * Server can now show and in some cases customize the feedback rules that nag clients before they submit annotations.
 * New feedback rule checks that each page is annotated.
 
@@ -16,9 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Rubrics now keep more careful records about who modified them and when.
 
 ### Fixed
-* Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you do keep path info out of bundle names.
+* Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you to keep path info out of bundle names.
 * Processing PDF scans: don't complain about rounding errors when instead some metadata mixup about width/height has occurred.
-* Client: clicking "sync" to synchronous rubrics from sever no longer resets selection.
+* Client: clicking "sync" to synchronous rubrics from server no longer resets selection.
 
 
 ## [0.15.2] - 2024-03-11
@@ -1159,7 +1169,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.2...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.3...main
+[0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3
 [0.15.2]: https://gitlab.com/plom/plom/-/compare/v0.15.1...v0.15.2
 [0.15.1]: https://gitlab.com/plom/plom/-/compare/v0.15.0...v0.15.1
 [0.15.0]: https://gitlab.com/plom/plom/-/compare/v0.14.8...v0.15.0

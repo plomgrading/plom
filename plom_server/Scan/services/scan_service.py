@@ -8,10 +8,11 @@
 from __future__ import annotations
 
 import hashlib
+from math import ceil
 import pathlib
 import random
 import tempfile
-from typing import Any, List
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -22,7 +23,7 @@ from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 
 from plom.scan import QRextract
-from plom.scan import render_page_to_bitmap
+from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
@@ -69,6 +70,7 @@ class ScanService:
         pdf_hash: str,
         number_of_pages: int,
         *,
+        force_render: bool = False,
         debug_jpeg: bool = False,
     ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
@@ -87,6 +89,8 @@ class ScanService:
             number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
+            force_render: Don't try to extract large bitmaps; always
+                render the page.
             debug_jpeg (bool): off by default.  If True then we make some
                 rotations by non-multiples of 90, and save some
                 low-quality jpegs.
@@ -104,6 +108,7 @@ class ScanService:
                 user=user,
                 timestamp=timestamp,
                 pushed=False,
+                force_page_render=force_render,
             )
             with uploaded_pdf_file.open() as fh:
                 bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
@@ -166,7 +171,7 @@ class ScanService:
         )
 
     def split_and_save_bundle_images(
-        self, bundle_pk: int, *, debug_jpeg: bool = False
+        self, bundle_pk: int, *, number_of_chunks: int = 16, debug_jpeg: bool = False
     ) -> None:
         """Read a PDF document and save page images to filesystem/database.
 
@@ -174,6 +179,9 @@ class ScanService:
             bundle_pk: StagingBundle object primary key
 
         Keyword Args:
+            number_of_chunks: the number of page-splitting jobs to run;
+                each huey-page-split-task will process approximately
+                number_of_pages_in_bundle / number_of_chunks pages.
             debug_jpeg (bool): off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
@@ -190,7 +198,10 @@ class ScanService:
             tracker_pk = x.pk
 
         res = huey_parent_split_bundle_task(
-            bundle_pk, debug_jpeg=debug_jpeg, tracker_pk=tracker_pk
+            bundle_pk,
+            number_of_chunks,
+            debug_jpeg=debug_jpeg,
+            tracker_pk=tracker_pk,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -320,12 +331,12 @@ class ScanService:
         return bundle.stagingimage_set.count()
 
     @transaction.atomic
-    def get_user_bundles(self, user: User) -> List[StagingBundle]:
+    def get_user_bundles(self, user: User) -> list[StagingBundle]:
         """Return all of the staging bundles that the given user uploaded."""
         return list(StagingBundle.objects.filter(user=user))
 
     @transaction.atomic
-    def get_all_staging_bundles(self) -> List[StagingBundle]:
+    def get_all_staging_bundles(self) -> list[StagingBundle]:
         """Return all of the staging bundles."""
         return list(StagingBundle.objects.all())
 
@@ -1342,7 +1353,8 @@ class ScanService:
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_parent_split_bundle_task(
-    bundle_pk,
+    bundle_pk: int,
+    number_of_chunks: int,
     *,
     debug_jpeg: bool = False,
     tracker_pk: int,
@@ -1356,6 +1368,9 @@ def huey_parent_split_bundle_task(
 
     Args:
         bundle_pk: StagingBundle object primary key
+        number_of_chunks: the number of page-splitting jobs to run;
+            each huey-page-split-task will handle 1/number_of_chunks of the
+            pages in the bundle.
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
@@ -1366,32 +1381,53 @@ def huey_parent_split_bundle_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep
+    from time import sleep, time
 
+    start_time = time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    # note that we index bundle images from 1 not zero,
+    # cut the list of all indices into chunks
+    bundle_length = bundle_obj.number_of_pages
+    assert bundle_length is not None
+    chunk_length = ceil(bundle_length / number_of_chunks)
+    # be careful with 0/1 indexing here.
+    # pymupdf (which we use to process pdfs) 0-indexes pages within
+    # a pdf while we 1-index bundle-positions. So at some point
+    # in our code we need to add/subtract one to translate between
+    # these. We add one here to make sure "order" is 1-indexed.
+    all_bundle_orders = [ord + 1 for ord in range(bundle_length)]
+    order_chunks = [
+        all_bundle_orders[ord : ord + chunk_length]
+        for ord in range(0, bundle_length, chunk_length)
+    ]
+
+    # note that we index bundle images from zero,
     with tempfile.TemporaryDirectory() as tmpdir:
-        n_pages = bundle_obj.number_of_pages
-        assert n_pages is not None
         task_list = [
-            huey_child_get_page_image(
+            huey_child_get_page_images(
                 bundle_pk,
-                pg,  # note pg is 1-indexed
+                ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
-                f"page{pg:05}",  # filename matches our 1-index
                 debug_jpeg=debug_jpeg,
             )
-            for pg in range(1, n_pages + 1)
+            for ord_chnk in order_chunks
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
         n_tasks = len(task_list)
         while True:
-            results = [X.get() for X in task_list]
-            count = sum(1 for X in results if X is not None)
+            # list items are None (if not completed) or list [dict of page info]
+            result_chunks = [X.get() for X in task_list]
+            # remove all the nones to get list of completed tasks
+            not_none_result_chunks = [
+                chunk for chunk in result_chunks if chunk is not None
+            ]
+            completed_tasks = len(not_none_result_chunks)
+            # flatten that list of lists to get a list of rendered pages
+            results = [X for chunk in not_none_result_chunks for X in chunk]
+            rendered_page_count = len(results)
 
             # TODO - check for error status here.
 
@@ -1399,10 +1435,10 @@ def huey_parent_split_bundle_task(
                 _task = PagesToImagesHueyTask.objects.select_for_update().get(
                     bundle=bundle_obj
                 )
-                _task.completed_pages = count
+                _task.completed_pages = rendered_page_count
                 _task.save()
 
-            if count == n_tasks:
+            if completed_tasks == n_tasks:
                 break
             else:
                 sleep(1)
@@ -1412,7 +1448,7 @@ def huey_parent_split_bundle_task(
                 with open(X["file_path"], "rb") as fh:
                     img = StagingImage.objects.create(
                         bundle=bundle_obj,
-                        bundle_order=X["index"],
+                        bundle_order=X["order"],
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
                     )
@@ -1424,6 +1460,7 @@ def huey_parent_split_bundle_task(
             # get a new reference for updating the bundle itself
             _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
             _write_bundle.has_page_images = True
+            _write_bundle.time_to_make_page_images = time() - start_time
             _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -1456,7 +1493,9 @@ def huey_parent_read_qr_codes_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep
+    from time import sleep, time
+
+    start_time = time()
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
@@ -1497,6 +1536,7 @@ def huey_parent_read_qr_codes_task(
         # get a new reference for updating the bundle itself
         _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
         _write_bundle.has_qr_codes = True
+        _write_bundle.time_to_read_qr = time() - start_time
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
@@ -1508,24 +1548,22 @@ def huey_parent_read_qr_codes_task(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks")
-def huey_child_get_page_image(
+def huey_child_get_page_images(
     bundle_pk: int,
-    index: int,
+    order_list: list[int],
     basedir: pathlib.Path,
-    basename: str,
     *,
     debug_jpeg: bool = False,
-) -> dict[str, Any]:
-    """Render a page image and save to disk in the background.
+) -> list[dict[str, Any]]:
+    """Render page images and save to disk in the background.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
 
     Args:
         bundle_pk: bundle DB object's primary key
-        index (int): bundle order of page - 1-indexed
+        order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
-        basename (str): a basic filename without the extension
 
     Keyword Args:
         debug_jpeg (bool): off by default.  If True then we make some rotations by
@@ -1541,44 +1579,70 @@ def huey_child_get_page_image(
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
+    rendered_page_info = []
+
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
-        save_path = render_page_to_bitmap(
-            pdf_doc[index - 1],  # PyMuPDF is 0-indexed
-            basedir,
-            basename,
-            bundle_obj.pdf_file,
-            add_metadata=True,
-        )
-    # For testing, randomly make jpegs, rotated a bit, of various qualities
-    if debug_jpeg and random.uniform(0, 1) <= 0.5:
-        _ = make_mucked_up_jpeg(save_path, basedir / ("muck-" + basename + ".jpg"))
-        save_path.unlink()
-        save_path = _
-    with open(save_path, "rb") as f:
-        image_hash = hashlib.sha256(f.read()).hexdigest()
+        for order in order_list:
+            basename = f"page{order:05}"
+            if bundle_obj.force_page_render:
+                save_path = None
+                msgs = ["Force render"]
+            else:
+                save_path, msgs = try_to_extract_image(
+                    pdf_doc[order - 1],  # PyMuPDF is 0-indexed
+                    pdf_doc,
+                    basedir,
+                    basename,
+                    bundle_obj.pdf_file,
+                    do_not_extract=False,
+                    add_metadata=True,
+                )
+            if save_path is None:
+                # log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+                # TODO: log and consider storing in the StagingImage as well
+                save_path = render_page_to_bitmap(
+                    pdf_doc[order - 1],  # PyMuPDF is 0-indexed
+                    basedir,
+                    basename,
+                    bundle_obj.pdf_file,
+                    add_metadata=True,
+                )
 
-    # make sure we load with exif rotations if required
-    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
-    size = 256, 256
-    try:
-        _lanczos = Image.Resampling.LANCZOS
-    except AttributeError:
-        # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
-        _lanczos = Image.LANCZOS  # type: ignore
-    pil_img.thumbnail(size, _lanczos)
-    thumb_path = basedir / ("thumb-" + basename + ".png")
-    pil_img.save(thumb_path)
+            # For testing, randomly make jpegs, rotated a bit, of various qualities
+            if debug_jpeg and random.uniform(0, 1) <= 0.5:
+                _ = make_mucked_up_jpeg(
+                    save_path, basedir / ("muck-" + basename + ".jpg")
+                )
+                save_path.unlink()
+                save_path = _
+            with open(save_path, "rb") as f:
+                image_hash = hashlib.sha256(f.read()).hexdigest()
 
-    # TODO - return an error of some sort here if problems
+            # make sure we load with exif rotations if required
+            pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
+            size = 256, 256
+            try:
+                _lanczos = Image.Resampling.LANCZOS
+            except AttributeError:
+                # TODO: Issue #2886: Deprecated, drop when minimum Pillow > 9.1.0
+                _lanczos = Image.LANCZOS  # type: ignore
+            pil_img.thumbnail(size, _lanczos)
+            thumb_path = basedir / ("thumb-" + basename + ".png")
+            pil_img.save(thumb_path)
 
-    return {
-        "index": index,
-        "file_name": save_path.name,
-        "file_path": str(save_path),
-        "image_hash": image_hash,
-        "thumb_name": thumb_path.name,
-        "thumb_path": str(thumb_path),
-    }
+            rendered_page_info.append(
+                {
+                    "order": order,
+                    "file_name": save_path.name,
+                    "file_path": str(save_path),
+                    "image_hash": image_hash,
+                    "thumb_name": thumb_path.name,
+                    "thumb_path": str(thumb_path),
+                }
+            )
+
+    # TODO - return an error of some sort here if problems?
+    return rendered_page_info
 
 
 # The decorated function returns a ``huey.api.Result``

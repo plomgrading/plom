@@ -107,15 +107,19 @@ class ScannerHomeView(ScannerRequiredView):
 
             user = request.user
             slug = data["slug"]
-            time_uploaded = data["time_uploaded"]
             bundle_file = data["pdf"]
             pdf_hash = data["sha256"]
             number_of_pages = data["number_of_pages"]
-            timestamp = datetime.timestamp(time_uploaded)
+            timestamp = datetime.timestamp(data["time_uploaded"])
 
-            # Note that this does take a timestamp instead of a bundle_pk, because that bundle does not yet exist in the database and so has no pk.
             ScanService().upload_bundle(
-                bundle_file, slug, user, timestamp, pdf_hash, number_of_pages
+                bundle_file,
+                slug,
+                user,
+                timestamp,
+                pdf_hash,
+                number_of_pages,
+                force_render=data["force_render"],
             )
 
             return HttpResponseRedirect(reverse("scan_home"))

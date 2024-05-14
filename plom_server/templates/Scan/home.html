@@ -14,6 +14,55 @@
     Scan bundles
 {% endblock page_heading %}
 {% block main_content %}
+    <div class="modal fade"
+         id="safeModeDocModal"
+         tabindex="-1"
+         aria-labelledby="safeModeDocModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="safeModeDocModalLabel">About safe mode rendering</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        By default, Plom checks the content of each
+                        page for a single large bitmap image, for
+                        lossless extraction.  This is fast and usually
+                        gives the highest possible image quality.
+                    </p>
+                    <p>
+                        If Plom detects anything on the page other
+                        than a single bitmap image (such as text, PDF
+                        annotations, vector art, etc) it falls back on
+                        &ldquo;rendering&rdquo; the page to generate a
+                        bitmap.
+                    </p>
+                    <p>
+                        In rare circumstances, the
+                        auto-detection-based extraction could miss
+                        overlaid annotations in student self-scanned
+                        work.  Extraction could also give
+                        unreasonably-large files, for unreasonable
+                        scanner settings (such as very high DPI).
+                    </p>
+                    <p>
+                        If you are experiencing problems with your
+                        scans, you can tick the box to disable the
+                        automatic extraction and force rendering in
+                        all cases.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-5">
             <div class="card w-auto my-2">
@@ -63,6 +112,16 @@
                               action="{% url 'scan_home' %}">
                             {% csrf_token %}
                             <input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="force_render"
+                                       name="force_render" />
+                                <label class="form-check-label" for="force_render">
+                                    Force safe mode rendering of each page
+                                    (<a href="" data-bs-toggle="modal" data-bs-target="#safeModeDocModal">tell me more</a>)
+                                </label>
+                            </div>
                             <input type="submit" class="btn btn-secondary" value="Upload">
                         </form>
                     {% else %}
