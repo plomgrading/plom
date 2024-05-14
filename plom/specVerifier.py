@@ -845,6 +845,12 @@ class SpecVerifier:
                     raise ValueError(
                         f"Page {p} overused {pageUse[p]} times but shared pages disabled"
                     )
+        for g in range(self.spec["numberOfQuestions"]):
+            for p in self.spec["question"][str(g + 1)]["pages"]:
+                if p in self.spec["doNotMarkPages"]:
+                    raise ValueError(
+                        f"Page {p} cannot be shared b/w DNM and question idx {g + 1}"
+                    )
 
 
 def checkSolutionSpec(testSpec, solutionSpec):

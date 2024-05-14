@@ -252,6 +252,14 @@ def test_spec_shared_page_must_be_explicitly_allowed():
     SpecVerifier(r).verify(_legacy=False)
 
 
+def test_spec_DNM_page_cannot_be_shared():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = True
+    r["question"]["1"]["pages"] = [2, 3]
+    with raises(ValueError, match="shared.*DNM.*question"):
+        SpecVerifier(r).verify(_legacy=False)
+
+
 def test_spec_legacy_overused_page():
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [1, 2, 3]
