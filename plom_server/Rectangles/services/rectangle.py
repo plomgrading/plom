@@ -153,7 +153,7 @@ class RectangleExtractor:
             The perspective transformation matrix that takes the rectangle (in scan-image px coords) and maps it back to
             a rectangle with width-height given by reference rectangle (but translated to origin).
         """
-        # map the refernce rectangle to scan coordinates
+        # map the reference rectangle to scan coordinates
         # (sc_x, sc_y) = M @ (r_x,r_y,1)
         # recall np matrix-mul Matrix @ vec, not M*v.
         scan_rect_coords = np.array(
@@ -218,7 +218,7 @@ class RectangleExtractor:
         rect_height = bottom - top
         rect_width = right - left
 
-        # now build a tranformation to map from ref-image-coords to
+        # now build a transformation to map from ref-image-coords to
         # scan-image-coords
         M_r_to_s = self._get_affine_transformation_matrix_ref_to_scan(img_obj.parsed_qr)
         # this can fail if too few qr-codes in scan-image
@@ -226,7 +226,7 @@ class RectangleExtractor:
         if M_r_to_s is None:
             return None
         # now use that to map the reference-rectangle over to
-        # the scan-image and then build the tranform that will
+        # the scan-image and then build the transform that will
         # take that quadrilateral back to a rectangle of same
         # dimensions as the ref-rectangle, but translated to
         # the origin.

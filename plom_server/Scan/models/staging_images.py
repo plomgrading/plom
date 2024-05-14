@@ -18,7 +18,7 @@ class StagingImage(models.Model):
     TODO: document other fields.
 
     Fields:
-        rotation: currrently this only deals with 0, 90, 180, 270, -90.
+        rotation: currently this only deals with 0, 90, 180, 270, -90.
             fractional rotations are handled elsewhere,
     """
 

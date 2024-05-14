@@ -49,7 +49,7 @@ class Image(models.Model):
         tells django where to automagically compute+store height/width information on save
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
-        it the correct approximate orientation.  Currrently this only deals
+        it the correct approximate orientation.  Currently this only deals
         with 0, 90, 180, 270, -90.  More precise fractional rotations are
         handled elsewhere,
 
