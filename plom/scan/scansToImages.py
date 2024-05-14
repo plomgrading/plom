@@ -146,7 +146,7 @@ def processFileToBitmaps(
             Must exist.
 
     Keyword Args:
-        do_not_extract (bool): always render, do no extract even if
+        do_not_extract (bool): always render, do not extract even if
             it seems possible to do so.  This is off-by-default until
             we are confident extracting won't miss anything.
             See more detailed description in the user-facing command-line

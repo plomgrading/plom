@@ -1,5 +1,6 @@
 .. Plom documentation
    Copyright (C) 2021-2023 Colin B. Macdonald
+   Copyright (C) 2024 Bryan
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Installing the Plom Client
@@ -51,7 +52,7 @@ want to verify your download.)
 For GNU/Linux
 -------------
 
-Users of various distributions can install from `from Flathub`_.
+Users of various distributions can install `from Flathub`_.
 
 .. _from Flathub: https://flathub.org/apps/details/org.plomgrading.PlomClient
 
