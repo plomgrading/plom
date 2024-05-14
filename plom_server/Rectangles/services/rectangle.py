@@ -271,8 +271,8 @@ class RectangleExtractor:
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
-            # TODO: maybe we could avoid the empty zip case by stuffing a wee
-            # bit of JSON metadata in here, like the coordinates for example.
+            # TODO: maybe we could avoid the empty zip case by writing a bit
+            # of JSON metadata in here, like the coordinates for example.
             for pn in paper_numbers:
                 fname = f"extracted_rectangle_pn{pn}.png"
                 dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
