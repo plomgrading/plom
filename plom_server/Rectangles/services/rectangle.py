@@ -8,7 +8,6 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 from typing import Any
-from warnings import warn
 
 import cv2 as cv
 import imutils

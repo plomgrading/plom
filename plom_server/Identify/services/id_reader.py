@@ -225,7 +225,6 @@ class IDReaderService:
         res = huey_id_reading_task(
             user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
         )
-        print(f"Just enqueued Huey id_reading_task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
 
@@ -257,7 +256,6 @@ def huey_id_reading_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    print(tracker_pk, " meh", task, "bah")
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
@@ -541,7 +539,7 @@ class IDBoxProcessorService:
             id_box_files, student_number_length
         )
 
-        probs_as_list = {k: [x for x in v] for k, v in heatmap.items()}
+        probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
         with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
             json.dump(probs_as_list, fh, indent="  ")
         return heatmap
