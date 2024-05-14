@@ -14,7 +14,7 @@ import numpy as np
 from pathlib import Path
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
-from typing import Any, Dict, List
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -54,7 +54,7 @@ class IDReaderService:
             paper_list.append(task.paper.paper_number)
         return paper_list
 
-    def get_prenamed_paper_numbers(self) -> List[int]:
+    def get_prenamed_paper_numbers(self) -> list[int]:
         return list(
             IDPrediction.objects.filter(predictor="prename").values_list(
                 "paper__paper_number", flat=True
@@ -358,7 +358,7 @@ class IDBoxProcessorService:
     # see https://stackoverflow.com/questions/73260250/how-do-i-type-hint-opencv-images-in-python
     def get_digit_images(
         self, ID_box: cv.typing.MatLike, num_digits: int
-    ) -> List[cv.typing.MatLike]:
+    ) -> list[cv.typing.MatLike]:
         """Find the digit images and return them in a list.
 
         Args:
@@ -447,7 +447,7 @@ class IDBoxProcessorService:
         num_digits: int,
         *,
         debug: bool = True,
-    ) -> List[List[float]]:
+    ) -> list[np.ndarray]:
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
@@ -495,8 +495,8 @@ class IDBoxProcessorService:
         return prob_lists
 
     def compute_probability_heatmap_for_idbox_images(
-        self, image_file_paths: Dict[int, Path], num_digits: int
-    ) -> Dict[int, List[List[float]]]:
+        self, image_file_paths: dict[int, Path], num_digits: int
+    ) -> dict[int, list[np.ndarray]]:
         """Return probabilities for digits for each paper in the given dictionary of images files.
 
         Args:
@@ -527,7 +527,7 @@ class IDBoxProcessorService:
                 probabilities[paper_number] = prob_lists
         return probabilities
 
-    def compute_and_save_probability_heatmap(self, id_box_files: Dict[int, Path]):
+    def compute_and_save_probability_heatmap(self, id_box_files: dict[int, Path]):
         """Use classifier to compute and save a probability heatmap for the ids.
 
         This downloads a pre-trained random forest classier to compute the probability
@@ -549,7 +549,7 @@ class IDBoxProcessorService:
     def make_id_predictions(
         self,
         user: User,
-        id_box_files: Dict[int, Path],
+        id_box_files: dict[int, Path],
         *,
         recompute_heatmap: bool = True,
     ):
