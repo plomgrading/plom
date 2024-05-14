@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Aden Chan
 
 """Plom is Paperless Open Marking.
 
@@ -23,7 +24,7 @@ if sys.version_info[0] == 2:
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
 
-Plom_API_Version = "106"
+Plom_API_Version = "107"
 Plom_Legacy_Server_API_Version = "60"
 Default_Port = 41984
 
