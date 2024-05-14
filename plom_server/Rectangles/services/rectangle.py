@@ -259,7 +259,10 @@ class RectangleExtractor:
     ):
         """Construct a zipfile of the extracted rectangular regions and save in dest_filename.
 
-        Warning: This constructs the pngs for each extracted region in memory, but then saves the resulting (potentially very large) zipfile on disc. This could cause problems if large rectangles are selected from many pages.
+        Warning: This constructs the pngs for each extracted region in
+        memory, but then saves the resulting (potentially very large)
+        zipfile on disc. This could cause problems if large rectangles
+        are selected from many pages.
         """
         paper_numbers = (
             PaperInfoService().get_paper_numbers_containing_given_page_version(
@@ -268,11 +271,15 @@ class RectangleExtractor:
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
+            # TODO: maybe we could avoid the empty zip case by stuffing a wee
+            # bit of JSON metadata in here, like the coordinates for example.
             for pn in paper_numbers:
                 fname = f"extracted_rectangle_pn{pn}.png"
-                # correctly detect the None return error case
-                # for the rectangle extractor.
                 dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
+                if dat is None:
+                    # TODO: is just ignoring the None's right?  What if they are all Nones
+                    # do we make an empty zip?  That's no fun.
+                    continue
                 archive.writestr(fname, dat)
 
     def get_largest_rectangle_contour(
