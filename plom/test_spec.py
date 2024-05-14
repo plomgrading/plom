@@ -229,9 +229,9 @@ def test_spec_label_too_long():
 def test_spec_shared_page_not_allowed():
     r = deepcopy(raw)
     r["question"]["2"]["pages"] = [3, 4]
-    with raises(ValueError):
+    with raises(ValueError, match="overused"):
         SpecVerifier(r).verify(_legacy=True)
-    with raises(ValueError):
+    with raises(ValueError, match="overused"):
         SpecVerifier(r).verify(_legacy=False)
 
 
@@ -247,8 +247,9 @@ def test_spec_legacy_overused_page():
     r["question"]["1"]["pages"] = [1, 2, 3]
     with raises(ValueError, match="overused"):
         SpecVerifier(r).verify()
-    r["question"]["1"]["pages"] = [2]
-    with raises(ValueError, match="overused"):
+    r = deepcopy(raw)
+    r["question"]["3"]["pages"] = [4]
+    with raises(ValueError, match="unused"):
         SpecVerifier(r).verify()
 
 
