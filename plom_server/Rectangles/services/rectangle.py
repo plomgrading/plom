@@ -202,7 +202,6 @@ class RectangleExtractor:
         Returns:
             the bytes of the image in png format, or none if errors
         """
-
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
         img_obj = FixedPage.objects.get(
