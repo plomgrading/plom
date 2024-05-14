@@ -74,59 +74,98 @@ class RectangleExtractor:
         self.FULL_WIDTH = rimg_obj.width
         self.FULL_HEIGHT = rimg_obj.height
 
-    def _create_affine_transformation_matrix(
+    def _get_affine_transformation_matrix_ref_to_scan(
         self, qr_dict: dict[str, dict[str, Any]]
-    ) -> np.ndarray[Any, Any]:
-        """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
+    ) -> None | np.ndarray[Any, Any]:
+        """Given QR data for an image, determine the affine transformation that maps coords in the reference image to coordinates in the scan image.
 
         Args:
-            qr_dict (dict): the QR information for the image
+            qr_dict: the QR information for the image
 
         Returns:
-            numpy.ndarray: the affine transformation matrix for correcting the image
+            The affine transformation matrix for correcting the image, or None if there is insufficient data.
         """
         # We need 3 qr codes in the dict, so if missing SE or SW
-        # then just return an identify matrix
+        # then  return None
         if "SE" not in qr_dict or "SW" not in qr_dict:
-            return np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+            return None
 
         if "NW" in qr_dict:
-            dest_three_points = np.array(
+            ref_three_points = np.array(
                 [
                     [self.LEFT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
-                ]
+                ],
+                dtype="float32",
             )
-            src_three_points = np.array(
+            scan_three_points = np.array(
                 [
                     [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
                     [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
-                ]
+                ],
+                dtype="float32",
             )
         elif "NE" in qr_dict:
-            dest_three_points = np.array(
+            ref_three_points = np.array(
                 [
                     [self.RIGHT, self.TOP],
                     [self.LEFT, self.BOTTOM],
                     [self.RIGHT, self.BOTTOM],
-                ]
+                ],
+                dtype="float32",
             )
-            src_three_points = np.array(
+            scan_three_points = np.array(
                 [
                     [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
                     [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
-                ]
+                ],
+                dtype="float32",
             )
         else:
-            return np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+            return None
         # float32 input expected
-        return cv.getAffineTransform(
-            src_three_points.astype(np.float32),
-            dest_three_points.astype(np.float32),
+        return cv.getAffineTransform(ref_three_points, scan_three_points)
+
+    def _get_perspective_transform_scan_to_ref(
+        self, ref_rect: dict[str, float], M_r_to_s: np.ndarray[Any, Any]
+    ) -> np.ndarray[Any, Any]:
+        """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
+
+        Args:
+            ref_rect: the ref-image coords (pixels) of the ref-rectangle given as {'left': px, 'top':px} etc.
+            M_r_to_s: the affine transform from ref-image to scan-image as computed via the location of the qr-codes.
+
+        Returns:
+            The perspective transformation matrix that takes the rectangle (in scan-image px coords) and maps it back to
+            a rectangle with width-height given by reference rectangle (but translated to origin).
+        """
+        # map the refernce rectangle to scan coordinates
+        # (sc_x, sc_y) = M @ (r_x,r_y,1)
+        # recall np matrix-mul Matrix @ vec, not M*v.
+        scan_rect_coords = np.array(
+            [
+                M_r_to_s
+                @ np.array([ref_rect["left"], ref_rect["top"], 1], dtype="float32"),
+                M_r_to_s
+                @ np.array([ref_rect["right"], ref_rect["top"], 1], dtype="float32"),
+                M_r_to_s
+                @ np.array([ref_rect["right"], ref_rect["bottom"], 1], dtype="float32"),
+                M_r_to_s
+                @ np.array([ref_rect["left"], ref_rect["bottom"], 1], dtype="float32"),
+            ],
+            dtype="float32",
         )
+
+        dest_h = ref_rect["bottom"] - ref_rect["top"]
+        dest_w = ref_rect["right"] - ref_rect["left"]
+        dest_rect_coords = np.array(
+            [[0, 0], [dest_w, 0], [dest_w, dest_h], [0, dest_h]], dtype="float32"
+        )
+        # now build the getPerspectiveTransform from scan-coords back to ref-coords
+        return cv.getPerspectiveTransform(scan_rect_coords, dest_rect_coords)
 
     def extract_rect_region(
         self,
@@ -135,7 +174,7 @@ class RectangleExtractor:
         top_f: float,
         right_f: float,
         bottom_f: float,
-    ) -> bytes:
+    ) -> None | bytes:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
@@ -148,55 +187,50 @@ class RectangleExtractor:
             right_f (float): same as top, defining the right boundary
 
         Returns:
-            the bytes of the image in png format
+            the bytes of the image in png format, or none if errors
         """
+
+        # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
         img_obj = FixedPage.objects.get(
             version=self.version, page_number=self.page_number, paper=paper_obj
         ).image
 
-        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img_obj.image_file.path)
-        pil_img = pil_img.rotate(img_obj.rotation, expand=True)
-
-        # convert the PIL.Image to OpenCV format
-        opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
-
-        affine_matrix = self._create_affine_transformation_matrix(img_obj.parsed_qr)
-        righted_img = cv.warpAffine(
-            opencv_img,
-            affine_matrix,
-            (self.FULL_WIDTH, self.FULL_HEIGHT),
-            flags=cv.INTER_LINEAR,
-        )
-
+        # rectangle to extract in ref-image-coords
         top = round(self.TOP + top_f * self.HEIGHT)
         bottom = round(self.TOP + bottom_f * self.HEIGHT)
         left = round(self.LEFT + left_f * self.WIDTH)
         right = round(self.LEFT + right_f * self.WIDTH)
+        ref_rect = {"left": left, "right": right, "top": top, "bottom": bottom}
+        rect_height = bottom - top
+        rect_width = right - left
 
-        if top < 0:
-            warn(f"Top input of {top} is outside of image pixel range, capping at 0.")
-        top = max(top, 0)
-        if left < 0:
-            warn(f"Left input of {left} is outside of image pixel range, capping at 0.")
-        left = max(left, 0)
-        if right > pil_img.width:
-            warn(
-                f"Right input of {right} is outside of image pixel range,"
-                f" capping at {pil_img.width}."
-            )
-        right = min(right, pil_img.width)
-        if bottom > pil_img.height:
-            warn(
-                f"Bottom input of {bottom} is outside of image pixel range,"
-                f" capping at {pil_img.height}."
-            )
-        bottom = min(bottom, pil_img.height)
-
-        cropped_img = righted_img[top:bottom, left:right]
-
+        # now build a tranformation to map from ref-image-coords to
+        # scan-image-coords
+        M_r_to_s = self._get_affine_transformation_matrix_ref_to_scan(img_obj.parsed_qr)
+        # this can fail if too few qr-codes in scan-image
+        # in which case we return a None
+        if M_r_to_s is None:
+            return None
+        # now use that to map the reference-rectangle over to
+        # the scan-image and then build the tranform that will
+        # take that quadrilateral back to a rectangle of same
+        # dimensions as the ref-rectangle, but translated to
+        # the origin.
+        M_s_to_r = self._get_perspective_transform_scan_to_ref(ref_rect, M_r_to_s)
+        # now get the scan-image ready to extract the rectangle
+        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img_obj.image_file.path)
+        pil_img = pil_img.rotate(img_obj.rotation, expand=True)
+        # convert the PIL.Image to OpenCV format
+        opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
+        # now finally extract out the rectangle from the scan image
+        extracted_rect_img = cv.warpPerspective(
+            opencv_img, M_s_to_r, (rect_width, rect_height)
+        )
         # convert the result to a PIL.Image
-        resulting_img = Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))
+        resulting_img = Image.fromarray(
+            cv.cvtColor(extracted_rect_img, cv.COLOR_BGR2RGB)
+        )
         with BytesIO() as fh:
             resulting_img.save(fh, format="png")
             return fh.getvalue()
@@ -222,6 +256,8 @@ class RectangleExtractor:
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
             for pn in paper_numbers:
                 fname = f"extracted_rectangle_pn{pn}.png"
+                # correctly detect the None return error case
+                # for the rectangle extractor.
                 dat = self.extract_rect_region(pn, left_f, top_f, right_f, bottom_f)
                 archive.writestr(fname, dat)
 

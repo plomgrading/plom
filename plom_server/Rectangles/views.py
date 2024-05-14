@@ -105,6 +105,8 @@ class ExtractedRectangleView(ManagerRequiredView):
         top = float(request.GET.get("top"))
         bottom = float(request.GET.get("bottom"))
 
+        # TODO - correctly handle the None-return case when
+        # rex cannot compute appropriate transforms.
         rect_region_bytes = rex.extract_rect_region(paper, left, top, right, bottom)
 
         return FileResponse(ContentFile(rect_region_bytes))

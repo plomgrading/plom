@@ -321,6 +321,8 @@ class IDBoxProcessorService:
         img_file_dict = {}
         for pn in paper_numbers:
             id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
+            # TODO - correctly handle the possible None return
+            # from rex when cannot compute appropriate transforms.
             id_box_bytes = rex.extract_rect_region(pn, *box)
             id_box_filename.write_bytes(id_box_bytes)
             img_file_dict[pn] = id_box_filename
