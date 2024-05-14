@@ -84,8 +84,7 @@ def add_metadata_jpeg_exif(filename, bundle_name, bundle_page):
             ``user_comment`` field.
     """
     im_shell = exif.Image(filename)
-    im_shell.set("user_comment", generate_metadata_str(
-        bundle_name, bundle_page))
+    im_shell.set("user_comment", generate_metadata_str(bundle_name, bundle_page))
     with open(filename, "wb") as f:
         f.write(im_shell.get_file())
 
@@ -204,8 +203,7 @@ def processFileToBitmaps(
             if outname is not None:
                 files.append(outname)
                 continue
-            log.info(
-                f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+            log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
             outname = render_page_to_bitmap(
                 p,
                 dest,
@@ -215,8 +213,7 @@ def processFileToBitmaps(
             )
             # For testing, randomly make jpegs, rotated a bit, of various qualities
             if debug_jpeg and random.uniform(0, 1) <= 0.9:
-                _ = make_mucked_up_jpeg(
-                    outname, dest / ("muck-" + basename + ".jpg"))
+                _ = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
                 outname.unlink()
                 outname = _
             files.append(outname)
@@ -321,8 +318,7 @@ def try_to_extract_image(
             # add_metadata_jpeg_exif(outname, bundle_name, p.number)
         else:
             # there should be no other choice until PlomImageExts is updated
-            raise ValueError(
-                f"No support for watermarking \"{d['ext']}\" files")
+            raise ValueError(f"No support for watermarking \"{d['ext']}\" files")
     return outname, msgs
 
 
