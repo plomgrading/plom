@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Aden Chan
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QUndoCommand

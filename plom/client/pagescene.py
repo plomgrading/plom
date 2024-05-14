@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2024 Aden Chan
 
 # a different kind of annotations... this is about code typing
 from __future__ import annotations

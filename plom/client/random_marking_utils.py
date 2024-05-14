@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Aden Chan
 
 import json
 from pathlib import Path
