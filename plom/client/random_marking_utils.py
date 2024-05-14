@@ -35,7 +35,7 @@ from plom.client.tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
-    CommandGroupDeltaText,
+    CommandRubric,
     CommandText,
 )
 
@@ -149,9 +149,7 @@ class SceneParent(QWidget):
 
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
-            self.scene.undoStack.push(
-                CommandGroupDeltaText(self.scene, self.rpt(), rubric)
-            )
+            self.scene.undoStack.push(CommandRubric(self.scene, self.rpt(), rubric))
         else:  # not legal - push text
             self.scene.undoStack.push(
                 CommandText(self.scene, self.rpt(), rubric["text"])
@@ -171,7 +169,7 @@ class SceneParent(QWidget):
             if self.scene.isLegalRubric(rubric):
                 if rubric["value"] > 0 or rubric["value"] < 0:
                     self.scene.undoStack.push(
-                        CommandGroupDeltaText(self.scene, self.rpt(), rubric)
+                        CommandRubric(self.scene, self.rpt(), rubric)
                     )
                     return
 

@@ -14,8 +14,8 @@ from plom.client.tools.crop import CommandCrop
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (
-    CommandGroupDeltaText,
-    GroupDeltaTextItem,
+    CommandRubric,
+    RubricItem,
     GhostComment,
 )
 from plom.client.tools.cross import CommandCross, CrossItem
