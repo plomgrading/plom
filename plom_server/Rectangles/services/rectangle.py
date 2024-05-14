@@ -236,7 +236,7 @@ class RectangleExtractor:
         # Note: this `img_obj.rotation` is (currently) only 0, 90, 180, 270
         # (The small adjustments from true will be handled by warpPerspective)
         pil_img = pil_img.rotate(img_obj.rotation, expand=True)
-        # convert the PIL.Image to OpenCV format
+        # convert PIL format to OpenCV format via numpy array; feels fragile :(
         opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
         # now finally extract out the rectangle from the scan image
         extracted_rect_img = cv.warpPerspective(
