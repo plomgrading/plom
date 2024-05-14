@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -49,7 +49,10 @@ class Image(models.Model):
         tells django where to automagically compute+store height/width information on save
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
-        it the correct orientation.
+        it the correct approximate orientation.  Currrently this only deals
+        with 0, 90, 180, 270, -90.  More precise fractional rotations are
+        handled elsewhere,
+
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
 
     height (int): the height of the image in px (auto-populated on
