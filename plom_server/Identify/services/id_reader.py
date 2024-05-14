@@ -373,7 +373,8 @@ class IDBoxProcessorService:
         processed_digits_images_list = []
         for digit_index in range(num_digits):
             # extract single digit by dividing ID box into num_digits equal boxes
-            ID_box_height, ID_box_width, _ = ID_box.shape
+            # (MyPy unhappy, thinks we won't get three numbers but we do in practice)
+            ID_box_height, ID_box_width, _ = ID_box.shape  # type: ignore
             digit_box_width = ID_box_width / num_digits
             side_crop = 5
             top_bottom_crop = 4
