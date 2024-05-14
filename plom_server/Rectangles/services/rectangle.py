@@ -3,25 +3,26 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Andrew Rechnitzer
 
-
 from __future__ import annotations
-from Papers.models import ReferenceImage
+
+from io import BytesIO
+from pathlib import Path
+from typing import Any
+from warnings import warn
+
 import cv2 as cv
 import imutils
-from io import BytesIO
 import numpy as np
-from pathlib import Path
 from PIL import Image
-from typing import Any, Dict, List
-from warnings import warn
 import zipfile
 
+from Papers.models import ReferenceImage
 from Papers.models import Paper, FixedPage
 from Papers.services import PaperInfoService
 from plom.scan import rotate
 
 
-def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
+def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
     """Given the version and page number, return the x/y coords of the qr codes on the reference image.
 
     Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
@@ -32,6 +33,9 @@ def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
 
     Returns:
         dict: {corner: [x,y]}, where corner is three of NE,SE,NW,SW, and x,y are floats.
+
+    Raises:
+        ValueError: no reference image.
     """
     try:
         rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
@@ -47,6 +51,14 @@ def get_reference_rectangle(version: int, page: int) -> Dict[str, List[float]]:
 
 
 class RectangleExtractor:
+    """Provides operations on scanned images based on a reference image.
+
+    Instances are particular to a page/version reference image.  They
+    stores information and cached calculations about a coordinate system
+    in the QR-code locations, enabling information to be looked up in a
+    scanned image based on locations chosen from the reference image.
+    """
+
     def __init__(self, version: int, page: int):
         self.page_number = page
         self.version = version
@@ -62,15 +74,15 @@ class RectangleExtractor:
                 x_coords.append(rimg_obj.parsed_qr[cnr]["x_coord"])
                 y_coords.append(rimg_obj.parsed_qr[cnr]["y_coord"])
 
-        # rectangle described by location of the 3 qr-code stamp centres.
+        # rectangle described by location of the 3 qr-code stamp centres of the reference image
         self.LEFT = min(x_coords)
         self.RIGHT = max(x_coords)
         self.TOP = min(y_coords)
         self.BOTTOM = max(y_coords)
-        # width and height of the qr-code bounded region
+        # width and height of the qr-code bounded region of the reference image
         self.WIDTH = self.RIGHT - self.LEFT
         self.HEIGHT = self.BOTTOM - self.TOP
-        # width and height of the actual image
+        # overall width and height of the actual reference image
         self.FULL_WIDTH = rimg_obj.width
         self.FULL_HEIGHT = rimg_obj.height
 
@@ -158,6 +170,8 @@ class RectangleExtractor:
             ],
             dtype="float32",
         )
+        # TODO - there should be some checks here for what happens
+        # when these coords are outside the bounds of the scan image?
 
         dest_h = ref_rect["bottom"] - ref_rect["top"]
         dest_w = ref_rect["right"] - ref_rect["left"]
@@ -179,12 +193,12 @@ class RectangleExtractor:
 
         Args:
             paper_number (int): the number of the paper from which to extract the rectangle of the given version, page
-            left_f (float): same as top, defining the left boundary
             top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
-                the image.
-            bottom_f (float): same as top, defining the bottom boundary
-            right_f (float): same as top, defining the right boundary
+                the image.  Measured relative to the centres of the QR codes.
+            left_f (float): same as top, defining the left boundary.
+            bottom_f (float): same as top, defining the bottom boundary.
+            right_f (float): same as top, defining the right boundary.
 
         Returns:
             the bytes of the image in png format, or none if errors
@@ -262,8 +276,8 @@ class RectangleExtractor:
                 archive.writestr(fname, dat)
 
     def get_largest_rectangle_contour(
-        self, region: None | Dict[str, float] = None
-    ) -> None | Dict[str, float]:
+        self, region: None | dict[str, float] = None
+    ) -> None | dict[str, float]:
         """Helper function for extracting the largest box from an image.
 
         Args:
