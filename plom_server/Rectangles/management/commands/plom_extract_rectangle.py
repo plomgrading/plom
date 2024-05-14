@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -51,7 +52,7 @@ class Command(BaseCommand):
                 continue
             fname.write_bytes(rect_region_bytes)
 
-        self.stdout.write(f'Action completed: wrote files t: "{er_dir}"')
+        self.stdout.write(f'Action completed, files written to directory "{er_dir}"')
 
     def add_arguments(self, parser):
         parser.add_argument(
