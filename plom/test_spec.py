@@ -235,6 +235,16 @@ def test_spec_shared_page_not_allowed():
         SpecVerifier(r).verify(_legacy=False)
 
 
+def test_spec_shared_page_explicit_disallowed():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = False
+    r["question"]["2"]["pages"] = [3, 4]
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=True)
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=False)
+
+
 def test_spec_shared_page_must_be_explicitly_allowed():
     r = deepcopy(raw)
     r["allowSharedPages"] = True
