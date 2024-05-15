@@ -140,8 +140,8 @@
                                   spellcheck="false">{{ generated_toml }}</textarea>
                         <button type="submit" class="btn btn-primary me-2">Submit</button>
                         <!--
-			    <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
-			-->
+                            <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
+                        -->
                         <button type="submit"
                                 class="btn btn-secondary m-2"
                                 name="which_action"
@@ -163,11 +163,11 @@
     </div>
     <script>
       function downloadtoml(stuff) {
-	  let filename = 'template_test_specification.toml';
-	  let element = document.createElement('a');
-	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
-	  element.setAttribute('download', filename);
-	  element.click();
-    }
+          let filename = 'template_test_specification.toml';
+          let element = document.createElement('a');
+          element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+          element.setAttribute('download', filename);
+          element.click();
+      }
     </script>
 {% endblock main_content %}
