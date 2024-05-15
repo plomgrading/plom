@@ -2,7 +2,7 @@
 
 ## Initialise the database
 
-1. Run `python3 manage.py migrate` to setup the database
+1. Run `python3 manage.py makemigrations` then `python3 manage.py migrate` to setup the database
 
 ## Setting up groups and users
 Django wants a "super user" to do administrative stuff - they can
