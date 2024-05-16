@@ -579,7 +579,6 @@ class IDBoxProcessorService:
             )
 
     def run_lap_solver(self, user: User, student_ids, probabilities):
-
         # start by removing any IDs that have already been used.
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
