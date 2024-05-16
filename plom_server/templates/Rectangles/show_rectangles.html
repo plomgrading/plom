@@ -31,7 +31,8 @@
                             <li>
                                 Paper {{ pn }}:
                                 <img class="border p-2 m-2"
-                                     src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}" />
+                                     src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                     onerror="imgError(this)" />
                             </li>
                         {% endfor %}
                     </ul>
@@ -49,4 +50,14 @@
             {% endif %}
         </div>
     </div>
+    <script type="text/javascript">
+  function imgError(image) {
+    var img_error_span = document.createElement('span');
+    img_error_span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+    img_error_span.innerHTML = "Could not extract rectangle.";
+
+    image.parentNode.insertBefore(img_error_span, image);
+    image.parentNode.removeChild(image);
+  }
+    </script>
 {% endblock main_content %}

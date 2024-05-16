@@ -103,6 +103,9 @@ class ExtractedRectangleView(ManagerRequiredView):
         right = float(request.GET.get("right"))
         top = float(request.GET.get("top"))
         bottom = float(request.GET.get("bottom"))
+        ## FOR TESTING
+        if paper%3 == 0:
+            raise Http404("Could not extract")
 
         rect_region_bytes = rex.extract_rect_region(paper, left, top, right, bottom)
         if rect_region_bytes is None:
