@@ -2,8 +2,8 @@
 
 ## Setting up PostgreSQL
 PostgreSQL must also be installed. Follow the installation instructions found (here)[https://www.postgresql.org/download/]. Afterwards:
-1. Create a user for PLOM, either using environment variables or using the default "postgres:postgres"
-2. Create a table for PLOM, either using environment variables or using the default "plom_db"
+1. Create a user for Plom, either using environment variables or using the default "postgres:postgres"
+2. Create a table for Plom, either using environment variables or using the default "plom_db"
 
 If you are using the defaults, the series of commands below will work, otherwise, replace the username and database name:
 1. `psql postgres`
