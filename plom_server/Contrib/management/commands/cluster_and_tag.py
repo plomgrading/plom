@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 import json
 from pathlib import Path
 
-import cv2
+import cv2 as cv
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -13,8 +14,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from Identify.services import IDReaderService, IDBoxProcessorService
-from Identify.management.commands.plom_id import Command as PlomIDCommand
+from Identify.services import IDBoxProcessorService
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from Rectangles.services import RectangleExtractor
@@ -106,7 +106,7 @@ class Command(BaseCommand):
                 raise ValueError("Image is not 28x28")
 
             p = dir / f"paper_{paper_num}_digit_{digit_index}.png"
-            cv2.imwrite(str(p), image)
+            cv.imwrite(str(p), image)
             count += 1
 
         self.stdout.write(f"Done extracting. Extracted {count} digits")
@@ -126,7 +126,7 @@ class Command(BaseCommand):
         dir.mkdir(exist_ok=True)
         for p in dir.iterdir():
             if p.stem.split("_")[3] == f"{digit_index}":
-                image = cv2.imread(str(p), cv2.IMREAD_GRAYSCALE)
+                image = cv.imread(str(p), cv.IMREAD_GRAYSCALE)
                 image = image.flatten()
                 images.append(image)
                 paper_num = p.stem.split("_")[1]
@@ -143,6 +143,7 @@ class Command(BaseCommand):
                 if kmeans.labels_[i] == label:
                     paper_num = paper_nums[i]
                     curr_papers.append(paper_num)
+            curr_papers.sort()
             clustered_papers.append(curr_papers)
 
         with open(settings.MEDIA_ROOT / "paper_clusters.json", "w") as f:
