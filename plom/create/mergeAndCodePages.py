@@ -13,13 +13,18 @@ import tempfile
 import math
 import pathlib
 from pathlib import Path
+from typing import Any
 
 # import pyqrcode
 import segno
 import fitz
 
 from plom.create import paperdir
-from plom.specVerifier import build_page_to_group_dict, build_page_to_version_dict
+from plom.specVerifier import (
+    build_page_to_group_dict,
+    get_question_labels,
+    build_page_to_version_dict,
+)
 from plom.tpv_utils import encodeTPV
 
 
@@ -453,16 +458,28 @@ def make_PDF(
 
     # We embed fonts for names and other overlay.  But if there are non-latin
     # characters (e.g., CJK) in names, then the embedded font is quite large.
-    # Subsetting requires https://pypi.org/project/fonttools
     # Note: In theory, this could muck around with fonts from the source
-    # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
-    # TODO: consider doing this only when *we* placed non-ascii (Issue #3381)
-    # TODO: remove this fallback on a future PyMuPDF (see Issue #3374)
-    try:
-        exam.subset_fonts(fallback=True)
-    except TypeError:
-        # PyMuPDF<=1.23 does not have fallback
-        exam.subset_fonts()
+    # (i.e., if they were NOT subsetted).  So we only do the subsetting if
+    # we're added non-ascii chars in any of the shortname, student name or
+    # question labels
+    do_subset = False
+    if extra and not extra["name"].isascii():
+        do_subset = True
+    if not spec["name"].isascii():
+        do_subset = True
+    for label in get_question_labels(spec):
+        if not label.isascii():
+            do_subset = True
+
+    if do_subset:
+        # TODO: remove this fallback on a future PyMuPDF (see Issue #3374)
+        # Fallback subsetting requires https://pypi.org/project/fonttools
+        try:
+            exam.subset_fonts(fallback=True)
+        except TypeError:
+            # PyMuPDF<=1.23 does not have fallback
+            # Subsetting requires https://pypi.org/project/fonttools
+            exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
