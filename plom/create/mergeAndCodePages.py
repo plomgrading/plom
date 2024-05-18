@@ -468,7 +468,8 @@ def make_PDF(
     # Note: In theory, this could muck around with fonts from the source
     # (i.e., if they were NOT subsetted).  So we only do the subsetting if
     # we're added non-ascii chars in any of the shortname, student name or
-    # question labels
+    # question labels.  Non-ascii is a stronger requirement than needed,
+    # but in theory the subsetting is harmless...
     do_subset = False
     if extra and not extra["name"].isascii():
         do_subset = True
