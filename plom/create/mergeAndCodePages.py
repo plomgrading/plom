@@ -457,7 +457,11 @@ def make_PDF(
     # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
     # TODO: consider doing this only when *we* placed non-ascii (Issue #3381)
     # TODO: remove this fallback on a future PyMuPDF (see Issue #3374)
-    exam.subset_fonts(fallback=True)
+    try:
+        exam.subset_fonts(fallback=True)
+    except TypeError:
+        # PyMuPDF<=1.23 does not have fallback
+        exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
