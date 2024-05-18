@@ -7,7 +7,6 @@ from django.shortcuts import render
 from django.views.generic import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .edit_profile_form import EditProfileForm
-from django.contrib.auth.models import User
 from Authentication.services import AuthenticationServices
 
 
