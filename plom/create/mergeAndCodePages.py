@@ -389,7 +389,7 @@ def make_PDF(
     ycoord=None,
     where=None,
     source_versions_path=None,
-):
+) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
     Take pages from each source (using `questions_versions`/`page_versions`) and
@@ -418,7 +418,8 @@ def make_PDF(
             source versions directory.
 
     Returns:
-        pathlib.Path: the file that was just written.
+        pathlib.Path: the file that was just written, or None in the slightly
+        strange, perhaps deprecated ``fakepdf`` case.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -433,7 +434,7 @@ def make_PDF(
     # make empty files instead of PDFs
     if fakepdf:
         save_name.touch()
-        return
+        return None
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
