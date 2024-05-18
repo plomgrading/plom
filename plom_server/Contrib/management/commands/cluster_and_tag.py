@@ -3,6 +3,9 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
+
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -69,6 +72,9 @@ class Command(BaseCommand):
                 "bottom_f": 0.9,
             }
         )
+        if idbox_location_rectangle is None:
+            self.stdout.write("Trouble finding the ID box on reference image")
+            return
         # now that we have the IDbox rectangle, we can use existing services to
         # extract them
         id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(
@@ -93,13 +99,15 @@ class Command(BaseCommand):
                 id_page_file
             )
             if ID_box is None:
-                self.stdout.write("Trouble finding the ID box")
+                self.stdout.write(f"Trouble finding the ID box on paper {paper_num}")
                 continue
             digit_images = IDBoxProcessorService().get_digit_images(
                 ID_box, student_number_length
             )
             if len(digit_images) != student_number_length:
-                self.stdout.write("Trouble finding digits inside the ID box")
+                self.stdout.write(
+                    f"Trouble finding digits inside the ID box on paper {paper_num}"
+                )
                 continue
             image = np.array(digit_images[digit_index])
             if image.flatten().shape[0] != 28 * 28:
