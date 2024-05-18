@@ -73,13 +73,13 @@ def create_QR_codes(
 
 
 def create_exam_and_insert_QR(
-    spec,
-    papernum,
-    question_versions,
-    tmpdir,
+    spec: dict[str, Any],
+    papernum: int,
+    question_versions: dict[int, int],
+    tmpdir: pathlib.Path,
     *,
-    no_qr=False,
-    source_versions_path=None,
+    no_qr: bool = False,
+    source_versions_path: str | pathlib.Path | None = None,
 ) -> fitz.Document:
     """Creates the exam objects and insert the QR codes.
 
@@ -281,7 +281,14 @@ def pdf_page_add_labels_QRs(
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
-def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
+def pdf_page_add_name_id_box(
+    page: fitz.Page,
+    name: str,
+    sid: str,
+    x: float | None = None,
+    y: float | None = None,
+    signherebox: bool = True,
+) -> None:
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
