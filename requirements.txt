@@ -56,7 +56,7 @@ pandas==2.1.4
 passlib==1.7.4
 Pillow==10.3.0
 psycopg2-binary==2.9.9
-pymupdf==1.24.3
+pymupdf==1.24.4
 PyMySQL==1.1.0
 random-username==1.0.2
 requests==2.31.0
