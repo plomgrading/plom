@@ -480,7 +480,7 @@ def make_PDF(
             do_subset = True
 
     if do_subset:
-        # TODO: remove this fallback on a future PyMuPDF (see Issue #3374)
+        # TODO: remove this fallback on a future PyMuPDF (see Plom Issue #3384)
         # Fallback subsetting requires https://pypi.org/project/fonttools
         try:
             exam.subset_fonts(fallback=True)
