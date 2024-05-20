@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Scanning (on the new server) defaults to automatic image extraction (if its detected safe to do so).  Scanners can force "safe mode rendering" for the previous behaviour.
 
 ### Changed
+* Plom is less aggressive about "font subsetting" when creating PDF files which might make generated PDFs a little bit safer.
 
 ### Fixed
+* Workaround spurious characters appearing on generated pages when using certain versions of PyMuPDF.
 
 
 
