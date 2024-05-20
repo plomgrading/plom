@@ -1859,6 +1859,10 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
+            # Special hack for legacy server data:
+            if X[0] == "GroupDeltaText":
+                log.info("Rewrote legacy GroupDeltaText %s as a Rubric", X[3])
+                X[0] = "Rubric"
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
