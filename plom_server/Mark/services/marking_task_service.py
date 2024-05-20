@@ -317,7 +317,7 @@ class MarkingTaskService:
         annotations = annot_data["sceneItems"]
         rubrics_used = []
         for ann in annotations:
-            if ann[0] == "RubricItem":
+            if ann[0] == "Rubric":
                 rubric_key = ann[3]
                 try:
                     rubric = Rubric.objects.get(key=rubric_key)

@@ -48,7 +48,7 @@ class CommandRubric(CommandTool):
 
         TODO: could this comandFoo.__init__() take a FooItem?
         """
-        assert X[0] == "RubricItem"
+        assert X[0] == "Rubric"
         X = X[1:]
         if len(X) != 9:
             raise ValueError("wrong length of pickle data")
@@ -202,7 +202,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def pickle(self):
         return [
-            "RubricItem",
+            "Rubric",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.rubricID,
