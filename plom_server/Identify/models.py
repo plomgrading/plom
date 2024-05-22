@@ -71,7 +71,7 @@ class IDPrediction(models.Model):
 
 
 class IDReadingHueyTask(HueyTaskTracker):
-    """Run the ID-box extraction and ID prediction in the background.
+    """Support running the ID-box extraction and ID prediction in the background.
 
     Note that this inherits fields from the base class table.  We add
     extra function to this to ensure there can only be one such task.
@@ -79,14 +79,9 @@ class IDReadingHueyTask(HueyTaskTracker):
     There was an attempt to make a common SingletonHueyTaskTracker but
     for now we're just duplicating that here (Issue #3130).
 
-
-    left: left edge of extracted rectangle. top,right,bottom similar.
+    Fields:
+        TODO?
     """
-
-    left = models.FloatField(null=False, default=0.0)
-    top = models.FloatField(null=False, default=0.0)
-    right = models.FloatField(null=False, default=1.0)
-    bottom = models.FloatField(null=False, default=1.0)
 
     def save(self, *args, **kwargs):
         IDReadingHueyTask.objects.exclude(id=self.id).delete()
