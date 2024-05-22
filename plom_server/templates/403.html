@@ -1,0 +1,24 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    403 - Forbidden
+{% endblock title %}
+{% block page_heading %}
+    <h1 style="color: red">Error!</h1>
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card text-black border-danger mb-3">
+        <div class="text-white card-header bg-danger">403 - Forbidden</div>
+        <div class="card-body">
+            <p>Your account does not have permission to view this directory or page.</p>
+            <p>Click below to go back.</p>
+            <button class="btn btn-primary" onclick="history.back()">Go Back!</button>
+        </div>
+    </div>
+{% endblock main_content %}
