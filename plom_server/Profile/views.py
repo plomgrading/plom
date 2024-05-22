@@ -7,7 +7,6 @@ from django.shortcuts import render
 from django.views.generic import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .edit_profile_form import EditProfileForm
-from Authentication.services import AuthenticationServices
 
 
 class Profile(LoginRequiredMixin, View):
@@ -32,14 +31,10 @@ class Profile(LoginRequiredMixin, View):
             group = request.user.groups.all()[0].name
         except IndexError:
             group = None
-
-        link = AuthenticationServices().generate_link(request, request.user)
-
         context = {
             "form": form,
             "user_group": group,
             "email": request.user.email,
-            "link": link,
         }
         return render(request, self.profile_page, context)
 
