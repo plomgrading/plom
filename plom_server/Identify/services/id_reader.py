@@ -236,10 +236,6 @@ class IDReaderService:
             # due to class method overrides in the model, this will delete
             # any other instances when we save this one.
             x = IDReadingHueyTask.objects.create(
-                left=box[0],
-                top=box[1],
-                right=box[2],
-                bottom=box[3],
                 status=IDReadingHueyTask.STARTING,
                 message="ID reading task queued.",
             )
