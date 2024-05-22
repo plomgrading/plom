@@ -285,6 +285,14 @@ def huey_id_reading_task(
     )
 
     id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+    # check if we got any ID boxes (eg no scanned papers, or all prenamed)
+    if len(id_box_image_dict) == 0:
+        IDReadingHueyTask.set_message_to_user(
+            tracker_pk, "No ID-boxes found. Cannot make predictions."
+        )
+        HueyTaskTracker.transition_to_complete(tracker_pk)
+        return True
+
     IDReadingHueyTask.set_message_to_user(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
