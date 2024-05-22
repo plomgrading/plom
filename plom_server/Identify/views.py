@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Dict
 
+from django.core.exceptions import MultipleObjectsReturned
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -24,6 +25,9 @@ from Rectangles.services import get_reference_rectangle, RectangleExtractor
 class IDPredictionView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
+        # get the status of any running id reading task
+        id_reader_task_status = IDReaderService().get_id_reader_background_task_status()
+        context.update({"id_reader_task_status": id_reader_task_status})
 
         # get all predictions.
         all_predictions = IDReaderService().get_ID_predictions()
@@ -123,10 +127,16 @@ class GetIDBoxRectangleView(ManagerRequiredView):
             )
             return render(request, "Identify/find_id_rect.html", context)
         elif "submit" in request.POST:
-            IDReaderService().run_the_id_reader_in_background_via_huey(
-                request.user, (left_f, top_f, right_f, bottom_f), recompute_heatmap=True
-            )
-
-            return redirect("id_prediction_home")
+            try:
+                IDReaderService().run_the_id_reader_in_background_via_huey(
+                    request.user,
+                    (left_f, top_f, right_f, bottom_f),
+                    recompute_heatmap=True,
+                )
+                return redirect("id_prediction_home")
+            except MultipleObjectsReturned:
+                # this means a ID predictor task was already running, so
+                # we also redirect back to the prediction home
+                return redirect("id_prediction_home")
         else:
             return redirect("get_id_box_rectangle")

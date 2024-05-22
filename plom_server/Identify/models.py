@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 
 from Base.models import BaseTask, BaseAction, HueyTaskTracker
@@ -73,11 +73,35 @@ class IDPrediction(models.Model):
 class IDReadingHueyTask(HueyTaskTracker):
     """Run the ID-box extraction and ID prediction in the background.
 
+    Note that this inherits fields from the base class table.  We add
+    extra function to this to ensure there can only be one such task.
+
+    There was an attempt to make a common SingletonHueyTaskTracker but
+    for now we're just duplicating that here (Issue #3130).
+
+
     left: left edge of extracted rectangle. top,right,bottom similar.
-    completed_pages: how many ID pages have been processed.
     """
 
     left = models.FloatField(null=False, default=0.0)
     top = models.FloatField(null=False, default=0.0)
     right = models.FloatField(null=False, default=1.0)
     bottom = models.FloatField(null=False, default=1.0)
+
+    def save(self, *args, **kwargs):
+        IDReadingHueyTask.objects.exclude(id=self.id).delete()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = IDReadingHueyTask.objects.get_or_create()
+        return obj
+
+    @classmethod
+    def set_message_to_user(cls, pk, message: str):
+        """Set the user-readible message string."""
+        with transaction.atomic(durable=True):
+            cls.objects.select_for_update().filter(pk=pk).update(message=message)
