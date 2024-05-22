@@ -24,7 +24,7 @@ Pillow==10.3.0
 platformdirs==4.2.1
 pymupdf==1.24.4
 PyMySQL==1.1.1
-requests==2.32.0
+requests==2.32.2
 requests-toolbelt==1.0.0
 segno==1.6.1
 stdiomask==0.0.6
