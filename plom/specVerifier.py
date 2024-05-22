@@ -46,8 +46,6 @@ chk = check_mark
 
 MAX_PAPERS_TO_PRODUCE = 9999
 
-# Some helper functions
-
 
 def get_question_label(spec, n: int | str) -> str:
     """Print question label for the nth question from spec dict.
@@ -83,6 +81,21 @@ def get_question_label(spec, n: int | str) -> str:
     return "Q{}".format(n)
 
 
+def get_question_labels(spec) -> list[str]:
+    """Get a list of all the question labels from spec dict.
+
+    Args:
+        spec (dict/SpecVerifier): a spec dict or a SpecVerifier
+            object.
+
+    Returns:
+        The labels of each question.
+    """
+    N = spec["numberOfQuestions"]
+    return [get_question_label(spec, n) for n in range(1, N + 1)]
+
+
+# helper function
 def isPositiveInt(s):
     """Check that given string s can be converted to a positive int."""
     try:
@@ -95,6 +108,7 @@ def isPositiveInt(s):
         return False
 
 
+# helper function
 def isListPosInt(l, lastPage) -> bool:
     """Check for a list of pos-int, bounded below by 1 and above by lastPage.
 
@@ -120,6 +134,7 @@ def isListPosInt(l, lastPage) -> bool:
     return True
 
 
+# helper function
 def isContiguous(l) -> bool:
     """Check input is a contiguous list of integers.
 
@@ -138,7 +153,7 @@ def isContiguous(l) -> bool:
     return True
 
 
-def build_page_to_group_dict(spec):
+def build_page_to_group_dict(spec) -> dict[int, str]:
     """Given a valid spec return a dict that translates each page to its containing group.
 
     Args:
