@@ -8,4 +8,9 @@ import Profile.views
 
 urlpatterns = [
     path("profile/", Profile.views.Profile.as_view(), name="profile"),
+    path(
+        "profile/password",
+        Profile.views.password_change_redirect,
+        name="self-password-reset",
+    ),
 ]
