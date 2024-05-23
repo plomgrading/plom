@@ -34,9 +34,9 @@
            data-bs-toggle="modal"
            data-bs-target="#deleteBtnModal">Delete All PDFs</a>
         {% if zip_enabled %}
-        <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
+            <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
         {% else %}
-        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
+            <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
         {% endif %}
     </div>
     <p class="mb-1">{{ message }}</p>
