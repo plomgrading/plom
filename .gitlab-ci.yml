@@ -112,13 +112,10 @@ wet_no_drift:
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
-    - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - export VER1=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER0
     - echo $VER1
-    - echo $VER2
     - bash -c "[[ x$VER0 == x$VER1 ]]"
-    - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
 copyright_year:

@@ -13,7 +13,7 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-# Also hardcoded in AppImageBuilder.yml and deprecated in plom/version.py
+# Also hardcoded in AppImageBuilder.yml
 __version__ = "0.15.5.dev0"
 
 import sys
