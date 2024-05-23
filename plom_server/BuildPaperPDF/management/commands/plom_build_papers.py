@@ -145,7 +145,7 @@ class Command(BaseCommand):
                 tot_size += len(chunk)
                 fh.write(chunk)
                 self.stdout.write(
-                    f"# chunk {index} = {tot_size//(1024*1024)}mb", ending="\r"
+                    f"# chunk {index} = {tot_size // (1024 * 1024)}mb", ending="\r"
                 )
         self.stdout.write(f'\nAll built papers saved in zip = "{short_name}.zip"')
 

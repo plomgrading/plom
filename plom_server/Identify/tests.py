@@ -244,7 +244,7 @@ class IdentifyTaskTests(TestCase):
 
         # test re-id'ing a task
         for k in range(1, 3):
-            its.identify_paper(self.marker0, k, f"{k+2}", f"A{k+2}")
+            its.identify_paper(self.marker0, k, f"{k + 2}", f"A{k + 2}")
 
         # test task existence
         paper = baker.make(Paper, paper_number=10)
