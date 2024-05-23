@@ -32,12 +32,10 @@
         <a class="btn btn-danger"
            data-bs-toggle="modal"
            data-bs-target="#deleteBtnModal">Delete All PDFs</a>
-        {% if tasks %}
-            <a class="btn btn-secondary"
-               onclick="document.getElementById('bottom').scrollIntoView()">
-                Scroll to bottom
-                <i class="bi bi-chevron-down"></i>
-            </a>
+        {% if zip_enabled %}
+        <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
+        {% else %}
+        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
         {% endif %}
     </div>
     <p class="mb-1">{{ message }}</p>
@@ -110,16 +108,5 @@
     {% endfor %}
 </table>
 <div id="bottom">
-    {% if zip_enabled %}
-        <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
-    {% else %}
-        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
-    {% endif %}
-    {% if tasks %}
-        <a class="btn btn-secondary"
-           onclick="document.querySelector('h1').scrollIntoView()">
-            Scroll to top
-            <i class="bi bi-chevron-up"></i>
-        </a>
-    {% endif %}
+
 </div>
