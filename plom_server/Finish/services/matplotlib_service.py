@@ -516,7 +516,7 @@ class MatplotlibService:
         for i, mark in reversed(list(enumerate(marks))):
             bp = ax.boxplot(mark, positions=[i], vert=False)
             # Issue #3262: MyPy complains about this line, after upgrading to say 3.8
-            inferno = matplotlib.colormaps['inferno']
+            inferno = matplotlib.colormaps["inferno"]
             colour = inferno(i / len(marks))  # type: ignore[attr-defined]
             self._boxplot_set_colors(bp, colour)
             (hL,) = plt.plot([], c=colour, label=marker_names[i])
