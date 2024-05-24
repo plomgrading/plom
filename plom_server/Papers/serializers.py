@@ -49,6 +49,7 @@ class SpecSerializer(serializers.ModelSerializer):
     idPage = serializers.IntegerField(min_value=1)
     doNotMarkPages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     question = serializers.DictField(child=SpecQuestionSerializer())
+    allowSharedPages = serializers.BooleanField(default=False)
 
     class Meta:
         model = Specification
