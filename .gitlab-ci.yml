@@ -1213,7 +1213,7 @@ linuxbin_ubuntu2004:
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1242,7 +1242,7 @@ linuxbin_ubuntu2204:
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2204.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1605,7 +1605,7 @@ winpyinst:
   - refreshenv
   # c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python311\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - $VER = &"c:\python311\python" -c "from plom import __version__; print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
