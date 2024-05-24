@@ -15,7 +15,7 @@
 # without any warranty.
 
 # Not server deps
-platformdirs==4.2.1
+platformdirs==4.2.2
 PyQt6==6.6.1
 PyQt6-Qt6==6.6.3
 PyQt6-sip==13.6.0
