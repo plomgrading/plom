@@ -70,8 +70,7 @@ class SpecSerializer(serializers.ModelSerializer):
             ValidationError: in this case the ``.detail`` field will contain
                 a list of what is wrong.
         """
-        is_valid = super().is_valid(raise_exception=raise_exception)
-        if not is_valid:
+        if not super().is_valid(raise_exception=raise_exception):
             return False
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
