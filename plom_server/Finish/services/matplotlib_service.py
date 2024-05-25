@@ -144,7 +144,10 @@ class MatplotlibService:
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = []
         if versions:
-            maxver = round(student_df[ver_column].max())
+            if pd.isna(student_df[ver_column].max()):
+                maxver = 0
+            else:
+                maxver = round(student_df[ver_column].max())
             for version in range(1, maxver + 1):
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
@@ -152,6 +155,7 @@ class MatplotlibService:
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
+       
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
