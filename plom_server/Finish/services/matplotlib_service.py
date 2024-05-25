@@ -155,8 +155,6 @@ class MatplotlibService:
             labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
-       
-
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         maxmark = SpecificationService.get_question_mark(question_idx)
