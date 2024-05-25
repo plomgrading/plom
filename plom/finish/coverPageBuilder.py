@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
+# Copyright (C) 2024 Bryan Tanady
 
 import fitz
 
