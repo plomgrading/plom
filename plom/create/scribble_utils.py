@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -632,7 +632,7 @@ def splitFakeFile(outfile, *, parts=3):
             )
         else:
             doc.insert_pdf(originalPDF, from_page=p * length)
-        fname = outfile.stem + f"{p+1}.pdf"
+        fname = outfile.stem + f"{p + 1}.pdf"
         doc.save(outfile.with_name(fname))
         doc.close()
     originalPDF.close()
