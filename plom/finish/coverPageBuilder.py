@@ -88,7 +88,7 @@ def makeCover(
     tw.append((m, vpos), text, fontsize=big_font)
     bullet = "\N{Bullet}"
     if info:
-        sname, sid = info
+        sid, sname = info
         if sname is None:
             sname = "Not ID'd yet"
         if sid is None:
