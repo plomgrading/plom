@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
 
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -13,7 +12,7 @@ from weasyprint import HTML, CSS
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
-from . import DataExtractionService, MatplotlibService 
+from . import DataExtractionService, MatplotlibService
 
 
 def _identity_in_first_input(x, *args, **kwargs):
@@ -106,6 +105,7 @@ def pdf_builder(
                 question_idx, versions=versions
             )
         )
+
     del marks_for_questions, question_idx, _  # clean up
 
     # correlation heatmap
