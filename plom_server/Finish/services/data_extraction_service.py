@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from typing import Dict, List, Optional, Tuple
 
@@ -73,6 +74,7 @@ class DataExtractionService:
 
         No particular order is promised: useful for statistics for example.
         """
+        self.student_df.dropna(subset=["total_mark"], inplace=True)
         return self.student_df["total_mark"].tolist()
 
     def _get_average_on_question_as_percentage(self, question_index: int) -> float:

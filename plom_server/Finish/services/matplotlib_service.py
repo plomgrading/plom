@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 import base64
 from io import BytesIO
@@ -143,14 +144,16 @@ class MatplotlibService:
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = []
         if versions:
-            maxver = round(student_df[ver_column].max())
+            if pd.isna(student_df[ver_column].max()):
+                maxver = 0
+            else:
+                maxver = round(student_df[ver_column].max())
             for version in range(1, maxver + 1):
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
                 )
         else:
             plot_series.append(student_df[mark_column])
-
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         maxmark = SpecificationService.get_question_mark(question_idx)
@@ -516,7 +519,8 @@ class MatplotlibService:
         for i, mark in reversed(list(enumerate(marks))):
             bp = ax.boxplot(mark, positions=[i], vert=False)
             # Issue #3262: MyPy complains about this line, after upgrading to say 3.8
-            colour = matplotlib.cm.hsv(i / len(marks))  # type: ignore[attr-defined]
+            inferno = matplotlib.colormaps["inferno"]
+            colour = inferno(i / len(marks))  # type: ignore[attr-defined]
             self._boxplot_set_colors(bp, colour)
             (hL,) = plt.plot([], c=colour, label=marker_names[i])
 

@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -83,14 +84,14 @@ class StudentMarkService:
             last_id_time = None
 
         # paper has multiple complete marking tasks, get the latest one
-        try:
+        if len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE)):
             last_annotation_time = (
                 MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
                 .order_by("-last_update")
                 .first()
                 .last_update
             )
-        except MarkingTask.DoesNotExist:
+        else:
             last_annotation_time = None
 
         if last_id_time and last_annotation_time:
