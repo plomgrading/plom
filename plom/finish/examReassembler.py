@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -75,6 +75,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     # process DNM pages one at a time, putting at most three per page
     max_per_page = 3
     on_this_page = 0
+    W = 0  # defined later, false positive from pylint
     for idx, img in enumerate(dnm_images):
         how_many_more = len(dnm_images) - idx
         if on_this_page == 0:
