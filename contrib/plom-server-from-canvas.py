@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Philip Loewen
 
@@ -187,7 +187,7 @@ def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None
         print("\nSwitched into test server directory.\n")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        if args.port is None:
+        if port is None:
             print("Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
