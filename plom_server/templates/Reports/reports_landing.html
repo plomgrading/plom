@@ -4,6 +4,7 @@
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -81,6 +82,23 @@
                     <li>download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
                 </ul>
             </p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Student Report</h5>
+            <p>Build individual student report pdf for each paper.</p>
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-auto">
+                        {% if all_marked %}
+                            <a href="{% url 'build_student_report' %}" class="btn btn-primary">Build Report</a>
+                        {% else %}
+                            <a href="{% url 'build_student_report' %}" class="btn btn-warning">Build Report</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
     <div class="card m-2">

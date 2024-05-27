@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from django.urls import path
 
@@ -19,6 +20,10 @@ from .views import (
     StartAllBuildSoln,
     StartOneBuildSoln,
     CancelQueuedBuildSoln,
+    BuildStudentReportView,
+    StartAllBuildReport,
+    StartOneBuildReport,
+    CancelQueuedBuildReport,
 )
 
 
@@ -76,4 +81,16 @@ urlpatterns = [
         CancelQueuedBuildSoln.as_view(),
         name="build_soln_cancel_queued",
     ),
+    path("build_student_report/", BuildStudentReportView.as_view(), name="build_student_report"),
+    path("build_student_report/all", StartAllBuildReport.as_view(), name="build_all_reports"),
+        path(
+        "build_report/queued",
+        CancelQueuedBuildReport.as_view(),
+        name="build_report_cancel_queued",
+    ),
+    path(
+        "build_student_report/<int:paper_number>",
+        StartOneBuildReport.as_view(),
+        name="build_one_report",
+    )
 ]

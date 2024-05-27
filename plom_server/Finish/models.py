@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from django.db import models
 
@@ -39,3 +40,13 @@ class SolutionImage(models.Model):
     version = models.PositiveIntegerField(null=False)
     solution_number = models.PositiveIntegerField(null=False)
     image = models.ImageField(upload_to="sourceVersions")
+
+
+class BuildStudentReportChore(HueyTaskTracker):
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+
+    pdf_file = models.FileField(upload_to="build_student_report/", null=True)
+
+    def __str__(self):
+        """Stringify task using its related test-paper's number."""
+        return "Build Student Report Chore " + str(self.paper.paper_number)
