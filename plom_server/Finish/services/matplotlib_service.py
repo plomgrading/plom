@@ -148,7 +148,6 @@ class MatplotlibService:
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
 
@@ -161,7 +160,8 @@ class MatplotlibService:
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -273,12 +273,11 @@ class MatplotlibService:
         bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
                     ta_df[(ta_df["question_version"] == version)]["score_given"]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(ta_df["score_given"])
 
@@ -291,7 +290,8 @@ class MatplotlibService:
         ax.set_title(f"Grades for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -359,7 +359,7 @@ class MatplotlibService:
         bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
@@ -372,7 +372,6 @@ class MatplotlibService:
                         60
                     )
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(
                 marking_times_df[(marking_times_df["question_number"] == question_idx)][
@@ -389,7 +388,8 @@ class MatplotlibService:
         ax.set_title(f"Time spent marking {qlabel}")
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
