@@ -450,6 +450,7 @@ class Downloader(QObject):
             sleep(wait1)
         # if self.simulate_failures and fail:
         #     raise NotImplementedError("TODO: how to simulate failure?")
+        assert self.msgr
         im_bytes = self.msgr.get_image(row["id"], md5)
         if self.simulate_failures:
             sleep(wait2)

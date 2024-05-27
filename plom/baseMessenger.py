@@ -1187,14 +1187,14 @@ class BaseMessenger:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_image(self, image_id, md5sum):
+    def get_image(self, image_id: int, md5sum: str) -> bytes:
         """Download one image from server by its database id.
 
         Args:
-            image_id (int): TODO: int/str?  The key into the server's
+            image_id: TODO: int/str?  The key into the server's
                 database of images.
-            md5sum (str): the expected md5sum, just for sanity checks or
-                something I suppose.
+            md5sum: the expected md5sum, just for correctness checks of
+                some sort.
 
         Returns:
             bytes: png/jpeg or whatever as bytes.
