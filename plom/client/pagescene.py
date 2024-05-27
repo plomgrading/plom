@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2024 Aden Chan
 
 # a different kind of annotations... this is about code typing
 from __future__ import annotations
@@ -55,7 +56,7 @@ from .tools import (
     CrossItem,
     DeltaItem,
     GhostComment,
-    GroupDeltaTextItem,
+    RubricItem,
     TextItem,
     TickItem,
 )
@@ -67,7 +68,7 @@ from .tools import (
     CommandImage,
     CommandDelete,
     CommandText,
-    CommandGroupDeltaText,
+    CommandRubric,
     CommandLine,
     CommandTick,
     CommandQMark,
@@ -684,7 +685,7 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # check if object has "saveable" attribute and it is set to true.
             if getattr(X, "saveable", False):
-                if isinstance(X, GroupDeltaTextItem):
+                if isinstance(X, RubricItem):
                     rubrics.append(X.as_rubric())
         return rubrics
 
@@ -846,7 +847,7 @@ class PageScene(QGraphicsScene):
         """
         rubrics = []
         for X in self.items():
-            if isinstance(X, GroupDeltaTextItem):
+            if isinstance(X, RubricItem):
                 rubrics.append(X.rubricID)
         return rubrics
 
@@ -870,7 +871,7 @@ class PageScene(QGraphicsScene):
         """
         count = 0
         for X in self.items():
-            if type(X) is GroupDeltaTextItem:
+            if type(X) is RubricItem:
                 count += 1
         return count
 
@@ -1157,7 +1158,7 @@ class PageScene(QGraphicsScene):
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDeltaTextItem)
+                or isinstance(under, RubricItem)
             ):
                 return True
         return False
@@ -1168,7 +1169,7 @@ class PageScene(QGraphicsScene):
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDeltaTextItem)
+                or isinstance(under, RubricItem)
             ):
                 return True
         return False
@@ -1452,9 +1453,9 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandGroupDeltaText(self, pt, self.current_rubric)
+            command = CommandRubric(self, pt, self.current_rubric)
             log.debug(
-                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
                 )
             )
@@ -1522,7 +1523,7 @@ class PageScene(QGraphicsScene):
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
             # If it is part of a group then do nothing
-            if isinstance(under.group(), GroupDeltaTextItem):
+            if isinstance(under.group(), RubricItem):
                 return
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
@@ -1858,6 +1859,10 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
+            # Special hack for legacy server data:
+            if X[0] == "GroupDeltaText":
+                log.info("Rewrote legacy GroupDeltaText %s as a Rubric", X[3])
+                X[0] = "Rubric"
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
@@ -2388,9 +2393,9 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandGroupDeltaText(self, event.scenePos(), self.current_rubric)
+            command = CommandRubric(self, event.scenePos(), self.current_rubric)
             log.debug(
-                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
                 )
             )
@@ -2440,7 +2445,7 @@ class PageScene(QGraphicsScene):
                 return
             else:
                 # delete the zeroth element of the list
-                if nearby[0].group() is not None:  # object part of GroupDeltaText
+                if nearby[0].group() is not None:  # object part of Rubric
                     self.deleteIfLegal(nearby[0].group())  # delete the group
                 else:
                     self.deleteIfLegal(nearby[0])
@@ -2477,7 +2482,7 @@ class PageScene(QGraphicsScene):
     def hasAnyComments(self) -> bool:
         """Returns True if scene has any rubrics or text items, False otherwise."""
         for X in self.items():
-            if isinstance(X, (TextItem, GroupDeltaTextItem)):
+            if isinstance(X, (TextItem, RubricItem)):
                 return True
         return False
 
@@ -2506,7 +2511,7 @@ class PageScene(QGraphicsScene):
             if getattr(x, "saveable", None):
                 if isinstance(x, (TickItem, CrossItem)):
                     continue
-                if isinstance(x, GroupDeltaTextItem):
+                if isinstance(x, RubricItem):
                     # check if this is a delta-rubric
                     # TODO: see rubrics_list.py: rubric_is_naked_delta
                     if x.kind == "relative" and x.blurb.toPlainText() == ".":

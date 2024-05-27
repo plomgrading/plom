@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2019 Andrew Rechnitzer
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import logging
 
@@ -14,8 +15,8 @@ from plom.client.tools.crop import CommandCrop
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (
-    CommandGroupDeltaText,
-    GroupDeltaTextItem,
+    CommandRubric,
+    RubricItem,
     GhostComment,
 )
 from plom.client.tools.cross import CommandCross, CrossItem
