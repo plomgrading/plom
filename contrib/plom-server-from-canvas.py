@@ -351,7 +351,11 @@ def get_submissions(
             ctype = getattr(obj, "content-type")
             # print(f"    Content type is {ctype}")
             if ctype == "null":
-                # TODO: in what cases does this occur?
+                print(
+                    "Unexpected null ctype: for now appending to error list\n"
+                    "TODO: in what cases does this occur?"
+                )
+                errors.append(sub)
                 continue
             elif ctype == "application/pdf":
                 suffix = "pdf"
@@ -363,9 +367,10 @@ def get_submissions(
                 suffix = ".jpeg"
             else:
                 print(
-                    f"unexpected content-type {ctype}: for now, appending to error list"
+                    f"Unexpected content-type {ctype}: for now appending to error list"
                 )
                 errors.append(sub)
+                continue
 
             filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
