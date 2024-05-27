@@ -1271,7 +1271,9 @@ class ScanService:
         return number_incomplete
 
     @transaction.atomic
-    def get_bundle_missing_paper_page_numbers_cmd(self, bundle_name: str) -> int:
+    def get_bundle_missing_paper_page_numbers_cmd(
+        self, bundle_name: str
+    ) -> list[tuple[int, list[int]]]:
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
