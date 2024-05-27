@@ -276,6 +276,9 @@ class ScanCastService:
         Keyword Args:
             image_type: this is a Enum.  So its sort of an integer but you should
                 be using the symbolic Enum values from ``StagingImage``.
+
+        Returns:
+            None.
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
