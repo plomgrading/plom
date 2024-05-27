@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -12,8 +15,13 @@ class Command(BaseCommand):
     help = "Cast to unknown a page from the given bundle at the given order"
 
     def unknowify_image_type_from_bundle(
-        self, username, bundle_name, order, *, image_type=None
-    ):
+        self,
+        username: str,
+        bundle_name: str,
+        order: int,
+        *,
+        image_type: str | None = None,
+    ) -> None:
         scs = ScanCastService()
 
         if image_type is None:
@@ -50,7 +58,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--check-type",
             choices=["discard", "error", "extra", "known"],
-            help="When present, the system checks that the page to be unknowified is of this type.",
+            help="""
+                When present, the system checks that the page to be
+                unknowified is of this type.
+            """,
         )
 
     def handle(self, *args, **options):
