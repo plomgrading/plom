@@ -334,7 +334,7 @@ class ScanCastService:
         bundle_name: str,
         bundle_order: int,
         *,
-        image_type: str | None = None,  # TODO: wrong type here, enum confusion
+        image_type: int | None = None,
     ) -> None:
         try:
             user_obj = User.objects.get(
