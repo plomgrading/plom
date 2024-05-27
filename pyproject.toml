@@ -281,3 +281,9 @@ module = [
     'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
+
+[tool.pyright]
+# exclude = [ ]
+# lots of Django false positives?
+reportAttributeAccessIssue = false
+pythonVersion = "3.12"
