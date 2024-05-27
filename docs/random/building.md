@@ -108,7 +108,7 @@ So the blueprint needs:
 
 * This separation means that it is easier to change the final number of papers.
   * For example, if the instructor decides they don't need quite so many they can just not print all the produced PDFs.
-  * If the instructor needs more papers then the system should be able to append to the production-list and so not mess up the random choices of papers that have already been produced (and perhaps printed).  
+  * If the instructor needs more papers then the system should be able to append to the production-list and so not mess up the random choices of papers that have already been produced (and perhaps printed).
 
 * Notice that being able to alter the number of tests is quite an important feature **not yet implemented**. If the instructor realises that they have undercounted by 10 papers (eg - they forgot about an extra sitting?) then they shouldn't have to redo everything from scratch.
 
@@ -136,7 +136,7 @@ So the blueprint needs:
 
 * This requires that the ID page have a standard template box (of fixed dimensions). The box contains room for entering name, section and 8 small squares for students to enter their ID-number. There will be internationalisation issues around ID-number length.
 
-* Thought requires as to how to get the instructor to encorporate this standard box template into their tests. Perhaps we could require that the one half of the ID-page be left blank and then the system could stamp the template onto it.
+* Thought requires as to how to get the instructor to incorporate this standard box template into their tests. Perhaps we could require that the one half of the ID-page be left blank and then the system could stamp the template onto it.
 
 * This might also give a (future) mechanism for generating personalised tests which already have the student's name and number printed on them.
 
@@ -152,4 +152,4 @@ So the blueprint needs:
 
 * Instructor should also be able to download individual papers.
 
-* There is not a need for the system to interface directly with a printing service. 
+* There is not a need for the system to interface directly with a printing service.

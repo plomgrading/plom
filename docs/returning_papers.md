@@ -89,7 +89,7 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
 ## Sharing with students
 
-  * Make a Canvas announcement or similar explaing what they need
+  * Make a Canvas announcement or similar explaining what they need
     to do: for example:
 
     > Midterm return link: https://amcweb.math.ubc.ca/~your/path

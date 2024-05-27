@@ -2074,6 +2074,10 @@ class PageScene(QGraphicsScene):
             command = CommandArrow(self, self.originPos, self.currentPos)
         elif self.arrowFlag == 4:
             command = CommandArrowDouble(self, self.originPos, self.currentPos)
+        else:
+            raise RuntimeError(
+                f"Tertium non datur: arrowFlag={self.arrowFlag} should not be possible"
+            )
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
         # don't add if too short
@@ -2180,6 +2184,10 @@ class PageScene(QGraphicsScene):
             command = CommandHighlight(self, self.path)
         elif self.penFlag == 4:
             command = CommandPenArrow(self, self.path)
+        else:
+            raise RuntimeError(
+                f"Tertium non datur: penFlag={self.penFlag} should not be possible"
+            )
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)

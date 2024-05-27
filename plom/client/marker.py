@@ -218,6 +218,7 @@ class BackgroundUploader(QThread):
             self.queue_status_changed.emit(
                 self.q.qsize(), 1, self.num_uploaded, self.num_failed
             )
+            simfail = False  # pylint worries it could be undefined
             if self.simulate_failures:
                 simfail = random.random() <= self._simulate_failure_rate / 100
                 a, b = self._simulate_slow_net
