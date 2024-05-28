@@ -1603,13 +1603,16 @@ winpyinst:
   - c:\python311\python -m pip install --user --upgrade pip
   - c:\python311\python -m pip --version
   - c:\python311\python -m pip install --user --upgrade setuptools wheel
+  - refreshenv
   script:
   - c:\python311\python -m pip install -r requirements.txt.client
+  - refreshenv
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python311\python -m pip install pyinstaller==6.7.0
+  - refreshenv
   - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
   - refreshenv
-  # c:\python311\python -m plom.client -h
+  - c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
   - $VER = &"c:\python311\python" -c "from plom import __version__; print(__version__)"
   - echo "Extracted version string '$VER'"
