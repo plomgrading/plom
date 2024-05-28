@@ -218,6 +218,7 @@ class BackgroundUploader(QThread):
             self.queue_status_changed.emit(
                 self.q.qsize(), 1, self.num_uploaded, self.num_failed
             )
+            simfail = False  # pylint worries it could be undefined
             if self.simulate_failures:
                 simfail = random.random() <= self._simulate_failure_rate / 100
                 a, b = self._simulate_slow_net
@@ -1567,7 +1568,7 @@ class MarkerClient(QWidget):
             self.ui.frameTechnical.setVisible(True)
             ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
             self.ui.frameTechnical.setStyleSheet(
-                f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
+                f"QWidget {{ font-size: {0.7 * ptsz}pt; }}"
             )
             # future use
             self.ui.labelTech4.setVisible(False)

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 import base64
 from io import BytesIO
@@ -143,15 +144,16 @@ class MatplotlibService:
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = []
         if versions:
-            maxver = round(student_df[ver_column].max())
+            if pd.isna(student_df[ver_column].max()):
+                maxver = 0
+            else:
+                maxver = round(student_df[ver_column].max())
             for version in range(1, maxver + 1):
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
-
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         maxmark = SpecificationService.get_question_mark(question_idx)
@@ -161,7 +163,8 @@ class MatplotlibService:
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -273,12 +276,11 @@ class MatplotlibService:
         bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
                     ta_df[(ta_df["question_version"] == version)]["score_given"]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(ta_df["score_given"])
 
@@ -291,7 +293,8 @@ class MatplotlibService:
         ax.set_title(f"Grades for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -359,7 +362,7 @@ class MatplotlibService:
         bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
@@ -372,7 +375,6 @@ class MatplotlibService:
                         60
                     )
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(
                 marking_times_df[(marking_times_df["question_number"] == question_idx)][
@@ -389,7 +391,8 @@ class MatplotlibService:
         ax.set_title(f"Time spent marking {qlabel}")
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -516,7 +519,8 @@ class MatplotlibService:
         for i, mark in reversed(list(enumerate(marks))):
             bp = ax.boxplot(mark, positions=[i], vert=False)
             # Issue #3262: MyPy complains about this line, after upgrading to say 3.8
-            colour = matplotlib.cm.hsv(i / len(marks))  # type: ignore[attr-defined]
+            inferno = matplotlib.colormaps["inferno"]
+            colour = inferno(i / len(marks))  # type: ignore[attr-defined]
             self._boxplot_set_colors(bp, colour)
             (hL,) = plt.plot([], c=colour, label=marker_names[i])
 

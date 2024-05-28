@@ -163,7 +163,9 @@ class KnowifyImageView(ScannerRequiredView):
             }
         )
 
-        page_labels = [f"page {n+1}" for n in range(SpecificationService.get_n_pages())]
+        page_labels = [
+            f"page {n + 1}" for n in range(SpecificationService.get_n_pages())
+        ]
         all_paper_numbers = paper_info.which_papers_in_database()
         missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers(bundle)
         context.update(

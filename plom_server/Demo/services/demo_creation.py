@@ -55,7 +55,7 @@ class DemoCreationService:
                 call_command(
                     "plom_preparation_test_source",
                     "upload",
-                    f"-v {i+1}",
+                    f"-v {i + 1}",
                     src,
                 )
         else:
@@ -149,7 +149,7 @@ class DemoCreationService:
         subprocess.check_call(split(py_man_cmd))
 
     def upload_bundles(self, number_of_bundles=3, homework_bundles={}):
-        bundle_names = [f"fake_bundle{n+1}.pdf" for n in range(number_of_bundles)]
+        bundle_names = [f"fake_bundle{n + 1}.pdf" for n in range(number_of_bundles)]
         # these will be messed with before upload via the --demo toggle
         # the bundle uploader altinates between demoScanner1 and demoScanner2
         dscan = 1
@@ -170,7 +170,7 @@ class DemoCreationService:
             dscan = 3 - dscan  # alternate 1-2-1-2-1-2 etc
 
     def wait_for_upload(self, number_of_bundles=3, homework_bundles={}):
-        bundle_names = [f"fake_bundle{n+1}" for n in range(number_of_bundles)]
+        bundle_names = [f"fake_bundle{n + 1}" for n in range(number_of_bundles)]
         for paper_number in homework_bundles:
             bundle_names.append(f"fake_hw_bundle_{paper_number}")
 
@@ -211,7 +211,7 @@ class DemoCreationService:
         print(
             "Try to push all bundles - some will fail since they are not yet ready, or contain unknowns/errors etc"
         )
-        todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
+        todo = [f"fake_bundle{k + 1}" for k in range(number_of_bundles)]
         for bundles in homework_bundles:
             paper_number = bundles["paper_number"]
             todo.append(f"fake_hw_bundle_{paper_number}")
@@ -258,7 +258,7 @@ class DemoCreationService:
 
         bundles = config.bundles
         for i, bundle in enumerate(bundles):
-            bundle_slug = f"fake_bundle{i+1}"
+            bundle_slug = f"fake_bundle{i + 1}"
             if "extra_page_papers" in bundle.keys():
                 extra_page_papers = bundle["extra_page_papers"]
                 extra_pages = ExtraStagingImage.objects.filter(
@@ -291,7 +291,7 @@ class DemoCreationService:
 
         bundles = config.bundles
         for i, bundle in enumerate(bundles):
-            bundle_slug = f"fake_bundle{i+1}"
+            bundle_slug = f"fake_bundle{i + 1}"
             if "discard_pages" in bundle.keys():
                 for page in bundle["discard_pages"]:
                     call_command(

@@ -15,7 +15,7 @@
 # without any warranty.
 
 # Not server deps
-platformdirs==4.2.1
+platformdirs==4.2.2
 PyQt6==6.6.1
 PyQt6-Qt6==6.6.3
 PyQt6-sip==13.6.0
@@ -61,8 +61,8 @@ PyMySQL==1.1.1
 random-username==1.0.2
 requests==2.32.2
 requests-toolbelt==1.0.0
-scikit-learn==1.4.2
-scipy==1.12.0
+scikit-learn==1.5.0
+scipy==1.13.1
 seaborn==0.13.2
 segno==1.6.1
 stdiomask==0.0.6

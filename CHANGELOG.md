@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+* Users can change their own passwords.
+
+### Changed
+
+### Fixed
+
+
+
 ## [0.15.4] - 2024-05-21
 
 ### Added
@@ -16,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Workaround spurious characters appearing on generated pages when using certain versions of PyMuPDF.
-
 
 
 ## [0.15.3] - 2024-05-11
@@ -1172,6 +1182,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.4...main
 [0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4
 [0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3
 [0.15.2]: https://gitlab.com/plom/plom/-/compare/v0.15.1...v0.15.2

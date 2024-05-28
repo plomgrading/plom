@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
@@ -173,7 +173,7 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
     # Cannot create test n before test n-1 (yet: Issue #1745)
     if t > 1:
         if Test.get_or_none(test_number=t - 1) is None:
-            raise ValueError(f"Error creating test {t} without test {t-1}")
+            raise ValueError(f"Error creating test {t} without test {t - 1}")
 
     status = f"Add DB row for paper {t:04}:"
     if not self.createTest(t):
