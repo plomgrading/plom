@@ -365,6 +365,18 @@ mypy-type-checking:
   allow_failure: true
 
 
+pyright:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install pyright~=1.1.364
+  script:
+    # for now, just display errors but don't fail (Issue #3237)
+    - pyright || true
+  allow_failure: true
+
+
 flake8:
   image: python:3
   stage: static_analysis
@@ -387,17 +399,6 @@ flake8:
     - echo $NUMBER_OF_FLAKE8_WARNINGS
     # Future hackers: please try to decrease this number
     - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 6 ]]"
-
-
-pyright:
-  image: python:3
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pyright~=1.1.364
-  script:
-    # for now, just display errors but don't fail (Issue #3237)
-    - pyright || true
-  allow_failure: true
 
 
 pydocstyle-plom-count:
