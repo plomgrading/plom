@@ -518,7 +518,7 @@ class MatplotlibService:
 
         # Create a DataFrame to use with Seaborn
         data = pd.DataFrame(marks).T
-        data.columns = marker_names
+        data.columns = pd.Index(marker_names)
 
         sns.boxplot(
             data=data,
