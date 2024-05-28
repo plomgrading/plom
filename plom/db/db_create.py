@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from datetime import datetime, timezone
 import logging
@@ -10,7 +11,7 @@ import logging
 from peewee import fn
 import peewee as pw
 
-from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentID as censorID
 from plom.rules import censorStudentName as censorName
 from plom.db.tables import (
     Annotation,

@@ -2,12 +2,13 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2024 Aden Chan
 
 from collections import defaultdict
 import glob
 import os
 
-from plom.rules import isValidStudentNumber
+from plom.rules import isValidStudentID
 from plom.scan import with_scanner_messenger
 
 
@@ -26,12 +27,12 @@ def IDQorIDorBad(fullfname):
     splut = fname.split(".")
     try:
         QFlag = splut[-2].isnumeric() or splut[-2] == "_"
-        IDFlag = isValidStudentNumber(splut[-3])
+        IDFlag = isValidStudentID(splut[-3])
     except IndexError:
         return ["BAD"]
     if QFlag and IDFlag:  # [-3] is ID and [-2] is Q.
         return ["IDQ", splut[-3], splut[-2]]  # ID and Q
-    elif isValidStudentNumber(splut[-2]):  # [-2] is ID
+    elif isValidStudentID(splut[-2]):  # [-2] is ID
         return ["JID", splut[-2]]  # Just ID
     else:
         return ["BAD"]  # Bad format
