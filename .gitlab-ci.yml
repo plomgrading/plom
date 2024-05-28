@@ -93,7 +93,7 @@ codespell:
     - python3 -m pip install codespell~=2.3.0
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.pdf,*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell
   allow_failure: true
   artifacts:
     reports:

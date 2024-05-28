@@ -289,3 +289,12 @@ exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
 typeCheckingMode = "basic"
 # lots of Django false positives?
 reportAttributeAccessIssue = false
+
+[tool.codespell]
+skip = "*.po,*.ts,*.pdf,*.png,*.jpg,*.svg,*.csv,*.json,.git,.gitlab-ci.yml"
+count = true
+check-filenames = true
+check-hidden = true
+quiet-level = 3
+ignore-words = ".codespell-ignorewords"
+exclude-file = ".codespell-ignorelines"
