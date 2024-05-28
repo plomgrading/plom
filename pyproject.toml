@@ -291,7 +291,7 @@ typeCheckingMode = "basic"
 reportAttributeAccessIssue = false
 
 [tool.codespell]
-skip = "*.po,*.ts,*.pdf,*.png,*.jpg,*.svg,*.csv,*.json,.git,.gitlab-ci.yml"
+skip = "*.po,*.ts,*.pdf,*.png,*.jpg,*.svg,*.csv,*.json,.git"
 count = true
 check-filenames = true
 check-hidden = true
