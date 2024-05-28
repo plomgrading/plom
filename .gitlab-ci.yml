@@ -1239,6 +1239,7 @@ linuxbin_ubuntu2204:
     - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install pyinstaller
+    - pip install . --no-deps  # pyinstaller spec needs version
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
@@ -1324,6 +1325,7 @@ macos12_universal_client:
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1373,6 +1375,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1428,6 +1431,7 @@ macos12_x86_64_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1479,6 +1483,7 @@ macos11_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
+  - pip install . --no-deps  # pyinstaller spec needs version
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1602,6 +1607,7 @@ winpyinst:
   - c:\python311\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python311\python -m pip install pyinstaller==6.6.0
+  - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
   - refreshenv
   # c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
