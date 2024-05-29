@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 import json
 import logging
@@ -137,6 +137,7 @@ def checkQRsValid(bundledir, spec):
 
     # go into page image directory of each bundle and look at each .qr file.
     for fnqr in (bundledir / "pageImages").glob("*.qr"):
+        msg = ""
         fname = fnqr.with_suffix("")  # strip .qr from blah.<ext>.qr
         with open(fnqr, "r") as qrfile:
             qrs = json.load(qrfile)
@@ -180,8 +181,8 @@ def checkQRsValid(bundledir, spec):
                     problemFlag = True
 
         # Make sure all (t,p,v) on this page are the same
+        tgvs = []
         if not problemFlag:
-            tgvs = []
             for tpvc in qrs.values():
                 tn, pn, vn, cn, o = parseTPV(tpvc)
                 tgvs.append((tn, pn, vn))
@@ -228,7 +229,9 @@ def checkQRsValid(bundledir, spec):
                 log.warning(f"[W] {fname}: {msg}\n    {explain}")
 
         if not problemFlag:
-            problemFlag, msg = validateQRsAgainstSpec(spec, fname, tn, pn, vn)
+            problemFlag, msg = validateQRsAgainstSpec(
+                spec, fname, tn, pn, vn
+            )  # pyright: ignore
 
         if not problemFlag:
             # we have a valid TGVC and the code matches.
