@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from plom.misc_utils import interpolate_questions_over_pages
+
 
 class TemplateSpecBuilderService:
     def build_template_toml(
@@ -45,15 +47,14 @@ doNotMarkPages = []
 """
 
         score_per_question = score // questions
-        pages_per_question = (pages - 1) // questions
         question_scores = [score_per_question for qi in range(questions)]
-        question_pages = [
-            [2 + qi * pages_per_question + pn for pn in range(pages_per_question)]
-            for qi in range(questions)
-        ]
-        # fix up score and pages for last question
+        # fix up score for last question
         question_scores[-1] += score - sum(question_scores)
-        question_pages[-1] += [pn + 1 for pn in range(question_pages[-1][-1], pages)]
+
+        # page 1 is used by the ID page, so distribute over the remaining pages
+        question_pages = interpolate_questions_over_pages(
+            pages - 1, questions, firstpg=2
+        )
 
         for k in range(questions):
             spec_toml += f"""
