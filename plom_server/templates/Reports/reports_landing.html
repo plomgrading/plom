@@ -91,10 +91,16 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-auto">
+                        <select name="report_type" class="form-select">
+                            <option value="brief">Brief Report</option>
+                            <option value="full">Full Report</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
                         {% if all_marked %}
-                            <button type="submit" class="btn btn-primary">Download report</button>
+                            <button type="submit" class="btn btn-primary">Download Report</button>
                         {% else %}
-                            <button type="submit" class="btn btn-warning">Download report</button>
+                            <button type="submit" class="btn btn-warning">Download Report</button>
                         {% endif %}
                     </div>
                 </div>
