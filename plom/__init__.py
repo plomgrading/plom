@@ -38,7 +38,7 @@ ScenePixelHeight = 2000
 # I don't know what units this is, especially after Issue #1071.
 AnnFontSizePts = 34.0
 
-from .rules import isValidStudentNumber
+from .rules import isValidStudentID
 
 from .version_maps import undo_json_packing_of_version_map
 from .version_maps import make_random_version_map, check_version_map

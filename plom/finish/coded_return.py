@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2024 Colin B. Macdonald
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2024 Aden Chan
 
 """Gather reassembled papers with html page for digital return."""
 
@@ -11,7 +12,7 @@ import sys
 import shutil
 from pathlib import Path
 
-from plom.rules import isValidStudentNumber, StudentIDLength
+from plom.rules import isValidStudentID, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
 
@@ -25,7 +26,7 @@ def do_renaming(fromdir, todir, sns):
         if file.name.endswith(".pdf"):
             oldname = file.name.partition(".")[0]
             sn = oldname.split("_")[-1]
-            assert isValidStudentNumber(sn)
+            assert isValidStudentID(sn)
             code = sns[sn]
             newname = "{0}_{1}.pdf".format(oldname, code)
             newname = todir / newname
