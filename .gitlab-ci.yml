@@ -93,7 +93,7 @@ codespell:
     - python3 -m pip install codespell~=2.3.0
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.pdf,*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell
   allow_failure: true
   artifacts:
     reports:
@@ -338,7 +338,7 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.2.2
+    - python3 -m pip install astroid~=3.2.2  # codespell:ignore astroid
     - python3 -m pip install pylint~=3.2.2
   script:
     - pylint plom
