@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
 
 from .marking_info import (
     MarkingInformationPaperView,
@@ -18,14 +17,6 @@ from .build_soln_pdf import (
     StartAllBuildSoln,
     StartOneBuildSoln,
 )
-
-from .student_report import(
-    BuildStudentReportView,
-    CancelQueuedBuildReport,
-    StartAllBuildReport,
-    StartOneBuildReport
-)
-
 from .soln_home import SolnHomeView
 from .soln_spec import SolnSpecView, TemplateSolnSpecView
 from .soln_sources import SolnSourcesView
