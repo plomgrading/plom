@@ -28,7 +28,7 @@
     <form method="post" action="{% url 'build_all_reports' %}">
         {% csrf_token %}
         <button class="btn btn-success m-2"
-        type="submit">Download zip of Student Reports</button>
+        type="submit">Download zip of all student reports</button>
     </form>
     
         {% if num_ready == num_scanned %}
