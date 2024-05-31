@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
