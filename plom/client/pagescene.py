@@ -600,7 +600,7 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
             b = QToolButton(text="\N{Trigram For Heaven}")
-            b.setStyleSheet("background-color: #ff6666")
+            b.setStyleSheet("QToolButton { background-color: #ff6666; }")
             # parenting the menu inside the scene
             m = QMenu(b)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
@@ -629,8 +629,8 @@ class PageScene(QGraphicsScene):
             b.setMenu(m)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
-            h.setScale(0.9)
-            h.setOpacity(0.5)
+            # h.setScale(0.9)
+            h.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
             wbr = h.mapRectToScene(h.boundingRect())
             # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
