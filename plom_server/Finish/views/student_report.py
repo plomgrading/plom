@@ -10,7 +10,6 @@ from .forms import StudentIDForm
 from ..models import Paper
 from Papers.services import SpecificationService
 from Progress.services import ManageScanService
-from Identify.models import PaperIDTask
 from django.contrib import messages
 
 from ..services import (

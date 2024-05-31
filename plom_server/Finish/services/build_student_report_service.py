@@ -4,11 +4,8 @@
 from .StudentReportPDFService import pdf_builder
 from ..services import StudentMarkService
 from Papers.services import SpecificationService
-from Progress.services import ManageScanService
 from ..models import Paper
 from pathlib import Path
-from typing import Any
-
 
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""

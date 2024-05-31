@@ -32,11 +32,11 @@
     </form>
     
         {% if num_ready == num_scanned %}
-        <i class="bi bi-check-circle text-success"></i> {{num_ready}} papers are ready to be built out of {{num_scanned}} scanned papers 
+        <i class="bi bi-check-circle text-success"></i> {{ num_ready }} papers are ready to be built out of {{ num_scanned }} scanned papers 
 
         {% else %}
             <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-            {{ num_ready }} papers will be built out of {{num_scanned}} scanned papers
+            {{ num_ready }} papers will be built out of {{ num_scanned }} scanned papers
         {% endif %}
  
     
