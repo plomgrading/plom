@@ -26,6 +26,11 @@ class Specification(SingletonBaseModel):
     """Store the json of the test specification dictionary.
 
     There can be at most one Specification entry.
+
+    WET alert: for some reason, changing code here also requires changing
+    the serializer as well in ``Papers/serializers.py``.  Both specify
+    defaults, with no verification that those defaults match (?).  Boo,
+    write everything twice :-(
     """
 
     name = models.TextField(null=False)
@@ -38,6 +43,7 @@ class Specification(SingletonBaseModel):
     publicCode = models.TextField()
     idPage = models.PositiveIntegerField()
     doNotMarkPages = models.JSONField()
+    allowSharedPages = models.BooleanField(default=False)
 
     def __getattr__(self, name):
         """If querying for questions, return a dictionary of all the spec questions."""

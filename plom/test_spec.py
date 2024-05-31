@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 from copy import deepcopy
 from pathlib import Path
@@ -226,13 +226,48 @@ def test_spec_label_too_long():
         SpecVerifier(r).verify()
 
 
-def test_spec_overused_page():
+def test_spec_shared_page_not_allowed():
+    r = deepcopy(raw)
+    r["question"]["2"]["pages"] = [3, 4]
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=True)
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=False)
+
+
+def test_spec_shared_page_explicit_disallowed():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = False
+    r["question"]["2"]["pages"] = [3, 4]
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=True)
+    with raises(ValueError, match="overused"):
+        SpecVerifier(r).verify(_legacy=False)
+
+
+def test_spec_shared_page_must_be_explicitly_allowed():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = True
+    r["question"]["2"]["pages"] = [3, 4]
+    SpecVerifier(r).verify(_legacy=False)
+
+
+def test_spec_DNM_page_cannot_be_shared():
+    r = deepcopy(raw)
+    r["allowSharedPages"] = True
+    r["question"]["1"]["pages"] = [2, 3]
+    with raises(ValueError, match="shared.*DNM.*question"):
+        SpecVerifier(r).verify(_legacy=False)
+
+
+def test_spec_legacy_overused_page():
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [1, 2, 3]
     with raises(ValueError, match="overused"):
         SpecVerifier(r).verify()
-    r["question"]["1"]["pages"] = [2]
-    with raises(ValueError, match="overused"):
+    r = deepcopy(raw)
+    r["question"]["3"]["pages"] = [4]
+    with raises(ValueError, match="unused"):
         SpecVerifier(r).verify()
 
 

@@ -15,6 +15,7 @@ from plom.tpv_utils import encodePaperPageVersion
 
 from django.contrib.auth.models import User
 from django.core.files import File
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
 
@@ -103,6 +104,7 @@ class ImageBundleService:
         Raises:
             RuntimeError
             ValueError
+            ObjectDoesNotExist
         """
         if not PapersPrinted.have_papers_been_printed():
             raise RuntimeError("Papers have not yet been printed.")
@@ -180,12 +182,19 @@ class ImageBundleService:
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
-                page = FixedPage.objects.get(
+                pages = FixedPage.objects.filter(
                     paper__paper_number=known.paper_number,
                     page_number=known.page_number,
-                )
-                page.image = image
-                page.save(update_fields=["image"])
+                ).select_for_update()
+                if not pages:
+                    raise ObjectDoesNotExist(
+                        f"Paper {known.paper_number}"
+                        f" page {known.page_number} does not exist"
+                    )
+                # Can be more than one FixedPage when questions share pages
+                for page in pages:
+                    page.image = image
+                    page.save(update_fields=["image"])
             elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage

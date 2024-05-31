@@ -2,11 +2,12 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Aden Chan
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools.rubric import GroupDeltaTextItem
+from plom.client.tools.rubric import RubricItem
 from plom.client.tools import DeleteObject
 
 
@@ -25,7 +26,7 @@ class CommandDelete(QUndoCommand):
     def redo(self):
         # remove the object
         self.scene.removeItem(self.deleteItem)
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
+        if isinstance(self.deleteItem, RubricItem):
             self.scene.refreshStateAndScore()
         # flash an animated box around the deleted object
         self.scene.addItem(self.do.item)
@@ -40,5 +41,5 @@ class CommandDelete(QUndoCommand):
         # put the object back
         self.scene.addItem(self.deleteItem)
         # If the object is a GroupTextDeltaItem then refresh the state and score
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
+        if isinstance(self.deleteItem, RubricItem):
             self.scene.refreshStateAndScore()

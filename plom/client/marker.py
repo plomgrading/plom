@@ -60,7 +60,6 @@ from PyQt6.QtWidgets import (
 
 from plom import __version__
 import plom.client.ui_files
-from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
@@ -79,6 +78,11 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from plom.feedback_rules import feedback_rules as static_feedback_rules_data
+from plom.question_labels import (
+    get_question_label,
+    verbose_question_label,
+    check_for_shared_pages,
+)
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectPaperQuestion
@@ -104,14 +108,6 @@ def _marking_time_as_str(m):
     else:
         # otherwise show integer
         return f"{m:.0f}"
-
-
-def verbose_question_label(spec: dict[str, Any], qidx: int) -> str:
-    """Get the question label with a possible parenthetical for the index."""
-    qlabel = get_question_label(spec, qidx)
-    if qlabel == f"Q{qidx}":
-        return qlabel
-    return f"{qlabel} (question index {qidx})"
 
 
 class BackgroundUploader(QThread):
@@ -218,6 +214,7 @@ class BackgroundUploader(QThread):
             self.queue_status_changed.emit(
                 self.q.qsize(), 1, self.num_uploaded, self.num_failed
             )
+            simfail = False  # pylint worries it could be undefined
             if self.simulate_failures:
                 simfail = random.random() <= self._simulate_failure_rate / 100
                 a, b = self._simulate_slow_net
@@ -1009,6 +1006,9 @@ class MarkerClient(QWidget):
             )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
+        s = check_for_shared_pages(self.exam_spec, self.question_idx)
+        if s:
+            InfoMsg(self, s).exec()
 
     def applyLastTimeOptions(self, lastTime: dict[str, Any]) -> None:
         """Applies all settings from previous client.

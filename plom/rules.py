@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021-2022 Andrew Rechnitzer
 # Copyright (C) 2023 Philip Loewen
+# Copyright (C) 2024 Aden Chan
 
 """Utils concerning rules about data, like valid student numbers."""
 
@@ -9,7 +10,7 @@
 StudentIDLength = 8
 
 
-def testValidUBCStudentNumber(n):
+def testValidUBCStudentID(n):
     """Check if input is a valid student number for UBC and an explanation.
 
     Input must be a string or string like or convertible by str().
@@ -28,9 +29,9 @@ def testValidUBCStudentNumber(n):
     return (True, "")
 
 
-def isValidUBCStudentNumber(n):
+def isValidUBCStudentID(n):
     """Is this a valid student number for UBC?"""
-    ok, _ = testValidUBCStudentNumber(n)
+    ok, _ = testValidUBCStudentID(n)
     return ok
 
 
@@ -61,7 +62,7 @@ def is_z_padded_integer(n):
     return ok
 
 
-def censorStudentNumber(n):
+def censorStudentID(n):
     """Replace some parts of student number with asterisks.
 
     If it doesn't look like a student number, we don't censor it.
@@ -83,9 +84,9 @@ def censorStudentName(s):
     return r
 
 
-def validateStudentNumber(n):
+def validateStudentID(n):
     """Check if is either a valid UBC SID or a z-padded int of correct length, and return any errors."""
-    s, msg1 = testValidUBCStudentNumber(n)
+    s, msg1 = testValidUBCStudentID(n)
     if s:
         # is valid UBC SID.
         return s, msg1
@@ -97,6 +98,6 @@ def validateStudentNumber(n):
             return (s, msg1 + ", ", msg2)
 
 
-def isValidStudentNumber(n):
+def isValidStudentID(n):
     """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages."""
-    return isValidUBCStudentNumber(n) or is_z_padded_integer(n)
+    return isValidUBCStudentID(n) or is_z_padded_integer(n)
