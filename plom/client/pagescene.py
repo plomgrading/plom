@@ -632,7 +632,7 @@ class PageScene(QGraphicsScene):
             # h.setScale(0.9)
             h.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
-            wbr = h.mapRectToScene(h.boundingRect())
+            # wbr = h.mapRectToScene(h.boundingRect())
             # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
             # maybe h.setTransformOriginPoint(...) would help?
             h.setPos(
