@@ -3,21 +3,25 @@
 
 from .StudentReportPDFService import pdf_builder
 from ..services import StudentMarkService
+from Papers.services import SpecificationService
+from Progress.services import ManageScanService
 from ..models import Paper
 from pathlib import Path
+from typing import Any
 
 
 class BuildStudentReportService:
-    """Class that contains helper functions for building student report pdf"""
+    """Class that contains helper functions for building student report pdf."""
 
     def build_one_report(paper_number: int):
-        """Build student report for the given paper number
+        """Build student report for the given paper number.
 
         Args:
-        paper_number: the paper_number to be built a report
+        paper_number: the paper_number to be built a report.
 
-        Return:
-        Student Report as PDF file in bytes"""
+        Returns:
+        Student Report as PDF file in bytes
+        """
         paper = Paper.objects.get(paper_number=paper_number)
 
         sms = StudentMarkService()
@@ -27,7 +31,33 @@ class BuildStudentReportService:
         outdir = Path("student_report")
         outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
-        print("DEBUG: ", outdir)
 
         report = pdf_builder(versions=True, sid=sid)
         return report
+
+    def get_status_for_student_report(self) -> list[int, int, int]:
+        """Retrieve status, such as number of scanned, marked, identified and ready to build papers.
+
+        Return:
+        A list comprising number of scanned, marked, identified, and built-ready papers respectively.
+        """
+        sms = StudentMarkService()
+
+        total_questions = SpecificationService.get_n_questions()
+        num_scanned = 0
+        num_fully_marked = 0
+        num_identified = 0
+        num_ready = 0
+
+        for paper in Paper.objects.all():
+            scanned, identified, num_marked, last_updated = sms.get_paper_status(paper)
+            if scanned:
+                num_scanned += 1
+            if identified:
+                num_identified += 1
+            if num_marked == total_questions:
+                num_fully_marked += 1
+                if identified:
+                    num_ready += 1
+
+        return [num_scanned, num_fully_marked, num_identified, num_ready]
