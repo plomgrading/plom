@@ -12,28 +12,28 @@
 {% endblock page_heading %}
 {% block main_content %}
 
-    <div>
-        <div class="card w-75", style="padding: 20px">
-            <h5>Download student report form:</h5>
-            <form method="post" action="{% url 'build_student_report' %}">
-                {% csrf_token %}
-                {{ student_report_form.as_p }}
-                <button class="btn btn-success m-2"
-                type="submit">Download</button>
-            </form>
-            {% if error_message %}
-            <div class="alert alert-danger" role="alert">
-                {{ error_message }}
-            </div>
-            {% endif %}
-        </div>
-
-        <form method="post" action="{% url 'build_all_reports' %}">
+    <div class="card w-75" style="padding: 20px">
+        <h5>Download student report form:</h5>
+        <form method="post" action="{% url 'build_student_report' %}">
             {% csrf_token %}
+            {{ student_report_form.as_p }}
             <button class="btn btn-success m-2"
-            type="submit">Download zip of Student Reports</button>
+            type="submit">Download</button>
         </form>
+        {% if error_message %}
+        <div class="alert alert-danger" role="alert">
+            {{ error_message }}
+        </div>
+        {% endif %}
+    
+
+    <form method="post" action="{% url 'build_all_reports' %}">
+        {% csrf_token %}
+        <button class="btn btn-success m-2"
+        type="submit">Download zip of Student Reports</button>
+    </form>
     </div>
+    
 {% endblock main_content %}
 
   
