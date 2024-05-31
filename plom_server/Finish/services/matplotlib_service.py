@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import List, Optional, Union
 
 import matplotlib
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -107,6 +108,48 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
+    def histogram_of_total_marks_highlighted(
+        self, sid: str, *, format: str = "base64"
+    ) -> Union[BytesIO, str]:
+        """Generate a personalized histogram of total mark.
+
+        Args: sid(str): the student number
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the histogram.
+        """
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+        df = self.des.get_student_data()
+        student = df[df["student_id"] == sid]
+        student_score = student["total_mark"].values[0]
+
+        fig, ax = plt.subplots()
+        sns.histplot(self.des.get_totals(), kde=False, bins=15, color="#4361EE")
+        # Overlay the student's score by highlighting the bar
+        ax = plt.gca()
+        for bar in ax.patches:
+            assert isinstance(bar, matplotlib.patches.Rectangle)
+            x = round(bar.get_x())
+            if x == student_score or x <= student_score < x + bar.get_width():
+                bar.set_color("#3061FF")
+                bar.set_edgecolor("black")
+                bar.set_linewidth(1.5)
+        plt.title("Histogram of Total Score")
+        plt.xlabel("Score")
+
+        graph_bytes = self.get_graph_as_BytesIO(fig)
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
     def histogram_of_grades_on_question_version(
         self,
         question_idx: int,
@@ -152,7 +195,6 @@ class MatplotlibService:
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
@@ -164,7 +206,8 @@ class MatplotlibService:
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -173,6 +216,56 @@ class MatplotlibService:
                 fancybox=True,
             )
         plt.grid(True, alpha=0.5)
+
+        graph_bytes = self.get_graph_as_BytesIO(fig)
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
+    def histogram_of_grades_on_question_highlighted(
+        self,
+        question_idx: int,
+        sid: str,
+        *,
+        format: str = "base64",
+    ) -> Union[BytesIO, str]:
+        """Generate a personalized histogram for one question.
+
+        Args:
+            question_idx: The question index number, one-based.
+            sid: the student number.
+
+        Keyword Args:
+            versions: Whether to split the histogram into versions. If omitted,
+                defaults to False.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the histogram.
+        """
+        df = self.des.get_student_data()
+        qlabel = SpecificationService.get_question_label(question_idx)
+        mark_column = "q" + str(question_idx) + "_mark"
+        student_score = df[df["student_id"] == sid][mark_column].values[0]
+
+        fig, ax = plt.subplots()
+        sns.histplot(df[mark_column], kde=False, bins=15, color="#4361EE")
+
+        # Overlay the student's score by highlighting the bar
+        ax = plt.gca()
+        for bar in ax.patches:
+            assert isinstance(bar, matplotlib.patches.Rectangle)
+            x = round(bar.get_x())
+            if x == student_score or x <= student_score < x + bar.get_width():
+                bar.set_color("#3061FF")
+                bar.set_edgecolor("black")
+                bar.set_linewidth(1.5)
+        plt.title(f"Histogram of {qlabel} Score")
+        plt.xlabel("Score")
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -276,12 +369,11 @@ class MatplotlibService:
         bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
                     ta_df[(ta_df["question_version"] == version)]["score_given"]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(ta_df["score_given"])
 
@@ -294,7 +386,8 @@ class MatplotlibService:
         ax.set_title(f"Grades for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -362,7 +455,7 @@ class MatplotlibService:
         bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
@@ -375,7 +468,6 @@ class MatplotlibService:
                         60
                     )
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(
                 marking_times_df[(marking_times_df["question_number"] == question_idx)][
@@ -392,7 +484,8 @@ class MatplotlibService:
         ax.set_title(f"Time spent marking {qlabel}")
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",

@@ -84,9 +84,9 @@ class SolnSpecView(ManagerRequiredView):
                 else:
                     SolnSpecService.load_soln_spec_from_toml_string(spec)
                 context["valid"] = True
-                context["unused_pages"] = (
-                    SolnSpecService.get_unused_pages_in_toml_string(spec)
-                )
+                context[
+                    "unused_pages"
+                ] = SolnSpecService.get_unused_pages_in_toml_string(spec)
             except ValueError as e:
                 context["error_list"].append(f"{e}")
             except ValidationError as errs:

@@ -48,9 +48,9 @@ class ReassembleService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            spreadsheet_data[paper.paper_number] = (
-                StudentMarkService().get_paper_status(paper)
-            )
+            spreadsheet_data[
+                paper.paper_number
+            ] = StudentMarkService().get_paper_status(paper)
         return spreadsheet_data
 
     def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
@@ -288,9 +288,9 @@ class ReassembleService:
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["reassembled_time"] = task.last_update
-                status[task.paper.paper_number]["reassembled_time_humanised"] = (
-                    arrow.get(task.last_update).humanize()
-                )
+                status[task.paper.paper_number][
+                    "reassembled_time_humanised"
+                ] = arrow.get(task.last_update).humanize()
 
         # do last round of updates
         for pn in status:

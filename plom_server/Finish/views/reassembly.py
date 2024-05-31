@@ -106,9 +106,9 @@ class StartAllReassembly(ManagerRequiredView):
         short_name = slugify(SpecificationService.get_shortname())
         zgen = ReassembleService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
-        response["Content-Disposition"] = (
-            f"attachment; filename={short_name}_reassembled.zip"
-        )
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename={short_name}_reassembled.zip"
         return response
 
 

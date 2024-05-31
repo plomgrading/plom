@@ -43,9 +43,9 @@ class TaskOrderService:
 
         task_priorities = {}
         for mt in marking_tasks:
-            task_priorities[(mt.paper.paper_number, mt.question_index)] = (
-                mt.marking_priority
-            )
+            task_priorities[
+                (mt.paper.paper_number, mt.question_index)
+            ] = mt.marking_priority
 
         return task_priorities
 

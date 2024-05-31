@@ -85,9 +85,9 @@ class BuildSolutionService:
             status[task.paper.paper_number]["obsolete"] = task.obsolete
             if task.status == HueyTaskTracker.COMPLETE:
                 status[task.paper.paper_number]["build_soln_time"] = task.last_update
-                status[task.paper.paper_number]["build_soln_time_humanised"] = (
-                    arrow.get(task.last_update).humanize()
-                )
+                status[task.paper.paper_number][
+                    "build_soln_time_humanised"
+                ] = arrow.get(task.last_update).humanize()
 
         # do last round of updates
         for pn in status:
