@@ -42,6 +42,7 @@ from PyQt6.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsView,
+    QGraphicsItem,
     QGraphicsItemGroup,
     QMessageBox,
     QToolButton,
@@ -595,8 +596,10 @@ class PageScene(QGraphicsScene):
         self.remove_page_hack_buttons()
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
-            b = QToolButton(text=f"Page {n}")
-            # b = QToolButton(text=f"\N{Page}")
+            # b = QToolButton(text=f"Page {n}")
+            # b = QToolButton(text="\N{Page}")
+            # heaven == hamburger? works for me!
+            b = QToolButton(text="\N{Trigram For Heaven}")
             b.setStyleSheet("background-color: #ff6666")
             # parenting the menu inside the scene
             m = QMenu(b)
@@ -626,16 +629,21 @@ class PageScene(QGraphicsScene):
             b.setMenu(m)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
-            h.setScale(1.8)
+            h.setScale(0.9)
+            h.setOpacity(0.5)
             br = img.mapRectToScene(img.boundingRect())
             wbr = h.mapRectToScene(h.boundingRect())
-            # h.setPos(br.right() - wbr.width(), br.top() - wbr.height())
-            # h.setPos(br.right() - wbr.width(), br.top())
+            # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
+            # maybe h.setTransformOriginPoint(...) would help?
             h.setPos(
-                br.left() + br.width() / 2 - wbr.width() / 2,
-                br.top() - wbr.height() / 2,
+                # br.left() + br.width() - wbr.width(),
+                br.left() + 0.86 * br.width(),
+                br.top(),
             )
-            # h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            h.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
+            )
             b.setToolTip(f"Page options for page {n}")
             self._page_hack_buttons.append(h)
 
