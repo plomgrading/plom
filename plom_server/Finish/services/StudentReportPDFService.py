@@ -176,8 +176,7 @@ def pdf_builder(
     pdf_data = HTML(string=html, base_url="").write_pdf(
         stylesheets=[CSS("./static/css/generate_report.css")]
     )
-    timestamp_file = timestamp.strftime("%Y-%m-%d--%H-%M-%S+00-00")
-    filename = f"Report-{shortname}--{timestamp_file}.pdf"
+    filename = f"Student_Report-{shortname}--{name}--{sid}.pdf"
     return {
         "bytes": pdf_data,
         "filename": filename,

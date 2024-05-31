@@ -2,11 +2,14 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from django.shortcuts import render, redirect
+import io
+import zipfile
 from django.http import HttpResponse
 
 from .forms import StudentIDForm
 from ..models import Paper
 from Papers.services import SpecificationService
+from Progress.services import ManageScanService
 
 from ..services import (
     StudentMarkService,
@@ -27,6 +30,7 @@ class BuildStudentReportView(ManagerRequiredView):
 
     def post(self, request):
         student_report_form = StudentIDForm(request.POST)
+        template = "Finish/build_student_report.html"
         if student_report_form.is_valid():
             choice = student_report_form.cleaned_data["choice"]
             input = student_report_form.cleaned_data["input"]
@@ -38,7 +42,7 @@ class BuildStudentReportView(ManagerRequiredView):
                 if student_df_filtered.empty:
                     return render(
                         request,
-                        "Finish/build_student_report.html",
+                        template,
                         {
                             "student_report_form": student_report_form,
                             "error_message": "Student ID is not recognized, maybe the paper has not been scanned?",
@@ -52,7 +56,14 @@ class BuildStudentReportView(ManagerRequiredView):
             try:
                 paper = Paper.objects.get(paper_number=paper_number)
             except Paper.DoesNotExist:
-                raise ValueError("Paper is missing!")
+                return render(
+                    request,
+                    template,
+                    {
+                        "student_report_form": student_report_form,
+                        "error_message": "Paper is not recognized",
+                    },
+                )
 
             sms = StudentMarkService()
             scanned, identified, num_marked, last_updated = sms.get_paper_status(paper)
@@ -60,7 +71,7 @@ class BuildStudentReportView(ManagerRequiredView):
             if not scanned:
                 return render(
                     request,
-                    "Finish/build_student_report.html",
+                    template,
                     {
                         "student_report_form": student_report_form,
                         "error_message": "The paper has not been scanned yet.",
@@ -69,7 +80,7 @@ class BuildStudentReportView(ManagerRequiredView):
             if not identified:
                 return render(
                     request,
-                    "Finish/build_student_report.html",
+                    template,
                     {
                         "student_report_form": student_report_form,
                         "error_message": "The paper has not been identified yet.",
@@ -80,7 +91,7 @@ class BuildStudentReportView(ManagerRequiredView):
             if num_marked != number_of_questions:
                 return render(
                     request,
-                    "Finish/build_student_report.html",
+                    template,
                     {
                         "student_report_form": student_report_form,
                         "error_message": "The paper has not been fully marked yet.",
@@ -93,3 +104,23 @@ class BuildStudentReportView(ManagerRequiredView):
             return response
 
         return redirect("build_student_report")
+
+    @staticmethod
+    def build_all(request):
+        papers = Paper.objects.all()
+        memory_file = io.BytesIO()
+        mss = ManageScanService()
+
+        papers = mss.get_all_completed_test_papers()
+
+        with zipfile.ZipFile(memory_file, "w") as zf:
+            for paper_number in papers.keys():
+                paper_info = StudentMarkService.get_paper_id_or_none(paper_number)
+                if paper_info:
+                    d = BuildStudentReportService.build_one_report(paper_number)
+                    zf.writestr(d["filename"], d["bytes"])
+
+        memory_file.seek(0)
+        response = HttpResponse(memory_file, content_type="application/zip")
+        response["Content-Disposition"] = 'attachment; filename="all_reports.zip"'
+        return response

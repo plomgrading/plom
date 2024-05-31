@@ -83,4 +83,9 @@ urlpatterns = [
         BuildStudentReportView.as_view(),
         name="build_student_report",
     ),
+    path(
+        "build_student_report/build_all_reports/",
+        BuildStudentReportView.build_all,
+        name="build_all_reports",
+    ),
 ]
