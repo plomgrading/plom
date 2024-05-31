@@ -13,12 +13,12 @@
 {% block main_content %}
 
     <div>
-        <div class = "card w-75", style = "padding: 20px">
+        <div class="card w-75", style = "padding: 20px">
             <h5>Download student report form:</h5>
             <form method="post" action="{% url 'build_student_report' %}">
                 {% csrf_token %}
                 {{ student_report_form.as_p }}
-                <button class = "btn btn-success m-2"
+                <button class="btn btn-success m-2"
                 type="submit">Download</button>
             </form>
             {% if error_message %}
@@ -30,7 +30,7 @@
 
         <form method="post" action="{% url 'build_all_reports' %}">
             {% csrf_token %}
-            <button class = "btn btn-success m-2"
+            <button class="btn btn-success m-2"
             type="submit">Download zip of Student Reports</button>
         </form>
 
