@@ -11,36 +11,27 @@
     Student Report
 {% endblock page_heading %}
 {% block main_content %}
-
     <div class="card w-75">
         <div class="card-body">
             <h5>Download single student report form:</h5>
             <form method="post" action="{% url 'build_student_report' %}">
                 {% csrf_token %}
                 {{ student_report_form.as_p }}
-                <button class="btn btn-success m-2"
-                type="submit">Download</button>
+                <button class="btn btn-success m-2" type="submit">Download</button>
             </form>
             {% for message in messages %}<p class="alert alert-danger">{{ message }}</p>{% endfor %}
         </div>
     </div>
-    
     <form method="post" action="{% url 'build_all_reports' %}">
         {% csrf_token %}
-        <button class="btn btn-success m-2"
-        type="submit">Download zip of all student reports</button>
+        <button class="btn btn-success m-2" type="submit">Download zip of all student reports</button>
     </form>
-    
         {% if num_ready == num_scanned %}
-        <i class="bi bi-check-circle text-success"></i> {{ num_ready }} papers are ready to be built out of {{ num_scanned }} scanned papers 
-
+            <i class="bi bi-check-circle text-success"></i> {{ num_ready }} papers are ready to be built out of {{ num_scanned }} scanned papers 
         {% else %}
             <i class="bi bi-exclamation-diamond-fill text-danger"></i>
             {{ num_ready }} papers will be built out of {{ num_scanned }} scanned papers
         {% endif %}
- 
-    
-    
 {% endblock main_content %}
 
   

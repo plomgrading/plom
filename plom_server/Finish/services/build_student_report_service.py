@@ -7,6 +7,7 @@ from Papers.services import SpecificationService
 from ..models import Paper
 from pathlib import Path
 
+
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
 
