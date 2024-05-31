@@ -287,7 +287,7 @@ def version_map_from_file(
     """
     f = Path(f)
     if f.suffix.casefold() not in (".json", ".csv"):
-        filename = f.with_suffix(f.suffix + ".csv")
+        f = f.with_suffix(f.suffix + ".csv")
     suffix = f.suffix
 
     if suffix.casefold() == ".json":
@@ -295,7 +295,7 @@ def version_map_from_file(
     elif suffix.casefold() == ".csv":
         return _version_map_from_csv(f, required_papers=required_papers)
     else:
-        raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
+        raise NotImplementedError(f'Don\'t know how to import from "{f}"')
 
 
 def version_map_to_csv(

@@ -70,18 +70,21 @@ def test_stamp_QRs(tmp_path) -> None:
     files = processFileToBitmaps(out, tmp_path)
 
     d = QRextract_legacy(files[0], write_to_file=False)
+    assert d is not None
     for k, v in d.items():
         print(k)
         print(v)
         assert len(v) == 0
 
     d = QRextract_legacy(files[2], write_to_file=False)
+    assert d is not None
     assert not d["NW"]
     assert d["NE"] == ["00006003001112345"]
     assert d["SW"] == ["00006003001312345"]
     assert d["SE"] == ["00006003001412345"]
 
     d = QRextract_legacy(files[3], write_to_file=False)
+    assert d is not None
     assert not d["NE"]
     assert d["NW"] == ["00006004001212345"]
     assert d["SW"] == ["00006004001312345"]
@@ -93,7 +96,7 @@ def test_qr_stamp_all_pages(tmp_path) -> None:
     spec = SpecVerifier.demo()
     spec.checkCodes()
     with working_directory(tmp_path):
-        ex = create_exam_and_insert_QR(spec, 5, {1: 1, 2: 1, 3: 2}, tmp_path)
+        ex = create_exam_and_insert_QR(spec.spec, 5, {1: 1, 2: 1, 3: 2}, tmp_path)
     # each page has three images: will break if we add images to the demo
     for p in ex.pages():
         assert len(p.get_images()) == 3
