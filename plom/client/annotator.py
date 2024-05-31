@@ -237,7 +237,7 @@ class Annotator(QWidget):
         features = (
             "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
-            # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
+            "Page manipulation in annotator.",
         )
         info = f"""
             <h4>Current experimental features</h4>
