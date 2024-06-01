@@ -13,10 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Plom now allows sharing pages between questions.
+* Client: parameterized rubrics are no longer considered experimental.
 
 ### Fixed
 * For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
-
+* Misc fixes and documentation improvements.
 
 
 ## [0.15.4] - 2024-05-21
