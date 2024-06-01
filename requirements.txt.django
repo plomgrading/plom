@@ -52,7 +52,7 @@ psycopg2-binary==2.9.9
 pymupdf==1.24.5
 PyMySQL==1.1.1
 random-username==1.0.2
-requests==2.32.2
+requests==2.32.3
 requests-toolbelt==1.0.0
 scikit-learn==1.5.0
 scipy==1.13.1
