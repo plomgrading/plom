@@ -79,6 +79,7 @@ from .tools import (
     CommandHighlight,
     CommandPenArrow,
     CommandCrop,
+    CommandRotatePage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -596,22 +597,7 @@ class PageScene(QGraphicsScene):
 
         def page_rotate_func_factory(n, degrees):
             def page_rotate():
-                # get old page width and location, select rightward objects to shift
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                loc = br.right()
-                w = br.width()
-                log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
-                stuff = self.find_items_right_of(loc)
-                # do the rotation in metadata and rebuild
-                self.src_img_data[n]["orientation"] += degrees
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
-                # shift previously-selected rightward annotations by diff in widths
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"After rotation: old width {w} now {br.width()}")
-                self.move_some_items(stuff, br.width() - w, 0)
+                self.rotate_page_image(n, degrees)
 
             return page_rotate
 
@@ -1903,6 +1889,32 @@ class PageScene(QGraphicsScene):
             X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
+
+    def rotate_page_image(self, n: int, degrees: int) -> None:
+        """Rotate a page on the undostack, shifting objects on other pages appropriately."""
+        print("building a rotate page command")
+        cmd = CommandRotatePage(self, n, degrees)
+        print("pushing it onto the stack")
+        self.undoStack.push(cmd)
+
+    def _rotate_page_image(self, n: int, degrees: int) -> None:
+        """Low-level code to rotate a page, shifting objects on other pages appropriately."""
+        # get old page width and location, select rightward objects to shift
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        loc = br.right()
+        w = br.width()
+        log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
+        stuff = self.find_items_right_of(loc)
+        # do the rotation in metadata and rebuild
+        self.src_img_data[n]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+        # shift previously-selected rightward annotations by diff in widths
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"After rotation: old width {w} now {br.width()}")
+        self.move_some_items(stuff, br.width() - w, 0)
 
     def mousePressBox(self, event):
         """Handle mouse presses when box tool is selected.
