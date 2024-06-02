@@ -1807,7 +1807,7 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I, dx, dy):
+    def move_some_items(self, I: list, dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
@@ -1817,19 +1817,24 @@ class PageScene(QGraphicsScene):
             dx (float): translation delta in the horizontal direction.
             dy (float): translation delta in the vertical direction.
 
-        Wraps the movement of all objects in a compound undo item.
+        Wraps the movement of all objects in a compound undo item.  If
+        you want this functionality without the macro (b/c you're doing
+        your own, see the low-level :py:method:`_move_some_items`.
         """
+        self.undoStack.beginMacro("Speak at once while taking turns")
+        self._move_some_items(I, dx, dy)
+        self.undoStack.endMacro()
+
+    def _move_some_items(self, I: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
         log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        self.undoStack.beginMacro("Speak at once while taking turns")
         for item in I:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
             command = CommandMoveItem(item, QPointF(dx, dy))
             self.undoStack.push(command)
-        self.undoStack.endMacro()
 
     def pickleSceneItems(self):
         """Pickles the saveable annotation items in the scene.
@@ -1914,7 +1919,7 @@ class PageScene(QGraphicsScene):
         img = self.underImage.images[n]
         br = img.mapRectToScene(img.boundingRect())
         log.debug(f"After rotation: old width {w} now {br.width()}")
-        self.move_some_items(stuff, br.width() - w, 0)
+        self._move_some_items(stuff, br.width() - w, 0)
 
     def mousePressBox(self, event):
         """Handle mouse presses when box tool is selected.
