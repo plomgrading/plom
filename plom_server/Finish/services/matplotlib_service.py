@@ -129,14 +129,17 @@ class MatplotlibService:
         student_score = student["total_mark"].values[0]
 
         fig, ax = plt.subplots()
-        sns.histplot(self.des.get_totals(), kde=False, bins=15, color="#4361EE")
+        bar_color = "#4361EE"
+        highlight_color = "#3061FF"
+        sns.histplot(self.des.get_totals(), kde=False, bins=15, color=bar_color)
         # Overlay the student's score by highlighting the bar
         ax = plt.gca()
         for bar in ax.patches:
             assert isinstance(bar, matplotlib.patches.Rectangle)
-            x = round(bar.get_x())
-            if x == student_score or x <= student_score < x + bar.get_width():
-                bar.set_color("#3061FF")
+            bar_left = bar.get_x()
+            bar_right = bar_left + bar.get_width()
+            if bar_left <= student_score <= bar_right:
+                bar.set_color(highlight_color)
                 bar.set_edgecolor("black")
                 bar.set_linewidth(1.5)
         plt.title("Histogram of Total Score")
@@ -253,15 +256,18 @@ class MatplotlibService:
         student_score = df[df["student_id"] == sid][mark_column].values[0]
 
         fig, ax = plt.subplots()
-        sns.histplot(df[mark_column], kde=False, bins=15, color="#4361EE")
+        bar_color = "#4361EE"
+        highlight_color = "#3061FF"
+        sns.histplot(df[mark_column], kde=False, bins=15, color=bar_color)
 
         # Overlay the student's score by highlighting the bar
         ax = plt.gca()
         for bar in ax.patches:
             assert isinstance(bar, matplotlib.patches.Rectangle)
-            x = round(bar.get_x())
-            if x == student_score or x <= student_score < x + bar.get_width():
-                bar.set_color("#3061FF")
+            bar_left = bar.get_x()
+            bar_right = bar_left + bar.get_width()
+            if bar_left <= student_score <= bar_right:
+                bar.set_color(highlight_color)
                 bar.set_edgecolor("black")
                 bar.set_linewidth(1.5)
         plt.title(f"Histogram of {qlabel} Score")

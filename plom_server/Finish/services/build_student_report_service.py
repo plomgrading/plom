@@ -27,7 +27,6 @@ class BuildStudentReportService:
         sid, sname = paper_info
 
         outdir = Path("student_report")
-        outdir = Path(outdir)
         outdir.mkdir(exist_ok=True)
 
         report = pdf_builder(versions=True, sid=sid)
@@ -37,7 +36,8 @@ class BuildStudentReportService:
         """Retrieve status, such as number of scanned, marked, identified and ready to build papers.
 
         Return:
-        A list comprising number of scanned, marked, identified, and built-ready papers respectively.
+        A list comprising number of scanned, marked, identified,
+        and built-ready papers respectively.
         """
         sms = StudentMarkService()
 

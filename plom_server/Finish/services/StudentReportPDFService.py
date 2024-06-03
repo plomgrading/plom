@@ -26,10 +26,10 @@ def pdf_builder(
 
     Args:
         versions: Whether to include versions in the report.
-        sid(str): student number
+        sid: student number.
 
     Keyword Args:
-        verbose: print messages on the stdout
+        verbose: print messages on the stdout.
         _use_tqdm: even more verbosity: use tqdm for progress bars.
 
     Returns:
