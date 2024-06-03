@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Aden Chan
 
 from copy import deepcopy
 
@@ -14,7 +15,7 @@ from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 
 
-class CommandGroupDeltaText(CommandTool):
+class CommandRubric(CommandTool):
     """A group of marks and text.
 
     Command to do a delta and a textitem together (a "rubric" or
@@ -35,19 +36,19 @@ class CommandGroupDeltaText(CommandTool):
                 automatically update this object,
         """
         super().__init__(scene)
-        self.gdt = GroupDeltaTextItem(
+        self.gdt = RubricItem(
             pt, rubric, _scene=scene, style=scene.style, fontsize=scene.fontSize
         )
         self.do = DeleteObject(self.gdt.shape(), fill=True)
-        self.setText("GroupDeltaText")
+        self.setText("Rubric")
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandGroupDeltaText from a serialized GroupDeltaTextItem.
+        """Construct a CommandRubric from a serialized RubricItem.
 
         TODO: could this comandFoo.__init__() take a FooItem?
         """
-        assert X[0] == "GroupDeltaText"
+        assert X[0] == "Rubric"
         X = X[1:]
         if len(X) != 9:
             raise ValueError("wrong length of pickle data")
@@ -85,7 +86,7 @@ class CommandGroupDeltaText(CommandTool):
         self.scene.refreshStateAndScore()
 
 
-class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
+class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """A group of Delta and Text presenting a rubric.
 
     TODO: passing in scene is a workaround so the TextItem can talk to
@@ -201,7 +202,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def pickle(self):
         return [
-            "GroupDeltaText",
+            "Rubric",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.rubricID,

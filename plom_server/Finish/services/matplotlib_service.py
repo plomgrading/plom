@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Elisa Pan
 
 import base64
 from io import BytesIO
@@ -614,23 +615,19 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        # create boxplot and set colours
-        for i, mark in reversed(list(enumerate(marks))):
-            bp = ax.boxplot(mark, positions=[i], vert=False)
-            # Issue #3262: MyPy complains about this line, after upgrading to say 3.8
-            inferno = matplotlib.colormaps["inferno"]
-            colour = inferno(i / len(marks))  # type: ignore[attr-defined]
-            self._boxplot_set_colors(bp, colour)
-            (hL,) = plt.plot([], c=colour, label=marker_names[i])
+        # Create a DataFrame to use with Seaborn
+        data = pd.DataFrame(marks).T
+        data.columns = pd.Index(marker_names)
 
-        # set legend
-        plt.legend(
-            loc="center left",
-            bbox_to_anchor=(1, 0.5),
-            ncol=1,
-            fancybox=True,
+        sns.boxplot(
+            data=data,
+            ax=ax,
+            orient="h",
         )
-        plt.grid(True, alpha=0.5)
+
+        # Set y-ticks and y-tick labels
+        ax.set_yticks(range(len(marker_names)))
+        ax.set_yticklabels(marker_names)
 
         ax.set_title(f"{qlabel} boxplot by marker")
         ax.set_xlabel(f"{qlabel} mark")
@@ -639,7 +636,7 @@ class MatplotlibService:
             which="both",  # both major and minor ticks are affected
             left=False,  # ticks along the bottom edge are off
             right=False,  # ticks along the top edge are off
-            labelleft=False,
+            labelleft=True,
         )
 
         plt.xlim(
@@ -651,6 +648,7 @@ class MatplotlibService:
             ]
         )
 
+        sns.despine()
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
@@ -658,21 +656,6 @@ class MatplotlibService:
             return graph_bytes
         else:
             return self.get_graph_as_base64(graph_bytes)
-
-    def _boxplot_set_colors(self, bp, colour: tuple) -> None:
-        """Set the colours of a boxplot.
-
-        Args:
-            bp: The boxplot to set the colours of.
-            colour: The colour to set the boxplot to.
-        """
-        plt.setp(bp["boxes"][0], color=colour)
-        plt.setp(bp["caps"][0], color=colour)
-        plt.setp(bp["caps"][1], color=colour)
-        plt.setp(bp["whiskers"][0], color=colour)
-        plt.setp(bp["whiskers"][1], color=colour)
-        plt.setp(bp["fliers"][0], color=colour)
-        plt.setp(bp["medians"][0], color=colour)
 
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
@@ -700,23 +683,23 @@ class MatplotlibService:
             )
             for i, v in enumerate(averages):
                 if i == 0:
-                    plt.plot(
-                        question_indices,
-                        v,
+                    sns.lineplot(
+                        x=question_indices,
+                        y=v,
                         marker="o",
                         label="Overall",
                     )
                 else:
-                    plt.plot(
-                        question_indices,
-                        v,
+                    sns.lineplot(
+                        x=question_indices,
+                        y=v,
                         marker="x",
                         label="Version " + str(i),
                     )
         else:
-            plt.plot(
-                question_indices,
-                self.des.get_averages_on_all_questions_as_percentage(),
+            sns.lineplot(
+                x=question_indices,
+                y=self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
                 label="All versions",
             )
@@ -727,7 +710,7 @@ class MatplotlibService:
                 ncol=1,
                 fancybox=True,
             )
-        plt.grid(True, alpha=0.5)
+        sns.despine()
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
         # plt.xlabel("Question")

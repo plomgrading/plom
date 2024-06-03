@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Users can change their own passwords.
 
 ### Changed
+* Plom now allows sharing pages between questions.
 
 ### Fixed
 

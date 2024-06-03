@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """The background downloader downloads images using threads."""
@@ -450,6 +450,7 @@ class Downloader(QObject):
             sleep(wait1)
         # if self.simulate_failures and fail:
         #     raise NotImplementedError("TODO: how to simulate failure?")
+        assert self.msgr
         im_bytes = self.msgr.get_image(row["id"], md5)
         if self.simulate_failures:
             sleep(wait2)
@@ -506,8 +507,9 @@ class DownloadWorker(QRunnable):
 
     @pyqtSlot()
     def run(self):
+        simfail = False  # pylint worries it could be undefined
         if self.simulate_failures:
-            fail = random.random() <= self._simulate_failure_rate / 100
+            simfail = random.random() <= self._simulate_failure_rate / 100
             a, b = self._simulate_slow_net
             # generate wait1 + wait2 \in (a, b)
             wait2 = random.random() * (b - a) + a
@@ -518,7 +520,7 @@ class DownloadWorker(QRunnable):
             t0 = time()
             try:
                 im_bytes = self._msgr.get_image(self.img_id, self.md5)
-                if self.simulate_failures and fail:
+                if self.simulate_failures and simfail:
                     # TODO: can get PlomNotAuthorized if the pre-clone msgr is logged out
                     raise NotImplementedError(
                         "TODO: what sort of exceptions are possible?"

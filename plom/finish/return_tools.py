@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2024 Aden Chan
 
 """Misc tools related to digital return.
 
@@ -179,7 +180,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
         dict of the mapping from student number to secret code.
     """
     import pandas
-    from plom import isValidStudentNumber
+    from plom import isValidStudentID
 
     df = pandas.read_csv(csvin, dtype="object")
 
@@ -200,7 +201,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
         sn = str(row[idcol])
         # blanks, not ID'd yet for example
         if not sn == "nan":
-            assert isValidStudentNumber(sn), "Invalid student ID"
+            assert isValidStudentID(sn), "Invalid student ID"
             if use_hex:
                 if salt:
                     code = salted_hex_hash_from_str(sn, salt, digits)

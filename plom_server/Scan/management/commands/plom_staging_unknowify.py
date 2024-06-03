@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -12,18 +15,23 @@ class Command(BaseCommand):
     help = "Cast to unknown a page from the given bundle at the given order"
 
     def unknowify_image_type_from_bundle(
-        self, username, bundle_name, order, *, image_type=None
-    ):
-        scs = ScanCastService()
-
-        if image_type is None:
+        self,
+        username: str,
+        bundle_name: str,
+        order: int,
+        *,
+        image_type_str: str | None = None,
+    ) -> None:
+        if image_type_str is None:
             self.stdout.write(
-                f"Unknowify image at position {order} from bundle {bundle_name} as user {username} without type check."
+                f"Unknowify image at position {order} from bundle {bundle_name} "
+                f"as user {username} without type check."
             )
         else:
-            image_type = scs.string_to_staging_image_type(image_type)
+            image_type = ScanCastService().string_to_staging_image_type(image_type_str)
             self.stdout.write(
-                f"Attempting to unknowify image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
+                f"Attempting to unknowify image of type '{image_type}' "
+                f"at position {order} from bundle {bundle_name} as user {username}"
             )
         try:
             ScanCastService().unknowify_image_type_from_bundle_cmd(
@@ -50,7 +58,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--check-type",
             choices=["discard", "error", "extra", "known"],
-            help="When present, the system checks that the page to be unknowified is of this type.",
+            help="""
+                When present, the system checks that the page to be
+                unknowified is of this type.
+            """,
         )
 
     def handle(self, *args, **options):
@@ -58,5 +69,5 @@ class Command(BaseCommand):
             options["username"],
             options["bundle"],
             options["order"],
-            image_type=options["check_type"],
+            image_type_str=options["check_type"],
         )
