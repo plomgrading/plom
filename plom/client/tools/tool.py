@@ -8,6 +8,22 @@ from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
 
 class CommandTool(QUndoCommand):
+    """Handles the do/undo of edits to the PageScene.
+
+    Subclasses will implement the ``obj`` which is the actual object to be
+    drawn, and the ``do`` (the "DeleteObject") which is used for transcient
+    animations.  Commands are free to subclass ``QUndoCommand`` themselves
+    rather than subclassing this ``CommandTool``.
+
+    The :py:method:`redo` method handles both the initial drawing and any
+    subsequent draw operations to due to undo/redo cycles.
+
+    Thus far, the ``redo`` method should not create subcommand objects:
+    in my experience, hard to debug and segfault behaviour comes from
+    trying.  Instead, macros are instead created in PageScene.  This
+    could be revisited in the future.
+    """
+
     def __init__(self, scene):
         super().__init__()
         self.scene = scene

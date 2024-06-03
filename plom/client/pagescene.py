@@ -1821,7 +1821,7 @@ class PageScene(QGraphicsScene):
         you want this functionality without the macro (b/c you're doing
         your own, see the low-level :py:method:`_move_some_items`.
         """
-        self.undoStack.beginMacro("Speak at once while taking turns")
+        self.undoStack.beginMacro("Move several items at once")
         self._move_some_items(I, dx, dy)
         self.undoStack.endMacro()
 
@@ -1897,10 +1897,10 @@ class PageScene(QGraphicsScene):
 
     def rotate_page_image(self, n: int, degrees: int) -> None:
         """Rotate a page on the undostack, shifting objects on other pages appropriately."""
-        print("building a rotate page command")
         cmd = CommandRotatePage(self, n, degrees)
-        print("pushing it onto the stack")
+        self.undoStack.beginMacro("Page rotation and item move")
         self.undoStack.push(cmd)
+        self.undoStack.endMacro()
 
     def _rotate_page_image(self, n: int, degrees: int) -> None:
         """Low-level code to rotate a page, shifting objects on other pages appropriately."""
