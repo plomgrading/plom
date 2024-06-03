@@ -6,12 +6,13 @@ from ..services import StudentMarkService
 from Papers.services import SpecificationService
 from ..models import Paper
 from pathlib import Path
+from typing import List
 
 
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
 
-    def build_one_report(paper_number: int):
+    def build_one_report(self, paper_number: int):
         """Build student report for the given paper number.
 
         Args:
@@ -24,7 +25,8 @@ class BuildStudentReportService:
 
         sms = StudentMarkService()
         paper_info = sms.get_paper_id_or_none(paper)
-        sid, sname = paper_info
+        if paper_info:
+            sid, sname = paper_info
 
         outdir = Path("student_report")
         outdir.mkdir(exist_ok=True)
@@ -32,7 +34,7 @@ class BuildStudentReportService:
         report = pdf_builder(versions=True, sid=sid)
         return report
 
-    def get_status_for_student_report(self) -> list[int, int, int]:
+    def get_status_for_student_report(self) -> List[int]:
         """Retrieve status, such as number of scanned, marked, identified and ready to build papers.
 
         Return:

@@ -111,7 +111,7 @@ class BuildStudentReportView(ManagerRequiredView):
 
             d = BuildStudentReportService.build_one_report(paper_number)
             response = HttpResponse(d["bytes"], content_type="application/pdf")
-            encoded_filename = quote(d['filename'])
+            encoded_filename = quote(d["filename"])
             response["Content-Disposition"] = f"attachment; filename={encoded_filename}"
             return response
 
