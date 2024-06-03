@@ -1807,15 +1807,16 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I: list, dx: float, dy: float) -> None:
+    def move_some_items(self, I: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
-            I (list): which objects to move.  TODO: not quite sure yet
+            I: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
-            dx (float): translation delta in the horizontal direction.
-            dy (float): translation delta in the vertical direction.
+                TODO: typed as ``QGraphicsItem`` but maybe Groups too?
+            dx: translation delta in the horizontal direction.
+            dy: translation delta in the vertical direction.
 
         Wraps the movement of all objects in a compound undo item.  If
         you want this functionality without the macro (b/c you're doing
