@@ -26,9 +26,9 @@ class BuildStudentReportService:
         sms = StudentMarkService()
         paper_info = sms.get_paper_id_or_none(paper)
         if paper_info:
-            sid, sname = paper_info
+            sid = paper_info[0]
         else:
-            sid, sname = None, None
+            sid = None
 
         outdir = Path("student_report")
         outdir.mkdir(exist_ok=True)
