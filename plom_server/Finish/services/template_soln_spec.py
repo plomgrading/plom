@@ -36,7 +36,7 @@ class TemplateSolnSpecService:
 # We assume that the number of pages, {spec_dict['numberOfPages']}, is the same as the original test
 # and that the pages for each question are the same as those of the original test.
 
-numberOfPages = 6  # Taken from the test specification
+numberOfPages = {spec_dict['numberOfPages']}  # Taken from the test specification
 """
 
         for q, dat in spec_dict["question"].items():
