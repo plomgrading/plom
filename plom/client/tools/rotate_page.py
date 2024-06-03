@@ -16,11 +16,7 @@ class CommandRotatePage(QUndoCommand):
         self.setText("RotatePage")
 
     def redo(self):
-        self.scene._rotate_page_image(
-            self.page_image_idx, self.degrees, move_objects=False
-        )
+        self.scene._rotate_page_image_only(self.page_image_idx, self.degrees)
 
     def undo(self):
-        self.scene._rotate_page_image(
-            self.page_image_idx, -self.degrees, move_objects=False
-        )
+        self.scene._rotate_page_image_only(self.page_image_idx, -self.degrees)
