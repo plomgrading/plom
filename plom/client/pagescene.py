@@ -1897,20 +1897,27 @@ class PageScene(QGraphicsScene):
 
     def rotate_page_image(self, n: int, degrees: int) -> None:
         """Rotate a page on the undostack, shifting objects on other pages appropriately."""
-        cmd = CommandRotatePage(self, n, degrees)
         self.undoStack.beginMacro("Page rotation and item move")
+        cmd = CommandRotatePage(self, n, degrees)
         self.undoStack.push(cmd)
+        # yuck, but the command only rotates the image, and we command to enqueue
+        # the commands to move the objects: so rotate it back and then do it again
+        self._rotate_page_image(n, -degrees, move_objects=False)
+        self._rotate_page_image(n, degrees, move_objects=True)
         self.undoStack.endMacro()
 
-    def _rotate_page_image(self, n: int, degrees: int) -> None:
-        """Low-level code to rotate a page, shifting objects on other pages appropriately."""
+    def _rotate_page_image(
+        self, n: int, degrees: int, *, move_objects: bool = True
+    ) -> None:
+        """Low-level rotate page support: rotate page and optionally shift objects."""
         # get old page width and location, select rightward objects to shift
         img = self.underImage.images[n]
         br = img.mapRectToScene(img.boundingRect())
         loc = br.right()
         w = br.width()
         log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
-        stuff = self.find_items_right_of(loc)
+        if move_objects:
+            stuff = self.find_items_right_of(loc)
         # do the rotation in metadata and rebuild
         self.src_img_data[n]["orientation"] += degrees
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
@@ -1919,7 +1926,8 @@ class PageScene(QGraphicsScene):
         img = self.underImage.images[n]
         br = img.mapRectToScene(img.boundingRect())
         log.debug(f"After rotation: old width {w} now {br.width()}")
-        self._move_some_items(stuff, br.width() - w, 0)
+        if move_objects:
+            self._move_some_items(stuff, br.width() - w, 0)
 
     def mousePressBox(self, event):
         """Handle mouse presses when box tool is selected.

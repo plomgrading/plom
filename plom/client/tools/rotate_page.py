@@ -5,8 +5,10 @@ from PyQt6.QtGui import QUndoCommand
 
 
 class CommandRotatePage(QUndoCommand):
+    """Do or undo a rotation of a page, not including cleanup moves of annotations."""
+
     def __init__(self, scene, page_image_idx: int, degrees: int) -> None:
-        # scene: plom.client.pagescene.PageScene
+        # scene type is plom.client.pagescene.PageScene
         super().__init__()
         self.scene = scene
         self.page_image_idx = page_image_idx
@@ -14,9 +16,11 @@ class CommandRotatePage(QUndoCommand):
         self.setText("RotatePage")
 
     def redo(self):
-        print("redoing page rotate")
-        self.scene._rotate_page_image(self.page_image_idx, self.degrees)
+        self.scene._rotate_page_image(
+            self.page_image_idx, self.degrees, move_objects=False
+        )
 
     def undo(self):
-        print("undoing page rotate")
-        self.scene._rotate_page_image(self.page_image_idx, -self.degrees)
+        self.scene._rotate_page_image(
+            self.page_image_idx, -self.degrees, move_objects=False
+        )
