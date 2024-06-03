@@ -625,11 +625,11 @@ class PageScene(QGraphicsScene):
                 _.setEnabled(False)
             m.addAction(
                 "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
-                page_rotate_func_factory(n, -90),
+                page_rotate_func_factory(n, 90),
             )
             m.addAction(
                 "\N{Clockwise Open Circle Arrow} Rotate CW",
-                page_rotate_func_factory(n, 90),
+                page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
@@ -1903,7 +1903,7 @@ class PageScene(QGraphicsScene):
 
         Args:
             n: which page, indexed from 0.
-            degrees: rotation angle.
+            degrees: rotation angle, positive means CCW.
 
         Returns:
             None.
