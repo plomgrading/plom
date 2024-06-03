@@ -11,6 +11,7 @@ from ..models import Paper
 from Papers.services import SpecificationService
 from Progress.services import ManageScanService
 from django.contrib import messages
+from urllib.parse import quote
 
 from ..services import (
     StudentMarkService,
@@ -82,7 +83,7 @@ class BuildStudentReportView(ManagerRequiredView):
                     )
                     return render(request, self.template, context=context)
                 else:
-                    paper_number = student_df_filtered["paper_number"]
+                    paper_number = student_df_filtered["paper_number"].iloc[0]
             else:
                 paper_number = input
 
@@ -110,7 +111,8 @@ class BuildStudentReportView(ManagerRequiredView):
 
             d = BuildStudentReportService.build_one_report(paper_number)
             response = HttpResponse(d["bytes"], content_type="application/pdf")
-            response["Content-Disposition"] = f"attachment; filename={d['filename']}"
+            encoded_filename = quote(d['filename'])
+            response["Content-Disposition"] = f"attachment; filename={encoded_filename}"
             return response
 
         return redirect("build_student_report")
