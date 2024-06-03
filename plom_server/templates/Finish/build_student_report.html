@@ -26,12 +26,10 @@
         {% csrf_token %}
         <button class="btn btn-success m-2" type="submit">Download zip of all student reports</button>
     </form>
-        {% if num_ready == num_scanned %}
-            <i class="bi bi-check-circle text-success"></i> {{ num_ready }} papers are ready to be built out of {{ num_scanned }} scanned papers 
-        {% else %}
-            <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-            {{ num_ready }} papers will be built out of {{ num_scanned }} scanned papers
-        {% endif %}
+    {% if num_ready == num_scanned %}
+        <i class="bi bi-check-circle text-success"></i> {{ num_ready }} papers are ready to be built out of {{ num_scanned }} scanned papers.
+    {% else %}
+        <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+        {{ num_ready }} papers will be built out of {{ num_scanned }} scanned papers
+    {% endif %}
 {% endblock main_content %}
-
-  
