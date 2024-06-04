@@ -110,7 +110,7 @@ class MatplotlibService:
             return self.get_graph_as_base64(graph_bytes)
 
     def histogram_of_total_marks_highlighted(
-        self, sid: str, *, format: str = "base64"
+        self, sid: Optional[str], *, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a personalized histogram of total mark.
 
@@ -232,7 +232,7 @@ class MatplotlibService:
     def histogram_of_grades_on_question_highlighted(
         self,
         question_idx: int,
-        sid: str,
+        sid: Optional[str],
         *,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
