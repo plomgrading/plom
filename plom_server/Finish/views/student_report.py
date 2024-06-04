@@ -108,8 +108,9 @@ class BuildStudentReportView(ManagerRequiredView):
             if num_marked != number_of_questions:
                 messages.info(request, "The paper has not been fully marked yet.")
                 return render(request, self.template, context=context)
-
-            d = BuildStudentReportService.build_one_report(paper_number=paper_number)
+            
+            bsrs = BuildStudentReportService()
+            d = bsrs.build_one_report(paper_number=paper_number)
             response = HttpResponse(d["bytes"], content_type="application/pdf")
             encoded_filename = quote(d["filename"])
             response["Content-Disposition"] = f"attachment; filename={encoded_filename}"
@@ -129,7 +130,10 @@ class BuildStudentReportView(ManagerRequiredView):
             for paper_number in papers.keys():
                 paper_info = StudentMarkService.get_paper_id_or_none(paper_number)
                 if paper_info:
-                    d = BuildStudentReportService.build_one_report(paper_number=paper_number)
+                    bsrs = BuildStudentReportService()
+                    d = bsrs.build_one_report(
+                        paper_number=paper_number
+                    )
                     zf.writestr(d["filename"], d["bytes"])
 
         memory_file.seek(0)
