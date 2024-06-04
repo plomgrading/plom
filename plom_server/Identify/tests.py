@@ -321,7 +321,7 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
-                "in_classlist": "True",
+                "in_classlist": "False",
             },
             2: {"idpageimage_pk": None, "status": "To Do"},
         }
@@ -344,14 +344,14 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
-                "in_classlist": "True",
+                "in_classlist": "False",
             },
             2: {
                 "idpageimage_pk": None,
                 "status": "Complete",
                 "student_id": "992",
                 "student_name": "AB2",
-                "in_classlist": "True",
+                "in_classlist": "False",
             },
         }
 
