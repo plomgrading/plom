@@ -68,7 +68,7 @@ def pdf_builder(
     timestamp = datetime.now()
     timestamp_str = timestamp.strftime("%d/%m/%Y %H:%M:%S+00:00")
     total_tasks = mts.get_n_total_tasks()
-    all_marked = mts.get_n_marked_tasks() == total_tasks and total_tasks > 0
+    all_marked = total_tasks > 0 and mts.get_n_marked_tasks() == total_tasks
 
     mpls.ensure_all_figures_closed()
     df = des.get_student_data()
