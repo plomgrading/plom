@@ -20,7 +20,11 @@ def _identity_in_first_input(x, *args, **kwargs):
 
 
 def pdf_builder(
-    versions: bool, sid: Optional[str], *, verbose: Optional[bool] = None, _use_tqdm: bool = False
+    versions: bool,
+    sid: Optional[str],
+    *,
+    verbose: Optional[bool] = None,
+    _use_tqdm: bool = False,
 ) -> Dict[str, Any]:
     """Build a Student Report PDF file report and return it as bytes.
 
