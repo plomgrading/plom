@@ -31,6 +31,8 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
 
         paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")
+        if question != "*":
+            question = int(question[1:])
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
@@ -39,7 +41,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_list = SpecificationService.get_question_indices()
+        question_list = SpecificationService.get_question_labels()
         version_list = SpecificationService.get_list_of_versions()
         maxmark = SpecificationService.get_max_all_question_mark()
         if not maxmark:

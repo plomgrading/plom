@@ -19,7 +19,7 @@
     {% endif %}
     {% if question == "*" %}
     {% else %}
-        of qi.{{ question }}
+        of Q{{ question }}
     {% endif %}
     {% if version == "*" %}
     {% else %}
@@ -53,7 +53,7 @@
                         </select>
                     </div>
                     <!-- TODO: use Question labels here Issue #3322 -->
-                    <label class="col-sm-1 col-form-label" for="question">Question index:</label>
+                    <label class="col-sm-1 col-form-label" for="question">Question label:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option>*</option>
