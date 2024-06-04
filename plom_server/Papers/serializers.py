@@ -32,7 +32,7 @@ class SpecQuestionSerializer(serializers.ModelSerializer):
 
 def new_private_seed() -> str:
     """Generate a random seed for a specification."""
-    return str(random.randrange(0, 10 ** 16)).zfill(16)
+    return str(random.randrange(0, 10**16)).zfill(16)
 
 
 class SpecSerializer(serializers.ModelSerializer):
