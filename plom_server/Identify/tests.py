@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from datetime import timedelta
 
@@ -320,6 +321,7 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
+                "in_classlist": "True",
             },
             2: {"idpageimage_pk": None, "status": "To Do"},
         }
@@ -342,12 +344,14 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
+                "in_classlist": "True",
             },
             2: {
                 "idpageimage_pk": None,
                 "status": "Complete",
                 "student_id": "992",
                 "student_name": "AB2",
+                "in_classlist": "True",
             },
         }
 
