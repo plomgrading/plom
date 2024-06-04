@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -34,12 +35,26 @@ class ReportLandingPageView(ManagerRequiredView):
         # Get the selected report type from the form
         report_type = request.POST.get("report_type", "brief")
 
+        # Get the selected graphs for the brief report
+        selected_graphs = {
+            "graph1": request.POST.get("graph1") == "on",
+            "graph2": request.POST.get("graph2") == "on",
+            "graph3": request.POST.get("graph3") == "on",
+            "graph4": request.POST.get("graph4") == "on",
+            "graph5": request.POST.get("graph5") == "on",
+            "graph6": request.POST.get("graph6") == "on",
+            "graph7": request.POST.get("graph7") == "on",
+            "graph8": request.POST.get("graph8") == "on",
+        }
+
         try:
-            # Generate the report based on the selected type
+            # Generate the report based on the selected type and graphs
             if report_type == "full":
                 d = ReportPDFService.pdf_builder(versions=True, brief=False)
             else:
-                d = ReportPDFService.pdf_builder(versions=True, brief=True)
+                d = ReportPDFService.pdf_builder(
+                    versions=True, brief=True, selected_graphs=selected_graphs
+                )
         except ValueError as e:
             response = HttpResponse(
                 "Error building report: it is possible marking is incomplete?\n"
