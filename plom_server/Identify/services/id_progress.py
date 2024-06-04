@@ -48,10 +48,9 @@ class IDProgressService:
         ):
             dat = {"status": task.get_status_display(), "idpageimage_pk": None}
             students_from_classlist = ClasslistService.get_students()
-            registered_sid = list()
-            for student in students_from_classlist:
-                registered_sid.append(student["student_id"])
-
+            registered_sid = [
+                student["student_id"] for student in students_from_classlist
+            ]
             if task.status == PaperIDTask.COMPLETE:
                 sid = task.latest_action.student_id
                 dat.update(
