@@ -4,8 +4,9 @@
 # Copyright (C) 2024 Elisa Pan
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 from textwrap import dedent
+from io import BytesIO
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -26,7 +27,7 @@ def pdf_builder(
     verbose: Optional[bool] = None,
     _use_tqdm: bool = False,
     brief: bool = False,
-    selected_graphs: Dict[str, bool] = None,
+    selected_graphs: Optional[Dict[str, bool]] = None,
 ) -> Dict[str, Any]:
     """Build a PDF file report and return it as bytes.
 
@@ -99,7 +100,7 @@ def pdf_builder(
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks()
 
-    graphs = {
+    graphs: Dict[str, Union[List[Any], None, BytesIO]] = {
         "graph1": histogram_of_grades,
         "graph2": None,
         "graph3": None,
@@ -109,6 +110,8 @@ def pdf_builder(
         "graph7": [],
         "graph8": None,
     }
+
+    selected_graphs = selected_graphs or {}
 
     if not brief or selected_graphs.get("graph2"):
         # histogram of grades for each question
@@ -237,7 +240,7 @@ def pdf_builder(
         <h3>{title}</h3>
         """
 
-    def _html_for_graphs(list_of_graphs: list) -> str:
+    def _html_for_graphs(list_of_graphs: List[Any]) -> str:
         """Generate HTML for a list of graphs."""
         out = ""
         odd = 0
@@ -262,7 +265,7 @@ def pdf_builder(
             """
         return out
 
-    def _html_for_big_graphs(list_of_graphs: list) -> str:
+    def _html_for_big_graphs(list_of_graphs: List[Any]) -> str:
         """Generate HTML for a list of large graphs."""
         return "".join(
             [
