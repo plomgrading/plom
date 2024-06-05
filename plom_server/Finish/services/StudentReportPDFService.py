@@ -56,8 +56,8 @@ def pdf_builder(
                 """
                 Graphs to generate:
                     1. Histogram of total marks (show student's standing)
-                    2. Histogram of each quetion (show student's standing)
-                    Generating.."""
+                    2. Histogram of each question (show student's standing)
+                    Generating."""
             )
         )
 

@@ -126,9 +126,12 @@ class BuildStudentReportView(ManagerRequiredView):
         papers = mss.get_all_completed_test_papers()
 
         with zipfile.ZipFile(memory_file, "w") as zf:
+            sms = StudentMarkService()
+            number_of_questions = SpecificationService.get_n_questions()
             for paper_number in papers.keys():
-                paper_info = StudentMarkService.get_paper_id_or_none(paper_number)
-                if paper_info:
+                paper = Paper.objects.get(paper_number=paper_number)
+                scanned, identified, num_marked, last_updated = sms.get_paper_status(paper)
+                if scanned and identified and num_marked == number_of_questions:
                     bsrs = BuildStudentReportService()
                     d = bsrs.build_one_report(paper_number=paper_number)
                     zf.writestr(d["filename"], d["bytes"])
