@@ -20,7 +20,7 @@ class CommandRotatePage(QUndoCommand):
         self.scene = scene
         self.page_image_idx = page_image_idx
         self.degrees = degrees
-        self.do = _DeleteObject(
+        self.do = _Animator(
             degrees, scene.underImage.images[page_image_idx].boundingRect()
         )
         self.setText("RotatePage")
@@ -49,8 +49,7 @@ class CommandRotatePage(QUndoCommand):
         QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
 
-# TODO: _Animator
-class _DeleteObject(QObject):
+class _Animator(QObject):
     def __init__(self, degrees, r):
         super().__init__()
         self.degrees = degrees
