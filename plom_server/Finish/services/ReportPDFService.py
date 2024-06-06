@@ -100,14 +100,14 @@ def pdf_builder(
     histogram_of_grades = mpls.histogram_of_total_marks()
 
     graphs: Dict[str, List[Any]] = {
-        "graph1": histogram_of_grades,
-        "graph2": None,
-        "graph3": None,
+        "graph1": [histogram_of_grades],
+        "graph2": [],
+        "graph3": [],
         "graph4": [],
         "graph5": [],
         "graph6": [],
         "graph7": [],
-        "graph8": None,
+        "graph8": [],
     }
 
     selected_graphs = selected_graphs or {}
@@ -127,7 +127,7 @@ def pdf_builder(
         # correlation heatmap
         if verbose:
             print("Correlation heatmap.")
-        graphs["graph3"] = mpls.correlation_heatmap_of_questions()
+        graphs["graph3"] = [mpls.correlation_heatmap_of_questions()]
 
     if not brief or selected_graphs.get("graph4"):
         # histogram of grades given by each marker by question
@@ -176,20 +176,20 @@ def pdf_builder(
             mpls.scatter_time_spent_vs_mark_given(
                 question,
                 times_spent_minutes=(
-                    [
+                    marking_times_df["seconds_spent_marking"].div(60).to_list()
+                    if not versions
+                    else [
                         marking_times_df["seconds_spent_marking"].div(60).to_list()
                         for version in marking_times_df["question_version"].unique()
                     ]
-                    if versions
-                    else marking_times_df["seconds_spent_marking"].div(60).to_list()
                 ),
                 marks_given=(
-                    [
+                    des.get_scores_for_question(question)
+                    if not versions
+                    else [
                         des.get_scores_for_question(question)
                         for version in marking_times_df["question_version"].unique()
                     ]
-                    if versions
-                    else des.get_scores_for_question(question)
                 ),
                 versions=versions,
             )
@@ -200,7 +200,6 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph7"):
-        # Box plot of the grades given by each marker for each question
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
                 [des.get_scores_for_question(question_index)]
@@ -223,10 +222,7 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph8"):
-        # Line graph of average mark by question
-        if verbose:
-            print("Line graph of average mark by question.")
-        graphs["graph8"] = mpls.line_graph_of_avg_marks_by_question(versions=versions)
+        graphs["graph8"] = [mpls.line_graph_of_avg_marks_by_question(versions=versions)]
 
     if verbose:
         print("\nGenerating HTML.")
@@ -296,7 +292,7 @@ def pdf_builder(
     <p>Standard deviation of total marks: {stdev_mark:.2f}</p>
     <br>
     <h3>Histogram of total marks</h3>
-    <img src="data:image/png;base64,{graphs["graph1"]}" />
+    <img src="data:image/png;base64,{graphs["graph1"][0]}" />
     """
 
     if not brief:
@@ -306,7 +302,7 @@ def pdf_builder(
         html += f"""
         <p style="break-before: page;"></p>
         <h3>Correlation heatmap</h3>
-        <img src="data:image/png;base64,{graphs["graph3"]}" />
+        <img src="data:image/png;base64,{graphs["graph3"][0]}" />
         """
 
         html += _html_add_title("Histograms of grades by marker by question")
@@ -334,7 +330,7 @@ def pdf_builder(
 
         html += _html_add_title("Line graph of average mark on each question")
         html += f"""
-            <img src="data:image/png;base64,{graphs["graph8"]}" />
+            <img src="data:image/png;base64,{graphs["graph8"][0]}" />
             """
     else:
         if selected_graphs.get("graph2"):
@@ -345,7 +341,7 @@ def pdf_builder(
             html += f"""
             <p style="break-before: page;"></p>
             <h3>Correlation heatmap</h3>
-            <img src="data:image/png;base64,{graphs["graph3"]}" />
+            <img src="data:image/png;base64,{graphs["graph3"][0]}" />
             """
 
         if selected_graphs.get("graph4"):
@@ -378,7 +374,7 @@ def pdf_builder(
         if selected_graphs.get("graph8"):
             html += _html_add_title("Line graph of average mark on each question")
             html += f"""
-                <img src="data:image/png;base64,{graphs["graph8"]}" />
+                <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
 
     pdf_data = HTML(string=html, base_url="").write_pdf(
