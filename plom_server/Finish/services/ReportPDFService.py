@@ -4,7 +4,7 @@
 # Copyright (C) 2024 Elisa Pan
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from textwrap import dedent
 from io import BytesIO
 
@@ -100,7 +100,7 @@ def pdf_builder(
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks()
 
-    graphs: Dict[str, Union[List[Any], None, BytesIO]] = {
+    graphs: Dict[str, List[Any], None, BytesIO] = {
         "graph1": histogram_of_grades,
         "graph2": None,
         "graph3": None,
