@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QRectF
+from PyQt6.QtCore import QRectF, QObject
 from PyQt6.QtCore import QTimer, QPropertyAnimation, pyqtProperty
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
-from PyQt6.QtWidgets import QGraphicsObject, QGraphicsRectItem
+from PyQt6.QtWidgets import QGraphicsRectItem
 
 
 # how long animations take in milliseconds
@@ -50,7 +50,7 @@ class CommandRotatePage(QUndoCommand):
 
 
 # TODO: _Animator
-class _DeleteObject(QGraphicsObject):
+class _DeleteObject(QObject):
     def __init__(self, degrees, r):
         super().__init__()
         self.degrees = degrees
