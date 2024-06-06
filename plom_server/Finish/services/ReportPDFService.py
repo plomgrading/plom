@@ -6,7 +6,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from textwrap import dedent
-from io import BytesIO
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -100,7 +99,7 @@ def pdf_builder(
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks()
 
-    graphs: Dict[str, List[Any], None, BytesIO] = {
+    graphs: Dict[str, List[Any]] = {
         "graph1": histogram_of_grades,
         "graph2": None,
         "graph3": None,
