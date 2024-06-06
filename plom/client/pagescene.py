@@ -80,6 +80,7 @@ from .tools import (
     CommandPenArrow,
     CommandCrop,
     CommandRotatePage,
+    CommandShiftPage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -587,19 +588,16 @@ class PageScene(QGraphicsScene):
             return page_delete
 
         def page_shift_func_factory(n, relative):
-            def page_shift():
-                d = self.src_img_data.pop(n)
-                self.src_img_data.insert(n + relative, d)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+            def _page_shift():
+                self.shift_page_image(n, relative)
 
-            return page_shift
+            return _page_shift
 
         def page_rotate_func_factory(n, degrees):
-            def page_rotate():
+            def _page_rotate():
                 self.rotate_page_image(n, degrees)
 
-            return page_rotate
+            return _page_rotate
 
         self.remove_page_hack_buttons()
         for n in range(len(self.underImage.images)):
@@ -1895,6 +1893,39 @@ class PageScene(QGraphicsScene):
             X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
+
+    def shift_page_image(self, n: int, relative: int) -> None:
+        """Shift a page left or right on the undostack.
+
+        Currently does not attempt to adjust the positions of annotation items.
+
+        Args:
+            n: which page, indexed from 0.
+            relative: +1 or -1, but no error checking is done and its
+                not defined what happens for other values.
+
+        Returns:
+            None
+        """
+        if relative > 0:
+            # not obvious we need a macro, but maybe later we move annotations with it
+            macroname = f"Page {n} shift right {relative}"
+        else:
+            macroname = f"Page {n} shift left {abs(relative)}"
+        self.undoStack.beginMacro(macroname)
+
+        # like calling _shift_page_image_only but covered in undo sauce
+        cmd = CommandShiftPage(self, n, n + relative)
+        self.undoStack.push(cmd)
+
+        # TODO: adjust annotations, then end the macro
+        self.undoStack.endMacro()
+
+    def _shift_page_image_only(self, n: int, m: int) -> None:
+        d = self.src_img_data.pop(n)
+        self.src_img_data.insert(m, d)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
 
     def rotate_page_image(self, n: int, degrees: int) -> None:
         """Rotate a page on the undostack, shifting objects on other pages appropriately.
