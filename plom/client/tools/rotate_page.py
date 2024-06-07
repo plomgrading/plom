@@ -20,9 +20,6 @@ class CommandRotatePage(QUndoCommand):
         self.scene = scene
         self.page_image_idx = page_image_idx
         self.degrees = degrees
-        self.do = _Animator(
-            degrees, scene.underImage.images[page_image_idx].boundingRect()
-        )
         self.setText("RotatePage")
 
     def redo(self):
@@ -32,10 +29,11 @@ class CommandRotatePage(QUndoCommand):
         self.scene._rotate_page_image_only(self.page_image_idx, self.degrees)
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo(self.degrees, r1, r2)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # animation showing what happened
+        do = _Animator()
+        self.scene.addItem(do.item)
+        do.flash_redo(self.degrees, r1, r2)
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
 
     def undo(self):
         img = self.scene.underImage.images[self.page_image_idx]
@@ -43,18 +41,17 @@ class CommandRotatePage(QUndoCommand):
         self.scene._rotate_page_image_only(self.page_image_idx, -self.degrees)
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo(self.degrees, r2, r1)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # animation showing what happened
+        do = _Animator()
+        self.scene.addItem(do.item)
+        do.flash_undo(self.degrees, r2, r1)
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
 
 
 class _Animator(QObject):
-    def __init__(self, degrees, r):
+    def __init__(self):
         super().__init__()
-        self.degrees = degrees
-        self.item = DeleteItem(QRectF(10, 10, 1200, 2000))
-        # self.item = DeleteItem(r.adjusted(100, 100, -100, -100))
+        self.item = DeleteItem(QRectF(10, 10, 20, 20))
         self.anim = QPropertyAnimation(self, b"foo")
         self.anim.setDuration(Duration)
 

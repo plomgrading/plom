@@ -20,38 +20,38 @@ class CommandShiftPage(QUndoCommand):
         self.scene = scene
         self.old_idx = old_idx
         self.new_idx = new_idx
-        self.do = _Animator()
         self.setText("RotatePage")
 
     def redo(self):
         # TODO: is this the correct boundary?
         img = self.scene.underImage.images[self.old_idx]
         r1 = img.mapRectToScene(img.boundingRect())
+        self.scene._shift_page_image_only(self.old_idx, self.new_idx)
         img = self.scene.underImage.images[self.new_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        self.scene._shift_page_image_only(self.old_idx, self.new_idx)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo(r1, r2)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # animation showing what happened
+        do = _Animator()
+        self.scene.addItem(do.item)
+        do.flash_redo(r1, r2)
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
 
     def undo(self):
         img = self.scene.underImage.images[self.old_idx]
         r1 = img.mapRectToScene(img.boundingRect())
+        self.scene._shift_page_image_only(self.new_idx, self.old_idx)
         img = self.scene.underImage.images[self.new_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        self.scene._shift_page_image_only(self.new_idx, self.old_idx)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo(r1, r2)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # animation showing what happened
+        do = _Animator()
+        self.scene.addItem(do.item)
+        do.flash_undo(r1, r2)
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
 
 
 class _Animator(QObject):
     def __init__(self):
         super().__init__()
         self.item = DeleteItem(QRectF(10, 10, 20, 20))
-        # self.item = DeleteItem(r.adjusted(100, 100, -100, -100))
         self.anim = QPropertyAnimation(self, b"foo")
         self.anim.setDuration(Duration)
 
