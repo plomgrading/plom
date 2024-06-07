@@ -48,10 +48,12 @@ class CommandShiftPage(QUndoCommand):
         QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
 
 
+# TODO: I thought I could subclass the QGraphicsRectItem too, but segfaults
+# maybe PyQt does not support multiple inheritance as the Qt C++ docs suggest?
 class _Animator(QObject):
     def __init__(self):
         super().__init__()
-        self.item = DeleteItem(QRectF(10, 10, 20, 20))
+        self.item = TmpAnimatingRectItem(QRectF(10, 10, 20, 20))
         self.anim = QPropertyAnimation(self, b"foo")
         self.anim.setDuration(Duration)
 
@@ -88,8 +90,7 @@ class _Animator(QObject):
         self.item.setRect(p.x() - w, p.y() - w, 2 * w, 2 * w)
 
 
-# class TmpAnimatingRectItem
-class DeleteItem(QGraphicsRectItem):
+class TmpAnimatingRectItem(QGraphicsRectItem):
     def __init__(self, r):
         super().__init__()
         self.saveable = False
