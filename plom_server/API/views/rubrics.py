@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from rest_framework.views import APIView
@@ -41,6 +42,13 @@ class MgetRubricPanes(APIView):
         config = request.data["rubric_config"]
         rs.update_rubric_pane(request.user, question, config)
         return Response(status=status.HTTP_200_OK)
+
+
+class MgetRubricUsages(APIView):
+    def get(self, request: Request, key: str) -> Response:
+        rs = RubricService()
+        paper_numbers = rs.get_all_paper_numbers_using_a_rubric(key)
+        return Response(paper_numbers, status=status.HTTP_200_OK)
 
 
 class McreateRubric(APIView):

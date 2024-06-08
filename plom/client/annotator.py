@@ -1853,9 +1853,14 @@ class Annotator(QWidget):
             key: the identifier of the rubric.
 
         Returns:
-            List of paper numbers using the rubric.
+            List of paper numbers using the rubric, excluding the paper
+            the annotator currently at.
         """
-        return self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        curr_paper_number = int(self.tgvID[:4])
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        if curr_paper_number in result:
+            result.remove(curr_paper_number)
+        return result
 
     def view_other_paper(self, paper_number: int) -> None:
         """Opens another dialog to view a paper.

@@ -2497,7 +2497,6 @@ class MarkerClient(QWidget):
             tn: the paper_number to be viewed.
             q: the identifier of the question to be viewed.
         """
-
         if (tn is None) and (q is None):
             max_question_idx = self.exam_spec["numberOfQuestions"]
             qlabels = [
