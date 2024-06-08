@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     "Finish",
     "Contrib",
     "TaskOrder",
+    "QuestionTags",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,28 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Elisa Pan
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block page_heading %}
+    Question Tags
+{% endblock page_heading %}
+{% block main_content %}
+    <p>Total Questions: {{ question_count }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in questions %}
+                <tr>
+                    <td>{{ question.id }}</td>
+                    <td>{{ question.name }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock main_content %}
