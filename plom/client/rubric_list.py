@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -38,6 +39,8 @@ from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
+from .other_rubric_usage_dialog import RubricUsageDialog
+
 from .rubric_conflict_dialog import RubricConflictDialog
 from plom.plom_exceptions import (
     PlomConflict,
@@ -307,6 +310,12 @@ class RubricTable(QTableWidget):
 
             return edit_func
 
+        def other_usage_factory(t, k):
+            def other_usage():
+                t._parent.other_usage(k)
+
+            return other_usage
+
         menu = QMenu(self)
         if key:
             a = QAction("Edit rubric", self)
@@ -320,6 +329,11 @@ class RubricTable(QTableWidget):
                 a = QAction(f"Add to tab {tab.shortname}", self)
                 a.triggered.connect(add_func_factory(tab, key))
                 menu.addAction(a)
+            menu.addSeparator()
+
+            other_usage = QAction("Other usage", self)
+            other_usage.triggered.connect(other_usage_factory(self, key))
+            menu.addAction(other_usage)
             menu.addSeparator()
 
             hideAction = QAction("Hide rubric", self)
@@ -1433,7 +1447,7 @@ class RubricWidget(QWidget):
     def getCurrentRubricKeyAndTab(self):
         """The current rubric key and the current tab.
 
-        Eeturns:
+        Returns:
             list: ``[a, b]`` where ``a`` is the rubric-key (int/None)
             and ``b`` is the current tab index (int).
         """
@@ -1602,6 +1616,24 @@ class RubricWidget(QWidget):
             self._new_or_edit_rubric(None, add_to_group=w.shortname)
         else:
             self._new_or_edit_rubric(None)
+
+    def other_usage(self, key: str) -> None:
+        """Open a dialog showing a list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+        """
+        paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+        rud = RubricUsageDialog(self, paper_numbers)
+        rud.exec()
+
+    def view_other_paper(self, paper_number: int) -> None:
+        """Opens another dialog to view a paper.
+
+        Args:
+            paper_number: the paper number of the paper to be viewed.
+        """
+        self._parent.view_other_paper(paper_number)
 
     def edit_rubric(self, key: str) -> None:
         """Open a dialog to edit a rubric - from the id-key of that rubric."""

@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
+# Copyright (C) 2024 Bryan Tanady
 
 """The Plom Marker client."""
 
@@ -1834,6 +1835,17 @@ class MarkerClient(QWidget):
         """
         return self.msgr.get_one_rubric(key)
 
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Gete list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric.
+        """
+        return self.msgr.MgetOtherRubricUsages(key)
+
     def sendNewRubricToServer(self, new_rubric) -> dict[str, Any]:
         return self.msgr.McreateRubric(new_rubric)
 
@@ -2478,22 +2490,29 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def view_other(self):
-        """Shows a particular paper number and question."""
-        max_question_idx = self.exam_spec["numberOfQuestions"]
-        qlabels = [
-            get_question_label(self.exam_spec, i + 1)
-            for i in range(0, max_question_idx)
-        ]
-        tgs = SelectPaperQuestion(
-            self,
-            qlabels,
-            max_papernum=self.max_papernum,
-            initial_idx=self.question_idx,
-        )
-        if tgs.exec() != QDialog.DialogCode.Accepted:
-            return
-        tn, q, get_annotated = tgs.get_results()
+    def view_other(self, *, tn=None, q=None, get_annotated=True):
+        """Shows a particular paper number and question.
+
+        Key Args:
+            tn: the paper_number to be viewed.
+            q: the identifier of the question to be viewed.
+        """
+
+        if (tn is None) and (q is None):
+            max_question_idx = self.exam_spec["numberOfQuestions"]
+            qlabels = [
+                get_question_label(self.exam_spec, i + 1)
+                for i in range(0, max_question_idx)
+            ]
+            tgs = SelectPaperQuestion(
+                self,
+                qlabels,
+                max_papernum=self.max_papernum,
+                initial_idx=self.question_idx,
+            )
+            if tgs.exec() != QDialog.DialogCode.Accepted:
+                return
+            tn, q, get_annotated = tgs.get_results()
 
         stuff = None
         if get_annotated:

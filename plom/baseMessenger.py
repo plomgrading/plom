@@ -5,6 +5,7 @@
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -1001,6 +1002,28 @@ class BaseMessenger:
             assert isinstance(new_rubric, str)
             return self.get_one_rubric(new_rubric)
         return new_rubric
+
+    def MgetOtherRubricUsages(self, key: str) -> list[int]:
+        """Retrieve list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            the list of paper numbers using the rubric.
+        """
+        with self.SRmutex:
+            url = f"/MK/rubric_usage/{key}"
+            try:
+                response = self.get_auth(url)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(
+                    f"Error getting paper number list: {e}"
+                ) from None
 
     def get_one_rubric(self, key: str) -> dict[str, Any]:
         """Retrieve one rubric from its key.

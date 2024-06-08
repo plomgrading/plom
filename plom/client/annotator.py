@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -1844,6 +1845,25 @@ class Annotator(QWidget):
     def getOneRubricFromServer(self, key):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
+
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Request a list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric.
+        """
+        return self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+
+    def view_other_paper(self, paper_number: int) -> None:
+        """Opens another dialog to view a paper.
+
+        Args:
+            paper_number: the paper number of the paper to be viewed.
+        """
+        self.parentMarkerUI.view_other(tn=paper_number, q=self.question_num)
 
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
