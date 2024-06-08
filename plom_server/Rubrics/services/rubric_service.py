@@ -272,26 +272,30 @@ class RubricService:
             be read-only.
         """
         return Rubric.objects.get(key=rubric_key)
-    
+
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
-        
+
         Args:
             rubric_key: the identifier of the rubric.
-        
+
         Returns:
             A list of paper number using that rubric.
-        """        
+        """
         seen_paper = set()
         paper_numbers = list()
         # Iterate from newest to oldest updates, ignore duplicate papers seen at later time
         # Append to paper_numbers if the *NEWEST* annotation on that paper uses the rubric.
-        annotions_using_the_rubric = Rubric.objects.get(key=rubric_key).annotations.all()
+        annotions_using_the_rubric = Rubric.objects.get(
+            key=rubric_key
+        ).annotations.all()
 
         annotations = Annotation.objects.all().order_by("-time_of_last_update")
         for annotation in annotations:
             paper_number = annotation.task.paper.paper_number
-            if ((paper_number not in seen_paper) and (annotation in annotions_using_the_rubric)):
+            if (paper_number not in seen_paper) and (
+                annotation in annotions_using_the_rubric
+            ):
                 paper_numbers.append(paper_number)
             seen_paper.add(paper_number)
 
