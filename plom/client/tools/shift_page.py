@@ -4,16 +4,20 @@
 from PyQt6.QtCore import QRectF, QObject
 from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
+from PyQt6.QtGui import QBrush, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsRectItem
 
 from plom.client.tools import log
+from plom.client.tools import (
+    AnimationPenColour,
+    AnimationPenThickness,
+    AnimationFillColour,
+)
+from plom.client.tools import AnimationDuration
 
-# how long animations take in milliseconds
-Duration = 300
-AnimationPenColour = QColor(8, 232, 222, 128)
-AnimationPenThickness = 10
-AnimationFillColour = QColor(8, 232, 222, 16)
+
+# this is a large-scale animation: slow it down a bit
+Duration = 3 * AnimationDuration // 2
 
 
 class CommandShiftPage(QUndoCommand):

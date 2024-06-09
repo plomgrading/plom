@@ -8,6 +8,15 @@ import logging
 
 log = logging.getLogger("tools")
 
+from PyQt6.QtGui import QColor
+
+# rough length of animations take in milliseconds: some might be shorter,
+# some longer but they will be scaled by this value.
+AnimationDuration: int = 200
+AnimationPenColour = QColor(8, 232, 222, 128)
+AnimationPenThickness = 10
+AnimationFillColour = QColor(8, 232, 222, 16)
+
 from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
 from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
 from plom.client.tools.delete import CommandDelete

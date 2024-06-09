@@ -8,9 +8,12 @@ from PyQt6.QtGui import QBrush, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsRectItem
 
 from plom.client.tools import log
-
+from plom.client.tools import (
+    AnimationPenColour,
+    AnimationPenThickness,
+    AnimationFillColour,
+)
 from .shift_page import Duration
-from .shift_page import AnimationPenColour, AnimationPenThickness, AnimationFillColour
 
 
 class CommandRotatePage(QUndoCommand):
