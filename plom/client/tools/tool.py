@@ -2,7 +2,8 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QTimer, QPropertyAnimation, pyqtProperty
+from PyQt6.QtCore import QTimer, QPropertyAnimation
+from PyQt6.QtCore import pyqtProperty
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
@@ -24,7 +25,7 @@ class CommandTool(QUndoCommand):
     could be revisited in the future.
     """
 
-    def __init__(self, scene):
+    def __init__(self, scene) -> None:
         super().__init__()
         self.scene = scene
         # obj and do need to be done by each tool
@@ -50,7 +51,7 @@ class CommandTool(QUndoCommand):
 
 
 class DeleteObject(QGraphicsObject):
-    def __init__(self, shape, fill=False):
+    def __init__(self, shape, fill: bool = False) -> None:
         super().__init__()
         self.item = DeleteItem(shape, fill=fill)
         self.anim_thick = QPropertyAnimation(self, b"thickness")
@@ -82,7 +83,7 @@ class DeleteObject(QGraphicsObject):
 
 
 class DeleteItem(QGraphicsPathItem):
-    def __init__(self, shape, fill=False):
+    def __init__(self, shape, fill: bool = False) -> None:
         super().__init__()
         self.saveable = False
         self.initialShape = shape
