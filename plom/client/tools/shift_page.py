@@ -75,7 +75,7 @@ class _Animator(QObject):
     def foo(self):
         return self._foo
 
-    @foo.setter
+    @foo.setter  # type: ignore[no-redef]
     def foo(self, t):
         r1 = self.r1
         r2 = self.r2
