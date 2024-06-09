@@ -51,7 +51,7 @@ class CommandShiftPage(QUndoCommand):
 # Our workaround is the above `_AnimatorCtrlr` class, which exists
 # just to call back to this one.
 class TmpAnimRectItem(QGraphicsRectItem):
-    def __init__(self, scene, r1, r2):
+    def __init__(self, scene, r1: QRectF, r2: QRectF) -> None:
         super().__init__()
         self._scene = scene
         self.saveable = False
@@ -105,7 +105,7 @@ class TmpAnimRectItem(QGraphicsRectItem):
 
 
 class _AnimatorCtrlr(QObject):
-    def __init__(self, item):
+    def __init__(self, item: TmpAnimRectItem) -> None:
         super().__init__()
         self.item = item
 
