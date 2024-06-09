@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QRectF, QObject, QTimer, QPropertyAnimation
+from PyQt6.QtCore import QRectF, QObject
+from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsRectItem
 
+from plom.client.tools import log
 
-# how long animations take in milliseconds
-Duration = 200
+from .shift_page import Duration
 
 
 class CommandRotatePage(QUndoCommand):
@@ -29,11 +30,8 @@ class CommandRotatePage(QUndoCommand):
         self.scene._rotate_page_image_only(self.page_image_idx, self.degrees)
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        # animation showing what happened
-        do = _Animator()
-        self.scene.addItem(do.item)
-        do.flash_redo(self.degrees, r1, r2)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
+        # temporary animation, removes itself when done
+        self.scene.addItem(TmpAnimRotatingRectItem(self.scene, self.degrees, r1, r2))
 
     def undo(self):
         img = self.scene.underImage.images[self.page_image_idx]
@@ -41,35 +39,73 @@ class CommandRotatePage(QUndoCommand):
         self.scene._rotate_page_image_only(self.page_image_idx, -self.degrees)
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
-        # animation showing what happened
-        do = _Animator()
-        self.scene.addItem(do.item)
-        do.flash_undo(self.degrees, r2, r1)
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(do.item))
+        # temporary animation, removes itself when done
+        self.scene.addItem(TmpAnimRotatingRectItem(self.scene, -self.degrees, r1, r2))
 
 
-class _Animator(QObject):
-    def __init__(self):
+# see comments about this class in `shift_page.py`
+class TmpAnimRotatingRectItem(QGraphicsRectItem):
+    def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
         super().__init__()
-        self.item = DeleteItem(QRectF(10, 10, 20, 20))
-        self.anim = QPropertyAnimation(self, b"foo")
-        self.anim.setDuration(Duration)
-
-    def flash_undo(self, degrees, r1, r2):
+        self._scene = scene
+        self.saveable = False
+        self.setRect(r1)
+        self.setPen(QPen(QColor(8, 232, 222, 128), 10))
+        self.setBrush(QBrush(QColor(8, 232, 222, 16)))
         self.r1 = r1
         self.r2 = r2
         self.degrees = degrees
+
+        # Crashes when calling our methods (probably b/c QGraphicsItem
+        # is not QObject).  Instead we use a helper class.
+        self._ctrlr = _AnimatorCtrlr(self)
+        self.anim = QPropertyAnimation(self._ctrlr, b"foo")
+
+        self.anim.setDuration(Duration)
         self.anim.setStartValue(0)
         self.anim.setEndValue(1)
-        self.anim.start()
+        # When the animation finishes, it will destroy itself, whence
+        # we'll get a callback to remove ourself from the scene
+        self.anim.destroyed.connect(self.remove_from_scene)
+        self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
-    def flash_redo(self, degrees, r1, r2):
-        self.r1 = r1
-        self.r2 = r2
-        self.degrees = degrees
-        self.anim.setStartValue(1)
-        self.anim.setEndValue(0)
-        self.anim.start()
+    def remove_from_scene(self) -> None:
+        log.debug(f"TmpAnimItem: removing {self} from scene")
+        # TODO: can we be sure that scene survives until the end of the animation?
+        # TODO: also, what if the scene removes the item early?
+        self._scene.removeItem(self)
+
+    def interp(self, t: float) -> None:
+        """Draw a rectangle part way between r1 and r2, with a zoom out and rotate effect.
+
+        Args:
+            t: a value in [0, 1].
+
+        Returns:
+            None
+
+        The rectangle starts (at t=0) from r1 and transforms into r2.  Currently we
+        don't strictly speaking interpolate and instead use a square centered on a
+        path from r1 to r2.
+        """
+        r1 = self.r1
+        r2 = self.r2
+        p = (1 - t) * r1.center() + t * r2.center()
+        angle = (1 - t) * self.degrees
+        # TODO: r = t*r1 + (1-t)*r2
+        # self.setRect(r)
+        w = min(r1.width(), r1.height(), r2.width(), r2.height()) / 4
+        # 2*w size decreasing to w, then back up to 2*w
+        w = w + w * (2 * t - 1) ** 2
+        self.setRect(p.x() - w, p.y() - w, 2 * w, 2 * w)
+        self.setTransformOriginPoint(self.boundingRect().center())
+        self.setRotation(angle)
+
+
+class _AnimatorCtrlr(QObject):
+    def __init__(self, item: TmpAnimRotatingRectItem) -> None:
+        super().__init__()
+        self.item = item
 
     _foo = -1.0  # unused, but the animator expects getter/setter
 
@@ -78,26 +114,5 @@ class _Animator(QObject):
         return self._foo
 
     @foo.setter  # type: ignore[no-redef]
-    def foo(self, t: float) -> float:
-        r1 = self.r1
-        r2 = self.r2
-        p = t * r1.center() + (1 - t) * r2.center()
-        angle = t * self.degrees
-        # TODO: r = t*r1 + (1-t)*r2
-        # self.item.setRect(r)
-        w = min(r1.width(), r1.height(), r2.width(), r2.height()) / 4
-        # 2*w size decreasing to w, then back up to 2*w
-        w = w + w * (2 * t - 1) ** 2
-        self.item.setRect(p.x() - w, p.y() - w, 2 * w, 2 * w)
-        self.item.setTransformOriginPoint(self.item.boundingRect().center())
-        self.item.setRotation(angle)
-
-
-# class TmpAnimatingRectItem
-class DeleteItem(QGraphicsRectItem):
-    def __init__(self, r):
-        super().__init__()
-        self.saveable = False
-        self.setRect(r)
-        self.setPen(QPen(QColor(8, 232, 222, 128), 10))
-        self.setBrush(QBrush(QColor(8, 232, 222, 16)))
+    def foo(self, t: float) -> None:
+        self.item.interp(t)
