@@ -34,13 +34,13 @@ class CommandShiftPage(QUndoCommand):
         self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
     def undo(self):
-        img = self.scene.underImage.images[self.old_idx]
+        img = self.scene.underImage.images[self.new_idx]
         r1 = img.mapRectToScene(img.boundingRect())
         self.scene._shift_page_image_only(self.new_idx, self.old_idx)
-        img = self.scene.underImage.images[self.new_idx]
+        img = self.scene.underImage.images[self.old_idx]
         r2 = img.mapRectToScene(img.boundingRect())
         # temporary animation, removes itself when done
-        self.scene.addItem(TmpAnimRectItem(self.scene, r2, r1))
+        self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
 
 # TODO: I thought I could subclass the QGraphicsRectItem too, but segfaults
