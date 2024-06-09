@@ -78,6 +78,7 @@ class TmpAnimRectItem(QGraphicsRectItem):
     def remove_from_scene(self) -> None:
         log.debug(f"TmpAnimItem: removing {self} from scene")
         # TODO: can we be sure that scene survives until the end of the animation?
+        # TODO: also, what if the scene removes the item early?
         self._scene.removeItem(self)
 
     def interp(self, t: float) -> None:
