@@ -11,6 +11,9 @@ from plom.client.tools import log
 
 # how long animations take in milliseconds
 Duration = 300
+AnimationPenColour = QColor(8, 232, 222, 128)
+AnimationPenThickness = 10
+AnimationFillColour = QColor(8, 232, 222, 16)
 
 
 class CommandShiftPage(QUndoCommand):
@@ -57,8 +60,8 @@ class TmpAnimRectItem(QGraphicsRectItem):
         self._scene = scene
         self.saveable = False
         self.setRect(r1)
-        self.setPen(QPen(QColor(8, 232, 222, 128), 10))
-        self.setBrush(QBrush(QColor(8, 232, 222, 16)))
+        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
+        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
 
