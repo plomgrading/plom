@@ -82,13 +82,13 @@ class TmpAnimRectItem(QGraphicsRectItem):
         self._scene.removeItem(self)
 
     def interp(self, t: float) -> None:
-        """Draw a rectangle part way between r1 and r2.
+        """Draw a rectangle part way between r1 and r2, with a zoom out effect.
 
         Args:
             t: a value in [0, 1].
 
-        This includes a zoom out effect but currently does strictly speaking
-        interpolate r1 and r2 directly.
+        Returns:
+            None
         """
         r1 = self.r1
         r2 = self.r2
