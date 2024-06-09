@@ -7,6 +7,7 @@ from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsRectItem
 
+from plom.client.tools import log
 
 # how long animations take in milliseconds
 Duration = 300
@@ -75,7 +76,7 @@ class TmpAnimRectItem(QGraphicsRectItem):
         self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def remove_from_scene(self) -> None:
-        print(f"TmpAnimItem: removing {self} from scene")
+        log.debug(f"TmpAnimItem: removing {self} from scene")
         # TODO: can we be sure that scene survives until the end of the animation?
         self._scene.removeItem(self)
 
