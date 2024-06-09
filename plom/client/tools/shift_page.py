@@ -72,11 +72,11 @@ class _Animator(QObject):
     _foo = -1.0  # unused, but the animator expects getter/setter
 
     @pyqtProperty(float)
-    def foo(self):
+    def foo(self) -> float:
         return self._foo
 
     @foo.setter  # type: ignore[no-redef]
-    def foo(self, t):
+    def foo(self, t: float) -> None:
         r1 = self.r1
         r2 = self.r2
         p = t * r1.center() + (1 - t) * r2.center()

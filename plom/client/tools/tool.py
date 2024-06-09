@@ -73,11 +73,11 @@ class DeleteObject(QGraphicsObject):
         self.anim_thick.start()
 
     @pyqtProperty(float)
-    def thickness(self):
+    def thickness(self) -> float:
         return self.item.thickness
 
     @thickness.setter
-    def thickness(self, value):
+    def thickness(self, value: float) -> None:
         self.item.restyle(value)
 
 
