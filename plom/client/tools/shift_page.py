@@ -43,24 +43,13 @@ class CommandShiftPage(QUndoCommand):
         self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
 
-# TODO: I thought I could subclass the QGraphicsRectItem too, but segfaults
-# maybe PyQt does not support multiple inheritance as the Qt C++ docs suggest?
-class _AnimatorCtrlr(QObject):
-    def __init__(self, item):
-        super().__init__()
-        self.item = item
-
-    _foo = -1.0  # unused, but the animator expects getter/setter
-
-    @pyqtProperty(float)
-    def foo(self) -> float:
-        return self._foo
-
-    @foo.setter  # type: ignore[no-redef]
-    def foo(self, t: float) -> None:
-        self.item.interp(t)
-
-
+# Note: tried multiple inheritance to make this an Object, like:
+#     TmpAnimRectItem(QGraphicsRectItem, QObject):
+# In theory, this allows QPropertyAnimation to talk to self, but it just
+# crashes for me.  Also tried swapping the order of inheritance.
+# There is also a QGraphicsItemAnimations but its deprecated.
+# Our workaround is the above `_AnimatorCtrlr` class, which exists
+# just to call back to this one.
 class TmpAnimRectItem(QGraphicsRectItem):
     def __init__(self, scene, r1, r2):
         super().__init__()
@@ -71,17 +60,24 @@ class TmpAnimRectItem(QGraphicsRectItem):
         self.setBrush(QBrush(QColor(8, 232, 222, 16)))
         self.r1 = r1
         self.r2 = r2
+
         # Crashes when calling our methods (probably b/c QGraphicsItem
         # is not QObject).  Instead we use a helper class.
         self._ctrlr = _AnimatorCtrlr(self)
         self.anim = QPropertyAnimation(self._ctrlr, b"foo")
+
         self.anim.setDuration(Duration)
-        self.anim.setStartValue(1)
-        self.anim.setEndValue(0)
+        self.anim.setStartValue(0)
+        self.anim.setEndValue(1)
         # When the animation finishes, it will destroy itself, whence
         # we'll get a callback to remove ourself from the scene
         self.anim.destroyed.connect(self.remove_from_scene)
         self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
+
+    def remove_from_scene(self) -> None:
+        print(f"TmpAnimItem: removing {self} from scene")
+        # TODO: can we be sure that scene survives until the end of the animation?
+        self._scene.removeItem(self)
 
     def interp(self, t: float) -> None:
         """Draw a rectangle part way between r1 and r2.
@@ -96,18 +92,29 @@ class TmpAnimRectItem(QGraphicsRectItem):
         r2 = self.r2
         # r = t*r1 + (1-t)*r2
         r = QRectF(
-            t * r1.left() + (1 - t) * r2.left(),
-            t * r1.top() + (1 - t) * r2.top(),
-            t * r1.width() + (1 - t) * r2.width(),
-            t * r1.height() + (1 - t) * r2.height(),
+            (1 - t) * r1.left() + t * r2.left(),
+            (1 - t) * r1.top() + t * r2.top(),
+            (1 - t) * r1.width() + t * r2.width(),
+            (1 - t) * r1.height() + t * r2.height(),
         )
         self.setRect(r)
-        # zoom out slightly during the animation
-        s = (1 + (2 * t - 1) ** 2) / 2.0
+        # zoom out to two-thirds during the animation
+        s = (2 + (2 * t - 1) ** 2) / 3.0
         self.setTransformOriginPoint(self.boundingRect().center())
         self.setScale(s)
 
-    def remove_from_scene(self) -> None:
-        print(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        self._scene.removeItem(self)
+
+class _AnimatorCtrlr(QObject):
+    def __init__(self, item):
+        super().__init__()
+        self.item = item
+
+    _foo = -1.0  # unused, but the animator expects getter/setter
+
+    @pyqtProperty(float)
+    def foo(self) -> float:
+        return self._foo
+
+    @foo.setter  # type: ignore[no-redef]
+    def foo(self, t: float) -> None:
+        self.item.interp(t)
