@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QGraphicsRectItem
 
 
 # how long animations take in milliseconds
-Duration = 200
+Duration = 300
 
 
 class CommandShiftPage(QUndoCommand):
@@ -104,8 +104,8 @@ class TmpAnimRectItem(QGraphicsRectItem):
         self.setRect(r)
         # zoom out slightly during the animation
         s = (1 + (2 * t - 1) ** 2) / 2.0
-        self.item.setTransformOriginPoint(self.boundingRect().center())
-        self.item.setScale(s)
+        self.setTransformOriginPoint(self.boundingRect().center())
+        self.setScale(s)
 
     def remove_from_scene(self) -> None:
         print(f"TmpAnimItem: removing {self} from scene")
