@@ -12,7 +12,13 @@ from typing import Any
 
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsItemGroup
+from PyQt6.QtWidgets import (
+    QGraphicsItemGroup,
+    QGraphicsItem,
+    QMenu,
+    QGraphicsProxyWidget,
+    QToolButton,
+)
 
 from plom.client.tools import (
     CommandTool,
@@ -141,6 +147,36 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         else:
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
+
+        import random
+
+        if random.random() < 0.5:
+            b = QToolButton(text="\N{Warning Sign}")
+            b.setStyleSheet("QToolButton { background-color: #66ff66; }")
+            # parenting the menu inside the scene
+            m = QMenu(b)
+            m.addAction(
+                "Update to latest", lambda: print("Update rubric: not implemented yet")
+            )
+            m.addSeparator()
+            m.addAction("Explain wtf is going on", lambda: print("hello world"))
+            b.setMenu(m)
+            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            h = QGraphicsProxyWidget()
+            h.setWidget(b)
+            h.setOpacity(0.66)
+            h.setPos(self.pt)
+            cr = self.blurb.boundingRect()
+            h.moveBy(cr.width(), 0.8 * cr.height())
+            h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            h.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
+            )
+            b.setToolTip("This rubric needs an update")
+            # TODO: both of these allow it to move but not receive mouse events
+            # self.addToGroup(h)
+            # h.setParentItem(self)
+            _scene.addItem(h)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
