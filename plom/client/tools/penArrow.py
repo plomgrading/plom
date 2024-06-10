@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
 from PyQt6.QtCore import QPointF
-from PyQt6.QtGui import QPen, QPainterPath, QBrush, QColor
+from PyQt6.QtGui import QPen, QPainterPath, QBrush
 from PyQt6.QtWidgets import (
     QGraphicsItemGroup,
     QGraphicsPathItem,
     QGraphicsItem,
 )
 
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import UndoStackMoveMixin
 from plom.client.tools.pen import CommandPen, PenItem
 
@@ -95,8 +96,8 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)

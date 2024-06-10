@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import QLineF, QPointF
-from PyQt6.QtGui import QPen, QColor, QBrush
+from PyQt6.QtGui import QPen
 from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsItem
 
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
@@ -57,7 +58,7 @@ class LineItem(UndoStackMoveMixin, QGraphicsLineItem):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawRoundedRect(option.rect, 10, 10)
         super().paint(painter, option, widget)
