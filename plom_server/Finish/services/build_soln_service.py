@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -172,13 +172,15 @@ class BuildSolutionService:
                 shortname = SpecificationService.get_shortname()
                 sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
                 if sid_sname_pair:
-                    fname = f"{shortname}_solution_{sid_sname_pair[0]}.pdf"
+                    # make sure filename matches legacy - see #3405
+                    fname = f"{shortname}_solutions_{sid_sname_pair[0]}.pdf"
                     if watermark:
                         self.watermark_pages(
                             dest_doc, f"Solutions for {sid_sname_pair[0]}"
                         )
                 else:
-                    fname = f"{shortname}_solution_{paper_number:04}.pdf"
+                    # make sure filename matches legacy - see #3405
+                    fname = f"{shortname}_solutions_{paper_number:04}.pdf"
 
                 return (dest_doc.tobytes(), fname)
 
@@ -380,14 +382,14 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> list[File]:
+    def get_completed_pdf_files(self) -> list[Tuple[File, str]]:
         """Get list of paths of pdf-files of solutions that are not obsolete.
 
         Returns:
-            A list of django-Files of the reassembled pdf.
+            A list of pairs of [django-File, display filename] of the reassembled pdf.
         """
         return [
-            task.pdf_file
+            (task.pdf_file, task.display_filename)
             for task in BuildSolutionPDFChore.objects.filter(
                 obsolete=False, status=HueyTaskTracker.COMPLETE
             )
@@ -398,9 +400,9 @@ class BuildSolutionService:
         paths = [
             {
                 "fs": pdf_file.path,
-                "n": pdf_file.name,
+                "n": f"solutions/{display_filename}",
             }
-            for pdf_file in self.get_completed_pdf_files()
+            for pdf_file, display_filename in self.get_completed_pdf_files()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
@@ -456,6 +458,7 @@ def huey_build_soln_for_paper(
         chore = BuildSolutionPDFChore.objects.select_for_update().get(pk=tracker_pk)
         if not chore.obsolete:
             chore.pdf_file = File(io.BytesIO(pdf_bytes), name=soln_pdf_name)
+            chore.display_filename = soln_pdf_name
             chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
