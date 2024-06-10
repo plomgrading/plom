@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020, 2022-2023 Colin B. Macdonald
+# Copyright (C) 2020, 2022-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QUndoCommand
 
+from plom.client.tools import AnimationDuration as Duration
 from plom.client.tools.rubric import RubricItem
 from plom.client.tools import DeleteObject
 
@@ -31,13 +32,13 @@ class CommandDelete(QUndoCommand):
         # flash an animated box around the deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_undo()  # note - is undo animation since object being removed
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
         # flash an animated box around the un-deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_redo()  # is redo animation since object being brought back
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
         # put the object back
         self.scene.addItem(self.deleteItem)
         # If the object is a GroupTextDeltaItem then refresh the state and score
