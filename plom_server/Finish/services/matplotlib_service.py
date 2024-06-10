@@ -70,13 +70,15 @@ class MatplotlibService:
         return base64.b64encode(bytes.read()).decode()
 
     def histogram_of_total_marks(
-        self, *, format: str = "base64"
+        self, *, highlighted_sid: Optional[str] = None, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the total marks.
 
         Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
+            highlighted_sid: The identifier of the student whose standing
+                will be highlighted in the chart.
 
         Returns:
             Base64 encoded string or bytes containing the histogram.
@@ -96,55 +98,26 @@ class MatplotlibService:
             width=0.8,
             align="mid",
         )
+        # Overlay the student's score by highlighting the bar
+        if highlighted_sid:
+            df = self.des.get_student_data()
+            student = df[df["student_id"] == highlighted_sid]
+            student_score = student["total_mark"].values[0]
+            highlight_color = "#3061FF"
+
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
         plt.grid(True, alpha=0.5)
-
-        graph_bytes = self.get_graph_as_BytesIO(fig)
-        self.ensure_all_figures_closed()
-
-        if format == "bytes":
-            return graph_bytes
-        else:
-            return self.get_graph_as_base64(graph_bytes)
-
-    def histogram_of_total_marks_highlighted(
-        self, sid: Optional[str], *, format: str = "base64"
-    ) -> Union[BytesIO, str]:
-        """Generate a personalized histogram of total mark.
-
-        Args: sid(str): the student number
-
-        Keyword Args:
-            format: The format to return the graph in. Should be either "base64"
-                or "bytes". If omitted, defaults to "base64".
-
-        Returns:
-            Base64 encoded string or bytes containing the histogram.
-        """
-        assert format in self.formats
-        self.ensure_all_figures_closed()
-        df = self.des.get_student_data()
-        student = df[df["student_id"] == sid]
-        student_score = student["total_mark"].values[0]
-
-        fig, ax = plt.subplots()
-        bar_color = "#4361EE"
-        highlight_color = "#3061FF"
-        sns.histplot(self.des.get_totals(), kde=False, bins=15, color=bar_color)
-        # Overlay the student's score by highlighting the bar
-        ax = plt.gca()
-        for bar in ax.patches:
-            assert isinstance(bar, matplotlib.patches.Rectangle)
-            bar_left = bar.get_x()
-            bar_right = bar_left + bar.get_width()
-            if bar_left <= student_score <= bar_right:
-                bar.set_color(highlight_color)
-                bar.set_edgecolor("black")
-                bar.set_linewidth(1.5)
-        plt.title("Histogram of Total Score")
-        plt.xlabel("Score")
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -160,6 +133,7 @@ class MatplotlibService:
         *,
         versions: bool = False,
         student_df: Optional[pd.DataFrame] = None,
+        highlighted_sid: Optional[str] = None,
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question.
@@ -173,6 +147,8 @@ class MatplotlibService:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+            highlighted_sid: Optional student ID, to show the student's standing
+                on the chart.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -210,6 +186,22 @@ class MatplotlibService:
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
+        if highlighted_sid:
+            # Overlay the student's score by highlighting the bar
+            df = self.des.get_student_data()
+            highlighted_color = highlight_color = "#3061FF"
+            student_score = df[df["student_id"] == highlighted_sid][mark_column].values[
+                0
+            ]
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
         if versions:
             labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
@@ -220,59 +212,6 @@ class MatplotlibService:
                 fancybox=True,
             )
         plt.grid(True, alpha=0.5)
-
-        graph_bytes = self.get_graph_as_BytesIO(fig)
-        self.ensure_all_figures_closed()
-
-        if format == "bytes":
-            return graph_bytes
-        else:
-            return self.get_graph_as_base64(graph_bytes)
-
-    def histogram_of_grades_on_question_highlighted(
-        self,
-        question_idx: int,
-        sid: Optional[str],
-        *,
-        format: str = "base64",
-    ) -> Union[BytesIO, str]:
-        """Generate a personalized histogram for one question.
-
-        Args:
-            question_idx: The question index number, one-based.
-            sid: the student number.
-
-        Keyword Args:
-            versions: Whether to split the histogram into versions. If omitted,
-                defaults to False.
-            format: The format to return the graph in. Should be either "base64"
-                or "bytes". If omitted, defaults to "base64".
-
-        Returns:
-            Base64 encoded string or bytes containing the histogram.
-        """
-        df = self.des.get_student_data()
-        qlabel = SpecificationService.get_question_label(question_idx)
-        mark_column = "q" + str(question_idx) + "_mark"
-        student_score = df[df["student_id"] == sid][mark_column].values[0]
-
-        fig, ax = plt.subplots()
-        bar_color = "#4361EE"
-        highlight_color = "#3061FF"
-        sns.histplot(df[mark_column], kde=False, bins=15, color=bar_color)
-
-        # Overlay the student's score by highlighting the bar
-        ax = plt.gca()
-        for bar in ax.patches:
-            assert isinstance(bar, matplotlib.patches.Rectangle)
-            bar_left = bar.get_x()
-            bar_right = bar_left + bar.get_width()
-            if bar_left <= student_score <= bar_right:
-                bar.set_color(highlight_color)
-                bar.set_edgecolor("black")
-                bar.set_linewidth(1.5)
-        plt.title(f"Histogram of {qlabel} Score")
-        plt.xlabel("Score")
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()

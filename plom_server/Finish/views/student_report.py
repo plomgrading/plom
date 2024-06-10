@@ -130,7 +130,9 @@ class BuildStudentReportView(ManagerRequiredView):
             number_of_questions = SpecificationService.get_n_questions()
             for paper_number in papers.keys():
                 paper = Paper.objects.get(paper_number=paper_number)
-                scanned, identified, num_marked, last_updated = sms.get_paper_status(paper)
+                scanned, identified, num_marked, last_updated = sms.get_paper_status(
+                    paper
+                )
                 if scanned and identified and num_marked == number_of_questions:
                     bsrs = BuildStudentReportService()
                     d = bsrs.build_one_report(paper_number=paper_number)

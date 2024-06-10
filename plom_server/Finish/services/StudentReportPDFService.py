@@ -86,7 +86,7 @@ def pdf_builder(
     # histogram of grades
     if verbose:
         print("Histogram of total marks.")
-    histogram_of_grades = mpls.histogram_of_total_marks_highlighted(sid=sid)
+    histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
 
     # histogram of grades for each question
     histogram_of_grades_q = []
@@ -98,8 +98,8 @@ def pdf_builder(
         question_idx = _q + 1  # 1-indexing
         histogram_of_grades_q.append(  # add to the list
             # each base64-encoded image
-            mpls.histogram_of_grades_on_question_highlighted(  # of the histogram
-                question_idx, sid=sid
+            mpls.histogram_of_grades_on_question_version(
+                question_idx, highlighted_sid=sid
             )
         )
 
