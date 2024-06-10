@@ -1720,7 +1720,7 @@ class Annotator(QWidget):
         # is 4-tuple (x,y,w,h) scaled by image width / height
         crop_rect_data = self.scene.current_crop_rectangle_as_proportions()
         # TODO: consider saving colour only if not red?
-        # TODO: someday src_img_data may have other images not used
+        # TODO: someday src_img_data may have other images not used (maybe today)
         plomData = {
             "base_images": self.scene.get_src_img_data(),
             "saveName": str(aname),

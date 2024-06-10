@@ -2527,7 +2527,7 @@ class MarkerClient(QWidget):
                     " it may not be scanned or was not written.",
                 ).exec()
                 return
-            # also, discard the non-included pages
+            # also, discard the non-included pages (TODO: or not?)
             pagedata = [x for x in pagedata if x["included"]]
             if not pagedata:
                 WarnMsg(

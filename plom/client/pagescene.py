@@ -310,7 +310,10 @@ class UnderlyingImages(QGraphicsItemGroup):
         super().__init__()
         self.images = {}
         x = 0
-        for n, data in enumerate(image_data):
+        n = 0
+        for data in image_data:
+            if not data["included"]:
+                continue
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
@@ -342,6 +345,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+            n += 1
 
         self.setZValue(-1)
 
@@ -429,6 +433,16 @@ class PageScene(QGraphicsScene):
         """
         super().__init__(parent)
         self.src_img_data = deepcopy(src_img_data)
+        for x in self.src_img_data:
+            # TODO: elsewhere "included" is taken to mean "the server thinks
+            # we should include it (viz, green highlight in PageArranger)
+            if "included" in x.keys():
+                x["server_included"] = x["included"]
+            x["included"] = True
+            print("=-" * 40)
+            print(f'Hacked in an "included": {x}')
+        if not self.src_img_data:
+            raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
         self.score = None
         self._page_hack_buttons = []
@@ -571,7 +585,8 @@ class PageScene(QGraphicsScene):
                 if d.exec() == QMessageBox.StandardButton.No:
                     img.setGraphicsEffect(None)
                     return
-                self.src_img_data.pop(n)
+                found_idx = self._idx_from_visible_idx(n)
+                self.src_img_data[found_idx]["included"] = False
                 br = img.mapRectToScene(img.boundingRect())
                 log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
                 # shift existing annotations leftward
@@ -708,19 +723,27 @@ class PageScene(QGraphicsScene):
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
 
-    def get_src_img_data(self):
-        return self.src_img_data
+    def get_src_img_data(self, only_included: bool = True) -> list[dict[str, Any]]:
+        """Get the live source image data for this scene.
 
-    def how_many_underlying_images_wide(self):
+        Note you get the actual data, not a copy so careful if you mess with it!
+        """
+        r = []
+        for x in self.src_img_data:
+            if x["included"] or not only_included:
+                r.append(x)
+        return r
+
+    def how_many_underlying_images_wide(self) -> int:
         """Count how many images wide the bottom layer is.
 
         Currently this is just the number of images (because we layout
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.src_img_data)
+        return len(self.get_src_img_data())
 
-    def how_many_underlying_images_high(self):
+    def how_many_underlying_images_high(self) -> int:
         """How many images high is the bottom layer.
 
         Currently this is always 1 because we align the images in a
@@ -1921,9 +1944,20 @@ class PageScene(QGraphicsScene):
         # TODO: adjust annotations, then end the macro
         self.undoStack.endMacro()
 
+    def _idx_from_visible_idx(self, n: int) -> int:
+        m = -1
+        for idx, x in enumerate(self.src_img_data):
+            if x["included"]:
+                m += 1
+            if m == n:
+                return idx
+        raise KeyError(f"no row in src_img_data visible at n={n}")
+
     def _shift_page_image_only(self, n: int, m: int) -> None:
-        d = self.src_img_data.pop(n)
-        self.src_img_data.insert(m, d)
+        n_idx = self._idx_from_visible_idx(n)
+        m_idx = self._idx_from_visible_idx(m)
+        d = self.src_img_data.pop(n_idx)
+        self.src_img_data.insert(m_idx, d)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 
@@ -1965,7 +1999,8 @@ class PageScene(QGraphicsScene):
     def _rotate_page_image_only(self, n: int, degrees: int) -> None:
         """Low-level rotate page support: only rotate page, no shifts."""
         # do the rotation in metadata and rebuild
-        self.src_img_data[n]["orientation"] += degrees
+        n_idx = self._idx_from_visible_idx(n)
+        self.src_img_data[n_idx]["orientation"] += degrees
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 
