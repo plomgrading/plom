@@ -189,7 +189,7 @@ class MatplotlibService:
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
-            highlighted_color = highlight_color = "#3061FF"
+            highlight_color = "#3061FF"
             student_score = df[df["student_id"] == highlighted_sid][mark_column].values[
                 0
             ]
