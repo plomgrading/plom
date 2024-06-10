@@ -35,7 +35,9 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         if question == "*":
             question_label = "*"
         else:
-            question_label = SpecificationService.get_question_label(question_index=question)
+            question_label = SpecificationService.get_question_label(
+                question_index=question
+            )
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")

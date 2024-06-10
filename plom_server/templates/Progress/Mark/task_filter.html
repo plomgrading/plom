@@ -59,7 +59,9 @@
                         <select name="question" class="form-select">
                             <option>*</option>
                             {% for q_idx, q_label in question_index_label_pairs %}
-                                <option value="{{ q_idx }}", label="{{ q_label }}" {% if question == q_idx %}selected{% endif %}>{{ q_idx }}</option>
+                                <option value="{{ q_idx }}"
+                                        label="{{ q_label }}"
+                                        {% if question == q_idx %}selected{% endif %}>{{ q_idx }}</option>
                             {% endfor %}
                         </select>
                     </div>
