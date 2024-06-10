@@ -20,7 +20,7 @@
     {% endif %}
     {% if question == "*" %}
     {% else %}
-        of {{ question_label }}
+        of {{ question_label|safe }}
     {% endif %}
     {% if version == "*" %}
     {% else %}
@@ -54,12 +54,12 @@
                         </select>
                     </div>
                     <!-- TODO: use Question labels here Issue #3322 -->
-                    <label class="col-sm-1 col-form-label" for="question">Question:</label>
+                    <label class="col-sm-1 col-form-label" for="question">Question label:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option>*</option>
-                            {% for qn in question_list %}
-                                <option {% if question == qn %}selected{% endif %}>{{ qn }}</option>
+                            {% for q_idx, q_label in question_index_label_pairs %}
+                                <option value="{{ q_idx }}", label="{{ q_label }}" {% if question == q_idx %}selected{% endif %}>{{ q_idx }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -124,7 +124,7 @@
                                     <thead>
                                         <tr>
                                             <th>P</th>
-                                            <th>Q</th>
+                                            <th>Q_idx</th>
                                             <th>V</th>
                                             <th>Status</th>
                                             <th>Last update</th>
