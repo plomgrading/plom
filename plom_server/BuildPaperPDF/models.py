@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 import pathlib
 from pathlib import Path
@@ -20,6 +21,7 @@ class BuildPaperPDFChore(HueyTaskTracker):
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
+    display_filename = models.TextField(null=True)
     # only used for UI display, but also a record of what was on the PDF file
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
@@ -37,25 +39,7 @@ class BuildPaperPDFChore(HueyTaskTracker):
         print(
             f"Deleting pdf associated with paper {self.paper.paper_number} if it exists"
         )
-        f = self.file_path()
-        if not f:
+        if self.pdf_file is None:
             print(f"  But no file associated with paper {self.paper.paper_number}")
             return
-        f.unlink(missing_ok=True)
-
-    def file_path(self) -> Union[pathlib.Path, None]:
-        """Get the path of the generated PDF file.
-
-        Returns:
-            If the file exists, return the path. If it doesn't, return `None`.
-        """
-        if not self.pdf_file:
-            return None
-        return Path(self.pdf_file.path)
-
-    def file_display_name(self):
-        """Return a file name for displaying on the PDF builder GUI."""
-        if self.student_id:
-            return f"exam_{self.paper.paper_number:04}_{self.student_id}.pdf"
-        else:
-            return f"exam_{self.paper.paper_number:04}.pdf"
+        self.pdf_file.path.unlink(missing_ok=True)

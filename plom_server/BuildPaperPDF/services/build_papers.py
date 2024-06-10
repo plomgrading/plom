@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
@@ -171,10 +171,10 @@ class BuildPapersService:
             obsolete=False, status=BuildPaperPDFChore.ERROR
         ).exists()
 
-    def get_completed_pdf_paths(self) -> list:
+    def get_completed_pdf_paths(self) -> list[tuple[File, str]]:
         """Get list of paths of pdf-files of completed (built) tests papers."""
         return [
-            pdf.file_path()
+            (pdf.pdf_file, pdf.display_filename)
             for pdf in BuildPaperPDFChore.objects.filter(
                 obsolete=False, status=BuildPaperPDFChore.COMPLETE
             )
@@ -381,9 +381,8 @@ class BuildPapersService:
         if task.status != BuildPaperPDFChore.COMPLETE:
             raise ValueError(f"Task {paper_number} is not complete")
 
-        paper_path = task.file_path()
-        with paper_path.open("rb") as fh:
-            return (paper_path.name, fh.read())
+        with tasks.pdf_file.path.open("rb") as fh:
+            return (task.display_file, task.pdf_file.read())
 
     @transaction.atomic
     def get_task_context(
@@ -404,7 +403,7 @@ class BuildPapersService:
                 "obsolete": task.obsolete,
                 "status": task.get_status_display(),
                 "message": task.message,
-                "pdf_filename": task.file_display_name(),
+                "pdf_filename": task.display_filename,
             }
             for task in tasks
         ]
@@ -415,16 +414,15 @@ class BuildPapersService:
         Raises:
             ValueError: no papers available.
         """
-        pdf_paths = self.get_completed_pdf_paths()
-        if not pdf_paths:
-            raise ValueError("No PDF files are built")
         paths = [
             {
                 "fs": pdf_path,
-                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
+                "n": f"papers_for_{short_name}/{display_filename}",
             }
-            for pdf_path in pdf_paths
+            for pdf_path, display_filename in self.get_completed_pdf_paths()
         ]
+        if len(paths) == 0:
+            raise ValueError("No PDF files are built")
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
