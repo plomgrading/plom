@@ -165,9 +165,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             h = QGraphicsProxyWidget()
             h.setWidget(b)
             h.setOpacity(0.66)
+            # h.setPos(self.blurb.boundingRect().bottomRight())
+            # TODO: these magic numbers come from _tweakPositions
             h.setPos(self.pt)
-            cr = self.blurb.boundingRect()
-            h.moveBy(cr.width(), 0.8 * cr.height())
+            cr = self.di.boundingRect()
+            h.moveBy(cr.width() + 5, cr.height() / 2)
+
             h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             h.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
