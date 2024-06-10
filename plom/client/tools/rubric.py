@@ -11,7 +11,7 @@ from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import AnimationDuration as Duration
-from plom.client.tools import OutOfBoundsPenColour, OutOfBoundsFill
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
@@ -218,8 +218,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
-            # TODO: this one has different thickness than others OOB pens?
-            painter.setPen(QPen(OutOfBoundsPenColour, 4))
+            painter.setPen(OutOfBoundsPen)
             painter.setBrush(OutOfBoundsFill)
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())

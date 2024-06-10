@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsTextItem, QGraphicsItem
 
-from plom.client.tools import OutOfBoundsPenColour, OutOfBoundsFill
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools.text import UndoStackMoveTextMixin
 
 
@@ -41,8 +41,7 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             if self.group() is None:  # make sure not part of a GDT
-                # TODO: this one has different thickness than others OOB pens?
-                painter.setPen(QPen(OutOfBoundsPenColour, 4))
+                painter.setPen(OutOfBoundsPen)
                 painter.setBrush(OutOfBoundsFill)
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
