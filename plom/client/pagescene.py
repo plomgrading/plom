@@ -299,18 +299,18 @@ class UnderlyingImages(QGraphicsItemGroup):
     Puts a dotted border around all the images.
     """
 
-    def __init__(self, image_data):
+    def __init__(self, image_data: list[dict[str, Any]]):
         """Initialize a new series of underlying images.
 
         Args:
-            image_data (list[dict]): each dict has keys 'filename'
-                and 'orientation' (and possibly others).  Currently
-                every image is used and the list order determines
-                the order.  That is subject to change.
+            image_data: each dict has keys 'filename', 'orientation',
+                and 'included' (and possibly others).  Only images with
+                'included' as True will be used.
+                The list order determines the order: subject to change!
         """
         super().__init__()
         self.images = {}
-        x = 0
+        x = 0.0
         n = 0
         for data in image_data:
             if not data["included"]:
