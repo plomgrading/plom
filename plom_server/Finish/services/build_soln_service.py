@@ -9,7 +9,7 @@ from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import arrow
 import fitz

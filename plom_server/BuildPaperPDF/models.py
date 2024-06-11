@@ -4,10 +4,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-import pathlib
-from pathlib import Path
-from typing import Union
-
 from django.db import models
 
 # from django.db.models.signals import pre_delete

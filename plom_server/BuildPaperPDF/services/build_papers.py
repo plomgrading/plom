@@ -103,6 +103,7 @@ def huey_build_single_paper(
             if not _chore.obsolete:
                 with save_path.open("rb") as f:
                     _chore.pdf_file = File(f, name=save_path.name)
+                    _chore.display_filename = save_path.name
                     _chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -381,8 +382,7 @@ class BuildPapersService:
         if task.status != BuildPaperPDFChore.COMPLETE:
             raise ValueError(f"Task {paper_number} is not complete")
 
-        with tasks.pdf_file.path.open("rb") as fh:
-            return (task.display_file, task.pdf_file.read())
+        return (task.display_filename, task.pdf_file.read())
 
     @transaction.atomic
     def get_task_context(
@@ -416,7 +416,7 @@ class BuildPapersService:
         """
         paths = [
             {
-                "fs": pdf_path,
+                "fs": pdf_path.path,
                 "n": f"papers_for_{short_name}/{display_filename}",
             }
             for pdf_path, display_filename in self.get_completed_pdf_paths()

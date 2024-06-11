@@ -10,7 +10,7 @@ from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any
+from typing import Any, Tuple
 
 import arrow
 import zipfly
