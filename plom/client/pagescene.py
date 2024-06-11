@@ -1979,7 +1979,7 @@ class PageScene(QGraphicsScene):
         img.setGraphicsEffect(e)
         d = SimpleQuestion(
             self.parent(),  # self.addWidget(d) instead?
-            """Remove this page?\n<ul>\n
+            """Remove this page? <ul>\n
               <li>You can undo or find the page again using
                 <em>Rearrange Pages</em>.</li>\n
             <li>Existing annotations will shift left or right.</li>\n
