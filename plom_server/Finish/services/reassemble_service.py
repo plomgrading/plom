@@ -80,11 +80,11 @@ class ReassembleService:
         return legacy_cover_page_info
 
     def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
-        """Return information needed to build a cover page for a reassembled test.
+        """Return information needed to build a cover page for a reassembled paper.
 
         Args:
-            paper: a reference to a Paper instance
-            solution (optional): bool, leave out the max possible mark.
+            paper: a reference to a Paper instance.
+            solution (optional): bool, leave out the mark.
 
         Returns:
             If ``solution`` is True then returns a list of lists
