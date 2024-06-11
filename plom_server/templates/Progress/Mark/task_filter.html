@@ -57,6 +57,7 @@
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
                             <option value="*" label="*" />
+                            <!-- seems ok to use non-html-escaped in label="..." -->
                             {% for q_idx, q_label in question_index_label_pairs %}
                                 <option value="{{ q_idx }}"
                                         label="{{ q_label }}"
