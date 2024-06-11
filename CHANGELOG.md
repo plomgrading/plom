@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plom now allows sharing pages between questions.
 
 ### Fixed
+* For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
 
 
 
