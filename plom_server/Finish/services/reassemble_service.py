@@ -53,6 +53,32 @@ class ReassembleService:
             )
         return spreadsheet_data
 
+    def get_legacy_cover_page_info(self, paper: Paper) -> list[list[Any]]:
+        """Info needed to build cover page for reassembled paper via legacy command line tool.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            A list of lists ``[[sid, sname], [qi, v, m], ..., [qi, v, m]]``
+            where ``qi`` is 1-indexed question index, ``v`` is version and
+            ``m`` is mark.
+        """
+        sms = StudentMarkService()
+        legacy_cover_page_info: list[list[Any]] = []
+        student_info = sms.get_paper_id_or_none(paper)
+        if student_info:
+            student_id, student_name = student_info
+        else:
+            student_id, student_name = None, None
+        legacy_cover_page_info.append([student_id, student_name])
+
+        for i in SpecificationService.get_question_indices():
+            version, mark = sms.get_question_version_and_mark(paper, i)
+            legacy_cover_page_info.append([i, version, mark])
+
+        return legacy_cover_page_info
+
     def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
         """Return information needed to build a cover page for a reassembled test.
 
