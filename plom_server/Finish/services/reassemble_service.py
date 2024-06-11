@@ -79,7 +79,7 @@ class ReassembleService:
 
         return legacy_cover_page_info
 
-    def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
+    def _get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
         """Return information needed to build a cover page for a reassembled paper.
 
         Args:
@@ -125,7 +125,7 @@ class ReassembleService:
         else:
             sid, sname = (None, None)
 
-        cover_page_info = self.get_cover_page_info(paper, solution)
+        cover_page_info = self._get_cover_page_info(paper, solution)
         cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
         makeCover(
             cover_page_info,
