@@ -302,6 +302,26 @@ def upload(
                 aname, pname
             )
         )
+    try:
+        _msgr.MreturnMarkedTask(
+            task,
+            question_idx,
+            ver,
+            grade,
+            marking_time,
+            aname,
+            pname,
+            rubrics,
+            integrity_check,
+        )
+    except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
+        knownFailCallback(task, str(ex))
+        # probably previous call does not return: it forces a crash
+        return False
+    except PlomException as ex:
+        unknownFailCallback(task, str(ex))
+        return False
+
     numDone, numTotal = _msgr.MprogressCount(question_idx, ver)
     successCallback(task, numDone, numTotal)
     return True
