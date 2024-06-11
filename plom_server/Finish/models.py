@@ -11,9 +11,14 @@ from Papers.models import Paper
 
 
 class ReassemblePaperChore(HueyTaskTracker):
-    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    """A tracker for the huey chore of reassembling marked papers
 
-    # make reassembled filename directory match legacy
+    paper (ForeignKey): a link to the associated paper being reassembled
+    pdf_file (FileField): stores the reassembled pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
+    display_filename (TextField): stores the filename of the reassembled pdf to be returned to users.
+    """
+
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="reassembled/", null=True)
     display_filename = models.TextField(null=True)
 
@@ -23,6 +28,13 @@ class ReassemblePaperChore(HueyTaskTracker):
 
 
 class BuildSolutionPDFChore(HueyTaskTracker):
+    """A tracker for the huey chore of building solution pdfs for papers
+
+    paper (ForeignKey): a link to the paper for which we are making the solution pdf.
+    pdf_file (FileField): stores the solution pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
+    display_filename (TextField): stores the filename of the solution pdf to be returned to users.
+    """
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
 
     pdf_file = models.FileField(upload_to="solutions/", null=True)

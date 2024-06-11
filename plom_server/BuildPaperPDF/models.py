@@ -13,7 +13,14 @@ from Papers.models import Paper
 
 
 class BuildPaperPDFChore(HueyTaskTracker):
-    """Represents the chore of building a PDF file for each paper."""
+    """Represents the chore of building a PDF file for each paper.
+
+    paper (ForeignKey): a link to the associated paper being reassembled
+    pdf_file (FileField): stores the reassembled pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
+    display_filename (TextField): stores the filename of the reassembled pdf to be returned to users.
+    student_name (TextField): None or stores the student name used to pre-name the paper when built.
+    student_id (TextField): None or stores the student id used to pre-name the paper when built.
+    """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
@@ -32,10 +39,8 @@ class BuildPaperPDFChore(HueyTaskTracker):
         return "Task Object " + str(self.paper.paper_number)
 
     def unlink_associated_pdf(self):
-        print(
-            f"Deleting pdf associated with paper {self.paper.paper_number} if it exists"
-        )
+        # NOTE - at present this is not called.
+        # TODO - call this when the associated task is out of date.
         if self.pdf_file is None:
-            print(f"  But no file associated with paper {self.paper.paper_number}")
             return
         self.pdf_file.path.unlink(missing_ok=True)
