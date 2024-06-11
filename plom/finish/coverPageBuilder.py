@@ -7,6 +7,8 @@
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 import fitz
 
 from plom.misc_utils import local_now_to_simple_string
@@ -17,11 +19,11 @@ def makeCover(
     tab,
     pdfname,
     *,
-    test_num=None,
-    info=None,
-    solution=False,
-    footer=True,
-    exam_name=None,
+    exam_name: str | None = None,
+    test_num: str | int | None = None,
+    info: tuple[str | None, str | None] | None = None,
+    solution: bool = False,
+    footer: bool = True,
 ):
     """Create html page of name ID etc and table of marks.
 
@@ -33,8 +35,9 @@ def makeCover(
         pdfname (pathlib.Path): filename to save the pdf into.
 
     Keyword Args:
-        exam_name (str): the "long name" of this assessment.
-        test_num (int/str): the test number for which we are making a cover.
+        exam_name: the "long name" of this assessment.
+        test_num: the test number for which we are making a cover, or
+            ``None`` to omit.
         info (list/tuple): currently a 2-tuple/2-list of student name (str)
             and student id (str).
         solution (bool): whether or not this is a cover page for solutions.
@@ -98,7 +101,7 @@ def makeCover(
         vpos += deltav
         tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
         vpos += deltav
-    if test_num:
+    if test_num is not None:
         if isinstance(test_num, int):
             text = f"{bullet} Test number: {test_num:04}"
         else:
