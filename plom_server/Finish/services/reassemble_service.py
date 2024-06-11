@@ -125,11 +125,11 @@ class ReassembleService:
         else:
             sid, sname = (None, None)
 
-        cover_page_info = self._get_cover_page_info(paper, solution)
-        cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
+        cover_page_table_data = self._get_cover_page_info(paper, solution)
+        cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
         makeCover(
-            cover_page_info,
-            cover_name,
+            cover_page_table_data,
+            cover_pdf_name,
             test_num=paper.paper_number,
             info=(sname, sid),
             solution=solution,

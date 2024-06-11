@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020, 2022-2023 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
+
+import pathlib
+from typing import Any
 
 import fitz
 
@@ -16,32 +19,32 @@ from .examReassembler import papersize_portrait
 
 
 def makeCover(
-    tab,
-    pdfname,
+    tab: list[list[Any]],
+    pdfname: pathlib.Path,
     *,
     exam_name: str | None = None,
     test_num: str | int | None = None,
     info: tuple[str | None, str | None] | None = None,
     solution: bool = False,
     footer: bool = True,
-):
+) -> None:
     """Create html page of name ID etc and table of marks.
 
     Args:
-        tab (list): information about the test that should be put on the
+        tab: information about the test that should be put on the
             coverpage.  A list of lists where each row is
             ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
             ``[qlabel, ver, maxPossibleMark]`` if solutions.
-        pdfname (pathlib.Path): filename to save the pdf into.
+        pdfname: filename to save the pdf into.
 
     Keyword Args:
         exam_name: the "long name" of this assessment.
         test_num: the test number for which we are making a cover, or
             ``None`` to omit.
-        info (list/tuple): currently a 2-tuple/2-list of student name (str)
+        info: currently a 2-tuple/2-list of student name (str)
             and student id (str).
-        solution (bool): whether or not this is a cover page for solutions.
-        footer (bool): whether to print a footer with timestamp.
+        solution: whether or not this is a cover page for solutions.
+        footer: whether to print a footer with timestamp.
 
     Returns:
         None
