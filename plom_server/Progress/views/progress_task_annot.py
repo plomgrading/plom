@@ -46,10 +46,11 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_index_label_pairs = (
-            SpecificationService.get_question_index_label_pairs()
-        )
-        version_list = SpecificationService.get_list_of_versions()
+        question_index_label_pairs = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+        version_list = [str(vn) for vn in SpecificationService.get_list_of_versions()]
         maxmark = SpecificationService.get_max_all_question_mark()
         if not maxmark:
             mark_list = []
