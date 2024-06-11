@@ -382,11 +382,11 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> list[Tuple[File, str]]:
-        """Get list of paths of pdf-files of solutions that are not obsolete.
+    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+        """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
-            A list of pairs of [django-File, display filename] of the reassembled pdf.
+            A list of pairs of [django-File, display filename] of the solution pdf.
         """
         return [
             (task.pdf_file, task.display_filename)
@@ -402,7 +402,7 @@ class BuildSolutionService:
                 "fs": pdf_file.path,
                 "n": f"solutions/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)

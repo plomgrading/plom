@@ -563,8 +563,8 @@ class ReassembleService:
             self.queue_single_paper_reassembly(data["paper_num"])
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> list[Tuple[File, str]]:
-        """Get list of paths of pdf-files of reassembled papers that are not obsolete.
+    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+        """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
 
         Returns:
             A list of pairs [django-File, display filename] of the reassembled pdf.
@@ -583,7 +583,7 @@ class ReassembleService:
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)

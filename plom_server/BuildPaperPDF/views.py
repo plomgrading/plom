@@ -109,8 +109,8 @@ class UpdatePDFTable(PDFTableView):
 class GetPDFFile(ManagerRequiredView):
     def get(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         try:
-            (pdf_filename, pdf_bytes) = BuildPapersService().get_paper_path_and_bytes(
-                paper_number
+            (pdf_filename, pdf_bytes) = (
+                BuildPapersService().get_paper_recommended_name_and_bytes(paper_number)
             )
         except ValueError:
             # TODO: Issue #3157 why do we need this?  Can we just 404?
