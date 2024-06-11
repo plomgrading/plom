@@ -36,9 +36,11 @@ class DiscardImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-
+        # have to get the query-param from the GET not the POST
+        the_filter = request.GET.get("filter", "all")
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id])
+            + f"?pop={index}&filter={the_filter}"
         )
 
 
@@ -62,15 +64,18 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
+        # have to get the query-param from the GET not the POST
+        the_filter = request.GET.get("filter", "all")
 
         if pop_index is None:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_thumbnails", args=[bundle_id])
+                + f"filter={the_filter}"
             )
         else:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_thumbnails", args=[bundle_id])
-                + f"?pop={pop_index}"
+                + f"?pop={pop_index}&filter={the_filter}"
             )
 
 

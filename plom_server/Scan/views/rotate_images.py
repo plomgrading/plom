@@ -29,9 +29,11 @@ class RotateImageClockwise(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-
+        # have to get the query-param from the GET not the POST
+        the_filter = request.GET.get("filter", "all")
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id])
+            + f"?pop={index}&filter={the_filter}"
         )
 
 
@@ -46,8 +48,11 @@ class RotateImageCounterClockwise(ScannerRequiredView):
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
 
+        # have to get the query-param from the GET not the POST
+        the_filter = request.GET.get("filter", "all")
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id])
+            + f"?pop={index}&filter={the_filter}"
         )
 
 
@@ -61,9 +66,11 @@ class RotateImageOneEighty(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-
+        # have to get the query-param from the GET not the POST
+        the_filter = request.GET.get("filter", "all")
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[bundle_id])
+            + f"?pop={index}&filter={the_filter}"
         )
 
 
