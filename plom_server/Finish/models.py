@@ -11,7 +11,7 @@ from Papers.models import Paper
 
 
 class ReassemblePaperChore(HueyTaskTracker):
-    """A tracker for the huey chore of reassembling marked papers
+    """A tracker for the huey chore of reassembling marked papers.
 
     paper (ForeignKey): a link to the associated paper being reassembled
     pdf_file (FileField): stores the reassembled pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
@@ -28,7 +28,7 @@ class ReassemblePaperChore(HueyTaskTracker):
 
 
 class BuildSolutionPDFChore(HueyTaskTracker):
-    """A tracker for the huey chore of building solution pdfs for papers
+    """A tracker for the huey chore of building solution pdfs for papers.
 
     paper (ForeignKey): a link to the paper for which we are making the solution pdf.
     pdf_file (FileField): stores the solution pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
