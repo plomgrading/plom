@@ -53,12 +53,38 @@ class ReassembleService:
             )
         return spreadsheet_data
 
-    def get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
-        """Return information needed to build a cover page for a reassembled test.
+    def get_legacy_cover_page_info(self, paper: Paper) -> list[list[Any]]:
+        """Info needed to build cover page for reassembled paper via legacy command line tool.
 
         Args:
-            paper: a reference to a Paper instance
-            solution (optional): bool, leave out the max possible mark.
+            paper: a reference to a Paper instance.
+
+        Returns:
+            A list of lists ``[[sid, sname], [qi, v, m], ..., [qi, v, m]]``
+            where ``qi`` is 1-indexed question index, ``v`` is version and
+            ``m`` is mark.
+        """
+        sms = StudentMarkService()
+        legacy_cover_page_info: list[list[Any]] = []
+        student_info = sms.get_paper_id_or_none(paper)
+        if student_info:
+            student_id, student_name = student_info
+        else:
+            student_id, student_name = None, None
+        legacy_cover_page_info.append([student_id, student_name])
+
+        for i in SpecificationService.get_question_indices():
+            version, mark = sms.get_question_version_and_mark(paper, i)
+            legacy_cover_page_info.append([i, version, mark])
+
+        return legacy_cover_page_info
+
+    def _get_cover_page_info(self, paper: Paper, solution: bool = False) -> list[Any]:
+        """Return information needed to build a cover page for a reassembled paper.
+
+        Args:
+            paper: a reference to a Paper instance.
+            solution (optional): bool, leave out the mark.
 
         Returns:
             If ``solution`` is True then returns a list of lists
@@ -93,23 +119,23 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
-        sms = StudentMarkService
-        # some annoying work here to handle casting None to (None, None) while keeping mypy happy
-        paper_id: tuple[str | None, str | None] | None = sms.get_paper_id_or_none(paper)
-        if not paper_id:
-            paper_id = (None, None)
+        tmp = StudentMarkService().get_paper_id_or_none(paper)
+        if tmp:
+            sid, sname = tmp
+        else:
+            sid, sname = (None, None)
 
-        cover_page_info = self.get_cover_page_info(paper, solution)
-        cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
+        cover_page_table_data = self._get_cover_page_info(paper, solution)
+        cover_pdf_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
         makeCover(
-            cover_page_info,
-            cover_name,
+            cover_page_table_data,
+            cover_pdf_name,
             test_num=paper.paper_number,
-            info=paper_id,
+            info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
         )
-        return cover_name
+        return cover_pdf_name
 
     def get_id_page_image(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the path to image and and rotation for a paper's ID page, if any.
