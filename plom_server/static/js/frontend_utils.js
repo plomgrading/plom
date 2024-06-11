@@ -12,12 +12,6 @@ let togglePassword = document.getElementById('togglePassword');
 let newPassword1 = document.getElementById('id_new_password1');
 let newPassword2 = document.getElementById('id_new_password2');
 
-// profile.html
-let editBtn = document.getElementById('edit');
-let profileCard = document.getElementById('profile-card');
-let editUser = document.getElementById('edit-user');
-let cancelBtn = document.getElementById('cancel');
-
 // login.html
 let showPassword = document.getElementById('check-password');
 
@@ -47,31 +41,6 @@ function viewPassword() {
         newPassword2.setAttribute('type', type);
         togglePassword.setAttribute('class', classAttribute);
     })
-}
-
-// profile.html
-function slideToLeft() {
-    editBtn.addEventListener('click', () => {
-        profileCard.style.transform = 'translateX(0%)';
-        setTimeout(fadeIn, 1000);
-    });
-}
-
-function slideToRight() {
-    cancelBtn.addEventListener('click', () => {
-       editUser.style.visibility = 'hidden';
-       profileCard.style.transform = 'translateX(55%)'
-       setTimeout(showEditBtn, 1000);
-    });
-}
-
-function fadeIn() {
-    editUser.style.visibility = 'visible';
-    editBtn.style.display = 'none';
-}
-
-function showEditBtn() {
-    editBtn.style.display = 'inline';
 }
 
 // login.html
