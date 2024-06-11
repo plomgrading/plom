@@ -27,6 +27,7 @@ from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop
 from plom.client.tools.rotate_page import CommandRotatePage
 from plom.client.tools.shift_page import CommandShiftPage
+from plom.client.tools.remove_page import CommandRemovePage
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (

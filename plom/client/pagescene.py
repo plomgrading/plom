@@ -81,6 +81,7 @@ from .tools import (
     CommandCrop,
     CommandRotatePage,
     CommandShiftPage,
+    CommandRemovePage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -564,41 +565,7 @@ class PageScene(QGraphicsScene):
 
         def page_delete_func_factory(n):
             def page_delete():
-                img = self.underImage.images[n]
-                e = QGraphicsColorizeEffect()
-                e.setColor(QColor("darkred"))
-                img.setGraphicsEffect(e)
-                d = SimpleQuestion(
-                    self.parent(),  # self.addWidget(d) instead?
-                    """Remove this page?  Currently, this <em>does not work</em>
-                    with the undo stack&mdash;Issue
-                    <a href="https://gitlab.com/plom/plom/-/issues/2510">#2510</a>.\n
-                    <ul>\n
-                      <li>You can always find the page again using
-                        <em>Rearrange Pages</em>.</li>\n
-                    <li>Existing annotations will shift left or right.</li>\n
-                    </ul>""",
-                    "Are you sure you want to remove this page?",
-                )
-                # h = self.addWidget(d)
-                # Not sure opening a dialog from the scene is wise
-                if d.exec() == QMessageBox.StandardButton.No:
-                    img.setGraphicsEffect(None)
-                    return
-                found_idx = self._idx_from_visible_idx(n)
-                self.src_img_data[found_idx]["included"] = False
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-                # shift existing annotations leftward
-                loc = br.right()
-                if n == len(self.underImage.images) - 1:
-                    # special case when deleting right-most image
-                    loc = br.left()
-                stuff = self.find_items_right_of(loc)
-                self.move_some_items(stuff, -br.width(), 0)
-                # TODO: replace with emit signal (if needed)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+                self.dont_use_page_image(n)
 
             return page_delete
 
@@ -2001,6 +1968,55 @@ class PageScene(QGraphicsScene):
         # do the rotation in metadata and rebuild
         n_idx = self._idx_from_visible_idx(n)
         self.src_img_data[n_idx]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def dont_use_page_image(self, n: int) -> None:
+        n_idx = self._idx_from_visible_idx(n)
+        img = self.underImage.images[n]
+        e = QGraphicsColorizeEffect()
+        e.setColor(QColor("darkred"))
+        img.setGraphicsEffect(e)
+        d = SimpleQuestion(
+            self.parent(),  # self.addWidget(d) instead?
+            """Remove this page?\n<ul>\n
+              <li>You can undo or find the page again using
+                <em>Rearrange Pages</em>.</li>\n
+            <li>Existing annotations will shift left or right.</li>\n
+            </ul>""",
+            "Are you sure you want to remove this page?",
+        )
+        # h = self.addWidget(d)
+        # Not sure opening a dialog from the scene is wise
+        if d.exec() == QMessageBox.StandardButton.No:
+            img.setGraphicsEffect(None)
+            return
+
+        self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        # self._set_visible_page_image(n_idx, False)
+        cmd = CommandRemovePage(self, n_idx, n)
+        self.undoStack.push(cmd)
+
+        if n == len(self.underImage.images) - 1:
+            # special case when deleting right-most image
+            loc = br.left()
+        else:
+            # shift existing annotations leftward
+            loc = br.right()
+        stuff = self.find_items_right_of(loc)
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, -br.width(), 0)
+
+        self.undoStack.endMacro()
+
+    def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
+        self.src_img_data[n_idx]["included"] = show
+        # TODO: replace with emit signal (if needed)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 
