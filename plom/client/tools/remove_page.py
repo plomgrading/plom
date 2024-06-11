@@ -19,12 +19,15 @@ from .shift_page import Duration
 class CommandRemovePage(QUndoCommand):
     """Remove or undo removing a page, not including cleanup moves of annotations."""
 
-    def __init__(self, scene, src_idx: int, page_image_idx: int) -> None:
+    def __init__(
+        self, scene, src_idx: int, page_image_idx: int, go_left: bool = False
+    ) -> None:
         # scene type is plom.client.pagescene.PageScene
         super().__init__()
         self.scene = scene
         self.src_idx = src_idx
         self.page_image_idx = page_image_idx
+        self.go_left = go_left
         self.setText("RotatePage")
 
     def redo(self):
@@ -33,7 +36,11 @@ class CommandRemovePage(QUndoCommand):
         r = img.mapRectToScene(img.boundingRect())
         self.scene._set_visible_page_image(self.src_idx, show=False)
         # temporary animation, removes itself when done
-        self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r))
+        if self.go_left:
+            what = "disappear_left"
+        else:
+            what = "disappear_right"
+        self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what=what))
 
     def undo(self):
         self.scene._set_visible_page_image(self.src_idx, show=True)
@@ -41,15 +48,20 @@ class CommandRemovePage(QUndoCommand):
         img = self.scene.underImage.images[self.page_image_idx]
         r = img.mapRectToScene(img.boundingRect())
         # temporary animation, removes itself when done
-        self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, restore=True))
+        self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what="restore"))
 
 
 # see comments about this class in `shift_page.py`
 class TmpAnimDisappearingRectItem(QGraphicsRectItem):
-    def __init__(self, scene, r: QRectF, *, restore: bool = False) -> None:
+    def __init__(self, scene, r: QRectF, *, what: str = "disappear_left") -> None:
         super().__init__()
         self._scene = scene
         self.saveable = False
+        assert what in ("disappear_left", "disappear_right", "restore")
+        self.what = what
+        if what == "disappear_left":
+            r.moveLeft(r.left() - r.width())
+        self.r = r
         self.setRect(r)
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         self.setBrush(QBrush(AnimationFillColour))
@@ -60,7 +72,7 @@ class TmpAnimDisappearingRectItem(QGraphicsRectItem):
         self.anim = QPropertyAnimation(self._ctrlr, b"foo")
 
         self.anim.setDuration(Duration)
-        if restore:
+        if what == "restore":
             self.anim.setStartValue(1)
             self.anim.setEndValue(0)
         else:
@@ -86,7 +98,19 @@ class TmpAnimDisappearingRectItem(QGraphicsRectItem):
         Returns:
             None
         """
-        self.setTransformOriginPoint(self.boundingRect().center())
+        if self.what == "restore":
+            self.setTransformOriginPoint(self.boundingRect().center())
+        elif self.what == "disappear_left":
+            self.setTransformOriginPoint(
+                (self.boundingRect().topRight() + self.boundingRect().bottomRight())
+                / 2.0
+            )
+        elif self.what == "disappear_right":
+            self.setTransformOriginPoint(
+                (self.boundingRect().topLeft() + self.boundingRect().bottomLeft()) / 2.0
+            )
+        else:
+            raise RuntimeError("Tertium non datur")
         self.setScale(1 - t)
 
 

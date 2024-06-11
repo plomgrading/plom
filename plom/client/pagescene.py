@@ -1997,18 +1997,21 @@ class PageScene(QGraphicsScene):
         br = img.mapRectToScene(img.boundingRect())
         log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
 
-        # like calling _set_visible_page_image but covered in undo sauce
-        # self._set_visible_page_image(n_idx, False)
-        cmd = CommandRemovePage(self, n_idx, n)
-        self.undoStack.push(cmd)
-
         if n == len(self.underImage.images) - 1:
             # special case when deleting right-most image
             loc = br.left()
+            go_left = False
         else:
             # shift existing annotations leftward
             loc = br.right()
+            go_left = True
         stuff = self.find_items_right_of(loc)
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        # self._set_visible_page_image(n_idx, False)
+        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+        self.undoStack.push(cmd)
+
         # enqueues appropriate CommmandMoves
         self._move_some_items(stuff, -br.width(), 0)
 
