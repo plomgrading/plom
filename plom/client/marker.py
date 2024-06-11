@@ -321,8 +321,7 @@ def upload(
         unknownFailCallback(task, str(ex))
         return False
 
-    numDone = msg[0]
-    numTotal = msg[1]
+    numDone, numTotal = _msgr.MprogressCount(question_idx, ver)
     successCallback(task, numDone, numTotal)
     return True
 
