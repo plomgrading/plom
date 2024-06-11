@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Bryan Tanady
   -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -19,7 +20,7 @@
     {% endif %}
     {% if question == "*" %}
     {% else %}
-        of qi.{{ question }}
+        of {{ question_label|safe }}
     {% endif %}
     {% if version == "*" %}
     {% else %}
@@ -52,13 +53,15 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <!-- TODO: use Question labels here Issue #3322 -->
-                    <label class="col-sm-1 col-form-label" for="question">Question index:</label>
+                    <label class="col-sm-1 col-form-label" for="question">Question:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
-                            <option>*</option>
-                            {% for qn in question_list %}
-                                <option {% if question == qn %}selected{% endif %}>{{ qn }}</option>
+                            <option value="*" label="*" />
+                            <!-- seems ok to use non-html-escaped in label="..." -->
+                            {% for q_idx, q_label in question_index_label_pairs %}
+                                <option value="{{ q_idx }}"
+                                        label="{{ q_label }}"
+                                        {% if question == q_idx %}selected{% endif %} />
                             {% endfor %}
                         </select>
                     </div>
@@ -123,7 +126,7 @@
                                     <thead>
                                         <tr>
                                             <th>P</th>
-                                            <th>Q</th>
+                                            <th>Q_idx</th>
                                             <th>V</th>
                                             <th>Status</th>
                                             <th>Last update</th>

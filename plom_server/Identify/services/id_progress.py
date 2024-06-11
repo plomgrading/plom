@@ -3,13 +3,14 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from typing import Dict, Union
 
 from django.db import transaction
 
 from Identify.models import PaperIDTask
-from Identify.services import IdentifyTaskService
+from Identify.services import IdentifyTaskService, ClasslistService
 from Papers.models import IDPage, Image
 
 
@@ -46,12 +47,17 @@ class IDProgressService:
             .order_by("paper__paper_number")
         ):
             dat = {"status": task.get_status_display(), "idpageimage_pk": None}
-
+            students_from_classlist = ClasslistService.get_students()
+            registered_sid = [
+                student["student_id"] for student in students_from_classlist
+            ]
             if task.status == PaperIDTask.COMPLETE:
+                sid = task.latest_action.student_id
                 dat.update(
                     {
-                        "student_id": task.latest_action.student_id,
+                        "student_id": sid,
                         "student_name": task.latest_action.student_name,
+                        "in_classlist": sid in registered_sid,
                     }
                 )
             id_info[task.paper.paper_number] = dat
@@ -59,7 +65,6 @@ class IDProgressService:
         for idp_obj in IDPage.objects.all().prefetch_related("paper", "image"):
             if idp_obj.image and idp_obj.paper.paper_number in id_info:
                 id_info[idp_obj.paper.paper_number]["idpageimage_pk"] = idp_obj.image.pk
-
         return id_info
 
     @transaction.atomic

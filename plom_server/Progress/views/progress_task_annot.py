@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
-
+# Copyright (C) 2024 Bryan Tanady
+import html
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse, FileResponse
 from django.shortcuts import render, reverse, redirect
@@ -31,6 +32,12 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
 
         paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")
+        if question == "*":
+            question_label = "*"
+        else:
+            question_label = SpecificationService.get_question_label(
+                question_index=question
+            )
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
@@ -39,7 +46,9 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_list = SpecificationService.get_question_indices()
+        question_index_label_pairs = (
+            SpecificationService.get_question_index_label_pairs()
+        )
         version_list = SpecificationService.get_list_of_versions()
         maxmark = SpecificationService.get_max_all_question_mark()
         if not maxmark:
@@ -52,12 +61,13 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
             {
                 "paper": paper,
                 "question": question,
+                "question_index_label_pairs": question_index_label_pairs,
+                "question_label": html.escape(question_label),
                 "version": version,
                 "username": username,
                 "score": score,
                 "the_tag": the_tag,
                 "paper_list": paper_list,
-                "question_list": question_list,
                 "version_list": version_list,
                 "mark_list": mark_list,
                 "username_list": mss.get_list_of_users_who_marked_anything(),
