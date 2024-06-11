@@ -119,11 +119,11 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
-        sms = StudentMarkService
-        # some annoying work here to handle casting None to (None, None) while keeping mypy happy
-        paper_id: tuple[str | None, str | None] | None = sms.get_paper_id_or_none(paper)
-        if not paper_id:
-            paper_id = (None, None)
+        tmp = StudentMarkService().get_paper_id_or_none(paper)
+        if tmp:
+            sid, sname = tmp
+        else:
+            sid, sname = (None, None)
 
         cover_page_info = self.get_cover_page_info(paper, solution)
         cover_name = tmpdir / f"cover_{int(paper.paper_number):04}.pdf"
@@ -131,7 +131,7 @@ class ReassembleService:
             cover_page_info,
             cover_name,
             test_num=paper.paper_number,
-            info=paper_id,
+            info=(sname, sid),
             solution=solution,
             exam_name=SpecificationService.get_longname(),
         )
