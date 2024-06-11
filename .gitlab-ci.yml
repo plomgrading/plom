@@ -383,18 +383,9 @@ flake8:
   before_script:
     - python3 -m pip install flake8~=7.0.0
   script:
-    # show all errors and warnings but don't fail
+    # first show all errors and warnings but don't fail
     - flake8 --exit-zero
-    # fail test if any errors here
-    - flake8 --select E,W
-    # Non-plom_server: the number of errors should decrease over time
-    - flake8 --extend-exclude plom_server --exit-zero
-    - NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER=`flake8 --count --extend-exclude plom_server | tail -n 1 || true`
-    - echo $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 1 ]]"
-    # Special case for plom_server
-    - flake8 plom_server
+    - flake8
 
 
 pydocstyle-plom-count:
