@@ -56,11 +56,11 @@
                     <label class="col-sm-1 col-form-label" for="question">Question:</label>
                     <div class="col-sm-4">
                         <select name="question" class="form-select">
-                            <option>*</option>
+                            <option value="*" label="*" />
                             {% for q_idx, q_label in question_index_label_pairs %}
                                 <option value="{{ q_idx }}"
                                         label="{{ q_label }}"
-                                        {% if question == q_idx %}selected{% endif %}>{{ q_idx }}</option>
+                                        {% if question == q_idx %}selected{% endif %} />
                             {% endfor %}
                         </select>
                     </div>
