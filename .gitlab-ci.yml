@@ -306,7 +306,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.5.1
+    - pip install pytest pytest-cov coverage[toml]~=7.5.3
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -339,7 +339,7 @@ pylint:
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
     - python3 -m pip install astroid~=3.2.2  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.2
+    - python3 -m pip install pylint~=3.2.3
   script:
     - pylint plom
     - pylint plom_server
@@ -370,7 +370,7 @@ pyright:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.364
+    - python3 -m pip install pyright~=1.1.366
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -450,7 +450,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.5.1
+    - python3 -m pip install coverage~=7.5.3
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
