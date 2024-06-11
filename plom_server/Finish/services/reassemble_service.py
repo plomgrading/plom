@@ -135,7 +135,7 @@ class ReassembleService:
             solution=solution,
             exam_name=SpecificationService.get_longname(),
         )
-        return cover_name
+        return cover_pdf_name
 
     def get_id_page_image(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the path to image and and rotation for a paper's ID page, if any.
