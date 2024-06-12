@@ -33,6 +33,13 @@ class BundleThumbnailsView(ScannerRequiredView):
             return [pg for pg in page_list if pg["status"] == filter_kind]
         elif filter_kind == "lowqr":
             return [pg for pg in page_list if pg["n_qr_read"] <= 2]
+        elif filter_kind == "ex_no_info":
+            return [
+                pg
+                for pg in page_list
+                if pg["status"] == "extra"
+                and not (pg["info"]["paper_number"] or pg["info"]["question_list"])
+            ]
         else:
             return page_list
 
@@ -70,14 +77,18 @@ class BundleThumbnailsView(ScannerRequiredView):
         ]
 
         filter_options = [
-            ("all", "all"),
-            ("known", "known pages"),
-            ("extra", "extra pages"),
-            ("error", "errors"),
-            ("lowqr", "few qr codes read"),
-            ("discard", "discarded pages"),
-            ("unknown", "unknown pages"),
-            ("unread", "unread pages"),
+            {"filter_code": X[0], "filter_name": X[1]}
+            for X in [
+                ("all", "all"),
+                ("known", "known pages"),
+                ("extra", "extra pages"),
+                ("ex_no_info", "extra pages without information"),
+                ("error", "errors"),
+                ("lowqr", "few qr codes read"),
+                ("discard", "discarded pages"),
+                ("unknown", "unknown pages"),
+                ("unread", "unread pages"),
+            ]
         ]
 
         context.update(

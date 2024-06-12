@@ -58,8 +58,11 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
                                     {{ current_page.qr_codes|length }} qr-codes read:
-                                    <ul>
-                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
                                 </li>
                             </ul>
@@ -74,8 +77,11 @@
                                 {% if current_page.qr_codes %}
                                     <li>
                                         {{ current_page.qr_codes|length }} qr-codes read:
-                                        <ul>
-                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
                                     </li>
                                 {% else %}
@@ -99,8 +105,11 @@
                                 {% if current_page.qr_codes %}
                                     <li>
                                         {{ current_page.qr_codes|length }} qr-codes read:
-                                        <ul>
-                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
                                     </li>
                                 {% else %}
@@ -116,11 +125,13 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
                                     {{ current_page.qr_codes|length }} qr-codes read:
-                                    <ul>
-                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
                                     </ul>
                                 </li>
-                                <li>{{ current_page.qr_codes }}</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'unread' %}

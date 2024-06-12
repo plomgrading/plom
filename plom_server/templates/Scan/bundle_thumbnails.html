@@ -86,17 +86,17 @@
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false">
                                 {% for opt in filter_options %}
-                                    {% if opt.0 == the_filter %}{{ opt.1 }}{% endif %}
+                                    {% if opt.filter_code == the_filter %}{{ opt.filter_name }}{% endif %}
                                 {% endfor %}
                             </button>
                             <ul class="dropdown-menu">
                                 {% for opt in filter_options %}
                                     <li>
-                                        {% if opt.0 != the_filter %}
+                                        {% if opt.filter_code != the_filter %}
                                             <a class="dropdown-item"
-                                               href="{% url 'scan_bundle_thumbnails' opt.0 bundle_id %}">{{ opt.1 }}</a>
+                                               href="{% url 'scan_bundle_thumbnails' opt.filter_code bundle_id %}">{{ opt.filter_name }}</a>
                                         {% else %}
-                                            <a class="dropdown-item text-secondary disabled">{{ opt.1 }}</a>
+                                            <a class="dropdown-item text-secondary disabled">{{ opt.filter_name }}</a>
                                         {% endif %}
                                     </li>
                                 {% endfor %}
