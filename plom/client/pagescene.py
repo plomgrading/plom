@@ -588,7 +588,7 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
             b = QToolButton(text="\N{Trigram For Heaven}")
-            b.setStyleSheet("QToolButton { background-color: #ff6666; }")
+            b.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
             m = QMenu(b)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
