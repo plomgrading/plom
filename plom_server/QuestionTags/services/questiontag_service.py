@@ -1,10 +1,31 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Elisa Pan
+from typing import Any, Dict, List
+from django.db.models import QuerySet
+from QuestionTags.models import Question
 
-from Papers.services import SpecificationService
+class QuestionService:
+    """Class to encapsulate functions for fetching questions."""
 
-def get_question_labels():
-    """Return a list of tuples containing question number and question label."""
-    question_labels = SpecificationService.get_question_labels()
-    question_indices = SpecificationService.get_question_indices()
-    return list(zip(question_indices, question_labels))
+    def get_all_questions(self) -> QuerySet[Question]:
+        """Get all questions.
+
+        Returns:
+            A queryset of questions.
+        """
+        return Question.objects.all()
+
+    def get_question_count(self) -> int:
+        """Get the count of all questions.
+
+        Returns:
+            The count of questions.
+        """
+        return Question.objects.count()
+
+    def get_questions_with_details(self) -> List[Dict[str, Any]]:
+        """Get all questions with their details.
+
+        Returns:
+            A list of dictionaries with question details.
+        """
+        questions = self.get_all_questions()
+        return [{"id": question.id, "name": question.name} for question in questions]

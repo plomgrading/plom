@@ -1,5 +1,7 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Copyright (C) 2024 Elisa Pan -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2024 Elisa Pan -->
 {% extends "base/base.html" %}
 {% load static %}
 {% block page_heading %}
@@ -7,10 +9,10 @@
 {% endblock page_heading %}
 {% block main_content %}
     <p>Total Questions: {{ question_count }}</p>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addQuestionTagModal">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionTagModal">
         Add
     </button>
-    <table>
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>Question Number</th>
@@ -27,15 +29,31 @@
         </tbody>
     </table>
 
+    <h3>Existing Question Tags</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Question Number</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tag in question_tags %}
+            <tr>
+                <td>{{ tag.question_number }}</td>
+                <td>{{ tag.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <!-- Modal -->
     <div class="modal fade" id="addQuestionTagModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionTagModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addQuestionTagModalLabel">Add Question Tag</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="addQuestionTagForm" method="POST" action="{% url 'add_question_tag' %}">
