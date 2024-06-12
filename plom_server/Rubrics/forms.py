@@ -4,7 +4,10 @@
 
 from django import forms
 
+from Papers.services import SpecificationService
+
 from .models import Rubric
+
 
 
 class RubricAdminForm(forms.Form):
@@ -24,10 +27,8 @@ class RubricWipeForm(forms.Form):
 class RubricFilterForm(forms.Form):
     # using hard-coded choices for now
     QUESTION_CHOICES = [
-        ("", "All Questions"),
-        ("1", "Question 1"),
-        ("2", "Question 2"),
-        ("3", "Question 3"),
+        (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
     ]
     KIND_CHOICES = [
         ("", "All Kinds"),
