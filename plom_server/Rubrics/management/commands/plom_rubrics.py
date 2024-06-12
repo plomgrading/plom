@@ -135,9 +135,9 @@ class Command(BaseCommand):
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        rubrics = service.get_rubrics_as_dicts(question=question)
 
         if not filename:
+            rubrics = service.get_rubrics_as_dicts(question=question)
             if not rubrics and question:
                 self.stdout.write(f"No rubrics for question index {question}")
                 return
@@ -150,26 +150,15 @@ class Command(BaseCommand):
         filename = Path(filename)
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
             filename = filename.with_suffix(filename.suffix + ".toml")
-        suffix = filename.suffix
+        suffix = filename.suffix[1:]
 
         if verbose:
             self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
 
         with open(filename, "w") as f:
-            if suffix == ".json":
-                json.dump(rubrics, f, indent="  ")
-            elif suffix == ".toml":
-                tomlkit.dump({"rubric": rubrics}, f)
-            elif suffix == ".csv":
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV writing needs "pandas" library: {e}')
-
-                df = pandas.json_normalize(rubrics)
-                df.to_csv(f, index=False, sep=",", encoding="utf-8")
-            else:
-                raise CommandError(f'Don\'t know how to export to "{filename}"')
+            buf = service.get_rubric_as_file(suffix, question=question)
+            buf.seek(0)
+            f.write(buf.getvalue())
 
     def upload_rubrics_from_file(self, filename):
         """Load rubrics from a file and upload them to the server.

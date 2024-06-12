@@ -9,12 +9,17 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 import html
 import logging
 from typing import Any
+import json
+import tomlkit
+import io
+from tabulate import tabulate
 
 from operator import itemgetter
 
@@ -575,3 +580,40 @@ class RubricService:
                 </tr>
             </table>
         """
+
+    def get_rubric_as_file(self, filetype: str, question: int | None) -> io.StringIO:
+        """
+        Get the rubric as a file in the specified format.
+
+        Args:
+            filetype (str): The desired file type. Supported types are "json", "toml", and "csv".
+            question (int): The index of the question.
+
+        Returns:
+            io.StringIO: A file-like object containing the rubric data in the specified format.
+
+        Raises:
+            RuntimeError: If no rubrics are available for the specified question index.
+            RuntimeError: If no rubrics are available at all.
+            ValueError: If an unsupported file type is specified.
+
+        """
+        rubrics = self.get_rubrics_as_dicts(question=question)
+
+        if filetype not in ("json", "toml", "csv"):
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        f = io.StringIO()
+        if filetype == "json":
+            json.dump(rubrics, f, indent="  ")
+        elif filetype == "toml":
+            tomlkit.dump({"rubric": rubrics}, f)
+        elif filetype == "csv":
+            try:
+                import pandas
+            except ImportError as e:
+                raise e
+
+            df = pandas.json_normalize(rubrics)
+            df.to_csv(f, index=False, sep=",", encoding="utf-8")
+        return f
