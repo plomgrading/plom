@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Brennen Chiu]
+# Copyright (C) 2024 Aden Chan
 
 from django.shortcuts import render
 
@@ -85,10 +86,20 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 )
             )
 
+            # Using tsv format for easy pasting into spreadsheet software
+            tsv = 'Username\tReset Link\n'.format()
+            for username, link in password_reset_links.items():
+                append = '{}{}{}{}'.format(username, '\t', link, '\n')
+                print(append)
+                tsv = tsv + append
+
+            print(tsv)
+
             context = {
                 "form": self.form,
                 "current_page": "multiple",
                 "links": password_reset_links,
+                "tsv": tsv,
                 "created": True,
             }
             return render(request, self.template_name, context)
