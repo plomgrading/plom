@@ -25,7 +25,9 @@ from plom.plom_exceptions import PlomBundleLockedException
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         try:
             ScanCastService().discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -36,11 +38,9 @@ class DiscardImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        # have to get the query-param from the GET not the POST
-        the_filter = request.GET.get("filter", "all")
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id])
-            + f"?pop={index}&filter={the_filter}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )
 
 

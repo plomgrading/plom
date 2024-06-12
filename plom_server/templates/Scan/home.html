@@ -187,7 +187,7 @@
                                 <td>{{ bundle.pages }}</td>
                                 <td>
                                     <a class="btn btn-success"
-                                       href="{% url 'scan_bundle_thumbnails' bundle.id %}">View</a>
+                                       href="{% url 'scan_bundle_thumbnails' 'all' bundle.id %}">View</a>
                                     <a class="btn btn-secondary"
                                        target="_"
                                        href="{% url 'scan_get_bundle' bundle.id %}">Download</a>

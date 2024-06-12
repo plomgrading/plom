@@ -26,13 +26,13 @@
                     {% else %}
                         <button type="button"
                                 class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' bundle_id prev_idx %}?filter={{ the_filter }}"
+                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id prev_idx %}"
                                 hx-target="#updatePage"
                                 hx-swap="innerHTML">
                             <i class="bi bi-chevron-left"></i>
                         </button>
                     {% endif %}
-                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }} {{ the_filter }}</h6>
+                    <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
                     {% if index == total_pages %}
                         <button type="button" class="btn btn-secondary mx-2" disabled>
                             <i class="bi bi-chevron-right"></i>
@@ -40,7 +40,7 @@
                     {% else %}
                         <button type="button"
                                 class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' bundle_id next_idx %}?filter={{ the_filter }}"
+                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id next_idx %}"
                                 hx-target="#updatePage"
                                 hx-swap="innerHTML">
                             <i class="bi bi-chevron-right"></i>
@@ -140,12 +140,12 @@
                         {% if current_page.status == 'known' %}
                             <!-- known page can discard -->
                             <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' bundle_id index %}?filter={{ the_filter }}"
+                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
                         {% elif current_page.status == 'error' %}
                             <!-- error page can discard but not recommended -->
                             <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' bundle_id index %}?filter={{ the_filter }}"
+                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
                                 Discard
                             </a>
@@ -185,7 +185,7 @@
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' bundle_id index %}?filter={{ the_filter }}"
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
                             </div>
                             <div>
@@ -202,7 +202,7 @@
                             </div>
                             <div>
                                 <a class="btn btn-danger text-centre w-100 mb-3"
-                                   hx-post="{% url 'discard_all_unknowns' bundle_id index %}?filter={{ the_filter }}"
+                                   hx-post="{% url 'discard_all_unknowns' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you want to discard all remaining unknowns?">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
                                     Discard all unknown pages
@@ -213,7 +213,7 @@
                             <!-- can discard  -->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' bundle_id index %}?filter={{ the_filter }}"
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
                             </div>
                             {% if current_page.info.paper_number and current_page.info.question_index_list %}

@@ -102,20 +102,22 @@ class BundleThumbnailsView(ScannerRequiredView):
         )
         return context
 
-    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int
+    ) -> HttpResponse:
         """Get a page of thumbnails with manipulations options for a bundle.
 
         Args:
             request: incoming request.
 
         Keyword Args:
+            the_filter: which filter to apply to the images.
             bundle_id: which bundle.
 
         Returns:
             The response returns a template-rendered page.
             If there was no such bundle, return a 404 error page.
         """
-        the_filter = request.GET.get("filter", None)
         try:
             context = self.build_context(bundle_id=bundle_id, the_filter=the_filter)
         except ObjectDoesNotExist as e:
@@ -155,7 +157,9 @@ class GetBundleThumbnailView(ScannerRequiredView):
 class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
+    def get(
+        self, request: HttpResponse, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -178,9 +182,9 @@ class GetBundlePageFragmentView(ScannerRequiredView):
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
                 "current_page": current_page,
+                "the_filter": the_filter,
             }
         )
-        context.update({"the_filter": request.GET.get("filter", "all")})
         # If page is an extra page then we grab some data for the
         # set-extra-page-info form stuff
         if current_page["status"] == "extra":

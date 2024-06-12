@@ -55,7 +55,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is missing pages"
-                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% else %}
@@ -63,7 +63,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is complete"
-                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% endif %}
@@ -78,16 +78,27 @@
         <div class="col-4">
             <div class="card">
                 <div class="card-header">
-                    <form>
-                        <div class="row">
-                            <select class="col form-select mx-2" name="filter" id="filter">
-                                {% for opt in filter_options %}
-                                    <option value="{{ opt.0 }}" {% if opt.0 == the_filter %}selected{% endif %}>{{ opt.1 }}</option>
-                                {% endfor %}
-                            </select>
-                            <input type="submit" class="col-auto btn btn-secondary mx-2" value="Filter">
-                        </div>
-                    </form>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                            Currently showing:
+                            {% for opt in filter_options %}
+                                {% if opt.0 == the_filter %}{{ opt.1 }}{% endif %}
+                            {% endfor %}
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% for opt in filter_options %}
+                                {% if opt.0 != the_filter %}
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="{% url 'scan_bundle_thumbnails' opt.0 bundle_id %}">{{ opt.1 }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
                 <div class="card-body p-2 pe-0">
                     <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
@@ -172,7 +183,7 @@
         </div>
         <div class="col-8" id="updatePage">
             {% if pop %}
-                <div hx-get="{% url 'scan_bundle_page' bundle_id pop %}"
+                <div hx-get="{% url 'scan_bundle_page' the_filter bundle_id pop %}"
                      hx-swap="innerHTML"
                      hx-target="#updatePage"
                      hx-trigger="load"></div>

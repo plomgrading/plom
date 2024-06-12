@@ -37,7 +37,7 @@ from .views import (
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
-        "bundlepage/<int:bundle_id>/<int:index>/",
+        "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),
         name="scan_bundle_page",
     ),
@@ -47,7 +47,7 @@ urlpatterns = [
         name="scan_get_thumbnail",
     ),
     path(
-        "thumbnails/<int:bundle_id>",
+        "thumbnails/<str:the_filter>/<int:bundle_id>",
         BundleThumbnailsView.as_view(),
         name="scan_bundle_thumbnails",
     ),
@@ -94,14 +94,8 @@ urlpatterns = [
         GetRotatedPushedImageView.as_view(),
         name="scan_rotated_pushed_img",
     ),
-    # TODO: currently dead unused code?
     path(
-        "summary/pushed_img_wrap/<int:img_pk>",
-        ScannerPushedImageWrapView.as_view(),
-        name="scan_pushed_img_wrap",
-    ),
-    path(
-        "discard/<int:bundle_id>/<int:index>/",
+        "discard/<str:the_filter>/<int:bundle_id>/<int:index>/",
         DiscardImageView.as_view(),
         name="discard_image",
     ),
@@ -131,17 +125,17 @@ urlpatterns = [
         name="extralise_image",
     ),
     path(
-        "rotate/clockwise/<int:bundle_id>/<int:index>/",
+        "rotate/clockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
         RotateImageClockwise.as_view(),
         name="rotate_img_cw",
     ),
     path(
-        "rotate/counterclockwise/<int:bundle_id>/<int:index>/",
+        "rotate/counterclockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
         RotateImageCounterClockwise.as_view(),
         name="rotate_img_ccw",
     ),
     path(
-        "rotate/oneeighty/<int:bundle_id>/<int:index>/",
+        "rotate/oneeighty/<str:the_filter>/<int:bundle_id>/<int:index>/",
         RotateImageOneEighty.as_view(),
         name="rotate_img_one_eighty",
     ),
@@ -149,5 +143,13 @@ urlpatterns = [
         "bundle_lock/<int:bundle_id>/",
         BundleLockView.as_view(),
         name="scan_bundle_lock",
+    ),
+    # Code below IS NOT DEAD -
+    # is used in summary_of-pushed, but not by its name, rather its url
+    # todo = fix up the calling to use the name not direct url
+    path(
+        "summary/pushed_img_wrap/<int:img_pk>",
+        ScannerPushedImageWrapView.as_view(),
+        name="scan_pushed_img_wrap",
     ),
 ]
