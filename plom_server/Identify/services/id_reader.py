@@ -22,7 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 from django_huey import db_task
 
-from ..models import PaperIDTask, IDPrediction, IDReadingHueyTask
+from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 from Base.models import HueyTaskTracker
 from Papers.models import Paper
@@ -204,7 +204,11 @@ class IDReaderService:
         )
 
     def get_id_reader_background_task_status(self):
-        idht_obj = IDReadingHueyTask.load()
+        try:
+            idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
+        except ObjectDoesNotExist:
+            idht_obj = IDReadingHueyTaskTracker.objects.create()
+
         return {"status": idht_obj.get_status_display(), "message": idht_obj.message}
 
     def run_the_id_reader_in_background_via_huey(
@@ -218,9 +222,12 @@ class IDReaderService:
         Raises:
             MultipleObjectsReturned: if the user tries to run multiple such tasks.
         """
-        # Note that we can only have 1 running task a time.
-        # this call creates the object if it does not already exist.
-        idht_obj = IDReadingHueyTask.load()
+        # Note that we should only have 1 task running at a time.
+        # if there is already one then check its status carefully
+        try:
+            idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
+        except ObjectDoesNotExist:
+            idht_obj = IDReadingHueyTaskTracker.objects.create()
         # if its status is STARTING, QUEUD, RUNNING, then do not create a
         # new task - return a "Hey it is already running error."
         if idht_obj.status in [
@@ -231,19 +238,32 @@ class IDReaderService:
             raise MultipleObjectsReturned(
                 "Can only have 1 running ID reading process at a time."
             )
+        # if the task is complete or error then set it as obsolete and create a new one.
+        if idht_obj.status in [HueyTaskTracker.COMPLETE, HueyTaskTracker.ERROR]:
+            with transaction.atomic(durable=True):
+                idht_obj.set_as_obsolete()
+                idht_obj = IDReadingHueyTaskTracker.objects.create()
 
-        with transaction.atomic(durable=True):
-            # due to class method overrides in the model, this will delete
-            # any other instances when we save this one.
-            x = IDReadingHueyTask.objects.create(
-                status=IDReadingHueyTask.STARTING,
-                message="ID reading task queued.",
-            )
-            tracker_pk = x.pk
+        # this point we should have an IDHT which has status TODO
+        # transition the tracker to 'starting'
+        assert idht_obj.status == HueyTaskTracker.TO_DO
+        tracker_pk = idht_obj.pk
 
+        # >>>> TODO <<<<<
+        # replace this by a safer class method version of this
+        with transaction.atomic():
+            idht_obj.status = HueyTaskTracker.STARTING
+            idht_obj.save()
+
+        # set a message to the user
+        IDReadingHueyTaskTracker.set_message_to_user(
+            tracker_pk, "ID reading task queued."
+        )
+        # now build the actual huey task
         res = huey_id_reading_task(
             user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
         )
+        # and update the status
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
 
@@ -276,27 +296,27 @@ def huey_id_reading_task(
         block or detect whether a task has finished".
     """
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-    IDReadingHueyTask.set_message_to_user(
+    IDReadingHueyTaskTracker.set_message_to_user(
         tracker_pk, "ID Reading task has started. Getting ID boxes."
     )
 
     id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
-        IDReadingHueyTask.set_message_to_user(
+        IDReadingHueyTaskTracker.set_message_to_user(
             tracker_pk, "No ID-boxes found. Cannot make predictions."
         )
         HueyTaskTracker.transition_to_complete(tracker_pk)
         return True
 
-    IDReadingHueyTask.set_message_to_user(
+    IDReadingHueyTaskTracker.set_message_to_user(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 
     IDBoxProcessorService().make_id_predictions(
         user, id_box_image_dict, recompute_heatmap=recompute_heatmap
     )
-    IDReadingHueyTask.set_message_to_user(tracker_pk, "ID predictions complete.")
+    IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

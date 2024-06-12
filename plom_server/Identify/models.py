@@ -70,30 +70,11 @@ class IDPrediction(models.Model):
     certainty = models.FloatField(null=False, default=0.0)
 
 
-class IDReadingHueyTask(HueyTaskTracker):
+class IDReadingHueyTaskTracker(HueyTaskTracker):
     """Support running the ID-box extraction and ID prediction in the background.
 
-    Note that this inherits fields from the base class table.  We add
-    extra function to this to ensure there can only be one such task.
-
-    There was an attempt to make a common SingletonHueyTaskTracker but
-    for now we're just duplicating that here (Issue #3130).
-
-    Fields:
-        TODO?
+    Note that this inherits fields from the base class table. Note that this has no additional fields.
     """
-
-    def save(self, *args, **kwargs):
-        IDReadingHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = IDReadingHueyTask.objects.get_or_create()
-        return obj
 
     @classmethod
     def set_message_to_user(cls, pk, message: str):
