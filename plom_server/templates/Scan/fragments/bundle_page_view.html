@@ -155,26 +155,26 @@
                             <!-- discard can cast to known, extra, unknown -->
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' bundle_id index %}"
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
                                     Cast to extra page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' bundle_id index %}"
+                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_image' bundle_id index %}"
+                                   hx-post="{% url 'unknowify_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
                                     Cast to unknown page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_all_discards' bundle_id index %}"
+                                   hx-post="{% url 'unknowify_all_discards' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you want to set all discarded pages as unknown pages?">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
@@ -190,14 +190,14 @@
                             </div>
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' bundle_id index %}"
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
                                     Cast to extra page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' bundle_id index %}"
+                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                             <div>
@@ -219,7 +219,7 @@
                             {% if current_page.info.paper_number and current_page.info.question_index_list %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-delete="{% url 'extralise_image' bundle_id index %}"
+                                       hx-delete="{% url 'extralise_image' the_filter bundle_id index %}"
                                        hx-confirm="Are you sure you wish to clear the extra page information?">
                                         Clear information
                                     </a>
@@ -227,7 +227,7 @@
                             {% else %}
                                 <div class="alert alert-secondary">
                                     <h6>Set extra page information</h6>
-                                    <form hx-post="{% url 'extralise_image' bundle_id index %}"
+                                    <form hx-post="{% url 'extralise_image' the_filter bundle_id index %}"
                                           hx-target="#invalidmessage"
                                           hx-swap="innerHTML">
                                         <div class="input-group p-3">

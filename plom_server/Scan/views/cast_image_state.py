@@ -46,7 +46,12 @@ class DiscardImageView(ScannerRequiredView):
 
 class DiscardAllUnknownsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, bundle_id: int, pop_index: int | None
+        self,
+        request: HttpRequest,
+        *,
+        the_filter: str,
+        bundle_id: int,
+        pop_index: int | None,
     ) -> HttpResponse:
         """View that discards all unknowns from the given bundle.
 
@@ -64,25 +69,24 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        # have to get the query-param from the GET not the POST
-        the_filter = request.GET.get("filter", "all")
 
         if pop_index is None:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id])
-                + f"filter={the_filter}"
+                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
             )
         else:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id])
-                + f"?pop={pop_index}&filter={the_filter}"
+                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+                + f"?pop={pop_index}"
             )
 
 
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         try:
             ScanCastService().unknowify_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
@@ -95,13 +99,19 @@ class UnknowifyImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )
 
 
 class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
     def post(
-        self, request: HttpRequest, *, bundle_id: int, pop_index: int | None
+        self,
+        request: HttpRequest,
+        *,
+        the_filter: str,
+        bundle_id: int,
+        pop_index: int | None,
     ) -> HttpResponse:
         """View that casts all discards in the given bundle as unknowns.
 
@@ -122,11 +132,11 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
 
         if pop_index is None:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id])
+                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
             )
         else:
             return HttpResponseClientRedirect(
-                reverse("scan_bundle_thumbnails", args=[bundle_id])
+                reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
                 + f"?pop={pop_index}"
             )
 
@@ -134,7 +144,9 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
 class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
-    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -165,6 +177,7 @@ class KnowifyImageView(ScannerRequiredView):
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
                 "current_page": current_page,
+                "the_filter": the_filter,
             }
         )
 
@@ -183,7 +196,9 @@ class KnowifyImageView(ScannerRequiredView):
 
         return render(request, "Scan/fragments/knowify_image.html", context)
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         # TODO - improve this form processing
 
         knowify_page_data = request.POST
@@ -227,14 +242,17 @@ class KnowifyImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )
 
 
 class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
-    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def post(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         # TODO - improve this form processing
 
         extra_page_data = request.POST
@@ -277,10 +295,13 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )
 
-    def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+    def put(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         try:
             ScanCastService().extralise_image_type_from_bundle_pk_and_order(
                 request.user, bundle_id, index
@@ -291,11 +312,12 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )
 
     def delete(
-        self, request: HttpRequest, *, bundle_id: int, index: int
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
             ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
@@ -307,5 +329,6 @@ class ExtraliseImageView(ScannerRequiredView):
             )
 
         return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+            reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
+            + f"?pop={index}"
         )

@@ -100,27 +100,27 @@ urlpatterns = [
         name="discard_image",
     ),
     path(
-        "discard_unknowns/<int:bundle_id>/<int:pop_index>/",
+        "discard_unknowns/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
         DiscardAllUnknownsHTMXView.as_view(),
         name="discard_all_unknowns",
     ),
     path(
-        "unknowify/<int:bundle_id>/<int:index>/",
+        "unknowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
         UnknowifyImageView.as_view(),
         name="unknowify_image",
     ),
     path(
-        "unknowify_discards/<int:bundle_id>/<int:pop_index>/",
+        "unknowify_discards/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
         UnknowifyAllDiscardsHTMXView.as_view(),
         name="unknowify_all_discards",
     ),
     path(
-        "knowify/<int:bundle_id>/<int:index>/",
+        "knowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
         KnowifyImageView.as_view(),
         name="knowify_image",
     ),
     path(
-        "extralise/<int:bundle_id>/<int:index>/",
+        "extralise/<str:the_filter>/<int:bundle_id>/<int:index>/",
         ExtraliseImageView.as_view(),
         name="extralise_image",
     ),
@@ -144,9 +144,7 @@ urlpatterns = [
         BundleLockView.as_view(),
         name="scan_bundle_lock",
     ),
-    # Code below IS NOT DEAD -
-    # is used in summary_of-pushed, but not by its name, rather its url
-    # todo = fix up the calling to use the name not direct url
+    # Code below IS NOT DEAD - is used in summary_of-pushed.
     path(
         "summary/pushed_img_wrap/<int:img_pk>",
         ScannerPushedImageWrapView.as_view(),

@@ -78,26 +78,30 @@
         <div class="col-4">
             <div class="card">
                 <div class="card-header">
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            Currently showing:
-                            {% for opt in filter_options %}
-                                {% if opt.0 == the_filter %}{{ opt.1 }}{% endif %}
-                            {% endfor %}
-                        </button>
-                        <ul class="dropdown-menu">
-                            {% for opt in filter_options %}
-                                {% if opt.0 != the_filter %}
+                    <div class="card-title">
+                        <div class="dropdown">
+                            <span>Showing:</span>
+                            <button class="btn btn-secondary fs-5 dropdown-toggle w-75"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                {% for opt in filter_options %}
+                                    {% if opt.0 == the_filter %}{{ opt.1 }}{% endif %}
+                                {% endfor %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% for opt in filter_options %}
                                     <li>
-                                        <a class="dropdown-item"
-                                           href="{% url 'scan_bundle_thumbnails' opt.0 bundle_id %}">{{ opt.1 }}</a>
+                                        {% if opt.0 != the_filter %}
+                                            <a class="dropdown-item"
+                                               href="{% url 'scan_bundle_thumbnails' opt.0 bundle_id %}">{{ opt.1 }}</a>
+                                        {% else %}
+                                            <a class="dropdown-item text-secondary disabled">{{ opt.1 }}</a>
+                                        {% endif %}
                                     </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-2 pe-0">
