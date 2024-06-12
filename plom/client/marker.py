@@ -303,7 +303,7 @@ def upload(
             )
         )
     try:
-        _msgr.MreturnMarkedTask(
+        msg = _msgr.MreturnMarkedTask(
             task,
             question_idx,
             ver,
@@ -322,7 +322,8 @@ def upload(
         unknownFailCallback(task, str(ex))
         return False
 
-    numDone, numTotal = _msgr.MprogressCount(question_idx, ver)
+    numDone = msg[0]
+    numTotal = msg[1]
     successCallback(task, numDone, numTotal)
     return True
 

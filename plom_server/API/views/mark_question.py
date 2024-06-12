@@ -155,8 +155,13 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
+        
+        def int_or_None(x):
+            return None if x is None else int(x)
+        question = int_or_None(data.get("pg"))
+        version = int_or_None(data.get("ver"))
 
         return Response(
-            [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
+            mts.get_marking_progress(question=question, version=version),
             status=status.HTTP_200_OK,
         )
