@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -83,14 +84,14 @@ class StudentMarkService:
             last_id_time = None
 
         # paper has multiple complete marking tasks, get the latest one
-        try:
+        if len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE)):
             last_annotation_time = (
                 MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
                 .order_by("-last_update")
                 .first()
                 .last_update
             )
-        except MarkingTask.DoesNotExist:
+        else:
             last_annotation_time = None
 
         if last_id_time and last_annotation_time:
@@ -162,17 +163,17 @@ class StudentMarkService:
         Args:
             paper: a reference to a Paper instance.
         """
-        paper_dict = {"paper_number": paper.paper_number}
+        paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
 
         paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
         if paper_id_info:
             student_id, student_name = paper_id_info
-            paper_dict["student_id"] = student_id
-            paper_dict["student_name"] = student_name
+            paper_dict["StudentID"] = student_id
+            paper_dict["StudentName"] = student_name
         else:
-            paper_dict["student_id"] = ""
-            paper_dict["student_name"] = ""
+            paper_dict["StudentID"] = ""
+            paper_dict["StudentName"] = ""
             warnings.append("[Not identified]")
         paper_dict["identified"] = paper_id_info is not None
 
@@ -183,7 +184,7 @@ class StudentMarkService:
             total = 0
         else:
             warnings.append("[Not marked]")
-            paper_dict["total_mark"] = None
+            paper_dict["Total"] = None
 
         for i in SpecificationService.get_question_indices():
             version, mark = self.get_question_version_and_mark(paper, i)
@@ -194,7 +195,7 @@ class StudentMarkService:
                 assert mark is not None
                 total += mark
         if paper_marked:
-            paper_dict["total_mark"] = total
+            paper_dict["Total"] = total
 
         if warnings:
             paper_dict.update({"warnings": ",".join(warnings)})
@@ -344,7 +345,7 @@ class StudentMarkService:
             paper_num: The paper number.
 
         Returns:
-            Dict keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
+            Dict keyed by string information about the student (i.e. "StudentID": 1234, "q1_version" : 2).
 
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
@@ -398,7 +399,12 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        keys = ["student_id", "student_name", "paper_number", "total_mark"]
+        # keys match those in legacy-plom
+        # see issue #3405
+        # excepting paper_number = PaperNumber
+        # since in legacy was TestNumber (which we avoid in webplom)
+        keys = ["StudentID", "StudentName", "PaperNumber", "Total"]
+        # if the above changed then make sure that the dict-keys also changed
         for q in SpecificationService.get_question_indices():
             keys.append(f"q{q}_mark")
         if version_info:

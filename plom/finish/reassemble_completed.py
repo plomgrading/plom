@@ -30,6 +30,8 @@ def download_data_build_cover_page(
 
     Keyword Args:
         solution: build coverpage for solutions, default False.
+            In this case, ``qvm[2]`` is not used: not quite sure
+            what is in there: probably same info but its ignored.
 
     Returns:
         Path and filename of the coverpage.
@@ -39,7 +41,7 @@ def download_data_build_cover_page(
     spec = msgr.get_spec()
     sid = cpi[0][0]
     sname = cpi[0][1]
-    # for each Q [qlabel, ver, mark, maxPossibleMark]
+    # for each question, build [qlabel, ver, mark, maxPossibleMark]
     arg = []
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])

@@ -31,8 +31,15 @@ class ReportLandingPageView(ManagerRequiredView):
 
     @staticmethod
     def report_download(request):
+        # Get the selected report type from the form
+        report_type = request.POST.get("report_type", "brief")
+
         try:
-            d = ReportPDFService.pdf_builder(versions=True)
+            # Generate the report based on the selected type
+            if report_type == "full":
+                d = ReportPDFService.pdf_builder(versions=True, brief=False)
+            else:
+                d = ReportPDFService.pdf_builder(versions=True, brief=True)
         except ValueError as e:
             response = HttpResponse(
                 "Error building report: it is possible marking is incomplete?\n"
@@ -40,6 +47,7 @@ class ReportLandingPageView(ManagerRequiredView):
                 content_type="text/plain",
             )
             return response
+
         response = HttpResponse(d["bytes"], content_type="application/pdf")
         response["Content-Disposition"] = f"attachment; filename={d['filename']}"
 

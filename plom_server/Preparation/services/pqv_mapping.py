@@ -162,8 +162,30 @@ class PQVMappingService:
         pqvmap = self.make_version_map(number_to_produce)
         # kind of hacky: we just increase/decrease the keys
         pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
+        # bit of a hack to ensure versions match per page
+        pqvmap = _fix_shared_pages(pqvmap)
         self.use_pqv_map(pqvmap)
 
     def get_minimum_number_to_produce(self):
         sss = StagingStudentService()
         return sss.get_minimum_number_to_produce()
+
+
+def _fix_shared_pages(vmap):
+    # Ensure any questions that share pages match versions.
+    # TODO: a read-only checker for this would be useful; at least a warning for self-uploaded
+    spec = SpecificationService.get_the_spec()
+    for q in reversed(SpecificationService.get_question_indices()):
+        # TODO: still don't like these str(qidx)
+        my_pages = spec["question"][str(q)]["pages"]
+        for pg in my_pages:
+            for qidx_str, v in spec["question"].items():
+                qidx = int(qidx_str)  # yuck, well this whole fcn but especially this
+                if qidx_str == str(q):
+                    continue
+                if pg in v["pages"]:
+                    # we are sharing a page with an earlier (b/c reverse) question
+                    # so copy all those versions
+                    for paper in vmap.keys():
+                        vmap[paper][q] = vmap[paper][qidx]
+    return vmap

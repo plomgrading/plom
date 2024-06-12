@@ -3,6 +3,8 @@
 
 from .misc_utils import format_int_list_with_runs
 from .misc_utils import run_length_encoding
+from .misc_utils import interpolate_questions_over_pages as interp
+
 
 endash = "\N{En Dash}"
 
@@ -50,3 +52,30 @@ def test_run_length_encoding() -> None:
     assert run_length_encoding([None]) == [(None, 0, 1)]
     assert run_length_encoding([1, 1]) == [(1, 0, 2)]
     assert run_length_encoding([5, 5, 7]) == [(5, 0, 2), (7, 2, 3)]
+
+
+def test_interp() -> None:
+    assert interp(3, 3) == [[1], [2], [3]]
+
+
+def test_interp_page_surplus() -> None:
+    assert interp(3, 1) == [[1, 2, 3]]
+    assert interp(4, 3) == [[1], [2], [3, 4]]
+    assert interp(4, 2) == [[1, 2], [3, 4]]
+    assert interp(5, 4) == [[1], [2], [3], [4, 5]]
+    assert interp(5, 3) == [[1], [2], [3, 4, 5]]
+    assert interp(5, 2) == [[1, 2], [3, 4, 5]]
+
+
+def test_interp_shared_pages() -> None:
+    assert interp(3, 4) == [[1], [1], [2], [3]]
+    assert interp(3, 5) == [[1], [1], [2], [2], [3]]
+    assert interp(3, 6) == [[1], [1], [2], [2], [3], [3]]
+    assert interp(3, 7) == [[1], [1], [1], [2], [2], [3], [3]]
+
+
+def test_interp_first_page() -> None:
+    assert interp(3, 4, firstpg=0) == [[0], [0], [1], [2]]
+    assert interp(3, 4, firstpg=5) == [[5], [5], [6], [7]]
+    assert interp(3, 3, firstpg=2) == [[2], [3], [4]]
+    assert interp(5, 2, firstpg=5) == [[5, 6], [7, 8, 9]]

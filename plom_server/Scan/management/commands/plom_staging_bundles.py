@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
@@ -30,11 +30,10 @@ class Command(BaseCommand):
 
     help = "Upload bundle pdf files to staging area"
 
-    def upload_pdf(self, username=None, source_pdf=None, *, debug_jpeg=False):
+    def upload_pdf(
+        self, username: str, source_pdf: str, *, debug_jpeg: bool = False
+    ) -> None:
         scanner = ScanService()
-
-        if source_pdf is None:
-            raise CommandError("No bundle supplied.")
 
         try:
             with open(source_pdf, "rb") as f:

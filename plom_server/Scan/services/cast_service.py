@@ -266,6 +266,20 @@ class ScanCastService:
         *,
         image_type: int | None = None,
     ) -> None:
+        """Cast to unknown an item ("page") from the given bundle at the given order.
+
+        Args:
+            user_obj: which user is doing this?
+            bundle_obj: which bundle.
+            bundle_order: which item ("page" colloquially) in the bundle.
+
+        Keyword Args:
+            image_type: this is a Enum.  So its sort of an integer but you should
+                be using the symbolic Enum values from ``StagingImage``.
+
+        Returns:
+            None.
+        """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -323,7 +337,7 @@ class ScanCastService:
         bundle_name: str,
         bundle_order: int,
         *,
-        image_type: str | None = None,
+        image_type: int | None = None,
     ) -> None:
         try:
             user_obj = User.objects.get(

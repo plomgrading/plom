@@ -192,6 +192,7 @@ class Chooser(QDialog):
             if not self.is_logged_in():
                 return
 
+        assert self.messenger is not None
         if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             if which_subapp != "Manager":
                 InfoMsg(

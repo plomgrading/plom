@@ -1,8 +1,19 @@
 # How to run the "new" Plom Server
 
+## Setting up PostgreSQL
+PostgreSQL must also be installed. Follow the installation instructions found (here)[https://www.postgresql.org/download/]. Afterwards:
+1. Create a user for Plom, either using environment variables or using the default "postgres:postgres"
+2. Create a table for Plom, either using environment variables or using the default "plom_db"
+
+If you are using the defaults, the series of commands below will work, otherwise, replace the username and database name:
+1. `psql postgres`
+2. `CREATE ROLE postgres WITH LOGIN PASSWORD 'postgres';`
+3. `CREATE DATABASE plom_db;`
+4. `GRANT ALL PRIVILEGES ON DATABASE plom_db TO postgres;`
+
 ## Initialise the database
 
-1. Run `python3 manage.py migrate` to setup the database
+1. Run `python3 manage.py makemigrations` then `python3 manage.py migrate` to setup the database
 
 ## Setting up groups and users
 Django wants a "super user" to do administrative stuff - they can

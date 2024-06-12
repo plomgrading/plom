@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
@@ -773,6 +773,7 @@ def main():
                 print('WARNING: server has no "reviewer" user')
             return
 
+        f = None
         if args.demo or args.auto is not None:
             f = autogen_users_file(args.demo, args.auto, args.numbered)
             print(f'Template csv for user lists written to "{f}"')
@@ -782,6 +783,7 @@ def main():
             f = args.userlist
 
         if args.upload:
+            assert f is not None
             users = get_raw_user_dict_from_csv(f)
             msgr = start_messenger(args.server, args.password)
             all_ok = True
