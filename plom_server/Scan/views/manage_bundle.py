@@ -27,7 +27,25 @@ class GetBundleImageView(ScannerRequiredView):
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-    def build_context(self, *, bundle_id: int | None = None) -> dict[str, Any]:
+
+    def filter_bundle_pages(self, page_list, filter_kind):
+        if filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
+            return [pg for pg in page_list if pg["status"] == filter_kind]
+        elif filter_kind == "lowqr":
+            return [pg for pg in page_list if pg["n_qr_read"] <= 2]
+        elif filter_kind == "ex_no_info":
+            return [
+                pg
+                for pg in page_list
+                if pg["status"] == "extra"
+                and not (pg["info"]["paper_number"] or pg["info"]["question_list"])
+            ]
+        else:
+            return page_list
+
+    def build_context(
+        self, *, bundle_id: int | None = None, the_filter: str | None = None
+    ) -> dict[str, Any]:
         """Build a context for a particular page of a bundle.
 
         Keyword Args:
@@ -47,12 +65,30 @@ class BundleThumbnailsView(ScannerRequiredView):
         error_pages = scanner.get_n_error_images(bundle)
 
         # list of dicts of page info, in bundle order
-        bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
+        # filter this according to 'the_filter'
+        bundle_page_info_list = self.filter_bundle_pages(
+            scanner.get_bundle_pages_info_list(bundle), the_filter
+        )
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
         bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
         # get a list of the paper-numbers in bundle that are missing pages
         bundle_incomplete_papers_list = [
             X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
+        ]
+
+        filter_options = [
+            {"filter_code": X[0], "filter_name": X[1]}
+            for X in [
+                ("all", "all"),
+                ("known", "known pages"),
+                ("extra", "extra pages"),
+                ("ex_no_info", "extra pages without information"),
+                ("error", "errors"),
+                ("lowqr", "few qr codes read"),
+                ("discard", "discarded pages"),
+                ("unknown", "unknown pages"),
+                ("unread", "unread pages"),
+            ]
         ]
 
         context.update(
@@ -71,17 +107,22 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "discard_pages": discard_pages,
                 "error_pages": error_pages,
                 "finished_reading_qr": bundle.has_qr_codes,
+                "the_filter": the_filter,
+                "filter_options": filter_options,
             }
         )
         return context
 
-    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, the_filter: str, bundle_id: int
+    ) -> HttpResponse:
         """Get a page of thumbnails with manipulations options for a bundle.
 
         Args:
             request: incoming request.
 
         Keyword Args:
+            the_filter: which filter to apply to the images.
             bundle_id: which bundle.
 
         Returns:
@@ -89,9 +130,10 @@ class BundleThumbnailsView(ScannerRequiredView):
             If there was no such bundle, return a 404 error page.
         """
         try:
-            context = self.build_context(bundle_id=bundle_id)
+            context = self.build_context(bundle_id=bundle_id, the_filter=the_filter)
         except ObjectDoesNotExist as e:
             raise Http404(e)
+
         # to pop up the same image we were just at
         context.update({"pop": request.GET.get("pop", None)})
         return render(request, "Scan/bundle_thumbnails.html", context)
@@ -126,7 +168,9 @@ class GetBundleThumbnailView(ScannerRequiredView):
 class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
+    def get(
+        self, request: HttpResponse, *, the_filter: str, bundle_id: int, index: int
+    ) -> HttpResponse:
         context = super().build_context()
         scanner = ScanService()
         paper_info = PaperInfoService()
@@ -149,6 +193,7 @@ class GetBundlePageFragmentView(ScannerRequiredView):
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
                 "current_page": current_page,
+                "the_filter": the_filter,
             }
         )
         # If page is an extra page then we grab some data for the
