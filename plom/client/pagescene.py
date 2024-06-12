@@ -632,7 +632,7 @@ class PageScene(QGraphicsScene):
             h.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            b.setToolTip(f"Page options for page {n}")
+            b.setToolTip(f"Options for page {n + 1}")
             self._page_hack_buttons.append(h)
 
     def getScore(self):
