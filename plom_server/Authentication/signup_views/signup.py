@@ -87,9 +87,9 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
             )
 
             # Using tsv format for easy pasting into spreadsheet software
-            tsv = 'Username\tReset Link\n'.format()
+            tsv = "Username\tReset Link\n".format()
             for username, link in password_reset_links.items():
-                append = '{}{}{}{}'.format(username, '\t', link, '\n')
+                append = "{}{}{}{}".format(username, "\t", link, "\n")
                 print(append)
                 tsv = tsv + append
 
