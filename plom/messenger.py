@@ -56,7 +56,7 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ID client API stuff
 
-    def IDprogressCount(self):
+    def IDprogressCount(self) -> list[int]:
         """Return info about progress on identifying.
 
         Return:
@@ -197,7 +197,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MprogressCount(self, q, v):
+    def MprogressCount(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
         Args:
@@ -205,7 +205,7 @@ class Messenger(BaseMessenger):
             v (str/int): a version number.
 
         Return:
-            list: with two integers, indicating the number of questions
+            A list of two integers, indicating the number of questions
             graded and the total number of questions to be graded of
             this question-version pair.
 
@@ -388,7 +388,7 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-    ):
+    ) -> list[int]:
         """Upload annotated image and associated data to the server.
 
         Args:
@@ -406,7 +406,9 @@ class Messenger(BaseMessenger):
                 back.
 
         Returns:
-            list: a 2-list of the form `[#done, #total]`.
+            A list of two integers, indicating the number of questions
+            graded and the total number of questions to be graded of
+            this question-version pair.
 
         Raises:
             PlomAuthenticationException
