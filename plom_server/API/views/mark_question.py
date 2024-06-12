@@ -120,7 +120,13 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_409_CONFLICT)
 
     def mark_task(self, request: Request, code: str) -> Response:
-        """Accept a marker's grade and annotation for a task."""
+        """Accept a marker's grade and annotation for a task.
+
+        Returns:
+        (200): returns two integers, first the number of marked papers
+            for this question/version and the total number of papers for
+            this question/version.
+        """
         mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
