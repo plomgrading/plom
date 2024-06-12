@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -316,7 +317,7 @@ class MarkingTaskService:
         annotations = annot_data["sceneItems"]
         rubrics_used = []
         for ann in annotations:
-            if ann[0] == "GroupDeltaText":
+            if ann[0] == "Rubric":
                 rubric_key = ann[3]
                 try:
                     rubric = Rubric.objects.get(key=rubric_key)

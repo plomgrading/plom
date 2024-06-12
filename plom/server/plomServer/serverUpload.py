@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2024 Aden Chan
 
 import hashlib
 import logging
@@ -14,7 +15,7 @@ import tempfile
 import uuid
 
 from plom.server import pageNotSubmitted
-from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentID as censorID
 
 
 log = logging.getLogger("server")

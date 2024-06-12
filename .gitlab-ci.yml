@@ -27,10 +27,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:25.0.5
+image: docker:26.1.3
 
 services:
-  - docker:25.0.5-dind
+  - docker:26.1.3-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -40,7 +40,7 @@ variables:
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_MAJOR_MINOR_VER: "3.11"
-  MACBIN_PY_VER: 3.11.6
+  MACBIN_PY_VER: 3.11.9
   QT_QPA_PLATFORM: offscreen
 
 stages:
@@ -87,13 +87,13 @@ docker-image:
 
 
 codespell:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install codespell~=2.2.6
+    - python3 -m pip install codespell~=2.3.0
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.pdf,*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell
   allow_failure: true
   artifacts:
     reports:
@@ -119,7 +119,7 @@ wet_no_drift:
 
 
 copyright_year:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - git --version
@@ -140,7 +140,7 @@ copyright_year:
 
 
 djlint:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - pip install djlint~=1.34.1
@@ -149,7 +149,7 @@ djlint:
 
 
 djlint-check:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - pip install djlint~=1.34.1
@@ -173,7 +173,7 @@ docker-tag-latest:
 
 # to ensure the pypi job works, make sure we can package
 make_package:
-  image: python:3.11
+  image: python:3.12
   stage: build
   script:
     - pip install --upgrade build
@@ -190,7 +190,7 @@ make_package:
 # If we have a tag, then push to PyPI using TWINE_* env vars
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
 pypi:
-  image: python:3.11
+  image: python:3.12
   stage: packaging
   rules:
    - if: $CI_COMMIT_TAG
@@ -264,7 +264,7 @@ release_job:
 # block release unless tag matches in-source version
 tag_matches_ver:
   stage: static_analysis
-  image: python:3.11
+  image: python:3
   rules:
    - if: $CI_COMMIT_TAG
   script:
@@ -282,7 +282,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=24.4.0"
+    - pip3 install "black~=24.4.2"
   script:
     - black --check --diff .
   allow_failure: true
@@ -303,7 +303,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.4.4
+    - pip install pytest pytest-cov coverage[toml]~=7.5.3
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -335,8 +335,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.1.0
-    - python3 -m pip install pylint~=3.1.0
+    - python3 -m pip install astroid~=3.2.2  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.2.3
   script:
     - pylint plom
     - pylint plom_server
@@ -353,7 +353,7 @@ mypy-type-checking:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.9.0
+    - python3 -m pip install mypy~=1.10.0
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
@@ -362,32 +362,31 @@ mypy-type-checking:
   allow_failure: true
 
 
+pyright:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install pyright~=1.1.366
+  script:
+    # for now, just display errors but don't fail (Issue #3237)
+    - pyright || true
+  allow_failure: true
+
+
 flake8:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - python3 -m pip install flake8~=7.0.0
   script:
-    # show all errors and warnings but don't fail
+    # first show all errors and warnings but don't fail
     - flake8 --exit-zero
-    # fail test if any errors here
-    - flake8 --select E,W
-    # Non-plom_server: the number of errors should decrease over time
-    - flake8 --extend-exclude plom_server --exit-zero
-    - NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER=`flake8 --count --extend-exclude plom_server | tail -n 1 || true`
-    - echo $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 1 ]]"
-    # Special case for plom_server
-    - flake8 plom_server --exit-zero
-    - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
-    - echo $NUMBER_OF_FLAKE8_WARNINGS
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 6 ]]"
+    - flake8
 
 
 pydocstyle-plom-count:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
@@ -407,7 +406,7 @@ pydocstyle-plom-count:
 # For now, an allowlist of submodules that must pass
 # TODO: add more modules and eventually just plom/
 pydocstyle-plom:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
@@ -418,7 +417,7 @@ pydocstyle-plom:
 
 # TODO: we may still have to tighten the rules in pyproject.toml
 pydocstyle-server:
-  image: python:3.11
+  image: python:3
   stage: static_analysis
   before_script:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
@@ -448,7 +447,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.4.4
+    - python3 -m pip install coverage~=7.5.3
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
@@ -1608,7 +1607,7 @@ winpyinst:
   - c:\python311\python -m pip install -r requirements.txt.client
   - refreshenv
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller==6.7.0
+  - c:\python311\python -m pip install pyinstaller~=6.8.0
   - refreshenv
   - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
   - refreshenv

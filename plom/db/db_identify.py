@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from datetime import datetime, timezone
 import logging
 
 import peewee as pw
 
-from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentID as censorID
 from plom.rules import censorStudentName as censorName
 from plom.db.tables import DNMPage, Group, IDGroup, IDPrediction, Test, User
 

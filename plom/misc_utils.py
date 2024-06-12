@@ -251,3 +251,51 @@ def working_directory(path):
         yield
     finally:
         os.chdir(current_directory)
+
+
+def interpolate_questions_over_pages(
+    pages: int, questions: int, *, firstpg: int = 1
+) -> list[list[int]]:
+    """Fit a number of pages to a number of questions, returning a list of lists of which pages go with each question.
+
+    This function is intended to be used to provide an initial guess
+    of how to map the pages to questions.
+
+    Args:
+        pages: how many pages.
+        questions: how many questions.
+
+    Keyword Args:
+        firstpg: what is the first page?
+
+    Returns:
+        A list of lists representing the pages occupied by each question.
+    """
+    if pages == questions:
+        question_pages = [[p + firstpg] for p in range(pages)]
+    elif pages < questions:
+        # shared pages
+        qpp = questions // pages
+        remainder = questions % pages
+        X = []
+        for pg in range(pages):
+            how_many = qpp
+            if remainder:
+                # spread the remainder over the first few pages
+                how_many += 1
+                remainder -= 1
+            X.extend([[pg + firstpg]] * how_many)
+        return X
+    else:
+        # Some question span multiple pages.
+        # Evenly divide the pages as much as possible
+        ppq = pages // questions
+        question_pages = [
+            [q * ppq + pn + firstpg for pn in range(ppq)] for q in range(questions)
+        ]
+        # then put any remaining pages to the last question
+        question_pages[-1] = [
+            pn for pn in range(question_pages[-1][0], pages + firstpg)
+        ]
+        # TODO: could instead spread them over the last few questions
+    return question_pages

@@ -281,3 +281,20 @@ module = [
     'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
+
+[tool.pyright]
+pythonVersion = "3.12"
+exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
+# changing to "off" makes this much quieter
+typeCheckingMode = "basic"
+# lots of Django false positives?
+reportAttributeAccessIssue = false
+
+[tool.codespell]
+skip = "*.po,*.ts,*.pdf,*.png,*.jpg,*.svg,*.csv,*.json,.git"
+count = true
+check-filenames = true
+check-hidden = true
+quiet-level = 3
+ignore-words = ".codespell-ignorewords"
+exclude-file = ".codespell-ignorelines"

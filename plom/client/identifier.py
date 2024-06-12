@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 """The Plom Identifier client."""
 
@@ -47,9 +48,9 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomTakenException,
 )
-from plom import isValidStudentNumber
+from plom import isValidStudentID
 
-# from plom.rules import censorStudentNumber as censorID
+# from plom.rules import censorStudentID as censorID
 from plom.rules import censorStudentName as censorName
 
 from .image_view_widget import ImageViewWidget
@@ -339,7 +340,7 @@ class IDClient(QWidget):
         self.predictions = self.msgr.IDgetPredictions()
 
     def setCompleters(self):
-        """Set up the studentname + studentnumber line-edit completers.
+        """Set up the studentname + studentID line-edit completers.
 
         Means that user can enter the first few numbers (or letters) and
         be prompted with little pop-up with list of possible completions.
@@ -875,9 +876,7 @@ class IDClient(QWidget):
             sid = snidbox.sid.strip()
             sname = snidbox.sname.strip()
             # note sid, sname will not be None-types.
-            if not isValidStudentNumber(
-                sid
-            ):  # this should not happen as snidbox checks.
+            if not isValidStudentID(sid):  # this should not happen as snidbox checks.
                 return
             if not sname:  # this should not happen as snidbox checks.
                 return

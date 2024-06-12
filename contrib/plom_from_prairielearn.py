@@ -1,7 +1,7 @@
 #!/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 """Start a Plom server from a PrairieLearn pdf file upload.
 
@@ -152,7 +152,7 @@ assert server.ping_server(), "cannot ping server, something gone wrong?"
 
 print("Server seems to still be running: demo setup is complete\n")
 
-print(f"Here are your accounts: (see also {serverdir/'userListRaw.csv'})")
+print(f"Here are your accounts: (see also {serverdir / 'userListRaw.csv'})")
 with open(serverdir / "userListRaw.csv", "r") as csvfile:
     print(csvfile.read())
 

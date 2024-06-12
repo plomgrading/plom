@@ -6,15 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.15.5] - 2024-06-12
 
 ### Added
 * Users can change their own passwords.
 
 ### Changed
+* Plom now allows sharing pages between questions.
+* Client: parameterized rubrics are no longer considered experimental.
 
 ### Fixed
-
+* For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
+* Misc fixes and documentation improvements.
 
 
 ## [0.15.4] - 2024-05-21
@@ -1182,7 +1185,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.4...main
+[0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5
 [0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4
 [0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3
 [0.15.2]: https://gitlab.com/plom/plom/-/compare/v0.15.1...v0.15.2
