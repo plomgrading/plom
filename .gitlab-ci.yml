@@ -481,7 +481,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --solutions
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick --solutions
     - popd
 
 
@@ -959,7 +959,7 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1079,7 +1079,7 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
