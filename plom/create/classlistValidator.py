@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from plom.rules import validateStudentNumber
+from plom.rules import validateStudentID
 
 # important classlist headers - all casefolded
 sid_field = "id".casefold()
@@ -133,7 +134,7 @@ class PlomClasslistValidator:
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentNumber(x[id_key])
+            idv = validateStudentID(x[id_key])
             if idv[0] is False:
                 err.append([x["_src_line"], idv[1]])
             ids_used[x[id_key]].append(x["_src_line"])

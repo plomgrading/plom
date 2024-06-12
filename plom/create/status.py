@@ -58,6 +58,7 @@ def status(*, msgr) -> None:
         print(cross + " Server does not yet have a spec")
         print("    You will need to add specification for your test.")
         spec = None
+        exam_info = None
     else:
         print(check_mark + " Server has a spec ")
         sv = SpecVerifier(spec)
@@ -112,7 +113,7 @@ def status(*, msgr) -> None:
             )
     else:
         papernums = []
-    if spec:
+    if spec and exam_info:
         # TODO: Issue #1745: this assumes contiguous test numbers
         not_named = set(range(1, exam_info["current_largest_paper_num"]))
         not_named.difference_update(papernums)

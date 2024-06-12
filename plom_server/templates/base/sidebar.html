@@ -17,7 +17,7 @@
             {% endif %}
         </a>
     </li>
-    <ul>
+    <ul style="list-style-type: none">
         <li class="nav-item">
             <a class="nav-link" href="{% url 'logout' %}">Log out</a>
         </li>
@@ -39,7 +39,7 @@
         <li class="nav-item accordion accordion-flush">
             <a class="nav-link" href="#progress">Progress</a>
             <div id="progress">
-                <ul>
+                <ul style="list-style-type: none">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
                     </li>
@@ -64,7 +64,7 @@
         <li class="nav-item accordion accordion-flush">
             <a class="nav-link" href="#development">In development</a>
             <div id="development">
-                <ul>
+                <ul style="list-style-type: none">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
                     </li>

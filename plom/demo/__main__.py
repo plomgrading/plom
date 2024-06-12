@@ -159,7 +159,7 @@ def main():
     ):
         if (args.server_dir / f).exists():
             raise RuntimeError(
-                f'Directory "{args.server_dir/f}" must not exist for this demo'
+                f'Directory "{args.server_dir / f}" must not exist for this demo'
             )
 
     # Note: if you're reading this code, you can use `plom-server ...`

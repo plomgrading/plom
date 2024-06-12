@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
 from plom.create import with_manager_messenger
-from plom.rules import censorStudentName, censorStudentNumber
+from plom.rules import censorStudentName, censorStudentID
 from .buildClasslist import get_demo_classlist
 
 
@@ -47,13 +48,13 @@ def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
         print(f"Uploaded classlist of length {len(classlist)}.")
         print(
             "  First student:  {} - {}".format(
-                censorStudentNumber(classlist[0]["id"]),
+                censorStudentID(classlist[0]["id"]),
                 censorStudentName(classlist[0]["name"]),
             )
         )
         print(
             "  Last student:  {} - {}".format(
-                censorStudentNumber(classlist[-1]["id"]),
+                censorStudentID(classlist[-1]["id"]),
                 censorStudentName(classlist[-1]["name"]),
             )
         )

@@ -13,13 +13,18 @@ import tempfile
 import math
 import pathlib
 from pathlib import Path
+from typing import Any
 
 # import pyqrcode
 import segno
 import fitz
 
 from plom.create import paperdir
-from plom.specVerifier import build_page_to_group_dict, build_page_to_version_dict
+from plom.specVerifier import (
+    build_page_to_group_dict,
+    get_question_labels,
+    build_page_to_version_dict,
+)
 from plom.tpv_utils import encodeTPV
 
 
@@ -68,13 +73,13 @@ def create_QR_codes(
 
 
 def create_exam_and_insert_QR(
-    spec,
-    papernum,
-    question_versions,
-    tmpdir,
+    spec: dict[str, Any],
+    papernum: int,
+    question_versions: dict[int, int],
+    tmpdir: pathlib.Path,
     *,
-    no_qr=False,
-    source_versions_path=None,
+    no_qr: bool = False,
+    source_versions_path: str | pathlib.Path | None = None,
 ) -> fitz.Document:
     """Creates the exam objects and insert the QR codes.
 
@@ -276,7 +281,14 @@ def pdf_page_add_labels_QRs(
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
-def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
+def pdf_page_add_name_id_box(
+    page: fitz.Page,
+    name: str,
+    sid: str,
+    x: float | None = None,
+    y: float | None = None,
+    signherebox: bool = True,
+) -> None:
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
@@ -389,7 +401,7 @@ def make_PDF(
     ycoord=None,
     where=None,
     source_versions_path=None,
-):
+) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
     Take pages from each source (using `questions_versions`/`page_versions`) and
@@ -418,7 +430,8 @@ def make_PDF(
             source versions directory.
 
     Returns:
-        pathlib.Path: the file that was just written.
+        pathlib.Path: the file that was just written, or None in the slightly
+        strange, perhaps deprecated ``fakepdf`` case.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -433,7 +446,7 @@ def make_PDF(
     # make empty files instead of PDFs
     if fakepdf:
         save_name.touch()
-        return
+        return None
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -452,10 +465,29 @@ def make_PDF(
 
     # We embed fonts for names and other overlay.  But if there are non-latin
     # characters (e.g., CJK) in names, then the embedded font is quite large.
-    # Subsetting requires https://pypi.org/project/fonttools
     # Note: In theory, this could muck around with fonts from the source
-    # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
-    exam.subset_fonts()
+    # (i.e., if they were NOT subsetted).  So we only do the subsetting if
+    # we're added non-ascii chars in any of the shortname, student name or
+    # question labels.  Non-ascii is a stronger requirement than needed,
+    # but in theory the subsetting is harmless...
+    do_subset = False
+    if extra and not extra["name"].isascii():
+        do_subset = True
+    if not spec["name"].isascii():
+        do_subset = True
+    for label in get_question_labels(spec):
+        if not label.isascii():
+            do_subset = True
+
+    if do_subset:
+        # TODO: remove this fallback on a future PyMuPDF (see Plom Issue #3384)
+        # Fallback subsetting requires https://pypi.org/project/fonttools
+        try:
+            exam.subset_fonts(fallback=True)
+        except TypeError:
+            # PyMuPDF<=1.23 does not have fallback
+            # Subsetting requires https://pypi.org/project/fonttools
+            exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

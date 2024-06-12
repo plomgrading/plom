@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import platform
 from typing import Any, Optional, Union
@@ -26,7 +27,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from plom import isValidStudentNumber
+from plom import isValidStudentID
 
 
 class _ErrorMsg(QMessageBox):
@@ -398,7 +399,7 @@ class SNIDBox(QDialog):
     def check(self):
         self.sid = self.sidLE.text().strip()
         self.sname = self.snameLE.text().strip()
-        if not isValidStudentNumber(self.sid):
+        if not isValidStudentID(self.sid):
             ErrorMsg(self, "Not a valid student number.").exec()
             return
         if not self.sname:
