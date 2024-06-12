@@ -90,10 +90,7 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
             tsv = "Username\tReset Link\n".format()
             for username, link in password_reset_links.items():
                 append = "{}{}{}{}".format(username, "\t", link, "\n")
-                print(append)
                 tsv = tsv + append
-
-            print(tsv)
 
             context = {
                 "form": self.form,
