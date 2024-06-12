@@ -304,8 +304,8 @@ class UnderlyingImages(QGraphicsItemGroup):
 
         Args:
             image_data: each dict has keys 'filename', 'orientation',
-                and 'included' (and possibly others).  Only images with
-                'included' as True will be used.
+                and 'visibble' (and possibly others).  Only images with
+                'visible' as True will be used.
                 The list order determines the order: subject to change!
         """
         super().__init__()
@@ -313,7 +313,7 @@ class UnderlyingImages(QGraphicsItemGroup):
         x = 0.0
         n = 0
         for data in image_data:
-            if not data["included"]:
+            if not data["visible"]:
                 continue
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
@@ -436,12 +436,12 @@ class PageScene(QGraphicsScene):
         self.src_img_data = deepcopy(src_img_data)
         for x in self.src_img_data:
             # TODO: elsewhere "included" is taken to mean "the server thinks
-            # we should include it (viz, green highlight in PageArranger)
+            # we should include it" (viz, green highlight in PageArranger)
             if "included" in x.keys():
                 x["server_included"] = x["included"]
-            x["included"] = True
-            print("=-" * 40)
-            print(f'Hacked in an "included": {x}')
+            if "visible" not in x.keys():
+                x["visible"] = True
+                log.warn(f'Hacked in an "visible": {x}')
         if not self.src_img_data:
             raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
@@ -690,14 +690,14 @@ class PageScene(QGraphicsScene):
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
 
-    def get_src_img_data(self, only_included: bool = True) -> list[dict[str, Any]]:
+    def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
 
         Note you get the actual data, not a copy so careful if you mess with it!
         """
         r = []
         for x in self.src_img_data:
-            if x["included"] or not only_included:
+            if x["visible"] or not only_visible:
                 r.append(x)
         return r
 
@@ -1914,7 +1914,7 @@ class PageScene(QGraphicsScene):
     def _idx_from_visible_idx(self, n: int) -> int:
         m = -1
         for idx, x in enumerate(self.src_img_data):
-            if x["included"]:
+            if x["visible"]:
                 m += 1
             if m == n:
                 return idx
@@ -2018,7 +2018,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.endMacro()
 
     def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
-        self.src_img_data[n_idx]["included"] = show
+        self.src_img_data[n_idx]["visible"] = show
         # TODO: replace with emit signal (if needed)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
