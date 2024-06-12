@@ -112,13 +112,10 @@ wet_no_drift:
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
-    - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - export VER1=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER0
     - echo $VER1
-    - echo $VER2
     - bash -c "[[ x$VER0 == x$VER1 ]]"
-    - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
 copyright_year:
@@ -1215,7 +1212,7 @@ linuxbin_ubuntu2004:
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1241,10 +1238,11 @@ linuxbin_ubuntu2204:
     - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install pyinstaller
+    - pip install . --no-deps  # pyinstaller spec needs version
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2204.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1326,6 +1324,7 @@ macos12_universal_client:
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1375,6 +1374,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1430,6 +1430,7 @@ macos12_x86_64_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1481,6 +1482,7 @@ macos11_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
+  - pip install . --no-deps  # pyinstaller spec needs version
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1600,14 +1602,18 @@ winpyinst:
   - c:\python311\python -m pip install --user --upgrade pip
   - c:\python311\python -m pip --version
   - c:\python311\python -m pip install --user --upgrade setuptools wheel
+  - refreshenv
   script:
   - c:\python311\python -m pip install -r requirements.txt.client
+  - refreshenv
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python311\python -m pip install pyinstaller~=6.8.0
   - refreshenv
-  # c:\python311\python -m plom.client -h
+  - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
+  - refreshenv
+  - c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python311\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - $VER = &"c:\python311\python" -c "from plom import __version__; print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
