@@ -1,7 +1,5 @@
-<!--
-    SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Elisa Pan
--->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2024 Elisa Pan -->
 {% extends "base/base.html" %}
 {% load static %}
 {% block page_heading %}
@@ -9,20 +7,55 @@
 {% endblock page_heading %}
 {% block main_content %}
     <p>Total Questions: {{ question_count }}</p>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addQuestionTagModal">
+        Add
+    </button>
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Name</th>
+                <th>Question Number</th>
+                <th>Question Label</th>
             </tr>
         </thead>
         <tbody>
-            {% for question in questions %}
-                <tr>
-                    <td>{{ question.id }}</td>
-                    <td>{{ question.name }}</td>
-                </tr>
+            {% for number, label in question_labels %}
+            <tr>
+                <td>{{ number }}</td>
+                <td>{{ label }}</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Modal -->
+    <div class="modal fade" id="addQuestionTagModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionTagModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addQuestionTagModalLabel">Add Question Tag</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addQuestionTagForm" method="POST" action="{% url 'add_question_tag' %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="questionNumber">Question Number</label>
+                            <select class="form-control" id="questionNumber" name="questionNumber">
+                                {% for number, label in question_labels %}
+                                <option value="{{ number }}">{{ number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" class="form-control" id="description" name="description" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock main_content %}
