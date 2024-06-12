@@ -4,6 +4,7 @@
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -33,8 +34,14 @@
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
             <a class="btn btn-secondary disabled" href="">Create additional "demo" rubrics</a>
             <p>Explanations go here, not implemented yet in the UI.</p>
-            <a class="btn btn-secondary disabled" href="">Download all rubrics to a local file</a>
-            <p>Not implemented yet in the UI.</p>
+            <form method="get" action={% url 'rubric_download' %} class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mr-2">
+                    <button type="submit" class="btn btn-success mt-1">Download rubrics</button>
+                    {{ rubric_download_form }}
+                </div>
+            </form>
+            <p> Download current rubrics into a file. </p>
             <a class="btn btn-secondary disabled" href="">Upload rubrics from a file</a>
             <p>Not implemented yet in the UI.</p>
             <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>

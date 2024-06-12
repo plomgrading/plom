@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copright (C) 2024 Aden Chan
 
 from django import forms
 
 from Papers.services import SpecificationService
 
 from .models import Rubric
-
 
 
 class RubricAdminForm(forms.Form):
@@ -25,10 +25,9 @@ class RubricWipeForm(forms.Form):
 
 
 class RubricFilterForm(forms.Form):
-    # using hard-coded choices for now
     QUESTION_CHOICES = [
         (str(q_idx), q_label)
-            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
     ]
     KIND_CHOICES = [
         ("", "All Kinds"),
@@ -48,3 +47,14 @@ class RubricEditForm(forms.ModelForm):
         widgets = {
             "meta": forms.Textarea(attrs={"rows": 2, "cols": 50}),
         }
+
+
+class RubricDownloadForm(forms.Form):
+    QUESTION_CHOICES = [
+        (str(q_idx), q_label)
+        for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+    ]
+
+    QUESTION_CHOICES.insert(0, ("", "All Questions"))
+
+    question_filter = forms.TypedChoiceField(choices=QUESTION_CHOICES, required=False)

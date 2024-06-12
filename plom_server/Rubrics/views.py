@@ -3,11 +3,13 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
+from wsgiref.util import FileWrapper
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
@@ -21,7 +23,7 @@ from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
 from .forms import RubricAdminForm, RubricWipeForm
-from .forms import RubricFilterForm, RubricEditForm
+from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -30,12 +32,14 @@ class RubricAdminPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.GET)
+        download_form = RubricDownloadForm(request.GET)
         context = self.build_context()
         rubrics = RubricService().get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
             }
         )
         return render(request, template_name, context=context)
@@ -324,3 +328,19 @@ class FeedbackRulesView(ManagerRequiredView):
             }
         )
         return render(request, template_name, context=context)
+
+
+class DownloadRubricView(ManagerRequiredView):
+    def get(self, request: HttpRequest):
+        service = RubricService()
+        question = request.GET.get("question_filter")
+        format_choice = request.GET.get("format_choice")
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
+
+        buf = service.get_rubric_as_file("csv", question=question)
+        response = HttpResponse(buf.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=rubrics.csv"
+        return response
