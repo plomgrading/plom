@@ -29,55 +29,71 @@ class TaskOrderService:
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def _get_task_priorities(self):
+    def get_task_priorities(self, status: bool):
         """Get the task priorities dict and list of not fully marked papers.
 
+        Args:
+            status: set to true to include MarkingTask.status in the return.
+
         Returns:
-            A dictionary of task priorities, keyed by
-            (paper_number, question_index) pairs and a list of paper_number
-            for papers that have not been fully marked.
+            if status is set to true it returns a mapping
+            from a tuple of (paper_number, q_index) to a tuple
+            of (priority, MarkingTask.StatusChoices). Otherwise it will be mapped
+            to only the task priority.
+
+        Note: MarkingTask.StatusChoices are represented as Integers, where:
+            1 represents TO_DO.
+            2 represents OUT.
+            3 represents COMPLETE.
+            4 represents OUT_OF_DATE.
         """
-        _marking_tasks = MarkingTask.objects.filter(
-            status=MarkingTask.TO_DO
-        ).select_related("paper")
+        if status:
+            _marking_tasks = MarkingTask.objects.all()
+
+        else:
+            _marking_tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
+
+        _marking_tasks.select_related("paper")
         marking_tasks = list(
             _marking_tasks.order_by("paper__paper_number", "question_index")
         )
 
         task_priorities = {}
-        unfinished_paper = []
+        marking_task_list = list()
 
         for mt in marking_tasks:
-            task_priorities[(mt.paper.paper_number, mt.question_index)] = (
-                mt.marking_priority
-            )
-            unfinished_paper.append(mt.paper.paper_number)
+            if status:
+                mapped_value = (mt.marking_priority, mt.status)
+            else:
+                mapped_value = mt.marking_priority
 
-        return task_priorities, unfinished_paper
+            task_priorities[(mt.paper.paper_number, mt.question_index)] = mapped_value
+            marking_task_list.append(mt.paper.paper_number)
 
-    def get_paper_number_to_priority_list(self) -> dict[int, list[int]]:
-        """Get the mapping from a paper number to the list of priorities.
+        return task_priorities, marking_task_list
 
-        The paper that has been fully marked will not be recorded here.
-        Additionally, the questions that have been marked will have priority
-        of 0.
+    def get_paper_number_to_priority_list(self) -> dict[int, list[int, int]]:
+        """Get the mapping from a paper number to the list of (priority, status).
+
+        If a marking task is missing, it will be flagged with (-1, -1).
 
         Returns:
-            A dictionary mapping paper number to the list of priorities
-            for that paper sorted by question index.
+            A dictionary that maps paper number to the list of tuples of
+            (priority, status), where the list is sorted in asceding order
+            by question index.
         """
-        task_priorities, unfinished_paper = self._get_task_priorities()
+        task_priorities, marking_task_list = self.get_task_priorities(status=True)
         total_questions = SpecificationService.get_n_questions()
+        missing_flag = (-1, -1)
 
-        paper_to_priority_map = dict()
+        paper_to_priority_and_status_list = dict()
 
-        for paper_number in unfinished_paper:
-            priority_list = [
-                task_priorities.get((paper_number, q_idx), 0)
+        for paper_number in marking_task_list:
+            paper_to_priority_and_status_list[paper_number] = [
+                task_priorities.get((paper_number, q_idx), missing_flag)
                 for q_idx in range(1, total_questions + 1)
             ]
-            paper_to_priority_map[paper_number] = priority_list
-        return paper_to_priority_map
+        return paper_to_priority_and_status_list
 
     def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""
@@ -85,7 +101,7 @@ class TaskOrderService:
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
-        task_priorities = self._get_task_priorities()[0]
+        task_priorities = self.get_task_priorities(status=False)[0]
         return [
             {
                 "Paper Number": paper_number,

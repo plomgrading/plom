@@ -58,10 +58,15 @@
                 {% for q in q_labels %}<th scope="col" class="border border-secondary">{{ q }}</th>{% endfor %}
             </thead>
             <tbody>
-                {% for p, priority_list in paper_to_priority_dict.items %}
+                {% for p, priority_status_list in paper_to_priority_dict.items %}
                     <tr>
                         <td class="border border-secondary">{{ p }}</td>
-                        {% for priority in priority_list %}<td class="border border-secondary">{{ priority|floatformat:1 }}</td>{% endfor %}
+                        {% for priority_status in priority_status_list %}
+                            <td class="border border-secondary"
+                                style="{% if priority_status.1 == 3 %}background-color: #dbf5da{% elif priority_status.1 == 2 %}background-color: #faf9d4{% elif priority_status.1 == -1 or priority_status.1 == 4 %}background-color: #fabebe{% endif %}">
+                                {{ priority_status.0|floatformat:1 }}
+                            </td>
+                        {% endfor %}
                     </tr>
                 {% endfor %}
             </tbody>
