@@ -207,7 +207,7 @@ class IDReaderService:
         try:
             idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
         except ObjectDoesNotExist:
-            idht_obj = IDReadingHueyTaskTracker.objects.create()
+            return {"status": "To Do", "message": "ID reader has not been run."}
 
         return {"status": idht_obj.get_status_display(), "message": idht_obj.message}
 
@@ -224,41 +224,34 @@ class IDReaderService:
         """
         # Note that we should only have 1 task running at a time.
         # if there is already one then check its status carefully
+        # Note that the status should never be TO_DO since this
+        # is the only function that creates the tracker and only
+        # does so in state STARTING
         try:
             idht_obj = IDReadingHueyTaskTracker.objects.exclude(obsolete=True).get()
+            # if its status is STARTING, QUEUD, RUNNING, then do not create a
+            # new task - return a "Hey it is already running error."
+            if idht_obj.status in [
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ]:
+                raise MultipleObjectsReturned(
+                    "Can only have 1 running ID reading process at a time."
+                )
+            # if the task is complete or error then set it as obsolete
+            if idht_obj.status in [HueyTaskTracker.COMPLETE, HueyTaskTracker.ERROR]:
+                with transaction.atomic(durable=True):
+                    idht_obj.set_as_obsolete()
         except ObjectDoesNotExist:
-            idht_obj = IDReadingHueyTaskTracker.objects.create()
-        # if its status is STARTING, QUEUD, RUNNING, then do not create a
-        # new task - return a "Hey it is already running error."
-        if idht_obj.status in [
-            HueyTaskTracker.STARTING,
-            HueyTaskTracker.QUEUED,
-            HueyTaskTracker.RUNNING,
-        ]:
-            raise MultipleObjectsReturned(
-                "Can only have 1 running ID reading process at a time."
-            )
-        # if the task is complete or error then set it as obsolete and create a new one.
-        if idht_obj.status in [HueyTaskTracker.COMPLETE, HueyTaskTracker.ERROR]:
-            with transaction.atomic(durable=True):
-                idht_obj.set_as_obsolete()
-                idht_obj = IDReadingHueyTaskTracker.objects.create()
-
-        # this point we should have an IDHT which has status TODO
-        # transition the tracker to 'starting'
-        assert idht_obj.status == HueyTaskTracker.TO_DO
-        tracker_pk = idht_obj.pk
-
-        # >>>> TODO <<<<<
-        # replace this by a safer class method version of this
-        with transaction.atomic():
-            idht_obj.status = HueyTaskTracker.STARTING
-            idht_obj.save()
-
-        # set a message to the user
-        IDReadingHueyTaskTracker.set_message_to_user(
-            tracker_pk, "ID reading task queued."
+            # there is no existing non-obsolete tracker, so pass
+            # we'll create one in a moment.
+            pass
+        # now we create a new tracker.
+        new_idht = IDReadingHueyTaskTracker.objects.create(
+            status=HueyTaskTracker.STARTING, message="ID reading task queued."
         )
+        tracker_pk = new_idht.pk
         # now build the actual huey task
         res = huey_id_reading_task(
             user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
