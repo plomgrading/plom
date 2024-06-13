@@ -127,9 +127,8 @@ class ScannerHomeView(ScannerRequiredView):
             # we can get the errors from the form and pass them into the context
             # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
             # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
-            errors = sum(form.errors.values(), [])
-            print(errors)
-            context.update({"upload_errors": errors})
+            error_list: list[str] = sum(form.errors.values(), [])
+            context.update({"upload_errors": error_list})
             return render(request, "Scan/home.html", context)
 
 
