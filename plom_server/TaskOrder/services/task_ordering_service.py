@@ -10,6 +10,7 @@ from Mark.models import MarkingTask
 from Mark.services import marking_priority
 from Papers.services import SpecificationService
 
+
 class TaskOrderService:
     """Class for handling task ordering."""
 
@@ -65,7 +66,6 @@ class TaskOrderService:
             A dictionary mapping paper number to the list of priorities
             for that paper sorted by question index.
         """
-
         task_priorities, unfinished_paper = self._get_task_priorities()
         total_questions = SpecificationService.get_n_questions()
 
