@@ -15,6 +15,7 @@ from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
+from django.contrib import messages
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
@@ -360,4 +361,5 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         service.get_rubric_from_file(f, suffix)
+        messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
