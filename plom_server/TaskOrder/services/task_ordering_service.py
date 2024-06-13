@@ -9,8 +9,6 @@ from __future__ import annotations
 from Mark.models import MarkingTask
 from Mark.services import marking_priority
 from Papers.services import SpecificationService
-from typing import Tuple, Dict, List
-
 
 class TaskOrderService:
     """Class for handling task ordering."""
