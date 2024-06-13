@@ -1,18 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QRectF, QObject
-from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
-from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtCore import QRectF
+from PyQt6.QtCore import QAbstractAnimation
 from PyQt6.QtGui import QBrush, QPen, QUndoCommand
-from PyQt6.QtWidgets import QGraphicsRectItem
 
-from plom.client.tools import log
 from plom.client.tools import (
     AnimationPenColour,
     AnimationPenThickness,
     AnimationFillColour,
 )
+from .animations import TmpAnimItem
 from .shift_page import Duration
 
 
@@ -51,12 +49,9 @@ class CommandRemovePage(QUndoCommand):
         self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what="restore"))
 
 
-# see comments about this class in `shift_page.py`
-class TmpAnimDisappearingRectItem(QGraphicsRectItem):
+class TmpAnimDisappearingRectItem(TmpAnimItem):
     def __init__(self, scene, r: QRectF, *, what: str = "disappear_left") -> None:
-        super().__init__()
-        self._scene = scene
-        self.saveable = False
+        super().__init__(scene)
         assert what in ("disappear_left", "disappear_right", "restore")
         self.what = what
         if what == "disappear_left":
@@ -66,11 +61,6 @@ class TmpAnimDisappearingRectItem(QGraphicsRectItem):
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         self.setBrush(QBrush(AnimationFillColour))
 
-        # Crashes when calling our methods (probably b/c QGraphicsItem
-        # is not QObject).  Instead we use a helper class.
-        self._ctrlr = _AnimatorCtrlr(self)
-        self.anim = QPropertyAnimation(self._ctrlr, b"foo")
-
         self.anim.setDuration(Duration)
         if what == "restore":
             self.anim.setStartValue(1)
@@ -78,16 +68,8 @@ class TmpAnimDisappearingRectItem(QGraphicsRectItem):
         else:
             self.anim.setStartValue(0)
             self.anim.setEndValue(1)
-        # When the animation finishes, it will destroy itself, whence
-        # we'll get a callback to remove ourself from the scene
-        self.anim.destroyed.connect(self.remove_from_scene)
-        self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
-    def remove_from_scene(self) -> None:
-        log.debug(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        # TODO: also, what if the scene removes the item early?
-        self._scene.removeItem(self)
+        self.start()
 
     def interp(self, t: float) -> None:
         """Draw a rectangle part way between r and zooming out to nothing.
@@ -112,19 +94,3 @@ class TmpAnimDisappearingRectItem(QGraphicsRectItem):
         else:
             raise RuntimeError("Tertium non datur")
         self.setScale(1 - t)
-
-
-class _AnimatorCtrlr(QObject):
-    def __init__(self, item: TmpAnimDisappearingRectItem) -> None:
-        super().__init__()
-        self.item = item
-
-    _foo = -1.0  # unused, but the animator expects getter/setter
-
-    @pyqtProperty(float)
-    def foo(self) -> float:
-        return self._foo
-
-    @foo.setter  # type: ignore[no-redef]
-    def foo(self, t: float) -> None:
-        self.item.interp(t)
