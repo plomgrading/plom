@@ -85,7 +85,7 @@ class TaskOrderService:
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
-        task_priorities = self._get_task_priorities()
+        task_priorities = self._get_task_priorities()[0]
         return [
             {
                 "Paper Number": paper_number,
