@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 """This is the legacy Plom Server."""
 
@@ -19,7 +19,7 @@ from .misc import build_server_directories
 from .misc import create_server_config
 from .misc import check_server_directories, check_server_fully_configured
 from .cert_utils import build_self_signed_SSL_keys
-from .manageUserFiles import build_canned_users
+from plom.manage_user_files import build_canned_users
 
 # from plom.server.theServer import Server, launch
 from plom.server.theServer import launch
