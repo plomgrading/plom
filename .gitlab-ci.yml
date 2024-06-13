@@ -481,7 +481,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --solutions
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick --solutions
     - popd
 
 
@@ -737,7 +737,7 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  image: fedora:40
+  image: fedora:41
   when: manual
   allow_failure: true
   before_script:
@@ -822,7 +822,7 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:40
+  image: fedora:41
   when: manual
   allow_failure: true
   before_script:
@@ -959,7 +959,7 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1079,7 +1079,7 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
