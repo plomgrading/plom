@@ -304,7 +304,7 @@ class UnderlyingImages(QGraphicsItemGroup):
 
         Args:
             image_data: each dict has keys 'filename', 'orientation',
-                and 'visibble' (and possibly others).  Only images with
+                and 'visible' (and possibly others).  Only images with
                 'visible' as True will be used.
                 The list order determines the order: subject to change!
         """
