@@ -90,6 +90,7 @@ class SourceReadOnlyView(ManagerRequiredView):
                 "number_of_pages": SpecificationService.get_n_pages(),
                 "uploaded_sources": SourceService.get_list_of_sources(),
                 "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
+                "page_list": [p + 1 for p in range(SpecificationService.get_n_pages())],
             }
         )
         return context
@@ -97,3 +98,8 @@ class SourceReadOnlyView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         return render(request, "Preparation/source_view.html", context)
+
+
+class ReferenceImageView(ManagerRequiredView):
+    def get(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
+        return FileResponse(SourceService._get_reference_image_file(version, page))

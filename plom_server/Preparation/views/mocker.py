@@ -2,12 +2,13 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
+from io import BytesIO
 from pathlib import Path
-import shutil
 
 from django.http import HttpRequest, HttpResponse, FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files import File
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -23,11 +24,8 @@ class MockExamView(ManagerRequiredView):
         source_path = Path(SourceService._get_source_file(version).path)
 
         n_pages = SpecificationService.get_n_pages()
-        pdf_path = mocker.mock_exam(
+        mock_exam_pdf_bytes = mocker.mock_exam(
             version, source_path, n_pages, SpecificationService.get_short_name_slug()
         )
-        pdf_doc = SimpleUploadedFile(
-            pdf_path.name, pdf_path.open("rb").read(), content_type="application/pdf"
-        )
-        shutil.rmtree(pdf_path.parent)
-        return FileResponse(pdf_doc)
+        mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
+        return FileResponse(mock_exam_file, content_type="application/pdf")

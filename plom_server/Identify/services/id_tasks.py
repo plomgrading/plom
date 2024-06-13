@@ -300,7 +300,9 @@ class IdentifyTaskService:
             ) from e
 
         try:
-            task = PaperIDTask.objects.get(paper=paper_obj)
+            task = PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE).get(
+                paper=paper_obj
+            )
             if increasing_cert:
                 task.iding_priority = -priority
             else:

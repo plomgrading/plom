@@ -4,10 +4,10 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 
-from Base.models import BaseTask, BaseAction
+from Base.models import BaseTask, BaseAction, HueyTaskTracker
 from Papers.models import Paper
 
 
@@ -68,3 +68,16 @@ class IDPrediction(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     predictor = models.CharField(null=False, max_length=255)
     certainty = models.FloatField(null=False, default=0.0)
+
+
+class IDReadingHueyTaskTracker(HueyTaskTracker):
+    """Support running the ID-box extraction and ID prediction in the background.
+
+    Note that this inherits fields from the base class table. Note that this has no additional fields.
+    """
+
+    @classmethod
+    def set_message_to_user(cls, pk, message: str):
+        """Set the user-readible message string."""
+        with transaction.atomic(durable=True):
+            cls.objects.select_for_update().filter(pk=pk).update(message=message)
