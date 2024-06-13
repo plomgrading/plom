@@ -101,7 +101,11 @@ def load_spec_from_toml(
 @transaction.atomic
 def is_there_a_spec() -> bool:
     """Has a test-specification been uploaded to the database."""
-    return Specification.objects.count() == 1
+    try:
+        return Specification.objects.count() == 1
+    except Exception as e:
+        log.error(f"Error checking for test spec: {e}")
+        return False
 
 
 @transaction.atomic
