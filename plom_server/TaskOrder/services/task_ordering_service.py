@@ -72,9 +72,7 @@ class TaskOrderService:
 
         return task_priorities, marking_task_list
 
-    def get_paper_number_to_priority_list(self) -> (
-             dict[int, list[tuple[int, int]]]
-    ):
+    def get_paper_number_to_priority_list(self) -> dict[int, list[tuple[int, int]]]:
         """Get the mapping from a paper number to the list of (priority, status).
 
         If a marking task is missing, it will be flagged with (-1, -1).
