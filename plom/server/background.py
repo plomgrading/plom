@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Forest Kobayashi
 
@@ -30,7 +30,8 @@ from plom.server import launch
 from plom.server import specdir as specdirname
 from plom.server import confdir
 from plom.server.prepare import initialise_server
-from plom.server.manageUserFiles import get_template_user_dict, save_initial_user_list
+from plom.manage_user_files import get_template_user_dict
+from plom.server.manageUserFilesCore import save_initial_user_list
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
 
