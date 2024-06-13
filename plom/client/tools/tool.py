@@ -1,14 +1,31 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021, 2023 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QTimer, QPropertyAnimation, pyqtProperty
+from PyQt6.QtCore import QTimer, QPropertyAnimation
+from PyQt6.QtCore import pyqtProperty
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
 
 class CommandTool(QUndoCommand):
-    def __init__(self, scene):
+    """Handles the do/undo of edits to the PageScene.
+
+    Subclasses will implement the ``obj`` which is the actual object to be
+    drawn, and the ``do`` (the "DeleteObject") which is used for transcient
+    animations.  Commands are free to subclass ``QUndoCommand`` themselves
+    rather than subclassing this ``CommandTool``.
+
+    The :py:method:`redo` method handles both the initial drawing and any
+    subsequent draw operations to due to undo/redo cycles.
+
+    Thus far, the ``redo`` method should not create subcommand objects:
+    in my experience, hard to debug and segfault behaviour comes from
+    trying.  Instead, macros are instead created in PageScene.  This
+    could be revisited in the future.
+    """
+
+    def __init__(self, scene) -> None:
         super().__init__()
         self.scene = scene
         # obj and do need to be done by each tool
@@ -34,7 +51,7 @@ class CommandTool(QUndoCommand):
 
 
 class DeleteObject(QGraphicsObject):
-    def __init__(self, shape, fill=False):
+    def __init__(self, shape, fill: bool = False) -> None:
         super().__init__()
         self.item = DeleteItem(shape, fill=fill)
         self.anim_thick = QPropertyAnimation(self, b"thickness")
@@ -57,16 +74,16 @@ class DeleteObject(QGraphicsObject):
         self.anim_thick.start()
 
     @pyqtProperty(float)
-    def thickness(self):
+    def thickness(self) -> float:
         return self.item.thickness
 
     @thickness.setter
-    def thickness(self, value):
+    def thickness(self, value: float) -> None:
         self.item.restyle(value)
 
 
 class DeleteItem(QGraphicsPathItem):
-    def __init__(self, shape, fill=False):
+    def __init__(self, shape, fill: bool = False) -> None:
         super().__init__()
         self.saveable = False
         self.initialShape = shape

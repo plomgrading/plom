@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2019 Andrew Rechnitzer
 # Copyright (C) 2020 Victoria Schuster
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022, 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 import logging
@@ -12,6 +12,8 @@ from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
 from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
 from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop
+from plom.client.tools.rotate_page import CommandRotatePage
+from plom.client.tools.shift_page import CommandShiftPage
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (

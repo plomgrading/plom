@@ -79,6 +79,8 @@ from .tools import (
     CommandHighlight,
     CommandPenArrow,
     CommandCrop,
+    CommandRotatePage,
+    CommandShiftPage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -586,34 +588,16 @@ class PageScene(QGraphicsScene):
             return page_delete
 
         def page_shift_func_factory(n, relative):
-            def page_shift():
-                d = self.src_img_data.pop(n)
-                self.src_img_data.insert(n + relative, d)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+            def _page_shift():
+                self.shift_page_image(n, relative)
 
-            return page_shift
+            return _page_shift
 
         def page_rotate_func_factory(n, degrees):
-            def page_rotate():
-                # get old page width and location, select rightward objects to shift
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                loc = br.right()
-                w = br.width()
-                log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
-                stuff = self.find_items_right_of(loc)
-                # do the rotation in metadata and rebuild
-                self.src_img_data[n]["orientation"] += degrees
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
-                # shift previously-selected rightward annotations by diff in widths
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"After rotation: old width {w} now {br.width()}")
-                self.move_some_items(stuff, br.width() - w, 0)
+            def _page_rotate():
+                self.rotate_page_image(n, degrees)
 
-            return page_rotate
+            return _page_rotate
 
         self.remove_page_hack_buttons()
         for n in range(len(self.underImage.images)):
@@ -639,11 +623,11 @@ class PageScene(QGraphicsScene):
                 _.setEnabled(False)
             m.addAction(
                 "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
-                page_rotate_func_factory(n, -90),
+                page_rotate_func_factory(n, 90),
             )
             m.addAction(
                 "\N{Clockwise Open Circle Arrow} Rotate CW",
-                page_rotate_func_factory(n, 90),
+                page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
@@ -1821,29 +1805,35 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I, dx, dy):
+    def move_some_items(self, I: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
-            I (list): which objects to move.  TODO: not quite sure yet
+            I: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
-            dx (float): translation delta in the horizontal direction.
-            dy (float): translation delta in the vertical direction.
+                TODO: typed as ``QGraphicsItem`` but maybe Groups too?
+            dx: translation delta in the horizontal direction.
+            dy: translation delta in the vertical direction.
 
-        Wraps the movement of all objects in a compound undo item.
+        Wraps the movement of all objects in a compound undo item.  If
+        you want this functionality without the macro (b/c you're doing
+        your own, see the low-level :py:method:`_move_some_items`.
         """
+        self.undoStack.beginMacro("Move several items at once")
+        self._move_some_items(I, dx, dy)
+        self.undoStack.endMacro()
+
+    def _move_some_items(self, I: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
         log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        self.undoStack.beginMacro("Speak at once while taking turns")
         for item in I:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
             command = CommandMoveItem(item, QPointF(dx, dy))
             self.undoStack.push(command)
-        self.undoStack.endMacro()
 
     def pickleSceneItems(self):
         """Pickles the saveable annotation items in the scene.
@@ -1903,6 +1893,81 @@ class PageScene(QGraphicsScene):
             X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
+
+    def shift_page_image(self, n: int, relative: int) -> None:
+        """Shift a page left or right on the undostack.
+
+        Currently does not attempt to adjust the positions of annotation items.
+
+        Args:
+            n: which page, indexed from 0.
+            relative: +1 or -1, but no error checking is done and its
+                not defined what happens for other values.
+
+        Returns:
+            None
+        """
+        if relative > 0:
+            # not obvious we need a macro, but maybe later we move annotations with it
+            macroname = f"Page {n} shift right {relative}"
+        else:
+            macroname = f"Page {n} shift left {abs(relative)}"
+        self.undoStack.beginMacro(macroname)
+
+        # like calling _shift_page_image_only but covered in undo sauce
+        cmd = CommandShiftPage(self, n, n + relative)
+        self.undoStack.push(cmd)
+
+        # TODO: adjust annotations, then end the macro
+        self.undoStack.endMacro()
+
+    def _shift_page_image_only(self, n: int, m: int) -> None:
+        d = self.src_img_data.pop(n)
+        self.src_img_data.insert(m, d)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def rotate_page_image(self, n: int, degrees: int) -> None:
+        """Rotate a page on the undostack, shifting objects on other pages appropriately.
+
+        The rotations happen within a single undoable "macro".
+
+        Args:
+            n: which page, indexed from 0.
+            degrees: rotation angle, positive means CCW.
+
+        Returns:
+            None.
+        """
+        self.undoStack.beginMacro(f"Page {n} rotation {degrees} and item move")
+
+        # get old page width and location, select rightward objects to shift
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        loc = br.right()
+        w = br.width()
+        log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _rotate_page_image_only but covered in undo sauce
+        cmd = CommandRotatePage(self, n, degrees)
+        self.undoStack.push(cmd)
+
+        # shift previously-selected rightward annotations by diff in widths
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"After rotation: old width {w} now {br.width()}")
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, br.width() - w, 0)
+
+        self.undoStack.endMacro()
+
+    def _rotate_page_image_only(self, n: int, degrees: int) -> None:
+        """Low-level rotate page support: only rotate page, no shifts."""
+        # do the rotation in metadata and rebuild
+        self.src_img_data[n]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
 
     def mousePressBox(self, event):
         """Handle mouse presses when box tool is selected.
