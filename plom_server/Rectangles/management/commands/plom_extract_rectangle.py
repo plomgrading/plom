@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,12 +15,12 @@ from ...services import RectangleExtractor
 class Command(BaseCommand):
     """Command to extract a rectangle from all papers with given page/version.
 
-    python3 manage.py plom_extract_rectangle -v 1 -p 3 -n 12
+    python3 manage.py plom_extract_rectangle ...
     """
 
     help = "Extract the rectangle from the given page/version of each paper."
 
-    def extract_rectangle(self, version: int, page: int, rectangle: Dict[str, float]):
+    def extract_rectangle(self, version: int, page: int, rectangle: dict[str, float]):
         # make a directory into which we extract stuff
         er_dir = Path("./extracted")
         er_dir.mkdir(exist_ok=True)
@@ -45,9 +47,12 @@ class Command(BaseCommand):
                 rectangle["right"],
                 rectangle["bottom"],
             )
+            if rect_region_bytes is None:
+                self.stdout.write(f"Skipping papernum {pn}: rex could not extract")
+                continue
             fname.write_bytes(rect_region_bytes)
 
-        self.stdout.write("Action completed")
+        self.stdout.write(f'Action completed, files written to directory "{er_dir}"')
 
     def add_arguments(self, parser):
         parser.add_argument(

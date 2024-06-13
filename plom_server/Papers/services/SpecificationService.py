@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 import html
 import logging
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
@@ -243,6 +243,28 @@ def get_short_name_slug() -> str:
         ObjectDoesNotExist: no exam specification yet.
     """
     return slugify(get_shortname())
+
+
+@transaction.atomic
+def get_id_page_number() -> int:
+    """Get the page number of the ID page.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.idPage
+
+
+@transaction.atomic
+def get_dnm_pages() -> List[int]:
+    """Get the list of do-no-mark page numbers.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.doNotMarkPages
 
 
 @transaction.atomic

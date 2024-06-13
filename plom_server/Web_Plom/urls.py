@@ -46,4 +46,5 @@ urlpatterns = [
     path("reports/", include("Reports.urls")),
     path("task_order/", include("TaskOrder.urls")),
     path("rectangles/", include("Rectangles.urls")),
+    path("identify/", include("Identify.urls")),
 ]

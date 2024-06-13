@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -12,12 +15,11 @@ from django.http import (
 )
 from django.core.files.base import ContentFile
 from django.shortcuts import render
+
 from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import SourceService
-
 from Base.base_group_views import ManagerRequiredView
-
-from Rectangles.services import get_reference_rectangle, RectangleExtractor
+from .services import get_reference_rectangle, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
@@ -103,7 +105,10 @@ class ExtractedRectangleView(ManagerRequiredView):
         bottom = float(request.GET.get("bottom"))
 
         rect_region_bytes = rex.extract_rect_region(paper, left, top, right, bottom)
-
+        if rect_region_bytes is None:
+            # TODO - correctly handle the None-return case when
+            # rex cannot compute appropriate transforms.
+            raise Http404("Could not extract")
         return FileResponse(ContentFile(rect_region_bytes))
 
 
@@ -124,7 +129,7 @@ class ZipExtractedRectangleView(ManagerRequiredView):
             rex.build_zipfile(tmpzip.name, left, top, right, bottom)
 
             return FileResponse(
-                tmpzip, filename="extracted_rectangles_v{version}_pg{page}.zip"
+                tmpzip, filename=f"extracted_rectangles_v{version}_pg{page}.zip"
             )
         finally:
             Path(tmpzip.name).unlink()
