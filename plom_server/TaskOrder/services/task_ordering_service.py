@@ -77,7 +77,7 @@ class TaskOrderService:
                 for q_idx in range(1, total_questions + 1)
             ]
             paper_to_priority_map[paper_number] = priority_list
-            return paper_to_priority_map
+        return paper_to_priority_map
 
     def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""
@@ -85,7 +85,7 @@ class TaskOrderService:
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
-        task_priorities = self.get_task_priorities()
+        task_priorities = self._get_task_priorities()
         return [
             {
                 "Paper Number": paper_number,
