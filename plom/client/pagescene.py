@@ -435,10 +435,8 @@ class PageScene(QGraphicsScene):
         super().__init__(parent)
         self.src_img_data = deepcopy(src_img_data)
         for x in self.src_img_data:
-            # TODO: elsewhere "included" is taken to mean "the server thinks
-            # we should include it" (viz, green highlight in PageArranger)
-            if "included" in x.keys():
-                x["server_included"] = x["included"]
+            # TODO: revisit moving this "visible" bit outside of PageScene
+            # and dedupe the business of pagedata and src_img_data.
             if "visible" not in x.keys():
                 x["visible"] = True
                 log.warn(f'Hacked in an "visible": {x}')
