@@ -337,7 +337,8 @@ class DownloadRubricView(ManagerRequiredView):
     def get(self, request: HttpRequest):
         service = RubricService()
         question = request.GET.get("question_filter")
-        format_choice = request.GET.get("format_choice")
+        # TODO: Add support for other file types after resolution of Issue #3414
+        # format_choice = request.GET.get("format_choice")
         if question is not None and len(question) != 0:
             question = int(question)
         else:

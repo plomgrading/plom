@@ -20,7 +20,6 @@ import json
 import tomlkit
 import tomllib
 import io
-from tabulate import tabulate
 
 from operator import itemgetter
 
@@ -583,21 +582,17 @@ class RubricService:
         """
 
     def get_rubric_as_file(self, filetype: str, question: int | None) -> io.StringIO:
-        """
-        Get the rubric as a file in the specified format.
+        """Get the rubric data as a file.
 
         Args:
-            filetype (str): The desired file type. Supported types are "json", "toml", and "csv".
-            question (int): The index of the question.
+            filetype (str): The type of file to generate. Supported file types are "json", "toml", and "csv".
+            question (int | None): The question ID to filter the rubric data. If None, all rubrics will be included.
 
         Returns:
-            io.StringIO: A file-like object containing the rubric data in the specified format.
+            io.StringIO: A file-like object containing the rubric data in the specified file format.
 
         Raises:
-            RuntimeError: If no rubrics are available for the specified question index.
-            RuntimeError: If no rubrics are available at all.
-            ValueError: If an unsupported file type is specified.
-
+            ValueError: If the specified file type is not supported.
         """
         rubrics = self.get_rubrics_as_dicts(question=question)
 
@@ -622,15 +617,15 @@ class RubricService:
     def get_rubric_from_file(
         self, file: io.BufferedReader | io.TextIOWrapper, filetype: str
     ):
-        """
-        Get the rubric data from the specified file.
+        """Retrieves rubrics from a file.
 
         Args:
-            file (io.BufferedReader): File data
-
+            file (io.BufferedReader | io.TextIOWrapper): The file object containing the rubrics.
+            filetype (str): The type of the file (json, toml, csv).
+        Returns:
+            list: A list of rubrics retrieved from the file.
         Raises:
-            NotImplementedError: If this function is not implemented yet.
-
+            ValueError: If the file type is not supported.
         """
         if filetype.casefold() not in ("json", "toml", "csv"):
             raise ValueError(f"Unsupported file type: {filetype}")
@@ -650,7 +645,7 @@ class RubricService:
             # TODO: flycheck is whining about this to_json
             rubrics = json.loads(df.to_json(orient="records"))
         else:
-            raise ValueError(f"File not supported")
+            raise ValueError("File not supported")
 
         service = RubricService()
         for rubric in rubrics:

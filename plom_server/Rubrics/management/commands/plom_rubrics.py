@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 import pathlib
 from pathlib import Path
 import sys
@@ -19,7 +18,6 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
