@@ -706,7 +706,7 @@ class PageScene(QGraphicsScene):
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.get_src_img_data())
+        return len(self.get_src_img_data(only_visible=True))
 
     def how_many_underlying_images_high(self) -> int:
         """How many images high is the bottom layer.
