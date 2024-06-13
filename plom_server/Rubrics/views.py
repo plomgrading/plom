@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
-from wsgiref.util import FileWrapper
+from io import TextIOWrapper
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
@@ -22,7 +22,7 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricWipeForm
+from .forms import RubricAdminForm, RubricWipeForm, RubricUploadForm
 from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 
 
@@ -33,6 +33,7 @@ class RubricAdminPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         rubrics = RubricService().get_all_rubrics()
         context.update(
@@ -40,6 +41,7 @@ class RubricAdminPageView(ManagerRequiredView):
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
                 "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -344,3 +346,18 @@ class DownloadRubricView(ManagerRequiredView):
         response = HttpResponse(buf.getvalue(), content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=rubrics.csv"
         return response
+
+
+class UploadRubricView(ManagerRequiredView):
+    def post(self, request: HttpRequest):
+        service = RubricService()
+        suffix = request.FILES["rubric_file"].name.split(".")[-1]
+
+        # TODO: Add support for other file types after resolution of Issue #3414
+        if suffix == "csv":
+            f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
+        else:
+            return redirect("rubrics_admin")
+
+        service.get_rubric_from_file(f, suffix)
+        return redirect("rubrics_admin")

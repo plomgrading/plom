@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
-# Copright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aden Chan
 
 from django import forms
 
@@ -58,3 +58,7 @@ class RubricDownloadForm(forms.Form):
     QUESTION_CHOICES.insert(0, ("", "All Questions"))
 
     question_filter = forms.TypedChoiceField(choices=QUESTION_CHOICES, required=False)
+
+
+class RubricUploadForm(forms.Form):
+    rubric_file = forms.FileField(label="")

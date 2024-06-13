@@ -21,6 +21,7 @@
                 <div class="form-group mr-2">{{ rubric_admin_form }}</div>
                 <button type="submit"
                         class="btn btn-success"
+                        name="init_system_rubrics"
                         {% if rubrics %}disabled{% endif %}>Create system rubrics</button>
             </form>
             <p>
@@ -41,9 +42,18 @@
                     {{ rubric_download_form }}
                 </div>
             </form>
-            <p> Download current rubrics into a file. </p>
-            <a class="btn btn-secondary disabled" href="">Upload rubrics from a file</a>
-            <p>Not implemented yet in the UI.</p>
+            <p>Download current rubrics into a file.</p>
+            <form method="post"
+                  action="{% url 'rubric_upload' %}"
+                  class="form-inline"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group mr-2">
+                    <button type="submit" class="btn btn-success mt-1" name="rubric_upload">Upload rubrics</button>
+                    {{ rubric_upload_form }}
+                </div>
+            </form>
+            <p>Upload a rubric.</p>
             <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
             <p>(A destructive action; you'll need to confirm it on the next screen)</p>
         </div>

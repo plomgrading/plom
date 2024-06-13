@@ -23,4 +23,5 @@ urlpatterns = [
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
     path("admin/download/", views.DownloadRubricView.as_view(), name="rubric_download"),
+    path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
 ]

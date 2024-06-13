@@ -18,6 +18,7 @@ import logging
 from typing import Any
 import json
 import tomlkit
+import tomllib
 import io
 from tabulate import tabulate
 
@@ -617,3 +618,45 @@ class RubricService:
             df = pandas.json_normalize(rubrics)
             df.to_csv(f, index=False, sep=",", encoding="utf-8")
         return f
+
+    def get_rubric_from_file(
+        self, file: io.BufferedReader | io.TextIOWrapper, filetype: str
+    ):
+        """
+        Get the rubric data from the specified file.
+
+        Args:
+            file (io.BufferedReader): File data
+
+        Raises:
+            NotImplementedError: If this function is not implemented yet.
+
+        """
+        if filetype.casefold() not in ("json", "toml", "csv"):
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        if filetype == "json":
+            rubrics = json.load(file)
+        elif filetype == "toml":
+            rubrics = tomllib.load(file)["rubric"]
+        elif filetype == "csv":
+            try:
+                import pandas
+            except ImportError as e:
+                raise e
+
+            df = pandas.read_csv(file)
+            df.fillna("", inplace=True)
+            # TODO: flycheck is whining about this to_json
+            rubrics = json.loads(df.to_json(orient="records"))
+        else:
+            raise ValueError(f"File not supported")
+
+        service = RubricService()
+        for rubric in rubrics:
+            # rubric.pop("id")
+            try:
+                service.create_rubric(rubric)
+            except Exception as e:
+                raise e
+        return rubrics

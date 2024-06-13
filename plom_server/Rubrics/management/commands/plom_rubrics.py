@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -176,40 +177,18 @@ class Command(BaseCommand):
         autogenerted.  See `upload_rubrics` in `push_pull_rubrics.py`.
         """
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
-            filename = filename.with_suffix(filename.suffix + ".toml")
+            raise CommandError(f"Unsupported file type: {filename}")
         suffix = filename.suffix
 
-        if suffix == ".json":
-            with open(filename, "r") as f:
-                rubrics = json.load(f)
+        if suffix in (".json", ".csv"):
+            f = open(filename, "r")
         elif suffix == ".toml":
-            with open(filename, "rb") as f:
-                rubrics = tomllib.load(f)["rubric"]
-        elif suffix == ".csv":
-            with open(filename, "r") as f:
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV reading needs "pandas" library: {e}')
-
-                df = pandas.read_csv(f)
-                df.fillna("", inplace=True)
-                # TODO: flycheck is whining about this to_json
-                rubrics = json.loads(df.to_json(orient="records"))
+            f = open(filename, "rb")
         else:
-            raise CommandError(f'Don\'t know how to import from "{filename}"')
+            raise CommandError(f"Unsupported file type: {filename}")
 
         service = RubricService()
-        for rubric in rubrics:
-            # rubric.pop("id")
-            try:
-                service.create_rubric(rubric)
-            except KeyError as e:
-                raise CommandError(f"{e} field(s) missing from rubrics file.")
-            except ValidationError as e:
-                raise CommandError(e.args[0])
-            except ValueError as e:
-                raise CommandError(e)
+        rubrics = service.get_rubric_from_file(f, suffix[1:])
         return len(rubrics)
 
     def add_arguments(self, parser):
