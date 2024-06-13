@@ -5,6 +5,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -98,20 +99,15 @@
         <div class="col-5">
             <div class="card w-auto my-2">
                 <div class="card-body">
-                    <h5 class="card-title">Upload bundle PDF</h5>
-                    <ul>
-                        <li>The images will be placed in a staging area where QR codes will be read.</li>
-                        <li>Then fix any issues such as extra page information, or illegible QR codes</li>
-                        <li>
-                            When there are no issues the bundle can be <q>pushed</q> and marking can begin.
-                        </li>
-                    </ul>
+                    <h5 class="card-title">Upload PDF bundle to staging area</h5>
                     {% if papers_have_been_printed %}
                         <form enctype="multipart/form-data"
                               method="post"
                               action="{% url 'scan_home' %}">
                             {% csrf_token %}
                             <input type="file" name="pdf" accept="application/pdf" required id="id_pdf">
+                            <br />
+                            <span class="text-muted small">pdf, &le;{{ bundle_size_limit }}MB, &le;{{ bundle_page_limit }} pages.</span>
                             <div class="form-check mt-1">
                                 <input class="form-check-input"
                                        type="checkbox"
