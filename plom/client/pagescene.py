@@ -1912,6 +1912,20 @@ class PageScene(QGraphicsScene):
         self.undoStack.endMacro()
 
     def _idx_from_visible_idx(self, n: int) -> int:
+        """Find the index in the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding 0-based index into the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
         m = -1
         for idx, x in enumerate(self.src_img_data):
             if x["visible"]:
