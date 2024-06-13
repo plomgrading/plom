@@ -2020,7 +2020,6 @@ class PageScene(QGraphicsScene):
         stuff = self.find_items_right_of(loc)
 
         # like calling _set_visible_page_image but covered in undo sauce
-        # self._set_visible_page_image(n_idx, False)
         cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
         self.undoStack.push(cmd)
 
