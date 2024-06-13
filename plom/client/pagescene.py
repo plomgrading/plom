@@ -47,6 +47,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QToolButton,
     QMenu,
+    QGraphicsColorizeEffect,
 )
 
 from plom import AnnFontSizePts, ScenePixelHeight
@@ -86,6 +87,7 @@ from .elastics import (
     which_centre_to_centre,
 )
 from plom.client.rubrics import compute_score
+from plom.client.useful_classes import SimpleQuestion
 
 
 log = logging.getLogger("pagescene")
@@ -547,6 +549,26 @@ class PageScene(QGraphicsScene):
         def page_delete_func_factory(n):
             def page_delete():
                 img = self.underImage.images[n]
+                e = QGraphicsColorizeEffect()
+                e.setColor(QColor("darkred"))
+                img.setGraphicsEffect(e)
+                d = SimpleQuestion(
+                    self.parent(),  # self.addWidget(d) instead?
+                    """Remove this page?  Currently, this <em>does not work</em>
+                    with the undo stack&mdash;Issue
+                    <a href="https://gitlab.com/plom/plom/-/issues/2510">#2510</a>.\n
+                    <ul>\n
+                      <li>You can always find the page again using
+                        <em>Rearrange Pages</em>.</li>\n
+                    <li>Existing annotations will shift left or right.</li>\n
+                    </ul>""",
+                    "Are you sure you want to remove this page?",
+                )
+                # h = self.addWidget(d)
+                # Not sure opening a dialog from the scene is wise
+                if d.exec() == QMessageBox.StandardButton.No:
+                    img.setGraphicsEffect(None)
+                    return
                 self.src_img_data.pop(n)
                 br = img.mapRectToScene(img.boundingRect())
                 log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
