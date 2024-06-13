@@ -285,6 +285,14 @@ class ScanService:
         return StagingBundle.objects.filter(pdf_hash=pdf_hash).exists()
 
     @transaction.atomic
+    def get_bundle_name_from_hash(self, pdf_hash: str) -> str | None:
+        """Get a bundle-name from a hash or return none."""
+        try:
+            return StagingBundle.objects.get(pdf_hash=pdf_hash).slug
+        except ObjectDoesNotExist:
+            return None
+
+    @transaction.atomic
     def get_bundle_from_timestamp(self, timestamp: float) -> StagingBundle:
         return StagingBundle.objects.get(
             timestamp=timestamp,

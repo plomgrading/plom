@@ -120,6 +120,14 @@
                             </div>
                             <input type="submit" class="btn btn-secondary" value="Upload">
                         </form>
+                        {% if upload_errors %}
+                            <div class="alert alert-warning my-2">
+                                Upload problems:
+                                <ul>
+                                    {% for v in upload_errors %}<li>{{ v }}</li>{% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
                     {% else %}
                         <a disabled>No bundles to upload - papers have not yet been printed.</a>
                     {% endif %}

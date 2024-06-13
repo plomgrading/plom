@@ -129,8 +129,11 @@ class ScannerHomeView(ScannerRequiredView):
 
             return HttpResponseRedirect(reverse("scan_home"))
         else:
-            # TODO - fix this error handling
-            # context.update({"form": form})
+            # we can get the errors from the form and pass them into the context
+            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
+            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
+            error_list: list[str] = sum(form.errors.values(), [])
+            context.update({"upload_errors": error_list})
             return render(request, "Scan/home.html", context)
 
 
