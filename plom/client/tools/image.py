@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 from typing import Optional
 
 from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt6.QtGui import QBrush, QColor, QImage, QPixmap, QPen
+from PyQt6.QtGui import QColor, QImage, QPixmap, QPen
 from PyQt6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPixmapItem,
@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QFormLayout,
 )
 
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
@@ -91,8 +92,8 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         """Paints the scene by adding a red border around the image if applicable."""
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawRoundedRect(option.rect, 10, 10)
 
         super().paint(painter, option, widget)

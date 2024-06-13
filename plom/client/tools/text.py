@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPen, QUndoCommand
+from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import AnimationDuration as Duration
 from plom.client.tools import CommandTool, DeleteObject
 from plom.client.tools import log
 
@@ -105,7 +107,7 @@ class CommandText(CommandTool):
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
         self.scene.removeItem(self.blurb)
@@ -115,7 +117,7 @@ class CommandText(CommandTool):
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
 
 class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
@@ -296,8 +298,8 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             if self.group() is None:  # make sure not part of a GDT
-                painter.setPen(QPen(QColor(255, 165, 0), 8))
-                painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+                painter.setPen(OutOfBoundsPen)
+                painter.setBrush(OutOfBoundsFill)
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
                 painter.drawRoundedRect(option.rect, 10, 10)

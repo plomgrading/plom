@@ -7,6 +7,8 @@ from PyQt6.QtCore import pyqtProperty
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
+from plom.client.tools import AnimationDuration as Duration
+
 
 class CommandTool(QUndoCommand):
     """Handles the do/undo of edits to the PageScene.
@@ -37,14 +39,14 @@ class CommandTool(QUndoCommand):
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
         self.scene.removeItem(self.obj)
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
 
 
 # For animation of undo / redo / delete
@@ -55,7 +57,7 @@ class DeleteObject(QGraphicsObject):
         super().__init__()
         self.item = DeleteItem(shape, fill=fill)
         self.anim_thick = QPropertyAnimation(self, b"thickness")
-        self.anim_thick.setDuration(200)
+        self.anim_thick.setDuration(Duration)
 
     def flash_undo(self):
         """Undo animation: thin -> thick -> none."""

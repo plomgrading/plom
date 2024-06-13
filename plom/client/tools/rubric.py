@@ -7,9 +7,11 @@
 from copy import deepcopy
 
 from PyQt6.QtCore import QTimer, Qt, QPointF
-from PyQt6.QtGui import QBrush, QColor, QFont, QPen
+from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
+from plom.client.tools import AnimationDuration as Duration
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
@@ -72,7 +74,7 @@ class CommandRubric(CommandTool):
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
         #
         self.scene.refreshStateAndScore()
 
@@ -81,7 +83,7 @@ class CommandRubric(CommandTool):
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
         #
         self.scene.refreshStateAndScore()
 
@@ -216,8 +218,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
-            painter.setPen(QPen(QColor(255, 165, 0), 4))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)

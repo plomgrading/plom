@@ -4,11 +4,15 @@
 from PyQt6.QtCore import QRectF, QObject
 from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
+from PyQt6.QtGui import QBrush, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsRectItem
 
 from plom.client.tools import log
-
+from plom.client.tools import (
+    AnimationPenColour,
+    AnimationPenThickness,
+    AnimationFillColour,
+)
 from .shift_page import Duration
 
 
@@ -50,8 +54,8 @@ class TmpAnimRotatingRectItem(QGraphicsRectItem):
         self._scene = scene
         self.saveable = False
         self.setRect(r1)
-        self.setPen(QPen(QColor(8, 232, 222, 128), 10))
-        self.setBrush(QBrush(QColor(8, 232, 222, 16)))
+        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
+        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
         self.degrees = degrees
