@@ -547,7 +547,9 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
-        if True or self.parent().is_experimental():
+        # TODO: for debugging:
+        # if True or self.parent().is_experimental():
+        if self.parent().is_experimental():
             self.build_page_hack_buttons()
 
         # Build scene rectangle to fit the image, and place image into it.
