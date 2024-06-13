@@ -15,11 +15,17 @@ from __future__ import annotations
 
 import html
 import logging
+import sys
 from typing import Any
 import json
 import tomlkit
-import tomllib
 import io
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 
 from operator import itemgetter
 
