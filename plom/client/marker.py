@@ -1836,7 +1836,7 @@ class MarkerClient(QWidget):
         return self.msgr.get_one_rubric(key)
 
     def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
-        """Gete list of paper numbers using the given rubric.
+        """Get list of paper numbers using the given rubric.
 
         Args:
             key: the identifier of the rubric.
@@ -2494,7 +2494,7 @@ class MarkerClient(QWidget):
         """Shows a particular paper number and question.
 
         Key Args:
-            tn: the paper_number to be viewed.
+            tn: the test number of the paper to be viewed.
             q: the identifier of the question to be viewed.
         """
         if (tn is None) and (q is None):

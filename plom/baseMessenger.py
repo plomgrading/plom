@@ -1012,6 +1012,8 @@ class BaseMessenger:
         Returns:
             the list of paper numbers using the rubric.
         """
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
         with self.SRmutex:
             url = f"/MK/rubric_usage/{key}"
             try:
