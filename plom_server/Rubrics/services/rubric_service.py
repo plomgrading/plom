@@ -622,8 +622,10 @@ class RubricService:
         Args:
             file (io.BufferedReader | io.TextIOWrapper): The file object containing the rubrics.
             filetype (str): The type of the file (json, toml, csv).
+
         Returns:
             list: A list of rubrics retrieved from the file.
+
         Raises:
             ValueError: If the file type is not supported.
         """
