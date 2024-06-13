@@ -51,18 +51,16 @@
     <div>
         <h4>Current Task Order</h4>
         <p>Tooltip: Click on a header to sort by that column.</p>
-        <table style="width: auto" class="table table-bordered sortable">
+        <table class="table table-striped sortable">
             <thead>
                 <th scope="col" class="border border-secondary">Paper ID</th>
-                <th scope="col" class="border border-secondary">Question</th>
-                <th scope="col" class="border border-secondary">Priority Value</th>
+                {% for q in q_labels %}<th scope="col" class="border border-secondary">{{ q }}</th>{% endfor %}
             </thead>
             <tbody>
-                {% for pq, priority in pq_priority_dict.items %}
+                {% for p, priority_list in paper_to_priority_dict.items %}
                     <tr>
-                        <td class="border border-secondary">{{ pq.0 }}</td>
-                        <td class="border border-secondary">{{ pq.1 }}</td>
-                        <td class="border border-secondary">{{ priority|floatformat:1 }}</td>
+                        <td class="border border-secondary">{{ p }}</td>
+                        {% for priority in priority_list %}<td class="border border-secondary">{{ priority|floatformat:1 }}</td>{% endfor %}
                     </tr>
                 {% endfor %}
             </tbody>

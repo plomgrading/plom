@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from Mark.models import MarkingTask
 from Mark.services import marking_priority
+from Papers.services import SpecificationService
+from typing import Tuple, Dict, List
 
 
 class TaskOrderService:
@@ -27,12 +29,13 @@ class TaskOrderService:
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def get_task_priorities(self) -> dict[tuple[int, int], int]:
-        """Get the task priorities.
+    def _get_task_priorities(self):
+        """Get the task priorities dict and list of not fully marked papers.
 
         Returns:
             A dictionary of task priorities, keyed by
-            (paper_number, question_index) pairs.
+            (paper_number, question_index) pairs and a list of paper_number
+            for papers that have not been fully marked.
         """
         _marking_tasks = MarkingTask.objects.filter(
             status=MarkingTask.TO_DO
@@ -42,12 +45,40 @@ class TaskOrderService:
         )
 
         task_priorities = {}
+        unfinished_paper = []
+
         for mt in marking_tasks:
             task_priorities[(mt.paper.paper_number, mt.question_index)] = (
                 mt.marking_priority
             )
+            unfinished_paper.append(mt.paper.paper_number)
 
-        return task_priorities
+        return task_priorities, unfinished_paper
+
+    def get_paper_number_to_priority_list(self) -> dict[int, list[int]]:
+        """Get the mapping from a paper number to the list of priorities.
+
+        The paper that has been fully marked will not be recorded here.
+        Additionally, the questions that have been marked will have priority
+        of 0.
+
+        Returns:
+            A dictionary mapping paper number to the list of priorities
+            for that paper sorted by question index.
+        """
+
+        task_priorities, unfinished_paper = self._get_task_priorities()
+        total_questions = SpecificationService.get_n_questions()
+
+        paper_to_priority_map = dict()
+
+        for paper_number in unfinished_paper:
+            priority_list = [
+                task_priorities.get((paper_number, q_idx), 0)
+                for q_idx in range(1, total_questions + 1)
+            ]
+            paper_to_priority_map[paper_number] = priority_list
+            return paper_to_priority_map
 
     def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""

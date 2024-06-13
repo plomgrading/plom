@@ -28,13 +28,15 @@ class TaskOrderPageView(ManagerRequiredView):
         order_form.fields["order_tasks_by"].initial = request.session.get(
             "order_tasks_by",
         )
-        pq_priority_dict = tos.get_task_priorities()
+        paper_to_priority_dict = tos.get_paper_number_to_priority_list()
+        q_labels = SpecificationService.get_question_labels()
 
         context.update(
             {
                 "order_form": order_form,
                 "upload_form": upload_form,
-                "pq_priority_dict": pq_priority_dict,
+                "q_labels": q_labels,
+                "paper_to_priority_dict": paper_to_priority_dict,
             }
         )
 
