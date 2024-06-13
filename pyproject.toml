@@ -123,6 +123,9 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 # [tool.setuptools]
 # zip-safe = true
 
+# ugh, maintaining this list is horrible, need get get "find" working
+# with the flat layout.  But we have now two packages (plom and plom_server)
+# not sure how to make that work.
 [tool.setuptools]
 packages = [
     "plom",
@@ -157,12 +160,14 @@ packages = [
     "plom_server.Mark",
     "plom_server.MarkingInformation",
     "plom_server.Papers",
+    "plom_server.Papers.models",
     "plom_server.Preparation",
     "plom_server.Profile",
     "plom_server.Progress",
     "plom_server.Reports",
     "plom_server.Rubrics",
     "plom_server.Scan",
+    "plom_server.Scan.models",
     "plom_server.SpecCreator",
     "plom_server.StudentMarks",
     "plom_server.Tags",
