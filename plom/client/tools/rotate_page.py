@@ -2,14 +2,9 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtGui import QBrush, QPen, QUndoCommand
+from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import (
-    AnimationPenColour,
-    AnimationPenThickness,
-    AnimationFillColour,
-)
-from .animations import TmpAnimItem
+from .animations import AnimatingTempRectItem
 from .shift_page import Duration
 
 
@@ -44,13 +39,11 @@ class CommandRotatePage(QUndoCommand):
         self.scene.addItem(TmpAnimRotatingRectItem(self.scene, -self.degrees, r1, r2))
 
 
-class TmpAnimRotatingRectItem(TmpAnimItem):
+class TmpAnimRotatingRectItem(AnimatingTempRectItem):
     def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
         self.anim.setDuration(Duration)
         self.setRect(r1)
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
         self.degrees = degrees

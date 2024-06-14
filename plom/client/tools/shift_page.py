@@ -2,15 +2,9 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtGui import QBrush, QPen, QUndoCommand
+from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import (
-    AnimationPenColour,
-    AnimationPenThickness,
-    AnimationFillColour,
-)
-from plom.client.tools import AnimationDuration
-from .animations import TmpAnimItem
+from .animations import AnimatingTempRectItem, AnimationDuration
 
 
 # this is a large-scale animation: slow it down a bit
@@ -48,12 +42,11 @@ class CommandShiftPage(QUndoCommand):
         self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
 
-class TmpAnimRectItem(TmpAnimItem):
+class TmpAnimRectItem(AnimatingTempRectItem):
     def __init__(self, scene, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
+        # TODO: does it matter if we don't set the rect?
         self.setRect(r1)
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
         self.anim.setDuration(Duration)

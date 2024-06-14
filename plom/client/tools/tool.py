@@ -7,7 +7,7 @@ from PyQt6.QtCore import pyqtProperty
 from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
-from plom.client.tools import AnimationDuration as Duration
+from .animations import AnimationDuration as Duration
 
 
 class CommandTool(QUndoCommand):

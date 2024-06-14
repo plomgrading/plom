@@ -4,10 +4,19 @@
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtGui import QBrush, QColor, QPen
 from PyQt6.QtWidgets import QGraphicsRectItem
 
 from plom.client.tools import log
-from plom.client.tools import AnimationDuration
+
+
+# rough length of animations take in milliseconds: some might be shorter,
+# some longer but they will be scaled by this value.
+AnimationDuration: int = 200
+
+AnimationPenColour = QColor(8, 232, 222, 128)
+AnimationPenThickness = 10
+AnimationFillColour = QColor(8, 232, 222, 16)
 
 
 # Note: tried multiple inheritance to make this an Object, like:
@@ -17,8 +26,8 @@ from plom.client.tools import AnimationDuration
 # There is also a QGraphicsItemAnimations but its deprecated.
 # Our workaround is the above `_AnimatorCtrlr` class, which exists
 # just to call back to this one.
-class TmpAnimItem(QGraphicsRectItem):
-    """A base class for new-style animations.
+class AnimatingTempRectItem(QGraphicsRectItem):
+    """A base class for new-style animated rectangles.
 
     At the end of your ``__init__`` function you must start the animation
     by calling `self.start()`.
@@ -34,12 +43,16 @@ class TmpAnimItem(QGraphicsRectItem):
         self._scene = scene
         self.saveable = False
 
+        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
+        self.setBrush(QBrush(AnimationFillColour))
+
         # Crashes when calling our methods (probably b/c QGraphicsItem
-        # is not QObject).  Instead we use a helper class.  "t" is a
+        # is not QObject).  Instead we use a helper class.  "prop" is a
         # property of that class, which the QPropertyAnimation will
-        # set between 0 and 1 as it wishes.
+        # set between 0 and 1 as it wishes.  "prop" will eventually
+        # be passed back to ``interp`` (the "t" arg).
         self._ctrlr = _AnimatorCtrlr(self)
-        self.anim = QPropertyAnimation(self._ctrlr, b"t")
+        self.anim = QPropertyAnimation(self._ctrlr, b"prop")
 
         self.anim.setDuration(AnimationDuration)
         self.anim.setStartValue(0)
@@ -66,16 +79,16 @@ class TmpAnimItem(QGraphicsRectItem):
 
 class _AnimatorCtrlr(QObject):
 
-    _t = -1.0  # unused, but the animator expects getter/setter
+    _prop = -1.0  # unused, but the animator expects getter/setter
 
-    def __init__(self, item: TmpAnimItem) -> None:
+    def __init__(self, item: AnimatingTempRectItem) -> None:
         super().__init__()
         self.item = item
 
     @pyqtProperty(float)
-    def t(self) -> float:
-        return self._t
+    def prop(self) -> float:
+        return self._prop
 
-    @t.setter  # type: ignore[no-redef]
-    def t(self, value: float) -> None:
+    @prop.setter  # type: ignore[no-redef]
+    def prop(self, value: float) -> None:
         self.item.interp(value)

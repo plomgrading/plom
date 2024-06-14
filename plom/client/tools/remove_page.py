@@ -2,15 +2,9 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtCore import QAbstractAnimation
-from PyQt6.QtGui import QBrush, QPen, QUndoCommand
+from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import (
-    AnimationPenColour,
-    AnimationPenThickness,
-    AnimationFillColour,
-)
-from .animations import TmpAnimItem
+from .animations import AnimatingTempRectItem
 from .shift_page import Duration
 
 
@@ -49,7 +43,7 @@ class CommandRemovePage(QUndoCommand):
         self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what="restore"))
 
 
-class TmpAnimDisappearingRectItem(TmpAnimItem):
+class TmpAnimDisappearingRectItem(AnimatingTempRectItem):
     def __init__(self, scene, r: QRectF, *, what: str = "disappear_left") -> None:
         super().__init__(scene)
         assert what in ("disappear_left", "disappear_right", "restore")
@@ -58,8 +52,6 @@ class TmpAnimDisappearingRectItem(TmpAnimItem):
             r.moveLeft(r.left() - r.width())
         self.r = r
         self.setRect(r)
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
 
         self.anim.setDuration(Duration)
         if what == "restore":

@@ -7,9 +7,9 @@
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import AnimationDuration as Duration
 from plom.client.tools.rubric import RubricItem
 from plom.client.tools import DeleteObject
+from .animations import AnimationDuration as Duration
 
 
 class CommandDelete(QUndoCommand):
