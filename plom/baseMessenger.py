@@ -1006,11 +1006,15 @@ class BaseMessenger:
     def MgetOtherRubricUsages(self, key: str) -> list[int]:
         """Retrieve list of paper numbers using the given rubric.
 
+        Note: This only returns papers whose most recent annotation
+        use the rubric.
+
         Args:
-            key: the identifier of the rubric.
+            key: The identifier of the rubric.
 
         Returns:
-            the list of paper numbers using the rubric.
+            the list of paper numbers using the rubric, or an empty
+            list if no papers are using the rubric.
         """
         if self.is_legacy_server():
             raise RuntimeError("This routine does not work on legacy servers")
