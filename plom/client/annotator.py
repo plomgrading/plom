@@ -1869,7 +1869,7 @@ class Annotator(QWidget):
             paper_number: the paper number of the paper to be viewed.
         """
         self.parentMarkerUI.view_other(
-            paper_number=paper_number, question_idx=self.question_num
+            paper_number=paper_number, question_idx=self.question_num, _parent=self
         )
 
     def saveTabStateToServer(self, tab_state):
