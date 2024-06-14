@@ -158,10 +158,15 @@ class StudentMarkService:
         return version, mark
 
     def paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
-        """Return a dictionary representing a paper for the reassembly spreadsheet.
+        """Return a dictionary representing a paper.
 
         Args:
             paper: a reference to a Paper instance.
+
+        Returns:
+            A dictionary whose keys are PaperNumber, StudentID, StudentName,
+            identified, marked, mark and version of each question, Total, and
+            last_update.
         """
         paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
@@ -201,7 +206,6 @@ class StudentMarkService:
             paper_dict.update({"warnings": ",".join(warnings)})
 
         paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
-
         return paper_dict
 
     def get_spreadsheet_data(self) -> dict[str, Any]:
