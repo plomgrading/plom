@@ -1104,7 +1104,7 @@ class MarkerClient(QWidget):
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.view_other)
+        self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
@@ -2490,20 +2490,38 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
+    def choose_and_view_other(self) -> None:
+        """Ask user to choose a paper number and question, then show images."""
+        max_question_idx = self.exam_spec["numberOfQuestions"]
+        qlabels = [
+            get_question_label(self.exam_spec, i + 1)
+            for i in range(0, max_question_idx)
+        ]
+        tgs = SelectPaperQuestion(
+            self,
+            qlabels,
+            max_papernum=self.max_papernum,
+            initial_idx=self.question_idx,
+        )
+        if tgs.exec() != QDialog.DialogCode.Accepted:
+            return
+        paper_number, question_idx, get_annotated = tgs.get_results()
+        self.view_other(paper_number, question_idx, get_annotated=get_annotated)
+
     def view_other(
         self,
+        paper_number: int,
+        question_idx: int,
         *,
-        paper_number: int | None = None,
-        question_idx: int | None = None,
         get_annotated: bool = True,
     ) -> None:
         """Shows a particular paper number and question.
 
-        Keyword Args:
+        Args:
             paper_number: the paper number to be viewed.
             question_idx: which question to be viewed.
-                If both ``paper_number`` and this kwarg are None,
-                we open a dialog asking the user.
+
+        Keyword Args:
             get_annotated: whether to try to get the latest annotated
                 image before falling back on the original scanned images.
                 True by default.
@@ -2511,22 +2529,6 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        if (paper_number is None) and (question_idx is None):
-            max_question_idx = self.exam_spec["numberOfQuestions"]
-            qlabels = [
-                get_question_label(self.exam_spec, i + 1)
-                for i in range(0, max_question_idx)
-            ]
-            tgs = SelectPaperQuestion(
-                self,
-                qlabels,
-                max_papernum=self.max_papernum,
-                initial_idx=self.question_idx,
-            )
-            if tgs.exec() != QDialog.DialogCode.Accepted:
-                return
-            paper_number, question_idx, get_annotated = tgs.get_results()
-
         tn = paper_number
         q = question_idx
 
