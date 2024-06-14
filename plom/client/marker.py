@@ -2515,7 +2515,7 @@ class MarkerClient(QWidget):
         paper_number: int,
         question_idx: int,
         *,
-        _parent: None,
+        _parent,
         get_annotated: bool = True,
     ) -> None:
         """Shows a particular paper number and question.
