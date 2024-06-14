@@ -4,43 +4,41 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QUndoCommand
+from PyQt6.QtGui import QPainterPath
 
+from plom.client.tools import CommandTool
 from plom.client.tools.rubric import RubricItem
-from plom.client.tools import DeleteObject
-from .animations import AnimationDuration as Duration
 
 
-class CommandDelete(QUndoCommand):
+class CommandDelete(CommandTool):
     # Deletes the graphicsitem. Have to be careful when it is
     # a rubric-item - need to refresh score in parent-scene
     # and be careful that is done once the item is actually deleted.
     def __init__(self, scene, deleteItem):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.deleteItem = deleteItem
         self.setText("Delete")
-        # the delete animation object
-        self.do = DeleteObject(self.deleteItem.shape())
+
+    def get_undo_redo_animation_shape(self) -> QPainterPath:
+        # TODO: this is not quite right b/c that particular item might have custom
+        # animation stuff.  But that is (currently) associated with the Command, not
+        # the item itself.
+        # TODO: maybe it would be better if each item can answer an appropriate shape
+        return self.deleteItem.shape()
 
     def redo(self):
-        # remove the object
         self.scene.removeItem(self.deleteItem)
         if isinstance(self.deleteItem, RubricItem):
+            # TODO: see rubric.py, I don't like this wack-a-mole approach to score
             self.scene.refreshStateAndScore()
-        # flash an animated box around the deleted object
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo()  # note - is undo animation since object being removed
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # not a typo: redoing a delete is an removal action; use the undo animation
+        self.undo_animation()
 
     def undo(self):
-        # flash an animated box around the un-deleted object
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()  # is redo animation since object being brought back
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
-        # put the object back
+        # not a typo: undoing a delete is placing an obj; use the redo animation
+        self.redo_animation()
         self.scene.addItem(self.deleteItem)
-        # If the object is a GroupTextDeltaItem then refresh the state and score
+        # If the object is a RubricItem then refresh the state and score
         if isinstance(self.deleteItem, RubricItem):
+            # TODO: see rubric.py, I don't like this wack-a-mole approach to score
             self.scene.refreshStateAndScore()

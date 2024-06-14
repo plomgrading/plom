@@ -55,11 +55,16 @@ class CommandTool(QUndoCommand):
             self.scene, self.get_undo_redo_animation_shape(), backward=backward
         )
 
-    def redo(self):
-        self.scene.addItem(self.obj)
-        # if .shape() isn't appropriate for your object, you may want to do something different
+    def redo_animation(self) -> None:
         self.scene.addItem(self.get_undo_redo_animation())
 
-    def undo(self):
-        self.scene.removeItem(self.obj)
+    def redo(self) -> None:
+        self.scene.addItem(self.obj)
+        self.redo_animation()
+
+    def undo_animation(self) -> None:
         self.scene.addItem(self.get_undo_redo_animation(backward=True))
+
+    def undo(self) -> None:
+        self.scene.removeItem(self.obj)
+        self.undo_animation()
