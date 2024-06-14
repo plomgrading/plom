@@ -643,3 +643,20 @@ class MarkingTaskService:
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
         if ibs.is_given_paper_question_ready(paper_obj, question_index):
             self.create_task(paper_obj, question_index)
+
+    def reassign_task_to_new_user(self, task_pk:int, username:str):
+        # make sure the given username corresponds to a marker
+        try:
+            new_user = User.objects.get(username=username, groups__name="marker")
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a marker-user {username}")
+        # grab the task
+        try:
+            task_obj = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find marking task {pk}")
+        with transaction.atomic():
+            task_obj.status=MarkingTask.TO_DO
+            task_obj.assigned_user=new_user
+
+

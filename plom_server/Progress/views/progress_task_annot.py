@@ -298,3 +298,16 @@ class MarkingTaskResetView(ManagerRequiredView):
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[new_task_pk])
         )
+
+class MarkingTaskReassignView(ManagerRequiredView):
+    def put(self, request, task_pk: int):
+        if "newUsername" not in request.POST:
+            return HttpResponseClientRefresh()
+        new_username = request.POST.get("newUsername"))
+        # first reassign the task
+        MarkingTaskService().reassign_task_to_new_user(task_pk, new_username)
+        # NOW TODO - tag it .
+
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[task_pk])
+        )
