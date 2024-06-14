@@ -13,7 +13,16 @@ from PyQt6.QtWidgets import (
 
 
 class RubricUsageDialog(QDialog):
-    def __init__(self, parent, paper_numbers):
+    def __init__(self, parent, paper_numbers: list[int]):
+        """Constructor of the dialog to view papers using a rubric.
+
+        Note: the paper numbers in the dialog should have been sorted
+        in ascending order.
+
+        Args:
+            parent: RubricWidget.
+            paper_numbers: the list of paper numbers that commonly use a rubric.
+        """
         super().__init__()
         self._parent = parent
 
@@ -24,6 +33,7 @@ class RubricUsageDialog(QDialog):
 
         # Create the list widget
         self.list_widget = QListWidget()
+        paper_numbers.sort()
         for number in paper_numbers:
             self.list_widget.addItem(str(number))
 
@@ -51,5 +61,5 @@ class RubricUsageDialog(QDialog):
                 self, "No Selection", "Please select a paper number to view."
             )
             return
-        paper_number = selected_items[0].text()
+        paper_number = int(selected_items[0].text())
         self._parent.view_other_paper(paper_number)
