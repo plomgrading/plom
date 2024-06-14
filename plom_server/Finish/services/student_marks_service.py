@@ -162,11 +162,11 @@ class StudentMarkService:
 
         Args:
             paper: a reference to a Paper instance.
-        
+
         Returns:
             A dictionary whose keys are PaperNumber, StudentID, StudentName,
             identified, marked, mark and version of each question, Total, and
-            last_update. 
+            last_update.
         """
         paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
