@@ -52,27 +52,29 @@
     <div>
         <h4>Current Task Order</h4>
         <p>Tooltip: Click on a header to sort by that column.</p>
-        <table class="table table-striped sortable">
-            <thead>
-                <th scope="col" class="border border-secondary">Paper ID</th>
-                {% for q in q_labels %}<th scope="col" class="border border-secondary">{{ q }}</th>{% endfor %}
-            </thead>
-            <tbody>
-                {% for p, priority_status_list in paper_to_priority_dict.items %}
-                    <tr>
-                        <td class="border border-secondary">{{ p }}</td>
-                        {% for priority_status in priority_status_list %}
-                            {% if priority_status.1 == "Complete" %}
-                                <td class="table-success">{{ priority_status.0|floatformat:1 }}</td>
-                            {% elif priority_status.1 == "Missing" %}
-                                <td class="table-danger">Missing</td>
-                            {% else %}
-                                <td class="border border-secondary">{{ priority_status.0|floatformat:1 }}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive" style="max-height: 80vh;">
+            <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
+                <thead class="sticky-top">
+                    <th scope="col" class="border border-secondary">Paper ID</th>
+                    {% for q in q_labels %}<th scope="col" class="border border-secondary">{{ q }}</th>{% endfor %}
+                </thead>
+                <tbody>
+                    {% for p, priority_status_list in paper_to_priority_dict.items %}
+                        <tr>
+                            <td class="border border-secondary w-25">{{ p }}</td>
+                            {% for priority_status in priority_status_list %}
+                                {% if priority_status.1 == "Complete" %}
+                                    <td class="table-success">{{ priority_status.0|floatformat:1 }}</td>
+                                {% elif priority_status.1 == "Missing" %}
+                                    <td class="table-danger">Missing</td>
+                                {% else %}
+                                    <td class="border border-secondary">{{ priority_status.0|floatformat:1 }}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endblock main_content %}
