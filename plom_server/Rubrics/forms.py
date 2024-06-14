@@ -25,10 +25,6 @@ class RubricWipeForm(forms.Form):
 
 
 class RubricFilterForm(forms.Form):
-    QUESTION_CHOICES = [
-        (str(q_idx), q_label)
-        for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
-    ]
     KIND_CHOICES = [
         ("", "All Kinds"),
         ("absolute", "Absolute"),
@@ -36,8 +32,16 @@ class RubricFilterForm(forms.Form):
         ("relative", "Relative"),
     ]
 
-    question_filter = forms.TypedChoiceField(choices=QUESTION_CHOICES, required=False)
+    question_filter = forms.TypedChoiceField(required=False)
     kind_filter = forms.TypedChoiceField(choices=KIND_CHOICES, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+        self.fields["question_filter"].choices = question_choices
 
 
 class RubricEditForm(forms.ModelForm):
@@ -50,14 +54,18 @@ class RubricEditForm(forms.ModelForm):
 
 
 class RubricDownloadForm(forms.Form):
-    QUESTION_CHOICES = [
-        (str(q_idx), q_label)
-        for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
-    ]
+    question_filter = forms.TypedChoiceField(required=False)
 
-    QUESTION_CHOICES.insert(0, ("", "All Questions"))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
 
-    question_filter = forms.TypedChoiceField(choices=QUESTION_CHOICES, required=False)
+        question_choices.insert(0, ("", "All Questions"))
+
+        self.fields["question_filter"].choices = question_choices
 
 
 class RubricUploadForm(forms.Form):
