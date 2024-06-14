@@ -7,5 +7,6 @@ class QuestionTag(models.Model):
     question_number = models.IntegerField()
     description = models.TextField()
 
-    def __str__(self):
-        return f"Q{self.question_number}: {self.description}"
+    class Meta:
+        db_table = 'questiontags_questiontag'
+
