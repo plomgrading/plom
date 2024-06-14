@@ -38,7 +38,6 @@ def pdf_builder(
             is incomplete, because the pandas library uses NaN for
             missing data.
     """
-
     if verbose:
         print("Building report.")
         print(
