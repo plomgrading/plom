@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -56,6 +57,14 @@
                         <th scope="col">#</th>
                         <th scope="col">Usernames</th>
                         <th scope="col">Links</th>
+                        <th scope="col">
+                            {% if links|length > 1 %}
+                                <button class="btn btn-primary"
+                                        onclick="copyText(this)"
+                                        id="copy-all"
+                                        data-copyText="{{ tsv|safe }}">Copy all</button>
+                            {% endif %}
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,9 +74,8 @@
                             <th>{{ username }}</th>
                             <td id="link">{{ link }}</td>
                             <td>
-                                <button class="btn btn-primary"
-                                        style="margin-left: 4px"
-                                        onclick="myfunction()">Copy</button>
+                                <button class="btn btn-primary" style="margin-left: 4px" onclick="copyText(this)" data-copyText={{ link }} id="copy-button-{{ forloop.counter0 }}">Copy
+                                </button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -75,9 +83,13 @@
             </table>
         </div>
         <script>
-            function myfunction() {
-              const link = document.getElementById('link');
-              navigator.clipboard.writeText(link.textContent.replace(/Copy/, ''));
+            async function copyText(buttonObj) {
+              const button = buttonObj;
+              navigator.clipboard.writeText(buttonObj.dataset.copytext);
+              const prevText = button.innerText;
+              button.innerText = "Copied!";
+              await new Promise(r => setTimeout(r, 2000));
+              button.innerText = prevText;
             }
         </script>
     {% endif %}

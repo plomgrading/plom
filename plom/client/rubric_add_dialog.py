@@ -349,10 +349,8 @@ class AddRubricBox(QDialog):
         lay.addItem(space)
         vlay.addLayout(lay)
         if maxver > 1:
-            # TODO: coming soon notice and setEnabled(False) below
             s = "<p>By default, rubrics are shared between versions of a question.<br />"
-            s += "You can also parameterize using version-specific substitutions."
-            s += " &nbsp;(Experimental!)</p>"
+            s += "You can also parameterize using version-specific substitutions.</p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
         vlay.addWidget(QLabel(s))
@@ -610,15 +608,9 @@ class AddRubricBox(QDialog):
             b = QToolButton(text="➕ add another")
         else:
             b = QToolButton(text="➕ add a parameterized substitution")
-            # disabled for Issue #2462
-            if not self.use_experimental_features:
-                b.setEnabled(False)
         b.setAutoRaise(True)
         b.pressed.connect(self.subsAddRow)
-        s = "Inserted at cursor point; highlighted text as initial value"
-        if not self.use_experimental_features:
-            s = "[disabled, experimental] " + s
-        b.setToolTip(s)
+        b.setToolTip("Inserted at cursor point; highlighted text as initial value")
         self.addParameterButton = b
         grid.addWidget(b, nr, 0)
         nr += 1

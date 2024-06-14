@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
+# Copyright (C) 2024 Bryan Tanady
 
 """The Plom Marker client."""
 

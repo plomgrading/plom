@@ -212,7 +212,7 @@ def processFileToBitmaps(
                 add_metadata=add_metadata,
             )
             # For testing, randomly make jpegs, rotated a bit, of various qualities
-            if debug_jpeg and random.uniform(0, 1) <= 0.5:
+            if debug_jpeg and random.uniform(0, 1) <= 0.9:
                 _ = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
                 outname.unlink()
                 outname = _

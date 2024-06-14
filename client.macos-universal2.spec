@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 from pathlib import Path
-# trickery to define __version__ without import
-with open(Path("plom") / "version.py") as f:
-    exec(f.read())
+from plom import __version__
 
 block_cipher = None
 
