@@ -2490,14 +2490,28 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def view_other(self, *, tn=None, q=None, get_annotated=True):
+    def view_other(
+        self,
+        *,
+        paper_number: int | None = None,
+        question_idx: int | None = None,
+        get_annotated: bool = True,
+    ) -> None:
         """Shows a particular paper number and question.
 
-        Key Args:
-            tn: the test number of the paper to be viewed.
-            q: the identifier of the question to be viewed.
+        Keyword Args:
+            paper_number: the paper number to be viewed.
+            question_idx: which question to be viewed.
+                If both ``paper_number`` and this kwarg are None,
+                we open a dialog asking the user.
+            get_annotated: whether to try to get the latest annotated
+                image before falling back on the original scanned images.
+                True by default.
+
+        Returns:
+            None
         """
-        if (tn is None) and (q is None):
+        if (paper_number is None) and (question_idx is None):
             max_question_idx = self.exam_spec["numberOfQuestions"]
             qlabels = [
                 get_question_label(self.exam_spec, i + 1)
@@ -2511,7 +2525,10 @@ class MarkerClient(QWidget):
             )
             if tgs.exec() != QDialog.DialogCode.Accepted:
                 return
-            tn, q, get_annotated = tgs.get_results()
+            paper_number, question_idx, get_annotated = tgs.get_results()
+
+        tn = paper_number
+        q = question_idx
 
         stuff = None
         if get_annotated:

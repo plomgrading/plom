@@ -1868,7 +1868,9 @@ class Annotator(QWidget):
         Args:
             paper_number: the paper number of the paper to be viewed.
         """
-        self.parentMarkerUI.view_other(tn=paper_number, q=self.question_num)
+        self.parentMarkerUI.view_other(
+            paper_number=paper_number, question_idx=self.question_num
+        )
 
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
