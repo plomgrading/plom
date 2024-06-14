@@ -620,13 +620,11 @@ class RubricService:
             df.to_csv(f, index=False, sep=",", encoding="utf-8")
         return f
 
-    def get_rubric_from_file(
-        self, file: io.BufferedReader | io.TextIOWrapper, filetype: str
-    ):
+    def get_rubric_from_file(self, file: io.TextIOWrapper | io.BytesIO, filetype: str):
         """Retrieves rubrics from a file.
 
         Args:
-            file (io.BufferedReader | io.TextIOWrapper): The file object containing the rubrics.
+            file (io.TextIOWrapper | io.BytesIO): The file object containing the rubrics.
             filetype (str): The type of the file (json, toml, csv).
 
         Returns:
@@ -641,7 +639,10 @@ class RubricService:
         if filetype == "json":
             rubrics = json.load(file)
         elif filetype == "toml":
-            rubrics = tomllib.load(file)["rubric"]
+            if isinstance(file, io.BytesIO):
+                rubrics = tomllib.load(file)["rubric"]
+            else:
+                raise RuntimeError("toml file must be a BytesIO object")
         elif filetype == "csv":
             try:
                 import pandas
