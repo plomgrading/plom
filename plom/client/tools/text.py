@@ -86,7 +86,7 @@ class CommandText(CommandTool):
             color=scene.style["annot_color"],
             _texmaker=scene,
         )
-        # TODO: why do CommandText have a .blurb instead of a .obj?
+        # TODO: why do CommandText have a .blurb instead of a .obj?  Issue #3419.
         # HACK by just making another reference to it: else we need custom undo/redo
         self.obj = self.blurb
         self.setText("Text")
