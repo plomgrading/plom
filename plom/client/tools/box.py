@@ -8,14 +8,13 @@ from PyQt6.QtGui import QBrush, QPen
 from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 
 
 class CommandBox(CommandTool):
     def __init__(self, scene, rect):
         super().__init__(scene)
         self.obj = BoxItem(rect, scene.style)
-        self.do = DeleteObject(self.obj.shape(), fill=True)
         self.setText("Box")
 
     @classmethod

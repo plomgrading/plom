@@ -2,20 +2,16 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QTimer, QPropertyAnimation
-from PyQt6.QtCore import pyqtProperty
-from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
-from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
+from PyQt6.QtGui import QPainterPath, QUndoCommand
 
-from .animations import AnimationDuration as Duration
+from .animations import AnimatingTempPathItem, AnimatingTempItemMixin
 
 
 class CommandTool(QUndoCommand):
     """Handles the do/undo of edits to the PageScene.
 
     Subclasses will implement the ``obj`` which is the actual object to be
-    drawn, and the ``do`` (the "DeleteObject") which is used for transcient
-    animations.  Commands are free to subclass ``QUndoCommand`` themselves
+    drawn.  Commands are free to subclass ``QUndoCommand`` themselves
     rather than subclassing this ``CommandTool``.
 
     The :py:method:`redo` method handles both the initial drawing and any
@@ -30,71 +26,40 @@ class CommandTool(QUndoCommand):
     def __init__(self, scene) -> None:
         super().__init__()
         self.scene = scene
-        # obj and do need to be done by each tool
+        # obj needs to be done by each tool
         # self.obj = QGraphicsItem()
-        # self.do = DeleteObject(self.obj.shape())
+
+    def get_undo_redo_animation_shape(self) -> QPainterPath:
+        """Return a shape appropriate for animating the undo/redo of an object.
+
+        Returns:
+            A QPainterPath used to draw the undo and redo temporary animations.
+            Subclasses are free to return a different, perhaps simpler
+            QPainterPath.  For example, :py:class:`CommandHighlight` returns
+            its ``obj.path`` instead.  Another example would be a subclass
+            that does not use the ``.obj`` instantance variable.
+        """
+        return self.obj.shape()
+
+    def get_undo_redo_animation(
+        self, *, backward: bool = False
+    ) -> AnimatingTempItemMixin:
+        """Return an object suitable for animating the undo/redo action.
+
+        Return:
+            A QGraphicsItem, that also has the AnimatingTempItemMixin.
+            This is a special object that will animate and then remove
+            itself from the scene.
+        """
+        return AnimatingTempPathItem(
+            self.scene, self.get_undo_redo_animation_shape(), backward=backward
+        )
 
     def redo(self):
         self.scene.addItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+        # if .shape() isn't appropriate for your object, you may want to do something different
+        self.scene.addItem(self.get_undo_redo_animation())
 
     def undo(self):
         self.scene.removeItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo()
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
-
-
-# For animation of undo / redo / delete
-
-
-class DeleteObject(QGraphicsObject):
-    def __init__(self, shape, fill: bool = False) -> None:
-        super().__init__()
-        self.item = DeleteItem(shape, fill=fill)
-        self.anim_thick = QPropertyAnimation(self, b"thickness")
-        self.anim_thick.setDuration(Duration)
-
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none."""
-        self.anim_thick.setStartValue(2)
-        self.anim_thick.setKeyValueAt(0.5, 8)
-        self.anim_thick.setEndValue(0)
-
-        self.anim_thick.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin."""
-        self.anim_thick.setStartValue(0)
-        self.anim_thick.setKeyValueAt(0.5, 8)
-        self.anim_thick.setEndValue(2)
-
-        self.anim_thick.start()
-
-    @pyqtProperty(float)
-    def thickness(self) -> float:
-        return self.item.thickness
-
-    @thickness.setter
-    def thickness(self, value: float) -> None:
-        self.item.restyle(value)
-
-
-class DeleteItem(QGraphicsPathItem):
-    def __init__(self, shape, fill: bool = False) -> None:
-        super().__init__()
-        self.saveable = False
-        self.initialShape = shape
-        self.thickness = 2
-        self.setPath(self.initialShape)
-        self.restyle(self.thickness)
-        if fill:
-            self.setBrush(QBrush(QColor(8, 232, 222, 16)))
-
-    def restyle(self, value):
-        self.thickness = value
-        self.setPen(QPen(QColor(8, 232, 222, 128), value))
+        self.scene.addItem(self.get_undo_redo_animation(backward=True))

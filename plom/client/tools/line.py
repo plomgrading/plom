@@ -8,7 +8,7 @@ from PyQt6.QtGui import QPen
 from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 
 
 class CommandLine(CommandTool):
@@ -17,7 +17,6 @@ class CommandLine(CommandTool):
         self.scene = scene
         # A line from pti(nitial) to ptf(inal)
         self.obj = LineItem(pti, ptf, scene.style)
-        self.do = DeleteObject(self.obj.shape())
         self.setText("Line")
 
     @classmethod

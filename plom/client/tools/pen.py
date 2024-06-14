@@ -8,7 +8,7 @@ from PyQt6.QtGui import QPen, QPainterPath
 from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 from plom.client.tools import log
 
 
@@ -16,7 +16,6 @@ class CommandPen(CommandTool):
     def __init__(self, scene, path):
         super().__init__(scene)
         self.obj = PenItem(path, scene.style)
-        self.do = DeleteObject(self.obj.shape())
         self.setText("Pen")
 
     @classmethod

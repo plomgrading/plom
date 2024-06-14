@@ -16,7 +16,7 @@ OutOfBoundsPen = QPen(OutOfBoundsPenColour, 8)
 OutOfBoundsFill = QBrush(OutOfBoundsFillColour)
 
 from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
-from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
+from plom.client.tools.tool import CommandTool
 from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop
 from plom.client.tools.rotate_page import CommandRotatePage
