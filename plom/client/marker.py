@@ -2506,8 +2506,9 @@ class MarkerClient(QWidget):
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         paper_number, question_idx, get_annotated = tgs.get_results()
-        self.view_other(paper_number, question_idx, _parent = self, get_annotated=get_annotated)
-
+        self.view_other(
+            paper_number, question_idx, _parent=self, get_annotated=get_annotated
+        )
     def view_other(
         self,
         paper_number: int,
