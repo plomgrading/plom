@@ -2506,13 +2506,14 @@ class MarkerClient(QWidget):
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         paper_number, question_idx, get_annotated = tgs.get_results()
-        self.view_other(paper_number, question_idx, get_annotated=get_annotated)
+        self.view_other(paper_number, question_idx, _parent=, get_annotated=get_annotated)
 
     def view_other(
         self,
         paper_number: int,
         question_idx: int,
         *,
+        _parent: None,
         get_annotated: bool = True,
     ) -> None:
         """Shows a particular paper number and question.
@@ -2533,6 +2534,10 @@ class MarkerClient(QWidget):
         q = question_idx
 
         stuff = None
+
+        if _parent is None:
+            _parent = self
+
         if get_annotated:
             try:
                 annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(tn, q)
@@ -2585,7 +2590,7 @@ class MarkerClient(QWidget):
         # ver = qvmap[q]
         # s += f" (ver {ver})"
 
-        d = QuestionViewDialog(self, stuff, tn, q, marker=self, title=s)
+        d = QuestionViewDialog(_parent, stuff, tn, q, marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()

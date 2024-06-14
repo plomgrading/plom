@@ -10,10 +10,11 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
 )
+from typing import List
 
 
 class RubricUsageDialog(QDialog):
-    def __init__(self, parent, paper_numbers: list[int]):
+    def __init__(self, parent, paper_numbers: List[int]):
         """Constructor of the dialog to view papers using a rubric.
 
         Note: the paper numbers in the dialog should have been sorted
