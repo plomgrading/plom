@@ -29,66 +29,48 @@ class TaskOrderService:
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def get_task_priorities(self, status: bool):
-        """Get the task priorities dict and list of not fully marked papers.
-
-        Args:
-            status: set to true to include MarkingTask.status in the return.
+    def _get_task_priorities(self):
+        """Get the task priorities dict and set of paper numbers in MarkingTask.
 
         Returns:
-            if status is set to true it returns a mapping
-            from a tuple of (paper_number, q_index) to a tuple
-            of (priority, MarkingTask.StatusChoices). Otherwise it will be mapped
-            to only the task priority.
-
-        Note: MarkingTask.StatusChoices are represented as Integers, where:
-            1 represents TO_DO.
-            2 represents OUT.
-            3 represents COMPLETE.
-            4 represents OUT_OF_DATE.
+            Mapping from a tuple of (paper_number, q_index) to a tuple
+            of (priority, MarkingTask's status (str)), and a set of paper numbers
+            for papers found in MarkingTask.
         """
-        if status:
-            _marking_tasks = MarkingTask.objects.all()
+        _marking_tasks = MarkingTask.objects.all().select_related("paper")
 
-        else:
-            _marking_tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
-
-        _marking_tasks.select_related("paper")
         marking_tasks = list(
             _marking_tasks.order_by("paper__paper_number", "question_index")
         )
 
         task_priorities = {}
-        marking_task_list = list()
+        paper_numbers = set()
 
         for mt in marking_tasks:
-            if status:
-                mapped_value = (mt.marking_priority, mt.status)
-            else:
-                mapped_value = mt.marking_priority
-
+            mapped_value = (mt.marking_priority, mt.get_status_display())
             task_priorities[(mt.paper.paper_number, mt.question_index)] = mapped_value
-            marking_task_list.append(mt.paper.paper_number)
+            paper_numbers.add(mt.paper.paper_number)
 
-        return task_priorities, marking_task_list
+        return task_priorities, paper_numbers
 
     def get_paper_number_to_priority_list(self) -> dict[int, list[tuple[int, int]]]:
         """Get the mapping from a paper number to the list of (priority, status).
 
-        If a marking task is missing, it will be flagged with (-1, -1).
+        If a marking task is missing, it will be flagged
+        with (None, "Missing").
 
         Returns:
             A dictionary that maps paper number to the list of tuples of
             (priority, status), where the list is sorted in ascending order
             by question index.
         """
-        task_priorities, marking_task_list = self.get_task_priorities(status=True)
+        task_priorities, paper_numbers = self._get_task_priorities()
         total_questions = SpecificationService.get_n_questions()
-        missing_flag = (-1, -1)
+        missing_flag = (None, "Missing")
 
         paper_to_priority_and_status_list = dict()
 
-        for paper_number in marking_task_list:
+        for paper_number in paper_numbers:
             paper_to_priority_and_status_list[paper_number] = [
                 task_priorities.get((paper_number, q_idx), missing_flag)
                 for q_idx in range(1, total_questions + 1)
@@ -97,18 +79,22 @@ class TaskOrderService:
 
     def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""
-        return ["Paper Number", "Question Number", "Priority Value"]
+        return ["Paper Number", "Question Number", "Priority Value", "Status"]
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
-        task_priorities = self.get_task_priorities(status=False)[0]
+        task_priorities = self._get_task_priorities()[0]
         return [
             {
                 "Paper Number": paper_number,
                 "Question Number": question_idx,
                 "Priority Value": priority,
+                "Status": status,
             }
-            for (paper_number, question_idx), priority in task_priorities.items()
+            for (
+                (paper_number, question_idx),
+                (priority, status),
+            ) in task_priorities.items()
         ]
 
     def handle_file_upload(self, csv_data) -> dict[tuple[int, int], int]:

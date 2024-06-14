@@ -62,10 +62,13 @@
                     <tr>
                         <td class="border border-secondary">{{ p }}</td>
                         {% for priority_status in priority_status_list %}
-                            <td class="border border-secondary"
-                                style="{% if priority_status.1 == 3 %}background-color: #dbf5da{% elif priority_status.1 == 2 %}background-color: #faf9d4{% elif priority_status.1 == -1 or priority_status.1 == 4 %}background-color: #fabebe{% endif %}">
-                                {{ priority_status.0|floatformat:1 }}
-                            </td>
+                            {% if priority_status.1 == "Complete" %}
+                                <td class="table-success">{{ priority_status.0|floatformat:1 }}</td>
+                            {% elif priority_status.1 == "Missing" %}
+                                <td class="table-danger">Missing</td>
+                            {% else %}
+                                <td class="border border-secondary">{{ priority_status.0|floatformat:1 }}</td>
+                            {% endif %}
                         {% endfor %}
                     </tr>
                 {% endfor %}
