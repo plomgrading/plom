@@ -116,9 +116,10 @@ class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
 class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
     """New-style animated path.
 
-    If you subclass this, pass ``start=False`` to ``__init__`` and then
-    at the end of your ``__init__`` function you must start the animation
-    by calling `self.start()`.
+    If you subclass this, call the superclass ``__init__`` like this:
+    ``super().__init__(scene, start=False)``.
+    Then at the end of your ``__init__`` function you must start the
+    animation by calling `self.
 
     Instance variables:
         anim: a QPropertyAnimation, you can call `setDuration` to change
