@@ -227,6 +227,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
         context.update(
             {
+                "all_markers": all_markers,
                 # the current tags, and then separated into normal and attn-marker
                 "current_normal_tags": current_normal_tags,
                 "current_attn_tags": current_attn_user_tags,
