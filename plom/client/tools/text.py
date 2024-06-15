@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool
 from plom.client.tools import log
-from .animations import AnimationDuration as Duration
 
 
 # TODO: move this to move.py?

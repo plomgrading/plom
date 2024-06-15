@@ -6,7 +6,7 @@
 
 from copy import deepcopy
 
-from PyQt6.QtCore import QTimer, Qt, QPointF
+from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
@@ -14,7 +14,6 @@ from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
-from .animations import AnimationDuration as Duration
 
 
 class CommandRubric(CommandTool):
