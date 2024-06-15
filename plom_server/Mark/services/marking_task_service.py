@@ -672,6 +672,6 @@ class MarkingTaskService:
                 task_obj.assigned_user = new_user
                 task_obj.save()
         except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find marking task {pk}")
+            raise ValueError(f"Cannot find marking task {task_pk}")
             # TODO - what to do if task is "OUT"
             # task_obj.status = MarkingTask.TO_DO
