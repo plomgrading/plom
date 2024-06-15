@@ -5,10 +5,10 @@ from PyQt6.QtWidgets import (
     QDialog,
     QListWidget,
     QVBoxLayout,
-    QPushButton,
     QHBoxLayout,
     QLabel,
     QMessageBox,
+    QDialogButtonBox,
 )
 from typing import List
 
@@ -38,9 +38,15 @@ class RubricUsageDialog(QDialog):
         for number in paper_numbers:
             self.list_widget.addItem(str(number))
 
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("View")
+
         # Create the view button
-        self.view_button = QPushButton("View")
-        self.view_button.clicked.connect(self.view_paper)
+        buttons.accepted.connect(self.view_paper)
+        buttons.rejected.connect(self.close)
 
         # Layouts
         v_layout = QVBoxLayout()
@@ -49,11 +55,10 @@ class RubricUsageDialog(QDialog):
 
         h_layout = QHBoxLayout()
         h_layout.addStretch()
-        h_layout.addWidget(self.view_button)
-
         v_layout.addLayout(h_layout)
-
         self.setLayout(v_layout)
+
+        h_layout.addWidget(buttons)
 
     def view_paper(self):
         selected_items = self.list_widget.selectedItems()
