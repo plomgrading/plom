@@ -27,6 +27,7 @@ from Progress.views import (
     AnnotationImageView,
     MarkingTaskTagView,
     MarkingTaskResetView,
+    MarkingTaskReassignView,
     OriginalImageWrapView,
     ProgressUserInfoHome,
     AllTaskOverviewView,
@@ -168,6 +169,11 @@ urlpatterns = [
     path(
         "mark/reset_task/<int:task_pk>",
         MarkingTaskResetView.as_view(),
-        name="marking_reset_task",
+        name="reset_marking_task",
+    ),
+    path(
+        "mark/reassign_task/<int:task_pk>",
+        MarkingTaskReassignView.as_view(),
+        name="reassign_marking_task",
     ),
 ]

@@ -43,6 +43,7 @@ from .progress_task_annot import (
     AllTaskOverviewView,
     MarkingTaskTagView,
     MarkingTaskResetView,
+    MarkingTaskReassignView,
 )
 
 from .progress_userinfo import (

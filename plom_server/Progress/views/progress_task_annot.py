@@ -255,22 +255,16 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         # make sure have the correct field from the form
         if "newTagText" not in request.POST:
             return HttpResponseClientRefresh()
-        # sanitize the text, check if such a tag already exists
-        # (create it otherwise) then add to the task
-        mts = MarkingTaskService()
-        tag_text = mts.sanitize_tag_text(request.POST.get("newTagText"))
+        try:
+            # note - this will sanitise the tag_text
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, request.POST.get("newTagText")
+            )
+        except ValidationError:
+            # the form *should* catch validation errors.
+            # we don't throw an explicit error here instead just refresh the page.
+            return HttpResponseClientRefresh()
 
-        tag_obj = mts.get_tag_from_text(tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
-            try:
-                tag_obj = mts.create_tag(request.user, tag_text)
-            except ValidationError:
-                # the form *should* catch validation errors.
-                # we don't throw an explicit error here
-                # instead just refresh the page.
-                return HttpResponseClientRefresh()
-
-        mts.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
 
 
@@ -299,14 +293,25 @@ class MarkingTaskResetView(ManagerRequiredView):
             reverse("progress_marking_task_details", args=[new_task_pk])
         )
 
+
 class MarkingTaskReassignView(ManagerRequiredView):
-    def put(self, request, task_pk: int):
-        if "newUsername" not in request.POST:
+    def post(self, request, task_pk: int):
+        if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
-        new_username = request.POST.get("newUsername"))
-        # first reassign the task
-        MarkingTaskService().reassign_task_to_new_user(task_pk, new_username)
-        # NOW TODO - tag it .
+        new_username = request.POST.get("newUser")
+
+        try:
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            MarkingTaskService().reassign_task_to_new_user(task_pk, new_username)
+            attn_user_tag_text = f"@{new_username}"
+            # note - creates the tag if needed
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, attn_user_tag_text
+            )
+        except ValueError:
+            # TO DO - report the error
+            pass
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
