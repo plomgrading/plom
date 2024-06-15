@@ -51,7 +51,6 @@ class TmpAnimDisappearingRectItem(AnimatingTempRectItem):
         if what == "disappear_left":
             r.moveLeft(r.left() - r.width())
         self.r = r
-        self.setRect(r)
 
         self.anim.setDuration(Duration)
         if what == "restore":

@@ -45,8 +45,6 @@ class CommandShiftPage(QUndoCommand):
 class TmpAnimRectItem(AnimatingTempRectItem):
     def __init__(self, scene, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
-        # TODO: does it matter if we don't set the rect?
-        self.setRect(r1)
         self.r1 = r1
         self.r2 = r2
         self.anim.setDuration(Duration)

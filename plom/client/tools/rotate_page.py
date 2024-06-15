@@ -43,7 +43,6 @@ class TmpAnimRotatingRectItem(AnimatingTempRectItem):
     def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
         self.anim.setDuration(Duration)
-        self.setRect(r1)
         self.r1 = r1
         self.r2 = r2
         self.degrees = degrees
