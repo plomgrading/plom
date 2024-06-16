@@ -584,6 +584,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
+        # TODO: temporarily use the defer button for reassign
+        self.ui.deferButton.clicked.connect(self.reassign_task)
         self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
@@ -1247,6 +1249,36 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
+
+    def reassign_task(self):
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
+            return
+        task = self.prxM.getPrefix(pr)
+        # TODO: combobox
+        assign_to, ok = QInputDialog.getText(
+            self, "Reassign to", f"Who would you like to reassign {task} to?"
+        )
+        if not ok:
+            return
+        # try:
+        #     self.msgr.TODO_New_Function(task, self.user, assign_to, reason="help")
+        # except PlomNoServerSupportException as e:
+        #     InfoMsg(self, e).exec()
+        #     return
+        # except PlomNoPermission as e:
+        #     InfoMsg(self, "You don't have permission to reassign that task: {e}").exec()
+        #     return
+        if random.random() < 0.5:
+            WarnMsg(
+                self, f'TODO: faked error reassigning {task} to "{assign_to}"'
+            ).exec()
+            return
+        InfoMsg(self, f'TODO: faked success reassigning {task} to "{assign_to}"').exec()
+        # TODO, now what?
+        # TODO: adding a new possibility here will have some fallout
+        self.examModel.setStatusByTask(task, "reassigned")
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
