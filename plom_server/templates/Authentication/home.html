@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -9,5 +10,12 @@
     Welcome to Plom
 {% endblock page_heading %}
 {% block main_content %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
     <p>Choose a task from the menu.</p>
 {% endblock main_content %}
