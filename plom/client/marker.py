@@ -771,7 +771,7 @@ class MarkerClient(QWidget):
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
-    def _updateCurrentlySelectedRow(self):
+    def _updateCurrentlySelectedRow(self) -> None:
         """Updates the preview image for the currently selected row of the table.
 
         Returns:
@@ -1071,11 +1071,11 @@ class MarkerClient(QWidget):
         """
         self.requestNext(update_select=False)
 
-    def moveToNextUnmarkedTest(self, task=None) -> bool:
+    def moveToNextUnmarkedTest(self, task: str | None = None) -> bool:
         """Move the list to the next unmarked test, if possible.
 
         Args:
-            task (str): the task number of the next unmarked test.
+            task: the task number of the next unmarked test.
 
         Returns:
             True if move was successful, False if not, for any reason.
@@ -1146,7 +1146,8 @@ class MarkerClient(QWidget):
 
         Args:
             initialData (list): containing things documented elsewhere
-                in :func:`plom.client.annotator.Annotator.__init__`.
+                in :method:`getDataForAnnotator`
+                and :func:`plom.client.annotator.Annotator.__init__`.
 
         Returns:
             None
@@ -1184,20 +1185,21 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def getDataForAnnotator(self, task):
+    def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
 
         Args:
-            task (str): the task id.  If original qXXXXgYY, then annotated
+            task: the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
 
         Returns:
-            list/None: as described by startTheAnnotator, if successful.
+            A tuple of data or None.
         """
         # Create annotated filename.
         assert task.startswith("q")
-        paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
-        paperdir = Path(paperdir)
+        paperdir = Path(
+            tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
+        )
         log.debug("create paperdir %s for annotating", paperdir)
         Gtask = "G" + task[1:]
         # note no extension yet
@@ -1207,7 +1209,7 @@ class MarkerClient(QWidget):
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
-                return
+                return None
             oldpname = self.examModel.getPlomFileByTask(task)
             with open(oldpname, "r") as fh:
                 pdict = json.load(fh)
@@ -1234,7 +1236,7 @@ class MarkerClient(QWidget):
                     "Still waiting for download.  Do you want to wait a bit longer?",
                 )
                 if msg.exec() == QMessageBox.StandardButton.No:
-                    return
+                    return None
                 count = 0
                 self.Qapp.processEvents()
 
@@ -1244,7 +1246,7 @@ class MarkerClient(QWidget):
                 log.warning(
                     "some kind of downloader fail? (unexpected, but probably harmless"
                 )
-                return
+                return None
 
         # stash the previous state, not ideal because makes column wider
         prevState = self.examModel.getStatusByTask(task)
@@ -1344,7 +1346,7 @@ class MarkerClient(QWidget):
         """Called when annotator is done grading.
 
         Args:
-            task (str): task name
+            task: task name without the leading "q".
 
         Returns:
             None
@@ -1363,7 +1365,7 @@ class MarkerClient(QWidget):
         """Called when annotator is done grading and is closing.
 
         Args:
-            task (str): the task ID of the current test.
+            task: the task ID of the current test with no leading "q".
 
         Returns:
             None
@@ -1448,35 +1450,29 @@ class MarkerClient(QWidget):
         # now update the marking history with the task.
         self.marking_history.append(task)
 
-    def getMorePapers(self, oldtgvID):
+    def getMorePapers(self, oldtgvID) -> tuple | None:
         """Loads more tests.
 
         Args:
             oldtgvID(str): the Test-Group-Version ID for the previous test.
 
         Returns:
-            initialData: as described by getDataForAnnotator
+            The data for the annotator or None as described in
+            :method:`getDataForAnnotator`.
         """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext(update_select=False)
         if not self.moveToNextUnmarkedTest("q" + oldtgvID if oldtgvID else None):
-            return False
-        # TODO: copy paste of annotateTest()
-        # probably don't need len check
-        if len(self.ui.tableView.selectedIndexes()):
-            row = self.ui.tableView.selectedIndexes()[0].row()
-        else:
-            # TODO: what to do here?
-            return False
-        tgvID = self.prxM.getPrefix(row)
-
-        data = self.getDataForAnnotator(tgvID)
-        # make sure getDataForAnnotator did not fail
+            return None
+        task_id_str = self.get_current_task_id_or_none()
+        if not task_id_str:
+            return None
+        data = self.getDataForAnnotator(task_id_str)
         if data is None:
-            return
+            return None
 
-        assert tgvID[1:] == data[0]
+        assert task_id_str[1:] == data[0]
         pdict = data[-3]  # the plomdict is third-last object in data
         assert pdict is None, "Annotator should not pull a regrade"
 
@@ -1859,10 +1855,11 @@ class MarkerClient(QWidget):
 
     def get_current_task_id_or_none(self) -> str | None:
         """Give back the task id string of the currently highlighted row or None."""
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
             return None
+        # Note: a single selection should have length 11 (see ExamModel): could assert
+        pr = prIndex[0].row()
         task_id_str = self.prxM.getPrefix(pr)
         return task_id_str
 
