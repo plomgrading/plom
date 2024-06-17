@@ -13,5 +13,5 @@ urlpatterns = [
         name="troubles_afoot",
     ),
     path("reset/", ResetView.as_view(), name="reset"),
-    path("reset/confirm", ResetConfirmView.as_view(), name="reset_confirm")
+    path("reset/confirm", ResetConfirmView.as_view(), name="reset_confirm"),
 ]

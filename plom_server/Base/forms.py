@@ -3,5 +3,6 @@
 
 from django import forms
 
+
 class CompleteWipeForm(forms.Form):
     confirmation_field = forms.CharField()

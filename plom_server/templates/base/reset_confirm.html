@@ -11,12 +11,16 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card">
-        <div class="card-header text-white bg-danger"><strong>DANGER: MASTER RESET</strong></div>
+        <div class="card-header text-white bg-danger">
+            <strong>DANGER: MASTER RESET</strong>
+        </div>
         <div class="card-body">
             <div class="card-text">
-                <p> You have chosen to completely reset this Plom instance. </p>
-                <p> <strong> This action is irreversible and will completely delete any data stored </strong> </p>
-                <p> All data stored by Plom currently will be wiped, including but not limited to: </p>
+                <p>You have chosen to completely reset this Plom instance.</p>
+                <p>
+                    <strong>This action is irreversible and will completely delete any data stored</strong>
+                </p>
+                <p>All data stored by Plom currently will be wiped, including but not limited to:</p>
                 <ul>
                     <li>All test specifications</li>
                     <li>All test PDFs</li>
@@ -25,17 +29,25 @@
                     <li>All marking annotations</li>
                 </ul>
                 <div class="d-flex flex-row mb-5">
-                    <a type="button" class="btn btn-primary flex-grow-1 m-1" href={% url "home" %}>Cancel and return home</a>
+                    <a type="button"
+                       class="btn btn-primary flex-grow-1 m-1"
+                       href="{% url "home" %}">Cancel and return home</a>
                 </div>
-                <p> Confirm that you understand that this action is irreversible, will result in the complete loss of data on this Plom instance, and that you wish to continue anyways by entering the follow phrase below</p>
-                <p class="text-center"> <strong> I wish to completely delete this Plom instance. </strong> </p>
+                <p>
+                    Confirm that you understand that this action is irreversible, will result in the complete loss of data on this Plom instance, and that you wish to continue anyways by entering the follow phrase below
+                </p>
+                <p class="text-center">
+                    <strong>I wish to completely delete this Plom instance.</strong>
+                </p>
                 <form method="post" action="">
                     {% csrf_token %}
                     <div class="mx-auto text-center flex-row">
                         <div class="form-group m-2 flex-grow-1">{{ wipe_form.confirmation_field }}</div>
                         {% if wipe_form.confirmation_field.errors %}
                             {% for error in wipe_form.confirmation_field.errors %}
-                                <p><strong>{{ error|escape }}</strong></p>
+                                <p>
+                                    <strong>{{ error|escape }}</strong>
+                                </p>
                             {% endfor %}
                         {% endif %}
                         <button type="submit" class="btn btn-danger">Wipe all rubrics</button>

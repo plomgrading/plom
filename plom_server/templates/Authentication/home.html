@@ -10,12 +10,8 @@
     Welcome to Plom
 {% endblock page_heading %}
 {% block main_content %}
-
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
     {% endif %}
-
     <p>Choose a task from the menu.</p>
 {% endblock main_content %}
