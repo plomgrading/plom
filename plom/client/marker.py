@@ -718,7 +718,7 @@ class MarkerClient(QWidget):
                 row["server_path"] = f
         self.get_downloads_for_src_img_data(src_img_data)
 
-        self.examModel.setOriginalFilesAndData(task, src_img_data)
+        self.examModel.set_source_image_data(task, src_img_data)
 
         paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
         log.debug("create paperdir %s for already-graded download", paperdir)

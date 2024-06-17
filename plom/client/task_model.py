@@ -36,6 +36,9 @@ def _marking_time_as_str(m):
 class MarkerExamModel(QStandardItemModel):
     """A tablemodel for handling the group image marking data."""
 
+    _idx_marking_time = 3
+    _idx_src_img_data = 10
+
     def __init__(self, parent=None):
         """Initializes a new MarkerExamModel.
 
@@ -212,11 +215,13 @@ class MarkerExamModel(QStandardItemModel):
         return self.data(self.index(r, 8))
 
     def _get_marking_time(self, r):
+        column_idx = self._idx_marking_time
         # TODO: instead of packing/unpacking a string, there should be a model
-        return float(self.data(self.index(r, 3)))
+        return float(self.data(self.index(r, column_idx)))
 
     def _set_marking_time(self, r, marking_time):
-        self.setData(self.index(r, 3), _marking_time_as_str(marking_time))
+        column_idx = self._idx_marking_time
+        self.setData(self.index(r, column_idx), _marking_time_as_str(marking_time))
 
     def _findTask(self, task: str) -> int:
         """Return the row index of this task.
@@ -322,20 +327,20 @@ class MarkerExamModel(QStandardItemModel):
         """
         self._setDataByTask(task, 8, tdir)
 
-    def _setImageData(self, task, src_img_data):
-        """Set the md5sums etc of the original image files."""
-        log.debug("Setting img data to {}".format(src_img_data))
-        self._setDataByTask(task, 10, repr(src_img_data))
-
     def get_source_image_data(self, task):
         """Return the image data (as a list of dicts) for task."""
+        column_idx = self._idx_src_img_data
         # dangerous repr/eval pair?  Is json safer/better?
-        r = eval(self._getDataByTask(task, 10))
+        r = eval(self._getDataByTask(task, column_idx))
         return r
 
-    def setOriginalFilesAndData(self, task, src_img_data):
+    def set_source_image_data(
+        self, task: str, src_img_data: list[dict[str, Any]]
+    ) -> None:
         """Set the original un-annotated image filenames and other metadata."""
-        self._setImageData(task, src_img_data)
+        log.debug("Setting src img data to {}".format(src_img_data))
+        column_idx = self._idx_src_img_data
+        self._setDataByTask(task, column_idx, repr(src_img_data))
 
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
