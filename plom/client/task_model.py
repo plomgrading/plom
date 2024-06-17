@@ -42,8 +42,8 @@ _idx_tags = 4
 _idx_annotated_file = 5
 _idx_plom_file = 6
 _idx_paper_dir = 7
-_idx_integrity = 8
-_idx_src_img_data = 9
+_idx_src_img_data = 8
+_idx_integrity = 9
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -74,8 +74,8 @@ class MarkerExamModel(QStandardItemModel):
                 "AnnotatedFile",
                 "PlomFile",
                 "PaperDir",
-                "integrity_check",
                 "src_img_data",
+                "integrity_check",
             ]
         )
 
@@ -141,9 +141,8 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
                 QStandardItem(""),  # paperdir
-                # todo - reorder these?
-                QStandardItem(integrity_check),
                 QStandardItem(repr(src_img_data)),
+                QStandardItem(integrity_check),
             ]
         )
         return r
