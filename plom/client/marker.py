@@ -537,7 +537,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.hideColumn(7)
         self.ui.tableView.hideColumn(8)
         self.ui.tableView.hideColumn(9)
-        self.ui.tableView.hideColumn(10)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)

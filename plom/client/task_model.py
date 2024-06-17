@@ -39,11 +39,11 @@ _idx_status = 1
 _idx_mark = 2
 _idx_marking_time = 3
 _idx_tags = 4
-_idx_annotated_file = 6
-_idx_plom_file = 7
-_idx_paper_dir = 8
-_idx_integrity = 9
-_idx_src_img_data = 10
+_idx_annotated_file = 5
+_idx_plom_file = 6
+_idx_paper_dir = 7
+_idx_integrity = 8
+_idx_src_img_data = 9
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -63,7 +63,6 @@ class MarkerExamModel(QStandardItemModel):
                 "Mark",
                 "Time (s)",
                 "Tag",
-                "OriginalFiles",
                 "AnnotatedFile",
                 "PlomFile",
                 "PaperDir",
@@ -131,7 +130,6 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(markstr),
                 QStandardItem(_marking_time_as_str(marking_time)),
                 QStandardItem(" ".join(tags)),
-                QStandardItem("placeholder"),
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
                 QStandardItem("placeholder"),
