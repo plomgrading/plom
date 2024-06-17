@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 import platform
@@ -323,7 +323,7 @@ class SimpleTableView(QTableView):
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
         else:
-            super(SimpleTableView, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
 
 class BlankIDBox(QDialog):
