@@ -33,11 +33,21 @@ def _marking_time_as_str(m):
         return f"{m:.0f}"
 
 
+# yuck numbers, but at least in one place
+_idx_task_id = 0  # here called "prefix"
+_idx_status = 1
+_idx_mark = 2
+_idx_marking_time = 3
+_idx_tags = 4
+_idx_annotated_file = 6
+_idx_plom_file = 7
+_idx_paper_dir = 8
+_idx_integrity = 9
+_idx_src_img_data = 10
+
+
 class MarkerExamModel(QStandardItemModel):
     """A tablemodel for handling the group image marking data."""
-
-    _idx_marking_time = 3
-    _idx_src_img_data = 10
 
     def __init__(self, parent=None):
         """Initializes a new MarkerExamModel.
@@ -141,7 +151,7 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             the string prefix of the image
         """
-        return self.data(self.index(r, 0))
+        return self.data(self.index(r, _idx_task_id))
 
     def _getStatus(self, r: int) -> str:
         """Returns the status of the image.
@@ -152,7 +162,7 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             The status of the image
         """
-        return self.data(self.index(r, 1))
+        return self.data(self.index(r, _idx_status))
 
     def _setStatus(self, r: int, status: str) -> None:
         """Sets the status of the image.
@@ -167,8 +177,8 @@ class MarkerExamModel(QStandardItemModel):
         self.setData(self.index(r, 1), status)
 
     def _setAnnotatedFile(self, r: int, aname: Path | str, pname: Path | str) -> None:
-        self.setData(self.index(r, 6), str(aname))
-        self.setData(self.index(r, 7), str(pname))
+        self.setData(self.index(r, _idx_annotated_file), str(aname))
+        self.setData(self.index(r, _idx_plom_file), str(pname))
 
     def _setPaperDir(self, r: int, tdir: Path | str | None) -> None:
         """Sets the paper directory for the given paper.
@@ -182,7 +192,7 @@ class MarkerExamModel(QStandardItemModel):
         """
         if tdir is not None:
             tdir = str(tdir)
-        self.setData(self.index(r, 8), tdir)
+        self.setData(self.index(r, _idx_paper_dir), tdir)
 
     def _clearPaperDir(self, r: int) -> None:
         """Clears the paper directory for the given paper.
@@ -204,15 +214,15 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             Name of a temporary directory for this paper.
         """
-        return self.data(self.index(r, 8))
+        return self.data(self.index(r, _idx_paper_dir))
 
     def _get_marking_time(self, r):
-        column_idx = self._idx_marking_time
+        column_idx = _idx_marking_time
         # TODO: instead of packing/unpacking a string, there should be a model
         return float(self.data(self.index(r, column_idx)))
 
     def _set_marking_time(self, r, marking_time):
-        column_idx = self._idx_marking_time
+        column_idx = _idx_marking_time
         self.setData(self.index(r, column_idx), _marking_time_as_str(marking_time))
 
     def _findTask(self, task: str) -> int:
@@ -270,44 +280,44 @@ class MarkerExamModel(QStandardItemModel):
 
     def getStatusByTask(self, task):
         """Return status for task."""
-        return self._getDataByTask(task, 1)
+        return self._getDataByTask(task, _idx_status)
 
     def setStatusByTask(self, task, st):
         """Set status for task."""
-        self._setDataByTask(task, 1, st)
+        self._setDataByTask(task, _idx_status, st)
 
-    def getTagsByTask(self, task):
+    def getTagsByTask(self, task: str) -> list[str]:
         """Return a list of tags for task.
 
         TODO: can we draw flat, but use list for storing?
         """
-        return self._getDataByTask(task, 4).split()
+        return self._getDataByTask(task, _idx_tags).split()
 
-    def setTagsByTask(self, task, tags):
+    def setTagsByTask(self, task: str, tags: list[str]) -> None:
         """Set a list of tags for task.
 
         Note: internally stored as flattened string.
         """
-        return self._setDataByTask(task, 4, " ".join(tags))
+        self._setDataByTask(task, _idx_tags, " ".join(tags))
 
-    def get_marking_time_by_task(self, task):
+    def get_marking_time_by_task(self, task: str) -> float:
         """Return total marking time (s) for task (str), return float."""
         r = self._findTask(task)
         return self._get_marking_time(r)
 
-    def getAnnotatedFileByTask(self, task):
+    def getAnnotatedFileByTask(self, task: str) -> Path:
         """Returns the filename of the annotated image."""
-        return Path(self._getDataByTask(task, 6))
+        return Path(self._getDataByTask(task, _idx_annotated_file))
 
-    def getPlomFileByTask(self, task):
+    def getPlomFileByTask(self, task: str) -> Path:
         """Returns the filename of the plom json data."""
-        return Path(self._getDataByTask(task, 7))
+        return Path(self._getDataByTask(task, _idx_plom_file))
 
-    def getPaperDirByTask(self, task):
+    def getPaperDirByTask(self, task: str) -> str:
         """Return temporary directory for this task."""
-        return self._getDataByTask(task, 8)
+        return self._getDataByTask(task, _idx_paper_dir)
 
-    def setPaperDirByTask(self, task: str, tdir: Path | str):
+    def setPaperDirByTask(self, task: str, tdir: Path | str) -> None:
         """Set temporary directory for this grading.
 
         Args:
@@ -317,11 +327,11 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
-        self._setDataByTask(task, 8, str(tdir))
+        self._setDataByTask(task, _idx_paper_dir, str(tdir))
 
     def get_source_image_data(self, task):
         """Return the image data (as a list of dicts) for task."""
-        column_idx = self._idx_src_img_data
+        column_idx = _idx_src_img_data
         # dangerous repr/eval pair?  Is json safer/better?
         r = eval(self._getDataByTask(task, column_idx))
         return r
@@ -331,7 +341,7 @@ class MarkerExamModel(QStandardItemModel):
     ) -> None:
         """Set the original un-annotated image filenames and other metadata."""
         log.debug("Setting src img data to {}".format(src_img_data))
-        column_idx = self._idx_src_img_data
+        column_idx = _idx_src_img_data
         self._setDataByTask(task, column_idx, repr(src_img_data))
 
     def setAnnotatedFile(self, task: str, aname: Path | str, pname: Path | str) -> None:
@@ -345,12 +355,12 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
-        self._setDataByTask(task, 6, str(aname))
-        self._setDataByTask(task, 7, str(pname))
+        self._setDataByTask(task, _idx_annotated_file, str(aname))
+        self._setDataByTask(task, _idx_plom_file, str(pname))
 
-    def getIntegrityCheck(self, task):
+    def getIntegrityCheck(self, task: str) -> str:
         """Return integrity_check for task as string."""
-        return self._getDataByTask(task, 9)
+        return self._getDataByTask(task, _idx_integrity)
 
     def markPaperByTask(self, task, mark, aname, pname, marking_time, tdir) -> None:
         """Add marking data for the given task.
@@ -373,7 +383,7 @@ class MarkerExamModel(QStandardItemModel):
         t = self._get_marking_time(r)
         self._set_marking_time(r, marking_time + t)
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), str(mark))
+        self.setData(self.index(r, _idx_mark), str(mark))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
@@ -406,7 +416,7 @@ class ProxyModel(QSortFilterProxyModel):
             parent (QObject): self's parent.
         """
         super().__init__(parent)
-        self.setFilterKeyColumn(4)
+        self.setFilterKeyColumn(_idx_tags)
         self.filterString = ""
         self.invert = False
 
@@ -472,7 +482,9 @@ class ProxyModel(QSortFilterProxyModel):
         tags.
         """
         search_terms = self.filterString.casefold().split()
-        tags = self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+        tags = (
+            self.sourceModel().data(self.sourceModel().index(pos, _idx_tags)).casefold()
+        )
         all_search_terms_in_tags = all(x in tags for x in search_terms)
         if self.invert:
             return not all_search_terms_in_tags
@@ -487,30 +499,29 @@ class ProxyModel(QSortFilterProxyModel):
         Returns:
             str: the prefix of the paper indicated by r.
         """
-        return self.data(self.index(r, 0))
+        return self.data(self.index(r, _idx_task_id))
 
     def getStatus(self, r: int) -> str:
         """Returns the status of inputted row index.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
-            str: the status of the paper indicated by r.
+            The status of the paper indicated by r.
         """
-        # Return the status of the image
-        return self.data(self.index(r, 1))
+        return self.data(self.index(r, _idx_status))
 
-    def getAnnotatedFile(self, r: int) -> str:
+    def getAnnotatedFile(self, r: int) -> Path:
         """Returns the file names of an annotated image.
 
         Args:
-            r (int): the row identifier of the paper.
+            r: the row identifier of the paper.
 
         Returns:
-            str: the file name of the annotated image of the paper in r.
+            The file name of the annotated image of the paper in r.
         """
-        return self.data(self.index(r, 6))
+        return Path(self.data(self.index(r, _idx_annotated_file)))
 
     def rowFromTask(self, task):
         """Return the row index (int) of this task (str) or None if absent."""
