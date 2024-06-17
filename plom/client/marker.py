@@ -1253,8 +1253,8 @@ class MarkerClient(QWidget):
         paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
-        aname = paperdir / "G{task[1:]}.{annot_img_info['extension']}"
-        pname = paperdir / "G{task[1:]}.plom"
+        aname = paperdir / f"G{task[1:]}.{annot_img_info['extension']}"
+        pname = paperdir / f"G{task[1:]}.plom"
         with open(aname, "wb") as fh:
             fh.write(annot_img_bytes)
         with open(pname, "w") as f:
