@@ -1131,11 +1131,9 @@ class MarkerClient(QWidget):
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.get_current_task_id_or_none()
+        if not task:
             return
-        task = self.prxM.getPrefix(pr)
         if self.examModel.getStatusByTask(task) == "deferred":
             return
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
@@ -1171,12 +1169,9 @@ class MarkerClient(QWidget):
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
-        if len(self.ui.tableView.selectedIndexes()):
-            row = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.get_current_task_id_or_none()
+        if not task:
             return
-
-        task = self.prxM.getPrefix(row)
         inidata = self.getDataForAnnotator(task)
         # make sure getDataForAnnotator did not fail
         if inidata is None:
@@ -1862,13 +1857,20 @@ class MarkerClient(QWidget):
         self.commentCache[txt] = fragFile
         return fragFile
 
-    def manage_tags(self):
-        """Manage the tags of the current task."""
+    def get_current_task_id_or_none(self) -> str | None:
+        """Give back the task id string of the currently highlighted row or None."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
+            return None
+        task_id_str = self.prxM.getPrefix(pr)
+        return task_id_str
+
+    def manage_tags(self):
+        """Manage the tags of the current task."""
+        task = self.current_task_id_or_none()
+        if not task:
             return
-        task = self.prxM.getPrefix(pr)
         self.manage_task_tags(task)
 
     def manage_task_tags(self, task, parent=None):
