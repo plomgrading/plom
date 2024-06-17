@@ -154,33 +154,23 @@ class MarkerExamModel(QStandardItemModel):
         """
         return self.data(self.index(r, 1))
 
-    def _setStatus(self, r: int, stat: str) -> None:
+    def _setStatus(self, r: int, status: str) -> None:
         """Sets the status of the image.
 
         Args:
             r: the row identifier of the paper.
-            stat: the new status string of the image.
+            status: the new status string of the image.
 
         Returns:
             None
         """
-        self.setData(self.index(r, 1), stat)
+        self.setData(self.index(r, 1), status)
 
-    def _setAnnotatedFile(self, r: int, aname: str, pname: str) -> None:
-        """Set the file name for the annotated image.
+    def _setAnnotatedFile(self, r: int, aname: Path | str, pname: Path | str) -> None:
+        self.setData(self.index(r, 6), str(aname))
+        self.setData(self.index(r, 7), str(pname))
 
-        Args:
-            r: the row identifier of the paper.
-            aname (str): the name for the annotated file.
-            pname (str): the name for the .plom file
-
-        Returns:
-            None
-        """
-        self.setData(self.index(r, 6), aname)
-        self.setData(self.index(r, 7), pname)
-
-    def _setPaperDir(self, r: int, tdir: str | None) -> None:
+    def _setPaperDir(self, r: int, tdir: Path | str | None) -> None:
         """Sets the paper directory for the given paper.
 
         Args:
@@ -190,6 +180,8 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
+        if tdir is not None:
+            tdir = str(tdir)
         self.setData(self.index(r, 8), tdir)
 
     def _clearPaperDir(self, r: int) -> None:
@@ -315,17 +307,17 @@ class MarkerExamModel(QStandardItemModel):
         """Return temporary directory for this task."""
         return self._getDataByTask(task, 8)
 
-    def setPaperDirByTask(self, task, tdir):
+    def setPaperDirByTask(self, task: str, tdir: Path | str):
         """Set temporary directory for this grading.
 
         Args:
-            task (str): the task for the image files to be loaded from.
-            tdir (dir): the temporary directory for task to be set to.
+            task: the task for the image files to be loaded from.
+            tdir: the temporary directory for task to be set to.
 
         Returns:
             None
         """
-        self._setDataByTask(task, 8, tdir)
+        self._setDataByTask(task, 8, str(tdir))
 
     def get_source_image_data(self, task):
         """Return the image data (as a list of dicts) for task."""
@@ -342,21 +334,30 @@ class MarkerExamModel(QStandardItemModel):
         column_idx = self._idx_src_img_data
         self._setDataByTask(task, column_idx, repr(src_img_data))
 
-    def setAnnotatedFile(self, task, aname, pname):
-        """Set the annotated image and .plom file names."""
-        self._setDataByTask(task, 6, aname)
-        self._setDataByTask(task, 7, pname)
+    def setAnnotatedFile(self, task: str, aname: Path | str, pname: Path | str) -> None:
+        """Set the annotated image and .plom file names as strings.
+
+        Args:
+            task: the task ID string.
+            aname: the name for the annotated file.
+            pname: the name for the .plom file
+
+        Returns:
+            None
+        """
+        self._setDataByTask(task, 6, str(aname))
+        self._setDataByTask(task, 7, str(pname))
 
     def getIntegrityCheck(self, task):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
-    def markPaperByTask(self, task, mrk, aname, pname, marking_time, tdir) -> None:
+    def markPaperByTask(self, task, mark, aname, pname, marking_time, tdir) -> None:
         """Add marking data for the given task.
 
         Args:
             task (str): the task for the image files to be loaded from.
-            mrk (int): the mark for this paper.
+            mark (int): the mark for this paper.
             aname (str): the annotated file name.
             pname (str): the .plom file name.
             marking_time (int/float): total marking time in seconds.
@@ -372,7 +373,7 @@ class MarkerExamModel(QStandardItemModel):
         t = self._get_marking_time(r)
         self._set_marking_time(r, marking_time + t)
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), str(mrk))
+        self.setData(self.index(r, 2), str(mark))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
