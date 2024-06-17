@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
@@ -30,56 +31,6 @@ def _marking_time_as_str(m):
     else:
         # otherwise show integer
         return f"{m:.0f}"
-
-
-class ExamQuestion:
-    """A class storing identifying information for one Exam Question.
-
-    A simple container for storing a groupimage's task ID,
-    number, group, version, status, the mark, the original image
-    filename, the annotated image filename, the mark, and the
-    time spent marking the groupimage.
-    """
-
-    def __init__(
-        self,
-        task,
-        *,
-        src_img_data=[],
-        stat="untouched",
-        mrk="-1",
-        marking_time=0,
-        tags=[],
-        integrity_check="",
-    ):
-        """Initializes an exam question.
-
-        Args:
-            task (str): the Task ID for the page being uploaded. Takes the form
-            "q1234g9" = test 1234 question 9.
-            stat (str): test status.
-            mrk (int): the mark of the question.
-            marking_time (float/int): marking time spent on that page in seconds.
-            tags (list): Tags corresponding to the exam.  We will flatten to
-                a space-separated string.
-            integrity_check (str): integrity_check = concat of md5sums of underlying images
-            src_img_data (list[dict]): a list of dicts of md5sums,
-                filenames and other metadata of the images for the test
-                question.
-
-        Notes:
-            By default set mark to be negative (since 0 is a possible mark)
-        """
-        self.prefix = task
-        self.status = stat
-        self.mark = mrk
-        self.src_img_data = src_img_data
-        # The filename for the (future) annotated image
-        self.annotatedFile = ""
-        self.plomFile = ""  # The filename for the (future) plom file
-        self.markingTime = marking_time
-        self.tags = " ".join(tags)
-        self.integrity_check = integrity_check
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -108,11 +59,33 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
 
-    def addPaper(self, paper) -> int:
+    def addPaper(
+        self,
+        task_id_str: str,
+        *,
+        src_img_data: list[dict[str, Any]] = [],
+        status: str = "untouched",
+        mark: int = -1,
+        marking_time: float = 0,
+        tags: list[str] = [],
+        integrity_check: str = "",
+    ) -> int:
         """Adds a paper to self.
 
         Args:
-            paper (ExamQuestion): the paper to be added
+            task_id_str: the Task ID for the page being uploaded. Takes the form
+                "q1234g9" for paper 1234 question 9.
+            status: test status string.
+            mark: the mark of the question.
+            marking_time (float/int): marking time spent on that page in seconds.
+            tags: Tags corresponding to the exam.  We will flatten to a
+                space-separated string.  TODO: maybe we should do that for display
+                but store as repr/json.
+            integrity_check: something from the server, especially legacy
+                servers, generally a concat of md5sums of underlying images.
+                The server expects us to be able to give it back to them.
+            src_img_data: a list of dicts of md5sums, filenames and other
+                metadata of the images for the test question.
 
         Returns:
             The integer row identifier of the added paper.
@@ -120,38 +93,38 @@ class MarkerExamModel(QStandardItemModel):
         # check if paper is already in model - if so, delete it and add it back with the new data.
         # **but** be careful - if annotation in progress then ??
         try:
-            r = self._findTask(paper.prefix)
+            r = self._findTask(task_id_str)
         except ValueError:
             pass
         else:
             # TODO: why is the model opening dialogs?!  Issue #2145.
             ErrorMsg(
                 None,
-                f"Task {paper.prefix} has been modified by server - you will need to annotate it again.",
+                f"Task {task_id_str} has been modified by server - you will need to annotate it again.",
             ).exec()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
-        # hide -1 which upstream tooling uses "not yet marked"
+        # hide -1 which something might be using for "not yet marked"
         try:
-            markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
+            markstr = str(mark) if int(mark) >= 0 else ""
         except ValueError:
             markstr = ""
-        # TODO: these *must* be strings but I don't understand why
+        # these *must* be strings but I don't understand why
         self.appendRow(
             [
-                QStandardItem(paper.prefix),
-                QStandardItem(paper.status),
+                QStandardItem(task_id_str),
+                QStandardItem(status),
                 QStandardItem(markstr),
-                QStandardItem(_marking_time_as_str(paper.markingTime)),
-                QStandardItem(paper.tags),
+                QStandardItem(_marking_time_as_str(marking_time)),
+                QStandardItem(" ".join(tags)),
                 QStandardItem("placeholder"),
-                QStandardItem(paper.annotatedFile),
-                QStandardItem(paper.plomFile),
+                QStandardItem(""),  # annotatedFile,
+                QStandardItem(""),  # plomFile
                 QStandardItem("placeholder"),
                 # todo - reorder these?
-                QStandardItem(paper.integrity_check),
-                QStandardItem(repr(paper.src_img_data)),
+                QStandardItem(integrity_check),
+                QStandardItem(repr(src_img_data)),
             ]
         )
         return r

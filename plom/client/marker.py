@@ -87,7 +87,7 @@ from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
-from .task_model import MarkerExamModel, ProxyModel, ExamQuestion
+from .task_model import MarkerExamModel, ProxyModel
 
 
 if platform.system() == "Darwin":
@@ -640,15 +640,13 @@ class MarkerClient(QWidget):
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
-                ExamQuestion(
-                    x[0],
-                    src_img_data=[],
-                    stat="marked",
-                    mrk=x[1],
-                    marking_time=x[2],
-                    tags=x[3],
-                    integrity_check=x[4],
-                )
+                x[0],
+                src_img_data=[],
+                status="marked",
+                mark=x[1],
+                marking_time=x[2],
+                tags=x[3],
+                integrity_check=x[4],
             )
             self.marking_history.append(x[0])
 
@@ -979,12 +977,10 @@ class MarkerClient(QWidget):
         self.get_downloads_for_src_img_data(src_img_data)
 
         self.examModel.addPaper(
-            ExamQuestion(
-                task,
-                src_img_data=src_img_data,
-                tags=tags,
-                integrity_check=integrity_check,
-            )
+            task,
+            src_img_data=src_img_data,
+            tags=tags,
+            integrity_check=integrity_check,
         )
 
     def moveSelectionToTask(self, task):
