@@ -49,6 +49,14 @@ _idx_src_img_data = 9
 class MarkerExamModel(QStandardItemModel):
     """A tablemodel for handling the group image marking data."""
 
+    columns_to_hide = [
+        _idx_annotated_file,
+        _idx_plom_file,
+        _idx_paper_dir,
+        _idx_integrity,
+        _idx_src_img_data,
+    ]
+
     def __init__(self, parent=None):
         """Initializes a new MarkerExamModel.
 
