@@ -18,8 +18,6 @@ from typing import Any
 from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
-from .useful_classes import ErrorMsg
-
 
 log = logging.getLogger("marker")
 
@@ -109,20 +107,25 @@ class MarkerExamModel(QStandardItemModel):
 
         Returns:
             The integer row identifier of the added paper.
+
+        Raises:
+            IndexError: already have a task matching that task_id_str.
         """
-        # check if paper is already in model - if so, delete it and add it back with the new data.
-        # **but** be careful - if annotation in progress then ??
         try:
             r = self._findTask(task_id_str)
-        except ValueError:
+        except ValueError as e:
+            assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
             pass
         else:
-            # TODO: why is the model opening dialogs?!  Issue #2145.
-            ErrorMsg(
-                None,
-                f"Task {task_id_str} has been modified by server - you will need to annotate it again.",
-            ).exec()
-            self.removeRow(r)
+            # Some earlier version of this code used to popup an error message
+            # then remove the row and try to continue.  For now just crash.
+            # self.removeRow(r)
+            raise IndexError(
+                f"We unexpected already have {task_id_str} in the table at r={r}. "
+                "Perhaps the server has modified the task in some unexpected way: "
+                "please file an issue if you see this!"
+            )
+
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
         # hide -1 which something might be using for "not yet marked"
