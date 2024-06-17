@@ -140,7 +140,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(" ".join(tags)),
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
-                QStandardItem("placeholder"),
+                QStandardItem(""),  # paperdir
                 # todo - reorder these?
                 QStandardItem(integrity_check),
                 QStandardItem(repr(src_img_data)),
