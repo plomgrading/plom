@@ -303,6 +303,8 @@ class SimpleQuestionCheckBox(QMessageBox):
 class SimpleTableView(QTableView):
     """A table-view widget that emits annotateSignal when the user hits enter or return."""
 
+    # Note: marker.ui knows about this via a "plom/client/useful_classes.h" header
+
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
