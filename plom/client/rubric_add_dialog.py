@@ -378,7 +378,6 @@ class AddRubricBox(QDialog):
 
         self.spell_checker = QPushButton("Check Spelling")
         self.spell_checker.clicked.connect(self.TE.highlight_text)
-
         lay.addWidget(self.spell_checker)
 
         flay.addRow("", lay)
@@ -408,6 +407,7 @@ class AddRubricBox(QDialog):
                 48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
             )
         )
+        vlay.addLayout(lay)
 
         hlay = QHBoxLayout()
         b = QRadioButton("absolute")
