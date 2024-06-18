@@ -72,6 +72,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomException,
     PlomNoPaper,
+    PlomNoServerSupportException,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -568,6 +569,7 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
+        self.ui.deferButton.setText("Load full list")
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
@@ -1129,6 +1131,30 @@ class MarkerClient(QWidget):
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
+        # temp call
+        try:
+            tasks = self.msgr.get_tasks(self.question_idx, self.version)
+        except PlomNoServerSupportException as e:
+            WarnMsg(self, str(e)).exec()
+        print("=== PROCESSING lots of tasks... ====")
+        for t in tasks:
+            task_id_str = f"q{t['paper_number']:04}g{t['question']}"
+            username = t.get("username", "")
+            # TODO: maybe task_model can support None for mark too...?
+            mark = t.get("score", -1)  # not keen on this -1 sentinel
+            try:
+                self.examModel.addPaper(
+                    task_id_str,
+                    src_img_data=[],
+                    mark=mark,
+                    status=t["status"],
+                    tags=t["tags"],
+                    username=username,
+                )
+            except KeyError as e:
+                print(f"Skipping this row b/c its already in there: {e}")
+                print(t)
+        return
         task = self.get_current_task_id_or_none()
         if not task:
             return
