@@ -534,7 +534,9 @@ class MarkerClient(QWidget):
         self.ui.tableView.setModel(self.prxM)
         # hide various columns without end-user useful info
         for i in self.ui.examModel.columns_to_hide:
-            self.ui.tableView.hideColumn(i)
+            # TODO: show all for now
+            pass
+            # self.ui.tableView.hideColumn(i)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
