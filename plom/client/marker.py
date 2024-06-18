@@ -682,6 +682,10 @@ class MarkerClient(QWidget):
             annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(
                 num, question_idx, edition=plomdata["annotation_edition"]
             )
+        except PlomNoPaper as e:
+            ErrorMsg(None, f"no annotations for task {task}: {e}").exec()
+            # TODO: need something more significant to happen
+            return True
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!
@@ -754,8 +758,14 @@ class MarkerClient(QWidget):
         if not self.get_files_for_previously_annotated(self.prxM.getPrefix(pr)):
             return
 
-        if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
-            self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
+        # first, display the annotated image if we have one
+        ann_img_file = self.prxM.getAnnotatedFile(pr)
+        # TODO: special hack as empty "" comes back as Path which is "."
+        if str(ann_img_file) == ".":
+            ann_img_file = ""
+
+        if ann_img_file:
+            self.testImg.updateImage(ann_img_file)
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
