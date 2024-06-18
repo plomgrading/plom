@@ -112,7 +112,7 @@ class MarkerExamModel(QStandardItemModel):
             The integer row identifier of the added paper.
 
         Raises:
-            IndexError: already have a task matching that task_id_str.
+            KeyError: already have a task matching that task_id_str.
         """
         try:
             r = self._findTask(task_id_str)
@@ -123,11 +123,7 @@ class MarkerExamModel(QStandardItemModel):
             # Some earlier version of this code used to popup an error message
             # then remove the row and try to continue.  For now just crash.
             # self.removeRow(r)
-            raise IndexError(
-                f"We unexpected already have {task_id_str} in the table at r={r}. "
-                "Perhaps the server has modified the task in some unexpected way: "
-                "please file an issue if you see this!"
-            )
+            raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
 
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
