@@ -113,6 +113,8 @@ class MgetDoneTasks(APIView):
 class GetTasks(APIView):
     """Retrieve data for tasks.
 
+    TODO: move the q data bits out of json into the url as optional q=7 stuff.
+
     Respond with status 200.
 
     Returns:

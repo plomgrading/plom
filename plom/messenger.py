@@ -241,7 +241,9 @@ class Messenger(BaseMessenger):
                     extra += f"v={v}"
                 if extra:
                     url += "?" + extra
-                response = self.get_auth(url)
+                # TODO: make this optional ? stuff work, for now we use json
+                # response = self.get_auth(url)
+                response = self.get_auth(url, json={"q": qidx, "v": v})
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
