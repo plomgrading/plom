@@ -8,6 +8,7 @@
 # Copyright (C) 2022-2024 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Bryan Tanady
 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -20,6 +21,7 @@ PyQt6==6.6.1
 PyQt6-Qt6==6.6.3
 PyQt6-sip==13.6.0
 pytest-qt==4.4.0
+pyspellchecker==0.8.1
 
 # Legacy-server only deps
 aiohttp==3.9.5
