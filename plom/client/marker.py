@@ -664,11 +664,11 @@ class MarkerClient(QWidget):
         if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
-        assert task[0] == "q"
-        assert task[5] == "g"
+        assert task[0] == "q", f"invalid task code {task}: no leading 'q'"
+        assert task[5] == "g", f"invalid task code {task}: no middle 'g'"
         num = int(task[1:5])
         question_idx = int(task[6:])
-        assert question_idx == self.question_idx
+        assert question_idx == self.question_idx, f"wrong qidx={question_idx}"
 
         try:
             integrity = self.examModel.getIntegrityCheck(task)
