@@ -978,6 +978,7 @@ class MarkerClient(QWidget):
             src_img_data=src_img_data,
             tags=tags,
             integrity_check=integrity_check,
+            username=self.msgr.username,
         )
 
     def moveSelectionToTask(self, task):
