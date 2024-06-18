@@ -643,6 +643,7 @@ class MarkerClient(QWidget):
                 marking_time=x[2],
                 tags=x[3],
                 integrity_check=x[4],
+                username=self.msgr.username,
             )
             self.marking_history.append(x[0])
 
