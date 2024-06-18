@@ -182,7 +182,7 @@ class AutoCorrectDialog(QDialog):
         h_layout.addWidget(buttons)
 
     def autocorrect(self):
-        """Replace the selected text with the choosen autocorrection option."""
+        """Replace the selected text with the chosen autocorrection option."""
         selected_items = self.list_widget.selectedItems()
         if not selected_items:
             QMessageBox.warning(
