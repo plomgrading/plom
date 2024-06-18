@@ -15,8 +15,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
 from Finish.services import SolnImageService
-from Mark.services import mark_task
-from Mark.services import MarkingTaskService, PageDataService
+from Mark.services import (
+    mark_task,
+    MarkingTaskService,
+    PageDataService,
+    MarkingStatsService,
+)
 from Papers.services import SpecificationService
 from Papers.models import Image
 
@@ -104,6 +108,34 @@ class MgetDoneTasks(APIView):
             marks,
         )
         return Response(rows, status=status.HTTP_200_OK)
+
+
+class GetTasks(APIView):
+    """Retrieve data for tasks.
+
+    Respond with status 200.
+
+    Returns:
+        List of lists of info for each task...  TODO: docs.
+        An empty list might be returned if no tasks.
+        This is potentially a lot of data so we use a list
+        of lists instead of a list of dicts for compactness.
+    """
+
+    def get(self, request: Request, *args) -> Response:
+        data = request.data
+        question_idx = data.get("q")
+        version = data.get("v")
+        # TODO: much more optional things we could support: tag, paper_min, paper_max
+        # TODO: see progress_task_annot.py
+
+        data = MarkingStatsService().filter_marking_task_annotation_info(
+            question_idx=question_idx,
+            version=version,
+        )
+        # TODO: priority might be useful?
+        # TODO: this is list of dicts
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class MgetPageDataQuestionInContext(APIView):

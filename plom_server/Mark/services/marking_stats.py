@@ -2,6 +2,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import statistics
 from typing import Any, Dict, List, Optional
 
@@ -314,11 +316,11 @@ class MarkingStatsService:
         paper_max: Optional[int] = None,
         score_min: Optional[int] = None,
         score_max: Optional[int] = None,
-        question: Optional[int] = None,
+        question_idx: Optional[int] = None,
         version: Optional[int] = None,
         username: Optional[str] = None,
         the_tag: Optional[str] = None,
-    ) -> List[Dict]:
+    ) -> list[dict[str, Any]]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
             task_set = task_set.filter(paper__paper_number__gte=paper_min)
@@ -328,8 +330,8 @@ class MarkingStatsService:
             task_set = task_set.filter(latest_annotation__score__gte=score_min)
         if score_max:
             task_set = task_set.filter(latest_annotation__score__lte=score_max)
-        if question:
-            task_set = task_set.filter(question_index=question)
+        if question_idx:
+            task_set = task_set.filter(question_index=question_idx)
         if version:
             task_set = task_set.filter(question_version=version)
         if username:

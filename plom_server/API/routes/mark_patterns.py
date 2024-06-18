@@ -7,6 +7,7 @@ from django.urls import path, re_path
 
 from API.views import (
     MgetDoneTasks,
+    GetTasks,
     MarkingProgressCount,
     MgetOneImage,
     MgetAllRubrics,
@@ -47,6 +48,11 @@ class MarkURLPatterns:
             path(
                 "tasks/complete", MgetDoneTasks.as_view(), name="api_MK_get_done_tasks"
             ),
+        ]
+        mark_patterns += tasks
+
+        tasks = [
+            path("tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
         ]
         mark_patterns += tasks
 

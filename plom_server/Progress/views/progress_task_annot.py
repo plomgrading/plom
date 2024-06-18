@@ -94,7 +94,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         task_info = mss.filter_marking_task_annotation_info(
             paper_min=optional_arg(paper),
             paper_max=optional_arg(paper),
-            question=optional_arg(question),
+            question_idx=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
             score_min=optional_arg(score),

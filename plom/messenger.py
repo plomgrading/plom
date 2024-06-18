@@ -26,6 +26,7 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoServerSupportException,
     PlomTakenException,
     PlomRangeException,
     PlomVersionMismatchException,
@@ -209,6 +210,44 @@ class Messenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def get_tasks(
+        self, qidx: int | None = None, v: int | None = None
+    ) -> list[list[Any]]:
+        """Information about all tasks.
+
+        Args:
+            qidx: which question index, or None.
+            v: which version, or None.
+
+        Returns:
+            List of info the tasks.  Each entry is a list of the task
+            string (of the form ``q0002g3``), the score, the time (in
+            seconds), a list of tags (strings), and which user its assigned to.
+            An empty list is returned if there are no tasks.
+        """
+        if self.is_legacy_server():
+            raise PlomNoServerSupportException(
+                "Legacy server does not support list of tasks"
+            )
+
+        with self.SRmutex:
+            try:
+                url = "/MK/tasks/all"
+                extra = ""
+                if qidx is not None:
+                    extra += f"q={qidx}"
+                if v is not None:
+                    extra += f"v={v}"
+                if extra:
+                    url += "?" + extra
+                response = self.get_auth(url)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MprogressCount(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
