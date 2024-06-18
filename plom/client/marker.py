@@ -732,7 +732,7 @@ class MarkerClient(QWidget):
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
-    def _updateImage(self, pr):
+    def _updateImage(self, pr: int) -> None:
         """Updates the preview image for a particular row of the table.
 
         .. note::
@@ -744,7 +744,7 @@ class MarkerClient(QWidget):
            some future Qt expert will help us...
 
         Args:
-            pr (int): which row is highlighted.
+            pr: which row is highlighted, via row index.
 
         Returns:
             None
