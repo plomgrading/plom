@@ -57,7 +57,8 @@ from PyQt6.QtWidgets import (
     QListWidget,
 )
 
-from autocorrect import Speller
+# from autocorrect import Speller
+from spellchecker import SpellChecker
 import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
@@ -136,7 +137,7 @@ class AutoCorrectDialog(QDialog):
             cursor_position: the position of the selected text.
         """
         super().__init__()
-        self.speller = Speller()
+        self.speller = SpellChecker()
         self._parent = parent
         self.cursor_position = cursor_position
 
@@ -147,11 +148,16 @@ class AutoCorrectDialog(QDialog):
 
         # Create the list of suggestions widget
         self.list_widget = QListWidget()
-        suggestions = self.speller.get_candidates(selected_word)
-        suggestions.sort(reverse=True)
-        for score, suggestion in suggestions:
-            if suggestion != selected_word:
-                self.list_widget.addItem(suggestion)
+        # suggestions = self.speller.get_candidates(selected_word)
+        suggestions = self.speller.candidates(selected_word)
+        # suggestions.sort(reverse=True)
+        if suggestions:
+            most_probable_candidate = self.speller.correction(selected_word)
+            self.list_widget.addItem(most_probable_candidate)
+
+            for suggestion in suggestions:
+                if suggestion != most_probable_candidate:
+                    self.list_widget.addItem(suggestion)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -182,7 +188,7 @@ class AutoCorrectDialog(QDialog):
         h_layout.addWidget(buttons)
 
     def autocorrect(self):
-        """Replace the selected text with the chosen autocorrection option."""
+        """Replace the selected text with the choosen autocorrection option."""
         selected_items = self.list_widget.selectedItems()
         if not selected_items:
             QMessageBox.warning(
@@ -206,7 +212,8 @@ class WideTextEdit(QTextEdit):
 
     def __init__(self):
         super().__init__()
-        self.speller = Speller()
+        # self.speller = Spell()
+        self.speller = SpellChecker()
         self.mouseDoubleClickEvent = self.on_double_click
 
     def sizeHint(self):
@@ -228,7 +235,14 @@ class WideTextEdit(QTextEdit):
         if event.button() == Qt.MouseButton.LeftButton:
             super().mouseDoubleClickEvent(event)
             selected_text = self.textCursor().selectedText()
-            if self.speller(selected_text) != selected_text:
+            best_correction = self.speller.correction(selected_text)
+            print(best_correction)
+            if (
+                len(selected_text)
+                and best_correction
+                and best_correction != selected_text
+            ):
+                print("Selected: ", selected_text)
                 autocorrect = AutoCorrectDialog(self, selected_text, self.textCursor())
                 # TODO: set dialog location to be exactly at mouse click event
                 # autocorrect.pt = (self.mapFromGlobal(event.globalPosition()))
@@ -256,7 +270,8 @@ class WideTextEdit(QTextEdit):
                 QTextCursor.MoveMode.KeepAnchor,
             )
             selected_text = cursor.selectedText()
-            if self.speller(selected_text) != selected_text:
+            best_correction = self.speller.correction(selected_text)
+            if best_correction and best_correction != selected_text:
                 cursor.mergeCharFormat(format)
             cursor.movePosition(
                 QTextCursor.MoveOperation.NextWord, QTextCursor.MoveMode.MoveAnchor
