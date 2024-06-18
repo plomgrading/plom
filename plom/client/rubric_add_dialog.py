@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -27,6 +28,8 @@ from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
     QRegularExpressionValidator,
+    QTextCursor,
+    QMouseEvent,
 )
 
 
@@ -50,8 +53,11 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QTextEdit,
     QVBoxLayout,
+    QPushButton,
+    QListWidget,
 )
 
+from autocorrect import Speller
 import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
@@ -120,11 +126,88 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
+class AutoCorrectDialog(QDialog):
+    def __init__(self, parent, selected_word: str, cursor_position: QTextCursor):
+        """Constructor of the dialog to autocorrect a spelling mistake.
+
+        Args:
+            parent: WideTextEdit
+            selected_word: the selected word that will be autocorrected.
+            cursor_position: the position of the selected text.
+        """
+        super().__init__()
+        self.speller = Speller()
+        self._parent = parent
+        self.cursor_position = cursor_position
+
+        self.setWindowTitle("Autocorrect")
+
+        # Create a label for the list
+        self.label = QLabel("Suggestions:")
+
+        # Create the list of suggestions widget
+        self.list_widget = QListWidget()
+        suggestions = self.speller.get_candidates(selected_word)
+        suggestions.sort(reverse=True)
+        for score, suggestion in suggestions:
+            if suggestion != selected_word:
+                self.list_widget.addItem(suggestion)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+
+        ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+
+        # for mypy type-checking. Mypy worries ok_button can be None
+        if ok_button:
+            ok_button.setText("Autocorrect")
+        else:
+            raise RuntimeError("There should be ok button.")
+
+        # Create the view button
+        buttons.accepted.connect(self.autocorrect)
+        buttons.rejected.connect(self.close)
+
+        # Layouts
+        v_layout = QVBoxLayout()
+        v_layout.addWidget(self.label)
+        v_layout.addWidget(self.list_widget)
+
+        h_layout = QHBoxLayout()
+        h_layout.addStretch()
+        v_layout.addLayout(h_layout)
+        self.setLayout(v_layout)
+
+        h_layout.addWidget(buttons)
+
+    def autocorrect(self):
+        """Replace the selected text with the choosen autocorrection option."""
+        selected_items = self.list_widget.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(
+                self, "No Selection", "Please select an option for autocorrection."
+            )
+            return
+        selected_autocorrect = selected_items[0].text()
+        cursor = self.cursor_position
+        cursor.beginEditBlock()
+        cursor.removeSelectedText()
+        cursor.insertText(selected_autocorrect)
+        cursor.endEditBlock()
+        self.close()
+
+
 class WideTextEdit(QTextEdit):
     """Just like QTextEdit but with hacked sizeHint() to be wider.
 
     Also, hacked to ignore shift-enter.
     """
+
+    def __init__(self):
+        super().__init__()
+        self.speller = Speller()
+        self.mouseDoubleClickEvent = self.on_double_click
 
     def sizeHint(self):
         sz = super().sizeHint()
@@ -140,6 +223,47 @@ class WideTextEdit(QTextEdit):
             e.ignore()
             return
         super().keyPressEvent(e)
+
+    def on_double_click(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            super().mouseDoubleClickEvent(event)
+            selected_text = self.textCursor().selectedText()
+            if self.speller(selected_text) != selected_text:
+                autocorrect = AutoCorrectDialog(self, selected_text, self.textCursor())
+                # TODO: set dialog location to be exactly at mouse click event
+                # autocorrect.pt = (self.mapFromGlobal(event.globalPosition()))
+                # print(event.globalPosition())
+                autocorrect.exec()
+
+    def highlight_text(self):
+        """Underline the texts that are suspected for spelling mistake."""
+        cursor = QTextCursor(self.document())
+        cursor.select(QTextCursor.SelectionType.Document)
+        cursor.setCharFormat(QTextCharFormat())
+        cursor.beginEditBlock()
+
+        # Create a QTextCharFormat for formatting
+        format = QTextCharFormat()
+        format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SpellCheckUnderline)
+        format.setUnderlineColor(QColor("red"))
+
+        start_position = 0
+        cursor.setPosition(start_position)
+        selected_text = " "
+        while selected_text:
+            cursor.movePosition(
+                QTextCursor.MoveOperation.EndOfWord,
+                QTextCursor.MoveMode.KeepAnchor,
+            )
+            selected_text = cursor.selectedText()
+            if self.speller(selected_text) != selected_text:
+                cursor.mergeCharFormat(format)
+            cursor.movePosition(
+                QTextCursor.MoveOperation.NextWord, QTextCursor.MoveMode.MoveAnchor
+            )
+
+        cursor.endEditBlock()
+        self.setCurrentCharFormat(QTextCharFormat())
 
 
 class AddRubricBox(QDialog):
@@ -236,6 +360,12 @@ class AddRubricBox(QDialog):
         lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
         reapable_layout = lay
+
+        self.spell_checker = QPushButton("Check Spelling")
+        self.spell_checker.clicked.connect(self.TE.highlight_text)
+
+        lay.addWidget(self.spell_checker)
+
         flay.addRow("", lay)
 
         frame = QFrame()
@@ -263,7 +393,7 @@ class AddRubricBox(QDialog):
                 48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
             )
         )
-        vlay.addLayout(lay)
+
         hlay = QHBoxLayout()
         b = QRadioButton("absolute")
         abs_tooltip = "Indicates a score as a part of a maximum possible amount"
@@ -452,7 +582,7 @@ class AddRubricBox(QDialog):
         else:
             for i in range(reapable_layout.count()):
                 w = reapable_layout.itemAt(i).widget()
-                if w:
+                if w and w != self.spell_checker:
                     w.setEnabled(False)
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
