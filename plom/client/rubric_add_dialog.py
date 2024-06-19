@@ -253,6 +253,15 @@ class WideTextEdit(QTextEdit):
         super().keyPressEvent(e)
 
     def on_double_click(self, event: QMouseEvent):
+        """Handle double click event.
+
+        Only pops up the autocorrection suggestions if the most likely
+        replacement word is different from the selected text, and the
+        selected text is not empty.
+
+        Raises:
+            RunTimeError if the AddRubricBox dialog is unitialized.
+        """
         if event.button() == Qt.MouseButton.LeftButton:
             super().mouseDoubleClickEvent(event)
             selected_text = self.textCursor().selectedText()
@@ -266,6 +275,10 @@ class WideTextEdit(QTextEdit):
                 splitter = self.parentWidget()
                 if splitter:
                     rubric_dialog = splitter.parentWidget()
+                else:
+                    raise RuntimeError(
+                        "Rubric Box Dialog is unexpectedly uninitialized"
+                    )
 
                 if isinstance(rubric_dialog, AddRubricBox):
                     autocorrect = rubric_dialog.autocorrect
