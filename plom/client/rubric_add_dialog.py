@@ -240,6 +240,17 @@ class WideTextEdit(QTextEdit):
         ):
             e.ignore()
             return
+
+        # Reset formatting, otherwise it can unexpectedly adopt the
+        # red squiggle line while backspacing.
+        # TODO: Decide whether reset format for any key or only backspace
+        # What should happen when text is inputted in the middle of
+        # the highligted text?.
+        elif e.key() == Qt.Key.Key_Backspace:
+            super().keyPressEvent(e)
+            self.setCurrentCharFormat(QTextCharFormat())
+            return
+
         super().keyPressEvent(e)
 
     def on_double_click(self, event: QMouseEvent):
@@ -253,7 +264,10 @@ class WideTextEdit(QTextEdit):
                 and best_correction != selected_text
             ):
                 # The first parent is QSplitter
-                rubric_dialog: AddRubricBox = self.parentWidget().parentWidget()
+                splitter = self.parentWidget()
+                if splitter:
+                    rubric_dialog = splitter.parentWidget()
+
                 autocorrect: AutoCorrectWidget = rubric_dialog.autocorrect
                 autocorrect.set_selected_word(selected_text, self.textCursor())
 
