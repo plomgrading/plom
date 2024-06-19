@@ -253,7 +253,7 @@ class WideTextEdit(QTextEdit):
         super().keyPressEvent(e)
 
     def on_double_click(self, event: QMouseEvent):
-        """Handle double click event.
+        """Handle double left-click event.
 
         Only pops up the autocorrection suggestions if the most likely
         replacement word is different from the selected text, and the
