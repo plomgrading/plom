@@ -12,7 +12,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from ..models import MarkingTask
+from ..models import MarkingTask, Annotation, AnnotationImage
 from . import mark_task, page_data
 from . import create_new_annotation_in_database
 
@@ -231,3 +231,10 @@ class QuestionMarkingService:
         # Note the helper function above also performs `task.save`; that seems ok.
         task.status = MarkingTask.COMPLETE
         task.save()
+
+    def hard_reset(self) -> None:
+        """Delete all annotations to perform a hard reset."""
+        for annotation_image in AnnotationImage.objects.all():
+            annotation_image.image.delete()
+            annotation_image.delete()
+        Annotation.objects.all().delete()

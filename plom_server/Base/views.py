@@ -9,6 +9,9 @@ from django.views.generic import View
 from Base.base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
 
+from Rubrics.services import RubricService
+from Mark.services import QuestionMarkingService
+
 
 class TroublesAfootGenericErrorView(View):
     def get(self, request: HttpRequest, *, hint: str) -> HttpResponse:
@@ -82,6 +85,12 @@ class ResetConfirmView(ManagerRequiredView):
         if form.is_valid():
             if form.cleaned_data[_confirm_field] == reset_phrase:
                 # Call the master reset function here
+
+                # Rubric App Deletion
+                # RubricService().erase_all_rubrics()
+
+                QuestionMarkingService().hard_reset()
+
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")
             form.add_error(_confirm_field, "Phrase is incorrect")
