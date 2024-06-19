@@ -285,7 +285,12 @@ class WideTextEdit(QTextEdit):
                     autocorrect.set_selected_word(selected_text, self.textCursor())
 
     def highlight_text(self):
-        """Underline the texts that are suspected for spelling mistake."""
+        """Underline the texts that are suspected for spelling mistake.
+
+        The text is underlined with red squiggle line when the most likely
+        replacement word is not an empty text and is different from the
+        selected text.
+        """
         cursor = QTextCursor(self.document())
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setCharFormat(QTextCharFormat())
