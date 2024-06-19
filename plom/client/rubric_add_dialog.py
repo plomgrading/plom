@@ -269,7 +269,7 @@ class WideTextEdit(QTextEdit):
             selected_text = self.textCursor().selectedText()
             best_correction = self.speller.correction(selected_text)
             if (
-                selected_tex != "tex"
+                selected_text != "tex"
                 and len(selected_text)
                 and best_correction
                 and best_correction != selected_text
