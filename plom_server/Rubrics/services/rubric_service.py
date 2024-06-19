@@ -114,12 +114,13 @@ class RubricService:
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
-        username = rubric_data.pop("username")
-        try:
-            user = User.objects.get(username=username)
-            rubric_data["user"] = user.pk
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"User {username} does not exist.") from e
+        if rubric_data["user"] is None:
+            username = rubric_data.pop("username")
+            try:
+                user = User.objects.get(username=username)
+                rubric_data["user"] = user.pk
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User {username} does not exist.") from e
 
         s = SettingsModel.load()
         if creating_user is None:
@@ -607,7 +608,12 @@ class RubricService:
 
         f = io.StringIO()
         if filetype == "json":
-            json.dump(rubrics, f, indent="  ")
+            if question is not None:
+                queryset = Rubric.objects.filter(question=question)
+            else:
+                queryset = Rubric.objects.all()
+            serializer = RubricSerializer(queryset, many=True)
+            json.dump(serializer.data, f, indent="  ")
         elif filetype == "toml":
             tomlkit.dump({"rubric": rubrics}, f)
         elif filetype == "csv":

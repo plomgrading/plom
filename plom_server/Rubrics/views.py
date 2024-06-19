@@ -337,17 +337,23 @@ class DownloadRubricView(ManagerRequiredView):
     def get(self, request: HttpRequest):
         service = RubricService()
         question = request.GET.get("question_filter")
+        filetype = request.GET.get("file_type")
         # TODO: Add support for other file types after resolution of Issue #3414
         # format_choice = request.GET.get("format_choice")
         if question is not None and len(question) != 0:
             question = int(question)
         else:
             question = None
-
-        buf = service.get_rubric_as_file("csv", question=question)
-        response = HttpResponse(buf.getvalue(), content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=rubrics.csv"
-        return response
+        if filetype == "json":
+            buf = service.get_rubric_as_file("json", question=question)
+            response = HttpResponse(buf.getvalue(), content_type="text/json")
+            response["Content-Disposition"] = "attachment; filename=rubrics.json"
+            return response
+        else:
+            buf = service.get_rubric_as_file("csv", question=question)
+            response = HttpResponse(buf.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=rubrics.csv"
+            return response
 
 
 class UploadRubricView(ManagerRequiredView):
@@ -356,9 +362,10 @@ class UploadRubricView(ManagerRequiredView):
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
 
         # TODO: Add support for other file types after resolution of Issue #3414
-        if suffix == "csv":
+        if suffix == "csv" or suffix == "json":
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
         else:
+            messages.error(request, "Invalid rubric file format")
             return redirect("rubrics_admin")
 
         service.get_rubric_from_file(f, suffix)
