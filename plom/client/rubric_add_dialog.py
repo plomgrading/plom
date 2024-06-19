@@ -55,6 +55,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
     QListWidget,
+    QSplitter,
 )
 
 # from autocorrect import Speller
@@ -127,42 +128,24 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
-class AutoCorrectDialog(QDialog):
-    def __init__(self, parent, selected_word: str, cursor_position: QTextCursor):
-        """Constructor of the dialog to autocorrect a spelling mistake.
-
-        Args:
-            parent: WideTextEdit
-            selected_word: the selected word that will be autocorrected.
-            cursor_position: the position of the selected text.
-        """
+class AutoCorrectWidget(QFrame):
+    def __init__(self):
+        """Constructor of the QFrame showing autocorrect suggestions."""
         super().__init__()
         self.speller = SpellChecker()
-        self._parent = parent
-        self.cursor_position = cursor_position
-
-        self.setWindowTitle("Autocorrect")
-
-        # Create a label for the list
-        self.label = QLabel("Suggestions:")
-
-        # Create the list of suggestions widget
         self.list_widget = QListWidget()
-        # suggestions = self.speller.get_candidates(selected_word)
-        suggestions = self.speller.candidates(selected_word)
-        # suggestions.sort(reverse=True)
-        if suggestions:
-            most_probable_candidate = self.speller.correction(selected_word)
-            self.list_widget.addItem(most_probable_candidate)
+        self.setFrameShape(QFrame.Shape.Box)
 
-            for suggestion in suggestions:
-                if suggestion != most_probable_candidate:
-                    self.list_widget.addItem(suggestion)
+        self.init_ui()
 
+        # Only show the widget when it's not empty
+        self.hide()
+
+    def init_ui(self):
+        self.label = QLabel("Suggestions:")
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-
         ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
 
         # for mypy type-checking. Mypy worries ok_button can be None
@@ -171,7 +154,6 @@ class AutoCorrectDialog(QDialog):
         else:
             raise RuntimeError("There should be ok button.")
 
-        # Create the view button
         buttons.accepted.connect(self.autocorrect)
         buttons.rejected.connect(self.close)
 
@@ -186,6 +168,37 @@ class AutoCorrectDialog(QDialog):
         self.setLayout(v_layout)
 
         h_layout.addWidget(buttons)
+
+    def set_selected_word(self, selected_word: str, cursor: QTextCursor):
+        """Request autocorrection for the selected word.
+
+        Args:
+            selected_word: the word that will be requested for
+            autocorrections.
+
+            cursor: the text cursor location in WideTextEdit text box.
+        """
+
+        self.selected_word = selected_word
+        self.cursor_position = cursor
+        self.update_suggestions()
+
+    def update_suggestions(self):
+        """Update the autocorrection suggestion list."""
+        self.list_widget.clear()
+        suggestions = self.speller.candidates(self.selected_word)
+        if suggestions:
+            most_probable_candidate = self.speller.correction(self.selected_word)
+            self.list_widget.addItem(most_probable_candidate)
+
+            for suggestion in suggestions:
+                if suggestion != most_probable_candidate:
+                    self.list_widget.addItem(suggestion)
+
+        if self.list_widget.count() > 0:
+            self.show()
+        else:
+            self.hide()
 
     def autocorrect(self):
         """Replace the selected text with the chosen autocorrection option."""
@@ -212,7 +225,6 @@ class WideTextEdit(QTextEdit):
 
     def __init__(self):
         super().__init__()
-        # self.speller = Spell()
         self.speller = SpellChecker()
         self.mouseDoubleClickEvent = self.on_double_click
 
@@ -236,18 +248,15 @@ class WideTextEdit(QTextEdit):
             super().mouseDoubleClickEvent(event)
             selected_text = self.textCursor().selectedText()
             best_correction = self.speller.correction(selected_text)
-            print(best_correction)
             if (
                 len(selected_text)
                 and best_correction
                 and best_correction != selected_text
             ):
-                print("Selected: ", selected_text)
-                autocorrect = AutoCorrectDialog(self, selected_text, self.textCursor())
-                # TODO: set dialog location to be exactly at mouse click event
-                # autocorrect.pt = (self.mapFromGlobal(event.globalPosition()))
-                # print(event.globalPosition())
-                autocorrect.exec()
+                # The first parent is QSplitter
+                rubric_dialog: AddRubricBox = self.parentWidget().parentWidget()
+                autocorrect: AutoCorrectWidget = rubric_dialog.autocorrect
+                autocorrect.set_selected_word(selected_text, self.textCursor())
 
     def highlight_text(self):
         """Underline the texts that are suspected for spelling mistake."""
@@ -345,6 +354,11 @@ class AddRubricBox(QDialog):
 
         self.reapable_CB = QComboBox()
         self.TE = WideTextEdit()
+        self.autocorrect = AutoCorrectWidget()
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(self.TE)
+        self.splitter.addWidget(self.autocorrect)
+
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
@@ -365,7 +379,7 @@ class AddRubricBox(QDialog):
         self.TEmeta.setSizePolicy(sizePolicy)
 
         flay = QFormLayout()
-        flay.addRow("Text", self.TE)
+        flay.addRow("Text", self.splitter)
         lay = QHBoxLayout()
         lay.addItem(
             QSpacerItem(
