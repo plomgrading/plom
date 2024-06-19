@@ -14,8 +14,8 @@ PyQt6-sip==13.6.0
 arrow==1.3.0
 exif==1.6.0
 fonttools==4.51.0
-importlib-resources==6.3.2
-packaging==24.0
+importlib-resources==6.4.0
+packaging==24.1
 # Pandas 2.0.3 is the last version supporting Python 3.8, needed to build AppImage
 # Note other requirements.txt have moved beyond this
 pandas==2.0.3
@@ -31,4 +31,4 @@ stdiomask==0.0.6
 tomli==2.0.1
 tomlkit==0.12.5
 tqdm==4.66.4
-urllib3==2.2.1
+urllib3==2.2.2

@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
+# Copyright (C) 2024 Bryan Tanady
 
 """The Plom Marker client."""
 
@@ -41,14 +42,11 @@ from packaging.version import Version
 from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
-    QModelIndex,
-    QSortFilterProxyModel,
     QTimer,
     QThread,
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QDialog,
     QInputDialog,
@@ -89,6 +87,7 @@ from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
+from .task_model import MarkerExamModel, ProxyModel
 
 
 if platform.system() == "Darwin":
@@ -99,15 +98,6 @@ if platform.system() == "Darwin":
 
 
 log = logging.getLogger("marker")
-
-
-def _marking_time_as_str(m):
-    if m < 10:
-        # show 2 sigfigs if less than 10
-        return f"{m:.2g}"
-    else:
-        # otherwise show integer
-        return f"{m:.0f}"
 
 
 class BackgroundUploader(QThread):
@@ -327,523 +317,6 @@ def upload(
     return True
 
 
-class ExamQuestion:
-    """A class storing identifying information for one Exam Question.
-
-    A simple container for storing a groupimage's task ID,
-    number, group, version, status, the mark, the original image
-    filename, the annotated image filename, the mark, and the
-    time spent marking the groupimage.
-    """
-
-    def __init__(
-        self,
-        task,
-        *,
-        src_img_data=[],
-        stat="untouched",
-        mrk="-1",
-        marking_time=0,
-        tags=[],
-        integrity_check="",
-    ):
-        """Initializes an exam question.
-
-        Args:
-            task (str): the Task ID for the page being uploaded. Takes the form
-            "q1234g9" = test 1234 question 9.
-            stat (str): test status.
-            mrk (int): the mark of the question.
-            marking_time (float/int): marking time spent on that page in seconds.
-            tags (list): Tags corresponding to the exam.  We will flatten to
-                a space-separated string.
-            integrity_check (str): integrity_check = concat of md5sums of underlying images
-            src_img_data (list[dict]): a list of dicts of md5sums,
-                filenames and other metadata of the images for the test
-                question.
-
-        Notes:
-            By default set mark to be negative (since 0 is a possible mark)
-        """
-        self.prefix = task
-        self.status = stat
-        self.mark = mrk
-        self.src_img_data = src_img_data
-        # The filename for the (future) annotated image
-        self.annotatedFile = ""
-        self.plomFile = ""  # The filename for the (future) plom file
-        self.markingTime = marking_time
-        self.tags = " ".join(tags)
-        self.integrity_check = integrity_check
-
-
-class MarkerExamModel(QStandardItemModel):
-    """A tablemodel for handling the group image marking data."""
-
-    def __init__(self, parent=None):
-        """Initializes a new MarkerExamModel.
-
-        Args:
-            parent (QStandardItemModel): MarkerExamModel's Parent.
-        """
-        super().__init__(parent)
-        self.setHorizontalHeaderLabels(
-            [
-                "Task",
-                "Status",
-                "Mark",
-                "Time (s)",
-                "Tag",
-                "OriginalFiles",
-                "AnnotatedFile",
-                "PlomFile",
-                "PaperDir",
-                "integrity_check",
-                "src_img_data",
-            ]
-        )
-
-    def addPaper(self, paper) -> int:
-        """Adds a paper to self.
-
-        Args:
-            paper (ExamQuestion): the paper to be added
-
-        Returns:
-            The integer row identifier of the added paper.
-        """
-        # check if paper is already in model - if so, delete it and add it back with the new data.
-        # **but** be careful - if annotation in progress then ??
-        try:
-            r = self._findTask(paper.prefix)
-        except ValueError:
-            pass
-        else:
-            # TODO: why is the model opening dialogs?!  Issue #2145.
-            ErrorMsg(
-                None,
-                f"Task {paper.prefix} has been modified by server - you will need to annotate it again.",
-            ).exec()
-            self.removeRow(r)
-        # Append new groupimage to list and append new row to table.
-        r = self.rowCount()
-        # hide -1 which upstream tooling uses "not yet marked"
-        try:
-            markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
-        except ValueError:
-            markstr = ""
-        # TODO: these *must* be strings but I don't understand why
-        self.appendRow(
-            [
-                QStandardItem(paper.prefix),
-                QStandardItem(paper.status),
-                QStandardItem(markstr),
-                QStandardItem(_marking_time_as_str(paper.markingTime)),
-                QStandardItem(paper.tags),
-                QStandardItem("placeholder"),
-                QStandardItem(paper.annotatedFile),
-                QStandardItem(paper.plomFile),
-                QStandardItem("placeholder"),
-                # todo - reorder these?
-                QStandardItem(paper.integrity_check),
-                QStandardItem(repr(paper.src_img_data)),
-            ]
-        )
-        return r
-
-    def _getPrefix(self, r: int) -> str:
-        """Return the prefix of the image.
-
-        Args:
-            r: the row identifier of the paper.
-
-        Returns:
-            the string prefix of the image
-        """
-        return self.data(self.index(r, 0))
-
-    def _getStatus(self, r: int) -> str:
-        """Returns the status of the image.
-
-        Args:
-            r: the row identifier of the paper.
-
-        Returns:
-            The status of the image
-        """
-        return self.data(self.index(r, 1))
-
-    def _setStatus(self, r: int, stat: str) -> None:
-        """Sets the status of the image.
-
-        Args:
-            r: the row identifier of the paper.
-            stat: the new status string of the image.
-
-        Returns:
-            None
-        """
-        self.setData(self.index(r, 1), stat)
-
-    def _setAnnotatedFile(self, r: int, aname: str, pname: str) -> None:
-        """Set the file name for the annotated image.
-
-        Args:
-            r: the row identifier of the paper.
-            aname (str): the name for the annotated file.
-            pname (str): the name for the .plom file
-
-        Returns:
-            None
-        """
-        self.setData(self.index(r, 6), aname)
-        self.setData(self.index(r, 7), pname)
-
-    def _setPaperDir(self, r: int, tdir: str | None) -> None:
-        """Sets the paper directory for the given paper.
-
-        Args:
-            r: the row identifier of the paper.
-            tdir: None or the name of a temporary directory for this paper.
-
-        Returns:
-            None
-        """
-        self.setData(self.index(r, 8), tdir)
-
-    def _clearPaperDir(self, r: int) -> None:
-        """Clears the paper directory for the given paper.
-
-        Args:
-            r: the row identifier of the paper.
-
-        Returns:
-            None
-        """
-        self._setPaperDir(r, None)
-
-    def _getPaperDir(self, r: int) -> str:
-        """Returns the paper directory for the given paper.
-
-        Args:
-            r: the row identifier of the paper.
-
-        Returns:
-            Name of a temporary directory for this paper.
-        """
-        return self.data(self.index(r, 8))
-
-    def _get_marking_time(self, r):
-        # TODO: instead of packing/unpacking a string, there should be a model
-        return float(self.data(self.index(r, 3)))
-
-    def _set_marking_time(self, r, marking_time):
-        self.setData(self.index(r, 3), _marking_time_as_str(marking_time))
-
-    def _findTask(self, task: str) -> int:
-        """Return the row index of this task.
-
-        Args:
-            task (str): the task for the image files to be loaded from.
-                Takes the form "q1234g9" = test 1234 question index 9.
-
-        Returns:
-            The row index of the task.
-
-        Raises:
-             ValueError if not found.
-        """
-        r0 = []
-        for r in range(self.rowCount()):
-            if self._getPrefix(r) == task:
-                r0.append(r)
-
-        if len(r0) == 0:
-            raise ValueError("task {} not found!".format(task))
-        elif not len(r0) == 1:
-            raise ValueError(
-                "Repeated task {} in rows {}  This should not happen!".format(task, r0)
-            )
-        return r0[0]
-
-    def _setDataByTask(self, task, n, stuff):
-        """Find the row identifier with `task` and sets `n`th column to `stuff`.
-
-        Args:
-            task (str): the task for the image files to be loaded from.
-            n (int): the column to be loaded into.
-            stuff: whatever is being added.
-
-        Returns:
-            None
-        """
-        r = self._findTask(task)
-        self.setData(self.index(r, n), stuff)
-
-    def _getDataByTask(self, task, n):
-        """Returns contents of task in `n`th column.
-
-        Args:
-            task (str): the task for the image files to be loaded from.
-            n (int): the column to return from.
-
-        Returns:
-            Contents of task in `n`th column.
-        """
-        r = self._findTask(task)
-        return self.data(self.index(r, n))
-
-    def getStatusByTask(self, task):
-        """Return status for task."""
-        return self._getDataByTask(task, 1)
-
-    def setStatusByTask(self, task, st):
-        """Set status for task."""
-        self._setDataByTask(task, 1, st)
-
-    def getTagsByTask(self, task):
-        """Return a list of tags for task.
-
-        TODO: can we draw flat, but use list for storing?
-        """
-        return self._getDataByTask(task, 4).split()
-
-    def setTagsByTask(self, task, tags):
-        """Set a list of tags for task.
-
-        Note: internally stored as flattened string.
-        """
-        return self._setDataByTask(task, 4, " ".join(tags))
-
-    def get_marking_time_by_task(self, task):
-        """Return total marking time (s) for task (str), return float."""
-        r = self._findTask(task)
-        return self._get_marking_time(r)
-
-    def getAnnotatedFileByTask(self, task):
-        """Returns the filename of the annotated image."""
-        return Path(self._getDataByTask(task, 6))
-
-    def getPlomFileByTask(self, task):
-        """Returns the filename of the plom json data."""
-        return Path(self._getDataByTask(task, 7))
-
-    def getPaperDirByTask(self, task):
-        """Return temporary directory for this task."""
-        return self._getDataByTask(task, 8)
-
-    def setPaperDirByTask(self, task, tdir):
-        """Set temporary directory for this grading.
-
-        Args:
-            task (str): the task for the image files to be loaded from.
-            tdir (dir): the temporary directory for task to be set to.
-
-        Returns:
-            None
-        """
-        self._setDataByTask(task, 8, tdir)
-
-    def _setImageData(self, task, src_img_data):
-        """Set the md5sums etc of the original image files."""
-        log.debug("Setting img data to {}".format(src_img_data))
-        self._setDataByTask(task, 10, repr(src_img_data))
-
-    def get_source_image_data(self, task):
-        """Return the image data (as a list of dicts) for task."""
-        # dangerous repr/eval pair?  Is json safer/better?
-        r = eval(self._getDataByTask(task, 10))
-        return r
-
-    def setOriginalFilesAndData(self, task, src_img_data):
-        """Set the original un-annotated image filenames and other metadata."""
-        self._setImageData(task, src_img_data)
-
-    def setAnnotatedFile(self, task, aname, pname):
-        """Set the annotated image and .plom file names."""
-        self._setDataByTask(task, 6, aname)
-        self._setDataByTask(task, 7, pname)
-
-    def getIntegrityCheck(self, task):
-        """Return integrity_check for task as string."""
-        return self._getDataByTask(task, 9)
-
-    def markPaperByTask(self, task, mrk, aname, pname, marking_time, tdir) -> None:
-        """Add marking data for the given task.
-
-        Args:
-            task (str): the task for the image files to be loaded from.
-            mrk (int): the mark for this paper.
-            aname (str): the annotated file name.
-            pname (str): the .plom file name.
-            marking_time (int/float): total marking time in seconds.
-            tdir (dir): the temporary directory for task to be set to.
-
-        Returns:
-            None
-        """
-        # There should be exactly one row with this Task
-        r = self._findTask(task)
-        # When marked, set the annotated filename, the plomfile, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        t = self._get_marking_time(r)
-        self._set_marking_time(r, marking_time + t)
-        self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), str(mrk))
-        self._setAnnotatedFile(r, aname, pname)
-        self._setPaperDir(r, tdir)
-
-    def deferPaper(self, task):
-        """Sets the status for the task's paper to deferred."""
-        self.setStatusByTask(task, "deferred")
-
-    def removePaper(self, task):
-        """Removes the task's paper from self."""
-        r = self._findTask(task)
-        self.removeRow(r)
-
-    def countReadyToMark(self):
-        """Returns the number of untouched Papers."""
-        count = 0
-        for r in range(self.rowCount()):
-            if self._getStatus(r) == "untouched":
-                count += 1
-        return count
-
-
-##########################
-class ProxyModel(QSortFilterProxyModel):
-    """A proxymodel wrapper to handle filtering and sorting of table model."""
-
-    def __init__(self, parent=None):
-        """Initializes a new ProxyModel object.
-
-        Args:
-            parent (QObject): self's parent.
-        """
-        super().__init__(parent)
-        self.setFilterKeyColumn(4)
-        self.filterString = ""
-        self.invert = False
-
-    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        """Sees if left data is less than right data.
-
-        Args:
-            left (QModelIndex):
-            right (QModelIndex):
-
-        Returns:
-            bool: if both can be converted to int, compare as ints.
-            Otherwise, convert to strings and compare.
-        """
-        # try to compare as integers
-        try:
-            return int(left.data()) < int(right.data())
-        except (ValueError, TypeError):
-            pass
-        # else compare as strings
-        return str(left.data()) < str(right.data())
-
-    def setFilterString(self, flt: str) -> None:
-        """Sets the Filter String.
-
-        Args:
-            flt: the string on which to filter.
-
-        Returns:
-            None
-        """
-        self.filterString = flt
-
-    def filterTags(self, invert=False):
-        """Sets the Filter Tags based on string.
-
-        Args:
-            invert (bool): True if looking for files that do not have given
-                filter string, false otherwise.
-
-        Returns:
-            None
-        """
-        self.invert = invert
-        self.setFilterFixedString(self.filterString)
-
-    def filterAcceptsRow(self, pos, index):
-        """Checks if a row matches the current filter.
-
-        Notes:
-            Overrides base method.
-
-        Args:
-            pos (int): row being checked.
-            index (any): unused.
-
-        Returns:
-            bool: True if filter accepts the row, False otherwise.
-
-        The filter string is first broken into words.  All of those words
-        must be in the tags of the row, in any order.  The `invert` flag
-        inverts that logic: at least one of the words must not be in the
-        tags.
-        """
-        search_terms = self.filterString.casefold().split()
-        tags = self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
-        all_search_terms_in_tags = all(x in tags for x in search_terms)
-        if self.invert:
-            return not all_search_terms_in_tags
-        return all_search_terms_in_tags
-
-    def getPrefix(self, r: int) -> str:
-        """Returns the task code of inputted row index.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            str: the prefix of the paper indicated by r.
-        """
-        return self.data(self.index(r, 0))
-
-    def getStatus(self, r: int) -> str:
-        """Returns the status of inputted row index.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            str: the status of the paper indicated by r.
-        """
-        # Return the status of the image
-        return self.data(self.index(r, 1))
-
-    def getAnnotatedFile(self, r: int) -> str:
-        """Returns the file names of an annotated image.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            str: the file name of the annotated image of the paper in r.
-        """
-        return self.data(self.index(r, 6))
-
-    def rowFromTask(self, task):
-        """Return the row index (int) of this task (str) or None if absent."""
-        r0 = []
-        for r in range(self.rowCount()):
-            if self.getPrefix(r) == task:
-                r0.append(r)
-
-        if len(r0) == 0:
-            return None
-        elif not len(r0) == 1:
-            raise ValueError(
-                "Repeated task {} in rows {}  This should not happen!".format(task, r0)
-            )
-        return r0[0]
-
-
 class MarkerClient(QWidget):
     """Setup for marking client and annotator.
 
@@ -1059,12 +532,8 @@ class MarkerClient(QWidget):
         self.prxM.setSourceModel(self.examModel)
         self.ui.tableView.setModel(self.prxM)
         # hide various columns without end-user useful info
-        self.ui.tableView.hideColumn(5)
-        self.ui.tableView.hideColumn(6)
-        self.ui.tableView.hideColumn(7)
-        self.ui.tableView.hideColumn(8)
-        self.ui.tableView.hideColumn(9)
-        self.ui.tableView.hideColumn(10)
+        for i in self.ui.examModel.columns_to_hide:
+            self.ui.tableView.hideColumn(i)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
@@ -1167,15 +636,13 @@ class MarkerClient(QWidget):
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
-                ExamQuestion(
-                    x[0],
-                    src_img_data=[],
-                    stat="marked",
-                    mrk=x[1],
-                    marking_time=x[2],
-                    tags=x[3],
-                    integrity_check=x[4],
-                )
+                x[0],
+                src_img_data=[],
+                status="marked",
+                mark=x[1],
+                marking_time=x[2],
+                tags=x[3],
+                integrity_check=x[4],
             )
             self.marking_history.append(x[0])
 
@@ -1247,13 +714,13 @@ class MarkerClient(QWidget):
                 row["server_path"] = f
         self.get_downloads_for_src_img_data(src_img_data)
 
-        self.examModel.setOriginalFilesAndData(task, src_img_data)
+        self.examModel.set_source_image_data(task, src_img_data)
 
         paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
-        aname = paperdir / "G{task[1:]}.{annot_img_info['extension']}"
-        pname = paperdir / "G{task[1:]}.plom"
+        aname = paperdir / f"G{task[1:]}.{annot_img_info['extension']}"
+        pname = paperdir / f"G{task[1:]}.plom"
         with open(aname, "wb") as fh:
             fh.write(annot_img_bytes)
         with open(pname, "w") as f:
@@ -1300,7 +767,7 @@ class MarkerClient(QWidget):
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
-    def _updateCurrentlySelectedRow(self):
+    def _updateCurrentlySelectedRow(self) -> None:
         """Updates the preview image for the currently selected row of the table.
 
         Returns:
@@ -1506,12 +973,10 @@ class MarkerClient(QWidget):
         self.get_downloads_for_src_img_data(src_img_data)
 
         self.examModel.addPaper(
-            ExamQuestion(
-                task,
-                src_img_data=src_img_data,
-                tags=tags,
-                integrity_check=integrity_check,
-            )
+            task,
+            src_img_data=src_img_data,
+            tags=tags,
+            integrity_check=integrity_check,
         )
 
     def moveSelectionToTask(self, task):
@@ -1602,11 +1067,11 @@ class MarkerClient(QWidget):
         """
         self.requestNext(update_select=False)
 
-    def moveToNextUnmarkedTest(self, task=None) -> bool:
+    def moveToNextUnmarkedTest(self, task: str | None = None) -> bool:
         """Move the list to the next unmarked test, if possible.
 
         Args:
-            task (str): the task number of the next unmarked test.
+            task: the task number of the next unmarked test.
 
         Returns:
             True if move was successful, False if not, for any reason.
@@ -1662,11 +1127,9 @@ class MarkerClient(QWidget):
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.get_current_task_id_or_none()
+        if not task:
             return
-        task = self.prxM.getPrefix(pr)
         if self.examModel.getStatusByTask(task) == "deferred":
             return
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
@@ -1679,7 +1142,8 @@ class MarkerClient(QWidget):
 
         Args:
             initialData (list): containing things documented elsewhere
-                in :func:`plom.client.annotator.Annotator.__init__`.
+                in :method:`getDataForAnnotator`
+                and :func:`plom.client.annotator.Annotator.__init__`.
 
         Returns:
             None
@@ -1702,12 +1166,9 @@ class MarkerClient(QWidget):
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
-        if len(self.ui.tableView.selectedIndexes()):
-            row = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.get_current_task_id_or_none()
+        if not task:
             return
-
-        task = self.prxM.getPrefix(row)
         inidata = self.getDataForAnnotator(task)
         # make sure getDataForAnnotator did not fail
         if inidata is None:
@@ -1720,20 +1181,21 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def getDataForAnnotator(self, task):
+    def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
 
         Args:
-            task (str): the task id.  If original qXXXXgYY, then annotated
+            task: the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
 
         Returns:
-            list/None: as described by startTheAnnotator, if successful.
+            A tuple of data or None.
         """
         # Create annotated filename.
         assert task.startswith("q")
-        paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
-        paperdir = Path(paperdir)
+        paperdir = Path(
+            tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
+        )
         log.debug("create paperdir %s for annotating", paperdir)
         Gtask = "G" + task[1:]
         # note no extension yet
@@ -1743,7 +1205,7 @@ class MarkerClient(QWidget):
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
-                return
+                return None
             oldpname = self.examModel.getPlomFileByTask(task)
             with open(oldpname, "r") as fh:
                 pdict = json.load(fh)
@@ -1770,7 +1232,7 @@ class MarkerClient(QWidget):
                     "Still waiting for download.  Do you want to wait a bit longer?",
                 )
                 if msg.exec() == QMessageBox.StandardButton.No:
-                    return
+                    return None
                 count = 0
                 self.Qapp.processEvents()
 
@@ -1780,7 +1242,7 @@ class MarkerClient(QWidget):
                 log.warning(
                     "some kind of downloader fail? (unexpected, but probably harmless"
                 )
-                return
+                return None
 
         # stash the previous state, not ideal because makes column wider
         prevState = self.examModel.getStatusByTask(task)
@@ -1880,7 +1342,7 @@ class MarkerClient(QWidget):
         """Called when annotator is done grading.
 
         Args:
-            task (str): task name
+            task: task name without the leading "q".
 
         Returns:
             None
@@ -1899,7 +1361,7 @@ class MarkerClient(QWidget):
         """Called when annotator is done grading and is closing.
 
         Args:
-            task (str): the task ID of the current test.
+            task: the task ID of the current test with no leading "q".
 
         Returns:
             None
@@ -1984,35 +1446,29 @@ class MarkerClient(QWidget):
         # now update the marking history with the task.
         self.marking_history.append(task)
 
-    def getMorePapers(self, oldtgvID):
+    def getMorePapers(self, oldtgvID) -> tuple | None:
         """Loads more tests.
 
         Args:
             oldtgvID(str): the Test-Group-Version ID for the previous test.
 
         Returns:
-            initialData: as described by getDataForAnnotator
+            The data for the annotator or None as described in
+            :method:`getDataForAnnotator`.
         """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext(update_select=False)
         if not self.moveToNextUnmarkedTest("q" + oldtgvID if oldtgvID else None):
-            return False
-        # TODO: copy paste of annotateTest()
-        # probably don't need len check
-        if len(self.ui.tableView.selectedIndexes()):
-            row = self.ui.tableView.selectedIndexes()[0].row()
-        else:
-            # TODO: what to do here?
-            return False
-        tgvID = self.prxM.getPrefix(row)
-
-        data = self.getDataForAnnotator(tgvID)
-        # make sure getDataForAnnotator did not fail
+            return None
+        task_id_str = self.get_current_task_id_or_none()
+        if not task_id_str:
+            return None
+        data = self.getDataForAnnotator(task_id_str)
         if data is None:
-            return
+            return None
 
-        assert tgvID[1:] == data[0]
+        assert task_id_str[1:] == data[0]
         pdict = data[-3]  # the plomdict is third-last object in data
         assert pdict is None, "Annotator should not pull a regrade"
 
@@ -2393,13 +1849,21 @@ class MarkerClient(QWidget):
         self.commentCache[txt] = fragFile
         return fragFile
 
+    def get_current_task_id_or_none(self) -> str | None:
+        """Give back the task id string of the currently highlighted row or None."""
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return None
+        # Note: a single selection should have length 11 (see ExamModel): could assert
+        pr = prIndex[0].row()
+        task_id_str = self.prxM.getPrefix(pr)
+        return task_id_str
+
     def manage_tags(self):
         """Manage the tags of the current task."""
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.current_task_id_or_none()
+        if not task:
             return
-        task = self.prxM.getPrefix(pr)
         self.manage_task_tags(task)
 
     def manage_task_tags(self, task, parent=None):

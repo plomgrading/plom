@@ -46,7 +46,10 @@ class BundleUploadForm(forms.Form):
             hashed = hashlib.sha256(file_bytes).hexdigest()
             scanner = ScanService()
             if scanner.check_for_duplicate_hash(hashed):
-                raise ValidationError("Bundle was already uploaded.")
+                original_bundle_name = scanner.get_bundle_name_from_hash(hashed)
+                raise ValidationError(
+                    f"Bundle was already uploaded as '{original_bundle_name}' and hash {hashed}"
+                )
 
             # get slug
             filename_stem = pathlib.Path(str(pdf)).stem

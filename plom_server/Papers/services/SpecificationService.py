@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 import html
 import logging
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.text import slugify
@@ -246,6 +246,28 @@ def get_short_name_slug() -> str:
 
 
 @transaction.atomic
+def get_id_page_number() -> int:
+    """Get the page number of the ID page.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.idPage
+
+
+@transaction.atomic
+def get_dnm_pages() -> List[int]:
+    """Get the list of do-no-mark page numbers.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.doNotMarkPages
+
+
+@transaction.atomic
 def get_n_questions() -> int:
     """Get the number of questions in the test.
 
@@ -298,6 +320,16 @@ def get_n_pages() -> int:
     """
     spec = Specification.objects.get()
     return spec.numberOfPages
+
+
+def get_list_of_pages() -> list[int]:
+    """Get a list of the pages.
+
+    If there is no spec, an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [p + 1 for p in range(get_n_pages())]
 
 
 @transaction.atomic

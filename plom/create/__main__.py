@@ -47,11 +47,10 @@ from plom.create import version_map_from_file
 from plom.create import save_version_map
 from plom import check_version_map
 
-# we may want to shift some files around
-from plom.server.manageUserFiles import write_csv_user_list
-from plom.server.manageUserFiles import get_raw_user_dict_from_csv
-from plom.server.manageUserFiles import get_template_user_dict
-from plom.server.manageUserFiles import build_canned_users
+from plom.manage_user_files import write_csv_user_list
+from plom.manage_user_files import get_raw_user_dict_from_csv
+from plom.manage_user_files import get_template_user_dict
+from plom.manage_user_files import build_canned_users
 
 
 def ensure_toml_extension(fname):

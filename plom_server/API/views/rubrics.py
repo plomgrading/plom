@@ -20,6 +20,11 @@ class MgetAllRubrics(APIView):
     def get(self, request: Request) -> Response:
         rs = RubricService()
         all_rubric_data = rs.get_rubrics_as_dicts(question=None)
+        if not all_rubric_data:
+            return _error_response(
+                "Server has no rubrics: check server settings",
+                status.HTTP_404_NOT_FOUND,
+            )
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
@@ -27,6 +32,11 @@ class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
         rs = RubricService()
         all_rubric_data = rs.get_rubrics_as_dicts(question=question)
+        if not all_rubric_data:
+            return _error_response(
+                "Server has no rubrics: check server settings",
+                status.HTTP_404_NOT_FOUND,
+            )
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 

@@ -2,10 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
-
-import pathlib
-from pathlib import Path
-from typing import Union
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.db import models
 
@@ -16,10 +13,18 @@ from Papers.models import Paper
 
 
 class BuildPaperPDFChore(HueyTaskTracker):
-    """Represents the chore of building a PDF file for each paper."""
+    """Represents the chore of building a PDF file for each paper.
+
+    paper (ForeignKey): a link to the associated paper being reassembled
+    pdf_file (FileField): stores the reassembled pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
+    display_filename (TextField): stores the filename of the reassembled pdf to be returned to users.
+    student_name (TextField): None or stores the student name used to pre-name the paper when built.
+    student_id (TextField): None or stores the student id used to pre-name the paper when built.
+    """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
+    display_filename = models.TextField(null=True)
     # only used for UI display, but also a record of what was on the PDF file
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
@@ -34,28 +39,8 @@ class BuildPaperPDFChore(HueyTaskTracker):
         return "Task Object " + str(self.paper.paper_number)
 
     def unlink_associated_pdf(self):
-        print(
-            f"Deleting pdf associated with paper {self.paper.paper_number} if it exists"
-        )
-        f = self.file_path()
-        if not f:
-            print(f"  But no file associated with paper {self.paper.paper_number}")
+        # NOTE - at present this is not called.
+        # TODO - call this when the associated task is out of date.
+        if self.pdf_file is None:
             return
-        f.unlink(missing_ok=True)
-
-    def file_path(self) -> Union[pathlib.Path, None]:
-        """Get the path of the generated PDF file.
-
-        Returns:
-            If the file exists, return the path. If it doesn't, return `None`.
-        """
-        if not self.pdf_file:
-            return None
-        return Path(self.pdf_file.path)
-
-    def file_display_name(self):
-        """Return a file name for displaying on the PDF builder GUI."""
-        if self.student_id:
-            return f"exam_{self.paper.paper_number:04}_{self.student_id}.pdf"
-        else:
-            return f"exam_{self.paper.paper_number:04}.pdf"
+        self.pdf_file.path.unlink(missing_ok=True)
