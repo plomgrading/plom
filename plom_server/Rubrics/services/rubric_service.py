@@ -114,7 +114,7 @@ class RubricService:
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
-        if rubric_data["user"] is None:
+        if "user" not in rubric_data.keys():
             username = rubric_data.pop("username")
             try:
                 user = User.objects.get(username=username)
@@ -615,6 +615,10 @@ class RubricService:
             serializer = RubricSerializer(queryset, many=True)
             json.dump(serializer.data, f, indent="  ")
         elif filetype == "toml":
+            for dictionary in rubrics:
+                filtered = {k: v for k, v in dictionary.items() if v is not None}
+                dictionary.clear()
+                dictionary.update(filtered)
             tomlkit.dump({"rubric": rubrics}, f)
         elif filetype == "csv":
             try:

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
-from io import TextIOWrapper
+from io import TextIOWrapper, BytesIO
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
@@ -338,8 +338,6 @@ class DownloadRubricView(ManagerRequiredView):
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
-        # TODO: Add support for other file types after resolution of Issue #3414
-        # format_choice = request.GET.get("format_choice")
         if question is not None and len(question) != 0:
             question = int(question)
         else:
@@ -348,6 +346,11 @@ class DownloadRubricView(ManagerRequiredView):
             buf = service.get_rubric_as_file("json", question=question)
             response = HttpResponse(buf.getvalue(), content_type="text/json")
             response["Content-Disposition"] = "attachment; filename=rubrics.json"
+            return response
+        elif filetype == "toml":
+            buf = service.get_rubric_as_file("toml", question=question)
+            response = HttpResponse(buf.getvalue(), content_type="application/toml")
+            response["Content-Disposition"] = "attachment; filename=rubrics.toml"
             return response
         else:
             buf = service.get_rubric_as_file("csv", question=question)
@@ -361,9 +364,10 @@ class UploadRubricView(ManagerRequiredView):
         service = RubricService()
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
 
-        # TODO: Add support for other file types after resolution of Issue #3414
         if suffix == "csv" or suffix == "json":
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
+        elif suffix == "toml":
+            f = BytesIO(request.FILES["rubric_file"].file.read())
         else:
             messages.error(request, "Invalid rubric file format")
             return redirect("rubrics_admin")
