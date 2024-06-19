@@ -260,7 +260,7 @@ class WideTextEdit(QTextEdit):
         selected text is not empty.
 
         Raises:
-            RunTimeError if the AddRubricBox dialog is unitialized.
+            RunTimeError if the AddRubricBox dialog is uninitialized.
         """
         if event.button() == Qt.MouseButton.LeftButton:
             super().mouseDoubleClickEvent(event)
