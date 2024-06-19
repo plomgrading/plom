@@ -101,6 +101,19 @@ if platform.system() == "Darwin":
 log = logging.getLogger("marker")
 
 
+def task_id_str_to_paper_question_index(task: str) -> tuple[int, int]:
+    # TODO: I dislike this packed-string: overdue for refactor
+    assert task[0] == "q", f"invalid task code {task}: no leading 'q'"
+    assert task[5] == "g", f"invalid task code {task}: no middle 'g'"
+    papernum = int(task[1:5])
+    question_idx = int(task[6:])
+    return papernum, question_idx
+
+
+def paper_question_index_to_task_id_str(papernum: int, question_idx: int) -> str:
+    return f"q{papernum:04}g{question_idx}"
+
+
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
@@ -668,10 +681,7 @@ class MarkerClient(QWidget):
         if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
-        assert task[0] == "q", f"invalid task code {task}: no leading 'q'"
-        assert task[5] == "g", f"invalid task code {task}: no middle 'g'"
-        num = int(task[1:5])
-        question_idx = int(task[6:])
+        num, question_idx = task_id_str_to_paper_question_index(task)
         assert question_idx == self.question_idx, f"wrong qidx={question_idx}"
 
         # TODO: this integrity is almost certainly not important unless I want
@@ -978,14 +988,11 @@ class MarkerClient(QWidget):
             PlomTakenException
             PlomVersionMismatchException
         """
+        _, qidx = task_id_str_to_paper_question_index(task)
+        assert qidx == self.question_idx, f"wrong question: question_idx={qidx}"
         src_img_data, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        # TODO: I dislike this packed-string: overdue for refactor
-        assert task[0] == "q"
-        assert task[5] == "g"
-        question_idx = int(task[6:])
-        assert question_idx == self.question_idx
 
         self.get_downloads_for_src_img_data(src_img_data)
 
@@ -1152,7 +1159,9 @@ class MarkerClient(QWidget):
             WarnMsg(self, str(e)).exec()
         print("=== PROCESSING lots of tasks... ====")
         for t in tasks:
-            task_id_str = f"q{t['paper_number']:04}g{t['question']}"
+            task_id_str = paper_question_index_to_task_id_str(
+                t["paper_number"], t["question"]
+            )
             username = t.get("username", "")
             # TODO: maybe task_model can support None for mark too...?
             mark = t.get("score", -1)  # not keen on this -1 sentinel
@@ -1292,11 +1301,9 @@ class MarkerClient(QWidget):
 
         exam_name = self.exam_spec["name"]
 
-        # TODO: I dislike this packed-string: overdue for refactor
-        assert task[5] == "g"
-        question_num = int(task[6:])
+        papernum, question_idx = task_id_str_to_paper_question_index(task)
         taskid = task[1:]
-        question_label = get_question_label(self.exam_spec, question_num)
+        question_label = get_question_label(self.exam_spec, question_idx)
         integrity_check = self.examModel.getIntegrityCheck(task)
         return (
             taskid,
