@@ -186,13 +186,22 @@ class AutoCorrectWidget(QFrame):
         """Update the autocorrection suggestion list."""
         self.list_widget.clear()
         suggestions = self.speller.candidates(self.selected_word)
+        capitalized = self.selected_word.istitle()
+
+        # Most probable candidate is set as the first item.
         if suggestions:
             most_probable_candidate = self.speller.correction(self.selected_word)
-            self.list_widget.addItem(most_probable_candidate)
+            if capitalized:
+                self.list_widget.addItem(most_probable_candidate.capitalize())
+            else:
+                self.list_widget.addItem(most_probable_candidate)
 
             for suggestion in suggestions:
                 if suggestion != most_probable_candidate:
-                    self.list_widget.addItem(suggestion)
+                    if capitalized:
+                        self.list_widget.addItem(suggestion.capitalize())
+                    else:
+                        self.list_widget.addItem(suggestion)
 
         if self.list_widget.count() > 0:
             self.show()
