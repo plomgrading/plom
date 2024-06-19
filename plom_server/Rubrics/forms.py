@@ -54,10 +54,10 @@ class RubricEditForm(forms.ModelForm):
 
 
 class RubricDownloadForm(forms.Form):
-    FILE_TYPE_CHOICES = [("json", ".json"), ("csv", ".csv"), ("toml", ".toml")]
+    FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
     question_filter = forms.TypedChoiceField(required=False)
     file_type = forms.TypedChoiceField(
-        choices=FILE_TYPE_CHOICES, required=False, initial="csv"
+        choices=FILE_TYPE_CHOICES, required=False, initial=".csv"
     )
 
     def __init__(self, *args, **kwargs):
