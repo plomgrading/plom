@@ -178,7 +178,6 @@ class AutoCorrectWidget(QFrame):
 
             cursor: the text cursor location in WideTextEdit text box.
         """
-
         self.selected_word = selected_word
         self.cursor_position = cursor
         self.update_suggestions()
