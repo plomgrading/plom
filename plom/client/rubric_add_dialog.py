@@ -233,23 +233,22 @@ class WideTextEdit(QTextEdit):
         return sz
 
     def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
-        if (
-            e is not None
-            and e.modifiers() == Qt.KeyboardModifier.ShiftModifier
-            and (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter)
-        ):
-            e.ignore()
-            return
+        if e is not None:
+            if e.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
+                e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter
+            ):
+                e.ignore()
+                return
 
-        # Reset formatting, otherwise it can unexpectedly adopt the
-        # red squiggle line while backspacing.
-        # TODO: Decide whether reset format for any key or only backspace
-        # What should happen when text is inputted in the middle of
-        # the highligted text?.
-        elif e.key() == Qt.Key.Key_Backspace:
-            super().keyPressEvent(e)
-            self.setCurrentCharFormat(QTextCharFormat())
-            return
+            # Reset formatting, otherwise it can unexpectedly adopt the
+            # red squiggle line while backspacing.
+            # TODO: Decide whether reset format for any key or only backspace
+            # What should happen when text is inputted in the middle of
+            # the highlighted text?.
+            elif e.key() == Qt.Key.Key_Backspace:
+                super().keyPressEvent(e)
+                self.setCurrentCharFormat(QTextCharFormat())
+                return
 
         super().keyPressEvent(e)
 
@@ -268,8 +267,9 @@ class WideTextEdit(QTextEdit):
                 if splitter:
                     rubric_dialog = splitter.parentWidget()
 
-                autocorrect: AutoCorrectWidget = rubric_dialog.autocorrect
-                autocorrect.set_selected_word(selected_text, self.textCursor())
+                if rubric_dialog.isinstance(AutoCorrectWidget):
+                    autocorrect = rubric_dialog.autocorrect
+                    autocorrect.set_selected_wordS(selected_text, self.textCursor())
 
     def highlight_text(self):
         """Underline the texts that are suspected for spelling mistake."""
