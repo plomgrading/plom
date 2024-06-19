@@ -267,9 +267,9 @@ class WideTextEdit(QTextEdit):
                 if splitter:
                     rubric_dialog = splitter.parentWidget()
 
-                if rubric_dialog.isinstance(AutoCorrectWidget):
+                if isinstance(rubric_dialog, AddRubricBox):
                     autocorrect = rubric_dialog.autocorrect
-                    autocorrect.set_selected_wordS(selected_text, self.textCursor())
+                    autocorrect.set_selected_word(selected_text, self.textCursor())
 
     def highlight_text(self):
         """Underline the texts that are suspected for spelling mistake."""
