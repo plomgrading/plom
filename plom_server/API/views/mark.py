@@ -70,15 +70,20 @@ class MarkingProgressCount(APIView):
 
 
 class MgetDoneTasks(APIView):
-    """Retrieve data for questions which have already been graded by the user.
+    """Retrieve data for tasks which have already been graded by a particular user.
 
     Respond with status 200.
 
     Returns:
-        200: list of [group-ids, mark, marking_time, [list_of_tag_texts], integrity_check ] for each paper.
+        List of lists of info for each of the already-processed
+        questions by the calling user.  The first entry is the task
+        string of the form ``q0002g3``, the second is the score, the
+        floating-point time in seconds, a list of tags (strings), and
+        an "integrity code".  An empty list is returned if nothing has
+        been graded by this user.
     """
 
-    def get(self, request, *args):
+    def get(self, request: Request, *args) -> Response:
         data = request.data
         question = data["q"]
         version = data["v"]
@@ -88,13 +93,6 @@ class MgetDoneTasks(APIView):
             request.user, question_idx=question, version=version
         )
 
-        # TODO: 3rd entry here is marking time: in legacy, we trust the client's
-        # previously given value (which the client tracks including revisions)
-        # Currently this tries to estimate a value server-side.  Decisions?
-        # Previous code was `mark_action.time - mark_action.claim_action.time`
-        # which is a `datatime.timedelta`.  Not sure how to convert to seconds
-        # so currently using hardcoded value.
-        # TODO: legacy marking time is int, but we may decide to change to float.
         rows = map(
             lambda annotation: [
                 annotation.task.code,
