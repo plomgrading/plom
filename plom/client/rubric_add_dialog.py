@@ -132,7 +132,7 @@ class AutoCorrectWidget(QFrame):
     def __init__(self):
         """Constructor of the QFrame showing autocorrect suggestions."""
         super().__init__()
-        self.speller = SpellChecker()
+        self.speller = SpellChecker(distance=1)
         self.list_widget = QListWidget()
         self.setFrameShape(QFrame.Shape.Box)
 
@@ -224,7 +224,7 @@ class WideTextEdit(QTextEdit):
 
     def __init__(self):
         super().__init__()
-        self.speller = SpellChecker()
+        self.speller = SpellChecker(distance=1)
         self.mouseDoubleClickEvent = self.on_double_click
 
     def sizeHint(self):
