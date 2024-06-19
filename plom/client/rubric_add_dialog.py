@@ -259,6 +259,8 @@ class WideTextEdit(QTextEdit):
         replacement word is different from the selected text, and the
         selected text is not empty.
 
+        Note: Ignore the word "tex".
+
         Raises:
             RunTimeError if the AddRubricBox dialog is uninitialized.
         """
@@ -267,7 +269,8 @@ class WideTextEdit(QTextEdit):
             selected_text = self.textCursor().selectedText()
             best_correction = self.speller.correction(selected_text)
             if (
-                len(selected_text)
+                selected_tex != "tex"
+                and len(selected_text)
                 and best_correction
                 and best_correction != selected_text
             ):
@@ -290,6 +293,8 @@ class WideTextEdit(QTextEdit):
         The text is underlined with red squiggle line when the most likely
         replacement word is not an empty text and is different from the
         selected text.
+
+        Note: Ignore "tex".
         """
         cursor = QTextCursor(self.document())
         cursor.select(QTextCursor.SelectionType.Document)
@@ -311,7 +316,11 @@ class WideTextEdit(QTextEdit):
             )
             selected_text = cursor.selectedText()
             best_correction = self.speller.correction(selected_text)
-            if best_correction and best_correction != selected_text:
+            if (
+                selected_text != "tex"
+                and best_correction
+                and best_correction != selected_text
+            ):
                 cursor.mergeCharFormat(format)
             cursor.movePosition(
                 QTextCursor.MoveOperation.NextWord, QTextCursor.MoveMode.MoveAnchor
