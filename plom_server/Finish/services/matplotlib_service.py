@@ -101,8 +101,8 @@ class MatplotlibService:
         # Overlay the student's score by highlighting the bar
         if highlighted_sid:
             df = self.des.get_student_data()
-            student = df[df["student_id"] == highlighted_sid]
-            student_score = student["total_mark"].values[0]
+            student = df[df["StudentID"] == highlighted_sid]
+            student_score = student["Total"].values[0]
             highlight_color = "#3061FF"
 
             ax = plt.gca()
@@ -190,7 +190,7 @@ class MatplotlibService:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
             highlight_color = "#3061FF"
-            student_score = df[df["student_id"] == highlighted_sid][mark_column].values[
+            student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
             ax = plt.gca()

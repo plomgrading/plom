@@ -67,12 +67,12 @@ def pdf_builder(
 
     mpls.ensure_all_figures_closed()
     df = des.get_student_data()
-    df_filtered = df[df["student_id"] == sid]
+    df_filtered = df[df["StudentID"] == sid]
     # TODO: Probably should check there is only one row?
 
     student_dict = df_filtered.iloc[0].to_dict()
-    name = student_dict["student_name"]
-    grade = int(student_dict["total_mark"])
+    name = student_dict["StudentName"]
+    grade = int(student_dict["Total"])
 
     # histogram of grades
     if verbose:
