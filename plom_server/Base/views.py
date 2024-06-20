@@ -9,8 +9,8 @@ from django.views.generic import View
 from Base.base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
 
+from Scan.services import ScanService
 from Rubrics.services import RubricService
-from Mark.services import QuestionMarkingService
 
 
 class TroublesAfootGenericErrorView(View):
@@ -49,7 +49,9 @@ class ResetView(ManagerRequiredView):
         Returns:
             HttpResponse: The HTTP response object.
         """
-        return render(request, "base/reset.html")
+        context = self.build_context()
+        context.update({"bundles_staged": ScanService().staging_bundles_exist()})
+        return render(request, "base/reset.html", context)
 
 
 class ResetConfirmView(ManagerRequiredView):
@@ -66,7 +68,9 @@ class ResetConfirmView(ManagerRequiredView):
         """
         context = self.build_context()
         form = CompleteWipeForm()
-        context.update({"wipe_form": form})
+        context.update(
+            {"bundles_staged": ScanService().staging_bundles_exist(), "wipe_form": form}
+        )
         return render(request, "base/reset_confirm.html", context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
@@ -89,10 +93,10 @@ class ResetConfirmView(ManagerRequiredView):
                 # Rubric App Deletion
                 # RubricService().erase_all_rubrics()
 
-                QuestionMarkingService().hard_reset()
-
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")
             form.add_error(_confirm_field, "Phrase is incorrect")
-        context.update({"wipe_form": form})
+        context.update(
+            {"bundles_staged": ScanService().staging_bundles_exist(), "wipe_form": form}
+        )
         return render(request, "base/reset_confirm.html", context=context)
