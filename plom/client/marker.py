@@ -1205,13 +1205,13 @@ class MarkerClient(QWidget):
 
     def change_task_view(self, cbidx: int) -> None:
         if cbidx == 0:
-            pass
+            self._remove_not_my_tasks()
         elif cbidx == 1:
-            self._download_full_list()
+            self._download_full_task_list()
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
-    def _download_full_list(self) -> None:
+    def _download_full_task_list(self) -> None:
         # temp call
         try:
             tasks = self.msgr.get_tasks(self.question_idx, self.version)
@@ -1247,6 +1247,16 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
+
+    def _remove_not_my_tasks(self) -> None:
+        # TODO: this drops a lot of temp annotated images, better to hide?
+        r = self.examModel.rowCount()
+        while r > -1:
+            username = self.examModel._get_username(r)
+            if username != self.msgr.username:
+                # TODO: careful removing in loop, so maybe hide is better
+                self.examModel.removeRow(r)
+            r -= 1
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
