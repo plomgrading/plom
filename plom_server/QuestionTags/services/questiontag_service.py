@@ -21,7 +21,7 @@ class QuestionTagService:
             question_number=question_number, description=description
         )
         for tag_name in tag_names:
-            tag = Tag.objects.get(tag_name=tag_name)  # Assuming tag_name is unique
+            tag = Tag.objects.get(tag_name=tag_name)
             question_tag.tags.add(tag)
         question_tag.save()
 
