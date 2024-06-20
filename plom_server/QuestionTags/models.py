@@ -3,13 +3,13 @@
 
 from django.db import models
 
-class QuestionTag(models.Model):
-    question_number = models.IntegerField()
-    description = models.TextField()
-
-    class Meta:
-        db_table = 'questiontags_questiontag'
 
 class Tag(models.Model):
     tag_name = models.TextField()
     description = models.TextField()
+
+
+class QuestionTag(models.Model):
+    question_number = models.IntegerField()
+    description = models.TextField()
+    tags = models.ManyToManyField(Tag)

@@ -1,32 +1,62 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from django.shortcuts import render, redirect
-from QuestionTags.services import get_question_labels, add_question_tag as add_tag
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from QuestionTags.services import QuestionTagService
 from .models import QuestionTag, Tag
 
-def qtags_landing(request):
-    question_labels = get_question_labels()
-    question_tags = QuestionTag.objects.all()
-    context = {
-        "question_labels": question_labels,
-        "question_count": len(question_labels),
-        "question_tags": question_tags,
-    }
-    return render(request, 'Questiontags/qtags_landing.html', context)
 
-def add_question_tag(request):
-    if request.method == 'POST':
-        question_number = request.POST.get('questionNumber')
-        description = request.POST.get('description')
-        add_tag(question_number, description)
-        return redirect('qtags_landing')
-    return redirect('qtags_landing')
+class QTagsLandingView(ListView):
+    model = QuestionTag
+    template_name = "Questiontags/qtags_landing.html"
+    context_object_name = "question_tags"
 
-def create_tag(request):
-    if request.method == 'POST':
-        tag_name = request.POST.get('tagName')
-        description = request.POST.get('tagDescription')
-        Tag.objects.create(tag_name=tag_name, description=description)
-        return redirect('qtags_landing')
-    return redirect('qtags_landing')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["question_labels"] = QuestionTagService.get_question_labels()
+        context["question_count"] = len(context["question_labels"])
+        context["tags"] = Tag.objects.all()
+        return context
+
+
+class AddQuestionTagView(CreateView):
+    template_name = "Questiontags/qtags_landing.html"
+
+    def post(self, request, *args, **kwargs):
+        question_number = request.POST.get("questionNumber")
+        tag_names = request.POST.getlist("tagName")
+        description = request.POST.get("description")
+        QuestionTagService.add_question_tag(question_number, tag_names, description)
+        return redirect(reverse("qtags_landing"))
+
+
+class CreateTagView(CreateView):
+    template_name = "Questiontags/qtags_landing.html"
+
+    def post(self, request, *args, **kwargs):
+        tag_name = request.POST.get("tagName")
+        description = request.POST.get("tagDescription")
+        QuestionTagService.create_tag(tag_name, description)
+        return redirect(reverse("qtags_landing"))
+
+
+class DeleteTagView(DeleteView):
+    model = Tag
+
+    def post(self, request, *args, **kwargs):
+        tag_id = request.POST.get("tag_id")
+        QuestionTagService.delete_tag(tag_id)
+        return redirect(reverse("qtags_landing"))
+
+
+class EditTagView(UpdateView):
+    template_name = "Questiontags/qtags_landing.html"
+
+    def post(self, request, *args, **kwargs):
+        tag_id = request.POST.get("tag_id")
+        tag_name = request.POST.get("tagName")
+        tag_description = request.POST.get("tagDescription")
+        QuestionTagService.edit_tag(tag_id, tag_name, tag_description)
+        return redirect(reverse("qtags_landing"))
