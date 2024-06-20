@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
@@ -27,6 +27,7 @@ from .views import (
     MiscExtrasView,
     ExtraPageView,
     ScrapPaperView,
+    ReferenceImageView,
 )
 
 urlpatterns = [
@@ -76,5 +77,10 @@ urlpatterns = [
     path("misc/scrap_paper", ScrapPaperView.as_view(), name="scrap_paper"),
     path(
         "pref_finished/", LandingFinishedToggle.as_view(), name="prep_finished_toggle"
+    ),
+    path(
+        "reference_image/<int:version>/<int:page>",
+        ReferenceImageView.as_view(),
+        name="reference_image",
     ),
 ]

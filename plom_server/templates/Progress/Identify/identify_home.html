@@ -3,6 +3,7 @@
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -32,6 +33,7 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Action</th>
+                    <th>Remark</th>
                 </thead>
                 {% for pn, data in id_task_info.items %}
                     <tr>
@@ -60,10 +62,18 @@
                                     clear
                                 </button>
                             </td>
+                            <td>
+                                {% if not data.in_classlist %}
+                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not from uploaded classlist
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                         {% else %}
                             <td></td>
                             <td></td>
                             <td></td>
+                            <td>-</td>
                         {% endif %}
                     </tr>
                 {% endfor %}

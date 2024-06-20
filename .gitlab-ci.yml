@@ -112,13 +112,10 @@ wet_no_drift:
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
-    - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - export VER1=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER0
     - echo $VER1
-    - echo $VER2
     - bash -c "[[ x$VER0 == x$VER1 ]]"
-    - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
 copyright_year:
@@ -306,7 +303,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.5.1
+    - pip install pytest pytest-cov coverage[toml]~=7.5.3
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -339,7 +336,7 @@ pylint:
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
     - python3 -m pip install astroid~=3.2.2  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.2
+    - python3 -m pip install pylint~=3.2.3
   script:
     - pylint plom
     - pylint plom_server
@@ -370,7 +367,7 @@ pyright:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.364
+    - python3 -m pip install pyright~=1.1.366
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -383,22 +380,9 @@ flake8:
   before_script:
     - python3 -m pip install flake8~=7.0.0
   script:
-    # show all errors and warnings but don't fail
+    # first show all errors and warnings but don't fail
     - flake8 --exit-zero
-    # fail test if any errors here
-    - flake8 --select E,W
-    # Non-plom_server: the number of errors should decrease over time
-    - flake8 --extend-exclude plom_server --exit-zero
-    - NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER=`flake8 --count --extend-exclude plom_server | tail -n 1 || true`
-    - echo $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS_NON_PLOM_SERVER -le 1 ]]"
-    # Special case for plom_server
-    - flake8 plom_server --exit-zero
-    - NUMBER_OF_FLAKE8_WARNINGS=`flake8 --count plom_server | tail -n 1 || true`
-    - echo $NUMBER_OF_FLAKE8_WARNINGS
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMBER_OF_FLAKE8_WARNINGS -le 6 ]]"
+    - flake8
 
 
 pydocstyle-plom-count:
@@ -463,7 +447,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.5.1
+    - python3 -m pip install coverage~=7.5.3
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
@@ -497,7 +481,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --solutions
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick --solutions
     - popd
 
 
@@ -753,7 +737,7 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  image: fedora:40
+  image: fedora:41
   when: manual
   allow_failure: true
   before_script:
@@ -838,7 +822,7 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:40
+  image: fedora:41
   when: manual
   allow_failure: true
   before_script:
@@ -975,7 +959,7 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1095,7 +1079,7 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - python3 manage.py plom_demo --no-waiting --randomarker --quick
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1228,7 +1212,7 @@ linuxbin_ubuntu2004:
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1254,10 +1238,11 @@ linuxbin_ubuntu2204:
     - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install pyinstaller
+    - pip install . --no-deps  # pyinstaller spec needs version
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2204.bin
     - mv dist/PlomClient*.bin $NAME
@@ -1339,6 +1324,7 @@ macos12_universal_client:
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1388,6 +1374,7 @@ macos12_arm64_client:
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1443,6 +1430,7 @@ macos12_x86_64_client:
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1494,6 +1482,7 @@ macos11_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
+  - pip install . --no-deps  # pyinstaller spec needs version
   - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
@@ -1613,14 +1602,18 @@ winpyinst:
   - c:\python311\python -m pip install --user --upgrade pip
   - c:\python311\python -m pip --version
   - c:\python311\python -m pip install --user --upgrade setuptools wheel
+  - refreshenv
   script:
   - c:\python311\python -m pip install -r requirements.txt.client
-  # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller==6.6.0
   - refreshenv
-  # c:\python311\python -m plom.client -h
+  # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
+  - c:\python311\python -m pip install pyinstaller~=6.8.0
+  - refreshenv
+  - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
+  - refreshenv
+  - c:\python311\python -m plom.client -h
   - c:\python311\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python311\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - $VER = &"c:\python311\python" -c "from plom import __version__; print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME

@@ -39,6 +39,16 @@
                                 <input class="btn btn-primary" type="submit" value="Mock">
                             </form>
                         </div>
+                        <div class="p-1 col">
+                            <span class="alert alert-warning">
+                                for debugging:
+                                {% for pg in page_list %}
+                                    <a class="btn btn-info"
+                                       target="_blank"
+                                       href="{% url 'reference_image' src.version pg %}">RI-{{ pg }}</a>
+                                {% endfor %}
+                            </span>
+                        </div>
                     </div>
                 {% endfor %}
             </div>

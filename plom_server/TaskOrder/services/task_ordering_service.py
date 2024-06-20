@@ -2,11 +2,13 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
 from Mark.models import MarkingTask
 from Mark.services import marking_priority
+from Papers.services import SpecificationService
 
 
 class TaskOrderService:
@@ -27,42 +29,74 @@ class TaskOrderService:
         else:
             marking_priority.set_marking_priority_paper_number()
 
-    def get_task_priorities(self) -> dict[tuple[int, int], int]:
-        """Get the task priorities.
+    def _get_task_priorities(self):
+        """Get the task priorities dict and set of paper numbers in MarkingTask.
 
         Returns:
-            A dictionary of task priorities, keyed by
-            (paper_number, question_index) pairs.
+            Mapping from a tuple of (paper_number, q_index) to a tuple
+            of (priority, MarkingTask's status (str)), and a set of paper numbers
+            for papers found in MarkingTask.
         """
-        _marking_tasks = MarkingTask.objects.filter(
-            status=MarkingTask.TO_DO
-        ).select_related("paper")
+        _marking_tasks = MarkingTask.objects.all().select_related("paper")
+
         marking_tasks = list(
             _marking_tasks.order_by("paper__paper_number", "question_index")
         )
 
         task_priorities = {}
-        for mt in marking_tasks:
-            task_priorities[(mt.paper.paper_number, mt.question_index)] = (
-                mt.marking_priority
-            )
+        paper_numbers = set()
 
-        return task_priorities
+        for mt in marking_tasks:
+            mapped_value = (mt.marking_priority, mt.get_status_display())
+            task_priorities[(mt.paper.paper_number, mt.question_index)] = mapped_value
+            paper_numbers.add(mt.paper.paper_number)
+
+        return task_priorities, paper_numbers
+
+    def get_paper_number_to_priority_list(
+        self,
+    ) -> dict[int, list[tuple[int | None, int]]]:
+        """Get the mapping from a paper number to the list of (priority, status).
+
+        If a marking task is missing, it will be flagged
+        with (None, "Missing").
+
+        Returns:
+            A dictionary that maps paper number to the list of tuples of
+            (priority, status), where the list is sorted in ascending order
+            by question index.
+        """
+        task_priorities, paper_numbers = self._get_task_priorities()
+        total_questions = SpecificationService.get_n_questions()
+        missing_flag = (None, "Missing")
+
+        paper_to_priority_and_status_list = dict()
+
+        for paper_number in paper_numbers:
+            paper_to_priority_and_status_list[paper_number] = [
+                task_priorities.get((paper_number, q_idx), missing_flag)
+                for q_idx in range(1, total_questions + 1)
+            ]
+        return paper_to_priority_and_status_list
 
     def get_csv_header(self) -> list[str]:
         """Get the CSV header for the task priorities."""
-        return ["Paper Number", "Question Number", "Priority Value"]
+        return ["Paper Number", "Question Number", "Priority Value", "Status"]
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
-        task_priorities = self.get_task_priorities()
+        task_priorities = self._get_task_priorities()[0]
         return [
             {
                 "Paper Number": paper_number,
                 "Question Number": question_idx,
                 "Priority Value": priority,
+                "Status": status,
             }
-            for (paper_number, question_idx), priority in task_priorities.items()
+            for (
+                (paper_number, question_idx),
+                (priority, status),
+            ) in task_priorities.items()
         ]
 
     def handle_file_upload(self, csv_data) -> dict[tuple[int, int], int]:

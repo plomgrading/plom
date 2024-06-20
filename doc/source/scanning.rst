@@ -26,6 +26,7 @@ scanning hardware that is available.  We recommend that you:
 
     - Sort papers into test-number order before scanning, and keep them in order (opinions differ on this but if something goes wrong its very valuable).
     - Keep papers in sensible and physically manageable bundles, before, during and after scanning.
+      There is a strict upper limit on bundle size and page count; these exist for security reasons and far exceed what would be a sensible bundle size.
     - Have a good physical flow of papers from pre-scan to post-scan, so that each paper is scanned exactly once.
     - Give your scans clear filenames such as ``math123mt1-sec1-bundle2.pdf``.
     - You may need to find page in these hardcopies so physically label each bundle, for example with the above filename.

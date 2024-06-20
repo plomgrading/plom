@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -28,9 +28,9 @@ from plom.server import (
     check_server_directories,
     check_server_fully_configured,
 )
-from plom.server.manageUserFiles import write_csv_user_list
-from plom.server.manageUserFiles import get_template_user_list
-from plom.server.manageUserFiles import parse_and_save_user_list
+from plom.manage_user_files import write_csv_user_list
+from plom.manage_user_files import get_template_user_list
+from plom.server.manageUserFilesCore import parse_and_save_user_list
 
 
 server_instructions = """Overview of running the Plom server:

@@ -94,7 +94,7 @@
                                             <td>{{ pn }}</td>
                                             <td>
                                                 {% for fp in pages.fixed|dictsort:"page_number" %}
-                                                    <button hx-get="pushed_img_wrap/{{ fp.img_pk }}"
+                                                    <button hx-get="{% url 'scan_pushed_img_wrap' fp.img_pk %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
                                                             class="btn btn-outline-success">
@@ -104,7 +104,7 @@
                                             </td>
                                             <td>
                                                 {% for mp in pages.mobile|dictsort:"question_number" %}
-                                                    <button hx-get="pushed_img_wrap/{{ mp.img_pk }}"
+                                                    <button hx-get="{% url 'scan_pushed_img_wrap' mp.img_pk %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
                                                             class="btn btn-outline-info">
@@ -144,7 +144,7 @@
                                             <td>
                                                 {% for fp in pages.fixed|dictsort:"page_number" %}
                                                     {% if fp.img_pk %}
-                                                        <button hx-get="pushed_img_wrap/{{ fp.img_pk }}"
+                                                        <button hx-get="{% url 'scan_pushed_img_wrap' fp.img_pk %}"
                                                                 hx-target="#incompleteImageHere"
                                                                 hx-replace="innerHTML"
                                                                 class="btn btn-outline-success">
@@ -160,7 +160,7 @@
                                             </td>
                                             <td>
                                                 {% for mp in pages.mobile|dictsort:"question_number" %}
-                                                    <button hx-get="pushed_img_wrap/{{ mp.img_pk }}"
+                                                    <button hx-get="{% url 'scan_pushed_img_wrap' mp.img_pk %}"
                                                             hx-target="#incompleteImageHere"
                                                             hx-replace="incompletInnerHTML"
                                                             class="btn btn-outline-info">
