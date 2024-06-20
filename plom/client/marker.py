@@ -652,7 +652,7 @@ class MarkerClient(QWidget):
         self.marking_history = []
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
-            self.examModel.addPaper(
+            self.examModel.add_task(
                 x[0],
                 src_img_data=[],
                 status="marked",
@@ -1023,12 +1023,13 @@ class MarkerClient(QWidget):
             row["filename"] = self.downloader.get_placeholder_path()
         return all_present
 
-    def claim_task_and_trigger_downloads(self, task):
+    def claim_task_and_trigger_downloads(self, task: str) -> None:
         """Claim a particular task for the current user and start image downloads.
 
         Notes:
             Side effects: on success, updates the table of tasks by adding
-            a new row.  The new row is *not* automatically selected.
+            a new row (or modifying an existing one).  But the new row is
+            *not* automatically selected.
 
         Returns:
             None
@@ -1045,9 +1046,12 @@ class MarkerClient(QWidget):
 
         self.get_downloads_for_src_img_data(src_img_data)
 
-        self.examModel.addPaper(
+        self.examModel.modify_task(
             task,
             src_img_data=src_img_data,
+            status="untouched",
+            mark=-1,
+            marking_time=0.0,
             tags=tags,
             integrity_check=integrity_check,
             username=self.msgr.username,
@@ -1215,7 +1219,7 @@ class MarkerClient(QWidget):
             # TODO: maybe task_model can support None for mark too...?
             mark = t.get("score", -1)  # not keen on this -1 sentinel
             try:
-                self.examModel.addPaper(
+                self.examModel.add_task(
                     task_id_str,
                     src_img_data=[],
                     mark=mark,

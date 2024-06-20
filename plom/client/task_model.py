@@ -79,23 +79,25 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
 
-    def addPaper(
+    def add_task(
         self,
         task_id_str: str,
         *,
         src_img_data: list[dict[str, Any]] = [],
         status: str = "untouched",
         mark: int = -1,
-        marking_time: float = 0,
+        marking_time: float = 0.0,
         tags: list[str] = [],
         integrity_check: str = "",
         username: str = "",
     ) -> int:
-        """Adds a paper to self.
+        """Add a new row to the task table.
 
         Args:
             task_id_str: the Task ID for the page being uploaded. Takes the form
                 "q1234g9" for paper 1234 question 9.
+
+        Keyword Args:
             status: test status string.
             mark: the mark of the question.
             marking_time (float/int): marking time spent on that page in seconds.
@@ -120,18 +122,15 @@ class MarkerExamModel(QStandardItemModel):
             assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
             pass
         else:
-            # Some earlier version of this code used to popup an error message
-            # then remove the row and try to continue.  For now just crash.
-            # self.removeRow(r)
             raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
 
-        # Append new groupimage to list and append new row to table.
-        r = self.rowCount()
         # hide -1 which something might be using for "not yet marked"
         try:
             markstr = str(mark) if int(mark) >= 0 else ""
         except ValueError:
             markstr = ""
+
+        r = self.rowCount()
         # these *must* be strings but I don't understand why
         self.appendRow(
             [
@@ -149,6 +148,56 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
         return r
+
+    def modify_task(
+        self,
+        task_id_str: str,
+        *,
+        src_img_data: list[dict[str, Any]] = [],
+        status: str = "untouched",
+        mark: int = -1,
+        marking_time: float = 0.0,
+        tags: list[str] = [],
+        integrity_check: str = "",
+        username: str = "",
+    ) -> int:
+        """Modify an existing row, or add a new one if it does not yet exist.
+
+        Args:
+            task_id_str: the Task ID for the page being uploaded. Takes the form
+                "q1234g9" for paper 1234 question 9.
+
+        Keywords Args:
+            status: task status string.
+            mark: the mark of the question.
+            marking_time (float/int): marking time spent on that page in seconds.
+            tags: Tags corresponding to the exam.  We will flatten to a
+                space-separated string.  TODO: maybe we should do that for display
+                but store as repr/json.
+            integrity_check: something from the server, especially legacy
+                servers, generally a concat of md5sums of underlying images.
+                The server expects us to be able to give it back to them.
+            src_img_data: a list of dicts of md5sums, filenames and other
+                metadata of the images for the test question.
+
+        Returns:
+            The integer row identifier of the added paper.
+        """
+        try:
+            r = self._findTask(task_id_str)
+        except ValueError as e:
+            assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
+            r = self.add_task(task_id_str)
+        else:
+            log.debug(f"Found task {task_id_str} in the table at r={r}, updating...")
+
+        self.set_source_image_data(task_id_str, src_img_data)
+        self._setStatus(r, status)
+        self._set_mark(r, mark)
+        self._set_marking_time(r, marking_time)
+        self.setTagsByTask(task_id_str, tags)
+        self.set_integrity_by_task(task_id_str, integrity_check)
+        self.set_username_by_task(task_id_str, username)
 
     def _getPrefix(self, r: int) -> str:
         """Return the prefix of the image.
@@ -223,6 +272,14 @@ class MarkerExamModel(QStandardItemModel):
             Name of a temporary directory for this paper.
         """
         return self.data(self.index(r, _idx_paper_dir))
+
+    def _set_mark(self, r: int, mark: int) -> None:
+        # hide -1 which something might be using for "not yet marked"
+        try:
+            markstr = str(mark) if int(mark) >= 0 else ""
+        except ValueError:
+            markstr = ""
+        self.setData(self.index(r, _idx_mark), markstr)
 
     def _get_marking_time(self, r):
         column_idx = _idx_marking_time
@@ -365,6 +422,12 @@ class MarkerExamModel(QStandardItemModel):
         """
         self._setDataByTask(task, _idx_annotated_file, str(aname))
         self._setDataByTask(task, _idx_plom_file, str(pname))
+
+    def set_username_by_task(self, task: str, user: str) -> None:
+        self._setDataByTask(task, _idx_user, user)
+
+    def set_integrity_by_task(self, task: str, integrity: str) -> None:
+        self._setDataByTask(task, _idx_integrity, integrity)
 
     def getIntegrityCheck(self, task: str) -> str:
         """Return integrity_check for task as string."""
