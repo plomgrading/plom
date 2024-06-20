@@ -667,6 +667,9 @@ class MarkerClient(QWidget):
     def get_files_for_previously_annotated(self, task: str) -> bool:
         """Loads the annotated image, the plom file, and the original source images.
 
+        TODO: maybe it could not aggressively download the src images: sometimes
+        people just want to look at the annotated image.
+
         Args:
             task (str): the task for the image files to be loaded from.
                 Takes the form "q1234g9" = test 1234 question 9
@@ -753,6 +756,9 @@ class MarkerClient(QWidget):
     def _updateImage(self, pr: int) -> None:
         """Updates the preview image for a particular row of the table.
 
+        Try various things to get an appropriate image to display.
+        Lots of side effects as we update the table as needed.
+
         .. note::
            This function is a workaround used to keep the preview
            up-to-date as the table of papers changes.  Ideally
@@ -767,32 +773,75 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        if not self.get_files_for_previously_annotated(self.prxM.getPrefix(pr)):
-            return
-
-        # first, display the annotated image if we have one
+        # simplest first: if we have the annotated image then display that
         ann_img_file = self.prxM.getAnnotatedFile(pr)
         # TODO: special hack as empty "" comes back as Path which is "."
         if str(ann_img_file) == ".":
             ann_img_file = ""
-
         if ann_img_file:
             self.testImg.updateImage(ann_img_file)
-        else:
-            # Colin doesn't understand this proxy: just pull task and query examModel
-            task = self.prxM.getPrefix(pr)
-            src_img_data = self.examModel.get_source_image_data(task)
-            for r in src_img_data:
-                if not r.get("filename") and not r.get("local_filename"):
-                    print(r)
-                    raise PlomSeriousException(
-                        f"Unexpected Issue #2327: src_img_data is {src_img_data}, task={task}"
-                    )
-            self.get_downloads_for_src_img_data(src_img_data, trigger=False)
+            return
+
+        task = self.prxM.getPrefix(pr)
+        status = self.prxM.getStatus(pr)
+
+        # next we try to download annotated image for certain hardcoded states
+        if status.casefold() in ("complete", "marked"):
+            self.get_files_for_previously_annotated(task)
+            self._updateImage(pr)  # recurse
+            return
+
+        # try the raw page images instead from the cached src_img_data
+        src_img_data = self.examModel.get_source_image_data(task)
+        if src_img_data:
+            self.get_downloads_for_src_img_data(src_img_data)
             self.testImg.updateImage(src_img_data)
-        # TODO: seems to behave ok without this hack: delete?
-        # self.testImg.forceRedrawOrSomeBullshit()
-        self.ui.tableView.setFocus()
+            return
+
+        # but if the src_img_data isn't present, get and trigger background downloads
+        src_img_data = self.get_src_img_data(task, cache=True)
+        if src_img_data:
+            self.get_downloads_for_src_img_data(src_img_data)
+            self.testImg.updateImage(src_img_data)
+
+        # All else fails, just wipe the display (e.g., pages removed from server)
+        self.testImg.updateImage(None)
+
+    def get_src_img_data(
+        self, task: str, *, cache: bool = False
+    ) -> list[dict[str, Any]]:
+        """Download the pagedate/src_img_data for a particular task.
+
+        Note this does not trigger downloads of the page images.  For
+        that, see :method:`get_downloads_for_src_img_data`.
+
+        Args:
+            task: which task to download the page data for.
+
+        Keyword Args:
+            cache: if this is one of the questions that we're marking,
+                also fill-in or update the client-side cache of pagedata.
+                Caution: page-arranger might mess with the local copy,
+                so for now be careful using this option.  Default: False.
+
+        Returns:
+            The source image data.
+
+        Raises:
+            PlomConflict: no paper.
+        """
+        papernum, qidx = task_id_str_to_paper_question_index(task)
+        pagedata = self.msgr.get_pagedata_context_question(papernum, qidx)
+
+        # TODO: is this the main difference between pagedata and src_img_data?
+        pagedata = [x for x in pagedata if x["included"]]
+
+        if cache and self.question_idx == qidx:
+            try:
+                self.examModel.set_source_image_data(task, pagedata)
+            except KeyError:
+                pass
+        return pagedata
 
     def _updateCurrentlySelectedRow(self) -> None:
         """Updates the preview image for the currently selected row of the table.
@@ -2028,29 +2077,24 @@ class MarkerClient(QWidget):
 
         if stuff is None:
             try:
-                pagedata = self.msgr.get_pagedata_context_question(tn, q)
+                # TODO: later we might be able to cache here
+                # ("q" might not be our question number)
+                pagedata = self.get_src_img_data(
+                    paper_question_index_to_task_id_str(tn, q)
+                )
             except PlomBenignException as e:
                 WarnMsg(self, f"Could not get page data: {e}").exec()
                 return
             if not pagedata:
                 WarnMsg(
                     self,
-                    f"No page images for paper {tn:04}:"
-                    " it may not be scanned or was not written.",
-                ).exec()
-                return
-            # also, discard the non-included pages
-            pagedata = [x for x in pagedata if x["included"]]
-            if not pagedata:
-                WarnMsg(
-                    self,
                     f"No page images for paper {tn:04} question index {q}:"
-                    " possibly that question is not yet scanned"
+                    " perhaps it was not written, not yet scanned,"
+                    " or possibly that question is not yet scanned"
                     " or has been discarded.",
                 ).exec()
                 return
-            # don't cache this pagedata: "q" might not be our question number
-            # (but the images are cacheable)
+            # (even if pagedata not cached, the images will be here)
             pagedata = self.downloader.sync_downloads(pagedata)
             stuff = pagedata
             s = f"Original ungraded images for paper {tn:04} question index {q}"
