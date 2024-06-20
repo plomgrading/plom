@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aden Chan
 
-import os
+from pathlib import Path
 from django.db import models
 from django.dispatch import receiver
 from Preparation.models import PaperSourcePDF
@@ -31,5 +31,6 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     when corresponding `ReferenceImage` object is deleted.
     """
     if instance.image_file:
-        if os.path.isfile(instance.image_file.path):
-            os.remove(instance.image_file.path)
+        with Path(instance.image_file.path) as path:
+            if path.is_file():
+                path.unlink()
