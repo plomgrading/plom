@@ -181,7 +181,7 @@ class MarkerExamModel(QStandardItemModel):
                 metadata of the images for the test question.
 
         Returns:
-            The integer row identifier of the added paper.
+            The integer row identifier of the added/modified paper.
         """
         try:
             r = self._findTask(task_id_str)
@@ -198,6 +198,7 @@ class MarkerExamModel(QStandardItemModel):
         self.setTagsByTask(task_id_str, tags)
         self.set_integrity_by_task(task_id_str, integrity_check)
         self.set_username_by_task(task_id_str, username)
+        return r
 
     def _getPrefix(self, r: int) -> str:
         """Return the prefix of the image.
