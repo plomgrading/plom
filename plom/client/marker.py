@@ -583,9 +583,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
-        # self.ui.deferButton.clicked.connect(self.deferTest)
-        self.ui.deferButton.clicked.connect(self.tmp_download_full_list)
-        self.ui.deferButton.setText("Load full list")
+        self.ui.deferButton.clicked.connect(self.deferTest)
+        self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
@@ -1204,7 +1203,15 @@ class MarkerClient(QWidget):
 
         return True
 
-    def tmp_download_full_list(self):
+    def change_task_view(self, cbidx: int) -> None:
+        if cbidx == 0:
+            pass
+        elif cbidx == 1:
+            self._download_full_list()
+        else:
+            raise NotImplementedError(f"Unexpected cbidx={cbidx}")
+
+    def _download_full_list(self) -> None:
         # temp call
         try:
             tasks = self.msgr.get_tasks(self.question_idx, self.version)
