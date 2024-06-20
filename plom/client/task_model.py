@@ -520,6 +520,7 @@ class ProxyModel(QSortFilterProxyModel):
 
     def set_show_only_this_user(self, user: str) -> None:
         self.show_only_this_user = user
+        self.trigger_filter_change()
 
     def set_filter_tags(self, filter_str: str, *, invert: bool = False) -> None:
         """Filter the visible tasks based on a string.
@@ -536,6 +537,9 @@ class ProxyModel(QSortFilterProxyModel):
         """
         self.invert_tag_search = invert
         self.tag_search_terms = filter_str.casefold().split()
+        self.trigger_filter_change()
+
+    def trigger_filter_change(self) -> None:
         # trigger update (but filterAcceptsRow will be used)
         self.setFilterFixedString("")
 
