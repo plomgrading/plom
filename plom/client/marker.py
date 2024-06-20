@@ -1935,12 +1935,11 @@ class MarkerClient(QWidget):
 
     def setFilter(self):
         """Sets a filter tag."""
-        self.prxM.setFilterString(self.ui.filterLE.text().strip())
-        # check to see if invert-filter is checked
+        search_terms = self.ui.filterLE.text().strip()
         if self.ui.filterInvCB.isChecked():
-            self.prxM.filterTags(invert=True)
+            self.prxM.set_filter_tags(search_terms, invert=True)
         else:
-            self.prxM.filterTags()
+            self.prxM.set_filter_tags(search_terms)
 
     def view_other(self):
         """Shows a particular paper number and question."""
