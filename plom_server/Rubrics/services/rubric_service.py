@@ -20,6 +20,7 @@ from typing import Any
 import json
 import tomlkit
 import io
+import csv
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -621,14 +622,10 @@ class RubricService:
                 dictionary.update(filtered)
             tomlkit.dump({"rubric": rubrics}, f)
         elif filetype == "csv":
-            try:
-                import pandas
-            except ImportError as e:
-                raise e
-
-            df = pandas.json_normalize(rubrics)
-            df.to_csv(f, index=False, sep=",", encoding="utf-8")
-        return f
+            writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
+            writer.writeheader()
+            writer.writerows(rubrics)
+            return f
 
     def get_rubric_from_file(self, file: io.TextIOWrapper | io.BytesIO, filetype: str):
         """Retrieves rubrics from a file.
@@ -654,15 +651,13 @@ class RubricService:
             else:
                 raise RuntimeError("toml file must be a BytesIO object")
         elif filetype == "csv":
-            try:
-                import pandas
-            except ImportError as e:
-                raise e
-
-            df = pandas.read_csv(file)
-            df.fillna("", inplace=True)
-            # TODO: flycheck is whining about this to_json
-            rubrics = json.loads(df.to_json(orient="records"))
+            if isinstance(file, io.TextIOWrapper):
+                reader = csv.DictReader(file)
+                rubrics = list(reader)
+                print(rubrics)
+            else:
+                print(type(file))
+                raise RuntimeError("csv file must be a TextIOWrapper object")
         else:
             raise ValueError("File not supported")
 
