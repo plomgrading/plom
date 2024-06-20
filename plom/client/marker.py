@@ -583,9 +583,11 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
+        m = QMenu(self)
+        m.addAction("Reassign task to...", self.reassign_task)
+        m.addAction("Claim task for me", self.claim_task)
+        self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.deferTest)
-        # TODO: temporarily use the defer button for reassign
-        self.ui.deferButton.clicked.connect(self.reassign_task)
         self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
@@ -1277,6 +1279,25 @@ class MarkerClient(QWidget):
         # TODO, now what?
         # TODO: adding a new possibility here will have some fallout
         self.examModel.setStatusByTask(task, "reassigned")
+
+    def claim_task(self):
+        task = self.get_current_task_id_or_none()
+        if not task:
+            return
+        # TODO: if its "To Do" we can just claim it
+        # TODO: in fact, I'd expect double-click to do that.
+        user = self.examModel.get_username_by_task(task)
+        if user == self.msgr.username:
+            InfoMsg(
+                self,
+                f"Note: task {task} appears to already belong to you, claiming anyway",
+            ).exec()
+        if self.examModel.getStatusByTask(task).casefold() != "to do":
+            WarnMsg(
+                self, f'Not implemented yet: claiming {task} from user "{user}"'
+            ).exec()
+            return
+        self.claim_task_and_trigger_downloads(task)
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""

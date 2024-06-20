@@ -216,16 +216,6 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="deferButton">
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="text">
-                <string>&amp;Defer</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="1">
               <widget class="QPushButton" name="tagButton">
                <property name="focusPolicy">
@@ -256,6 +246,22 @@
                </property>
                <property name="text">
                 <string>&amp;Get next</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QToolButton" name="deferButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="text">
+                <string>&amp;Defer</string>
                </property>
               </widget>
              </item>
