@@ -106,7 +106,7 @@
                 var selectedTag = $(this).val();
                 var selectedTagText = $(this).find('option:selected').text();
                 $('#tagName_edit').val(selectedTagText);
-                // You might want to fetch the description dynamically here
+                // TO-DO: get the description and tag name to display dynamically
                 var selectedTagDescription = tags.find(tag => tag.id == selectedTag).description;
                 $('#tagDescription_edit').val(selectedTagDescription);
             });
