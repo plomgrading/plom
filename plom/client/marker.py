@@ -1292,6 +1292,8 @@ class MarkerClient(QWidget):
                 self,
                 f"Note: task {task} appears to already belong to you, claiming anyway",
             ).exec()
+            self.claim_task_and_trigger_downloads(task)
+            return
         if self.examModel.getStatusByTask(task).casefold() != "to do":
             WarnMsg(
                 self, f'Not implemented yet: claiming {task} from user "{user}"'
