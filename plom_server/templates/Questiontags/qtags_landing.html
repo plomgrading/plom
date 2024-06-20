@@ -2,11 +2,9 @@
 <!-- Copyright (C) 2024 Elisa Pan -->
 {% extends "base/base.html" %}
 {% load static %}
-
 {% block page_heading %}
     Question Tags
 {% endblock page_heading %}
-
 {% block main_content %}
     <p>Total Questions: {{ question_count }}</p>
     <h3>Available Questions</h3>
@@ -19,22 +17,25 @@
         </thead>
         <tbody>
             {% for number, label in question_labels %}
-            <tr>
-                <td>{{ number }}</td>
-                <td>{{ label }}</td>
-            </tr>
+                <tr>
+                    <td>{{ number }}</td>
+                    <td>{{ label }}</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTagModal">
-        Create Tag
-    </button>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTagModal">
-        Edit Tag
-    </button>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deleteTagModal">
-        Delete Tag
-    </button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#createTagModal">Create Tag</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#editTagModal">Edit Tag</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#deleteTagModal">Delete Tag</button>
     <h3>Tag Names</h3>
     <table class="table table-striped">
         <thead>
@@ -44,15 +45,16 @@
         </thead>
         <tbody>
             {% for tag in tags %}
-            <tr>
-                <td>{{ tag.tag_name }}</td>
-            </tr>
+                <tr>
+                    <td>{{ tag.tag_name }}</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionTagModal">
-        Link Question to Tag
-    </button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addQuestionTagModal">Link Question to Tag</button>
     <h3>Existing Question Tags</h3>
     <table class="table table-striped">
         <thead>
@@ -64,25 +66,28 @@
         </thead>
         <tbody>
             {% for tag in question_tags %}
-            <tr>
-                <td>{{ tag.question_number }}</td>
-                <td>{{ tag.description }}</td>
-                <td>
-                    {% for t in tag.tags.all %}
-                        <a href="#" class="tag-link {% cycle 'blue-tag' 'green-tag' %}" data-bs-toggle="modal" data-bs-target="#tagModal" data-tag-name="{{ t.tag_name }}" data-tag-description="{{ t.description }}">{{ t.tag_name }}</a>
-                    {% endfor %}
-                </td>
-            </tr>
+                <tr>
+                    <td>{{ tag.question_number }}</td>
+                    <td>{{ tag.description }}</td>
+                    <td>
+                        {% for t in tag.tags.all %}
+                            <a href="#"
+                               class="tag-link {% cycle 'blue-tag' 'green-tag' %}"
+                               data-bs-toggle="modal"
+                               data-bs-target="#tagModal"
+                               data-tag-name="{{ t.tag_name }}"
+                               data-tag-description="{{ t.description }}">{{ t.tag_name }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-
     {% include 'Questiontags/modal_forms.html' %}
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
     <script>
         $(document).ready(function() {
             $('#tagName').select2({
@@ -106,7 +111,6 @@
             });
         });
     </script>
-
     <style>
         .tag-link {
             display: inline-block;

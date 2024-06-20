@@ -1,36 +1,45 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Copyright (C) 2024 Elisa Pan -->
-
 <!-- Modal for Adding Question Tag -->
-<div class="modal fade" id="addQuestionTagModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionTagModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="addQuestionTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="addQuestionTagModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addQuestionTagModalLabel">Link Question to Tag</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addQuestionTagForm" method="POST" action="{% url 'add_question_tag' %}">
+                <form id="addQuestionTagForm"
+                      method="POST"
+                      action="{% url 'add_question_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="questionNumber">Question Number</label>
                         <select class="form-control" id="questionNumber" name="questionNumber">
-                            {% for number, label in question_labels %}
-                            <option value="{{ number }}">{{ number }}</option>
-                            {% endfor %}
+                            {% for number, label in question_labels %}<option value="{{ number }}">{{ number }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="tagName">Tag Name</label>
                         <select class="form-control" id="tagName" name="tagName" multiple="multiple">
-                            {% for tag in tags %}
-                            <option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>
-                            {% endfor %}
+                            {% for tag in tags %}<option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" required>
+                        <input type="text"
+                               class="form-control"
+                               id="description"
+                               name="description"
+                               required>
                     </div>
                     <button type="submit" class="btn btn-primary">Add</button>
                 </form>
@@ -38,14 +47,21 @@
         </div>
     </div>
 </div>
-
 <!-- Modal for Creating Tag -->
-<div class="modal fade" id="createTagModal" tabindex="-1" role="dialog" aria-labelledby="createTagModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="createTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="createTagModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createTagModalLabel">Create Tag</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="createTagForm" method="POST" action="{% url 'create_tag' %}">
@@ -56,7 +72,11 @@
                     </div>
                     <div class="form-group">
                         <label for="tagDescription">Description</label>
-                        <input type="text" class="form-control" id="tagDescription" name="tagDescription" required>
+                        <input type="text"
+                               class="form-control"
+                               id="tagDescription"
+                               name="tagDescription"
+                               required>
                     </div>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
@@ -64,14 +84,21 @@
         </div>
     </div>
 </div>
-
 <!-- Modal for Deleting Tag -->
-<div class="modal fade" id="deleteTagModal" tabindex="-1" role="dialog" aria-labelledby="deleteTagModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="deleteTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="deleteTagModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteTagModalLabel">Delete Tag</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="deleteTagForm" method="POST" action="{% url 'delete_tag' %}">
@@ -79,9 +106,7 @@
                     <div class="form-group">
                         <label for="tag_id">Select Tag to Delete</label>
                         <select class="form-control" id="tag_id" name="tag_id">
-                            {% for tag in tags %}
-                            <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
-                            {% endfor %}
+                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -90,14 +115,21 @@
         </div>
     </div>
 </div>
-
 <!-- Modal for Editing Tag -->
-<div class="modal fade" id="editTagModal" tabindex="-1" role="dialog" aria-labelledby="editTagModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="editTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="editTagModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editTagModalLabel">Edit Tag</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="editTagForm" method="POST" action="{% url 'edit_tag' %}">
@@ -105,18 +137,24 @@
                     <div class="form-group">
                         <label for="tag_id_edit">Select Tag to Edit</label>
                         <select class="form-control" id="tag_id_edit" name="tag_id">
-                            {% for tag in tags %}
-                            <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
-                            {% endfor %}
+                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="tagName_edit">Tag Name</label>
-                        <input type="text" class="form-control" id="tagName_edit" name="tagName" required>
+                        <input type="text"
+                               class="form-control"
+                               id="tagName_edit"
+                               name="tagName"
+                               required>
                     </div>
                     <div class="form-group">
                         <label for="tagDescription_edit">Description</label>
-                        <input type="text" class="form-control" id="tagDescription_edit" name="tagDescription" required>
+                        <input type="text"
+                               class="form-control"
+                               id="tagDescription_edit"
+                               name="tagDescription"
+                               required>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
@@ -124,18 +162,29 @@
         </div>
     </div>
 </div>
-
 <!-- Modal for Viewing Tag Details -->
-<div class="modal fade" id="tagModal" tabindex="-1" role="dialog" aria-labelledby="tagModalLabel" aria-hidden="true">
+<div class="modal fade"
+     id="tagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="tagModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="tagModalLabel">Tag Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p><strong>Tag Name:</strong> <span id="modalTagName"></span></p>
-                <p><strong>Description:</strong> <span id="modalTagDescription"></span></p>
+                <p>
+                    <strong>Tag Name:</strong> <span id="modalTagName"></span>
+                </p>
+                <p>
+                    <strong>Description:</strong> <span id="modalTagDescription"></span>
+                </p>
             </div>
         </div>
     </div>
