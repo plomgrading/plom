@@ -7,14 +7,14 @@
 {% endblock page_heading %}
 {% block main_content %}
     <p>Total Questions: {{ question_count }}</p>
-    <button type="button" class="btn btn-primary">
-        Edit
-    </button>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionTagModal">
-        Add
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTagModal">
+        Create Tag
     </button>
     <button type="button" class="btn btn-primary">
-        Delete
+        Edit Tag
+    </button>
+    <button type="button" class="btn btn-primary">
+        Delete Tag
     </button>
     <table class="table table-striped">
         <thead>
@@ -32,7 +32,12 @@
             {% endfor %}
         </tbody>
     </table>
-
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionTagModal">
+        Link Question to Tag
+    </button>
+    <button type="button" class="btn btn-primary">
+        Edit Question to Tag
+    </button>
     <h3>Existing Question Tags</h3>
     <table class="table table-striped">
         <thead>
@@ -51,7 +56,7 @@
         </tbody>
     </table>
 
-    <!-- Modal -->
+    <!-- Modal for Adding Question Tag -->
     <div class="modal fade" id="addQuestionTagModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionTagModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -75,6 +80,32 @@
                             <input type="text" class="form-control" id="description" name="description" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Creating Tag -->
+    <div class="modal fade" id="createTagModal" tabindex="-1" role="dialog" aria-labelledby="createTagModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createTagModalLabel">Create Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createTagForm" method="POST" action="{% url 'create_tag' %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="tagName">Tag Name</label>
+                            <input type="text" class="form-control" id="tagName" name="tagName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tagDescription">Description</label>
+                            <input type="text" class="form-control" id="tagDescription" name="tagDescription" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create</button>
                     </form>
                 </div>
             </div>

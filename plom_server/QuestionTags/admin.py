@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Elisa Pan
 
 from django.contrib import admin
-from .models import QuestionTag
+from .models import QuestionTag, Tag
 
 admin.site.register(QuestionTag)
+admin.site.register(Tag)

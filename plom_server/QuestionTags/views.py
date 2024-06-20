@@ -2,8 +2,8 @@
 # Copyright (C) 2024 Elisa Pan
 
 from django.shortcuts import render, redirect
-from QuestionTags.services import get_question_labels
-from .models import QuestionTag
+from QuestionTags.services import get_question_labels, add_question_tag as add_tag
+from .models import QuestionTag, Tag
 
 def qtags_landing(request):
     question_labels = get_question_labels()
@@ -19,6 +19,14 @@ def add_question_tag(request):
     if request.method == 'POST':
         question_number = request.POST.get('questionNumber')
         description = request.POST.get('description')
-        QuestionTag.objects.create(question_number=question_number, description=description)
+        add_tag(question_number, description)
+        return redirect('qtags_landing')
+    return redirect('qtags_landing')
+
+def create_tag(request):
+    if request.method == 'POST':
+        tag_name = request.POST.get('tagName')
+        description = request.POST.get('tagDescription')
+        Tag.objects.create(tag_name=tag_name, description=description)
         return redirect('qtags_landing')
     return redirect('qtags_landing')

@@ -10,3 +10,6 @@ class QuestionTag(models.Model):
     class Meta:
         db_table = 'questiontags_questiontag'
 
+class Tag(models.Model):
+    tag_name = models.TextField()
+    description = models.TextField()
