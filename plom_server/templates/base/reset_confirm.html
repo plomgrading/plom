@@ -26,8 +26,6 @@
                         <li>All test specifications</li>
                         <li>All test PDFs</li>
                         <li>All classlists</li>
-                        <li>All scanned bundles</li>
-                        <li>All marking annotations</li>
                     </ul>
                     <div class="d-flex flex-row mb-5">
                         <a type="button"
@@ -40,7 +38,7 @@
                     <p class="text-center">
                         <strong>I wish to completely delete this Plom instance.</strong>
                     </p>
-                    <form method="post" action="">
+                    <form method="post" action="" autocomplete="off">
                         {% csrf_token %}
                         <div class="mx-auto text-center flex-row">
                             <div class="form-group m-2 flex-grow-1">{{ wipe_form.confirmation_field }}</div>
@@ -51,7 +49,7 @@
                                     </p>
                                 {% endfor %}
                             {% endif %}
-                            <button type="submit" class="btn btn-danger">Wipe all rubrics</button>
+                            <button type="submit" class="btn btn-danger">Wipe Plom Instance</button>
                         </div>
                     </form>
                 </div>

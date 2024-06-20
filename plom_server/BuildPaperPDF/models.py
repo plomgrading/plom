@@ -3,8 +3,10 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
+from pathlib import Path
 
 # from django.db.models.signals import pre_delete
 
@@ -43,4 +45,7 @@ class BuildPaperPDFChore(HueyTaskTracker):
         # TODO - call this when the associated task is out of date.
         if self.pdf_file is None:
             return
-        self.pdf_file.path.unlink(missing_ok=True)
+        try:
+            Path(self.pdf_file.path).unlink(missing_ok=True)
+        except:
+            pass

@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aden Chan
 
+import os
 from django.db import models
+from django.dispatch import receiver
 from Preparation.models import PaperSourcePDF
 
 
@@ -19,3 +22,14 @@ class ReferenceImage(models.Model):
     version = models.PositiveIntegerField(null=False)
     height = models.IntegerField(default=0)
     width = models.IntegerField(default=0)
+
+
+@receiver(models.signals.post_delete, sender=ReferenceImage)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `ReferenceImage` object is deleted.
+    """
+    if instance.image_file:
+        if os.path.isfile(instance.image_file.path):
+            os.remove(instance.image_file.path)

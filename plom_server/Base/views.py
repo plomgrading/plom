@@ -10,7 +10,19 @@ from Base.base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
 
 from Scan.services import ScanService
-from Rubrics.services import RubricService
+
+# from Rubrics.services import RubricService
+from Preparation.services import (
+    PapersPrinted,
+    ScrapPaperService,
+    ExtraPageService,
+    PQVMappingService,
+    StagingStudentService,
+    PrenameSettingService,
+    SourceService,
+)
+from BuildPaperPDF.services import BuildPapersService
+from Papers.services import PaperCreatorService, SpecificationService
 
 
 class TroublesAfootGenericErrorView(View):
@@ -88,7 +100,32 @@ class ResetConfirmView(ManagerRequiredView):
         _confirm_field = "confirmation_field"
         if form.is_valid():
             if form.cleaned_data[_confirm_field] == reset_phrase:
-                # Call the master reset function here
+                # Essentially the "Create Test" page in reverse
+                # Unset printed status
+                PapersPrinted.set_papers_printed(False)
+
+                # Remove Extra and Scrap Pages
+                ScrapPaperService().delete_scrap_paper_pdf()
+                ExtraPageService().delete_extra_page_pdf()
+
+                # Remove all test PDFs
+                BuildPapersService().reset_all_tasks()
+
+                # Remove all test database rows
+                PaperCreatorService().remove_all_papers_from_db()
+
+                # Remove QV Mappings
+                PQVMappingService().remove_pqv_map()
+
+                # Remove classlist
+                StagingStudentService().remove_all_students()
+                PrenameSettingService().set_prenaming_setting(False)
+
+                # Remove and delete source PDFs
+                SourceService.delete_all_source_pdfs()
+
+                # Remove test spec
+                SpecificationService.remove_spec()
 
                 # Rubric App Deletion
                 # RubricService().erase_all_rubrics()
