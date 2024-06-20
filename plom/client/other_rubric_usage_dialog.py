@@ -45,10 +45,10 @@ class RubricUsageDialog(QDialog):
         ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
 
         # for mypy type-checking. Mypy worries ok_button can be None
-        if ok_button:
-            ok_button.setText("View")
-        else:
+        if not ok_button:
             raise RuntimeError("There should be ok button.")
+
+        ok_button.setText("View")
 
         # Create the view button
         buttons.accepted.connect(self.view_paper)
