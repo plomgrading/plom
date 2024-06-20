@@ -110,21 +110,20 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="filterButton">
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
-               <property name="text">
-                <string>Filter</string>
+               <property name="sizeType">
+                <enum>QSizePolicy::MinimumExpanding</enum>
                </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="filterInvCB">
-               <property name="text">
-                <string>Inv</string>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>16</width>
+                 <height>8</height>
+                </size>
                </property>
-              </widget>
+              </spacer>
              </item>
              <item>
               <widget class="QLineEdit" name="filterLE">
@@ -145,6 +144,16 @@
                </property>
                <property name="clearButtonEnabled">
                 <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="filterInvCB">
+               <property name="toolTip">
+                <string>Invert filter</string>
+               </property>
+               <property name="text">
+                <string>inv</string>
                </property>
               </widget>
              </item>
