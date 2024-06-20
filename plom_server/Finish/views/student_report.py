@@ -1,24 +1,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Colin B. Macdonald
 
-from django.shortcuts import render, redirect
 import io
 import zipfile
-from django.http import HttpResponse
-
-from .forms import StudentIDForm
-from ..models import Paper
-from Papers.services import SpecificationService
-from Progress.services import ManageScanService
-from django.contrib import messages
 from urllib.parse import quote
 
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+from Base.base_group_views import ManagerRequiredView
+from Papers.services import SpecificationService
+from Papers.models import Paper
+from Progress.services import ManageScanService
 from ..services import (
     StudentMarkService,
     BuildStudentReportService,
     DataExtractionService,
 )
-from Base.base_group_views import ManagerRequiredView
+from .forms import StudentIDForm
 
 
 class BuildStudentReportView(ManagerRequiredView):
