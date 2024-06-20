@@ -156,6 +156,7 @@ class Command(BaseCommand):
 
         with open(filename, "w") as f:
             buf = service.get_rubric_as_file(suffix, question=question)
+            # buf is a BytesIO, so we need to seek back to the start
             buf.seek(0)
             f.write(buf.getvalue())
 
