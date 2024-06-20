@@ -1163,7 +1163,7 @@ class MarkerClient(QWidget):
             # it might be hidden by filters
             prstart = 0  # put 'start' at row=0
         pr = prstart
-        while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
+        while self.prxM.getStatus(pr).casefold() != "untouched":
             pr = (pr + 1) % prt
             if pr == prstart:  # don't get stuck in a loop
                 break
@@ -1270,8 +1270,10 @@ class MarkerClient(QWidget):
         if not task:
             return
         inidata = self.getDataForAnnotator(task)
-        # make sure getDataForAnnotator did not fail
         if inidata is None:
+            InfoMsg(
+                self, f"Cannot annotate {task}, perhaps it is not assigned to you?"
+            ).exec()
             return
 
         if self.allowBackgroundOps:
@@ -1291,6 +1293,13 @@ class MarkerClient(QWidget):
         Returns:
             A tuple of data or None.
         """
+        status = self.examModel.getStatusByTask(task)
+
+        if status.casefold() not in ("marked", "uploading...", "???", "untouched"):
+            # TODO: should this make a dialog somewhere?
+            log.warn(f"task {task} status '{status}' is not your's to annotate")
+            return
+
         # Create annotated filename.
         assert task.startswith("q")
         paperdir = Path(
@@ -1302,7 +1311,7 @@ class MarkerClient(QWidget):
         aname = paperdir / Gtask
         pdict = None
 
-        if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
+        if status in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return None
