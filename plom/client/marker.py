@@ -1251,11 +1251,9 @@ class MarkerClient(QWidget):
                 )
 
     def reassign_task(self):
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
+        task = self.get_current_task_id_or_none()
+        if not task:
             return
-        task = self.prxM.getPrefix(pr)
         # TODO: combobox
         assign_to, ok = QInputDialog.getText(
             self, "Reassign to", f"Who would you like to reassign {task} to?"
