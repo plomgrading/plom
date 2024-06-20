@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Colin B. Macdonald
 
-from .StudentReportPDFService import pdf_builder
-from ..services import StudentMarkService
-from Papers.services import SpecificationService
-from ..models import Paper
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List
+
+from Papers.services import SpecificationService
+from Papers.models import Paper
+from ..services import StudentMarkService
+from .StudentReportPDFService import pdf_builder
 
 
 class BuildStudentReportService:
@@ -16,10 +19,10 @@ class BuildStudentReportService:
         """Build student report for the given paper number.
 
         Args:
-        paper_number: the paper_number to be built a report.
+            paper_number: the paper_number to be built a report.
 
         Returns:
-        Student Report as PDF file in bytes
+            Student Report as PDF file in bytes
         """
         paper = Paper.objects.get(paper_number=paper_number)
 
@@ -36,12 +39,12 @@ class BuildStudentReportService:
         report = pdf_builder(versions=True, sid=sid)
         return report
 
-    def get_status_for_student_report(self) -> List[int]:
+    def get_status_for_student_report(self) -> list[int]:
         """Retrieve status, such as number of scanned, marked, identified and ready to build papers.
 
         Return:
-        A list comprising number of scanned, marked, identified,
-        and built-ready papers respectively.
+            A list comprising number of scanned, marked, identified,
+            and built-ready papers respectively.
         """
         sms = StudentMarkService()
 

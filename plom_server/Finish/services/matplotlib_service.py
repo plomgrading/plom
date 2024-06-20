@@ -70,7 +70,7 @@ class MatplotlibService:
         return base64.b64encode(bytes.read()).decode()
 
     def histogram_of_total_marks(
-        self, *, highlighted_sid: Optional[str] = None, format: str = "base64"
+        self, *, highlighted_sid: str = None, format: str = "base64"
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the total marks.
 
@@ -133,7 +133,7 @@ class MatplotlibService:
         *,
         versions: bool = False,
         student_df: Optional[pd.DataFrame] = None,
-        highlighted_sid: Optional[str] = None,
+        highlighted_sid: str = "",
         format: str = "base64",
     ) -> Union[BytesIO, str]:
         """Generate a histogram of the grades on a specific question.

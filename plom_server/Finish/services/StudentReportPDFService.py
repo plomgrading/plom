@@ -3,9 +3,11 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Dict, Optional
 from textwrap import dedent
+from typing import Any
 
 from weasyprint import HTML, CSS
 
@@ -16,10 +18,10 @@ from . import DataExtractionService, MatplotlibService
 
 def pdf_builder(
     versions: bool,
-    sid: Optional[str],
+    sid: str | None,
     *,
-    verbose: Optional[bool] = None,
-) -> Dict[str, Any]:
+    verbose: bool = False,
+) -> dict[str, Any]:
     """Build a Student Report PDF file report and return it as bytes.
 
     Args:
