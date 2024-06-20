@@ -1205,14 +1205,14 @@ class MarkerClient(QWidget):
 
     def change_task_view(self, cbidx: int) -> None:
         if cbidx == 0:
-            self._remove_not_my_tasks()
+            self._show_only_my_tasks()
         elif cbidx == 1:
+            self._show_all_tasks()
             self._download_full_task_list()
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
     def _download_full_task_list(self) -> None:
-        # temp call
         try:
             tasks = self.msgr.get_tasks(self.question_idx, self.version)
         except PlomNoServerSupportException as e:
@@ -1247,16 +1247,6 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
-
-    def _remove_not_my_tasks(self) -> None:
-        # TODO: this drops a lot of temp annotated images, better to hide?
-        r = self.examModel.rowCount()
-        while r > -1:
-            username = self.examModel._get_username(r)
-            if username != self.msgr.username:
-                # TODO: careful removing in loop, so maybe hide is better
-                self.examModel.removeRow(r)
-            r -= 1
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
@@ -2080,6 +2070,12 @@ class MarkerClient(QWidget):
             self.prxM.set_filter_tags(search_terms, invert=True)
         else:
             self.prxM.set_filter_tags(search_terms)
+
+    def _show_only_my_tasks(self) -> None:
+        self.prxM.set_show_only_this_user(self.msgr.username)
+
+    def _show_all_tasks(self) -> None:
+        self.prxM.set_show_only_this_user("")
 
     def view_other(self):
         """Shows a particular paper number and question."""

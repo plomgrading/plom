@@ -497,6 +497,7 @@ class ProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(_idx_tags)
         self.tag_search_terms = []
         self.invert_tag_search = False
+        self.show_only_this_user = ""
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
         """Sees if left data is less than right data.
@@ -516,6 +517,9 @@ class ProxyModel(QSortFilterProxyModel):
             pass
         # else compare as strings
         return str(left.data()) < str(right.data())
+
+    def set_show_only_this_user(self, user: str) -> None:
+        self.show_only_this_user = user
 
     def set_filter_tags(self, filter_str: str, *, invert: bool = False) -> None:
         """Filter the visible tasks based on a string.
@@ -553,6 +557,11 @@ class ProxyModel(QSortFilterProxyModel):
         inverts that logic: at least one of the words must not be in the
         tags.
         """
+        if self.show_only_this_user:
+            user = self.sourceModel().data(self.sourceModel().index(pos, _idx_user))
+            if user != self.show_only_this_user:
+                return False
+
         tags = (
             self.sourceModel().data(self.sourceModel().index(pos, _idx_tags)).casefold()
         )
