@@ -6,7 +6,6 @@
 from django.urls import reverse
 from django.shortcuts import render
 from django.http import FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
@@ -30,11 +29,10 @@ class MiscExtrasView(ManagerRequiredView):
 class ExtraPageView(ManagerRequiredView):
     def get(self, request):
         ep_service = ExtraPageService()
-        with open(ep_service.get_extra_page_pdf_filepath(), "rb") as pdf_bytes:
-            pdf = SimpleUploadedFile(
-                "extra_page.pdf", pdf_bytes.read(), content_type="application/pdf"
-            )
-            return FileResponse(pdf)
+        return FileResponse(
+            open(ep_service.get_extra_page_pdf_filepath(), "rb"),
+            content_type="application/pdf",
+        )
 
     def put(self, request):
         ep_service = ExtraPageService()
@@ -50,11 +48,10 @@ class ExtraPageView(ManagerRequiredView):
 class ScrapPaperView(ManagerRequiredView):
     def get(self, request):
         sp_service = ScrapPaperService()
-        with open(sp_service.get_scrap_paper_pdf_filepath(), "rb") as pdf_bytes:
-            pdf = SimpleUploadedFile(
-                "scrap_paper.pdf", pdf_bytes.read(), content_type="application/pdf"
-            )
-            return FileResponse(pdf)
+        return FileResponse(
+            open(sp_service.get_scrap_paper_pdf_filepath(), "rb"),
+            content_type="application/pdf",
+        )
 
     def put(self, request):
         sp_service = ScrapPaperService()
