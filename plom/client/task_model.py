@@ -422,8 +422,8 @@ class ProxyModel(QSortFilterProxyModel):
         """
         super().__init__(parent)
         self.setFilterKeyColumn(_idx_tags)
-        self.filterString = ""
-        self.invert = False
+        self.tag_search_terms = []
+        self.invert_tag_search = False
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
         """Sees if left data is less than right data.
@@ -444,29 +444,23 @@ class ProxyModel(QSortFilterProxyModel):
         # else compare as strings
         return str(left.data()) < str(right.data())
 
-    def setFilterString(self, flt: str) -> None:
-        """Sets the Filter String.
+    def set_filter_tags(self, filter_str: str, *, invert: bool = False) -> None:
+        """Filter the visible tasks based on a string.
 
         Args:
-            flt: the string on which to filter.
+            filter_str: which terms to search for.
 
-        Returns:
-            None
-        """
-        self.filterString = flt
-
-    def filterTags(self, invert=False):
-        """Sets the Filter Tags based on string.
-
-        Args:
-            invert (bool): True if looking for files that do not have given
+        Keyword Args:
+            invert: True if looking for tasks that do not have given
                 filter string, false otherwise.
 
         Returns:
             None
         """
-        self.invert = invert
-        self.setFilterFixedString(self.filterString)
+        self.invert_tag_search = invert
+        self.tag_search_terms = filter_str.casefold().split()
+        # trigger update (but filterAcceptsRow will be used)
+        self.setFilterFixedString("")
 
     def filterAcceptsRow(self, pos, index):
         """Checks if a row matches the current filter.
@@ -486,12 +480,11 @@ class ProxyModel(QSortFilterProxyModel):
         inverts that logic: at least one of the words must not be in the
         tags.
         """
-        search_terms = self.filterString.casefold().split()
         tags = (
             self.sourceModel().data(self.sourceModel().index(pos, _idx_tags)).casefold()
         )
-        all_search_terms_in_tags = all(x in tags for x in search_terms)
-        if self.invert:
+        all_search_terms_in_tags = all(x in tags for x in self.tag_search_terms)
+        if self.invert_tag_search:
             return not all_search_terms_in_tags
         return all_search_terms_in_tags
 
