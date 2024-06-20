@@ -83,7 +83,7 @@
             {% endfor %}
         </tbody>
     </table>
-    {% include 'Questiontags/modal_forms.html' %}
+    {% include "Questiontags/modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
@@ -106,6 +106,7 @@
                 var selectedTag = $(this).val();
                 var selectedTagText = $(this).find('option:selected').text();
                 $('#tagName_edit').val(selectedTagText);
+                // You might want to fetch the description dynamically here
                 var selectedTagDescription = tags.find(tag => tag.id == selectedTag).description;
                 $('#tagDescription_edit').val(selectedTagDescription);
             });
