@@ -583,7 +583,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
-        self.ui.deferButton.clicked.connect(self.deferTest)
+        # self.ui.deferButton.clicked.connect(self.deferTest)
+        self.ui.deferButton.clicked.connect(self.tmp_download_full_list)
         self.ui.deferButton.setText("Load full list")
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
@@ -1203,8 +1204,7 @@ class MarkerClient(QWidget):
 
         return True
 
-    def deferTest(self):
-        """Mark test as "defer" - to be skipped until later."""
+    def tmp_download_full_list(self):
         # temp call
         try:
             tasks = self.msgr.get_tasks(self.question_idx, self.version)
@@ -1228,9 +1228,21 @@ class MarkerClient(QWidget):
                     username=username,
                 )
             except KeyError as e:
-                print(f"Skipping this row b/c its already in there: {e}")
-                print(t)
-        return
+                # only update those papers not with our username (TODO: fragile!)
+                if username == self.msgr.username:
+                    print(f"Skipping 'our' row b/c its already there: {str(e)}\n  {t}")
+                    continue
+                self.examModel.modify_task(
+                    task_id_str,
+                    src_img_data=[],
+                    mark=mark,
+                    status=t["status"],
+                    tags=t["tags"],
+                    username=username,
+                )
+
+    def deferTest(self):
+        """Mark test as "defer" - to be skipped until later."""
         task = self.get_current_task_id_or_none()
         if not task:
             return
