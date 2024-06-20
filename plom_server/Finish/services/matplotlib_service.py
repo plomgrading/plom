@@ -4,6 +4,8 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 
+from __future__ import annotations
+
 import base64
 from io import BytesIO
 from typing import List, Optional, Union
@@ -70,8 +72,8 @@ class MatplotlibService:
         return base64.b64encode(bytes.read()).decode()
 
     def histogram_of_total_marks(
-        self, *, highlighted_sid: str = "", format: str = "base64"
-    ) -> Union[BytesIO, str]:
+        self, *, highlighted_sid: str | None = None, format: str = "base64"
+    ) -> BytesIO | str:
         """Generate a histogram of the total marks.
 
         Keyword Args:
@@ -133,9 +135,9 @@ class MatplotlibService:
         *,
         versions: bool = False,
         student_df: Optional[pd.DataFrame] = None,
-        highlighted_sid: str = "",
+        highlighted_sid: str | None = None,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question.
 
         Args:
@@ -223,7 +225,7 @@ class MatplotlibService:
 
     def correlation_heatmap_of_questions(
         self, *, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a correlation heatmap of the questions.
 
         Keyword Args:
@@ -281,7 +283,7 @@ class MatplotlibService:
         ta_df: Optional[pd.DataFrame] = None,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
@@ -361,7 +363,7 @@ class MatplotlibService:
         max_time: int = 0,
         bin_width: int = 15,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the time spent marking a question.
 
         Args:
@@ -457,7 +459,7 @@ class MatplotlibService:
         *,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
         Args:
@@ -529,7 +531,7 @@ class MatplotlibService:
         question_idx: int,
         *,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a boxplot of the marks given by each TA for the specified question.
 
         The length and order of marks and marker_names should be the same such
@@ -598,7 +600,7 @@ class MatplotlibService:
 
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a line graph of the average percentage marks by question.
 
         Keyword Args:
