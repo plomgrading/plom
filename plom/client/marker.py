@@ -587,7 +587,7 @@ class MarkerClient(QWidget):
         m.addAction("Reassign task to...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
-        self.ui.deferButton.clicked.connect(self.deferTest)
+        self.ui.deferButton.clicked.connect(self.defer_task)
         self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
@@ -1301,12 +1301,19 @@ class MarkerClient(QWidget):
             return
         self.claim_task_and_trigger_downloads(task)
 
-    def deferTest(self):
-        """Mark test as "defer" - to be skipped until later."""
+    def defer_task(self):
+        """Mark task as "defer" - to be skipped until later."""
         task = self.get_current_task_id_or_none()
         if not task:
             return
         if self.examModel.getStatusByTask(task) == "deferred":
+            return
+        user = self.examModel.get_username_by_task(task)
+        if user != self.msgr.username:
+            s = f"Cannot defer task {task} b/c it isn't yours"
+            if user:
+                s += f': {task} belongs to "{user}"'
+            InfoMsg(self, s).exec()
             return
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             InfoMsg(self, "Cannot defer a marked test.").exec()
