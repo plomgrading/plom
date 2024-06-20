@@ -458,10 +458,9 @@ class ProxyModel(QSortFilterProxyModel):
             None
         """
         self.invert_tag_search = invert
-        # TODO: code was like this but I don't think we're using this b/c
-        # TODO: we have our own `filterAcceptsRow()`.
-        # self.setFilterFixedString(filter_str)
         self.tag_search_terms = filter_str.casefold().split()
+        # trigger update (but filterAcceptsRow will be used)
+        self.setFilterFixedString("")
 
     def filterAcceptsRow(self, pos, index):
         """Checks if a row matches the current filter.
