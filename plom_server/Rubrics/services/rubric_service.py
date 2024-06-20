@@ -627,7 +627,7 @@ class RubricService:
             writer.writerows(rubrics)
             return f
 
-    def get_rubric_from_file(self, file: io.TextIOWrapper | io.BytesIO, filetype: str):
+    def get_rubric_from_file(self, f: io.TextIOWrapper | io.BytesIO, filetype: str):
         """Retrieves rubrics from a file.
 
         Args:
@@ -644,19 +644,19 @@ class RubricService:
             raise ValueError(f"Unsupported file type: {filetype}")
 
         if filetype == "json":
-            rubrics = json.load(file)
+            rubrics = json.load(f)
         elif filetype == "toml":
-            if isinstance(file, io.BytesIO):
-                rubrics = tomllib.load(file)["rubric"]
+            if isinstance(f, io.BytesIO):
+                rubrics = tomllib.load(f)["rubric"]
             else:
                 raise RuntimeError("toml file must be a BytesIO object")
         elif filetype == "csv":
-            if isinstance(file, io.TextIOWrapper):
-                reader = csv.DictReader(file)
+            if isinstance(f, io.TextIOWrapper):
+                reader = csv.DictReader(f)
                 rubrics = list(reader)
                 print(rubrics)
             else:
-                print(type(file))
+                print(type(f))
                 raise RuntimeError("csv file must be a TextIOWrapper object")
         else:
             raise ValueError("File not supported")
