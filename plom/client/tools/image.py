@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 
 
 class CommandImage(CommandTool):
@@ -43,7 +43,6 @@ class CommandImage(CommandTool):
         """
         super().__init__(scene)
         self.obj = ImageItem(pt, image, scale, border, data)
-        self.do = DeleteObject(self.obj.shape())
         self.setText("Image")
 
     @classmethod

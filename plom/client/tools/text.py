@@ -8,9 +8,8 @@ from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, DeleteObject
+from plom.client.tools import CommandTool
 from plom.client.tools import log
-from .animations import AnimationDuration as Duration
 
 
 # TODO: move this to move.py?
@@ -86,7 +85,9 @@ class CommandText(CommandTool):
             color=scene.style["annot_color"],
             _texmaker=scene,
         )
-        self.do = DeleteObject(self.blurb.shape(), fill=True)
+        # TODO: why do CommandText have a .blurb instead of a .obj?  Issue #3419.
+        # HACK by just making another reference to it: else we need custom undo/redo
+        self.obj = self.blurb
         self.setText("Text")
 
     @classmethod
@@ -99,25 +100,9 @@ class CommandText(CommandTool):
         # knows to latex it if needed.
         return cls(scene, QPointF(X[1], X[2]), X[0])
 
-    def redo(self):
-        self.scene.addItem(self.blurb)
-        # update the deleteobject since the text may have been updated
-        # use getshape - takes offset into account
-        self.do.item.setPath(self.blurb.getShape())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
-
-    def undo(self):
-        self.scene.removeItem(self.blurb)
-        # update the deleteobject since the text may have been updated
-        # use getshape - takes offset into account
-        self.do.item.setPath(self.blurb.getShape())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo()
-        QTimer.singleShot(Duration, lambda: self.scene.removeItem(self.do.item))
+    def get_undo_redo_animation_shape(self):
+        # takes offset into account: always at origin without this
+        return self.blurb.getShape()
 
 
 class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):

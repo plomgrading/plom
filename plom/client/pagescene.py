@@ -1551,7 +1551,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt = ept - QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()
@@ -1589,7 +1589,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             pt = event.scenePos()
             command = CommandText(self, pt, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()

@@ -3,20 +3,22 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt6.QtGui import QPen
+from PyQt6.QtGui import QPen, QPainterPath
 from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools.pen import CommandPen, PenItem
-from plom.client.tools import DeleteObject, UndoStackMoveMixin
+from plom.client.tools import UndoStackMoveMixin
 
 
 class CommandHighlight(CommandPen):
     def __init__(self, scene, path):
         super().__init__(scene, path)
         self.obj = HighlightItem(path, scene.style)
-        self.do = DeleteObject(self.obj.path)
         self.setText("Highlight")
+
+    def get_undo_redo_animation_shape(self) -> QPainterPath:
+        return self.obj.path
 
 
 class HighlightItem(UndoStackMoveMixin, QGraphicsPathItem):

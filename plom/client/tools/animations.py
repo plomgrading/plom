@@ -5,7 +5,7 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QBrush, QColor, QPen
-from PyQt6.QtWidgets import QGraphicsRectItem
+from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsPathItem
 
 from plom.client.tools import log
 
@@ -15,7 +15,7 @@ from plom.client.tools import log
 AnimationDuration: int = 200
 
 AnimationPenColour = QColor(8, 232, 222, 128)
-AnimationPenThickness = 10
+AnimationPenThickness = 8
 AnimationFillColour = QColor(8, 232, 222, 16)
 
 
@@ -26,8 +26,8 @@ AnimationFillColour = QColor(8, 232, 222, 16)
 # There is also a QGraphicsItemAnimations but its deprecated.
 # Our workaround is the above `_AnimatorCtrlr` class, which exists
 # just to call back to this one.
-class AnimatingTempRectItem(QGraphicsRectItem):
-    """A base class for new-style animated rectangles.
+class AnimatingTempItemMixin:
+    """A base class for new-style animations.
 
     At the end of your ``__init__`` function you must start the animation
     by calling `self.start()`.
@@ -38,13 +38,10 @@ class AnimatingTempRectItem(QGraphicsRectItem):
             `setEndValue` of 1.
     """
 
-    def __init__(self, scene) -> None:
-        super().__init__()
+    def anim_init(self, scene) -> None:
+        # basically __init__ but I cannot handle multiple inheritance
         self._scene = scene
         self.saveable = False
-
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
 
         # Crashes when calling our methods (probably b/c QGraphicsItem
         # is not QObject).  Instead we use a helper class.  "prop" is a
@@ -81,7 +78,7 @@ class _AnimatorCtrlr(QObject):
 
     _prop = -1.0  # unused, but the animator expects getter/setter
 
-    def __init__(self, item: AnimatingTempRectItem) -> None:
+    def __init__(self, item: AnimatingTempItemMixin) -> None:
         super().__init__()
         self.item = item
 
@@ -92,3 +89,58 @@ class _AnimatorCtrlr(QObject):
     @prop.setter  # type: ignore[no-redef]
     def prop(self, value: float) -> None:
         self.item.interp(value)
+
+
+# Note multiple inheritance with PyQt is ok as long as only one is a Qt class
+class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
+    """A base class for new-style animated rectangles.
+
+    At the end of your ``__init__`` function you must start the animation
+    by calling `self.start()`.
+
+    You'll need to subclass this, and add a ``interp`` method.
+
+    Instance variables:
+        anim: a QPropertyAnimation, you can call `setDuration` to change
+            the time from default.  It has default `setStartValue` of 0,
+            `setEndValue` of 1.
+    """
+
+    def __init__(self, scene) -> None:
+        super().__init__()
+        self.anim_init(scene)
+        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
+        self.setBrush(QBrush(AnimationFillColour))
+
+
+class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
+    """New-style animated path.
+
+    If you subclass this, call the superclass ``__init__`` like this:
+    ``super().__init__(scene, start=False)``.
+    Then at the end of your ``__init__`` function you must start the
+    animation by calling `self.
+
+    Instance variables:
+        anim: a QPropertyAnimation, you can call `setDuration` to change
+            the time from default.  It has default `setStartValue` of 0,
+            `setEndValue` of 2.
+    """
+
+    def __init__(self, scene, path, backward: bool = False, start: bool = True) -> None:
+        super().__init__()
+        self.anim_init(scene)
+        self.setPath(path)
+        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
+        if backward:
+            self.anim.setStartValue(AnimationPenThickness / 4.0)
+            self.anim.setEndValue(0)
+        else:
+            self.anim.setStartValue(0)
+            self.anim.setEndValue(AnimationPenThickness / 4.0)
+        self.anim.setKeyValueAt(0.5, AnimationPenThickness)
+        if start:
+            self.start()
+
+    def interp(self, thickness: float):
+        self.setPen(QPen(AnimationPenColour, thickness))
