@@ -22,9 +22,9 @@
                       action="{% url 'add_question_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="questionNumber">Question Number</label>
-                        <select class="form-control" id="questionNumber" name="questionNumber">
-                            {% for number, label in question_labels %}<option value="{{ number }}">{{ number }}</option>{% endfor %}
+                        <label for="questionIndex">Question Index</label>
+                        <select class="form-control" id="questionIndex" name="questionIndex">
+                            {% for index, label in question_labels %}<option value="{{ index }}">{{ index }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">

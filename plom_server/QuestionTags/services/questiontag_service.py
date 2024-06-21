@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 class QuestionTagService:
     @staticmethod
     def get_question_labels():
-        """Return a list of tuples containing question number and question label."""
+        """Return a list of tuples containing question index and question label."""
         question_labels = SpecificationService.get_question_labels()
         question_indices = SpecificationService.get_question_indices()
         return list(zip(question_indices, question_labels))
