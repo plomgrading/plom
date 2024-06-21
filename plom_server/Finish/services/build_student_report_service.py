@@ -22,7 +22,7 @@ class BuildStudentReportService:
             paper_number: the paper_number to be built a report.
 
         Returns:
-            Student Report as PDF file in bytes
+            A dictionary with student report PDF file in bytes.
         """
         paper = Paper.objects.get(paper_number=paper_number)
 
