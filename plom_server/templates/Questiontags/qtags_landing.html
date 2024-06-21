@@ -6,8 +6,7 @@
     Question Tags
 {% endblock page_heading %}
 {% block main_content %}
-    <p>Total Questions: {{ question_count }}</p>
-    <h3>Available Questions</h3>
+    <h3>List of Available Question Indexes and Labels</h3>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -16,9 +15,9 @@
             </tr>
         </thead>
         <tbody>
-            {% for number, label in question_labels %}
+            {% for index, label in question_labels %}
                 <tr>
-                    <td>{{ number }}</td>
+                    <td>{{ index }}</td>
                     <td>{{ label }}</td>
                 </tr>
             {% endfor %}
@@ -41,12 +40,14 @@
         <thead>
             <tr>
                 <th>Tag Name</th>
+                <th>Tag Description</th>
             </tr>
         </thead>
         <tbody>
             {% for tag in tags %}
                 <tr>
                     <td>{{ tag.tag_name }}</td>
+                    <td>{{ tag.description }}</td>
                 </tr>
             {% endfor %}
         </tbody>

@@ -116,6 +116,8 @@
     </div>
 </div>
 <!-- Modal for Editing Tag -->
+<!-- TO-DO: have the tag name and description display when choosing an option 
+            have a delete button -->
 <div class="modal fade"
      id="editTagModal"
      tabindex="-1"
@@ -158,6 +160,33 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Viewing Tag Details -->
+<div class="modal fade"
+     id="tagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="tagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">Tag Details</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Tag Name:</strong> <span id="modalTagName"></span>
+                </p>
+                <p>
+                    <strong>Description:</strong> <span id="modalTagDescription"></span>
+                </p>
             </div>
         </div>
     </div>

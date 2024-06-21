@@ -25,7 +25,7 @@ class AddQuestionTagView(CreateView):
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
-        question_index = request.POST.get("questionNumber")
+        question_index = request.POST.get("questionIndex")
         tag_names = request.POST.getlist("tagName")
         description = request.POST.get("description")
         QuestionTagService.add_question_tag(question_index, tag_names, description)
