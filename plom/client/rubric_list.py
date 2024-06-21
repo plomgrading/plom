@@ -331,7 +331,7 @@ class RubricTable(QTableWidget):
                 menu.addAction(a)
             menu.addSeparator()
 
-            other_usage = QAction("Other usage", self)
+            other_usage = QAction("See other usage...", self)
             other_usage.triggered.connect(other_usage_factory(self, key))
             menu.addAction(other_usage)
             menu.addSeparator()

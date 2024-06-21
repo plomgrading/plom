@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
 
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (
     QDialog,
     QListWidget,
@@ -34,6 +35,8 @@ class RubricUsageDialog(QDialog):
 
         # Create the list widget
         self.list_widget = QListWidget()
+        # Connect double click to view paper
+        self.list_widget.itemDoubleClicked.connect(self._handle_double_click)
         paper_numbers.sort()
         for number in paper_numbers:
             self.list_widget.addItem(str(number))
@@ -65,6 +68,9 @@ class RubricUsageDialog(QDialog):
         self.setLayout(v_layout)
 
         h_layout.addWidget(buttons)
+    
+    def _handle_double_click(self, item):
+        self.view_paper()
 
     def view_paper(self):
         selected_items = self.list_widget.selectedItems()
