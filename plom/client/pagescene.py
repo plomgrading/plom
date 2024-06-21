@@ -617,6 +617,7 @@ class PageScene(QGraphicsScene):
             b.setMenu(m)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
+            h.setZValue(20)
             # h.setScale(0.9)
             h.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
