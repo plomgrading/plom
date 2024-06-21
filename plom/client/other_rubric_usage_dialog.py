@@ -68,7 +68,7 @@ class RubricUsageDialog(QDialog):
         self.setLayout(v_layout)
 
         h_layout.addWidget(buttons)
-    
+
     def _handle_double_click(self, item):
         self.view_paper()
 
