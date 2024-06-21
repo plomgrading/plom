@@ -15,10 +15,10 @@ class QuestionTagService:
         return list(zip(question_indices, question_labels))
 
     @staticmethod
-    def add_question_tag(question_number, tag_names, description):
+    def add_question_tag(question_index, tag_names, description):
         """Add a question tag to the database."""
         question_tag = QuestionTag.objects.create(
-            question_number=question_number, description=description
+            question_index=question_index, description=description
         )
         for tag_name in tag_names:
             tag = Tag.objects.get(tag_name=tag_name)

@@ -67,7 +67,7 @@
         <tbody>
             {% for tag in question_tags %}
                 <tr>
-                    <td>{{ tag.question_number }}</td>
+                    <td>{{ tag.question_index }}</td>
                     <td>{{ tag.description }}</td>
                     <td>
                         {% for t in tag.tags.all %}

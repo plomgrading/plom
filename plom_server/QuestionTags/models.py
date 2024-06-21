@@ -10,6 +10,6 @@ class Tag(models.Model):
 
 
 class QuestionTag(models.Model):
-    question_number = models.IntegerField()
+    question_index = models.IntegerField()
     description = models.TextField()
     tags = models.ManyToManyField(Tag)
