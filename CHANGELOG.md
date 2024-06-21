@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Users can change their own passwords.
-* Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
 
 ### Changed
 * Plom now allows sharing pages between questions.
