@@ -81,6 +81,7 @@ from .tools import (
     CommandCrop,
     CommandRotatePage,
     CommandShiftPage,
+    CommandRemovePage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -298,19 +299,22 @@ class UnderlyingImages(QGraphicsItemGroup):
     Puts a dotted border around all the images.
     """
 
-    def __init__(self, image_data):
+    def __init__(self, image_data: list[dict[str, Any]]):
         """Initialize a new series of underlying images.
 
         Args:
-            image_data (list[dict]): each dict has keys 'filename'
-                and 'orientation' (and possibly others).  Currently
-                every image is used and the list order determines
-                the order.  That is subject to change.
+            image_data: each dict has keys 'filename', 'orientation',
+                and 'visible' (and possibly others).  Only images with
+                'visible' as True will be used.
+                The list order determines the order: subject to change!
         """
         super().__init__()
         self.images = {}
-        x = 0
-        for n, data in enumerate(image_data):
+        x = 0.0
+        n = 0
+        for data in image_data:
+            if not data["visible"]:
+                continue
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
@@ -342,6 +346,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+            n += 1
 
         self.setZValue(-1)
 
@@ -429,6 +434,14 @@ class PageScene(QGraphicsScene):
         """
         super().__init__(parent)
         self.src_img_data = deepcopy(src_img_data)
+        for x in self.src_img_data:
+            # TODO: revisit moving this "visible" bit outside of PageScene
+            # and dedupe the business of pagedata and src_img_data.
+            if "visible" not in x.keys():
+                x["visible"] = True
+                log.warn(f'Hacked in an "visible": {x}')
+        if not self.src_img_data:
+            raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
         self.score = None
         self._page_hack_buttons = []
@@ -534,6 +547,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
+        # TODO: for debugging:
+        # if True or self.parent().is_experimental():
         if self.parent().is_experimental():
             self.build_page_hack_buttons()
 
@@ -550,40 +565,7 @@ class PageScene(QGraphicsScene):
 
         def page_delete_func_factory(n):
             def page_delete():
-                img = self.underImage.images[n]
-                e = QGraphicsColorizeEffect()
-                e.setColor(QColor("darkred"))
-                img.setGraphicsEffect(e)
-                d = SimpleQuestion(
-                    self.parent(),  # self.addWidget(d) instead?
-                    """Remove this page?  Currently, this <em>does not work</em>
-                    with the undo stack&mdash;Issue
-                    <a href="https://gitlab.com/plom/plom/-/issues/2510">#2510</a>.\n
-                    <ul>\n
-                      <li>You can always find the page again using
-                        <em>Rearrange Pages</em>.</li>\n
-                    <li>Existing annotations will shift left or right.</li>\n
-                    </ul>""",
-                    "Are you sure you want to remove this page?",
-                )
-                # h = self.addWidget(d)
-                # Not sure opening a dialog from the scene is wise
-                if d.exec() == QMessageBox.StandardButton.No:
-                    img.setGraphicsEffect(None)
-                    return
-                self.src_img_data.pop(n)
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-                # shift existing annotations leftward
-                loc = br.right()
-                if n == len(self.underImage.images) - 1:
-                    # special case when deleting right-most image
-                    loc = br.left()
-                stuff = self.find_items_right_of(loc)
-                self.move_some_items(stuff, -br.width(), 0)
-                # TODO: replace with emit signal (if needed)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+                self.dont_use_page_image(n)
 
             return page_delete
 
@@ -606,7 +588,7 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
             b = QToolButton(text="\N{Trigram For Heaven}")
-            b.setStyleSheet("QToolButton { background-color: #ff6666; }")
+            b.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
             m = QMenu(b)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
@@ -650,7 +632,7 @@ class PageScene(QGraphicsScene):
             h.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            b.setToolTip(f"Page options for page {n}")
+            b.setToolTip(f"Options for page {n + 1}")
             self._page_hack_buttons.append(h)
 
     def getScore(self):
@@ -708,19 +690,27 @@ class PageScene(QGraphicsScene):
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
 
-    def get_src_img_data(self):
-        return self.src_img_data
+    def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
+        """Get the live source image data for this scene.
 
-    def how_many_underlying_images_wide(self):
+        Note you get the actual data, not a copy so careful if you mess with it!
+        """
+        r = []
+        for x in self.src_img_data:
+            if x["visible"] or not only_visible:
+                r.append(x)
+        return r
+
+    def how_many_underlying_images_wide(self) -> int:
         """Count how many images wide the bottom layer is.
 
         Currently this is just the number of images (because we layout
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.src_img_data)
+        return len(self.get_src_img_data(only_visible=True))
 
-    def how_many_underlying_images_high(self):
+    def how_many_underlying_images_high(self) -> int:
         """How many images high is the bottom layer.
 
         Currently this is always 1 because we align the images in a
@@ -1921,9 +1911,34 @@ class PageScene(QGraphicsScene):
         # TODO: adjust annotations, then end the macro
         self.undoStack.endMacro()
 
+    def _idx_from_visible_idx(self, n: int) -> int:
+        """Find the index in the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding 0-based index into the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
+        m = -1
+        for idx, x in enumerate(self.src_img_data):
+            if x["visible"]:
+                m += 1
+            if m == n:
+                return idx
+        raise KeyError(f"no row in src_img_data visible at n={n}")
+
     def _shift_page_image_only(self, n: int, m: int) -> None:
-        d = self.src_img_data.pop(n)
-        self.src_img_data.insert(m, d)
+        n_idx = self._idx_from_visible_idx(n)
+        m_idx = self._idx_from_visible_idx(m)
+        d = self.src_img_data.pop(n_idx)
+        self.src_img_data.insert(m_idx, d)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 
@@ -1965,7 +1980,59 @@ class PageScene(QGraphicsScene):
     def _rotate_page_image_only(self, n: int, degrees: int) -> None:
         """Low-level rotate page support: only rotate page, no shifts."""
         # do the rotation in metadata and rebuild
-        self.src_img_data[n]["orientation"] += degrees
+        n_idx = self._idx_from_visible_idx(n)
+        self.src_img_data[n_idx]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def dont_use_page_image(self, n: int) -> None:
+        n_idx = self._idx_from_visible_idx(n)
+        img = self.underImage.images[n]
+        e = QGraphicsColorizeEffect()
+        e.setColor(QColor("darkred"))
+        img.setGraphicsEffect(e)
+        d = SimpleQuestion(
+            self.parent(),  # self.addWidget(d) instead?
+            """Remove this page? <ul>\n
+              <li>You can undo or find the page again using
+                <em>Rearrange Pages</em>.</li>\n
+            <li>Existing annotations will shift left or right.</li>\n
+            </ul>""",
+            "Are you sure you want to remove this page?",
+        )
+        # h = self.addWidget(d)
+        # Not sure opening a dialog from the scene is wise
+        if d.exec() == QMessageBox.StandardButton.No:
+            img.setGraphicsEffect(None)
+            return
+
+        self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+        if n == len(self.underImage.images) - 1:
+            # special case when deleting right-most image
+            loc = br.left()
+            go_left = False
+        else:
+            # shift existing annotations leftward
+            loc = br.right()
+            go_left = True
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+        self.undoStack.push(cmd)
+
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, -br.width(), 0)
+
+        self.undoStack.endMacro()
+
+    def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
+        self.src_img_data[n_idx]["visible"] = show
+        # TODO: replace with emit signal (if needed)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 

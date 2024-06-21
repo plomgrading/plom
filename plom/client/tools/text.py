@@ -8,9 +8,9 @@ from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import AnimationDuration as Duration
 from plom.client.tools import CommandTool, DeleteObject
 from plom.client.tools import log
+from .animations import AnimationDuration as Duration
 
 
 # TODO: move this to move.py?

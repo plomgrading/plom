@@ -10,12 +10,6 @@ log = logging.getLogger("tools")
 
 from PyQt6.QtGui import QBrush, QColor, QPen
 
-# rough length of animations take in milliseconds: some might be shorter,
-# some longer but they will be scaled by this value.
-AnimationDuration: int = 200
-AnimationPenColour = QColor(8, 232, 222, 128)
-AnimationPenThickness = 10
-AnimationFillColour = QColor(8, 232, 222, 16)
 OutOfBoundsPenColour = QColor(255, 165, 0)
 OutOfBoundsFillColour = QColor(255, 165, 0, 128)
 OutOfBoundsPen = QPen(OutOfBoundsPenColour, 8)
@@ -27,6 +21,7 @@ from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop
 from plom.client.tools.rotate_page import CommandRotatePage
 from plom.client.tools.shift_page import CommandShiftPage
+from plom.client.tools.remove_page import CommandRemovePage
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (

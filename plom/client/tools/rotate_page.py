@@ -1,18 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QRectF, QObject
-from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
-from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QBrush, QPen, QUndoCommand
-from PyQt6.QtWidgets import QGraphicsRectItem
+from PyQt6.QtCore import QRectF
+from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import log
-from plom.client.tools import (
-    AnimationPenColour,
-    AnimationPenThickness,
-    AnimationFillColour,
-)
+from .animations import AnimatingTempRectItem
 from .shift_page import Duration
 
 
@@ -47,37 +39,16 @@ class CommandRotatePage(QUndoCommand):
         self.scene.addItem(TmpAnimRotatingRectItem(self.scene, -self.degrees, r1, r2))
 
 
-# see comments about this class in `shift_page.py`
-class TmpAnimRotatingRectItem(QGraphicsRectItem):
+class TmpAnimRotatingRectItem(AnimatingTempRectItem):
     def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
-        super().__init__()
-        self._scene = scene
-        self.saveable = False
+        super().__init__(scene)
+        self.anim.setDuration(Duration)
         self.setRect(r1)
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
         self.degrees = degrees
 
-        # Crashes when calling our methods (probably b/c QGraphicsItem
-        # is not QObject).  Instead we use a helper class.
-        self._ctrlr = _AnimatorCtrlr(self)
-        self.anim = QPropertyAnimation(self._ctrlr, b"foo")
-
-        self.anim.setDuration(Duration)
-        self.anim.setStartValue(0)
-        self.anim.setEndValue(1)
-        # When the animation finishes, it will destroy itself, whence
-        # we'll get a callback to remove ourself from the scene
-        self.anim.destroyed.connect(self.remove_from_scene)
-        self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
-
-    def remove_from_scene(self) -> None:
-        log.debug(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        # TODO: also, what if the scene removes the item early?
-        self._scene.removeItem(self)
+        self.start()
 
     def interp(self, t: float) -> None:
         """Draw a rectangle part way between r1 and r2, with a zoom out and rotate effect.
@@ -104,19 +75,3 @@ class TmpAnimRotatingRectItem(QGraphicsRectItem):
         self.setRect(p.x() - w, p.y() - w, 2 * w, 2 * w)
         self.setTransformOriginPoint(self.boundingRect().center())
         self.setRotation(angle)
-
-
-class _AnimatorCtrlr(QObject):
-    def __init__(self, item: TmpAnimRotatingRectItem) -> None:
-        super().__init__()
-        self.item = item
-
-    _foo = -1.0  # unused, but the animator expects getter/setter
-
-    @pyqtProperty(float)
-    def foo(self) -> float:
-        return self._foo
-
-    @foo.setter  # type: ignore[no-redef]
-    def foo(self, t: float) -> None:
-        self.item.interp(t)

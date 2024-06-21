@@ -1,19 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 
-from PyQt6.QtCore import QRectF, QObject
-from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
-from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
-from PyQt6.QtGui import QBrush, QPen, QUndoCommand
-from PyQt6.QtWidgets import QGraphicsRectItem
+from PyQt6.QtCore import QRectF
+from PyQt6.QtGui import QUndoCommand
 
-from plom.client.tools import log
-from plom.client.tools import (
-    AnimationPenColour,
-    AnimationPenThickness,
-    AnimationFillColour,
-)
-from plom.client.tools import AnimationDuration
+from .animations import AnimatingTempRectItem, AnimationDuration
 
 
 # this is a large-scale animation: slow it down a bit
@@ -51,42 +42,15 @@ class CommandShiftPage(QUndoCommand):
         self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
 
-# Note: tried multiple inheritance to make this an Object, like:
-#     TmpAnimRectItem(QGraphicsRectItem, QObject):
-# In theory, this allows QPropertyAnimation to talk to self, but it just
-# crashes for me.  Also tried swapping the order of inheritance.
-# There is also a QGraphicsItemAnimations but its deprecated.
-# Our workaround is the above `_AnimatorCtrlr` class, which exists
-# just to call back to this one.
-class TmpAnimRectItem(QGraphicsRectItem):
+class TmpAnimRectItem(AnimatingTempRectItem):
     def __init__(self, scene, r1: QRectF, r2: QRectF) -> None:
-        super().__init__()
-        self._scene = scene
-        self.saveable = False
+        super().__init__(scene)
+        # TODO: does it matter if we don't set the rect?
         self.setRect(r1)
-        self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
-        self.setBrush(QBrush(AnimationFillColour))
         self.r1 = r1
         self.r2 = r2
-
-        # Crashes when calling our methods (probably b/c QGraphicsItem
-        # is not QObject).  Instead we use a helper class.
-        self._ctrlr = _AnimatorCtrlr(self)
-        self.anim = QPropertyAnimation(self._ctrlr, b"foo")
-
         self.anim.setDuration(Duration)
-        self.anim.setStartValue(0)
-        self.anim.setEndValue(1)
-        # When the animation finishes, it will destroy itself, whence
-        # we'll get a callback to remove ourself from the scene
-        self.anim.destroyed.connect(self.remove_from_scene)
-        self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
-
-    def remove_from_scene(self) -> None:
-        log.debug(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        # TODO: also, what if the scene removes the item early?
-        self._scene.removeItem(self)
+        self.start()
 
     def interp(self, t: float) -> None:
         """Draw a rectangle part way between r1 and r2, with a zoom out effect.
@@ -111,19 +75,3 @@ class TmpAnimRectItem(QGraphicsRectItem):
         s = (2 + (2 * t - 1) ** 2) / 3.0
         self.setTransformOriginPoint(self.boundingRect().center())
         self.setScale(s)
-
-
-class _AnimatorCtrlr(QObject):
-    def __init__(self, item: TmpAnimRectItem) -> None:
-        super().__init__()
-        self.item = item
-
-    _foo = -1.0  # unused, but the animator expects getter/setter
-
-    @pyqtProperty(float)
-    def foo(self) -> float:
-        return self._foo
-
-    @foo.setter  # type: ignore[no-redef]
-    def foo(self, t: float) -> None:
-        self.item.interp(t)
