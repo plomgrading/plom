@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
@@ -126,7 +126,7 @@ class Command(BaseCommand):
     def download_specific_paper(self, paper_number: int) -> None:
         bp_service = BuildPapersService()
         try:
-            (name, b) = bp_service.get_paper_path_and_bytes(paper_number)
+            (name, b) = bp_service.get_paper_recommended_name_and_bytes(paper_number)
         except ValueError as err:
             raise CommandError(err)
 

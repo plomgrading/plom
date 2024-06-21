@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -18,7 +18,7 @@ from plom.server import (
     build_server_directories,
     create_server_config,
 )
-from .manageUserFiles import save_initial_user_list
+from .manageUserFilesCore import save_initial_user_list
 
 
 class PlomServerConfigurationError(Exception):

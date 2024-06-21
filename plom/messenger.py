@@ -14,6 +14,7 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -56,7 +57,7 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ID client API stuff
 
-    def IDprogressCount(self):
+    def IDprogressCount(self) -> list[int]:
         """Return info about progress on identifying.
 
         Return:
@@ -180,7 +181,20 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ------------------------
     # Marker stuff
-    def MrequestDoneTasks(self, q, v):
+    def MrequestDoneTasks(self, q: int, v: int) -> list[list[Any]]:
+        """Information about the tasks previously marked by this year.
+
+        Args:
+            q: which question.
+            v: which version.
+
+        Returns:
+            List of info the tasks.  Each entry is a list of the task
+            string (of the form ``q0002g3``), the score, the time (in
+            seconds), a list of tags (strings), and an "integrity code".
+            An empty list is returned if nothing has been graded by this
+            user.
+        """
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -188,8 +202,7 @@ class Messenger(BaseMessenger):
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
-            mList = response.json()
-            return mList
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -197,7 +210,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MprogressCount(self, q, v):
+    def MprogressCount(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
         Args:
@@ -205,7 +218,7 @@ class Messenger(BaseMessenger):
             v (str/int): a version number.
 
         Return:
-            list: with two integers, indicating the number of questions
+            A list of two integers, indicating the number of questions
             graded and the total number of questions to be graded of
             this question-version pair.
 
@@ -388,7 +401,7 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-    ):
+    ) -> list[int]:
         """Upload annotated image and associated data to the server.
 
         Args:
@@ -406,7 +419,9 @@ class Messenger(BaseMessenger):
                 back.
 
         Returns:
-            list: a 2-list of the form `[#done, #total]`.
+            A list of two integers, indicating the number of questions
+            graded and the total number of questions to be graded of
+            this question-version pair.
 
         Raises:
             PlomAuthenticationException

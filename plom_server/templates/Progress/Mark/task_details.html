@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -96,7 +96,7 @@
                     {% endfor %}
                 </span>
                 <p>
-                    <div class="collapse border my-2 p-3 w-25" id="newTagForm">
+                    <div class="collapse border my-2 p-3" id="newTagForm">
                         <form class="form validation was-validated"
                               hx-post="{% url 'create_marking_task_tag' task_pk %}">
                             <div class="form-floating m-2">

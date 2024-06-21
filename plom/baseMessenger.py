@@ -1084,7 +1084,9 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoRubric(response.reason) from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:

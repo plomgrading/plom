@@ -236,7 +236,6 @@ class Annotator(QWidget):
         #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
         # )
         features = (
-            "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
             # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
         )
@@ -1408,8 +1407,8 @@ class Annotator(QWidget):
             msg = f"{len(out_objs)} annotations are outside the margins."
             msg += " Please move or delete them before saving."
             info = "<p>Out-of-bounds objects are highlighted in orange.</p>"
-            info += "<p><em>Note:</em> if you cannot see any such objects, "
-            info += "you may be experiencing "
+            info += "<p><em>Note:</em> if you cannot see any such objects "
+            info += "(even after zooming out) then you may be experiencing "
             info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue '
             info += "#1792</a>; please help us by copy-pasting the details below, "
             info += "along with any details about how to make this happen!</p>"
