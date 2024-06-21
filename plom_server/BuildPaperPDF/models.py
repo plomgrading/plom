@@ -43,9 +43,7 @@ class BuildPaperPDFChore(HueyTaskTracker):
     def unlink_associated_pdf(self):
         # NOTE - at present this is not called.
         # TODO - call this when the associated task is out of date.
-        if self.pdf_file is None:
-            return
-        try:
+        if self.pdf_file:
             Path(self.pdf_file.path).unlink(missing_ok=True)
-        except:
-            pass
+        else:
+            return
