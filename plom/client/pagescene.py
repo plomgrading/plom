@@ -42,10 +42,12 @@ from PyQt6.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsView,
+    QGraphicsItem,
     QGraphicsItemGroup,
     QMessageBox,
     QToolButton,
     QMenu,
+    QGraphicsColorizeEffect,
 )
 
 from plom import AnnFontSizePts, ScenePixelHeight
@@ -77,6 +79,9 @@ from .tools import (
     CommandHighlight,
     CommandPenArrow,
     CommandCrop,
+    CommandRotatePage,
+    CommandShiftPage,
+    CommandRemovePage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -85,6 +90,7 @@ from .elastics import (
     which_centre_to_centre,
 )
 from plom.client.rubrics import compute_score
+from plom.client.useful_classes import SimpleQuestion
 
 
 log = logging.getLogger("pagescene")
@@ -293,19 +299,22 @@ class UnderlyingImages(QGraphicsItemGroup):
     Puts a dotted border around all the images.
     """
 
-    def __init__(self, image_data):
+    def __init__(self, image_data: list[dict[str, Any]]):
         """Initialize a new series of underlying images.
 
         Args:
-            image_data (list[dict]): each dict has keys 'filename'
-                and 'orientation' (and possibly others).  Currently
-                every image is used and the list order determines
-                the order.  That is subject to change.
+            image_data: each dict has keys 'filename', 'orientation',
+                and 'visible' (and possibly others).  Only images with
+                'visible' as True will be used.
+                The list order determines the order: subject to change!
         """
         super().__init__()
         self.images = {}
-        x = 0
-        for n, data in enumerate(image_data):
+        x = 0.0
+        n = 0
+        for data in image_data:
+            if not data["visible"]:
+                continue
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
@@ -337,6 +346,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+            n += 1
 
         self.setZValue(-1)
 
@@ -424,6 +434,14 @@ class PageScene(QGraphicsScene):
         """
         super().__init__(parent)
         self.src_img_data = deepcopy(src_img_data)
+        for x in self.src_img_data:
+            # TODO: revisit moving this "visible" bit outside of PageScene
+            # and dedupe the business of pagedata and src_img_data.
+            if "visible" not in x.keys():
+                x["visible"] = True
+                log.warn(f'Hacked in an "visible": {x}')
+        if not self.src_img_data:
+            raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
         self.score = None
         self._page_hack_buttons = []
@@ -529,6 +547,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
+        # TODO: for debugging:
+        # if True or self.parent().is_experimental():
         if self.parent().is_experimental():
             self.build_page_hack_buttons()
 
@@ -547,59 +567,30 @@ class PageScene(QGraphicsScene):
 
         def page_delete_func_factory(n):
             def page_delete():
-                img = self.underImage.images[n]
-                self.src_img_data.pop(n)
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-                # shift existing annotations leftward
-                loc = br.right()
-                if n == len(self.underImage.images) - 1:
-                    # special case when deleting right-most image
-                    loc = br.left()
-                stuff = self.find_items_right_of(loc)
-                self.move_some_items(stuff, -br.width(), 0)
-                # TODO: replace with emit signal (if needed)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+                self.dont_use_page_image(n)
 
             return page_delete
 
         def page_shift_func_factory(n, relative):
-            def page_shift():
-                d = self.src_img_data.pop(n)
-                self.src_img_data.insert(n + relative, d)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+            def _page_shift():
+                self.shift_page_image(n, relative)
 
-            return page_shift
+            return _page_shift
 
         def page_rotate_func_factory(n, degrees):
-            def page_rotate():
-                # get old page width and location, select rightward objects to shift
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                loc = br.right()
-                w = br.width()
-                log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
-                stuff = self.find_items_right_of(loc)
-                # do the rotation in metadata and rebuild
-                self.src_img_data[n]["orientation"] += degrees
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
-                # shift previously-selected rightward annotations by diff in widths
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"After rotation: old width {w} now {br.width()}")
-                self.move_some_items(stuff, br.width() - w, 0)
+            def _page_rotate():
+                self.rotate_page_image(n, degrees)
 
-            return page_rotate
+            return _page_rotate
 
         self.remove_page_hack_buttons()
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
-            b = QToolButton(text=f"Page {n}")
-            # b = QToolButton(text=f"\N{Page}")
-            b.setStyleSheet("background-color: #ff6666")
+            # b = QToolButton(text=f"Page {n}")
+            # b = QToolButton(text="\N{Page}")
+            # heaven == hamburger? works for me!
+            b = QToolButton(text="\N{Trigram For Heaven}")
+            b.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
             m = QMenu(b)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
@@ -616,11 +607,11 @@ class PageScene(QGraphicsScene):
                 _.setEnabled(False)
             m.addAction(
                 "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
-                page_rotate_func_factory(n, -90),
+                page_rotate_func_factory(n, 90),
             )
             m.addAction(
                 "\N{Clockwise Open Circle Arrow} Rotate CW",
-                page_rotate_func_factory(n, 90),
+                page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
@@ -628,17 +619,22 @@ class PageScene(QGraphicsScene):
             b.setMenu(m)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
-            h.setScale(1.8)
+            # h.setScale(0.9)
+            h.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
-            wbr = h.mapRectToScene(h.boundingRect())
-            # h.setPos(br.right() - wbr.width(), br.top() - wbr.height())
-            # h.setPos(br.right() - wbr.width(), br.top())
+            # wbr = h.mapRectToScene(h.boundingRect())
+            # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
+            # maybe h.setTransformOriginPoint(...) would help?
             h.setPos(
-                br.left() + br.width() / 2 - wbr.width() / 2,
-                br.top() - wbr.height() / 2,
+                # br.left() + br.width() - wbr.width(),
+                br.left() + 0.86 * br.width(),
+                br.top(),
             )
-            # h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            b.setToolTip(f"Page options for page {n}")
+            h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            h.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
+            )
+            b.setToolTip(f"Options for page {n + 1}")
             self._page_hack_buttons.append(h)
 
     def getScore(self):
@@ -696,19 +692,27 @@ class PageScene(QGraphicsScene):
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
 
-    def get_src_img_data(self):
-        return self.src_img_data
+    def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
+        """Get the live source image data for this scene.
 
-    def how_many_underlying_images_wide(self):
+        Note you get the actual data, not a copy so careful if you mess with it!
+        """
+        r = []
+        for x in self.src_img_data:
+            if x["visible"] or not only_visible:
+                r.append(x)
+        return r
+
+    def how_many_underlying_images_wide(self) -> int:
         """Count how many images wide the bottom layer is.
 
         Currently this is just the number of images (because we layout
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.src_img_data)
+        return len(self.get_src_img_data(only_visible=True))
 
-    def how_many_underlying_images_high(self):
+    def how_many_underlying_images_high(self) -> int:
         """How many images high is the bottom layer.
 
         Currently this is always 1 because we align the images in a
@@ -1549,7 +1553,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt = ept - QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()
@@ -1587,7 +1591,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             pt = event.scenePos()
             command = CommandText(self, pt, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()
@@ -1793,29 +1797,35 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I, dx, dy):
+    def move_some_items(self, I: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
-            I (list): which objects to move.  TODO: not quite sure yet
+            I: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
-            dx (float): translation delta in the horizontal direction.
-            dy (float): translation delta in the vertical direction.
+                TODO: typed as ``QGraphicsItem`` but maybe Groups too?
+            dx: translation delta in the horizontal direction.
+            dy: translation delta in the vertical direction.
 
-        Wraps the movement of all objects in a compound undo item.
+        Wraps the movement of all objects in a compound undo item.  If
+        you want this functionality without the macro (b/c you're doing
+        your own, see the low-level :py:method:`_move_some_items`.
         """
+        self.undoStack.beginMacro("Move several items at once")
+        self._move_some_items(I, dx, dy)
+        self.undoStack.endMacro()
+
+    def _move_some_items(self, I: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
         log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        self.undoStack.beginMacro("Speak at once while taking turns")
         for item in I:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
             command = CommandMoveItem(item, QPointF(dx, dy))
             self.undoStack.push(command)
-        self.undoStack.endMacro()
 
     def pickleSceneItems(self):
         """Pickles the saveable annotation items in the scene.
@@ -1875,6 +1885,158 @@ class PageScene(QGraphicsScene):
             X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
+
+    def shift_page_image(self, n: int, relative: int) -> None:
+        """Shift a page left or right on the undostack.
+
+        Currently does not attempt to adjust the positions of annotation items.
+
+        Args:
+            n: which page, indexed from 0.
+            relative: +1 or -1, but no error checking is done and its
+                not defined what happens for other values.
+
+        Returns:
+            None
+        """
+        if relative > 0:
+            # not obvious we need a macro, but maybe later we move annotations with it
+            macroname = f"Page {n} shift right {relative}"
+        else:
+            macroname = f"Page {n} shift left {abs(relative)}"
+        self.undoStack.beginMacro(macroname)
+
+        # like calling _shift_page_image_only but covered in undo sauce
+        cmd = CommandShiftPage(self, n, n + relative)
+        self.undoStack.push(cmd)
+
+        # TODO: adjust annotations, then end the macro
+        self.undoStack.endMacro()
+
+    def _idx_from_visible_idx(self, n: int) -> int:
+        """Find the index in the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding 0-based index into the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
+        m = -1
+        for idx, x in enumerate(self.src_img_data):
+            if x["visible"]:
+                m += 1
+            if m == n:
+                return idx
+        raise KeyError(f"no row in src_img_data visible at n={n}")
+
+    def _shift_page_image_only(self, n: int, m: int) -> None:
+        n_idx = self._idx_from_visible_idx(n)
+        m_idx = self._idx_from_visible_idx(m)
+        d = self.src_img_data.pop(n_idx)
+        self.src_img_data.insert(m_idx, d)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def rotate_page_image(self, n: int, degrees: int) -> None:
+        """Rotate a page on the undostack, shifting objects on other pages appropriately.
+
+        The rotations happen within a single undoable "macro".
+
+        Args:
+            n: which page, indexed from 0.
+            degrees: rotation angle, positive means CCW.
+
+        Returns:
+            None.
+        """
+        self.undoStack.beginMacro(f"Page {n} rotation {degrees} and item move")
+
+        # get old page width and location, select rightward objects to shift
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        loc = br.right()
+        w = br.width()
+        log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _rotate_page_image_only but covered in undo sauce
+        cmd = CommandRotatePage(self, n, degrees)
+        self.undoStack.push(cmd)
+
+        # shift previously-selected rightward annotations by diff in widths
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"After rotation: old width {w} now {br.width()}")
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, br.width() - w, 0)
+
+        self.undoStack.endMacro()
+
+    def _rotate_page_image_only(self, n: int, degrees: int) -> None:
+        """Low-level rotate page support: only rotate page, no shifts."""
+        # do the rotation in metadata and rebuild
+        n_idx = self._idx_from_visible_idx(n)
+        self.src_img_data[n_idx]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def dont_use_page_image(self, n: int) -> None:
+        n_idx = self._idx_from_visible_idx(n)
+        img = self.underImage.images[n]
+        e = QGraphicsColorizeEffect()
+        e.setColor(QColor("darkred"))
+        img.setGraphicsEffect(e)
+        d = SimpleQuestion(
+            self.parent(),  # self.addWidget(d) instead?
+            """Remove this page? <ul>\n
+              <li>You can undo or find the page again using
+                <em>Rearrange Pages</em>.</li>\n
+            <li>Existing annotations will shift left or right.</li>\n
+            </ul>""",
+            "Are you sure you want to remove this page?",
+        )
+        # h = self.addWidget(d)
+        # Not sure opening a dialog from the scene is wise
+        if d.exec() == QMessageBox.StandardButton.No:
+            img.setGraphicsEffect(None)
+            return
+
+        self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+        if n == len(self.underImage.images) - 1:
+            # special case when deleting right-most image
+            loc = br.left()
+            go_left = False
+        else:
+            # shift existing annotations leftward
+            loc = br.right()
+            go_left = True
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+        self.undoStack.push(cmd)
+
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, -br.width(), 0)
+
+        self.undoStack.endMacro()
+
+    def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
+        self.src_img_data[n_idx]["visible"] = show
+        # TODO: replace with emit signal (if needed)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
 
     def mousePressBox(self, event):
         """Handle mouse presses when box tool is selected.
