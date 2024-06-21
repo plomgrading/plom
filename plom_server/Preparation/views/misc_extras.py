@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.urls import reverse
 from django.shortcuts import render
@@ -30,8 +31,7 @@ class ExtraPageView(ManagerRequiredView):
         ep_service = ExtraPageService()
         return FileResponse(
             open(ep_service.get_extra_page_pdf_filepath(), "rb"),
-            as_attachment=True,
-            filename="extra_page.pdf",
+            content_type="application/pdf",
         )
 
     def put(self, request):
@@ -50,8 +50,7 @@ class ScrapPaperView(ManagerRequiredView):
         sp_service = ScrapPaperService()
         return FileResponse(
             open(sp_service.get_scrap_paper_pdf_filepath(), "rb"),
-            as_attachment=True,
-            filename="scrap_paper.pdf",
+            content_type="application/pdf",
         )
 
     def put(self, request):

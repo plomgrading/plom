@@ -14,6 +14,7 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
@@ -180,7 +181,20 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ------------------------
     # Marker stuff
-    def MrequestDoneTasks(self, q, v):
+    def MrequestDoneTasks(self, q: int, v: int) -> list[list[Any]]:
+        """Information about the tasks previously marked by this year.
+
+        Args:
+            q: which question.
+            v: which version.
+
+        Returns:
+            List of info the tasks.  Each entry is a list of the task
+            string (of the form ``q0002g3``), the score, the time (in
+            seconds), a list of tags (strings), and an "integrity code".
+            An empty list is returned if nothing has been graded by this
+            user.
+        """
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -188,8 +202,7 @@ class Messenger(BaseMessenger):
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
-            mList = response.json()
-            return mList
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
