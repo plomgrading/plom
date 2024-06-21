@@ -562,6 +562,8 @@ class PageScene(QGraphicsScene):
         self._page_hack_buttons = []
 
     def build_page_hack_buttons(self):
+        # TODO: Issue #2522 remove early return to enable this feature
+        return
 
         def page_delete_func_factory(n):
             def page_delete():
