@@ -4,7 +4,6 @@
 # Copyright (C) 2024 Aden Chan
 
 from django.shortcuts import render
-from django.http import FileResponse
 
 from Base.base_group_views import ManagerRequiredView
 
