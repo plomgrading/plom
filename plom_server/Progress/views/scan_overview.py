@@ -37,20 +37,6 @@ class ScanOverview(ManagerRequiredView):
         return render(request, "Progress/scan_overview.html", context)
 
 
-class ScanGetPageImage(ManagerRequiredView):
-    """Get a page-image from the database."""
-
-    def get(self, request, test_paper, index):
-        mss = ManageScanService()
-
-        image = mss.get_page_image(test_paper, index)
-        return FileResponse(
-            open(str(image.file_name), "rb"),
-            filename=f"{test_paper:04}_page{index}.png",
-            content_type="image/png",
-        )
-
-
 class ScanBundlesView(ManagerRequiredView):
     """View the bundles uploaded by scanner users."""
 
