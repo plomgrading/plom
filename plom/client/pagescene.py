@@ -828,6 +828,11 @@ class PageScene(QGraphicsScene):
         if self.mode == "pan":
             self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         else:
+            # We want "NoDrag" but some reason toggling thru ScrollHandDrag
+            # fixes the cursor Issue #3417.  I suspect the real issue is that
+            # we are overfiltering mouse events, and not calling the super
+            # mouse event handler somewhere (e.g., Issue #834).
+            self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
             self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def get_nonrubric_text_from_page(self):
