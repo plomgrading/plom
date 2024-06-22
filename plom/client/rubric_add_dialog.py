@@ -90,14 +90,20 @@ class SignedSB(QSpinBox):
 
 
 class SubstitutionsHighlighter(QSyntaxHighlighter):
-    """Highlight tex prefix and parametric substitutions."""
+    """Highlight tex prefix, parametric substitutions, and spelling mistakes"""
 
     def __init__(self, *args, **kwargs):
         # TODO: initial value of subs?
         self.subs = []
         super().__init__(*args, **kwargs)
+        self.wordRegEx = re.compile(r"\b([A-Za-z]{2,})\b")
+        self.speller = SpellChecker(distance=1)
 
     def highlightBlock(self, text: str | None) -> None:
+        self._highlight_prefix(text)
+        self._highlight_spelling(text)
+
+    def _highlight_prefix(self, text: str | None):
         """Highlight tex prefix and matches in our substitution list.
 
         Args:
@@ -122,6 +128,31 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
                 # TODO: not sure why this doesn't work?
                 # frmt.setToolTip('v2 subs: "TODO"')
                 self.setFormat(match.start(), match.end() - match.start(), frmt)
+
+    def _highlight_spelling(self, text: str | None):
+        """Highlight spelling mistakes with red squiggle line.
+
+        Args:
+            text: the text to be highlighted.
+        """
+        if text is None:
+            return
+
+        self.misspelledFormat = QTextCharFormat()
+        self.misspelledFormat.setUnderlineStyle(
+            QTextCharFormat.UnderlineStyle.SpellCheckUnderline
+        )  # Platform and theme dependent
+        self.misspelledFormat.setUnderlineColor(QColor("red"))
+
+        for word_object in self.wordRegEx.finditer(text):
+            most_likely_word = self.speller.correction(word_object.group())
+
+            if most_likely_word and most_likely_word != word_object.group():
+                self.setFormat(
+                    word_object.start(),
+                    word_object.end() - word_object.start(),
+                    self.misspelledFormat,
+                )
 
     def setSubs(self, subs):
         self.subs = subs
