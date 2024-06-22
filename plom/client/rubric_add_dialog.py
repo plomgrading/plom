@@ -90,7 +90,7 @@ class SignedSB(QSpinBox):
 
 
 class SubstitutionsHighlighter(QSyntaxHighlighter):
-    """Highlight tex prefix, parametric substitutions, and spelling mistakes"""
+    """Highlight tex prefix, parametric substitutions, and spelling mistakes."""
 
     def __init__(self, *args, **kwargs):
         # TODO: initial value of subs?
