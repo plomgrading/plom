@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -204,9 +205,9 @@ class RubricService:
             if user.username == modifying_user:
                 # users can modify their own
                 pass
-            # elif is_lead_marker(modifying_user):
-            #     # lead markers can modify any non-system-rubric
-            #     pass
+            elif modifying_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
+                pass
             else:
                 raise PermissionDenied(
                     f'You ("{modifying_user}") are not allowed to modify'
