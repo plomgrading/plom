@@ -54,6 +54,9 @@ from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
+# in some places we make assumptions that our view is this subclass
+from plom.client.pageview import PageView
+
 from .tools import (
     CrossItem,
     DeltaItem,
@@ -1089,7 +1092,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event) -> None:
         if (
             QGuiApplication.queryKeyboardModifiers()
             == Qt.KeyboardModifier.ControlModifier
@@ -1097,7 +1100,10 @@ class PageScene(QGraphicsScene):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             event.accept()
 
@@ -1630,8 +1636,10 @@ class PageScene(QGraphicsScene):
             None.
         """
         self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
-        super().mouseReleaseEvent(event)
-        self.views()[0].setZoomSelector()
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector()
 
     def mousePressImage(self, event) -> None:
         """Adds the selected image at the location the mouse is pressed and shows a message box with instructions.
@@ -1656,7 +1664,7 @@ class PageScene(QGraphicsScene):
             msg.setText(
                 "You can double-click on an Image to modify its scale and border."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
 
     def dragEnterEvent(self, e):
@@ -2388,7 +2396,10 @@ class PageScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -2463,7 +2474,10 @@ class PageScene(QGraphicsScene):
             )
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].setZoomSelector(True)
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0
