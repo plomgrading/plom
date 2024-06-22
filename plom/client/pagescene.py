@@ -1655,10 +1655,15 @@ class PageScene(QGraphicsScene):
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
             self.tempImagePath = None
+            _parent = self.parent()
+            assert _parent is not None
             # set the mode back to move
-            self.parent().toMoveMode()
+            # MyPy is rightfully unsure parent is an Annotator:
+            # # assert isinstance(_parent, Annotator)
+            # but that's likely a circular import, so just add exception:
+            _parent.toMoveMode()  # type: ignore[attr-defined]
 
-            msg = QMessageBox(self.parent())
+            msg = QMessageBox(_parent)
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
