@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPen, QUndoCommand
+from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
-from plom.client.tools import CommandTool, DeleteObject
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import CommandTool
 from plom.client.tools import log
 
 
@@ -84,7 +85,9 @@ class CommandText(CommandTool):
             color=scene.style["annot_color"],
             _texmaker=scene,
         )
-        self.do = DeleteObject(self.blurb.shape(), fill=True)
+        # TODO: why do CommandText have a .blurb instead of a .obj?  Issue #3419.
+        # HACK by just making another reference to it: else we need custom undo/redo
+        self.obj = self.blurb
         self.setText("Text")
 
     @classmethod
@@ -97,25 +100,9 @@ class CommandText(CommandTool):
         # knows to latex it if needed.
         return cls(scene, QPointF(X[1], X[2]), X[0])
 
-    def redo(self):
-        self.scene.addItem(self.blurb)
-        # update the deleteobject since the text may have been updated
-        # use getshape - takes offset into account
-        self.do.item.setPath(self.blurb.getShape())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
-
-    def undo(self):
-        self.scene.removeItem(self.blurb)
-        # update the deleteobject since the text may have been updated
-        # use getshape - takes offset into account
-        self.do.item.setPath(self.blurb.getShape())
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+    def get_undo_redo_animation_shape(self):
+        # takes offset into account: always at origin without this
+        return self.blurb.getShape()
 
 
 class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
@@ -296,8 +283,8 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             if self.group() is None:  # make sure not part of a GDT
-                painter.setPen(QPen(QColor(255, 165, 0), 8))
-                painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+                painter.setPen(OutOfBoundsPen)
+                painter.setBrush(OutOfBoundsFill)
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
                 painter.drawRoundedRect(option.rect, 10, 10)

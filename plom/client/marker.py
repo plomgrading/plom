@@ -1861,7 +1861,7 @@ class MarkerClient(QWidget):
 
     def manage_tags(self):
         """Manage the tags of the current task."""
-        task = self.current_task_id_or_none()
+        task = self.get_current_task_id_or_none()
         if not task:
             return
         self.manage_task_tags(task)
