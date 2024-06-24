@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtGui import QPen, QBrush, QColor
+from PyQt6.QtGui import QPen, QBrush
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 
 
 class CommandEllipse(CommandTool):
     def __init__(self, scene, rect):
         super().__init__(scene)
         self.obj = EllipseItem(rect, scene.style)
-        self.do = DeleteObject(self.obj.shape(), fill=True)
         self.setText("Ellipse")
 
     @classmethod
@@ -55,8 +55,8 @@ class EllipseItem(UndoStackMoveMixin, QGraphicsEllipseItem):
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)
