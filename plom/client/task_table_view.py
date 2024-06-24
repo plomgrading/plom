@@ -4,8 +4,10 @@
 # Copyright (C) 2024 Aden Chan
 
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QAction, QCursor, QContextMenuEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QMenu,
     QTableView,
 )
 
@@ -36,3 +38,18 @@ class TaskTableView(QTableView):
             self.annotateSignal.emit()
         else:
             super().keyPressEvent(event)
+
+    def contextMenuEvent(self, event: QContextMenuEvent):
+        menu = QMenu(self)
+        a = QAction("Tag task...", self)
+        a.triggered.connect(lambda: print("TODO: tag..."))
+        menu.addAction(a)
+        a = QAction("Claim this task", self)
+        a.triggered.connect(lambda: print("TODO: claim"))
+        menu.addAction(a)
+        a = QAction("Reassign task to...", self)
+        a.triggered.connect(lambda: print("TODO: reassign to..."))
+        menu.addAction(a)
+
+        menu.popup(QCursor.pos())
+        event.accept()
