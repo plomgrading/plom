@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
 
-from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (
     QDialog,
     QListWidget,
