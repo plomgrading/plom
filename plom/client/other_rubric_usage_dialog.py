@@ -25,8 +25,9 @@ class RubricUsageDialog(QDialog):
             parent: RubricWidget.
             paper_numbers: the list of paper numbers that commonly use a rubric.
         """
-        super().__init__()
+        super().__init__(parent)
         self._parent = parent
+        self.setModal(True)
 
         self.setWindowTitle("Other rubric usages")
 

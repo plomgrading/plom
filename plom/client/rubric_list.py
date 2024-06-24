@@ -1624,7 +1624,9 @@ class RubricWidget(QWidget):
             key: the identifier of the rubric.
         """
         paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
-        rud = RubricUsageDialog(self, paper_numbers)
+        # dialog's parent is set to Annotator.
+        print(self._parent)
+        rud = RubricUsageDialog(self._parent, paper_numbers)
         rud.exec()
 
     def view_other_paper(self, paper_number: int) -> None:
