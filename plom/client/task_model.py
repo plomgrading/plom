@@ -232,7 +232,7 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
-        self.setData(self.index(r, 1), status)
+        self.setData(self.index(r, _idx_status), status)
 
     def _setAnnotatedFile(self, r: int, aname: Path | str, pname: Path | str) -> None:
         self.setData(self.index(r, _idx_annotated_file), str(aname))
