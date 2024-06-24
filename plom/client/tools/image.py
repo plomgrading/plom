@@ -145,7 +145,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         # not sure if this can happen but the possibility offends mypy
         if not the_scene:
             raise RuntimeError("Unexpected the scaling dialog had no scene")
-        parent = the_scene.views()[0]
+        parent = the_scene.views()[0].parent()
         # yuck, had to go way up the chain to find someone who can parent a dialog!
         # maybe that means this code should NOT be opening dialogs
         dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
