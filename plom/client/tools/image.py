@@ -152,7 +152,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
-            # TODO: I don't think this event generates a Command!  No undo stack...
+            # TODO: Issue #3441: This doesn't generate a Command so no undo stack
             # self.scene()._set_dirty()
             if border is not self.border:
                 self.border = border
