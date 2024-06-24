@@ -161,7 +161,7 @@
            </widget>
           </item>
           <item>
-           <widget class="SimpleTableView" name="tableView">
+           <widget class="TaskTableView" name="tableView">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -449,9 +449,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>SimpleTableView</class>
+   <class>TaskTableView</class>
    <extends>QTableView</extends>
-   <header location="global">plom/client/useful_classes.h</header>
+   <header location="global">plom/client/task_table_view.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
