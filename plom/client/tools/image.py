@@ -3,7 +3,9 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021-2024 Colin B. Macdonald
 
-from typing import Optional
+from __future__ import annotations
+
+from typing import Any
 
 from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
 from PyQt6.QtGui import QColor, QImage, QPixmap, QPen
@@ -46,7 +48,7 @@ class CommandImage(CommandTool):
         self.setText("Image")
 
     @classmethod
-    def from_pickle(cls, X, *, scene):
+    def from_pickle(cls, X: list[Any], *, scene) -> CommandImage:
         """Construct a CommandImage from a serialized form."""
         assert X[0] == "Image"
         X = X[1:]
@@ -102,7 +104,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             painter.drawRect(self.boundingRect())
             painter.restore()
 
-    def pickle(self):
+    def pickle(self) -> list[Any]:
         """Pickle the image into a list containing important information.
 
         Returns:
@@ -132,7 +134,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             pickle = ["Image", self.x(), self.y(), self.data, self.scale(), self.border]
         return pickle
 
-    def mouseDoubleClickEvent(self, event: Optional[QGraphicsSceneMouseEvent]) -> None:
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
         """On double-click, show menu and modify image according to user inputs.
 
         Args:
@@ -169,7 +171,7 @@ class ImageSettingsDialog(QDialog):
     NumGridRows = 2
     NumButtons = 3
 
-    def __init__(self, parent, scalePercent, checked):
+    def __init__(self, parent, scalePercent: int, checked: bool):
         """Initialize a new image settings dialog object.
 
         Args:
