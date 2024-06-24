@@ -372,7 +372,6 @@ class MarkingStatsService:
                     }
                 )
             elif task.status == MarkingTask.OUT:
-                print(task)
                 dat.update(
                     {
                         "username": task.assigned_user.username,
