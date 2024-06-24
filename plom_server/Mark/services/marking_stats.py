@@ -371,6 +371,13 @@ class MarkingStatsService:
                         "score": task.latest_annotation.score,
                     }
                 )
+            elif task.status == MarkingTask.OUT:
+                print(task)
+                dat.update(
+                    {
+                        "username": task.assigned_user.username,
+                    }
+                )
 
             task_info.append(dat)
 
