@@ -118,7 +118,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         if self.data is None:
             byte_array = QByteArray()
             buffer = QBuffer(byte_array)
-            buffer.open(QIODevice.WriteOnly)
+            buffer.open(QIODevice.OpenModeFlag.WriteOnly)
             self.qImage.save(buffer, "PNG")
             pickle = [
                 "Image",
