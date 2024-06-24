@@ -1667,8 +1667,7 @@ class PageScene(QGraphicsScene):
             # # assert isinstance(_parent, Annotator)
             # but that's likely a circular import, so just add exception:
             _parent.toMoveMode()  # type: ignore[attr-defined]
-
-            msg = QMessageBox(_parent)
+            msg = QMessageBox(_parent)  # type: ignore[call-overload]
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
@@ -2165,8 +2164,7 @@ class PageScene(QGraphicsScene):
                 nrect.width() > minimum_box_side_length
                 and nrect.height() > minimum_box_side_length
             ):
-                command = CommandBox(self, nrect)
-                self.undoStack.push(command)
+                self.undoStack.push(CommandBox(self, nrect))
         else:
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
@@ -2174,8 +2172,7 @@ class PageScene(QGraphicsScene):
                 self.ellipseItem.rect().width() > minimum_box_side_length
                 and self.ellipseItem.rect().height() > minimum_box_side_length
             ):
-                command = CommandEllipse(self, self.ellipseItem.rect())
-                self.undoStack.push(command)
+                self.undoStack.push(CommandEllipse(self, self.ellipseItem.rect()))
 
         self.boxFlag = 0
 
