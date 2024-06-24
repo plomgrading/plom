@@ -1212,15 +1212,18 @@ class MarkerClient(QWidget):
             self._show_only_my_tasks()
         elif cbidx == 1:
             self._show_all_tasks()
-            self._download_full_task_list()
+            if not self._download_full_task_list():
+                # could not update (maybe legacy server) so go back to only mine
+                self.tasksComboBox.setCurrentIndex(0)
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
-    def _download_full_task_list(self) -> None:
+    def _download_full_task_list(self) -> bool:
         try:
             tasks = self.msgr.get_tasks(self.question_idx, self.version)
         except PlomNoServerSupportException as e:
             WarnMsg(self, str(e)).exec()
+            return False
         print("=== PROCESSING lots of tasks... ====")
         for t in tasks:
             task_id_str = paper_question_index_to_task_id_str(
@@ -1251,6 +1254,7 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
+        return True
 
     def reassign_task(self):
         task = self.get_current_task_id_or_none()
