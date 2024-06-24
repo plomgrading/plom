@@ -105,15 +105,22 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize, maxScore, score, question_label=None):
+    def __init__(
+        self,
+        style: dict[str, Any],
+        fontsize,
+        maxScore: int,
+        score,
+        question_label: str | None = None,
+    ) -> None:
         """Initialize a new ScoreBox.
 
         Args:
-            style (dict): pen width, annotation colour, etc.
+            style: a dict of pen width, annotation colour, etc.
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
-            question_label (str/None): how to display the question
+            question_label: how to display the question
                 number, or `None` to display no label at the beginning
                 of the score box.
         """
@@ -2510,6 +2517,7 @@ class PageScene(QGraphicsScene):
         self.delBoxItem = QGraphicsRectItem(
             QRectF(self.originPos, self.currentPos).normalized()
         )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
@@ -2533,6 +2541,7 @@ class PageScene(QGraphicsScene):
                 # somehow missed the mouse-press (2024: not convinced this can happen)
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
@@ -2972,6 +2981,7 @@ class PageScene(QGraphicsScene):
         self.delBoxItem = QGraphicsRectItem(
             QRectF(self.originPos, self.currentPos).normalized()
         )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
@@ -2995,6 +3005,7 @@ class PageScene(QGraphicsScene):
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press (2024: not convinced this can happen)
                 self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
