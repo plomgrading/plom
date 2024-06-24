@@ -1214,7 +1214,7 @@ class MarkerClient(QWidget):
             self._show_all_tasks()
             if not self._download_full_task_list():
                 # could not update (maybe legacy server) so go back to only mine
-                self.tasksComboBox.setCurrentIndex(0)
+                self.ui.tasksComboBox.setCurrentIndex(0)
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
