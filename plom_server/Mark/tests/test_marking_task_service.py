@@ -90,14 +90,13 @@ class MarkingTaskServiceTests(TestCase):
         user2: User = baker.make(User)
         task = baker.make(MarkingTask, status=MarkingTask.TO_DO)
 
-        mts = MarkingTaskService()
-        mts.assign_task_to_user(user1, task)
+        MarkingTaskService.assign_task_to_user(task.pk, user1)
         task.refresh_from_db()
         self.assertEqual(task.status, MarkingTask.OUT)
         self.assertEqual(task.assigned_user, user1)
 
         with self.assertRaisesMessage(RuntimeError, "Task is currently assigned."):
-            mts.assign_task_to_user(user2, task)
+            MarkingTaskService.assign_task_to_user(task.pk, user2)
 
         task.refresh_from_db()
         self.assertEqual(task.assigned_user, user1)
