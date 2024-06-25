@@ -6,9 +6,8 @@
 import platform
 from typing import Any, Optional, Union
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QAbstractItemView,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -20,7 +19,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QTableView,
     QTextEdit,
     QToolButton,
     QVBoxLayout,

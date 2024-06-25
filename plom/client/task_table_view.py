@@ -4,10 +4,8 @@
 # Copyright (C) 2024 Aden Chan
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QCursor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QMenu,
     QTableView,
 )
 
