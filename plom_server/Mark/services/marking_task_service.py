@@ -671,8 +671,8 @@ class MarkingTaskService:
                     return
                 task_obj.assigned_user = new_user
                 # if the original user has it checked-out then update the status to to-do
-                if task_obj.status == Marking.OUT:
-                    task_obj.status = TO_DO
+                if task_obj.status == MarkingTask.OUT:
+                    task_obj.status = MarkingTask.TO_DO
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
