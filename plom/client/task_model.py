@@ -44,6 +44,19 @@ _idx_paper_dir = 8
 _idx_src_img_data = 9
 _idx_integrity = 10
 
+# the possible status that we make locally
+# TODO: "reassigned"?
+local_possible_statuses = (
+    "untouched",
+    "marked",
+    "uploading...",
+    "???",
+    "deferred",
+)
+
+# there is some overlap with the servers's status strings
+server_possible_statuses = ("Complete", "To Do", "Out")
+
 
 class MarkerExamModel(QStandardItemModel):
     """A tablemodel for handling the group image marking data."""
@@ -232,6 +245,9 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
+        assert (
+            status in local_possible_statuses or status in server_possible_statuses
+        ), f'Task status "{status}" is not in the allow lists'
         self.setData(self.index(r, _idx_status), status)
 
     def _setAnnotatedFile(self, r: int, aname: Path | str, pname: Path | str) -> None:
@@ -435,9 +451,15 @@ class MarkerExamModel(QStandardItemModel):
 
     def is_our_task(self, task: str, username) -> bool:
         task_username = self._getDataByTask(task, _idx_user)
+        status = self._getDataByTask(task, _idx_status)
         if task_username == username:
-            # TODO: some additional asserts here!
+            assert (
+                status in local_possible_statuses
+            ), f'Unexpected status "{status}" seen in one of our tasks'
             return True
+        assert (
+            status in server_possible_statuses
+        ), f'Unexpected server task status "{status}"'
         return False
 
     def set_integrity_by_task(self, task: str, integrity: str) -> None:
