@@ -14,12 +14,13 @@
     Marking task info
     <a class="btn btn-primary"
        href="{% url 'progress_marking_task_filter' %}?question={{ question }}&version={{ version }}">browse marking</a>
+    <a class="btn btn-primary" href="{% url 'all_task_overview' %}">table of all tasks</a>
 {% endblock page_heading %}
 {% block main_content %}
     <div class="container p-2 border rounded mx-0">
         <div class="row m-2">
             <div class="col">
-                {% if user_is_manager %}
+                {% if user_is_manager or user_is_lead_marker %}
                     <p>
                         <button class="btn btn-danger"
                                 hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
@@ -30,6 +31,7 @@
                         <button class="btn btn-warning dropdown-toggle"
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                {% if not lead_markers %}disabled{% endif %}
                                 aria-expanded="false">Tag for / reassign to lead marker</button>
                         <ul class="dropdown-menu">
                             {% for user in lead_markers %}
@@ -65,27 +67,29 @@
                         </ul>
                     </span>
                 {% endif %}
-                <p>Paper: {{ paper_number }}</p>
-                <p>Question index: {{ question }}</p>
-                <p>Version: {{ version }}</p>
-                <p>
-                    Status: {{ status }}
-                    {% if status == "Out Of Date" %}
-                        <a href="{% url 'progress_newest_marking_task_details' task_pk %}"
-                           class="btn btn-success">show newest</a>
+                <div class="py-2">
+                    <p>Paper: {{ paper_number }}</p>
+                    <p>Question index: {{ question }}</p>
+                    <p>Version: {{ version }}</p>
+                    <p>
+                        Status: {{ status }}
+                        {% if status == "Out Of Date" %}
+                            <a href="{% url 'progress_newest_marking_task_details' task_pk %}"
+                               class="btn btn-success">show newest</a>
+                        {% endif %}
+                    </p>
+                    {% if status == "Complete" %}
+                        <p>Score: {{ score }}</p>
+                        <p>Edition: {{ edition }}</p>
+                        <p>User: {{ username }}</p>
+                        <p>Last update: {{ last_update|naturaltime }}</p>
+                        <p>Marking time: {{ marking_time }}s</p>
+                    {% elif status == "Out" %}
+                        <p>User: {{ username }}</p>
+                    {% elif status == "To Do" %}
+                    {% else %}
                     {% endif %}
-                </p>
-                {% if status == "Complete" %}
-                    <p>Score: {{ score }}</p>
-                    <p>Edition: {{ edition }}</p>
-                    <p>User: {{ username }}</p>
-                    <p>Last update: {{ last_update|naturaltime }}</p>
-                    <p>Marking time: {{ marking_time }}s</p>
-                {% elif status == "Out" %}
-                    <p>User: {{ username }}</p>
-                {% elif status == "To Do" %}
-                {% else %}
-                {% endif %}
+                </div>
                 <p>
                     <button hx-get="{% url 'progress_original_img_wrap' paper_number question %}"
                             hx-target="#imageHere"

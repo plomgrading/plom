@@ -10,7 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
-from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
+from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
@@ -280,7 +280,7 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
         return redirect("progress_marking_task_details", task_pk=new_task_pk)
 
 
-class MarkingTaskResetView(ManagerRequiredView):
+class MarkingTaskResetView(LeadMarkerOrManagerView):
     def put(self, request, task_pk: int):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
@@ -295,7 +295,7 @@ class MarkingTaskResetView(ManagerRequiredView):
         )
 
 
-class MarkingTaskReassignView(ManagerRequiredView):
+class MarkingTaskReassignView(LeadMarkerOrManagerView):
     def post(self, request, task_pk: int):
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
