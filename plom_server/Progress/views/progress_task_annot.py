@@ -10,7 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
-from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
+from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
