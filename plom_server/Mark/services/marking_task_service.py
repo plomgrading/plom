@@ -216,6 +216,9 @@ class MarkingTaskService:
     def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
         """Associate a user to a marking task and update the task status.
 
+        Note: this looks superficially like :method:`reassign_task_to_user`;
+        this current method is really about claiming "OUT" tasks for a user.
+
         Args:
             user: reference to a User instance
             task: reference to a MarkingTask instance
@@ -688,6 +691,12 @@ class MarkingTaskService:
         while if it is "OUT" or "TO_DO", then assigned user will be set to None.
         ie - this function assumes that the task will also be tagged with
         an appropriate @username tag (by the caller; we don't do it for you!)
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and---with
+        extra tagging effort described above---pushing them toward a different
+        user.
 
         Args:
             task_pk: the private key of a task.
