@@ -31,6 +31,7 @@
                         <button class="btn btn-warning dropdown-toggle"
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                {% if not lead_markers %}disabled{% endif %}
                                 aria-expanded="false">Tag for / reassign to lead marker</button>
                         <ul class="dropdown-menu">
                             {% for user in lead_markers %}
