@@ -1241,10 +1241,13 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
-            except KeyError as e:
-                # only update those papers not with our username (TODO: fragile!)
-                if username == self.msgr.username:
-                    print(f"Skipping 'our' row b/c its already there: {str(e)}\n  {t}")
+            except KeyError:
+                # only update those tasks that aren't ours
+                # TODO: we can also check that server has "Out"/"Complete" for
+                # ours and consider updating those that are not (previous list
+                # could be out of date)
+                if self.examModel.is_our_task(task_id_str, self.msgr.username):
+                    log.debug(f"Skipping 'our' row {t}")
                     continue
                 self.examModel.modify_task(
                     task_id_str,
@@ -1312,9 +1315,9 @@ class MarkerClient(QWidget):
             return
         if self.examModel.getStatusByTask(task) == "deferred":
             return
-        user = self.examModel.get_username_by_task(task)
-        if user != self.msgr.username:
+        if not self.examModel.is_our_task(task, self.msgr.username):
             s = f"Cannot defer task {task} b/c it isn't yours"
+            user = self.examModel.get_username_by_task(task)
             if user:
                 s += f': {task} belongs to "{user}"'
             InfoMsg(self, s).exec()

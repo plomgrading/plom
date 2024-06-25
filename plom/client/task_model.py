@@ -433,6 +433,13 @@ class MarkerExamModel(QStandardItemModel):
     def _get_username(self, r: int) -> str:
         return self.data(self.index(r, _idx_user))
 
+    def is_our_task(self, task: str, username) -> bool:
+        task_username = self._getDataByTask(task, _idx_user)
+        if task_username == username:
+            # TODO: some additional asserts here!
+            return True
+        return False
+
     def set_integrity_by_task(self, task: str, integrity: str) -> None:
         self._setDataByTask(task, _idx_integrity, integrity)
 
