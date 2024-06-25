@@ -175,9 +175,20 @@ class QuestionMarkingService:
 
         if task_to_assign.status != MarkingTask.TO_DO:
             raise ValueError("Task is currently assigned.")
-
-        if not self.user or task_to_assign.assigned_user is not None:
-            raise RuntimeError("Unable to assign task to user.")
+        # if the user variable has not been set then we cannot assign the task
+        if not self.user:
+            raise RuntimeError("Unable to assign task to user - user variable not set.")
+        # the assigned_user is None, then okay, or if set to the current user okay,
+        # but otherwise throw an error.
+        if (
+            task_to_assign.assigned_user is None
+            or task_to_assign.assigned_user == self.user
+        ):
+            pass
+        else:
+            raise RuntimeError(
+                "Unable to assign task to user - task has a different assigned user."
+            )
 
         task_to_assign.assigned_user = self.user
         task_to_assign.status = MarkingTask.OUT
