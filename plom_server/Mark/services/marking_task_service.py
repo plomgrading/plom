@@ -464,12 +464,13 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    def create_tag(self, user, tag_text):
-        """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
+    def create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+        """Create a new tag that can be associated with marking task.
 
         Args:
             user: reference to a User instance
-            tag_text: str, the text content of a tag.
+            tag_text: str, the proposed text content of a tag.
+                Assumes this input text has already been sanitized.
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
@@ -552,7 +553,6 @@ class MarkingTaskService:
         the_tag = self.get_tag_from_text(tag_text)
         if not the_tag:
             the_tag = self.create_tag(user, tag_text)
-        assert the_tag is not None
         self._add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
@@ -655,13 +655,18 @@ class MarkingTaskService:
             self.create_task(paper_obj, question_index)
 
     @transaction.atomic
-    def create_tag_and_attach_to_task(self, user: User, task_pk: int, tag_text: str):
+    def create_tag_and_attach_to_task(
+        self, user: User, task_pk: int, tag_text: str
+    ) -> None:
         """Create a tag with given text and attach to given task.
 
         Args:
             user: the user creating/attaching the tag.
             task_pk: the pk of the markingtask.
             tag_text: the text of the tag being created/attached.
+
+        Returns:
+            None
 
         Raises:
             ValidationError: if the tag text is not legal.
