@@ -665,7 +665,18 @@ class MarkingTaskService:
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
-    def reassign_task_to_new_user(self, task_pk: int, username: str):
+    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+        """Reassign a task to a different user.
+
+        If the task was already checked out, it will be revoked.
+
+        Args:
+            task_pk: the private key of a task.
+            username: a string of a username.
+
+        Returns:
+            None.
+        """
         # make sure the given username corresponds to a marker
         try:
             new_user = User.objects.get(username=username, groups__name="marker")
@@ -685,5 +696,3 @@ class MarkingTaskService:
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
-            # TODO - what to do if task is "OUT"
-            # task_obj.status = MarkingTask.TO_DO
