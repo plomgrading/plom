@@ -552,6 +552,7 @@ class MarkingTaskService:
         the_tag = self.get_tag_from_text(tag_text)
         if not the_tag:
             the_tag = self.create_tag(user, tag_text)
+        assert the_tag is not None
         self._add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
