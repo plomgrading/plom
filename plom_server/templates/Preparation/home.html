@@ -19,6 +19,86 @@
     {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
+    <div class="container ms-3 mb-4">
+        <div class="list-group">
+            <a class="list-group-item list-group-item-action border mb-1"
+               href="{% url 'spec_summary' %}">
+                <p class="fs-4">
+                    {% if valid_spec %}
+                        <i class="bi bi-square-check text-success"></i>
+                    {% else %}
+                        <i class="bi bi-square"></i>
+                    {% endif %}
+                    Test specification
+                </p>
+                <p class="fs-7">&emsp;&ensp; The specification describes the structure of your assessment to Plom</p>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action border mb-1">
+                <p class="fs-4">
+                    {% if all_sources_uploaded %}
+                        <i class="bi bi-square-check text-success"></i>
+                    {% elif num_uploaded_source_versions > 0 %}
+                        <i class="bi bi-square-plus text-primary"></i>
+                    {% else %}
+                        <i class="bi bi-square"></i>
+                    {% endif %}
+                    Manage source PDFs
+                    {% if num_versions %}({{ num_uploaded_source_versions }} of {{ num_versions }}){% endif %}
+                </p>
+                <p class="fs-7">&emsp;&ensp; Manage the source PDFs for building your test-papers</p>
+            </a>
+            <a class="list-group-item list-group-item-action borer mb-1"
+               href="{% url 'prep_classlist' %}">
+                <p class="fs-4">
+                    {% if student_list_present %}
+                        <i class="bi bi-check-square text-success"></i>
+                    {% else %}
+                        {% if prename_enabled %}
+                            <i class="bi bi-x-square text-danger"></i>
+                        {% else %}
+                            <i class="bi bi-dash-square-dotted"></i>
+                        {% endif %}
+                    {% endif %}
+                    (Optional) manage classlist and prenaming
+                </p>
+                <p class="fs-7">&emsp;&ensp; Optionally, upload a classlist and, also optinally, prenaming of papers</p>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action border mb-1">
+                <p class="fs-4">
+                    {% if papers_staged %}
+                        <i class="bi bi-square-check text-success"></i>
+                    {% else %}
+                        <i class="bi bi-square"></i>
+                    {% endif %}
+                    Manage question-version mapping
+                </p>
+                <p class="fs-7">&emsp;&ensp; Manage how different test versions are used</p>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action border mb-1">
+                <p class="fs-4">
+                    {% if papers_built %}
+                        <i class="bi bi-square-check text-success"></i>
+                    {% else %}
+                        <i class="bi bi-square"></i>
+                    {% endif %}
+                    Build test-paper PDFs
+                </p>
+                <p class="fs-7">&emsp;&ensp; Build and download printable test-paper PDFs</p>
+            </a>
+            <a href="#" class="list-group-item list-group-item-action border">
+                <p class="fs-4">
+                    {% if have_papers_been_printed %}
+                        <i class="bi bi-square-check text-success"></i>
+                    {% else %}
+                        <i class="bi bi-square"></i>
+                    {% endif %}
+                    Tell Plom that papers have been printed
+                </p>
+                <p class="fs-7">&emsp;&ensp; Tell Plom that the assessment is set and you are ready to move on to next steps</p>
+            </a>
+        </div>
+    </div>
+    <div class="alert alert-danger">Reordering in progress - old things below.</div>
     <ul class="list-group ms-3">
         <li class="list-group-item list-group-item-action">
             <div class="d-flex align-items-center gap-1">
