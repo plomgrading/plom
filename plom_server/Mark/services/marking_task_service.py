@@ -687,7 +687,7 @@ class MarkingTaskService:
         If tasks status is "COMPLETE" then the assigned_user will be updated,
         while if it is "OUT" or "TO_DO", then assigned user will be set to None.
         ie - this function assumes that the task will also be tagged with
-        an appropriate @username tag.
+        an appropriate @username tag (by the caller; we don't do it for you!)
 
         Args:
             task_pk: the private key of a task.
@@ -695,6 +695,9 @@ class MarkingTaskService:
 
         Returns:
             None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
         """
         # make sure the given username corresponds to a marker
         try:
@@ -705,16 +708,24 @@ class MarkingTaskService:
         try:
             with transaction.atomic():
                 task_obj = MarkingTask.objects.select_for_update().get(pk=task_pk)
-                # if already assigned to that user, do nothing
                 if task_obj.assigned_user == new_user:
+                    # already assigned to new_user, nothing needs done
                     return
-                # if complete then make sure assigned to the new user
                 if task_obj.status == MarkingTask.COMPLETE:
                     task_obj.assigned_user = new_user
-                # if out then set it as todo and clear the assigned_user.
-                elif task_obj.status in [MarkingTask.OUT, MarkingTask.TO_DO]:
+                elif task_obj.status == MarkingTask.OUT_OF_DATE:
+                    # log.warn(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+                    task_obj.assigned_user = new_user
+                elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
+                    # if out then set it as todo and clear the assigned_user.
+                    # Note: this makes it available to anyone; the caller
+                    # might want to additionally tag it for new_user.
                     task_obj.status = MarkingTask.TO_DO
                     task_obj.assigned_user = None
+                else:
+                    raise AssertionError(
+                        f'Tertium non datur: impossible status "{task_obj.status}"'
+                    )
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
