@@ -655,6 +655,16 @@ class MarkingTaskService:
 
     @transaction.atomic
     def create_tag_and_attach_to_task(self, user: User, task_pk: int, tag_text: str):
+        """Create a tag with given text and attach to given task
+
+        Args:
+            user: the user creating/attaching the tag.
+            task_pk: the pk of the markingtask.
+            tag_text: the text of the tag being created/attached.
+
+        Raises:
+            ValidationError: if the tag text is not legal.
+        """
         # clean up the text and see if such a tag already exists
         cleaned_tag_text = self.sanitize_tag_text(tag_text)
         tag_obj = self.get_tag_from_text(cleaned_tag_text)
