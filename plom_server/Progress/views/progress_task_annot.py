@@ -301,12 +301,15 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
+        # Note a task is reassigned by both tagging it @username,
+        # and also clearing / changing the task.assigned_user field.
+        # accordingly we call two functions.
         try:
             # first reassign the task - this checks if the username
             # corresponds to an existing marker-user
-            MarkingTaskService().reassign_task_to_new_user(task_pk, new_username)
+            MarkingTaskService().reassign_task_to_user(task_pk, new_username)
+            # note - the service creates the tag if needed
             attn_user_tag_text = f"@{new_username}"
-            # note - creates the tag if needed
             MarkingTaskService().create_tag_and_attach_to_task(
                 request.user, task_pk, attn_user_tag_text
             )
