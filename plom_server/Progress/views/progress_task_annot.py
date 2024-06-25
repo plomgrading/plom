@@ -280,7 +280,7 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
         return redirect("progress_marking_task_details", task_pk=new_task_pk)
 
 
-class MarkingTaskResetView(ManagerRequiredView):
+class MarkingTaskResetView(LeadMarkerOrManagerView):
     def put(self, request, task_pk: int):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
@@ -295,7 +295,7 @@ class MarkingTaskResetView(ManagerRequiredView):
         )
 
 
-class MarkingTaskReassignView(ManagerRequiredView):
+class MarkingTaskReassignView(LeadMarkerOrManagerView):
     def post(self, request, task_pk: int):
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
