@@ -484,12 +484,18 @@ class MarkingTaskService:
         new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
-    def add_tag(self, tag, task):
+    def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
 
+        Also assumes appropriate select_for_update's have been done although
+        from glancing at the code I doubt that's true.
+
         Args:
-            tag: reference to a MarkingTaskTag instance
-            task: reference to a MarkingTask instance
+            tag: reference to a MarkingTaskTag instance.
+            task: reference to a MarkingTask instance.
+
+        Returns:
+            None
         """
         # TODO: port to select_for_update?
         tag.task.add(task)
@@ -497,13 +503,17 @@ class MarkingTaskService:
 
     @transaction.atomic
     def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
-        """Add existing tag with given pk to the marking task with given pk."""
+        """Add existing tag with given pk to the marking task with given pk.
+
+        Raises:
+            ValueError: no such task or tag.
+        """
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-        self.add_tag(the_tag, the_task)
+        self._add_tag(the_tag, the_task)
 
     def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
@@ -538,12 +548,11 @@ class MarkingTaskService:
             RuntimeError: task not found
             ValidationError: invalid tag text
         """
-        mts = MarkingTaskService()
-        the_task = mts.get_task_from_code(code)
-        the_tag = mts.get_tag_from_text(tag_text)
+        the_task = self.get_task_from_code(code)
+        the_tag = self.get_tag_from_text(tag_text)
         if not the_tag:
-            the_tag = mts.create_tag(user, tag_text)
-        mts.add_tag(the_tag, the_task)
+            the_tag = self.create_tag(user, tag_text)
+        self._add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
