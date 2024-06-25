@@ -24,6 +24,8 @@ from ..services import (
     PapersPrinted,
 )
 
+from ..services.preparation_permissions_service import can_rebuild_test_pdfs
+
 
 class PreparationLandingView(ManagerRequiredView):
     def build_context(self):

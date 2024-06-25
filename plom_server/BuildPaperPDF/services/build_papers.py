@@ -151,6 +151,10 @@ class BuildPapersService:
         """Get the total number of non-obsolete chores."""
         return BuildPaperPDFChore.objects.filter(obsolete=False).count()
 
+    def are_any_papers_built(self) -> bool:
+        """Return true if any papers have had their PDFs built successfully."""
+        return self.get_n_complete_tasks() > 0
+
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
         """Return True if all of the papers have had their PDF built successfully.
