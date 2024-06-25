@@ -1235,7 +1235,7 @@ class Annotator(QWidget):
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
         else:
             self.setToolMode("image", imagePath=fileName)

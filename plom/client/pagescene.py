@@ -54,6 +54,9 @@ from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
+# in some places we make assumptions that our view is this subclass
+from plom.client.pageview import PageView
+
 from .tools import (
     CrossItem,
     DeltaItem,
@@ -102,15 +105,22 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize, maxScore, score, question_label=None):
+    def __init__(
+        self,
+        style: dict[str, Any],
+        fontsize,
+        maxScore: int,
+        score,
+        question_label: str | None = None,
+    ) -> None:
         """Initialize a new ScoreBox.
 
         Args:
-            style (dict): pen width, annotation colour, etc.
+            style: a dict of pen width, annotation colour, etc.
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
-            question_label (str/None): how to display the question
+            question_label: how to display the question
                 number, or `None` to display no label at the beginning
                 of the score box.
         """
@@ -825,6 +835,11 @@ class PageScene(QGraphicsScene):
         if self.mode == "pan":
             self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         else:
+            # We want "NoDrag" but some reason toggling thru ScrollHandDrag
+            # fixes the cursor Issue #3417.  I suspect the real issue is that
+            # we are overfiltering mouse events, and not calling the super
+            # mouse event handler somewhere (e.g., Issue #834).
+            self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
             self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def get_nonrubric_text_from_page(self):
@@ -1089,7 +1104,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event) -> None:
         if (
             QGuiApplication.queryKeyboardModifiers()
             == Qt.KeyboardModifier.ControlModifier
@@ -1097,7 +1112,10 @@ class PageScene(QGraphicsScene):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             event.accept()
 
@@ -1338,7 +1356,7 @@ class PageScene(QGraphicsScene):
                 command = CommandTick(self, pt)
         self.undoStack.push(command)  # push onto the stack.
 
-    def mousePressCross(self, event):
+    def mousePressCross(self, event) -> None:
         """Selects the proper cross/?-mark/tick based on which mouse button/key combination.
 
         Notes:
@@ -1364,7 +1382,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mousePressTick(self, event):
+    def mousePressTick(self, event) -> None:
         # use the boxStampPress function to update things
         self.boxStampPress(event)
         # only have to do something if in states 3 or 4
@@ -1377,7 +1395,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseMoveCross(self, event):
+    def mouseMoveCross(self, event) -> None:
         self.boxStampMove(event)
         if self.boxLineStampState >= 4:  # error has occurred
             log.debug(
@@ -1386,7 +1404,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mouseMoveTick(self, event):
+    def mouseMoveTick(self, event) -> None:
         self.boxStampMove(event)
         if self.boxLineStampState >= 4:  # error has occurred
             log.debug(
@@ -1395,7 +1413,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mouseReleaseCross(self, event):
+    def mouseReleaseCross(self, event) -> None:
         # update things
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
@@ -1408,7 +1426,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseTick(self, event):
+    def mouseReleaseTick(self, event) -> None:
         # update things
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
@@ -1421,7 +1439,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mousePressRubric(self, event):
+    def mousePressRubric(self, event) -> None:
         """Mouse press while holding rubric tool.
 
         Usually this creates a rubric, an object consisting of a delta
@@ -1472,7 +1490,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mousePressMove(self, event):
+    def mousePressMove(self, event) -> None:
         """Create closed hand cursor when move-tool is selected, otherwise does nothing.
 
         Notes:
@@ -1488,7 +1506,7 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
-    def mousePressPan(self, event):
+    def mousePressPan(self, event) -> None:
         """While pan-tool selected changes the cursor to a closed hand, otherwise does not do much.
 
         Notes:
@@ -1504,7 +1522,7 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         return
 
-    def mousePressText(self, event):
+    def mousePressText(self, event) -> None:
         """Mouse press while holding text tool.
 
         Usually this creates a textobject, but if user drags then, it
@@ -1564,7 +1582,7 @@ class PageScene(QGraphicsScene):
             )
             self.undoStack.endMacro()
 
-    def mouseMoveText(self, event):
+    def mouseMoveText(self, event) -> None:
         """Handles mouse moving with a text.
 
         Args:
@@ -1575,7 +1593,7 @@ class PageScene(QGraphicsScene):
         """
         self.boxStampMove(event)
 
-    def mouseReleaseText(self, event):
+    def mouseReleaseText(self, event) -> None:
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
         # if there is text under the ghost then do not stamp anything - ignore the event.
         if self.textUnderneathPoint(event.scenePos()) and self.boxLineStampState in [
@@ -1604,7 +1622,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseMove(self, event):
+    def mouseReleaseMove(self, event) -> None:
         """Handles mouse releases for move tool by setting cursor to an open hand.
 
         Args:
@@ -1620,7 +1638,7 @@ class PageScene(QGraphicsScene):
         # self.updateSceneRectangle()
         # self.update()
 
-    def mouseReleasePan(self, event):
+    def mouseReleasePan(self, event) -> None:
         """Handles mouse releases for pan tool by setting cursor to an open hand.
 
         Args:
@@ -1630,10 +1648,12 @@ class PageScene(QGraphicsScene):
             None.
         """
         self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
-        super().mouseReleaseEvent(event)
-        self.views()[0].setZoomSelector()
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector()
 
-    def mousePressImage(self, event):
+    def mousePressImage(self, event) -> None:
         """Adds the selected image at the location the mouse is pressed and shows a message box with instructions.
 
         Args:
@@ -1647,16 +1667,20 @@ class PageScene(QGraphicsScene):
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
             self.tempImagePath = None
+            _parent = self.parent()
+            assert _parent is not None
             # set the mode back to move
-            self.parent().toMoveMode()
-
-            msg = QMessageBox(self.parent())
+            # MyPy is rightfully unsure parent is an Annotator:
+            # # assert isinstance(_parent, Annotator)
+            # but that's likely a circular import, so just add exception:
+            _parent.toMoveMode()  # type: ignore[attr-defined]
+            msg = QMessageBox(_parent)  # type: ignore[call-overload]
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
                 "You can double-click on an Image to modify its scale and border."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
 
     def dragEnterEvent(self, e):
@@ -2037,7 +2061,7 @@ class PageScene(QGraphicsScene):
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
 
-    def mousePressBox(self, event):
+    def mousePressBox(self, event) -> None:
         """Handle mouse presses when box tool is selected.
 
         Notes:
@@ -2083,7 +2107,7 @@ class PageScene(QGraphicsScene):
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
 
-    def mouseMoveBox(self, event):
+    def mouseMoveBox(self, event) -> None:
         """Update the size of the box as the mouse is moved.
 
         Notes:
@@ -2121,7 +2145,7 @@ class PageScene(QGraphicsScene):
         else:
             return
 
-    def mouseReleaseBox(self, event):
+    def mouseReleaseBox(self, event) -> None:
         """Handle when the mouse is released after drawing a new box.
 
         Notes:
@@ -2147,8 +2171,7 @@ class PageScene(QGraphicsScene):
                 nrect.width() > minimum_box_side_length
                 and nrect.height() > minimum_box_side_length
             ):
-                command = CommandBox(self, nrect)
-                self.undoStack.push(command)
+                self.undoStack.push(CommandBox(self, nrect))
         else:
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
@@ -2156,12 +2179,11 @@ class PageScene(QGraphicsScene):
                 self.ellipseItem.rect().width() > minimum_box_side_length
                 and self.ellipseItem.rect().height() > minimum_box_side_length
             ):
-                command = CommandEllipse(self, self.ellipseItem.rect())
-                self.undoStack.push(command)
+                self.undoStack.push(CommandEllipse(self, self.ellipseItem.rect()))
 
         self.boxFlag = 0
 
-    def mousePressLine(self, event):
+    def mousePressLine(self, event) -> None:
         """Handle the mouse press when using the line tool to draw a line.
 
         Notes:
@@ -2201,7 +2223,7 @@ class PageScene(QGraphicsScene):
         self.lineItem.setPen(self.ink)
         self.addItem(self.lineItem)
 
-    def mouseMoveLine(self, event):
+    def mouseMoveLine(self, event) -> None:
         """Update the length of the box as the mouse is moved.
 
         Notes:
@@ -2217,7 +2239,7 @@ class PageScene(QGraphicsScene):
             self.currentPos = event.scenePos()
             self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
-    def mouseReleaseLine(self, event):
+    def mouseReleaseLine(self, event) -> None:
         """Handle when the mouse is released after drawing a new line.
 
         Notes:
@@ -2250,7 +2272,7 @@ class PageScene(QGraphicsScene):
         if (self.originPos - self.currentPos).manhattanLength() > 24:
             self.undoStack.push(command)
 
-    def mousePressPen(self, event):
+    def mousePressPen(self, event) -> None:
         """Handle the mouse press when using the pen tool to draw.
 
         Notes:
@@ -2299,7 +2321,7 @@ class PageScene(QGraphicsScene):
         # mouse-release.
         self.addItem(self.pathItem)
 
-    def mouseMovePen(self, event):
+    def mouseMovePen(self, event) -> None:
         """Update the pen-path as the mouse is moved.
 
         Notes:
@@ -2317,7 +2339,7 @@ class PageScene(QGraphicsScene):
             self.pathItem.setPath(self.path)
         # do not add to path when flag is zero.
 
-    def mouseReleasePen(self, event):
+    def mouseReleasePen(self, event) -> None:
         """Handle when the mouse is released after drawing.
 
         Notes:
@@ -2365,7 +2387,7 @@ class PageScene(QGraphicsScene):
         # ):
         #     self.undoStack.push(command)
 
-    def mousePressZoom(self, event):
+    def mousePressZoom(self, event) -> None:
         """Handle the mouse press when drawing a zoom box.
 
         Notes:
@@ -2388,7 +2410,10 @@ class PageScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -2403,7 +2428,7 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
 
-    def mouseMoveZoom(self, event):
+    def mouseMoveZoom(self, event) -> None:
         """Update the size of the zoom box as the mouse is moved.
 
         Notes:
@@ -2429,7 +2454,7 @@ class PageScene(QGraphicsScene):
                 QRectF(self.originPos, self.currentPos).normalized()
             )
 
-    def mouseReleaseZoom(self, event):
+    def mouseReleaseZoom(self, event) -> None:
         """Handle when the mouse is released after drawing a new zoom box.
 
         Notes: Either zoom-in a little (if zoombox small), else fit the
@@ -2463,12 +2488,15 @@ class PageScene(QGraphicsScene):
             )
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].setZoomSelector(True)
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0
 
-    def mousePressDelete(self, event):
+    def mousePressDelete(self, event) -> None:
         """Handle the mouse press when drawing a delete box.
 
         Notes:
@@ -2489,11 +2517,12 @@ class PageScene(QGraphicsScene):
         self.delBoxItem = QGraphicsRectItem(
             QRectF(self.originPos, self.currentPos).normalized()
         )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
-    def mouseMoveDelete(self, event):
+    def mouseMoveDelete(self, event) -> None:
         """Update the size of the delete box as the mouse is moved.
 
         Notes:
@@ -2512,6 +2541,7 @@ class PageScene(QGraphicsScene):
                 # somehow missed the mouse-press (2024: not convinced this can happen)
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
@@ -2537,7 +2567,7 @@ class PageScene(QGraphicsScene):
             command = CommandDelete(self, item)
             self.undoStack.push(command)
 
-    def mouseReleaseRubric(self, event):
+    def mouseReleaseRubric(self, event) -> None:
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
         # if there is text under the ghost then do not stamp anything - ignore the event.
         if self.textUnderneathGhost() and self.boxLineStampState in [0, 2]:
@@ -2572,7 +2602,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseDelete(self, event):
+    def mouseReleaseDelete(self, event) -> None:
         """Handle when the mouse is released after drawing a new delete box.
 
         Notes:
@@ -2744,7 +2774,7 @@ class PageScene(QGraphicsScene):
         """Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
-    def mouseMoveRubric(self, event):
+    def mouseMoveRubric(self, event) -> None:
         """Handles mouse moving with a rubric.
 
         Args:
@@ -2930,7 +2960,7 @@ class PageScene(QGraphicsScene):
         # now set mode to move.
         self.parent().toMoveMode()
 
-    def mousePressCrop(self, event):
+    def mousePressCrop(self, event) -> None:
         """Handle the mouse press when drawing a crop box.
 
         Notes:
@@ -2951,11 +2981,12 @@ class PageScene(QGraphicsScene):
         self.delBoxItem = QGraphicsRectItem(
             QRectF(self.originPos, self.currentPos).normalized()
         )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
-    def mouseMoveCrop(self, event):
+    def mouseMoveCrop(self, event) -> None:
         """Update the size of the crop box as the mouse is moved.
 
         Notes:
@@ -2974,6 +3005,7 @@ class PageScene(QGraphicsScene):
                 log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press (2024: not convinced this can happen)
                 self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
@@ -2981,7 +3013,7 @@ class PageScene(QGraphicsScene):
                 QRectF(self.originPos, self.currentPos).normalized()
             )
 
-    def mouseReleaseCrop(self, event):
+    def mouseReleaseCrop(self, event) -> None:
         """Handle when the mouse is released after drawing a new delete box.
 
         Notes:
