@@ -668,7 +668,10 @@ class MarkingTaskService:
     def reassign_task_to_user(self, task_pk: int, username: str) -> None:
         """Reassign a task to a different user.
 
-        If the task was already checked out, it will be revoked.
+        If tasks status is "COMPLETE" then the assigned_user will be updated,
+        while if it is "OUT" or "TO_DO", then assigned user will be set to None.
+        ie - this function assumes that the task will also be tagged with
+        an appropriate @username tag.
 
         Args:
             task_pk: the private key of a task.
@@ -689,10 +692,13 @@ class MarkingTaskService:
                 # if already assigned to that user, do nothing
                 if task_obj.assigned_user == new_user:
                     return
-                task_obj.assigned_user = new_user
-                # if the original user has it checked-out then update the status to to-do
-                if task_obj.status == MarkingTask.OUT:
+                # if complete then make sure assigned to the new user
+                if task_obj.status == MarkingTask.COMPLETE:
+                    task_obj.assigned_user = new_user
+                # if out then set it as todo and clear the assigned_user.
+                elif task_obj.status in [MarkingTask.OUT, MarkingTask.TO_DO]:
                     task_obj.status = MarkingTask.TO_DO
+                    task_obj.assigned_user = None
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
