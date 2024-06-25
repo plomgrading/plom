@@ -6,6 +6,7 @@
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2024 Bryan Tanady
 
 """Plom's Chooser dialog."""
 
@@ -39,7 +40,7 @@ import tomlkit
 
 import urllib3
 from PyQt6 import uic, QtGui
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import pyqtSlot, Qt
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
@@ -163,6 +164,16 @@ class Chooser(QDialog):
         self.ui.pgSB.setValue(int(self.lastTime["question"]))
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
+
+    def keyPressEvent(self, event):
+
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            # Only connect to login if the current focus is at password line edit
+            # Otherwise the return key works as default.
+            if self.focusWidget() == self.ui.passwordLE:
+                self.login()
+            else:
+                super().keyPressEvent(event)
 
     def setServer(self, s: str) -> None:
         """Set the server and port UI widgets from a string.
