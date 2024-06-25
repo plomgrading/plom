@@ -655,7 +655,7 @@ class MarkingTaskService:
 
     @transaction.atomic
     def create_tag_and_attach_to_task(self, user: User, task_pk: int, tag_text: str):
-        """Create a tag with given text and attach to given task
+        """Create a tag with given text and attach to given task.
 
         Args:
             user: the user creating/attaching the tag.
