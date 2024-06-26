@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -82,7 +83,7 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
-    def test_no_kind_ValidationError(self) -> None:
+    def test_no_kind_KeyValidationError(self) -> None:
         """Test ValidationError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()

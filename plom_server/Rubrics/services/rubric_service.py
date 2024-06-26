@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
