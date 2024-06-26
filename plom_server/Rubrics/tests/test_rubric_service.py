@@ -82,11 +82,11 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
-    def test_no_kind_KeyError(self) -> None:
-        """Test KeyError in RubricService.create_rubric().
+    def test_no_kind_ValidationError(self) -> None:
+        """Test ValidationError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
-        method raises a KeyError when attempting to create a rubric
+        method raises a ValidationError when attempting to create a rubric
         without providing the 'kind' key in the rubric dictionary.
         """
         rub = {
@@ -96,7 +96,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question": 1,
         }
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
 
