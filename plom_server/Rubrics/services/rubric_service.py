@@ -122,10 +122,12 @@ class RubricService:
             pass
 
         serializer = RubricSerializer(data=rubric_data)
-        serializer.is_valid()
-        serializer.save()
-        rubric_obj = serializer.instance
-        return rubric_obj
+        if serializer.is_valid():
+            serializer.save()
+            rubric_obj = serializer.instance
+            return rubric_obj
+        else:
+            raise ValidationError(serializer.errors)
 
     @transaction.atomic
     def modify_rubric(
