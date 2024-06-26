@@ -4,12 +4,14 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 import random
 
 from django.db import models
 from django.contrib.auth.models import User
 from Mark.models.annotations import Annotation
+from django.utils.translation import gettext_lazy as _
 
 
 def generate_key():
@@ -65,8 +67,13 @@ class Rubric(models.Model):
             creative/hacky.
     """
 
+    class RubricKind(models.TextChoices):
+        ABSOLUTE = "absolute", _("Absolute")
+        NEUTRAL = "neutral", _("Neutral")
+        RELATIVE = "relative", _("Relative")
+
     key = models.TextField(null=False, default=generate_unique_key)
-    kind = models.TextField(null=False)
+    kind = models.TextField(null=False, choices=RubricKind.choices)
     display_delta = models.TextField(null=False, default="")  # is short
     value = models.IntegerField(null=False, default=0)
     out_of = models.IntegerField(null=False, default=0)
