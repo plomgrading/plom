@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from rest_framework.exceptions import ValidationError
@@ -81,10 +82,13 @@ class SpecEditorView(ManagerRequiredView):
                 context["msg"] = "Specification passes validity checks."
             else:
                 service.save_spec()
-                context["msg"] = "Specification saved!"
+                context["msg"] = "Specification saved! - reload page"
+
             context["success"] = True
-        except (ValueError, RuntimeError) as e:
+        except PermissionDenied as e:
             context["error_list"] = [str(e)]
+        except (ValueError, RuntimeError) as e:
+            context["error_list"] = [f"Cannot modify specification - {e}"]
         except ValidationError as errs:
             for k, v in errs.detail.items():
                 if isinstance(v, list) and len(v) == 1:

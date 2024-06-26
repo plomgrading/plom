@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
@@ -24,7 +25,7 @@ from ..services import (
     PapersPrinted,
 )
 
-from ..services.preparation_permissions_service import can_rebuild_test_pdfs
+from ..services.preparation_permissions_service import can_modify_spec
 
 
 class PreparationLandingView(ManagerRequiredView):
@@ -107,14 +108,11 @@ class PreparationLandingView(ManagerRequiredView):
 
 class LandingResetSpec(ManagerRequiredView):
     def delete(self, request):
-        SpecificationService.remove_spec()
-
-        SourceService.delete_all_source_pdfs()
-
-        qv_service = PQVMappingService()
-        qv_service.remove_pqv_map()
-
-        return HttpResponseClientRefresh()
+        try:
+            SpecificationService.remove_spec()
+            return HttpResponseClientRefresh()
+        except PermissionDenied as err:
+            return HttpResponse(f"You cannot modify the specification - {err}")
 
 
 class LandingResetSources(ManagerRequiredView):

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.http import HttpResponse, HttpRequest, Http404
 from django.shortcuts import render
@@ -14,11 +15,12 @@ class SpecSummaryView(ManagerRequiredView):
     """Display a read-only summary of the test specification in the browser."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        if not SpecificationService.is_there_a_spec():
-            raise Http404("Server has no spec")
-        context = {
-            "spec": SpecificationService.get_the_spec(),
-        }
+        if SpecificationService.is_there_a_spec():
+            context = {
+                "spec": SpecificationService.get_the_spec(),
+            }
+        else:
+            context = {"spec": None}
         return render(request, "SpecCreator/summary-page.html", context)
 
 

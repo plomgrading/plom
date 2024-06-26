@@ -66,6 +66,8 @@ def load_spec_from_dict(
 
     Args:
         spec_dict:
+    Raises:
+        PermissionDenied: if the spec cannot be modified
 
     Keyword Args:
         public_code: optionally pass a manually specified public code (mainly for unit testing)
@@ -73,6 +75,12 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
+    from Preparation.services.preparation_permissions_service import can_modify_spec
+
+    # this will Raise a PermissionDenied exception if cannot modify the spec
+    if can_modify_spec():
+        pass
+
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
@@ -198,19 +206,20 @@ def remove_spec() -> None:
 
     Raises:
         ObjectDoesNotExist: no exam specification yet.
-        MultipleObjectsReturned: cannot remove spec because
-            there are already papers.
+        PermissionDenied: cannot modify spec due to dependencies (eg sources uploaded, papers in database, etc)
     """
     if not is_there_a_spec():
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
-    from .paper_info import PaperInfoService
+    # from .paper_info import PaperInfoService
+    # if PaperInfoService().is_paper_database_populated():
+    #     raise MultipleObjectsReturned("Database is already populated with test-papers.")
 
-    if PaperInfoService().is_paper_database_populated():
-        raise MultipleObjectsReturned("Database is already populated with test-papers.")
+    from Preparation.services.preparation_permissions_service import can_modify_spec
 
-    Specification.objects.all().delete()
-    SpecQuestion.objects.all().delete()
+    if can_modify_spec():
+        Specification.objects.all().delete()
+        SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
