@@ -216,6 +216,9 @@ class MarkingTaskService:
     def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
         """Associate a user to a marking task and update the task status.
 
+        Note: this looks superficially like :method:`reassign_task_to_user`;
+        this current method is really about claiming "OUT" tasks for a user.
+
         Args:
             user: reference to a User instance
             task: reference to a MarkingTask instance
@@ -464,12 +467,13 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    def create_tag(self, user, tag_text):
-        """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
+    def create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+        """Create a new tag that can be associated with marking task.
 
         Args:
             user: reference to a User instance
-            tag_text: str, the text content of a tag.
+            tag_text: str, the proposed text content of a tag.
+                Assumes this input text has already been sanitized.
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
@@ -484,12 +488,18 @@ class MarkingTaskService:
         new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
-    def add_tag(self, tag, task):
+    def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
 
+        Also assumes appropriate select_for_update's have been done although
+        from glancing at the code I doubt that's true.
+
         Args:
-            tag: reference to a MarkingTaskTag instance
-            task: reference to a MarkingTask instance
+            tag: reference to a MarkingTaskTag instance.
+            task: reference to a MarkingTask instance.
+
+        Returns:
+            None
         """
         # TODO: port to select_for_update?
         tag.task.add(task)
@@ -497,13 +507,17 @@ class MarkingTaskService:
 
     @transaction.atomic
     def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
-        """Add existing tag with given pk to the marking task with given pk."""
+        """Add existing tag with given pk to the marking task with given pk.
+
+        Raises:
+            ValueError: no such task or tag.
+        """
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-        self.add_tag(the_tag, the_task)
+        self._add_tag(the_tag, the_task)
 
     def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
@@ -538,12 +552,11 @@ class MarkingTaskService:
             RuntimeError: task not found
             ValidationError: invalid tag text
         """
-        mts = MarkingTaskService()
-        the_task = mts.get_task_from_code(code)
-        the_tag = mts.get_tag_from_text(tag_text)
+        the_task = self.get_task_from_code(code)
+        the_tag = self.get_tag_from_text(tag_text)
         if not the_tag:
-            the_tag = mts.create_tag(user, tag_text)
-        mts.add_tag(the_tag, the_task)
+            the_tag = self.create_tag(user, tag_text)
+        self._add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
@@ -643,3 +656,85 @@ class MarkingTaskService:
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
         if ibs.is_given_paper_question_ready(paper_obj, question_index):
             self.create_task(paper_obj, question_index)
+
+    @transaction.atomic
+    def create_tag_and_attach_to_task(
+        self, user: User, task_pk: int, tag_text: str
+    ) -> None:
+        """Create a tag with given text and attach to given task.
+
+        Args:
+            user: the user creating/attaching the tag.
+            task_pk: the pk of the markingtask.
+            tag_text: the text of the tag being created/attached.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: if the tag text is not legal.
+        """
+        # clean up the text and see if such a tag already exists
+        cleaned_tag_text = self.sanitize_tag_text(tag_text)
+        tag_obj = self.get_tag_from_text(cleaned_tag_text)
+        if tag_obj is None:  # no such tag exists, so create one
+            # note - will raise validationerror if tag_text not legal
+            tag_obj = self.create_tag(user, cleaned_tag_text)
+        # finally - attach it.
+        self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
+
+    @transaction.atomic
+    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+        """Reassign a task to a different user.
+
+        If tasks status is "COMPLETE" then the assigned_user will be updated,
+        while if it is "OUT" or "TO_DO", then assigned user will be set to None.
+        ie - this function assumes that the task will also be tagged with
+        an appropriate @username tag (by the caller; we don't do it for you!)
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and---with
+        extra tagging effort described above---pushing them toward a different
+        user.
+
+        Args:
+            task_pk: the private key of a task.
+            username: a string of a username.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
+        """
+        # make sure the given username corresponds to a marker
+        try:
+            new_user = User.objects.get(username=username, groups__name="marker")
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a marker-user {username}")
+        # grab the task
+        try:
+            with transaction.atomic():
+                task_obj = MarkingTask.objects.select_for_update().get(pk=task_pk)
+                if task_obj.assigned_user == new_user:
+                    # already assigned to new_user, nothing needs done
+                    return
+                if task_obj.status == MarkingTask.COMPLETE:
+                    task_obj.assigned_user = new_user
+                elif task_obj.status == MarkingTask.OUT_OF_DATE:
+                    # log.warn(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+                    task_obj.assigned_user = new_user
+                elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
+                    # if out then set it as todo and clear the assigned_user.
+                    # Note: this makes it available to anyone; the caller
+                    # might want to additionally tag it for new_user.
+                    task_obj.status = MarkingTask.TO_DO
+                    task_obj.assigned_user = None
+                else:
+                    raise AssertionError(
+                        f'Tertium non datur: impossible status "{task_obj.status}"'
+                    )
+                task_obj.save()
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find marking task {task_pk}")

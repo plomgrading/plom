@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
@@ -12,11 +12,13 @@
     Marking progress
 {% endblock page_heading %}
 {% block main_content %}
-    <div>
-        <p>
-            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
-        </p>
-    </div>
+    {% if user_is_lead_marker or user_is_manager %}
+        <div>
+            <p>
+                <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
+            </p>
+        </div>
+    {% endif %}
     <div class="container w-100">
         {% for qn in questions %}
             <div class="row">
