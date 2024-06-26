@@ -165,7 +165,7 @@ class RubricService:
         username = new_rubric_data.pop("username")
 
         try:
-            user = User.objects.get(username=new_rubric_data.pop("username"))
+            user = User.objects.get(username=username)
             new_rubric_data["user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
