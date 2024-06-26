@@ -98,8 +98,6 @@ class RubricService:
         self, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
         rubric_data = rubric_data.copy()
-        # TODO: add a function to check if a rubric_data is valid/correct
-        self.check_rubric(rubric_data)
 
         username = rubric_data.pop("username")
         try:
@@ -163,13 +161,21 @@ class RubricService:
             PlomConflict: the new data is too old; someone else modified.
         """
         new_rubric_data = new_rubric_data.copy()
-        user = User.objects.get(username=new_rubric_data.pop("username"))
-        new_rubric_data["user"] = user.pk
+        username = new_rubric_data.pop("username")
+
+        try:
+            user = User.objects.get(username=new_rubric_data.pop("username"))
+            new_rubric_data["user"] = user.pk
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"User {username} does not exist.") from e
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
+
+        # incoming revision is not incremented to check if what the
+        # revision was based on is outdated
         if not new_rubric_data["revision"] == rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
@@ -209,10 +215,12 @@ class RubricService:
             new_rubric_data["modified_by_user"] = modifying_user.pk
         new_rubric_data["revision"] += 1
         serializer = RubricSerializer(rubric, data=new_rubric_data)
-        serializer.is_valid()
-        serializer.save()
-        rubric_obj = serializer.instance
-        return _Rubric_to_dict(rubric_obj)
+        if serializer.is_valid():
+            serializer.save()
+            rubric_obj = serializer.instance
+            return _Rubric_to_dict(rubric_obj)
+        else:
+            raise ValidationError(serializer.errors)
 
     def get_rubrics_as_dicts(
         self, *, question: int | None = None
@@ -464,16 +472,6 @@ class RubricService:
         pane = RubricPane.objects.get(user=user, question=question)
         pane.data = data
         pane.save()
-
-    def check_rubric(self, rubric_data: dict[str, Any]) -> None:
-        """Check rubric data to ensure the data is consistent.
-
-        Args:
-            rubric_data: data for a rubric submitted by a web request.
-        """
-        # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
-        #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
-        pass
 
     def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
         """Get the queryset of annotations that use this rubric.
