@@ -66,8 +66,6 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
-    __valid_kinds = ("absolute", "neutral", "relative")
-
     def create_rubric(
         self, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> dict[str, Any]:
@@ -123,10 +121,6 @@ class RubricService:
             # TODO: consult per-user permissions (not implemented yet)
             pass
 
-        kind = rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
-
         serializer = RubricSerializer(data=rubric_data)
         serializer.is_valid()
         serializer.save()
@@ -169,10 +163,6 @@ class RubricService:
         new_rubric_data = new_rubric_data.copy()
         user = User.objects.get(username=new_rubric_data.pop("username"))
         new_rubric_data["user"] = user.pk
-
-        kind = new_rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
         rubric = Rubric.objects.filter(key=key).select_for_update().get()
 
