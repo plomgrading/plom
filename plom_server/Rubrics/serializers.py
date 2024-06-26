@@ -5,9 +5,12 @@
 from rest_framework import serializers
 
 from Rubrics.models import Rubric
+from django.contrib.auth.models import User
 
 
 class RubricSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
     class Meta:
         model = Rubric
         fields = "__all__"
