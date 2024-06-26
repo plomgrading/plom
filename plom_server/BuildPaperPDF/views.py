@@ -3,10 +3,12 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 from typing import Any
+from io import BytesIO
 
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -15,7 +17,6 @@ from django.http import HttpRequest, HttpResponse
 from django.http import FileResponse, StreamingHttpResponse, Http404
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -116,11 +117,9 @@ class GetPDFFile(ManagerRequiredView):
             # TODO: Issue #3157 why do we need this?  Can we just 404?
             return render(request, "BuildPaperPDF/cannot_find_pdf.html")
 
-        pdf = SimpleUploadedFile(
-            pdf_filename, pdf_bytes, content_type="application/pdf"
+        return FileResponse(
+            BytesIO(pdf_bytes), filename=pdf_filename, content_type="application/pdf"
         )
-
-        return FileResponse(pdf)
 
 
 class GetStreamingZipOfPDFs(ManagerRequiredView):
