@@ -514,7 +514,9 @@
   <tabstop>loginButton</tabstop>
   <tabstop>logoutButton</tabstop>
   <tabstop>pgSB</tabstop>
+  <tabstop>pgDrop</tabstop>
   <tabstop>vSB</tabstop>
+  <tabstop>vDrop</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
   <tabstop>manageButton</tabstop>
@@ -522,8 +524,6 @@
   <tabstop>optionsButton</tabstop>
   <tabstop>aboutButton</tabstop>
   <tabstop>closeButton</tabstop>
-  <tabstop>pgDrop</tabstop>
-  <tabstop>vDrop</tabstop>
  </tabstops>
  <resources/>
  <connections/>
