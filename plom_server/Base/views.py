@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.views.generic import View
 from Base.base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
+from django.core.exceptions import ObjectDoesNotExist
 
 from Scan.services import ScanService
 
@@ -112,7 +113,10 @@ class ResetConfirmView(ManagerRequiredView):
                 BuildPapersService().reset_all_tasks()
 
                 # Remove all test database rows
-                PaperCreatorService().remove_all_papers_from_db()
+                try:
+                    PaperCreatorService().remove_all_papers_from_db()
+                except ObjectDoesNotExist:
+                    pass
 
                 # Remove QV Mappings
                 PQVMappingService().remove_pqv_map()
@@ -125,10 +129,10 @@ class ResetConfirmView(ManagerRequiredView):
                 SourceService.delete_all_source_pdfs()
 
                 # Remove test spec
-                SpecificationService.remove_spec()
-
-                # Rubric App Deletion
-                # RubricService().erase_all_rubrics()
+                try:
+                    SpecificationService.remove_spec()
+                except ObjectDoesNotExist:
+                    pass
 
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")
