@@ -165,15 +165,15 @@ class Chooser(QDialog):
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
 
-    def keyPressEvent(self, event):
-
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            # Only connect to login if the current focus is at password line edit
-            # Otherwise the return key works as default.
-            if self.focusWidget() == self.ui.passwordLE:
-                self.login()
-            else:
-                super().keyPressEvent(event)
+    # TODO: see Issue #3423, this below workaround doesn't work for me
+    # def keyPressEvent(self, event):
+    #     if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+    #         # Only connect to login if the current focus is at password line edit
+    #         # Otherwise the return key works as default.
+    #         if self.focusWidget() == self.ui.passwordLE:
+    #             self.login()
+    #         else:
+    #             super().keyPressEvent(event)
 
     def setServer(self, s: str) -> None:
         """Set the server and port UI widgets from a string.
