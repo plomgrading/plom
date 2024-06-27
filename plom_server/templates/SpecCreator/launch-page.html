@@ -18,7 +18,7 @@
             <a class="btn btn-primary" href="{% url 'spec_summary' %}">Specification summary page</a>
         </div>
         {% if is_there_a_spec %}
-            <span class="alert alert-success my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
+            <span class="alert alert-warning my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
         {% else %}
             <div class="alert alert-primary" role="alert">There is no assessment specification</div>
         {% endif %}
