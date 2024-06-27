@@ -166,6 +166,7 @@ class AutoCorrectWidget(QFrame):
         self.speller = SpellChecker(distance=1)
         self.list_widget = QListWidget()
         self.setFrameShape(QFrame.Shape.Box)
+        self.list_widget.doubleClicked.connect(self.autocorrect)
 
         self.init_ui()
 
@@ -175,17 +176,13 @@ class AutoCorrectWidget(QFrame):
     def init_ui(self):
         self.label = QLabel("Suggestions:")
         buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Apply
+            | QDialogButtonBox.StandardButton.Cancel
         )
-        ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
 
-        # for mypy type-checking. Mypy worries ok_button can be None
-        if ok_button:
-            ok_button.setText("Autocorrect")
-        else:
-            raise RuntimeError("There should be ok button.")
-
-        buttons.accepted.connect(self.autocorrect)
+        buttons.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(
+            self.autocorrect
+        )
         buttons.rejected.connect(self.close)
 
         # Layouts
