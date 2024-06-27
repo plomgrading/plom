@@ -40,17 +40,19 @@ class ProgressOverviewService:
         for task in MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
         ).prefetch_related("paper", "latest_annotation", "assigned_user"):
+            # task status is one of to_do, out, complete
             dat = {
                 "paper": task.paper.paper_number,
                 "status": task.get_status_display(),
                 "question": task.question_index,
                 "version": task.question_version,
+                "task_pk": task.pk,
             }
-            if task.status in [MarkingTask.OUT, MarkingTask.COMPLETE]:
+            if task.status == MarkingTask.OUT:
                 dat["user"] = task.assigned_user.username
             if task.status == MarkingTask.COMPLETE:
+                dat["user"] = task.assigned_user.username
                 dat["score"] = task.latest_annotation.score
-                dat["task_pk"] = task.pk
 
             marking_info.append(dat)
         return marking_info
@@ -67,8 +69,8 @@ class ProgressOverviewService:
           * {status: 'Complete', 'user': username, 'sid': student_id} - user who did the id'ing and the student-id of that paper.
 
         Marking-info dict is of the form {paper_number: {1: dat, 2:dat, ..., n: dat} } with data for each question. For each question we have
-          * {status: 'To do'} or
-          * {'status': 'Out', 'user': username} - the name of the user who has the task
+          * {status: 'To do', 'task_pk': blah} or
+          * {'status': 'Out', 'user': username, 'task_pk': blah} - the name of the user who has the task
           * {status: 'Complete', 'user': username, 'score': score, 'task_pk: blah} - user who did the marking'ing, the score, and the pk of the corresponding marking task.
         """
         id_task_overview: dict[int, None | dict[str, Any]] = {}
