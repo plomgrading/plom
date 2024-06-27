@@ -643,10 +643,3 @@ class MarkingTaskService:
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
         if ibs.is_given_paper_question_ready(paper_obj, question_index):
             self.create_task(paper_obj, question_index)
-
-
-def hard_reset():
-    """Delete all marking tasks to perform a hard reset."""
-    MarkingTask.objects.all().delete()
-    MarkingTaskTag.objects.all().delete()
-    MarkingTaskPriority.objects.all().delete()
