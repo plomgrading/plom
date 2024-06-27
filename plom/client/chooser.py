@@ -145,6 +145,9 @@ class Chooser(QDialog):
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.logoutButton.setVisible(False)
         self.ui.logoutButton.clicked.connect(self.logout)
+        # Chooser is a QDialog and has special Enter behaviour
+        # TODO: but it doesn't work, Issue #3423.
+        self.ui.loginButton.setDefault(True)
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
