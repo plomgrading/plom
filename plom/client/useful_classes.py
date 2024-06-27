@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 import platform
@@ -303,6 +303,8 @@ class SimpleQuestionCheckBox(QMessageBox):
 class SimpleTableView(QTableView):
     """A table-view widget that emits annotateSignal when the user hits enter or return."""
 
+    # Note: marker.ui knows about this via a "plom/client/useful_classes.h" header
+
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
@@ -323,7 +325,7 @@ class SimpleTableView(QTableView):
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
         else:
-            super(SimpleTableView, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
 
 class BlankIDBox(QDialog):
