@@ -75,7 +75,8 @@ class ScrapPaperService:
     def delete_scrap_paper_pdf(self):
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ScrapPaperPDFTask.load()
-        Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
+        if task_obj.scrap_paper_pdf:
+            Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
         task_obj.transition_back_to_todo()
 
     def build_scrap_paper_pdf(self):

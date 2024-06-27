@@ -75,7 +75,8 @@ class ExtraPageService:
     def delete_extra_page_pdf(self):
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ExtraPagePDFTask.load()
-        Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
+        if task_obj.extra_page_pdf:
+            Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
         task_obj.transition_back_to_todo()
 
     def build_extra_page_pdf(self):
