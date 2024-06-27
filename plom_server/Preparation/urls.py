@@ -13,7 +13,6 @@ from .views import (
     LandingResetQVmap,
     LandingFinishedToggle,
     SourceManageView,
-    SourceReadOnlyView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
@@ -48,7 +47,6 @@ urlpatterns = [
         name="prep_source_upload",
     ),
     path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
-    path("source/view/", SourceReadOnlyView.as_view(), name="prep_source_view"),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(

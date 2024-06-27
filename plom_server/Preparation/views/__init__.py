@@ -12,7 +12,7 @@ from .home import (
     LandingResetQVmap,
     LandingFinishedToggle,
 )
-from .source_manage import SourceManageView, SourceReadOnlyView, ReferenceImageView
+from .source_manage import SourceManageView, ReferenceImageView
 from .prenaming import PrenamingView
 from .classlist_manage import (
     ClasslistView,

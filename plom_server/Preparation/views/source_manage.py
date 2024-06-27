@@ -12,7 +12,9 @@ from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django_htmx.http import HttpResponseClientRedirect
+from django.contrib import messages
 
+from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
@@ -39,6 +41,15 @@ class SourceManageView(ManagerRequiredView):
         }
 
     def get(self, request: HttpRequest, version: int | None = None) -> HttpResponse:
+        # if no spec then redirect to the dependency conflict page
+        if not SpecificationService.is_there_a_spec():
+            messages.add_message(
+                request,
+                messages.ERROR,
+                f"You cannot upload source pdfs until there is an assessment specification.",
+            )
+            return redirect(reverse("prep_conflict"))
+
         if version is not None:
             try:
                 return FileResponse(
@@ -49,8 +60,6 @@ class SourceManageView(ManagerRequiredView):
             except ObjectDoesNotExist as e:
                 raise Http404(e)
 
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_source_view")
         context = self.build_context()
         return render(request, "Preparation/source_manage.html", context)
 
@@ -72,32 +81,14 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/test_source_attempt.html", context)
 
     def delete(self, request, version=None):
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_source_view")
-
         if version:
-            SourceService.delete_source_pdf(version)
+            try:
+                SourceService.delete_source_pdf(version)
+            except PlomDependencyConflict:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return HttpResponseClientRedirect(reverse("prep_conflict"))
+
         return HttpResponseClientRedirect(reverse("prep_sources"))
-
-
-class SourceReadOnlyView(ManagerRequiredView):
-    def build_context(self):
-        context = super().build_context()
-        context.update(
-            {
-                "num_versions": SpecificationService.get_n_versions(),
-                "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
-                "number_of_pages": SpecificationService.get_n_pages(),
-                "uploaded_sources": SourceService.get_list_of_sources(),
-                "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
-                "page_list": [p + 1 for p in range(SpecificationService.get_n_pages())],
-            }
-        )
-        return context
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        return render(request, "Preparation/source_view.html", context)
 
 
 class ReferenceImageView(ManagerRequiredView):
