@@ -48,10 +48,12 @@ class PlomConflict(PlomBenignException):
 
     pass
 
+
 class PlomDependencyConflict(PlomConflict):
     """Attempt to modify an object on which other objects depend."""
 
     pass
+
 
 class PlomNoMoreException(PlomBenignException):
     pass
@@ -187,6 +189,3 @@ class PlomNoServerSupportException(PlomBenignException):
     """For when an action is not supported by the server."""
 
     pass
-
-
-
