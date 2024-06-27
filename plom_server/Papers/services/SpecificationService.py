@@ -11,7 +11,7 @@ import html
 import logging
 from typing import Any, List, Optional, Tuple
 
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Max
@@ -75,7 +75,7 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
-    from Preparation.services.preparation_permissions_service import can_modify_spec
+    from Preparation.services.preparation_dependency_service import can_modify_spec
 
     # this will Raise a PermissionDenied exception if cannot modify the spec
     if can_modify_spec():
@@ -215,7 +215,7 @@ def remove_spec() -> None:
     # if PaperInfoService().is_paper_database_populated():
     #     raise MultipleObjectsReturned("Database is already populated with test-papers.")
 
-    from Preparation.services.preparation_permissions_service import can_modify_spec
+    from Preparation.services.preparation_dependency_service import can_modify_spec
 
     if can_modify_spec():
         Specification.objects.all().delete()
