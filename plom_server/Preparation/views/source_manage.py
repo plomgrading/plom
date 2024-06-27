@@ -64,19 +64,22 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_source_view")
-
         context = self.build_context()
         if not request.FILES["source_pdf"]:
             context.update(
                 {"success": False, "message": "Form invalid", "version": version}
             )
         else:
-            success, message = SourceService.take_source_from_upload(
-                version, request.FILES["source_pdf"]
-            )
-            context.update({"version": version, "success": success, "message": message})
+            try:
+                success, message = SourceService.take_source_from_upload(
+                    version, request.FILES["source_pdf"]
+                )
+                context.update(
+                    {"version": version, "success": success, "message": message}
+                )
+            except PlomDependencyConflict as err:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return HttpResponseClientRedirect(reverse("prep_conflict"))
 
         return render(request, "Preparation/test_source_attempt.html", context)
 
