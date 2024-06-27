@@ -58,7 +58,6 @@ from PyQt6.QtWidgets import (
     QSplitter,
 )
 
-# from autocorrect import Speller
 from spellchecker import SpellChecker
 import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
@@ -159,14 +158,14 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
-class AutoCorrectWidget(QFrame):
+class CorrectionWidget(QFrame):
     def __init__(self):
-        """Constructor of the QFrame showing autocorrect suggestions."""
+        """Constructor of the QFrame showing spelling correction suggestions."""
         super().__init__()
         self.speller = SpellChecker(distance=1)
         self.list_widget = QListWidget()
         self.setFrameShape(QFrame.Shape.Box)
-        self.list_widget.doubleClicked.connect(self.autocorrect)
+        self.list_widget.doubleClicked.connect(self.replace_word_from_correction_list)
 
         self.init_ui()
 
@@ -181,7 +180,7 @@ class AutoCorrectWidget(QFrame):
         )
 
         buttons.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(
-            self.autocorrect
+            self.replace_word_from_correction_list
         )
         buttons.rejected.connect(self.close)
 
@@ -198,11 +197,11 @@ class AutoCorrectWidget(QFrame):
         h_layout.addWidget(buttons)
 
     def set_selected_word(self, selected_word: str, cursor: QTextCursor):
-        """Request autocorrection for the selected word.
+        """Request spelling corretion for the selected word.
 
         Args:
             selected_word: the word that will be requested for
-            autocorrections.
+            spelling corrections.
 
             cursor: the text cursor location in WideTextEdit text box.
         """
@@ -211,7 +210,7 @@ class AutoCorrectWidget(QFrame):
         self.update_suggestions()
 
     def update_suggestions(self):
-        """Update the autocorrection suggestion list."""
+        """Update the spelling correction suggestion list."""
         self.list_widget.clear()
         suggestions = self.speller.candidates(self.selected_word)
         capitalized = self.selected_word.istitle()
@@ -236,19 +235,19 @@ class AutoCorrectWidget(QFrame):
         else:
             self.hide()
 
-    def autocorrect(self):
-        """Replace the selected text with the chosen autocorrection option."""
+    def replace_word_from_correction_list(self):
+        """Replace the selected text with the chosen correction option."""
         selected_items = self.list_widget.selectedItems()
         if not selected_items:
             QMessageBox.warning(
-                self, "No Selection", "Please select an option for autocorrection."
+                self, "No Selection", "Please select an option for correction."
             )
             return
-        selected_autocorrect = selected_items[0].text()
+        selected_correction = selected_items[0].text()
         cursor = self.cursor_position
         cursor.beginEditBlock()
         cursor.removeSelectedText()
-        cursor.insertText(selected_autocorrect)
+        cursor.insertText(selected_correction)
         cursor.endEditBlock()
         self.close()
 
@@ -292,7 +291,7 @@ class WideTextEdit(QTextEdit):
     def on_double_click(self, event: QMouseEvent):
         """Handle double left-click event.
 
-        Only pops up the autocorrection suggestions if the most likely
+        Only pops up the spelling corrections if the most likely
         replacement word is different from the selected text, and the
         selected text is not empty.
 
@@ -322,8 +321,9 @@ class WideTextEdit(QTextEdit):
                     )
 
                 if isinstance(rubric_dialog, AddRubricBox):
-                    autocorrect = rubric_dialog.autocorrect
-                    autocorrect.set_selected_word(selected_text, self.textCursor())
+                    rubric_dialog.correction_widget.set_selected_word(
+                        selected_text, self.textCursor()
+                    )
 
     def highlight_text(self):
         """Underline the texts that are suspected for spelling mistake.
@@ -433,10 +433,10 @@ class AddRubricBox(QDialog):
 
         self.reapable_CB = QComboBox()
         self.TE = WideTextEdit()
-        self.autocorrect = AutoCorrectWidget()
+        self.correction_widget = CorrectionWidget()
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.addWidget(self.TE)
-        self.splitter.addWidget(self.autocorrect)
+        self.splitter.addWidget(self.correction_widget)
 
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
