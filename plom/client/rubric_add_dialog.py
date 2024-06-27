@@ -144,14 +144,15 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.misspelledFormat.setUnderlineColor(QColor("red"))
 
         for word_object in self.wordRegEx.finditer(text):
-            most_likely_word = self.speller.correction(word_object.group())
+            if word_object.group() != "tex" and word_object.group().isalpha():
+                most_likely_word = self.speller.correction(word_object.group())
 
-            if most_likely_word and most_likely_word != word_object.group():
-                self.setFormat(
-                    word_object.start(),
-                    word_object.end() - word_object.start(),
-                    self.misspelledFormat,
-                )
+                if most_likely_word and most_likely_word != word_object.group():
+                    self.setFormat(
+                        word_object.start(),
+                        word_object.end() - word_object.start(),
+                        self.misspelledFormat,
+                    )
 
     def setSubs(self, subs):
         self.subs = subs
@@ -197,7 +198,7 @@ class CorrectionWidget(QFrame):
         h_layout.addWidget(buttons)
 
     def set_selected_word(self, selected_word: str, cursor: QTextCursor):
-        """Request spelling corretion for the selected word.
+        """Request spelling correction for the selected word.
 
         Args:
             selected_word: the word that will be requested for
