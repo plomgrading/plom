@@ -67,7 +67,7 @@
             <a href="#" class="list-group-item list-group-item-action border mb-1">
                 <p class="fs-4">
                     {% if papers_staged %}
-                        <i class="bi bi-square-check text-success"></i>
+                        <i class="bi bi-check-square text-success"></i>
                     {% else %}
                         <i class="bi bi-square"></i>
                     {% endif %}
@@ -75,10 +75,13 @@
                 </p>
                 <p class="fs-7">&emsp;&ensp; Manage how different test versions are used</p>
             </a>
-            <a href="#" class="list-group-item list-group-item-action border mb-1">
+            <a href="{% url 'create_paperPDFs' %}"
+               class="list-group-item list-group-item-action border mb-1">
                 <p class="fs-4">
-                    {% if papers_built %}
-                        <i class="bi bi-square-check text-success"></i>
+                    {% if all_papers_built %}
+                        <i class="bi bi-check-square text-success"></i>
+                    {% elif any_papers_built %}
+                        <i class="bi bi-dash-square-dotted text-info"></i>
                     {% else %}
                         <i class="bi bi-square"></i>
                     {% endif %}
@@ -89,7 +92,7 @@
             <a href="#" class="list-group-item list-group-item-action border">
                 <p class="fs-4">
                     {% if have_papers_been_printed %}
-                        <i class="bi bi-square-check text-success"></i>
+                        <i class="bi bi-check-square text-success"></i>
                     {% else %}
                         <i class="bi bi-square"></i>
                     {% endif %}

@@ -46,7 +46,7 @@ class SourceManageView(ManagerRequiredView):
             messages.add_message(
                 request,
                 messages.ERROR,
-                f"You cannot upload source pdfs until there is an assessment specification.",
+                "You cannot upload source pdfs until there is an assessment specification.",
             )
             return redirect(reverse("prep_conflict"))
 
@@ -84,7 +84,7 @@ class SourceManageView(ManagerRequiredView):
         if version:
             try:
                 SourceService.delete_source_pdf(version)
-            except PlomDependencyConflict:
+            except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return HttpResponseClientRedirect(reverse("prep_conflict"))
 

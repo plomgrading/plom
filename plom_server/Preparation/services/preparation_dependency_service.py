@@ -46,7 +46,9 @@ def can_modify_sources() -> bool:
         raise PlomDependencyConflict("There is no test specification")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
-        raise PlomDependencyConflict("Test PDFs have been built.")
+        raise PlomDependencyConflict(
+            "Test PDFs have been built - these depend on the source pdfs."
+        )
     return True
 
 
