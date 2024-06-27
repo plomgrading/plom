@@ -23,7 +23,9 @@
                     Download <tt>.toml</tt>
                     <icon class="bi bi-file-earmark-arrow-down"></icon>
                 </a>
-                <button class="btn btn-danger" hx-confirm="Are you sure?" hx-delete="{% url 'spec_delete' %}">Delete specification</button>
+                <button class="btn btn-danger"
+                        hx-confirm="Are you sure?"
+                        hx-delete="{% url 'spec_delete' %}">Delete specification</button>
                 <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
             {% endif %}
         </div>
