@@ -93,7 +93,7 @@ def can_modify_qv_mapping_database() -> bool:
 
 
 # 5 - the test pdfs depend on the qv-map/db and source pdfs.
-# nothing depnds on the test-pdfs
+# nothing depends on the test-pdfs
 def can_rebuild_test_pdfs() -> bool:
     # cannot rebuild test pdfs if papers printed
     if PapersPrinted.have_papers_been_printed():
