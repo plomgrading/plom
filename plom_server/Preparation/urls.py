@@ -6,7 +6,7 @@
 from django.urls import path
 from .views import (
     PreparationLandingView,
-    LandingResetSpec,
+    PreparationDependencyConflictView,
     LandingResetSources,
     LandingPrenameToggle,
     LandingResetClasslist,
@@ -32,7 +32,7 @@ from .views import (
 
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
-    path("reset/spec/", LandingResetSpec.as_view(), name="prep_reset_spec"),
+    path("conflict", PreparationDependencyConflictView.as_view(), name="prep_conflict"),
     path("reset/sources/", LandingResetSources.as_view(), name="prep_reset_sources"),
     path(
         "reset/prenaming/", LandingPrenameToggle.as_view(), name="prep_prename_toggle"

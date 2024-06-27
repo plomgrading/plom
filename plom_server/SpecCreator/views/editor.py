@@ -6,9 +6,13 @@
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 
 # from django.http import HttpResponseBadRequest
+
+from plom.plom_exceptions import PlomDependencyConflict
+from django_htmx.http import HttpResponseClientRedirect
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -82,9 +86,12 @@ class SpecEditorView(ManagerRequiredView):
                 context["msg"] = "Specification passes validity checks."
             else:
                 service.save_spec()
-                context["msg"] = "Specification saved! - reload page"
+                # Spec saved successfully - redirect to the summary page.
+                return HttpResponseClientRedirect(reverse("spec_summary"))
 
             context["success"] = True
+        except PlomDependencyConflict as e:
+            context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
         except (ValueError, RuntimeError) as e:

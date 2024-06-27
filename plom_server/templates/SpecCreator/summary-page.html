@@ -5,10 +5,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Test Specification
+    Assessment Specification
 {% endblock title %}
 {% block page_heading %}
-    Test Specification
+    Assessment Specification
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -23,13 +23,14 @@
                     Download <tt>.toml</tt>
                     <icon class="bi bi-file-earmark-arrow-down"></icon>
                 </a>
+                <button class="btn btn-danger" hx-confirm="Are you sure?" hx-delete="{% url 'spec_delete' %}">Delete specification</button>
                 <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
             {% endif %}
         </div>
         <div class="card">
             <div class="card-body">
                 {% if spec %}
-                    <h4 class="card-title">Test specification</h4>
+                    <h4 class="card-title">Assssment specification</h4>
                     <p class="card-subtitle">The following will be used to generate test papers:</p>
                     <dl class="row">
                         <dt class="col-sm-2">Name</dt>
@@ -72,7 +73,7 @@
                         </dd>
                     </dl>
                 {% else %}
-                    <h4 class="card-title">There is no test specification</h4>
+                    <h4 class="card-title">There is no assessment specification</h4>
                     <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
                 {% endif %}
             </div>

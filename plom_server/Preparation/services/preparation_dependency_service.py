@@ -28,7 +28,9 @@ def can_modify_spec() -> bool:
         raise PlomDependencyConflict("Papers have been printed.")
     # if any sources uploaded, then cannot modify spec.
     if SourceService.how_many_source_versions_uploaded() > 0:
-        raise PlomDependencyConflict("Source PDFs have been uploaded")
+        raise PlomDependencyConflict(
+            "Source PDFs for your assessment have been uploaded."
+        )
     # TODO - decide if spec can be changed with/without classlist
     return True
 

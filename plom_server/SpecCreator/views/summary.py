@@ -5,6 +5,11 @@
 
 from django.http import HttpResponse, HttpRequest, Http404
 from django.shortcuts import render
+from django.urls import reverse
+from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
+
+from django.contrib import messages
+from plom.plom_exceptions import PlomDependencyConflict
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -40,3 +45,13 @@ class HTMXSummaryQuestion(ManagerRequiredView):
             "page_numbers": question.pages,
         }
         return render(request, "SpecCreator/summary-question.html", context)
+
+
+class HTMXDeleteSpec(ManagerRequiredView):
+    def delete(self, request):
+        try:
+            SpecificationService.remove_spec()
+            return HttpResponseClientRefresh()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))

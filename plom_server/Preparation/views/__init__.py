@@ -5,7 +5,7 @@
 
 from .home import (
     PreparationLandingView,
-    LandingResetSpec,
+    PreparationDependencyConflictView,
     LandingResetSources,
     LandingPrenameToggle,
     LandingResetClasslist,

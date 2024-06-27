@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
-from plom.plom_exceptions import PlomDependencyConflict
+from django.contrib.messages import get_messages
 
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
@@ -105,13 +105,17 @@ class PreparationLandingView(ManagerRequiredView):
         return render(request, "Preparation/home.html", context)
 
 
-class LandingResetSpec(ManagerRequiredView):
-    def delete(self, request):
-        try:
-            SpecificationService.remove_spec()
-            return HttpResponseClientRefresh()
-        except PlomDependencyConflict as err:
-            return HttpResponse(f"You cannot modify the specification - {err}")
+class PreparationDependencyConflictView(ManagerRequiredView):
+    """This view is used to display a preparation dependency conflict error message to users."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        reasons = []
+        for msg in get_messages(request):
+            reasons.append(f"{msg}")
+
+        context.update({"reasons": reasons})
+        return render(request, "Preparation/dependency_conflict.html", context)
 
 
 class LandingResetSources(ManagerRequiredView):

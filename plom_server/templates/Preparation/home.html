@@ -113,7 +113,7 @@
                 {% if valid_spec and not papers_staged %}
                     <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
                     <a class="btn btn-danger float-end"
-                       hx-delete="{% url 'prep_reset_spec' %}"
+                       hx-delete="{% url 'spec_delete' %}"
                        hx-confirm="Are you sure?">Reset</a>
                     <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
                         Modify

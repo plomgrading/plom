@@ -18,12 +18,7 @@
             <a class="btn btn-primary" href="{% url 'spec_summary' %}">Specification summary page</a>
         </div>
         {% if is_there_a_spec %}
-            <div class="alert alert-success" role="alert">There is a specification in the database</div>
-            <div>
-                <a class="btn btn-danger"
-                   hx-delete="{% url 'prep_reset_spec' %}"
-                   hx-confirm="Are you sure?">Delete current specification</a>
-            </div>
+            <span class="alert alert-success my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
         {% else %}
             <div class="alert alert-primary" role="alert">There is no assessment specification</div>
         {% endif %}
