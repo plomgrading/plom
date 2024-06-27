@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-from django.core.exceptions import PermissionDenied
+
+from plom.plom_exceptions import PlomDependencyConflict
 
 from BuildPaperPDF.services import BuildPapersService
 from . import SourceService, PapersPrinted, PrenameSettingService, StagingStudentService
@@ -24,10 +25,10 @@ from Papers.services import (
 def can_modify_spec() -> bool:
     # cannot modify spec if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PermissionDenied("Papers have been printed.")
+        raise PlomDependencyConflict("Papers have been printed.")
     # if any sources uploaded, then cannot modify spec.
     if SourceService.how_many_source_versions_uploaded() > 0:
-        raise PermissionDenied("Source PDFs have been uploaded")
+        raise PlomDependencyConflict("Source PDFs have been uploaded")
     # TODO - decide if spec can be changed with/without classlist
     return True
 
@@ -37,13 +38,13 @@ def can_modify_spec() -> bool:
 def can_modify_sources() -> bool:
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PermissionDenied("Papers have been printed.")
+        raise PlomDependencyConflict("Papers have been printed.")
     # if there is no spec, then cannot modify sources
     if not SpecificationService.is_there_a_spec():
-        raise PermissionDenied("There is no test specification")
+        raise PlomDependencyConflict("There is no test specification")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
-        raise PermissionDenied("Test PDFs have been built.")
+        raise PlomDependencyConflict("Test PDFs have been built.")
     return True
 
 
@@ -52,13 +53,13 @@ def can_modify_sources() -> bool:
 def can_modify_classlist_and_prenaming() -> bool:
     # cannot modify prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PermissionDenied("Papers have been printed.")
+        raise PlomDependencyConflict("Papers have been printed.")
     # TODO - decide if this should depend on presence of spec.
     # if not SpecificationService.is_there_a_spec():
-    #     raise PermissionDenied("There is no test specification")
+    #     raise PlomDependencyConflict("There is no test specification")
     # if the qv-mapping/database is built then cannot modify classlist/prenaming.
     if not PaperInfoService().is_paper_database_populated():
-        raise PermissionDenied(
+        raise PlomDependencyConflict(
             "The qv-mapping has been built and the database have been populated."
         )
     return True
@@ -69,16 +70,16 @@ def can_modify_classlist_and_prenaming() -> bool:
 def can_modify_qv_mapping_database() -> bool:
     # cannot modify qv mapping / database if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PermissionDenied("Papers have been printed.")
+        raise PlomDependencyConflict("Papers have been printed.")
     # cannot modify the qv-mapping if there is no spec
     if not SpecificationService.is_there_a_spec():
-        raise PermissionDenied("There is no test specification")
+        raise PlomDependencyConflict("There is no test specification")
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.
     if PrenameSettingService.get_prenaming_setting():
         if not StagingStudentService().are_there_students():
-            raise PermissionDenied(
+            raise PlomDependencyConflict(
                 "Prenaming enabled, but no classlist has been uploaded"
             )
         else:  # have classlist and prenaming set, so can modify qv-map
@@ -88,7 +89,7 @@ def can_modify_qv_mapping_database() -> bool:
 
     # cannot modify qv-mapping if test papers have been produced
     if BuildPapersService().are_any_papers_built():
-        raise PermissionDenied("Test PDFs have been built.")
+        raise PlomDependencyConflict("Test PDFs have been built.")
     return True
 
 
@@ -97,12 +98,12 @@ def can_modify_qv_mapping_database() -> bool:
 def can_rebuild_test_pdfs() -> bool:
     # cannot rebuild test pdfs if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PermissionDenied("Papers have been printed.")
+        raise PlomDependencyConflict("Papers have been printed.")
     # and we need sources-pdfs and a populated db
     if not SourceService.are_all_sources_uploaded():
-        raise PermissionDenied("Not all source PDFs have been uploaded.")
+        raise PlomDependencyConflict("Not all source PDFs have been uploaded.")
     if not PaperInfoService().is_paper_database_populated():
-        raise PermissionDenied(
+        raise PlomDependencyConflict(
             "The qv-mapping has been built and the database have been populated."
         )
     return True

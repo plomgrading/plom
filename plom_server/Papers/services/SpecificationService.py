@@ -67,7 +67,7 @@ def load_spec_from_dict(
     Args:
         spec_dict:
     Raises:
-        PermissionDenied: if the spec cannot be modified
+        PlomDependencyException: if the spec cannot be modified
 
     Keyword Args:
         public_code: optionally pass a manually specified public code (mainly for unit testing)
@@ -77,7 +77,7 @@ def load_spec_from_dict(
     """
     from Preparation.services.preparation_dependency_service import can_modify_spec
 
-    # this will Raise a PermissionDenied exception if cannot modify the spec
+    # this will Raise a PlomDependencyException if cannot modify the spec
     if can_modify_spec():
         pass
 
@@ -206,14 +206,10 @@ def remove_spec() -> None:
 
     Raises:
         ObjectDoesNotExist: no exam specification yet.
-        PermissionDenied: cannot modify spec due to dependencies (eg sources uploaded, papers in database, etc)
+        PlomDependencyException: cannot modify spec due to dependencies (eg sources uploaded, papers in database, etc)
     """
     if not is_there_a_spec():
         raise ObjectDoesNotExist("The database does not contain a test specification.")
-
-    # from .paper_info import PaperInfoService
-    # if PaperInfoService().is_paper_database_populated():
-    #     raise MultipleObjectsReturned("Database is already populated with test-papers.")
 
     from Preparation.services.preparation_dependency_service import can_modify_spec
 

@@ -3,11 +3,12 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
+
+from plom.plom_exceptions import PlomDependencyException
 
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
@@ -109,7 +110,7 @@ class LandingResetSpec(ManagerRequiredView):
         try:
             SpecificationService.remove_spec()
             return HttpResponseClientRefresh()
-        except PermissionDenied as err:
+        except PlomDependencyException as err:
             return HttpResponse(f"You cannot modify the specification - {err}")
 
 
