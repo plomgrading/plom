@@ -9,6 +9,8 @@ import arrow
 
 from django.db import transaction
 
+from plom.misc_utils import pprint_score
+
 from Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
@@ -367,6 +369,7 @@ class MarkingStatsService:
                             task.latest_annotation.time_of_last_update
                         ).humanize(),
                         "score": task.latest_annotation.score,
+                        "score_str": pprint_score(task.latest_annotation.score),
                     }
                 )
 

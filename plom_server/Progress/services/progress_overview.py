@@ -10,6 +10,8 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Count, Min, Max
 
+from plom.misc_utils import pprint_score
+
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
 from Papers.services import SpecificationService
@@ -53,6 +55,7 @@ class ProgressOverviewService:
             if task.status == MarkingTask.COMPLETE:
                 dat["user"] = task.assigned_user.username
                 dat["score"] = task.latest_annotation.score
+                dat["score_str"] = pprint_score(task.latest_annotation.score)
 
             marking_info.append(dat)
         return marking_info
