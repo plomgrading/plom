@@ -80,7 +80,7 @@ def can_modify_prenaming() -> bool:
         raise PlomDependencyConflict("Papers have been printed.")
 
     # if the qv-mapping/database is built then cannot modify prenaming.
-    if not PaperInfoService().is_paper_database_populated():
+    if PaperInfoService().is_paper_database_populated():
         raise PlomDependencyConflict(
             "The database has been populated, so cannot change the prenaming setting."
         )
