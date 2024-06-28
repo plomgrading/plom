@@ -589,7 +589,7 @@ class RubricService:
             </table>
         """
 
-    def get_rubric_as_file(self, filetype: str, question: int | None) -> io.StringIO:
+    def get_rubric_data(self, filetype: str, question: int | None) -> str:
         """Get the rubric data as a file.
 
         Args:
@@ -597,7 +597,7 @@ class RubricService:
             question (int | None): The question ID to filter the rubric data. If None, all rubrics will be included.
 
         Returns:
-            io.StringIO: A file-like object containing the rubric data in the specified file format.
+            str: A string containing the rubric data from the specified file format.
 
         Raises:
             ValueError: If the specified file type is not supported.
@@ -607,31 +607,32 @@ class RubricService:
         if filetype not in ("json", "toml", "csv"):
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        f = io.StringIO()
         if filetype == "json":
             if question is not None:
                 queryset = Rubric.objects.filter(question=question)
             else:
                 queryset = Rubric.objects.all()
             serializer = RubricSerializer(queryset, many=True)
-            json.dump(serializer.data, f, indent="  ")
+            data_string = json.dumps(serializer.data, indent="  ")
         elif filetype == "toml":
             for dictionary in rubrics:
                 filtered = {k: v for k, v in dictionary.items() if v is not None}
                 dictionary.clear()
                 dictionary.update(filtered)
-            tomlkit.dump({"rubric": rubrics}, f)
+            data_string = tomlkit.dumps({"rubric": rubrics})
         elif filetype == "csv":
+            f = io.StringIO()
             writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
             writer.writeheader()
             writer.writerows(rubrics)
-            return f
+            data_string = f.getvalue()
+        return data_string
 
-    def get_rubric_from_file(self, f: io.TextIOWrapper | io.BytesIO, filetype: str):
+    def update_rubric_data(self, data: str, filetype: str):
         """Retrieves rubrics from a file.
 
         Args:
-            file (io.TextIOWrapper | io.BytesIO): The file object containing the rubrics.
+            data (str): The file object containing the rubrics.
             filetype (str): The type of the file (json, toml, csv).
 
         Returns:
@@ -644,26 +645,18 @@ class RubricService:
             raise ValueError(f"Unsupported file type: {filetype}")
 
         if filetype == "json":
-            rubrics = json.load(f)
+            rubrics = json.loads(data)
         elif filetype == "toml":
-            if isinstance(f, io.BytesIO):
-                rubrics = tomllib.load(f)["rubric"]
-            else:
-                raise RuntimeError("toml file must be a BytesIO object")
+            rubrics = tomllib.loads(data)["rubric"]
         elif filetype == "csv":
-            if isinstance(f, io.TextIOWrapper):
-                reader = csv.DictReader(f)
-                rubrics = list(reader)
-                print(rubrics)
-            else:
-                print(type(f))
-                raise RuntimeError("csv file must be a TextIOWrapper object")
+            f = io.StringIO(data)
+            reader = csv.DictReader(f)
+            rubrics = list(reader)
         else:
             raise ValueError("File not supported")
 
         service = RubricService()
         for rubric in rubrics:
-            # rubric.pop("id")
             try:
                 service.create_rubric(rubric)
             except Exception as e:

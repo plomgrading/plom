@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
-from io import TextIOWrapper, BytesIO
+from io import TextIOWrapper, StringIO, BytesIO
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
@@ -50,6 +50,8 @@ class RubricAdminPageView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.POST)
+        download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         if form.is_valid():
             # TODO: not necessarily the one who logged in; does it matter?
@@ -61,6 +63,8 @@ class RubricAdminPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -338,25 +342,28 @@ class DownloadRubricView(ManagerRequiredView):
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
+
         if question is not None and len(question) != 0:
             question = int(question)
         else:
             question = None
+
         if filetype == "json":
-            buf = service.get_rubric_as_file("json", question=question)
+            data_string = service.get_rubric_data("json", question=question)
+            buf = StringIO(data_string)
             response = HttpResponse(buf.getvalue(), content_type="text/json")
             response["Content-Disposition"] = "attachment; filename=rubrics.json"
-            return response
         elif filetype == "toml":
-            buf = service.get_rubric_as_file("toml", question=question)
+            data_string = service.get_rubric_data("toml", question=question)
+            buf = BytesIO(data_string.encode("utf-8"))
             response = HttpResponse(buf.getvalue(), content_type="application/toml")
             response["Content-Disposition"] = "attachment; filename=rubrics.toml"
-            return response
         else:
-            buf = service.get_rubric_as_file("csv", question=question)
+            data_string = service.get_rubric_data("csv", question=question)
+            buf = StringIO(data_string)
             response = HttpResponse(buf.getvalue(), content_type="text/csv")
             response["Content-Disposition"] = "attachment; filename=rubrics.csv"
-            return response
+        return response
 
 
 class UploadRubricView(ManagerRequiredView):
@@ -366,12 +373,14 @@ class UploadRubricView(ManagerRequiredView):
 
         if suffix == "csv" or suffix == "json":
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
+            data_string = f.read()
         elif suffix == "toml":
             f = BytesIO(request.FILES["rubric_file"].file.read())
+            data_string = f.getvalue().decode("utf-8")
         else:
             messages.error(request, "Invalid rubric file format")
             return redirect("rubrics_admin")
 
-        service.get_rubric_from_file(f, suffix)
+        service.update_rubric_data(data_string, suffix)
         messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
