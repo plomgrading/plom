@@ -27,14 +27,10 @@
                         <li>All test PDFs</li>
                         <li>All classlists</li>
                     </ul>
-                    <div class="d-flex flex-row">
-                        <a type="button"
-                           class="btn btn-primary flex-grow-1 m-1"
-                           href="{% url "home" %}">Return Home</a>
-                        <a type="button"
-                           class="btn btn-danger m-1"
-                           href="{% url "reset_confirm" %}">I understand and I want to continue</a>
-                    </div>
+                    <a type="button" class="btn btn-primary m-1" href="{% url "home" %}">Return Home</a>
+                    <a type="button"
+                       class="btn btn-danger m-1"
+                       href="{% url "reset_confirm" %}">I understand and I want to continue</a>
                 </div>
             </div>
         </div>
