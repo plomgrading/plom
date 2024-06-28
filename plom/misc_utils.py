@@ -63,7 +63,10 @@ def is_within_one_hour_of_now(timestamp):
         return False
 
 
-def pprint_score(score) -> str:
+def pprint_score(score: int | float | None) -> str:
+    """Pretty print a score."""
+    if score is None:
+        return ""
     return f"{score:.5g}"
 
 
