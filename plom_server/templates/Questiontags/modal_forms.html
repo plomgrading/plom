@@ -17,20 +17,22 @@
                         aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="linkQtagForm"
-                      method="post"
-                      action="{% url 'add_question_tag' %}">
+                <form id="linkQtagForm" method="post" action="{% url 'add_question_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="questionIndex">Question Index</label>
                         <select class="form-control" id="questionIndex" name="questionIndex">
-                            {% for index, label_str, label_html in question_label_triple %}<option value="{{ index }}">{{ index }}</option>{% endfor %}
+                            {% for index, label_str, label_html in question_label_triple %}
+                                <option value="{{ index }}">{{ index }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="tagName">Tag Name</label>
                         <select class="form-control" id="tagName" name="tagName" multiple="multiple">
-                            {% for tag in tags %}<option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>{% endfor %}
+                            {% for tag in tags %}
+                                <option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Add</button>
@@ -64,11 +66,7 @@
                     </div>
                     <div class="form-group">
                         <label for="text">Description</label>
-                        <input type="text"
-                               class="form-control"
-                               id="text"
-                               name="text"
-                               required>
+                        <input type="text" class="form-control" id="text" name="text" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
@@ -98,7 +96,9 @@
                     <div class="form-group">
                         <label for="tag_id">Select Tag to Delete</label>
                         <select class="form-control" id="tag_id" name="tag_id">
-                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -131,24 +131,18 @@
                     <div class="form-group">
                         <label for="tag_id_edit">Select Tag to Edit</label>
                         <select class="form-control" id="tag_id_edit" name="tag_id">
-                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="tagName_edit">Tag Name</label>
-                        <input type="text"
-                               class="form-control"
-                               id="tagName_edit"
-                               name="tagName"
-                               required>
+                        <input type="text" class="form-control" id="tagName_edit" name="tagName" required>
                     </div>
                     <div class="form-group">
                         <label for="text_edit">Description</label>
-                        <input type="text"
-                               class="form-control"
-                               id="text_edit"
-                               name="text"
-                               required>
+                        <input type="text" class="form-control" id="text_edit" name="text" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
