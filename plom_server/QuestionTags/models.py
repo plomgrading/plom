@@ -10,7 +10,7 @@ class PedagogyTag(Tag):
 
     def __str__(self):
         """Return the tag name."""
-        return self.tag_name
+        return str(self.tag_name)
 
 
 class QuestionTag(models.Model):
