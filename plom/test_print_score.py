@@ -21,3 +21,7 @@ def test_print_score_no_trailing_zeros() -> None:
 
 def test_print_score_none_as_blank() -> None:
     assert pp(None) == ""
+
+
+def test_print_score_large_int() -> None:
+    assert pp(1234567) == "1234567"

@@ -67,6 +67,8 @@ def pprint_score(score: int | float | None) -> str:
     """Pretty print a score."""
     if score is None:
         return ""
+    if isinstance(score, int):
+        return str(score)
     return f"{score:.5g}"
 
 
