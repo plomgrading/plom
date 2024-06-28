@@ -73,10 +73,10 @@ class BuildStudentReportView(ManagerRequiredView):
             choice = student_report_form.cleaned_data["choice"]
             input = student_report_form.cleaned_data["input"]
 
-            if choice == "studentID":
+            if choice == "StudentID":
                 des = DataExtractionService()
                 student_df = des.get_student_data()
-                student_df_filtered = student_df[student_df["studentID"] == input]
+                student_df_filtered = student_df[student_df["StudentID"] == input]
                 if student_df_filtered.empty:
                     messages.info(
                         request,
@@ -84,7 +84,8 @@ class BuildStudentReportView(ManagerRequiredView):
                     )
                     return render(request, self.template, context=context)
                 else:
-                    paper_number = student_df_filtered["paper_number"].iloc[0]
+                    print(student_df_filtered.columns)
+                    paper_number = student_df_filtered["PaperNumber"].iloc[0]
             else:
                 paper_number = input
 

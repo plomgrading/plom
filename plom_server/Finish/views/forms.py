@@ -5,7 +5,7 @@ from django import forms
 
 
 class StudentIDForm(forms.Form):
-    INPUT_CHOICES = [("paper_number", "Paper Number"), ("student_id", "Student ID")]
+    INPUT_CHOICES = [("paper_number", "Paper Number"), ("StudentID", "Student ID")]
 
     choice = forms.ChoiceField(
         required=True,
