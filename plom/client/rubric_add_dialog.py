@@ -230,7 +230,9 @@ class CorrectionWidget(QFrame):
                         self.list_widget.addItem(suggestion.capitalize())
                     else:
                         self.list_widget.addItem(suggestion)
-
+                        
+        # the first item in the list is the default chosen correction.
+        self.list_widget.setCurrentRow(0)
         if self.list_widget.count() > 0:
             self.show()
         else:
