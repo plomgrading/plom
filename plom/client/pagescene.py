@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 # a different kind of annotations... this is about code typing
 from __future__ import annotations
@@ -102,14 +103,22 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize, maxScore, score, question_label=None):
+    def __init__(
+        self,
+        style,
+        fontsize,
+        maxScore: int,
+        score: float | None,
+        question_label: str | None = None,
+    ):
         """Initialize a new ScoreBox.
 
         Args:
             style (dict): pen width, annotation colour, etc.
             fontsize (int): A non-zero, positive font value.
-            maxScore (int): A non-zero, positive maximum score.
-            score (int): A non-zero, positive current score for the paper.
+            maxScore: A non-zero, positive integer maximum score.
+            score: A current score for the paper, which can be zero,
+                ``None``, or a positive float.
             question_label (str/None): how to display the question
                 number, or `None` to display no label at the beginning
                 of the score box.
@@ -138,7 +147,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.score is None:
             s += "Unmarked"
         else:
-            s += "{} out of {}".format(self.score, self.maxScore)
+            s += f"{self.score:.5g} out of {self.maxScore}"
         self.setPlainText(s)
 
     def get_text(self):
@@ -148,7 +157,7 @@ class ScoreBox(QGraphicsTextItem):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
 
-    def changeScore(self, x: int | None) -> None:
+    def changeScore(self, x: int | float | None) -> None:
         """Set the score to x.
 
         Args:
@@ -2764,7 +2773,7 @@ class PageScene(QGraphicsScene):
             ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
         )
 
-    def setTheMark(self, newMark: int) -> None:
+    def setTheMark(self, newMark: int | float) -> None:
         """Sets the new mark/score for the paper.
 
         Args:

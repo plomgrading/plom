@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -106,7 +107,9 @@ def compute_score_legacy2022(
     return score
 
 
-def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | None:
+def compute_score_locabs(
+    rubrics: list[dict[str, Any]], maxscore: int, tolerance: float = 1e-9
+) -> int | float | None:
     """Compute score given a set of rubrics.
 
     A new set of rubric summation rules, designed to allow mixing up
@@ -121,18 +124,19 @@ def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | 
         maxscore (int): the maximum anticipated score
 
     Returns:
-        None/int: the computed score or `None` if there are no mark-changing
-        annotations on the page.  Note `None` is different from `0`.
+        None/int/float: the computed score in the same type as ``rubric["value"]``
+        or `None` if there are no mark-changing annotations on the page.
+        Note `None` is different from `0`.
 
     Raises:
-        PlomInconsistentRubric: for example, absolute and relative rubrics
-            cannot be mixed.
-        ValueError: int is outside range [0, maxscore], or absolute rubrics
+        PlomInconsistentRubric: for example, positive and negative
+            relative rubrics cannot be mixed.
+        ValueError: ``value`` is outside range [0, maxscore], or absolute rubrics
             are out of their own range ``[0, out_of]``.  Can also be because
             the total of all ``out_of`` are more than maxscore.  The absolute
             rubrics give upper/lower bounds for possible scores which raise
             ValueErrors if exceeded by relative rubrics.  More than one
-            rubric from an exclusive group is a ValueError.
+            rubric from the same exclusive group is a ValueError.
         PlomInvalidRubric: unexpectedly invalid rubric.
     """
     lo_score = 0
@@ -165,12 +169,11 @@ def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | 
 
     for r in absolutes:
         out_of = r["out_of"]
-        if out_of not in range(1, maxscore + 1):
-            # TODO: or Inconsistent?
+        if out_of < 0 or out_of > (maxscore + tolerance):
             raise ValueError(f"out_of is outside of [1, {maxscore}]")
-        if r["value"] not in range(0, out_of + 1):
-            # TODO: or Inconsistent?
+        if r["value"] < 0 or r["value"] > (out_of + tolerance):
             raise ValueError(f"value is outside of [0, out_of] where out_of={out_of}")
+
         lo_score += r["value"]
         hi_score -= r["out_of"] - r["value"]
         sum_out_of += out_of
@@ -210,12 +213,13 @@ def compute_score_locabs(rubrics: list[dict[str, Any]], maxscore: int) -> int | 
     if downrs:
         score = hi_score + sum(r["value"] for r in downrs)
 
-    if score < 0 or score > maxscore:
+    # some float scores need tolerance.
+    if score < 0 or score > (maxscore + tolerance):
         raise ValueError("score is out of range")
 
-    if score < lo_score:
+    if score < lo_score - tolerance:
         raise ValueError("cannot drop score below that established by absolute rubrics")
-    if score > hi_score:
+    if score > hi_score + tolerance:
         raise ValueError("cannot lift score above that established by absolute rubrics")
 
     return score

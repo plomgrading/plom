@@ -6,6 +6,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aidan Murphy
 
 """Client-side model for tasks, implementation details for MVC stuff."""
 
@@ -126,8 +127,14 @@ class MarkerExamModel(QStandardItemModel):
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
         # hide -1 which something might be using for "not yet marked"
+        # also, maybe in the future we have None as the sentinel so support that too
         try:
-            markstr = str(mark) if int(mark) >= 0 else ""
+            if mark is None:
+                markstr = ""
+            elif mark <= 0:
+                markstr = ""
+            else:
+                markstr = f"{mark:.5g}"
         except ValueError:
             markstr = ""
         # these *must* be strings but I don't understand why

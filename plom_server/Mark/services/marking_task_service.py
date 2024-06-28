@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -316,9 +317,10 @@ class MarkingTaskService:
             raise RuntimeError("User cannot update task.")
 
         try:
-            for val in ("pg", "ver", "score"):
+            for val in ("pg", "ver"):
                 elem = data[val]
                 cleaned_data[val] = int(elem)
+            cleaned_data["score"] = float(data["score"])
         except IndexError:
             raise ValidationError(f"Multiple values for '{val}', expected 1.")
         except (ValueError, TypeError):
