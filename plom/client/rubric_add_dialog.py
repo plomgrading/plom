@@ -100,7 +100,8 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text: str | None) -> None:
         self._highlight_prefix(text)
-        self._highlight_spelling(text)
+        # TODO: new MR for dynamic spellchecker
+        # self._highlight_spelling(text)
 
     def _highlight_prefix(self, text: str | None):
         """Highlight tex prefix and matches in our substitution list.
@@ -230,7 +231,7 @@ class CorrectionWidget(QFrame):
                         self.list_widget.addItem(suggestion.capitalize())
                     else:
                         self.list_widget.addItem(suggestion)
-                        
+
         # the first item in the list is the default chosen correction.
         self.list_widget.setCurrentRow(0)
         if self.list_widget.count() > 0:
