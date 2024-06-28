@@ -1861,14 +1861,24 @@ class Annotator(QWidget):
             result.remove(curr_paper_number)
         return result
 
-    def view_other_paper(self, paper_number: int) -> None:
+    def view_other_paper(
+        self, paper_number: int, *, _parent: QWidget | None = None
+    ) -> None:
         """Opens another dialog to view a paper.
 
         Args:
             paper_number: the paper number of the paper to be viewed.
+
+        Keyword:
+            _parent: override the default parent which is ourselves.
+
+        Returns:
+            None
         """
+        if _parent is None:
+            _parent = self
         self.parentMarkerUI.view_other(
-            paper_number=paper_number, question_idx=self.question_num, _parent=self
+            paper_number=paper_number, question_idx=self.question_num, _parent=_parent
         )
 
     def saveTabStateToServer(self, tab_state):

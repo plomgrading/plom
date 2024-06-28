@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 from PyQt6.QtWidgets import (
     QDialog,
     QListWidget,
@@ -10,22 +12,24 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QDialogButtonBox,
 )
-from typing import List
 
 
 class RubricUsageDialog(QDialog):
-    def __init__(self, parent, paper_numbers: List[int]):
+    def __init__(self, parent, paper_numbers: list[int]):
         """Constructor of the dialog to view papers using a rubric.
 
         Note: the paper numbers in the dialog should have been sorted
         in ascending order.
 
         Args:
-            parent: RubricWidget.
+            parent: an Annotator instance.
             paper_numbers: the list of paper numbers that commonly use a rubric.
+
+        Returns:
+            None
         """
         super().__init__(parent)
-        self._parent = parent
+        self._annotr = parent
         self.setModal(True)
 
         self.setWindowTitle("Other rubric usages")
@@ -80,4 +84,6 @@ class RubricUsageDialog(QDialog):
             )
             return
         paper_number = int(selected_items[0].text())
-        self._parent.view_other_paper(paper_number)
+        # TODO: by default, the new popup would parent to Annotator
+        # self._annotr.view_other_paper(paper_number)
+        self._annotr.view_other_paper(paper_number, _parent=self)
