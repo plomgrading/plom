@@ -53,6 +53,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWidgets import QGraphicsRectItem
 
+from plom.misc_utils import pprint_score
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
@@ -575,7 +576,7 @@ class Annotator(QWidget):
         if score is None:
             s += "Unmarked"
         else:
-            s += f"{score:.5g} out of {self.maxMark}"
+            s += f"{pprint_score(score)} out of {self.maxMark}"
         self.ui.markLabel.setText(s)
         self.ui.narrowMarkLabel.setText(s)
 

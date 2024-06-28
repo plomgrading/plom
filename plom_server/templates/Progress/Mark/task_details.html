@@ -79,7 +79,8 @@
                         {% endif %}
                     </p>
                     {% if status == "Complete" %}
-                        <p>Score: {{ score|floatformat:"-4" }}</p>
+                        <p>Score: {{ score_str }}</p>
+                        <p>Raw score: {{ score }}</p>
                         <p>Edition: {{ edition }}</p>
                         <p>User: {{ username }}</p>
                         <p>Last update: {{ last_update|naturaltime }}</p>

@@ -53,6 +53,7 @@ from PyQt6.QtWidgets import (
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
+from plom.misc_utils import pprint_score
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
@@ -147,7 +148,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.score is None:
             s += "Unmarked"
         else:
-            s += f"{self.score:.5g} out of {self.maxScore}"
+            s += f"{pprint_score(self.score)} out of {self.maxScore}"
         self.setPlainText(s)
 
     def get_text(self):
