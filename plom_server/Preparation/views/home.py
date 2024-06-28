@@ -120,12 +120,14 @@ class PreparationDependencyConflictView(ManagerRequiredView):
 
 
 class LandingResetSources(ManagerRequiredView):
+    # TODO - remove this view
     def delete(self, request):
         SourceService.delete_all_source_pdfs()
         return HttpResponseClientRefresh()
 
 
 class LandingPrenameToggle(ManagerRequiredView):
+    # TODO - remove this view
     def post(self, request):
         prename_service = PrenameSettingService()
         curr_state = prename_service.get_prenaming_setting()

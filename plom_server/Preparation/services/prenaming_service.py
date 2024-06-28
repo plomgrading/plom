@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import transaction
 
-from ..models import PrenamingSetting
+from Preparation.models import PrenamingSetting
 
 
 class PrenameSettingService:
@@ -15,6 +15,17 @@ class PrenameSettingService:
 
     @transaction.atomic
     def set_prenaming_setting(self, enable_disable):
+        """Set prenaming to the given bool.
+
+        Raises a PlomDependencyConflict if cannot modify."""
+
+        from Preparation.services.preparation_dependency_service import (
+            can_modify_prenaming,
+        )
+
+        # raises a PlomDependencyConflict if fails.
+        if can_modify_prenaming():
+            pass
         p_obj = PrenamingSetting.load()
         p_obj.enabled = enable_disable
         p_obj.save()

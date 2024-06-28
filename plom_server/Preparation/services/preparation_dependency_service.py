@@ -4,7 +4,13 @@
 from plom.plom_exceptions import PlomDependencyConflict
 
 from BuildPaperPDF.services import BuildPapersService
-from . import SourceService, PapersPrinted, PrenameSettingService, StagingStudentService
+from . import (
+    SourceService,
+    PapersPrinted,
+    PrenameSettingService,
+    StagingStudentService,
+    PrenameSettingService,
+)
 
 from Papers.services import (
     SpecificationService,
@@ -54,17 +60,29 @@ def can_modify_sources() -> bool:
 
 # 3 = classlist and prenaming - does not depend on spec, but
 # the database depends on prenaming and classlist.
-def can_modify_classlist_and_prenaming() -> bool:
+def can_modify_classlist() -> bool:
+    # cannot modify classlist if papers printed
+    if PapersPrinted.have_papers_been_printed():
+        raise PlomDependencyConflict("Papers have been printed.")
+    # if db populated and prenaming is set, then cannot modify classlist
+    if (
+        PaperInfoService().is_paper_database_populated()
+        and PrenameSettingService().get_prenaming_setting()
+    ):
+        raise PlomDependencyConflict(
+            "Database has been populated with some prenamed papers, cannot change the classlist."
+        )
+
+
+def can_modify_prenaming() -> bool:
     # cannot modify prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # TODO - decide if this should depend on presence of spec.
-    # if not SpecificationService.is_there_a_spec():
-    #     raise PlomDependencyConflict("There is no test specification")
-    # if the qv-mapping/database is built then cannot modify classlist/prenaming.
+
+    # if the qv-mapping/database is built then cannot modify prenaming.
     if not PaperInfoService().is_paper_database_populated():
         raise PlomDependencyConflict(
-            "The qv-mapping has been built and the database have been populated."
+            "The database has been populated, so cannot change the prenaming setting."
         )
     return True
 

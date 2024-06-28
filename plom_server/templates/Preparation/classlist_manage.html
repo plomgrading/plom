@@ -13,7 +13,17 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if prenaming %}<div class="alert alert-warning">Prenaming is enabled, so a classlist is required</div>{% endif %}
+        {% if prenaming %}
+            <div class="alert alert-warning">
+                Prenaming is enabled, so a classlist is required
+                <a class="btn btn-danger" hx-delete="{% url 'prep_prename' %}">Disable</a>
+            </div>
+        {% else %}
+            <div class="alert alert-primary">
+                Prenaming is not enabled, so a classlist is not required
+                <a class="btn btn-danger" hx-post="{% url 'prep_prename' %}">Enable</a>
+            </div>
+        {% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
                 <span>Classlist present with {{ student_list|length }} students:</span>
