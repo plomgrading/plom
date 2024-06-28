@@ -180,18 +180,30 @@ def pdf_builder(
             mpls.scatter_time_spent_vs_mark_given(
                 question,
                 times_spent_minutes=(
-                    marking_times_df["seconds_spent_marking"].div(60).to_list()
+                    list(
+                        map(
+                            float,
+                            marking_times_df["seconds_spent_marking"].div(60).to_list(),
+                        )
+                    )
                     if not versions
                     else [
-                        marking_times_df["seconds_spent_marking"].div(60).to_list()
+                        list(
+                            map(
+                                float,
+                                marking_times_df["seconds_spent_marking"]
+                                .div(60)
+                                .to_list(),
+                            )
+                        )
                         for version in marking_times_df["question_version"].unique()
                     ]
                 ),
                 marks_given=(
-                    des.get_scores_for_question(question)
+                    list(map(float, des.get_scores_for_question(question)))
                     if not versions
                     else [
-                        des.get_scores_for_question(question)
+                        list(map(float, des.get_scores_for_question(question)))
                         for version in marking_times_df["question_version"].unique()
                     ]
                 ),
@@ -206,9 +218,16 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [des.get_scores_for_question(question_index)]
+                [list(map(float, des.get_scores_for_question(question_index)))]
                 + [
-                    des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
+                    list(
+                        map(
+                            float,
+                            des.get_scores_for_ta(
+                                ta_name=marker_name, ta_df=question_df
+                            ),
+                        )
+                    )
                     for marker_name in des.get_tas_that_marked_this_question(
                         question_index, ta_df=question_df
                     )
@@ -235,6 +254,8 @@ def pdf_builder(
 
     def _html_add_title(title: str) -> str:
         """Generate HTML for a title."""
+        if not isinstance(title, str):
+            title = str(title)
         return f"""
         <br>
         <p style="break-before: page;"></p>
