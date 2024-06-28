@@ -6,11 +6,11 @@ from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
-from .models import QuestionTag, PedagogyTag
+from .models import TmpAbstractQuestion, PedagogyTag
 
 
 class QTagsLandingView(ListView):
-    model = QuestionTag
+    model = TmpAbstractQuestion
     template_name = "Questiontags/qtags_landing.html"
     context_object_name = "question_tags"
 
@@ -20,7 +20,9 @@ class QTagsLandingView(ListView):
             SpecificationService.get_question_html_label_triples()
         )
         context["tags"] = PedagogyTag.objects.all()
-        context["question_tags"] = QuestionTag.objects.prefetch_related("tags").all()
+        context["question_tags"] = TmpAbstractQuestion.objects.prefetch_related(
+            "tags"
+        ).all()
         return context
 
 

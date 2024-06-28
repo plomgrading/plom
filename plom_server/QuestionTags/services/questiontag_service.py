@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from QuestionTags.models import QuestionTag, PedagogyTag
+from QuestionTags.models import TmpAbstractQuestion, PedagogyTag
 from django.shortcuts import get_object_or_404
 
 
@@ -9,7 +9,7 @@ class QuestionTagService:
     @staticmethod
     def add_question_tag(question_index, tag_names, user):
         """Add a question tag to the database."""
-        question_tag, created = QuestionTag.objects.get_or_create(
+        question_tag, created = TmpAbstractQuestion.objects.get_or_create(
             question_index=question_index
         )
         for tag_name in tag_names:
