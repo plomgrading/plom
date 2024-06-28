@@ -14,12 +14,11 @@ class QuestionTagService:
         )
         for tag_name in tag_names:
             tag, tag_created = PedagogyTag.objects.get_or_create(
-                tag_name=tag_name,
-                defaults={'user': user}
+                tag_name=tag_name, defaults={"user": user}
             )
             question_tag.tags.add(tag)
         question_tag.save()
-        
+
     @staticmethod
     def create_tag(tag_name, text, user):
         """Create a new tag."""
