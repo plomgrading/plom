@@ -351,7 +351,7 @@ class WideTextEdit(QTextEdit):
         start_position = 0
         cursor.setPosition(start_position)
         selected_text = " "
-        while selected_text:
+        while not cursor.atEnd():
             cursor.movePosition(
                 QTextCursor.MoveOperation.EndOfWord,
                 QTextCursor.MoveMode.KeepAnchor,
