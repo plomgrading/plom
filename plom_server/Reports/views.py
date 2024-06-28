@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import ReportPDFService, StudentMarkService
+from Finish.services import ReportPDFService, StudentMarkService, GRAPH_DETAILS
 from Mark.services import MarkingTaskService
 
 
@@ -22,9 +22,13 @@ class ReportLandingPageView(ManagerRequiredView):
         context = self.build_context()
         total_tasks = MarkingTaskService().get_n_valid_tasks()
         all_marked = StudentMarkService().are_all_papers_marked() and total_tasks > 0
+
         context.update(
             {
                 "all_marked": all_marked,
+                "graph_list": [
+                    {"name": key, **value} for key, value in GRAPH_DETAILS.items()
+                ],
             }
         )
 
@@ -37,14 +41,7 @@ class ReportLandingPageView(ManagerRequiredView):
 
         # Get the selected graphs for the brief report
         selected_graphs = {
-            "graph1": request.POST.get("graph1") == "on",
-            "graph2": request.POST.get("graph2") == "on",
-            "graph3": request.POST.get("graph3") == "on",
-            "graph4": request.POST.get("graph4") == "on",
-            "graph5": request.POST.get("graph5") == "on",
-            "graph6": request.POST.get("graph6") == "on",
-            "graph7": request.POST.get("graph7") == "on",
-            "graph8": request.POST.get("graph8") == "on",
+            key: request.POST.get(key) == "on" for key in GRAPH_DETAILS.keys()
         }
 
         try:

@@ -14,3 +14,4 @@ from .build_soln_service import BuildSolutionService
 from .soln_images import SolnImageService
 from .soln_source import SolnSourceService
 from .template_soln_spec import TemplateSolnSpecService
+from .ReportPDFService import GRAPH_DETAILS

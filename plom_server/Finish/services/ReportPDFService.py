@@ -20,6 +20,27 @@ def _identity_in_first_input(x, *args, **kwargs):
     return x
 
 
+GRAPH_DETAILS = {
+    "graph1": {"title": "Histogram of total marks", "default": True},
+    "graph2": {"title": "Histogram of marks by question", "default": False},
+    "graph3": {"title": "Correlation heatmap", "default": False},
+    "graph4": {"title": "Histograms of grades by marker by question", "default": False},
+    "graph5": {
+        "title": "Histograms of time spent marking each question",
+        "default": False,
+    },
+    "graph6": {
+        "title": "Scatter plots of time spent marking vs mark given",
+        "default": False,
+    },
+    "graph7": {
+        "title": "Box plots of grades given by marker by question",
+        "default": False,
+    },
+    "graph8": {"title": "Line graph of average mark by question", "default": False},
+}
+
+
 def pdf_builder(
     versions: bool,
     *,
@@ -94,26 +115,15 @@ def pdf_builder(
 
     mpls.ensure_all_figures_closed()
 
-    # histogram of grades
-    if verbose:
-        print("Histogram of total marks.")
-    histogram_of_grades = mpls.histogram_of_total_marks()
-
-    graphs: Dict[str, List[Any]] = {
-        "graph1": [histogram_of_grades],
-        "graph2": [],
-        "graph3": [],
-        "graph4": [],
-        "graph5": [],
-        "graph6": [],
-        "graph7": [],
-        "graph8": [],
-    }
-
+    # Initialize the graphs dictionary
+    graphs: Dict[str, List[Any]] = {key: [] for key in GRAPH_DETAILS}
     selected_graphs = selected_graphs or {}
 
+    if verbose:
+        print("Histogram of total marks.")
+    graphs["graph1"].append(mpls.histogram_of_total_marks())
+
     if not brief or selected_graphs.get("graph2"):
-        # histogram of grades for each question
         marks_for_questions = des._get_marks_for_all_questions()
         graphs["graph2"] = [
             mpls.histogram_of_grades_on_question_version(_q + 1, versions=versions)
@@ -124,20 +134,16 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph3"):
-        # correlation heatmap
         if verbose:
             print("Correlation heatmap.")
-        graphs["graph3"] = [mpls.correlation_heatmap_of_questions()]
+        graphs["graph3"].append(mpls.correlation_heatmap_of_questions())
 
     if not brief or selected_graphs.get("graph4"):
-        # histogram of grades given by each marker by question
         for marker, scores_for_user in tqdm(
             des._get_all_ta_data_by_ta().items(),
             desc="Histograms of marks by marker by question",
         ):
-            questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(
-                marker,
-            )
+            questions_marked_by_this_ta = des.get_questions_marked_by_this_ta(marker)
             graphs["graph4"].append(
                 [
                     mpls.histogram_of_grades_on_question_by_ta(
@@ -153,7 +159,6 @@ def pdf_builder(
             )
 
     if not brief or selected_graphs.get("graph5"):
-        # histogram of time taken to mark each question
         max_time = des._get_ta_data()["seconds_spent_marking"].max()
         bin_width = 15
         graphs["graph5"] = [
@@ -171,7 +176,6 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph6"):
-        # scatter plot of time taken to mark each question vs mark given
         graphs["graph6"] = [
             mpls.scatter_time_spent_vs_mark_given(
                 question,
@@ -222,7 +226,9 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph8"):
-        graphs["graph8"] = [mpls.line_graph_of_avg_marks_by_question(versions=versions)]
+        graphs["graph8"].append(
+            mpls.line_graph_of_avg_marks_by_question(versions=versions)
+        )
 
     if verbose:
         print("\nGenerating HTML.")
@@ -296,16 +302,16 @@ def pdf_builder(
     """
 
     if not brief:
-        html += _html_add_title("Histogram of marks by question")
+        html += _html_add_title(GRAPH_DETAILS["graph2"]["title"])
         html += _html_for_big_graphs(graphs["graph2"])
 
         html += f"""
         <p style="break-before: page;"></p>
-        <h3>Correlation heatmap</h3>
+        <h3>{GRAPH_DETAILS["graph3"]["title"]}</h3>
         <img src="data:image/png;base64,{graphs["graph3"][0]}" />
         """
 
-        html += _html_add_title("Histograms of grades by marker by question")
+        html += _html_add_title(GRAPH_DETAILS["graph4"]["title"])
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
@@ -313,39 +319,33 @@ def pdf_builder(
             """
             html += _html_for_big_graphs(graphs["graph4"][index])
 
-        html += _html_add_title(
-            "Histograms of time spent marking each question (in minutes)"
-        )
+        html += _html_add_title(GRAPH_DETAILS["graph5"]["title"])
         html += _html_for_big_graphs(graphs["graph5"])
 
-        html += _html_add_title(
-            "Scatter plots of time spent marking each question vs mark given"
-        )
+        html += _html_add_title(GRAPH_DETAILS["graph6"]["title"])
         html += _html_for_big_graphs(graphs["graph6"])
 
-        html += _html_add_title(
-            "Box plots of grades given by each marker for each question"
-        )
+        html += _html_add_title(GRAPH_DETAILS["graph7"]["title"])
         html += _html_for_big_graphs(graphs["graph7"])
 
-        html += _html_add_title("Line graph of average mark on each question")
+        html += _html_add_title(GRAPH_DETAILS["graph8"]["title"])
         html += f"""
             <img src="data:image/png;base64,{graphs["graph8"][0]}" />
             """
     else:
         if selected_graphs.get("graph2"):
-            html += _html_add_title("Histogram of marks by question")
+            html += _html_add_title(GRAPH_DETAILS["graph2"]["title"])
             html += _html_for_big_graphs(graphs["graph2"])
 
         if selected_graphs.get("graph3"):
             html += f"""
             <p style="break-before: page;"></p>
-            <h3>Correlation heatmap</h3>
+            <h3>{GRAPH_DETAILS["graph3"]["title"]}</h3>
             <img src="data:image/png;base64,{graphs["graph3"][0]}" />
             """
 
         if selected_graphs.get("graph4"):
-            html += _html_add_title("Histograms of grades by marker by question")
+            html += _html_add_title(GRAPH_DETAILS["graph4"]["title"])
 
             for index, marker in enumerate(des._get_all_ta_data_by_ta()):
                 html += f"""
@@ -354,25 +354,19 @@ def pdf_builder(
                 html += _html_for_big_graphs(graphs["graph4"][index])
 
         if selected_graphs.get("graph5"):
-            html += _html_add_title(
-                "Histograms of time spent marking each question (in minutes)"
-            )
+            html += _html_add_title(GRAPH_DETAILS["graph5"]["title"])
             html += _html_for_big_graphs(graphs["graph5"])
 
         if selected_graphs.get("graph6"):
-            html += _html_add_title(
-                "Scatter plots of time spent marking each question vs mark given"
-            )
+            html += _html_add_title(GRAPH_DETAILS["graph6"]["title"])
             html += _html_for_big_graphs(graphs["graph6"])
 
         if selected_graphs.get("graph7"):
-            html += _html_add_title(
-                "Box plots of grades given by each marker for each question"
-            )
+            html += _html_add_title(GRAPH_DETAILS["graph7"]["title"])
             html += _html_for_big_graphs(graphs["graph7"])
 
         if selected_graphs.get("graph8"):
-            html += _html_add_title("Line graph of average mark on each question")
+            html += _html_add_title(GRAPH_DETAILS["graph8"]["title"])
             html += f"""
                 <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
