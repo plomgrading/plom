@@ -568,12 +568,16 @@ class Annotator(QWidget):
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
+        # TODO: some duplication of code b/w here and pagescene.ScoreBox
+        s = ""
+        if self.question_label:
+            s += self.question_label + ": "
         if score is None:
-            self.ui.markLabel.setText("Unmarked")
-            self.ui.narrowMarkLabel.setText("Unmarked")
+            s += "Unmarked"
         else:
-            self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
-            self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
+            s += f"{score:.5g} out of {self.maxMark}"
+        self.ui.markLabel.setText(s)
+        self.ui.narrowMarkLabel.setText(s)
 
     def loadCursors(self):
         """Load custom cursors and set their hotspots.

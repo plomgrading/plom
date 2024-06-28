@@ -4,11 +4,14 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aidan Murphy
+
 
 import random
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
 from Mark.models.annotations import Annotation
 
 
@@ -28,22 +31,37 @@ class Rubric(models.Model):
     """Represents a marker's comment and mark delta for a particular question.
 
     Fields:
-        key: is a unique key/id for accessing or uniquely identifying
+        key: a unique key/id for accessing or uniquely identifying
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
             implementation-specific.
-        display_delta: short string to display, such as "+3" or "2 of 3",
+        kind: one of "relative"; "abs"; or "neutral". This field indicates how the
+            ``value`` and ``out_of`` fields are to be interpreted.
+            "relative" rubrics have a ``value`` indicating a change in score,
+            this can be positive or negative; ``out_of`` should be 0.
+            "abs"(olute) rubrics hold a flat score assignment
+            of {``value``}/{``score``}.
+            "neutral" rubrics indicate no change in score,
+            ``value`` and ``out_of`` are both 0.
+        display_delta: a short string to display, such as "+3" or "2 of 3",
             that illustrates to recipients how their score is changed by
-            this rubric.
-        value: the internal change associated with this rubric, not shown
-            to recipients.  This should generally be somehow related to
+            this rubric; its format is pre-defined by ``kind``.
+        value: the internal score change associated with this rubric, not shown
+            to recipients. This should generally be somehow related to
             the display delta, although the exact calculation depends on
             ``kind`` and there maybe be hypothetical future circumstances
             such as mastery grading where the ``display_delta`` might
             differ substantially from ``value``.
-        TODO: document other fields.
-        annotations: a mapping to Annotation objects.  Its many-to-many
+        annotations: a mapping to Annotation objects.  It's many-to-many
             so that multiple rubrics can link to multiple Annotations.
+        out_of: the maximum ``value`` an "abs" ``kind`` rubric may hold, 0 otherwise.
+        text: a string to display to recipients, its format is not pre-defined.
+        question: the ``SpecQuestion`` this rubric is related to.
+        tags: TODO:
+        meta: TODO:
+        versions: a JSON list containing the versions of ``question``
+            this rubric is assigned to.
+        parameters: TODO:
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
@@ -68,8 +86,10 @@ class Rubric(models.Model):
     key = models.TextField(null=False, default=generate_unique_key)
     kind = models.TextField(null=False)
     display_delta = models.TextField(null=False, default="")  # is short
-    value = models.IntegerField(null=False, default=0)
-    out_of = models.IntegerField(null=False, default=0)
+    value = models.FloatField(null=False, default=0)
+    out_of = models.FloatField(
+        null=False, default=0, validators=[MinValueValidator(0.0)]
+    )
     text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
     tags = models.TextField(null=True, default="")  # can be long

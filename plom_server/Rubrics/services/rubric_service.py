@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -372,7 +373,7 @@ class RubricService:
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
             # now make delta-rubrics
-            for m in range(1, mx + 1):
+            for m in range(1, int(mx) + 1):
                 # make positive delta
                 rubric = {
                     "display_delta": "+{}".format(m),
@@ -403,6 +404,103 @@ class RubricService:
                 }
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
+
+            # half-mark deltas in demo: easy to turn off: change True to False
+            if True:
+                for rubric in [
+                    {
+                        "display_delta": "+1\N{Vulgar Fraction One Half}",
+                        "value": 1.5,
+                        "out_of": 0,
+                        "text": "testing non-integer rubric",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "-\N{Vulgar Fraction One Half}",
+                        "value": -0.5,
+                        "out_of": 0,
+                        "text": "testing negative non-integer rubric",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "\N{Vulgar Fraction One Half}",
+                        "value": 0.5,
+                        "out_of": 0,
+                        "text": ".",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "-\N{Vulgar Fraction One Half}",
+                        "value": -0.5,
+                        "out_of": 0,
+                        "text": ".",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "+a tenth",
+                        "value": 1 / 10,
+                        "out_of": 0,
+                        "text": "one tenth of one point",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "+1/29",
+                        "value": 1 / 29,
+                        "out_of": 0,
+                        "text": "ADR will love co-prime pairs",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "+1/31",
+                        "value": 1 / 31,
+                        "out_of": 0,
+                        "text": r"tex: Note that $31 \times 29 = 899$.",
+                        "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                ]:
+                    r = self.create_rubric(rubric)
+                    log.info(
+                        "Built %s rubric %s for Q%s: %s",
+                        r["kind"],
+                        r["display_delta"],
+                        q,
+                        r["id"],
+                    )
 
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.

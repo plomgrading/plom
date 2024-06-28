@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 """Services for annotations and annotation images."""
 
@@ -22,7 +23,7 @@ from ..models import Annotation, AnnotationImage, MarkingTask
 @transaction.atomic
 def create_new_annotation_in_database(
     task: MarkingTask,
-    score: int,
+    score: float,
     time: int,
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
@@ -62,7 +63,7 @@ def create_new_annotation_in_database(
 
 def _create_new_annotation_in_database(
     task: MarkingTask,
-    score: int,
+    score: float,
     time: int,
     annotation_image: AnnotationImage,
     data: Dict[str, Any],
