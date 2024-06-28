@@ -4,8 +4,9 @@
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
-from .models import QuestionTag, Tag
+from .models import QuestionTag, PedagogyTag
 
 
 class QTagsLandingView(ListView):
@@ -15,9 +16,11 @@ class QTagsLandingView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["question_labels"] = QuestionTagService.get_question_labels()
-        context["question_count"] = len(context["question_labels"])
-        context["tags"] = Tag.objects.all()
+        context["question_label_triple"] = (
+            SpecificationService.get_question_html_label_triples()
+        )
+        context["tags"] = PedagogyTag.objects.all()
+        context["question_tags"] = QuestionTag.objects.prefetch_related("tags").all()
         return context
 
 
@@ -27,8 +30,7 @@ class AddQuestionTagView(CreateView):
     def post(self, request, *args, **kwargs):
         question_index = request.POST.get("questionIndex")
         tag_names = request.POST.getlist("tagName")
-        description = request.POST.get("description")
-        QuestionTagService.add_question_tag(question_index, tag_names, description)
+        QuestionTagService.add_question_tag(question_index, tag_names, request.user)
         return redirect(reverse("qtags_landing"))
 
 
@@ -37,13 +39,13 @@ class CreateTagView(CreateView):
 
     def post(self, request, *args, **kwargs):
         tag_name = request.POST.get("tagName")
-        description = request.POST.get("tagDescription")
-        QuestionTagService.create_tag(tag_name, description)
+        text = request.POST.get("text")
+        QuestionTagService.create_tag(tag_name, text, request.user)
         return redirect(reverse("qtags_landing"))
 
 
 class DeleteTagView(DeleteView):
-    model = Tag
+    model = PedagogyTag
 
     def post(self, request, *args, **kwargs):
         tag_id = request.POST.get("tag_id")
@@ -57,6 +59,6 @@ class EditTagView(UpdateView):
     def post(self, request, *args, **kwargs):
         tag_id = request.POST.get("tag_id")
         tag_name = request.POST.get("tagName")
-        tag_description = request.POST.get("tagDescription")
-        QuestionTagService.edit_tag(tag_id, tag_name, tag_description)
+        text = request.POST.get("text")
+        QuestionTagService.edit_tag(tag_id, tag_name, text)
         return redirect(reverse("qtags_landing"))

@@ -6,23 +6,44 @@
     Question Tags
 {% endblock page_heading %}
 {% block main_content %}
-    <h3>List of Available Question Indexes and Labels</h3>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#linkQtagModal">Link Question to Tag</button>
+
+    <h3>List of Available Question Indexes, Labels, and Tags</h3>
     <table class="table table-striped">
         <thead>
             <tr>
                 <th>Question Index</th>
                 <th>Question Label</th>
+                <th>Tags</th>
             </tr>
         </thead>
         <tbody>
-            {% for index, label in question_labels %}
+            {% for index, label_str, label_html in question_label_triple %}
                 <tr>
                     <td>{{ index }}</td>
-                    <td>{{ label }}</td>
+                    <td>{{ label_html|safe }}</td>
+                    <td>
+                        {% for question_tag in question_tags %}
+                            {% if question_tag.question_index == index %}
+                                {% for t in question_tag.tags.all %}
+                                    <a href="#"
+                                       class="tag-link {% cycle 'blue-tag' 'green-tag' %}"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#tagModal"
+                                       data-tag-name="{{ t.tag_name }}"
+                                       data-tag-description="{{ t.text }}">{{ t.tag_name }}</a>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+
     <button type="button"
             class="btn btn-primary"
             data-bs-toggle="modal"
@@ -35,6 +56,7 @@
             class="btn btn-primary"
             data-bs-toggle="modal"
             data-bs-target="#deleteTagModal">Delete Tag</button>
+
     <h3>Tag Names</h3>
     <table class="table table-striped">
         <thead>
@@ -47,53 +69,28 @@
             {% for tag in tags %}
                 <tr>
                     <td>{{ tag.tag_name }}</td>
-                    <td>{{ tag.description }}</td>
+                    <td>{{ tag.text }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#addQuestionTagModal">Link Question to Tag</button>
-    <h3>Existing Question Tags</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Question Index</th>
-                <th>Description</th>
-                <th>Tags</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for tag in question_tags %}
-                <tr>
-                    <td>{{ tag.question_index }}</td>
-                    <td>{{ tag.description }}</td>
-                    <td>
-                        {% for t in tag.tags.all %}
-                            <a href="#"
-                               class="tag-link {% cycle 'blue-tag' 'green-tag' %}"
-                               data-bs-toggle="modal"
-                               data-bs-target="#tagModal"
-                               data-tag-name="{{ t.tag_name }}"
-                               data-tag-description="{{ t.description }}">{{ t.tag_name }}</a>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
     {% include "Questiontags/modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-          rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script>
         $(document).ready(function() {
             $('#tagName').select2({
                 placeholder: 'Select or search for tags',
                 allowClear: true
+            });
+
+            $('#addQuestionTagModal').on('shown.bs.modal', function () {
+                $('#tagName').select2({
+                    placeholder: 'Select or search for tags',
+                    allowClear: true
+                });
             });
 
             $('.tag-link').on('click', function() {
@@ -130,6 +127,9 @@
         }
         .tag-link:hover {
             opacity: 0.8;
+        }
+        .select2-container {
+            z-index: 9999;
         }
     </style>
 {% endblock main_content %}

@@ -1,30 +1,30 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Copyright (C) 2024 Elisa Pan -->
-<!-- Modal for Adding Question Tag -->
+<!-- Modal for Linking Question to Tag -->
 <div class="modal fade"
-     id="addQuestionTagModal"
+     id="linkQtagModal"
      tabindex="-1"
      role="dialog"
-     aria-labelledby="addQuestionTagModalLabel"
+     aria-labelledby="linkQtagModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addQuestionTagModalLabel">Link Question to Tag</h5>
+                <h5 class="modal-title" id="linkQtagModalLabel">Link Question to Tag</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addQuestionTagForm"
+                <form id="linkQtagForm"
                       method="post"
                       action="{% url 'add_question_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="questionIndex">Question Index</label>
                         <select class="form-control" id="questionIndex" name="questionIndex">
-                            {% for index, label in question_labels %}<option value="{{ index }}">{{ index }}</option>{% endfor %}
+                            {% for index, label_str, label_html in question_label_triple %}<option value="{{ index }}">{{ index }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -32,14 +32,6 @@
                         <select class="form-control" id="tagName" name="tagName" multiple="multiple">
                             {% for tag in tags %}<option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <input type="text"
-                               class="form-control"
-                               id="description"
-                               name="description"
-                               required>
                     </div>
                     <button type="submit" class="btn btn-primary">Add</button>
                 </form>
@@ -71,11 +63,11 @@
                         <input type="text" class="form-control" id="tagName" name="tagName" required>
                     </div>
                     <div class="form-group">
-                        <label for="tagDescription">Description</label>
+                        <label for="text">Description</label>
                         <input type="text"
                                class="form-control"
-                               id="tagDescription"
-                               name="tagDescription"
+                               id="text"
+                               name="text"
                                required>
                     </div>
                     <button type="submit" class="btn btn-primary">Create</button>
@@ -151,11 +143,11 @@
                                required>
                     </div>
                     <div class="form-group">
-                        <label for="tagDescription_edit">Description</label>
+                        <label for="text_edit">Description</label>
                         <input type="text"
                                class="form-control"
-                               id="tagDescription_edit"
-                               name="tagDescription"
+                               id="text_edit"
+                               name="text"
                                required>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>

@@ -2,14 +2,16 @@
 # Copyright (C) 2024 Elisa Pan
 
 from django.db import models
+from Base.models import Tag
 
 
-class Tag(models.Model):
+class PedagogyTag(Tag):
     tag_name = models.TextField()
-    description = models.TextField()
+
+    def __str__(self):
+        return self.tag_name
 
 
 class QuestionTag(models.Model):
     question_index = models.IntegerField(default=0)
-    description = models.TextField()
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(PedagogyTag)
