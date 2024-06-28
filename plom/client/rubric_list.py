@@ -39,7 +39,7 @@ from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
-from .other_rubric_usage_dialog import RubricUsageDialog
+from .rubric_other_usage_dialog import RubricOtherUsageDialog
 
 from .rubric_conflict_dialog import RubricConflictDialog
 from plom.plom_exceptions import (
@@ -1625,9 +1625,7 @@ class RubricWidget(QWidget):
         """
         paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
         # dialog's parent is set to Annotator.
-        print(self._parent)
-        rud = RubricUsageDialog(self._parent, paper_numbers)
-        rud.exec()
+        RubricOtherUsageDialog(self._parent, paper_numbers).exec()
 
     def view_other_paper(self, paper_number: int) -> None:
         """Opens another dialog to view a paper.

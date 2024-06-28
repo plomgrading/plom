@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 
-class RubricUsageDialog(QDialog):
+class RubricOtherUsageDialog(QDialog):
     def __init__(self, parent, paper_numbers: list[int]):
         """Constructor of the dialog to view papers using a rubric.
 
