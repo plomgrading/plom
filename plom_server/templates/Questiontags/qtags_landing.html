@@ -1,16 +1,25 @@
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- Copyright (C) 2024 Elisa Pan -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Elisa Pan
+    Copyright (C) 2024 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% load static %}
 {% block page_heading %}
     Question Tags
 {% endblock page_heading %}
 {% block main_content %}
+    <p>
+        Tagging questions is a beta feature intended to support more
+        detailed analysis during or after an assessment.  For example
+        one might tag questions according their learning objective,
+        format, or topic.
+    </p>
+    <h3>Questions</h3>
     <button type="button"
             class="btn btn-primary"
             data-bs-toggle="modal"
-            data-bs-target="#linkQtagModal">Link Question to Tag</button>
-    <h3>List of Available Question Indexes, Labels, and Tags</h3>
+            data-bs-target="#linkQtagModal">Tag a Question</button>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -42,6 +51,8 @@
             {% endfor %}
         </tbody>
     </table>
+    <br />
+    <h3>Manage Tags</h3>
     <button type="button"
             class="btn btn-primary"
             data-bs-toggle="modal"
@@ -54,7 +65,6 @@
             class="btn btn-primary"
             data-bs-toggle="modal"
             data-bs-target="#deleteTagModal">Delete Tag</button>
-    <h3>Tag Names</h3>
     <table class="table table-striped">
         <thead>
             <tr>
