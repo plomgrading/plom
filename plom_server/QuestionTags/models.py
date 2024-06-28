@@ -9,7 +9,7 @@ class PedagogyTag(Tag):
     tag_name = models.TextField()
 
     def __str__(self):
-        """Return the tag name."""        
+        """Return the tag name."""
         return self.tag_name
 
 
