@@ -79,7 +79,7 @@ class MiscIncomingAnnotationsTests(TestCase):
             paper=paper2,
             question_index=1,
         )
-        mts.assign_task_to_user(user0, task)
+        MarkingTaskService.assign_task_to_user(task.pk, user0)
         img1 = baker.make(AnnotationImage)
         a1 = _create_new_annotation_in_database(task, 3, 17, img1, {"sceneItems": []})
         task.latest_annotation == a1
