@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -26,29 +27,35 @@
                         <div class="p-1 col">
                             <h5>Version {{ src.version }}:</h5>
                         </div>
-                        <div class="p-1 col">
-                            <a class="btn btn-success"
-                               target="_blank"
-                               href="{% url 'prep_source_upload' src.version %}">View</a>
-                        </div>
-                        <div class="p-1 col">
-                            <form action="{% url 'prep_mock' src.version %}"
-                                  target="_blank"
-                                  method="post">
-                                {% csrf_token %}
-                                <input class="btn btn-primary" type="submit" value="Mock">
-                            </form>
-                        </div>
-                        <div class="p-1 col">
-                            <span class="alert alert-warning">
-                                for debugging:
-                                {% for pg in page_list %}
-                                    <a class="btn btn-info"
-                                       target="_blank"
-                                       href="{% url 'reference_image' src.version pg %}">RI-{{ pg }}</a>
-                                {% endfor %}
-                            </span>
-                        </div>
+                        {% if src.uploaded %}
+                            <div class="p-1 col">
+                                <a class="btn btn-success"
+                                   target="_blank"
+                                   href="{% url 'prep_source_upload' src.version %}">View</a>
+                            </div>
+                            <div class="p-1 col">
+                                <form action="{% url 'prep_mock' src.version %}"
+                                      target="_blank"
+                                      method="post">
+                                    {% csrf_token %}
+                                    <input class="btn btn-primary" type="submit" value="Mock">
+                                </form>
+                            </div>
+                            <div class="p-1 col">
+                                <span class="alert alert-warning">
+                                    for debugging:
+                                    {% for pg in page_list %}
+                                        <a class="btn btn-info"
+                                           target="_blank"
+                                           href="{% url 'reference_image' src.version pg %}">RI-{{ pg }}</a>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div class="p-1 col">
+                                <p>Not uploaded</p>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

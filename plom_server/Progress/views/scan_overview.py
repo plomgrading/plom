@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Aden Chan
 
 from django.shortcuts import render
-from django.http import FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -35,22 +34,6 @@ class ScanOverview(ManagerRequiredView):
             }
         )
         return render(request, "Progress/scan_overview.html", context)
-
-
-class ScanGetPageImage(ManagerRequiredView):
-    """Get a page-image from the database."""
-
-    def get(self, request, test_paper, index):
-        mss = ManageScanService()
-
-        image = mss.get_page_image(test_paper, index)
-        with open(str(image.file_name), "rb") as f:
-            image_file = SimpleUploadedFile(
-                f"{test_paper:04}_page{index}.png",
-                f.read(),
-                content_type="image/png",
-            )
-        return FileResponse(image_file)
 
 
 class ScanBundlesView(ManagerRequiredView):
