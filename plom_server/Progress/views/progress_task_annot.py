@@ -10,7 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
-from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
+from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
@@ -227,6 +227,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
         context.update(
             {
+                "all_markers": all_markers,
                 # the current tags, and then separated into normal and attn-marker
                 "current_normal_tags": current_normal_tags,
                 "current_attn_tags": current_attn_user_tags,
@@ -255,22 +256,16 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         # make sure have the correct field from the form
         if "newTagText" not in request.POST:
             return HttpResponseClientRefresh()
-        # sanitize the text, check if such a tag already exists
-        # (create it otherwise) then add to the task
-        mts = MarkingTaskService()
-        tag_text = mts.sanitize_tag_text(request.POST.get("newTagText"))
+        try:
+            # note - this will sanitise the tag_text
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, request.POST.get("newTagText")
+            )
+        except ValidationError:
+            # the form *should* catch validation errors.
+            # we don't throw an explicit error here instead just refresh the page.
+            return HttpResponseClientRefresh()
 
-        tag_obj = mts.get_tag_from_text(tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
-            try:
-                tag_obj = mts.create_tag(request.user, tag_text)
-            except ValidationError:
-                # the form *should* catch validation errors.
-                # we don't throw an explicit error here
-                # instead just refresh the page.
-                return HttpResponseClientRefresh()
-
-        mts.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
 
 
@@ -285,7 +280,7 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
         return redirect("progress_marking_task_details", task_pk=new_task_pk)
 
 
-class MarkingTaskResetView(ManagerRequiredView):
+class MarkingTaskResetView(LeadMarkerOrManagerView):
     def put(self, request, task_pk: int):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
@@ -297,4 +292,31 @@ class MarkingTaskResetView(ManagerRequiredView):
         new_task_pk = mark_task.get_latest_task(pn, qi).pk
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[new_task_pk])
+        )
+
+
+class MarkingTaskReassignView(LeadMarkerOrManagerView):
+    def post(self, request, task_pk: int):
+        if "newUser" not in request.POST:
+            return HttpResponseClientRefresh()
+        new_username = request.POST.get("newUser")
+
+        # Note a task is reassigned by both tagging it @username,
+        # and also clearing / changing the task.assigned_user field.
+        # accordingly we call two functions.
+        try:
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            MarkingTaskService().reassign_task_to_user(task_pk, new_username)
+            # note - the service creates the tag if needed
+            attn_user_tag_text = f"@{new_username}"
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, attn_user_tag_text
+            )
+        except ValueError:
+            # TO DO - report the error
+            pass
+
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[task_pk])
         )
