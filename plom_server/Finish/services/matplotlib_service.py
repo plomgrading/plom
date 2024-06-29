@@ -17,7 +17,6 @@ import seaborn as sns
 from . import DataExtractionService
 from Papers.services import SpecificationService
 
-
 RANGE_BIN_OFFSET = 2
 
 
@@ -53,7 +52,7 @@ class MatplotlibService:
         png_bytes = BytesIO()
         fig.savefig(png_bytes, format="png")
         png_bytes.seek(0)
-        plt.close()
+        plt.close(fig)  # Ensure the figure is closed after saving
 
         return png_bytes
 
