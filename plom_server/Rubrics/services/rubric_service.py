@@ -281,7 +281,7 @@ class RubricService:
         return Rubric.objects.get(key=rubric_key, valid=True)
 
     def get_past_revisions_by_key(self, rubric_key: str) -> List[Rubric]:
-        """Get all rubrics by it's key
+        """Get all rubrics by it's key.
 
         Args:
             rubric_key (str): the key of the rubric
