@@ -43,6 +43,7 @@ class Rubric(models.Model):
             ``kind`` and there maybe be hypothetical future circumstances
             such as mastery grading where the ``display_delta`` might
             differ substantially from ``value``.
+        versions: a list of question versions the rubric can be used on.
         TODO: document other fields.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
@@ -97,6 +98,7 @@ class Rubric(models.Model):
         User, null=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, default=0)
+    valid = models.BooleanField(null=False, default=False)
 
 
 class RubricPane(models.Model):

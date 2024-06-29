@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import html
 import logging
-from typing import Any
+from typing import Any, List
 
 from operator import itemgetter
 
@@ -104,6 +104,7 @@ class RubricService:
         try:
             user = User.objects.get(username=username)
             rubric_data["user"] = user.pk
+            rubric_data["modified_by_user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
@@ -120,6 +121,7 @@ class RubricService:
             # TODO: consult per-user permissions (not implemented yet)
             pass
 
+        rubric_data["valid"] = True
         serializer = RubricSerializer(data=rubric_data)
         if serializer.is_valid():
             serializer.save()
@@ -170,7 +172,7 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
-        rubric = Rubric.objects.filter(key=key).select_for_update().get()
+        rubric = Rubric.objects.filter(key=key, valid=True).select_for_update().get()
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
@@ -180,9 +182,9 @@ class RubricService:
         if not new_rubric_data["revision"] == rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f'Your rubric revision {new_rubric_data["revision"]} does not match '
-                f"database content (revision {rubric.revision}): most likely your "
-                "edits have collided with those of someone else."
+                f'The rubric your revision was based upon {new_rubric_data["revision"]} '
+                f"does not match database content (revision {rubric.revision}): "
+                f"most likely your  edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
@@ -215,10 +217,14 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
         new_rubric_data["revision"] += 1
-        serializer = RubricSerializer(rubric, data=new_rubric_data)
+        new_rubric_data["valid"] = True
+        new_rubric_data["key"] = rubric.key
+        serializer = RubricSerializer(data=new_rubric_data)
         if serializer.is_valid():
             serializer.save()
             rubric_obj = serializer.instance
+            rubric.valid = False
+            rubric.save()
             return _Rubric_to_dict(rubric_obj)
         else:
             raise ValidationError(serializer.errors)
@@ -255,14 +261,14 @@ class RubricService:
         Returns:
             Lazy queryset of all rubrics.
         """
-        return Rubric.objects.all()
+        return Rubric.objects.filter(valid=True)
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total."""
         return Rubric.objects.count()
 
     def get_rubric_by_key(self, rubric_key: str) -> Rubric:
-        """Get a rubric by its key/id.
+        """Get the past rubric revisions by its key/id.
 
         Args:
             rubric_key: which rubric.  Note currently the key/id is not
@@ -272,7 +278,18 @@ class RubricService:
             The rubric object.  It is not "selected for update" so should
             be read-only.
         """
-        return Rubric.objects.get(key=rubric_key)
+        return Rubric.objects.get(key=rubric_key, valid=True)
+
+    def get_past_revisions_by_key(self, rubric_key: str) -> List[Rubric]:
+        """Get all rubrics by it's key
+
+        Args:
+            rubric_key (str): the key of the rubric
+
+        Returns:
+            List[Rubric]: A list of rubrics with the specified key
+        """
+        return list(Rubric.objects.filter(key=rubric_key, valid=False).all())
 
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
@@ -312,7 +329,7 @@ class RubricService:
         Returns:
             Key-value pairs representing the rubric.
         """
-        r = Rubric.objects.get(key=rubric_key)
+        r = Rubric.objects.get(key=rubric_key, valid=True)
         return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:

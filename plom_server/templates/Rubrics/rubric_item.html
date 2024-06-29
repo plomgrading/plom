@@ -7,23 +7,111 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Rubric Info
+    Rubric Info - {{ latest_rubric.key }}
 {% endblock title %}
 {% block page_heading %}
     Rubric Info
 {% endblock page_heading %}
 {% block main_content %}
-    <p>Rubric ID: {{ rubric.key }}</p>
-    <p>Kind: {{ rubric.kind }}</p>
-    <p>Created by: {{ rubric.user }}</p>
-    <p>
-        Revision: {{ rubric.revision }}, last modified {{ rubric.last_modified|naturaltime }} by {{ rubric.modified_by_user }}
-    </p>
-    <p>System rubric: {{ rubric.system_rubric }}</p>
-    <p># used: {{ marking_tasks|length }}</p>
-    {{ rubric_as_html|safe }}
+    <div class="container m-0">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <h5 class="card-header">Rubric {{ latest_rubric.key }}, revision {{ latest_rubric.revision }}</h5>
+                    <div class="card-body">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">ID</th>
+                                    <td>{{ latest_rubric.key }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Kind</th>
+                                    <td>{{ latest_rubric.kind }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Created By</th>
+                                    <td>{{ latest_rubric.user }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Last Modified</th>
+                                    <td>{{ latest_rubric.last_modified|naturaltime }} by {{ latest_rubric.modified_by_user }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">System Rubric</th>
+                                    <td>{{ latest_rubric.system_rubric }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Used</th>
+                                    <td>
+                                        {{ marking_tasks|length }}
+                                        {% if marking_tasks|length == 1 %}
+                                            time
+                                        {% else %}
+                                            times
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Preview</th>
+                                    <td>{{ latest_rubric_as_html|safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <h5 class="card-header">Past Revisions</h5>
+                    <div class="card-body">
+                        <div class="accordion" id="accordion">
+                            {% for revision in revisions %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                                        <button class="accordion-button collapsed"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#collapse-{{ forloop.counter }}"
+                                                aria-expanded="false"
+                                                aria-controls="collapse-{{ forloop.counter }}">
+                                            Revision {{ revision.revision }} - by {{ revision.modified_by_user }} {{ revision.last_modified|naturaltime }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-{{ forloop.counter }}"
+                                         class="accordion-collapse collapse"
+                                         aria-labelledby="heading-{{ forloop.counter }}"
+                                         data-bs-parent="#accordion">
+                                        <div class="accordion-body">
+                                            <table style="color:#FF0000;">
+                                                <tr>
+                                                    <td style="padding:2px;
+                                                               border-width:1px;
+                                                               border-style:solid;
+                                                               border-color:#FF0000">
+                                                        <b>{{ revision.display_delta }}</b>
+                                                    </td>
+                                                    <td style="padding:2px;
+                                                               border-width:1px;
+                                                               border-style:dotted;
+                                                               border-color:#FF0000;
+                                                               border-left-style:None">{{ revision.text }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                None found
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <br>
-    <form action="{% url 'rubric_edit' rubric.key %}" method="post">
+    <form action="{% url 'rubric_edit' latest_rubric.key %}" method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <input type="submit" value="Submit">
