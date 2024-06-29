@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from QuestionTags.models import TmpAbstractQuestion, PedagogyTag
+from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTag
 from django.shortcuts import get_object_or_404
 
 
@@ -17,6 +17,7 @@ class QuestionTagService:
                 tag_name=tag_name, defaults={"user": user}
             )
             question_tag.tags.add(tag)
+            QuestionTag.objects.create(question=question_tag, tag=tag, user=user)
         question_tag.save()
 
     @staticmethod

@@ -3,6 +3,8 @@
 
 from django.db import models
 from Base.models import Tag
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 """ This presents the abstract notion of a question, which are otherwise
     just integers of their question index. It exists mainly to support
@@ -22,3 +24,20 @@ class PedagogyTag(Tag):
 class TmpAbstractQuestion(models.Model):
     question_index = models.IntegerField(default=0)
     tags = models.ManyToManyField(PedagogyTag)
+
+    def __str__(self):
+        """Return the question index."""
+        return f"Question {str(self.question_index)}"
+
+
+class QuestionTag(models.Model):
+    question = models.ForeignKey(TmpAbstractQuestion, on_delete=models.CASCADE)
+    tag = models.ForeignKey(PedagogyTag, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        """Return a string representation of the question-tag relationship."""
+        user_id = self.user_id if self.user else "None"
+        tag_name = self.tag.tag_name if self.tag else "None"
+        return f"Question {self.question.id} tagged with '{tag_name}' by user {user_id}"
