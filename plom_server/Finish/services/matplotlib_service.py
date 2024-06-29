@@ -414,8 +414,8 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_idx: int,
-        times_spent_minutes: Union[List[int], List[List[float]]],
-        marks_given: Union[List[int], List[List[float]]],
+        times_spent_minutes: Union[List[float], List[List[float]]],
+        marks_given: Union[List[float], List[List[float]]],
         *,
         versions: bool = False,
         format: str = "base64",
@@ -446,9 +446,7 @@ class MatplotlibService:
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         if versions is True:
-            graphs = len(times_spent_minutes)
-            assert graphs == len(marks_given)
-            for i in range(0, graphs):
+            for i in range(len(times_spent_minutes)):
                 ax.scatter(
                     marks_given[i],
                     times_spent_minutes[i],
@@ -486,7 +484,7 @@ class MatplotlibService:
 
     def boxplot_of_marks_given_by_ta(
         self,
-        marks: List[List[int]],
+        marks: List[List[float]],
         marker_names: List[str],
         question_idx: int,
         *,

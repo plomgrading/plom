@@ -14,6 +14,7 @@ from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
+import numpy as np
 
 
 def _identity_in_first_input(x, *args, **kwargs):
@@ -180,30 +181,26 @@ def pdf_builder(
             mpls.scatter_time_spent_vs_mark_given(
                 question,
                 times_spent_minutes=(
-                    list(
-                        map(
-                            float,
-                            marking_times_df["seconds_spent_marking"].div(60).to_list(),
-                        )
-                    )
+                    np.array(marking_times_df["seconds_spent_marking"].div(60))
+                    .astype(float)
+                    .tolist()
                     if not versions
                     else [
-                        list(
-                            map(
-                                float,
-                                marking_times_df["seconds_spent_marking"]
-                                .div(60)
-                                .to_list(),
-                            )
-                        )
+                        np.array(marking_times_df["seconds_spent_marking"].div(60))
+                        .astype(float)
+                        .tolist()
                         for version in marking_times_df["question_version"].unique()
                     ]
                 ),
                 marks_given=(
-                    list(map(float, des.get_scores_for_question(question)))
+                    np.array(des.get_scores_for_question(question))
+                    .astype(float)
+                    .tolist()
                     if not versions
                     else [
-                        list(map(float, des.get_scores_for_question(question)))
+                        np.array(des.get_scores_for_question(question))
+                        .astype(float)
+                        .tolist()
                         for version in marking_times_df["question_version"].unique()
                     ]
                 ),
@@ -218,16 +215,17 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [list(map(float, des.get_scores_for_question(question_index)))]
+                [
+                    np.array(des.get_scores_for_question(question_index))
+                    .astype(float)
+                    .tolist()
+                ]
                 + [
-                    list(
-                        map(
-                            float,
-                            des.get_scores_for_ta(
-                                ta_name=marker_name, ta_df=question_df
-                            ),
-                        )
+                    np.array(
+                        des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
                     )
+                    .astype(float)
+                    .tolist()
                     for marker_name in des.get_tas_that_marked_this_question(
                         question_index, ta_df=question_df
                     )
@@ -254,12 +252,10 @@ def pdf_builder(
 
     def _html_add_title(title: str) -> str:
         """Generate HTML for a title."""
-        if not isinstance(title, str):
-            title = str(title)
         return f"""
         <br>
         <p style="break-before: page;"></p>
-        <h3>{title}</h3>
+        <h3>{str(title)}</h3>
         """
 
     def _html_for_graphs(list_of_graphs: List[Any]) -> str:
@@ -323,7 +319,7 @@ def pdf_builder(
     """
 
     if not brief:
-        html += _html_add_title(GRAPH_DETAILS["graph2"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph2"]["title"]))
         html += _html_for_big_graphs(graphs["graph2"])
 
         html += f"""
@@ -332,7 +328,7 @@ def pdf_builder(
         <img src="data:image/png;base64,{graphs["graph3"][0]}" />
         """
 
-        html += _html_add_title(GRAPH_DETAILS["graph4"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph4"]["title"]))
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
@@ -340,22 +336,22 @@ def pdf_builder(
             """
             html += _html_for_big_graphs(graphs["graph4"][index])
 
-        html += _html_add_title(GRAPH_DETAILS["graph5"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph5"]["title"]))
         html += _html_for_big_graphs(graphs["graph5"])
 
-        html += _html_add_title(GRAPH_DETAILS["graph6"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph6"]["title"]))
         html += _html_for_big_graphs(graphs["graph6"])
 
-        html += _html_add_title(GRAPH_DETAILS["graph7"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph7"]["title"]))
         html += _html_for_big_graphs(graphs["graph7"])
 
-        html += _html_add_title(GRAPH_DETAILS["graph8"]["title"])
+        html += _html_add_title(str(GRAPH_DETAILS["graph8"]["title"]))
         html += f"""
             <img src="data:image/png;base64,{graphs["graph8"][0]}" />
             """
     else:
         if selected_graphs.get("graph2"):
-            html += _html_add_title(GRAPH_DETAILS["graph2"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph2"]["title"]))
             html += _html_for_big_graphs(graphs["graph2"])
 
         if selected_graphs.get("graph3"):
@@ -366,7 +362,7 @@ def pdf_builder(
             """
 
         if selected_graphs.get("graph4"):
-            html += _html_add_title(GRAPH_DETAILS["graph4"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph4"]["title"]))
 
             for index, marker in enumerate(des._get_all_ta_data_by_ta()):
                 html += f"""
@@ -375,19 +371,19 @@ def pdf_builder(
                 html += _html_for_big_graphs(graphs["graph4"][index])
 
         if selected_graphs.get("graph5"):
-            html += _html_add_title(GRAPH_DETAILS["graph5"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph5"]["title"]))
             html += _html_for_big_graphs(graphs["graph5"])
 
         if selected_graphs.get("graph6"):
-            html += _html_add_title(GRAPH_DETAILS["graph6"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph6"]["title"]))
             html += _html_for_big_graphs(graphs["graph6"])
 
         if selected_graphs.get("graph7"):
-            html += _html_add_title(GRAPH_DETAILS["graph7"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph7"]["title"]))
             html += _html_for_big_graphs(graphs["graph7"])
 
         if selected_graphs.get("graph8"):
-            html += _html_add_title(GRAPH_DETAILS["graph8"]["title"])
+            html += _html_add_title(str(GRAPH_DETAILS["graph8"]["title"]))
             html += f"""
                 <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
