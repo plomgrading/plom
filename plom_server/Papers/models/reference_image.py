@@ -26,10 +26,7 @@ class ReferenceImage(models.Model):
 
 @receiver(models.signals.post_delete, sender=ReferenceImage)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
-    """
-    Deletes file from filesystem
-    when corresponding `ReferenceImage` object is deleted.
-    """
+    """Deletes file when linked `ReferenceImage` object is deleted."""
     if instance.image_file:
         with Path(instance.image_file.path) as path:
             if path.is_file():

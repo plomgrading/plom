@@ -45,5 +45,3 @@ class BuildPaperPDFChore(HueyTaskTracker):
         # TODO - call this when the associated task is out of date.
         if self.pdf_file:
             Path(self.pdf_file.path).unlink(missing_ok=True)
-        else:
-            return

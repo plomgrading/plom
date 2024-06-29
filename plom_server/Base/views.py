@@ -60,7 +60,7 @@ class ResetView(ManagerRequiredView):
             request (HttpRequest): The HTTP request object.
 
         Returns:
-            HttpResponse: The HTTP response object.
+            An HTTP response object.
         """
         context = self.build_context()
         context.update({"bundles_staged": ScanService().staging_bundles_exist()})
@@ -136,8 +136,12 @@ class ResetConfirmView(ManagerRequiredView):
 
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")
-            form.add_error(_confirm_field, "Phrase is incorrect")
-        context.update(
-            {"bundles_staged": ScanService().staging_bundles_exist(), "wipe_form": form}
-        )
-        return render(request, "base/reset_confirm.html", context=context)
+            else:
+                form.add_error(_confirm_field, "Phrase is incorrect")
+                context.update(
+                    {
+                        "bundles_staged": ScanService().staging_bundles_exist(),
+                        "wipe_form": form,
+                    }
+                )
+                return render(request, "base/reset_confirm.html", context=context)
