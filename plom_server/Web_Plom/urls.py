@@ -47,4 +47,5 @@ urlpatterns = [
     path("task_order/", include("TaskOrder.urls")),
     path("rectangles/", include("Rectangles.urls")),
     path("identify/", include("Identify.urls")),
+    path("questiontags/", include("QuestionTags.urls")),
 ]
