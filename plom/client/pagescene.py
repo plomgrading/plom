@@ -2641,6 +2641,7 @@ class PageScene(QGraphicsScene):
                 else:
                     self.deleteIfLegal(nearby[0])
         elif self.deleteFlag == 2:
+            del_list = []
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
@@ -2648,9 +2649,18 @@ class PageScene(QGraphicsScene):
                     self.delBoxItem, mode=Qt.ItemSelectionMode.ContainsItemShape
                 ):
                     if X.group() is None:
-                        self.deleteIfLegal(X)
+                        if getattr(X, "saveable", False):
+                            # we can only delete "saveable" items
+                            del_list.append(X)
                     else:
                         pass  # is part of a group
+
+            if del_list:
+                self.undoStack.beginMacro(f"Deleting {len(del_list)} items")
+                for X in del_list:
+                    # TODO: or check above only...?   how to clean this up?
+                    self.deleteIfLegal(X)
+                self.undoStack.endMacro()
 
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
