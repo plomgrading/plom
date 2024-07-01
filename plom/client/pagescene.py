@@ -2030,6 +2030,7 @@ class PageScene(QGraphicsScene):
         self._move_some_items(stuff, -br.width(), 0)
 
         self.undoStack.endMacro()
+        self.highlight_pages_reset()
 
     def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
         self.src_img_data[n_idx]["visible"] = show
