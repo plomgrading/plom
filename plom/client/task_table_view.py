@@ -3,6 +3,8 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
+from __future__ import annotations
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QCursor, QContextMenuEvent
 from PyQt6.QtWidgets import (
@@ -45,7 +47,9 @@ class TaskTableView(QTableView):
         else:
             super().keyPressEvent(event)
 
-    def contextMenuEvent(self, event: QContextMenuEvent):
+    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
+        if not event:
+            return
         menu = QMenu(self)
         a = QAction("Annotate", self)
         a.triggered.connect(self.annotateSignal.emit)
