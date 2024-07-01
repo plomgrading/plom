@@ -52,7 +52,7 @@ class TaskTableView(QTableView):
         if not event:
             return
         menu = QMenu(self)
-        a = QAction("Annotate", self)
+        a = QAction("Annotate\tEnter", self)
         a.triggered.connect(self.annotateSignal.emit)
         menu.addAction(a)
         a = QAction("Tag task", self)
