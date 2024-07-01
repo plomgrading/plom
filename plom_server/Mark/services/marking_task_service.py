@@ -698,7 +698,8 @@ class MarkingTaskService:
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
-    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+    @staticmethod
+    def reassign_task_to_user(task_pk: int, username: str) -> None:
         """Reassign a task to a different user.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,
