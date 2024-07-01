@@ -2006,7 +2006,6 @@ class PageScene(QGraphicsScene):
             # h = self.addWidget(d)
             # Not sure opening a dialog from the scene is wise
             if d.exec() == QMessageBox.StandardButton.No:
-                self.highlight_pages_reset()
                 return
 
             self.undoStack.beginMacro(f"Page {n} remove and item move")
