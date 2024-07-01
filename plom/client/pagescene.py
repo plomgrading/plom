@@ -44,10 +44,11 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QGraphicsItem,
     QGraphicsItemGroup,
+    QGraphicsColorizeEffect,
+    QGraphicsOpacityEffect,
     QMessageBox,
     QToolButton,
     QMenu,
-    QGraphicsColorizeEffect,
 )
 
 from plom import AnnFontSizePts, ScenePixelHeight
@@ -1989,10 +1990,8 @@ class PageScene(QGraphicsScene):
 
     def dont_use_page_image(self, n: int) -> None:
         n_idx = self._idx_from_visible_idx(n)
+        self.highlight_pages([n], "darkred")
         img = self.underImage.images[n]
-        e = QGraphicsColorizeEffect()
-        e.setColor(QColor("darkred"))
-        img.setGraphicsEffect(e)
         d = SimpleQuestion(
             self.parent(),  # self.addWidget(d) instead?
             """Remove this page? <ul>\n
@@ -2005,7 +2004,7 @@ class PageScene(QGraphicsScene):
         # h = self.addWidget(d)
         # Not sure opening a dialog from the scene is wise
         if d.exec() == QMessageBox.StandardButton.No:
-            img.setGraphicsEffect(None)
+            self.highlight_pages_reset()
             return
 
         self.undoStack.beginMacro(f"Page {n} remove and item move")
@@ -2680,6 +2679,30 @@ class PageScene(QGraphicsScene):
                         continue
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
+
+    def highlight_pages(self, indices: list[int], colour: str = "blue") -> None:
+        """Highlight some of the underlying images that we are annotating."""
+        # for i in indices:
+        #     img = self.underImage.images[i]
+        #     e = QGraphicsColorizeEffect()
+        #     e.setColor(QColor("darkred"))
+        #     img.setGraphicsEffect(e)
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            if i in indices:
+                e = QGraphicsColorizeEffect()
+                e.setColor(QColor(colour))
+                img.setGraphicsEffect(e)
+            else:
+                e = QGraphicsOpacityEffect()
+                e.setOpacity(0.25)
+                img.setGraphicsEffect(e)
+
+    def highlight_pages_reset(self) -> None:
+        """Remove any graphical effects from the underlying images that we are annotating."""
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            img.setGraphicsEffect(None)
 
     def get_list_of_non_annotated_underimages(self) -> list[int]:
         """Which images in the scene are not yet annotated.
