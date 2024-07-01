@@ -2684,23 +2684,22 @@ class PageScene(QGraphicsScene):
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
 
-    def highlight_pages(self, indices: list[int], colour: str = "blue") -> None:
+    def highlight_pages(
+        self, indices: list[int], colour: str = "blue", *, fade_others: bool = True
+    ) -> None:
         """Highlight some of the underlying images that we are annotating."""
-        # for i in indices:
-        #     img = self.underImage.images[i]
-        #     e = QGraphicsColorizeEffect()
-        #     e.setColor(QColor("darkred"))
-        #     img.setGraphicsEffect(e)
         for i in range(len(self.underImage.images)):
             img = self.underImage.images[i]
             if i in indices:
                 e = QGraphicsColorizeEffect()
                 e.setColor(QColor(colour))
                 img.setGraphicsEffect(e)
-            else:
+            elif fade_others:
                 e = QGraphicsOpacityEffect()
                 e.setOpacity(0.25)
                 img.setGraphicsEffect(e)
+            else:
+                pass
 
     def highlight_pages_reset(self) -> None:
         """Remove any graphical effects from the underlying images that we are annotating."""
