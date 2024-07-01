@@ -1300,16 +1300,22 @@ class MarkerClient(QWidget):
         if user == self.msgr.username:
             InfoMsg(
                 self,
-                f"Note: task {task} appears to already belong to you, claiming anyway",
+                f"Note: task {task} appears to already belong to you,"
+                " trying to claim anyway...",
             ).exec()
-            self.claim_task_and_trigger_downloads(task)
-            return
-        if self.examModel.getStatusByTask(task).casefold() != "to do":
+        elif self.examModel.getStatusByTask(task).casefold() != "to do":
             WarnMsg(
                 self, f'Not implemented yet: claiming {task} from user "{user}"'
             ).exec()
             return
-        self.claim_task_and_trigger_downloads(task)
+        try:
+            self.claim_task_and_trigger_downloads(task)
+        except (
+            PlomTakenException,
+            PlomRangeException,
+            PlomVersionMismatchException,
+        ) as err:
+            WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
 
     def defer_task(self):
         """Mark task as "defer" - to be skipped until later."""
