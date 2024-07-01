@@ -2690,13 +2690,13 @@ class PageScene(QGraphicsScene):
         for i in range(len(self.underImage.images)):
             img = self.underImage.images[i]
             if i in indices:
-                e = QGraphicsColorizeEffect()
-                e.setColor(QColor(colour))
-                img.setGraphicsEffect(e)
+                colour_effect = QGraphicsColorizeEffect()
+                colour_effect.setColor(QColor(colour))
+                img.setGraphicsEffect(colour_effect)
             elif fade_others:
-                e = QGraphicsOpacityEffect()
-                e.setOpacity(0.25)
-                img.setGraphicsEffect(e)
+                fade_effect = QGraphicsOpacityEffect()
+                fade_effect.setOpacity(0.25)
+                img.setGraphicsEffect(fade_effect)
             else:
                 pass
 
