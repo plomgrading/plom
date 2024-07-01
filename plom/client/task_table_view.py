@@ -13,12 +13,18 @@ from PyQt6.QtWidgets import (
 
 
 class TaskTableView(QTableView):
-    """A table-view widget that emits annotateSignal when the user hits enter or return."""
+    """A table-view widget for local storage/presentation of tasks.
+
+    It emits various signals including `annotateSignal` when the user
+    hits enter or return.
+    """
 
     # Note: marker.ui knows about this via a "plom/client/task_table_view.h" header
 
-    # This is picked up by the marker, lets it know to annotate
+    # Marker will need to connect to these
     annotateSignal = pyqtSignal()
+    tagSignal = pyqtSignal()
+    claimSignal = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -41,15 +47,19 @@ class TaskTableView(QTableView):
 
     def contextMenuEvent(self, event: QContextMenuEvent):
         menu = QMenu(self)
-        a = QAction("Tag task...", self)
-        a.triggered.connect(lambda: print("TODO: tag..."))
+        a = QAction("Annotate", self)
+        a.triggered.connect(self.annotateSignal.emit)
+        menu.addAction(a)
+        a = QAction("Tag task", self)
+        a.triggered.connect(self.tagSignal.emit)
         menu.addAction(a)
         a = QAction("Claim this task", self)
-        a.triggered.connect(lambda: print("TODO: claim"))
+        a.triggered.connect(self.claimSignal.emit)
         menu.addAction(a)
-        a = QAction("Reassign task to...", self)
-        a.triggered.connect(lambda: print("TODO: reassign to..."))
-        menu.addAction(a)
+        # TODO: future work
+        # a = QAction("Reassign task to...", self)
+        # a.triggered.connect(lambda: print("TODO: reassign to..."))
+        # menu.addAction(a)
 
         menu.popup(QCursor.pos())
         event.accept()

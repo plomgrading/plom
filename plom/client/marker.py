@@ -554,6 +554,8 @@ class MarkerClient(QWidget):
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
+        self.ui.tableView.tagSignal.connect(self.manage_tags)
+        self.ui.tableView.claimSignal.connect(self.claim_task)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
