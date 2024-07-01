@@ -1990,47 +1990,50 @@ class PageScene(QGraphicsScene):
 
     def dont_use_page_image(self, n: int) -> None:
         n_idx = self._idx_from_visible_idx(n)
+        # the try behaves like "with highlighted_pages([n]):"
         self.highlight_pages([n], "darkred")
-        img = self.underImage.images[n]
-        d = SimpleQuestion(
-            self.parent(),  # self.addWidget(d) instead?
-            """Remove this page? <ul>\n
-              <li>You can undo or find the page again using
-                <em>Rearrange Pages</em>.</li>\n
-            <li>Existing annotations will shift left or right.</li>\n
-            </ul>""",
-            "Are you sure you want to remove this page?",
-        )
-        # h = self.addWidget(d)
-        # Not sure opening a dialog from the scene is wise
-        if d.exec() == QMessageBox.StandardButton.No:
+        try:
+            img = self.underImage.images[n]
+            d = SimpleQuestion(
+                self.parent(),  # self.addWidget(d) instead?
+                """Remove this page? <ul>\n
+                  <li>You can undo or find the page again using
+                    <em>Rearrange Pages</em>.</li>\n
+                <li>Existing annotations will shift left or right.</li>\n
+                </ul>""",
+                "Are you sure you want to remove this page?",
+            )
+            # h = self.addWidget(d)
+            # Not sure opening a dialog from the scene is wise
+            if d.exec() == QMessageBox.StandardButton.No:
+                self.highlight_pages_reset()
+                return
+
+            self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+            br = img.mapRectToScene(img.boundingRect())
+            log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+            if n == len(self.underImage.images) - 1:
+                # special case when deleting right-most image
+                loc = br.left()
+                go_left = False
+            else:
+                # shift existing annotations leftward
+                loc = br.right()
+                go_left = True
+            stuff = self.find_items_right_of(loc)
+
+            # like calling _set_visible_page_image but covered in undo sauce
+            cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+            self.undoStack.push(cmd)
+
+            # enqueues appropriate CommmandMoves
+            self._move_some_items(stuff, -br.width(), 0)
+
+            self.undoStack.endMacro()
+        finally:
             self.highlight_pages_reset()
-            return
-
-        self.undoStack.beginMacro(f"Page {n} remove and item move")
-
-        br = img.mapRectToScene(img.boundingRect())
-        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-
-        if n == len(self.underImage.images) - 1:
-            # special case when deleting right-most image
-            loc = br.left()
-            go_left = False
-        else:
-            # shift existing annotations leftward
-            loc = br.right()
-            go_left = True
-        stuff = self.find_items_right_of(loc)
-
-        # like calling _set_visible_page_image but covered in undo sauce
-        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
-        self.undoStack.push(cmd)
-
-        # enqueues appropriate CommmandMoves
-        self._move_some_items(stuff, -br.width(), 0)
-
-        self.undoStack.endMacro()
-        self.highlight_pages_reset()
 
     def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
         self.src_img_data[n_idx]["visible"] = show

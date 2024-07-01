@@ -1638,9 +1638,9 @@ class Annotator(QWidget):
         if not indices:
             return True
 
-        # this try behaves like "with highlighted_pages(indices):"
+        # the try behaves like "with highlighted_pages(indices):"
+        self.scene.highlight_pages(indices)
         try:
-            self.scene.highlight_pages(indices)
             msg = self._feedback_rules[code]["explanation"]
             msg = msg.format(which_pages=", ".join([str(p + 1) for p in indices]))
             return self._continue_after_warning(code, msg)
