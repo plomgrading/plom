@@ -27,6 +27,7 @@ class TaskTableView(QTableView):
     annotateSignal = pyqtSignal()
     tagSignal = pyqtSignal()
     claimSignal = pyqtSignal()
+    deferSignal = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -57,8 +58,13 @@ class TaskTableView(QTableView):
         a = QAction("Tag task", self)
         a.triggered.connect(self.tagSignal.emit)
         menu.addAction(a)
+        # TODO: this menu could be "context aware", not showing
+        # claim if we already own it or defer if we don't
         a = QAction("Claim this task", self)
         a.triggered.connect(self.claimSignal.emit)
+        menu.addAction(a)
+        a = QAction("Defer this task", self)
+        a.triggered.connect(self.deferSignal.emit)
         menu.addAction(a)
         # TODO: future work
         # a = QAction("Reassign task to...", self)

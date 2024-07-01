@@ -556,6 +556,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
         self.ui.tableView.tagSignal.connect(self.manage_tags)
         self.ui.tableView.claimSignal.connect(self.claim_task)
+        self.ui.tableView.deferSignal.connect(self.defer_task)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
