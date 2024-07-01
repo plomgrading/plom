@@ -231,9 +231,10 @@ class MarkingTaskService:
             MarkingTask.DoesNotExist: if there is no such task.
         """
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
-        # TODO: != MarkingTask.TO_DO versus == MarkingTask.OUT
         if task.status != MarkingTask.TO_DO:
-            raise RuntimeError("Task is currently assigned.")
+            raise RuntimeError(
+                f'Task is not available: currently assigned to "{task.assigned_user}"'
+            )
 
         # the assigned_user is None, then okay, or if set to the current user okay,
         # but otherwise throw an error.

@@ -95,7 +95,7 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(task.status, MarkingTask.OUT)
         self.assertEqual(task.assigned_user, user1)
 
-        with self.assertRaisesMessage(RuntimeError, "Task is currently assigned."):
+        with self.assertRaisesRegex(RuntimeError, "Task .* not available.* assigned"):
             MarkingTaskService.assign_task_to_user(task.pk, user2)
 
         task.refresh_from_db()
