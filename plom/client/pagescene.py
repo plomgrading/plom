@@ -2007,32 +2007,32 @@ class PageScene(QGraphicsScene):
             # Not sure opening a dialog from the scene is wise
             if d.exec() == QMessageBox.StandardButton.No:
                 return
-
-            self.undoStack.beginMacro(f"Page {n} remove and item move")
-
-            br = img.mapRectToScene(img.boundingRect())
-            log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-
-            if n == len(self.underImage.images) - 1:
-                # special case when deleting right-most image
-                loc = br.left()
-                go_left = False
-            else:
-                # shift existing annotations leftward
-                loc = br.right()
-                go_left = True
-            stuff = self.find_items_right_of(loc)
-
-            # like calling _set_visible_page_image but covered in undo sauce
-            cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
-            self.undoStack.push(cmd)
-
-            # enqueues appropriate CommmandMoves
-            self._move_some_items(stuff, -br.width(), 0)
-
-            self.undoStack.endMacro()
         finally:
             self.highlight_pages_reset()
+
+        self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+        if n == len(self.underImage.images) - 1:
+            # special case when deleting right-most image
+            loc = br.left()
+            go_left = False
+        else:
+            # shift existing annotations leftward
+            loc = br.right()
+            go_left = True
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+        self.undoStack.push(cmd)
+
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, -br.width(), 0)
+
+        self.undoStack.endMacro()
 
     def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
         self.src_img_data[n_idx]["visible"] = show
