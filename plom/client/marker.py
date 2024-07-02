@@ -657,6 +657,8 @@ class MarkerClient(QWidget):
 
         Returns:
             None
+
+        Deprecated: only called on legacy servers.
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question_idx, self.version)
@@ -1716,7 +1718,10 @@ class MarkerClient(QWidget):
         stat = self.examModel.getStatusByTask(task)
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
-            self.examModel.setStatusByTask(task, "marked")
+            if self.msgr.is_legacy_server():
+                self.examModel.setStatusByTask(task, "marked")
+            else:
+                self.examModel.setStatusByTask(task, "Complete")
         self.updateProgress(numDone, numtotal)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
