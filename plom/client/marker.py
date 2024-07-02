@@ -457,7 +457,10 @@ class MarkerClient(QWidget):
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
-        self.loadMarkedList()
+        if self.msgr.is_legacy_server():
+            self.loadMarkedList()
+        else:
+            self.download_task_list(username=self.msgr.username)
 
         # Keep the original format around in case we need to change it
         self._cachedProgressFormatStr = self.ui.mProgressBar.format()
@@ -1206,15 +1209,17 @@ class MarkerClient(QWidget):
             self._show_only_my_tasks()
         elif cbidx == 1:
             self._show_all_tasks()
-            if not self._download_full_task_list():
+            if not self.download_task_list():
                 # could not update (maybe legacy server) so go back to only mine
                 self.ui.tasksComboBox.setCurrentIndex(0)
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
-    def _download_full_task_list(self) -> bool:
+    def download_task_list(self, *, username: str = "") -> bool:
         try:
-            tasks = self.msgr.get_tasks(self.question_idx, self.version)
+            tasks = self.msgr.get_tasks(
+                self.question_idx, self.version, username=username
+            )
         except PlomNoServerSupportException as e:
             WarnMsg(self, str(e)).exec()
             return False

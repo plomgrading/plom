@@ -78,6 +78,8 @@ class MgetDoneTasks(APIView):
 
     Respond with status 200.
 
+    Maybe being replaced...
+
     Returns:
         List of lists of info for each of the already-processed
         questions by the calling user.  The first entry is the task
@@ -125,18 +127,21 @@ class GetTasks(APIView):
     """
 
     def get(self, request: Request, *args) -> Response:
+        # TODO: data = request.query_data  # get the ?stuff
         data = request.data
         question_idx = data.get("q")
         version = data.get("v")
+        username = data.get("username")
         # TODO: much more optional things we could support: tag, paper_min, paper_max
         # TODO: see progress_task_annot.py
 
         data = MarkingStatsService().filter_marking_task_annotation_info(
             question_idx=question_idx,
             version=version,
+            username=username,
         )
-        # TODO: priority might be useful?
-        # TODO: this is list of dicts
+        # TODO: priority might be useful for client
+        # TODO: this is list of dicts, edit docs above?
         return Response(data, status=status.HTTP_200_OK)
 
 

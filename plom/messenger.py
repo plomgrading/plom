@@ -212,7 +212,7 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
     def get_tasks(
-        self, qidx: int | None = None, v: int | None = None
+        self, qidx: int | None = None, v: int | None = None, *, username: str = ""
     ) -> list[list[Any]]:
         """Information about all tasks.
 
@@ -220,11 +220,16 @@ class Messenger(BaseMessenger):
             qidx: which question index, or None.
             v: which version, or None.
 
+        Keyword Args:
+            username: find the tasks assigned to a particular user.  If
+                omitted we get the tasks for all users (and those unassigned)..
+
         Returns:
             List of info the tasks.  Each entry is a list of the task
             string (of the form ``q0002g3``), the score, the time (in
             seconds), a list of tags (strings), and which user its assigned to.
             An empty list is returned if there are no tasks.
+            TODO: right now it might be a list-of-dicts.
         """
         if self.is_legacy_server():
             raise PlomNoServerSupportException(
@@ -234,16 +239,19 @@ class Messenger(BaseMessenger):
         with self.SRmutex:
             try:
                 url = "/MK/tasks/all"
-                extra = ""
-                if qidx is not None:
-                    extra += f"q={qidx}"
-                if v is not None:
-                    extra += f"v={v}"
-                if extra:
-                    url += "?" + extra
+                # extra = ""
+                # if qidx is not None:
+                #     extra += f"q={qidx}"
+                # if v is not None:
+                #     extra += f"v={v}"
+                # if extra:
+                #     url += "?" + extra
                 # TODO: make this optional ? stuff work, for now we use json
+                # TODO: but /MK/tasks/available also uses json, so which is right?
                 # response = self.get_auth(url)
-                response = self.get_auth(url, json={"q": qidx, "v": v})
+                response = self.get_auth(
+                    url, json={"q": qidx, "v": v, "username": username}
+                )
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
