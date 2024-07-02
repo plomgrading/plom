@@ -172,7 +172,12 @@ class RubricService:
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
-        rubric = Rubric.objects.filter(key=key, valid=True).select_for_update().get()
+        try:
+            rubric = (
+                Rubric.objects.filter(key=key, valid=True).select_for_update().get()
+            )
+        except Rubric.DoesNotExist as e:
+            raise ValueError(f"Rubric {key} does not exist.") from e
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
