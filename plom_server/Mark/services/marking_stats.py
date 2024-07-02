@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 import statistics
 from typing import Any, Dict, List, Optional
@@ -318,6 +319,7 @@ class MarkingStatsService:
         version: Optional[int] = None,
         username: Optional[str] = None,
         the_tag: Optional[str] = None,
+        status: Optional[int] = None,
     ) -> List[Dict]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
@@ -341,6 +343,8 @@ class MarkingStatsService:
                 task_set = task_set.filter(markingtasktag=tag_obj)
             except MarkingTaskTag.DoesNotExist:
                 pass
+        if status:
+            task_set = task_set.filter(status=status)
         task_info = []
         for task in task_set.prefetch_related(
             "latest_annotation", "paper", "assigned_user"
