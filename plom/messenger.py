@@ -195,7 +195,14 @@ class Messenger(BaseMessenger):
             seconds), a list of tags (strings), and an "integrity code".
             An empty list is returned if nothing has been graded by this
             user.
+
+        Deprecated: only for supporting legacy servers.
         """
+        if not self.is_legacy_server():
+            raise PlomNoServerSupportException(
+                "Only legacy servers support list of tasks"
+            )
+
         self.SRmutex.acquire()
         try:
             response = self.get(

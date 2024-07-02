@@ -73,45 +73,6 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
-class MgetDoneTasks(APIView):
-    """Retrieve data for tasks which have already been graded by a particular user.
-
-    Respond with status 200.
-
-    Maybe being replaced...
-
-    Returns:
-        List of lists of info for each of the already-processed
-        questions by the calling user.  The first entry is the task
-        string of the form ``q0002g3``, the second is the score, the
-        floating-point time in seconds, a list of tags (strings), and
-        an "integrity code".  An empty list is returned if nothing has
-        been graded by this user.
-    """
-
-    def get(self, request: Request, *args) -> Response:
-        data = request.data
-        question = data["q"]
-        version = data["v"]
-
-        mts = MarkingTaskService()
-        marks = mts.get_user_mark_results(
-            request.user, question_idx=question, version=version
-        )
-
-        rows = map(
-            lambda annotation: [
-                annotation.task.code,
-                annotation.score,
-                annotation.marking_time,
-                mts.get_tags_for_task(annotation.task.code),
-                str(annotation.task.pk),  # TODO: integrity check is not implemented yet
-            ],
-            marks,
-        )
-        return Response(rows, status=status.HTTP_200_OK)
-
-
 class GetTasks(APIView):
     """Retrieve data for tasks.
 
