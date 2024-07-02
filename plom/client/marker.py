@@ -1296,7 +1296,7 @@ class MarkerClient(QWidget):
             ).exec()
         elif self.examModel.getStatusByTask(task).casefold() != "to do":
             WarnMsg(
-                self, f'Not implemented yet: claiming {task} from user "{user}"'
+                self, f'Not implemented yet: cannot claim {task} from user "{user}"'
             ).exec()
             return
         self._claim_task(task)
