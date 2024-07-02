@@ -581,7 +581,8 @@ class MarkerClient(QWidget):
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu(self)
-        m.addAction("Get \N{Mathematical Italic Small N}th...", self.requestInteractive)
+        s = "Get \N{Mathematical Italic Small N}th..."
+        m.addAction(s, self.claim_task_interactive)
         m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -907,7 +908,7 @@ class MarkerClient(QWidget):
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
-    def requestInteractive(self):
+    def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
 
         If available, download stuff, add to list, update view.
@@ -921,18 +922,8 @@ class MarkerClient(QWidget):
         )
         if not ok:
             return
-        log.info("getting paper num %s", n)
         task = f"q{n:04}g{self.question_idx}"
-        try:
-            self.claim_task_and_trigger_downloads(task)
-        except (
-            PlomTakenException,
-            PlomRangeException,
-            PlomVersionMismatchException,
-        ) as err:
-            WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
-            return
-        self.moveSelectionToTask(task)
+        self._claim_task(task)
 
     def requestNext(self, *, update_select=True):
         """Ask server for an unmarked paper, get file, add to list, update view.
@@ -1290,7 +1281,7 @@ class MarkerClient(QWidget):
         # TODO: adding a new possibility here will have some fallout
         self.examModel.setStatusByTask(task, "reassigned")
 
-    def claim_task(self):
+    def claim_task(self) -> None:
         task = self.get_current_task_id_or_none()
         if not task:
             return
@@ -1308,6 +1299,10 @@ class MarkerClient(QWidget):
                 self, f'Not implemented yet: claiming {task} from user "{user}"'
             ).exec()
             return
+        self._claim_task(task)
+
+    def _claim_task(self, task: str) -> None:
+        log.info("claiming task %s", task)
         try:
             self.claim_task_and_trigger_downloads(task)
         except (
@@ -1316,6 +1311,9 @@ class MarkerClient(QWidget):
             PlomVersionMismatchException,
         ) as err:
             WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
+            return
+        # maybe it was there already: should be harmless
+        self.moveSelectionToTask(task)
 
     def defer_task(self):
         """Mark task as "defer" - to be skipped until later."""
