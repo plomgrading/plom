@@ -460,6 +460,7 @@ class MarkerClient(QWidget):
         if self.msgr.is_legacy_server():
             self.loadMarkedList()
         else:
+            assert self.msgr.username is not None
             self.download_task_list(username=self.msgr.username)
 
         # Keep the original format around in case we need to change it
