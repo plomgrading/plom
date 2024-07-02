@@ -1334,7 +1334,12 @@ class MarkerClient(QWidget):
                 s += f': {task} belongs to "{user}"'
             InfoMsg(self, s).exec()
             return
-        if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
+        if self.examModel.getStatusByTask(task).casefold() in (
+            "complete",
+            "marked",
+            "uploading...",
+            "???",
+        ):
             InfoMsg(self, "Cannot defer a marked test.").exec()
             return
         self.examModel.deferPaper(task)
@@ -1397,7 +1402,13 @@ class MarkerClient(QWidget):
         """
         status = self.examModel.getStatusByTask(task)
 
-        if status.casefold() not in ("marked", "uploading...", "???", "untouched"):
+        if status.casefold() not in (
+            "complete",
+            "marked",
+            "uploading...",
+            "???",
+            "untouched",
+        ):
             # TODO: should this make a dialog somewhere?
             log.warn(f"task {task} status '{status}' is not your's to annotate")
             return None
@@ -1413,7 +1424,7 @@ class MarkerClient(QWidget):
         aname = paperdir / Gtask
         pdict = None
 
-        if status in ("marked", "uploading...", "???"):
+        if status.casefold() in ("complete", "marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return None

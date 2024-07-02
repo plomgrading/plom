@@ -48,7 +48,8 @@ _idx_integrity = 10
 # TODO: "reassigned"?
 local_possible_statuses = (
     "untouched",
-    "marked",
+    "marked",  # deprecated, legacy still uses
+    "complete",
     "uploading...",
     "???",
     "deferred",
@@ -246,7 +247,8 @@ class MarkerExamModel(QStandardItemModel):
             None
         """
         assert (
-            status in local_possible_statuses or status in server_possible_statuses
+            status.casefold() in local_possible_statuses
+            or status.casefold() in server_possible_statuses
         ), f'Task status "{status}" is not in the allow lists'
         self.setData(self.index(r, _idx_status), status)
 
@@ -454,7 +456,7 @@ class MarkerExamModel(QStandardItemModel):
         status = self._getDataByTask(task, _idx_status)
         if task_username == username:
             assert (
-                status in local_possible_statuses
+                status.casefold() in local_possible_statuses
             ), f'Unexpected status "{status}" seen in one of our tasks'
             return True
         assert (
