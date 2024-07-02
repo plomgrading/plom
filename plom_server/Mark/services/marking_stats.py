@@ -369,12 +369,14 @@ class MarkingStatsService:
                             task.latest_annotation.time_of_last_update
                         ).humanize(),
                         "score": task.latest_annotation.score,
+                        "integrity": str(task.pk),  # TODO: not implemented yet
                     }
                 )
             elif task.status == MarkingTask.OUT:
                 dat.update(
                     {
                         "username": task.assigned_user.username,
+                        "integrity": str(task.pk),  # TODO: not implemented yet
                     }
                 )
 

@@ -105,7 +105,7 @@ class MgetDoneTasks(APIView):
                 annotation.score,
                 annotation.marking_time,
                 mts.get_tags_for_task(annotation.task.code),
-                annotation.task.pk,  # TODO: integrity check is not implemented yet
+                str(annotation.task.pk),  # TODO: integrity check is not implemented yet
             ],
             marks,
         )

@@ -1229,6 +1229,7 @@ class MarkerClient(QWidget):
                 t["paper_number"], t["question"]
             )
             username = t.get("username", "")
+            integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
             mark = t.get("score", -1)  # not keen on this -1 sentinel
             try:
@@ -1239,6 +1240,7 @@ class MarkerClient(QWidget):
                     status=t["status"],
                     tags=t["tags"],
                     username=username,
+                    integrity_check=integrity,
                 )
             except KeyError:
                 # only update those tasks that aren't ours
