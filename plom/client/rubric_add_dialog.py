@@ -269,7 +269,45 @@ class WideTextEdit(QTextEdit):
     def __init__(self):
         super().__init__()
         self.speller = SpellChecker(distance=1)
-        self.mouseDoubleClickEvent = self.on_double_click
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
+        """Handle double left-click event.
+
+        Only pops up the spelling corrections if the most likely
+        replacement word is different from the selected text, and the
+        selected text is not empty.
+
+        Note: Ignore the word "tex" and non alphabetical.
+
+        Raises:
+            RunTimeError if the AddRubricBox dialog is uninitialized.
+        """
+        if not event:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
+            super().mouseDoubleClickEvent(event)
+            selected_text = self.textCursor().selectedText()
+            best_correction = self.speller.correction(selected_text)
+            if (
+                selected_text.isalpha()
+                and selected_text != "tex"
+                and len(selected_text)
+                and best_correction
+                and best_correction != selected_text
+            ):
+                # The first parent is QSplitter
+                splitter = self.parentWidget()
+                if splitter:
+                    rubric_dialog = splitter.parentWidget()
+                else:
+                    raise RuntimeError(
+                        "Rubric Box Dialog is unexpectedly uninitialized"
+                    )
+
+                if isinstance(rubric_dialog, AddRubricBox):
+                    rubric_dialog.correction_widget.set_selected_word(
+                        selected_text, self.textCursor()
+                    )
 
     def sizeHint(self):
         sz = super().sizeHint()
@@ -295,43 +333,6 @@ class WideTextEdit(QTextEdit):
                 return
 
         super().keyPressEvent(e)
-
-    def on_double_click(self, event: QMouseEvent):
-        """Handle double left-click event.
-
-        Only pops up the spelling corrections if the most likely
-        replacement word is different from the selected text, and the
-        selected text is not empty.
-
-        Note: Ignore the word "tex" and non alphabetical.
-
-        Raises:
-            RunTimeError if the AddRubricBox dialog is uninitialized.
-        """
-        if event.button() == Qt.MouseButton.LeftButton:
-            super().mouseDoubleClickEvent(event)
-            selected_text = self.textCursor().selectedText()
-            best_correction = self.speller.correction(selected_text)
-            if (
-                selected_text.isalpha()
-                and selected_text != "tex"
-                and len(selected_text)
-                and best_correction
-                and best_correction != selected_text
-            ):
-                # The first parent is QSplitter
-                splitter = self.parentWidget()
-                if splitter:
-                    rubric_dialog = splitter.parentWidget()
-                else:
-                    raise RuntimeError(
-                        "Rubric Box Dialog is unexpectedly uninitialized"
-                    )
-
-                if isinstance(rubric_dialog, AddRubricBox):
-                    rubric_dialog.correction_widget.set_selected_word(
-                        selected_text, self.textCursor()
-                    )
 
     def highlight_text(self) -> None:
         """Underline the texts that are suspected for spelling mistake.
