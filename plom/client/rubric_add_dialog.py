@@ -268,7 +268,9 @@ class WideTextEdit(QTextEdit):
     def __init__(self):
         super().__init__()
         self.speller = SpellChecker(distance=1)
-        self.mouseDoubleClickEvent = self.on_double_click
+
+    def mouseDoubleClickEvent(self, event):
+        self.on_double_click(event)
 
     def sizeHint(self):
         sz = super().sizeHint()
