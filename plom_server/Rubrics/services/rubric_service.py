@@ -604,9 +604,6 @@ class RubricService:
         """
         rubrics = self.get_rubrics_as_dicts(question=question)
 
-        if filetype not in ("json", "toml", "csv"):
-            raise ValueError(f"Unsupported file type: {filetype}")
-
         if filetype == "json":
             if question is not None:
                 queryset = Rubric.objects.filter(question=question)
@@ -626,6 +623,9 @@ class RubricService:
             writer.writeheader()
             writer.writerows(rubrics)
             data_string = f.getvalue()
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
         return data_string
 
     def update_rubric_data(self, data: str, filetype: str):
