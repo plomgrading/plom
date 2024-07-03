@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from django.urls import path, re_path
 
@@ -12,6 +13,7 @@ from API.views import (
     MgetAllRubrics,
     MgetRubricsByQuestion,
     MgetRubricPanes,
+    MgetRubricUsages,
     McreateRubric,
     MmodifyRubric,
     MlatexFragment,
@@ -76,6 +78,11 @@ class MarkURLPatterns:
                 name="api_MK_get_rubric_panes",
             ),
             path("rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
+            path(
+                "rubric_usage/<str:key>",
+                MgetRubricUsages.as_view(),
+                name="api_MK_get_rubric_usages",
+            ),
             re_path(
                 r"rubric/(?P<key>[0-9]{12})$",
                 MmodifyRubric.as_view(),

@@ -601,7 +601,7 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterLE.textEdited.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.view_other)
+        self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
@@ -1522,6 +1522,17 @@ class MarkerClient(QWidget):
         """
         return self.msgr.get_one_rubric(key)
 
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Get list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric.
+        """
+        return self.msgr.MgetOtherRubricUsages(key)
+
     def sendNewRubricToServer(self, new_rubric) -> dict[str, Any]:
         return self.msgr.McreateRubric(new_rubric)
 
@@ -2176,8 +2187,8 @@ class MarkerClient(QWidget):
     def _show_all_tasks(self) -> None:
         self.prxM.set_show_only_this_user("")
 
-    def view_other(self):
-        """Shows a particular paper number and question."""
+    def choose_and_view_other(self) -> None:
+        """Ask user to choose a paper number and question, then show images."""
         max_question_idx = self.exam_spec["numberOfQuestions"]
         qlabels = [
             get_question_label(self.exam_spec, i + 1)
@@ -2191,9 +2202,41 @@ class MarkerClient(QWidget):
         )
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
-        tn, q, get_annotated = tgs.get_results()
+        paper_number, question_idx, get_annotated = tgs.get_results()
+        self.view_other(
+            paper_number, question_idx, _parent=self, get_annotated=get_annotated
+        )
+
+    def view_other(
+        self,
+        paper_number: int,
+        question_idx: int,
+        *,
+        _parent: QWidget | None = None,
+        get_annotated: bool = True,
+    ) -> None:
+        """Shows a particular paper number and question.
+
+        Args:
+            paper_number: the paper number to be viewed.
+            question_idx: which question to be viewed.
+
+        Keyword Args:
+            get_annotated: whether to try to get the latest annotated
+                image before falling back on the original scanned images.
+                True by default.
+
+        Returns:
+            None
+        """
+        tn = paper_number
+        q = question_idx
 
         stuff = None
+
+        if _parent is None:
+            _parent = self
+
         if get_annotated:
             try:
                 annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(tn, q)
@@ -2241,7 +2284,7 @@ class MarkerClient(QWidget):
         # ver = qvmap[q]
         # s += f" (ver {ver})"
 
-        d = QuestionViewDialog(self, stuff, tn, q, marker=self, title=s)
+        d = QuestionViewDialog(_parent, stuff, tn, q, marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()
