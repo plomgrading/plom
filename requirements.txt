@@ -20,8 +20,8 @@ platformdirs==4.2.2
 PyQt6==6.6.1
 PyQt6-Qt6==6.6.3
 PyQt6-sip==13.6.0
-pytest-qt==4.4.0
 pyspellchecker==0.8.1
+pytest-qt==4.4.0
 
 # Legacy-server only deps
 aiohttp==3.9.5

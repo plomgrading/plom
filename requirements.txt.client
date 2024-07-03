@@ -25,6 +25,7 @@ Pillow==10.3.0
 platformdirs==4.2.2
 pymupdf==1.24.5
 PyMySQL==1.1.1
+pyspellchecker==0.8.1
 requests==2.32.3
 requests-toolbelt==1.0.0
 segno==1.6.1
@@ -33,4 +34,3 @@ tomli==2.0.1
 tomlkit==0.12.5
 tqdm==4.66.4
 urllib3==2.2.2
-pyspellchecker==0.8.1
