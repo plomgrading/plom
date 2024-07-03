@@ -1,5 +1,5 @@
 <!-- Copyright (C) 2023 Julian Lapenna -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023-2024 Andrew Rechnitzer -->
 <!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -15,6 +15,7 @@
         </p>
     </div>
     <div class="table-responsive" style="max-height: 80vh;">
+        <p>Click on a marking task for detailed information.</p>
         <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
             <thead class="sticky-top">
                 <tr>
@@ -72,12 +73,18 @@
                                                data-bs-title="v.{{ dat.version }} by {{ dat.user }}">{{ dat.score }}</a>
                                         </td>
                                     {% elif dat.status == "To Do" %}
-                                        <td class="table-warning">to do</td>
+                                        <td class="table-warning">
+                                            <a class="btn btn-sm py-0 btn-warning-subtle w-100"
+                                               href="{% url 'progress_marking_task_details' dat.task_pk %}">to do</a>
+                                        </td>
                                     {% elif dat.status == "Out" %}
-                                        <td class="table-info"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="bottom"
-                                            data-bs-title="with {{ dat.user }}">out</td>
+                                        <td class="table-info">
+                                            <a class="btn btn-sm py-0 btn-info-subtle w-100"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="bottom"
+                                               data-bs-title="with {{ dat.user }}"
+                                               href="{% url 'progress_marking_task_details' dat.task_pk %}">out</a>
+                                        </td>
                                     {% else %}
                                         <td class="table-danger">task missing</td>
                                     {% endif %}

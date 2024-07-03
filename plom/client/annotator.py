@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -1720,9 +1721,8 @@ class Annotator(QWidget):
         # is 4-tuple (x,y,w,h) scaled by image width / height
         crop_rect_data = self.scene.current_crop_rectangle_as_proportions()
         # TODO: consider saving colour only if not red?
-        # TODO: someday src_img_data may have other images not used
         plomData = {
-            "base_images": self.scene.get_src_img_data(),
+            "base_images": self.scene.get_src_img_data(only_visible=True),
             "saveName": str(aname),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
@@ -1844,6 +1844,42 @@ class Annotator(QWidget):
     def getOneRubricFromServer(self, key):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
+
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Request a list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric, excluding the paper
+            the annotator currently at.
+        """
+        curr_paper_number = int(self.tgvID[:4])
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        if curr_paper_number in result:
+            result.remove(curr_paper_number)
+        return result
+
+    def view_other_paper(
+        self, paper_number: int, *, _parent: QWidget | None = None
+    ) -> None:
+        """Opens another dialog to view a paper.
+
+        Args:
+            paper_number: the paper number of the paper to be viewed.
+
+        Keyword:
+            _parent: override the default parent which is ourselves.
+
+        Returns:
+            None
+        """
+        if _parent is None:
+            _parent = self
+        self.parentMarkerUI.view_other(
+            paper_number=paper_number, question_idx=self.question_num, _parent=_parent
+        )
 
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""

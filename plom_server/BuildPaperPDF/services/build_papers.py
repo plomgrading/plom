@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -361,6 +362,7 @@ class BuildPapersService:
         self.try_to_cancel_all_queued_tasks()
         for task in BuildPaperPDFChore.objects.all():
             task.set_as_obsolete()
+            task.unlink_associated_pdf()
 
     @transaction.atomic
     def get_all_task_status(self) -> dict[int, str]:

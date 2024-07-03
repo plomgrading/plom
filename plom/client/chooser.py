@@ -6,6 +6,7 @@
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2024 Bryan Tanady
 
 """Plom's Chooser dialog."""
 
@@ -144,6 +145,9 @@ class Chooser(QDialog):
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.logoutButton.setVisible(False)
         self.ui.logoutButton.clicked.connect(self.logout)
+        # Chooser is a QDialog and has special Enter behaviour
+        # TODO: but it doesn't work, Issue #3423.
+        self.ui.loginButton.setDefault(True)
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
@@ -163,6 +167,16 @@ class Chooser(QDialog):
         self.ui.pgSB.setValue(int(self.lastTime["question"]))
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
+
+    # TODO: see Issue #3423, this below workaround doesn't work for me
+    # def keyPressEvent(self, event):
+    #     if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+    #         # Only connect to login if the current focus is at password line edit
+    #         # Otherwise the return key works as default.
+    #         if self.focusWidget() == self.ui.passwordLE:
+    #             self.login()
+    #         else:
+    #             super().keyPressEvent(event)
 
     def setServer(self, s: str) -> None:
         """Set the server and port UI widgets from a string.

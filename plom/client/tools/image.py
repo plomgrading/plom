@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
-from typing import Optional
+from __future__ import annotations
+
+from typing import Any
 
 from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt6.QtGui import QBrush, QColor, QImage, QPixmap, QPen
+from PyQt6.QtGui import QColor, QImage, QPixmap, QPen
 from PyQt6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPixmapItem,
@@ -21,7 +23,8 @@ from PyQt6.QtWidgets import (
     QFormLayout,
 )
 
-from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 
 
 class CommandImage(CommandTool):
@@ -42,11 +45,10 @@ class CommandImage(CommandTool):
         """
         super().__init__(scene)
         self.obj = ImageItem(pt, image, scale, border, data)
-        self.do = DeleteObject(self.obj.shape())
         self.setText("Image")
 
     @classmethod
-    def from_pickle(cls, X, *, scene):
+    def from_pickle(cls, X: list[Any], *, scene) -> CommandImage:
         """Construct a CommandImage from a serialized form."""
         assert X[0] == "Image"
         X = X[1:]
@@ -91,8 +93,8 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         """Paints the scene by adding a red border around the image if applicable."""
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.setPen(OutOfBoundsPen)
+            painter.setBrush(OutOfBoundsFill)
             painter.drawRoundedRect(option.rect, 10, 10)
 
         super().paint(painter, option, widget)
@@ -102,7 +104,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             painter.drawRect(self.boundingRect())
             painter.restore()
 
-    def pickle(self):
+    def pickle(self) -> list[Any]:
         """Pickle the image into a list containing important information.
 
         Returns:
@@ -118,7 +120,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         if self.data is None:
             byte_array = QByteArray()
             buffer = QBuffer(byte_array)
-            buffer.open(QIODevice.WriteOnly)
+            buffer.open(QIODevice.OpenModeFlag.WriteOnly)
             self.qImage.save(buffer, "PNG")
             pickle = [
                 "Image",
@@ -132,7 +134,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             pickle = ["Image", self.x(), self.y(), self.data, self.scale(), self.border]
         return pickle
 
-    def mouseDoubleClickEvent(self, event: Optional[QGraphicsSceneMouseEvent]) -> None:
+    def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
         """On double-click, show menu and modify image according to user inputs.
 
         Args:
@@ -145,14 +147,14 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         # not sure if this can happen but the possibility offends mypy
         if not the_scene:
             raise RuntimeError("Unexpected the scaling dialog had no scene")
-        parent = the_scene.views()[0]
+        parent = the_scene.views()[0].parent()
         # yuck, had to go way up the chain to find someone who can parent a dialog!
         # maybe that means this code should NOT be opening dialogs
         dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
-            # TODO: I don't think this event generates a Command!  No undo stack...
+            # TODO: Issue #3441: This doesn't generate a Command so no undo stack
             # self.scene()._set_dirty()
             if border is not self.border:
                 self.border = border
@@ -169,7 +171,7 @@ class ImageSettingsDialog(QDialog):
     NumGridRows = 2
     NumButtons = 3
 
-    def __init__(self, parent, scalePercent, checked):
+    def __init__(self, parent, scalePercent: int, checked: bool):
         """Initialize a new image settings dialog object.
 
         Args:
