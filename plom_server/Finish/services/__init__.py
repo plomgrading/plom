@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 
 from .student_marks_service import StudentMarkService
@@ -15,4 +16,5 @@ from .build_soln_service import BuildSolutionService
 from .soln_images import SolnImageService
 from .soln_source import SolnSourceService
 from .template_soln_spec import TemplateSolnSpecService
+from .build_student_report_service import BuildStudentReportService
 from .ReportPDFService import GRAPH_DETAILS
