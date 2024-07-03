@@ -2570,23 +2570,37 @@ class PageScene(QGraphicsScene):
                 QRectF(self.originPos, self.currentPos).normalized()
             )
 
-    def deleteIfLegal(self, item):
+    def deleteIfLegal(self, item, *, dryrun: bool = False) -> bool:
         """Deletes the annotation item if that is a legal action.
 
         Notes:
             Can't delete the pageimage, scorebox, delete-box, ghostitem and
             its constituents, probably other things too.  You can delete
             annotations: those all have a "saveable" attribute.
+            You also cannot delete objects that are part of a group: you need
+            to the parent.
 
         Args:
             item (QGraphicsItem): the item to possibly be deleted.
 
+        Keyword Args:
+            dryrun: just check if we could delete but don't actually
+                do it.
+
         Returns:
-            None
+            True if the object was deleted, else False.
         """
-        if getattr(item, "saveable", False):  # we can only delete "saveable" items
-            command = CommandDelete(self, item)
-            self.undoStack.push(command)
+        if item.group() is not None:
+            return False
+        if not getattr(item, "saveable", False):
+            # we can only delete "saveable" items
+            return False
+        # we're ready to delete, unless this is a dryrun
+        if dryrun:
+            return True
+        command = CommandDelete(self, item)
+        self.undoStack.push(command)
+        return True
 
     def mouseReleaseRubric(self, event) -> None:
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
@@ -2662,16 +2676,21 @@ class PageScene(QGraphicsScene):
                 else:
                     self.deleteIfLegal(nearby[0])
         elif self.deleteFlag == 2:
+            del_list = []
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
                 if X.collidesWithItem(
                     self.delBoxItem, mode=Qt.ItemSelectionMode.ContainsItemShape
                 ):
-                    if X.group() is None:
-                        self.deleteIfLegal(X)
-                    else:
-                        pass  # is part of a group
+                    if self.deleteIfLegal(X, dryrun=True):
+                        del_list.append(X)
+
+            if del_list:
+                self.undoStack.beginMacro(f"Deleting {len(del_list)} items")
+                for X in del_list:
+                    self.deleteIfLegal(X)
+                self.undoStack.endMacro()
 
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
