@@ -4,11 +4,13 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 
+from __future__ import annotations
+
 import base64
 from io import BytesIO
-from typing import List, Optional, Union
 
 import matplotlib
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,7 +18,6 @@ import seaborn as sns
 
 from . import DataExtractionService
 from Papers.services import SpecificationService
-
 
 RANGE_BIN_OFFSET = 2
 
@@ -53,7 +54,7 @@ class MatplotlibService:
         png_bytes = BytesIO()
         fig.savefig(png_bytes, format="png")
         png_bytes.seek(0)
-        plt.close()
+        plt.close(fig)  # Ensure the figure is closed after saving
 
         return png_bytes
 
@@ -69,13 +70,15 @@ class MatplotlibService:
         return base64.b64encode(bytes.read()).decode()
 
     def histogram_of_total_marks(
-        self, *, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+        self, *, highlighted_sid: str | None = None, format: str = "base64"
+    ) -> BytesIO | str:
         """Generate a histogram of the total marks.
 
         Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
+            highlighted_sid: The identifier of the student whose standing
+                will be highlighted in the chart.
 
         Returns:
             Base64 encoded string or bytes containing the histogram.
@@ -95,6 +98,22 @@ class MatplotlibService:
             width=0.8,
             align="mid",
         )
+        # Overlay the student's score by highlighting the bar
+        if highlighted_sid:
+            df = self.des.get_student_data()
+            student = df[df["StudentID"] == highlighted_sid]
+            student_score = student["Total"].values[0]
+            highlight_color = "#3061FF"
+
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
@@ -113,9 +132,10 @@ class MatplotlibService:
         question_idx: int,
         *,
         versions: bool = False,
-        student_df: Optional[pd.DataFrame] = None,
+        student_df: pd.DataFrame | None = None,
+        highlighted_sid: str | None = None,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question.
 
         Args:
@@ -127,6 +147,8 @@ class MatplotlibService:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+            highlighted_sid: Optional student ID, to show the student's standing
+                on the chart.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -164,6 +186,22 @@ class MatplotlibService:
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
+        if highlighted_sid:
+            # Overlay the student's score by highlighting the bar
+            df = self.des.get_student_data()
+            highlight_color = "#3061FF"
+            student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
+                0
+            ]
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
         if versions:
             labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
@@ -184,8 +222,8 @@ class MatplotlibService:
             return self.get_graph_as_base64(graph_bytes)
 
     def correlation_heatmap_of_questions(
-        self, *, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+        self, *, corr_df: pd.DataFrame | None = None, format: str = "base64"
+    ) -> BytesIO | str:
         """Generate a correlation heatmap of the questions.
 
         Keyword Args:
@@ -240,10 +278,10 @@ class MatplotlibService:
         question_idx: int,
         ta_name: str,
         *,
-        ta_df: Optional[pd.DataFrame] = None,
+        ta_df: pd.DataFrame | None = None,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
@@ -318,12 +356,12 @@ class MatplotlibService:
         self,
         question_idx: int,
         *,
-        marking_times_df: Optional[pd.DataFrame] = None,
+        marking_times_df: pd.DataFrame | None = None,
         versions: bool = False,
         max_time: int = 0,
         bin_width: int = 15,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the time spent marking a question.
 
         Args:
@@ -414,12 +452,12 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_idx: int,
-        times_spent_minutes: Union[List[int], List[List[float]]],
-        marks_given: Union[List[int], List[List[float]]],
+        times_spent_minutes: list[float] | list[list[float]],
+        marks_given: list[float] | list[list[float]],
         *,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
         Args:
@@ -446,9 +484,7 @@ class MatplotlibService:
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         if versions is True:
-            graphs = len(times_spent_minutes)
-            assert graphs == len(marks_given)
-            for i in range(0, graphs):
+            for i in range(len(times_spent_minutes)):
                 ax.scatter(
                     marks_given[i],
                     times_spent_minutes[i],
@@ -486,12 +522,12 @@ class MatplotlibService:
 
     def boxplot_of_marks_given_by_ta(
         self,
-        marks: List[List[int]],
-        marker_names: List[str],
+        marks: list[list[float]],
+        marker_names: list[str],
         question_idx: int,
         *,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a boxplot of the marks given by each TA for the specified question.
 
         The length and order of marks and marker_names should be the same such
@@ -560,7 +596,7 @@ class MatplotlibService:
 
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a line graph of the average percentage marks by question.
 
         Keyword Args:

@@ -7,7 +7,6 @@
 from PyQt6.QtGui import QPainterPath
 
 from plom.client.tools import CommandTool
-from plom.client.tools.rubric import RubricItem
 
 
 class CommandDelete(CommandTool):
@@ -28,9 +27,6 @@ class CommandDelete(CommandTool):
 
     def redo(self):
         self.scene.removeItem(self.deleteItem)
-        if isinstance(self.deleteItem, RubricItem):
-            # TODO: see rubric.py, I don't like this wack-a-mole approach to score
-            self.scene.refreshStateAndScore()
         # not a typo: redoing a delete is an removal action; use the undo animation
         self.undo_animation()
 
@@ -38,7 +34,3 @@ class CommandDelete(CommandTool):
         # not a typo: undoing a delete is placing an obj; use the redo animation
         self.redo_animation()
         self.scene.addItem(self.deleteItem)
-        # If the object is a RubricItem then refresh the state and score
-        if isinstance(self.deleteItem, RubricItem):
-            # TODO: see rubric.py, I don't like this wack-a-mole approach to score
-            self.scene.refreshStateAndScore()

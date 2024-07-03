@@ -664,11 +664,23 @@ class PageScene(QGraphicsScene):
         """
         return self.getScore() is None
 
+    def _refreshScore(self):
+        # Note that this assumes that the rubrics are consistent as per currentMarkingState
+        self.score = compute_score(self.get_rubrics(), self.maxMark)
+
     def refreshStateAndScore(self):
-        self.refreshScore()
+        """Compute the current score by adding up the rubric items and update state.
+
+        This should be called after any change that might effect the score, but
+        normally should shouldn't have to do that manually: for example, adding
+        or removing items from the scene triggers this automatically.
+        """
+        self._refreshScore()
         # after score and state are recomputed, we need to update a few things
         # the scorebox
-        self.scoreBox.changeScore(self.score)
+        if hasattr(self, "scoreBox") and self.scoreBox is not None:
+            # if its too early, we may not yet have a scorebox
+            self.scoreBox.changeScore(self.score)
         # update the rubric-widget
         self.parent().rubric_widget.updateLegalityOfRubrics()
         # also update the marklabel in the annotator - same text as scorebox
@@ -677,6 +689,15 @@ class PageScene(QGraphicsScene):
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
             self._updateGhost(self.current_rubric)
+
+    def addItem(self, X) -> None:
+        # X: QGraphicsItem; but typing it so gives the Liskov error
+        super().addItem(X)
+        self.refreshStateAndScore()
+
+    def removeItem(self, X) -> None:
+        super().removeItem(X)
+        self.refreshStateAndScore()
 
     def get_rubrics(self):
         """A list of the rubrics current used in the scene.
@@ -694,13 +715,6 @@ class PageScene(QGraphicsScene):
                 if isinstance(X, RubricItem):
                     rubrics.append(X.as_rubric())
         return rubrics
-
-    def refreshScore(self):
-        """Compute the current score by adding up the rubric items on the page.
-
-        Note that this assumes that the rubrics are consistent as per currentMarkingState
-        """
-        self.score = compute_score(self.get_rubrics(), self.maxMark)
 
     def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
@@ -1474,7 +1488,6 @@ class PageScene(QGraphicsScene):
                 )
             )
             self.undoStack.push(command)  # push the delta onto the undo stack.
-            self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:
             log.debug(
@@ -2573,7 +2586,6 @@ class PageScene(QGraphicsScene):
             )
             # push the delta onto the undo stack.
             self.undoStack.push(command)
-            self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:  # stamp is done
             # TODO: how to get here?  In testing 2022-03-01, Colin could not make this code run

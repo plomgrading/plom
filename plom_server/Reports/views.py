@@ -3,12 +3,13 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 
 from django.shortcuts import render
 from django.http import HttpResponse
 
 from Base.base_group_views import ManagerRequiredView
-from Finish.services import ReportPDFService, StudentMarkService
+from Finish.services import ReportPDFService, StudentMarkService, GRAPH_DETAILS
 from Mark.services import MarkingTaskService
 
 
@@ -21,9 +22,13 @@ class ReportLandingPageView(ManagerRequiredView):
         context = self.build_context()
         total_tasks = MarkingTaskService().get_n_valid_tasks()
         all_marked = StudentMarkService().are_all_papers_marked() and total_tasks > 0
+
         context.update(
             {
                 "all_marked": all_marked,
+                "graph_list": [
+                    {"name": key, **value} for key, value in GRAPH_DETAILS.items()
+                ],
             }
         )
 
@@ -34,12 +39,19 @@ class ReportLandingPageView(ManagerRequiredView):
         # Get the selected report type from the form
         report_type = request.POST.get("report_type", "brief")
 
+        # Get the selected graphs for the brief report
+        selected_graphs = {
+            key: request.POST.get(key) == "on" for key in GRAPH_DETAILS.keys()
+        }
+
         try:
-            # Generate the report based on the selected type
+            # Generate the report based on the selected type and graphs
             if report_type == "full":
                 d = ReportPDFService.pdf_builder(versions=True, brief=False)
             else:
-                d = ReportPDFService.pdf_builder(versions=True, brief=True)
+                d = ReportPDFService.pdf_builder(
+                    versions=True, brief=True, selected_graphs=selected_graphs
+                )
         except ValueError as e:
             response = HttpResponse(
                 "Error building report: it is possible marking is incomplete?\n"
