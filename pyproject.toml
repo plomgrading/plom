@@ -53,7 +53,7 @@ dependencies = [
     "django-braces>=1.15.0",
     "django-filter>=23.2",
     "django-htmx>=1.14.0",
-    "django-mathfilters==1.0.0",
+    "django-mathfilters>=1.0.0",
     "django-huey>=1.1.1",
     "django-polymorphic>=3.1.0",
     "django-reset-migrations>=0.4.0",
@@ -96,7 +96,7 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=1.4.0",
-    "pyspellchecker==0.8.1",
+    "pyspellchecker>=0.8.1",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
