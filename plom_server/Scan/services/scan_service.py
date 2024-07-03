@@ -348,6 +348,10 @@ class ScanService:
         """Return all of the staging bundles."""
         return list(StagingBundle.objects.all())
 
+    def staging_bundles_exist(self) -> bool:
+        """Check if any staging bundles exist."""
+        return StagingBundle.objects.all().exists()
+
     def parse_qr_code(self, list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
         """Parse QR codes into list of dictionaries.
 
