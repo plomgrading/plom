@@ -169,7 +169,7 @@ class CorrectionWidget(QFrame):
         super().__init__()
         self.speller = SpellChecker(distance=1)
         self.list_widget = QListWidget()
-        self.setFrameShape(QFrame.Shape.Box)
+        self.setFrameShape(QFrame.Shape.StyledPanel)
         self.list_widget.doubleClicked.connect(self.replace_word_from_correction_list)
 
         self.init_ui()
