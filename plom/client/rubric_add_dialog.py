@@ -472,13 +472,11 @@ class AddRubricBox(QDialog):
                 32, 10, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
             )
         )
-        lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
-        reapable_layout = lay
-
-        self.spell_checker = QPushButton("Check Spelling")
-        self.spell_checker.clicked.connect(self.TE.highlight_text)
-        lay.addWidget(self.spell_checker)
+        _ = QPushButton("Check Spelling")
+        _.clicked.connect(self.TE.highlight_text)
+        lay.addWidget(_)
+        # text_options_layout = lay
 
         flay.addRow("", lay)
 
@@ -694,11 +692,12 @@ class AddRubricBox(QDialog):
         if reapable:
             self.reapable_CB.addItem("")
             self.reapable_CB.addItems(reapable)
+            self.reapable_CB.setToolTip("Choose existing text from page")
         else:
-            for i in range(reapable_layout.count()):
-                w = reapable_layout.itemAt(i).widget()
-                if w and w != self.spell_checker:
-                    w.setEnabled(False)
+            self.reapable_CB.setEnabled(False)
+            self.reapable_CB.setToolTip(
+                "Choose existing text from page (none available)"
+            )
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
