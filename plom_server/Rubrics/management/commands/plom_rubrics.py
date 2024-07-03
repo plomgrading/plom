@@ -155,10 +155,8 @@ class Command(BaseCommand):
             self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
 
         with open(filename, "w") as f:
-            buf = service.get_rubric_as_file(suffix, question=question)
-            # buf is a BytesIO, so we need to seek back to the start
-            buf.seek(0)
-            f.write(buf.getvalue())
+            data = service.get_rubric_data(suffix, question=question)
+            f.write(data)
 
     def upload_rubrics_from_file(self, filename):
         """Load rubrics from a file and upload them to the server.
@@ -181,13 +179,15 @@ class Command(BaseCommand):
 
         if suffix in (".json", ".csv"):
             f = open(filename, "r")
+            data = f.read()
         elif suffix == ".toml":
             f = open(filename, "rb")
+            data = f.read().decode("utf-8")
         else:
             raise CommandError(f"Unsupported file type: {filename}")
 
         service = RubricService()
-        rubrics = service.get_rubric_from_file(f, suffix[1:])
+        rubrics = service.update_rubric_data(data, suffix[1:])
         return len(rubrics)
 
     def add_arguments(self, parser):
