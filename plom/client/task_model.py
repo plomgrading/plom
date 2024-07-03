@@ -19,6 +19,7 @@ from typing import Any
 from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
+from plom.misc_utils import pprint_score
 from .useful_classes import ErrorMsg
 
 
@@ -86,7 +87,7 @@ class MarkerExamModel(QStandardItemModel):
         *,
         src_img_data: list[dict[str, Any]] = [],
         status: str = "untouched",
-        mark: int = -1,
+        mark: int | float | None = -1,
         marking_time: float = 0,
         tags: list[str] = [],
         integrity_check: str = "",
@@ -97,7 +98,7 @@ class MarkerExamModel(QStandardItemModel):
             task_id_str: the Task ID for the page being uploaded. Takes the form
                 "q1234g9" for paper 1234 question 9.
             status: test status string.
-            mark: the mark of the question.
+            mark: the mark awarded to the question, can be None.
             marking_time (float/int): marking time spent on that page in seconds.
             tags: Tags corresponding to the exam.  We will flatten to a
                 space-separated string.  TODO: maybe we should do that for display
@@ -126,17 +127,13 @@ class MarkerExamModel(QStandardItemModel):
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
-        # hide -1 which something might be using for "not yet marked"
-        # also, maybe in the future we have None as the sentinel so support that too
-        try:
-            if mark is None:
-                markstr = ""
-            elif mark <= 0:
-                markstr = ""
-            else:
-                markstr = f"{mark:.5g}"
-        except ValueError:
+
+        # some processes might use -1 for unmarked papers
+        if mark is not None and mark < 0:
             markstr = ""
+        else:
+            markstr = pprint_score(mark)
+
         # these *must* be strings but I don't understand why
         self.appendRow(
             [
@@ -395,7 +392,7 @@ class MarkerExamModel(QStandardItemModel):
         t = self._get_marking_time(r)
         self._set_marking_time(r, marking_time + t)
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, _idx_mark), str(mark))
+        self.setData(self.index(r, _idx_mark), pprint_score(mark))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
