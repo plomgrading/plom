@@ -444,7 +444,8 @@ class BaseMessenger:
         Raises:
             PlomAPIException: a mismatch between server/client versions.
             PlomExistingLoginException: user already has a token:
-                currently, we do not support getting another one.
+                currently, we do not support getting another one on
+                legacy servers.  TBD on the new server.
             PlomAuthenticationException: wrong password, account
                 disabled, etc: check contents for details.
             PlomSeriousException: something else unexpected such as a
@@ -505,9 +506,9 @@ class BaseMessenger:
                 self.token = response.json()
                 self.user = user
             except requests.HTTPError as e:
-                if response.status_code == 400:
+                if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
-                elif response.status_code == 401:
+                elif response.status_code == 400:
                     raise PlomAPIException(response.reason) from None
                 elif response.status_code == 409:
                     # TODO: not sure django-server prevents simultaneous logins
