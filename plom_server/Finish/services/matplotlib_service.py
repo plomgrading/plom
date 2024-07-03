@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import base64
 from io import BytesIO
-from typing import Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -413,8 +412,8 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_idx: int,
-        times_spent_minutes: Union[list[float], list[list[float]]],
-        marks_given: Union[list[float], list[list[float]]],
+        times_spent_minutes: list[float] | list[list[float]],
+        marks_given: list[float] | list[list[float]],
         *,
         versions: bool = False,
         format: str = "base64",
