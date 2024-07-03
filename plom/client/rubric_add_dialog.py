@@ -95,7 +95,8 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         # TODO: initial value of subs?
         self.subs = []
         super().__init__(*args, **kwargs)
-        self.wordRegEx = re.compile(r"\b([A-Za-z]{2,})\b")
+        # TODO: see dynamic spellchecker, future work
+        # self.wordRegEx = re.compile(r"\b([A-Za-z]{2,})\b")
         self.speller = SpellChecker(distance=1)
 
     def highlightBlock(self, text: str | None) -> None:
@@ -129,31 +130,33 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
                 # frmt.setToolTip('v2 subs: "TODO"')
                 self.setFormat(match.start(), match.end() - match.start(), frmt)
 
-    def _highlight_spelling(self, text: str | None):
-        """Highlight spelling mistakes with red squiggle line.
-
-        Args:
-            text: the text to be highlighted.
-        """
-        if text is None:
-            return
-
-        self.misspelledFormat = QTextCharFormat()
-        self.misspelledFormat.setUnderlineStyle(
-            QTextCharFormat.UnderlineStyle.SpellCheckUnderline
-        )  # Platform and theme dependent
-        self.misspelledFormat.setUnderlineColor(QColor("red"))
-
-        for word_object in self.wordRegEx.finditer(text):
-            if word_object.group() != "tex" and word_object.group().isalpha():
-                most_likely_word = self.speller.correction(word_object.group())
-
-                if most_likely_word and most_likely_word != word_object.group():
-                    self.setFormat(
-                        word_object.start(),
-                        word_object.end() - word_object.start(),
-                        self.misspelledFormat,
-                    )
+    # def _highlight_spelling(self, text: str | None):
+    #     """Highlight spelling mistakes with red squiggle line.
+    #
+    #     TODO: Currently unused, pending testing and review in new MR.
+    #
+    #     Args:
+    #         text: the text to be highlighted.
+    #     """
+    #     if text is None:
+    #         return
+    #
+    #     self.misspelledFormat = QTextCharFormat()
+    #     self.misspelledFormat.setUnderlineStyle(
+    #         QTextCharFormat.UnderlineStyle.SpellCheckUnderline
+    #     )  # Platform and theme dependent
+    #     self.misspelledFormat.setUnderlineColor(QColor("red"))
+    #
+    #     for word_object in self.wordRegEx.finditer(text):
+    #         if word_object.group() != "tex" and word_object.group().isalpha():
+    #             most_likely_word = self.speller.correction(word_object.group())
+    #
+    #             if most_likely_word and most_likely_word != word_object.group():
+    #                 self.setFormat(
+    #                     word_object.start(),
+    #                     word_object.end() - word_object.start(),
+    #                     self.misspelledFormat,
+    #                 )
 
     def setSubs(self, subs):
         self.subs = subs
