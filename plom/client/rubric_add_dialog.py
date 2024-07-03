@@ -269,7 +269,7 @@ class WideTextEdit(QTextEdit):
         super().__init__()
         self.speller = SpellChecker(distance=1)
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
         """Handle double left-click event.
 
         Only pops up the spelling corrections if the most likely
@@ -281,6 +281,8 @@ class WideTextEdit(QTextEdit):
         Raises:
             RunTimeError if the AddRubricBox dialog is uninitialized.
         """
+        if not event:
+            return
         if event.button() == Qt.MouseButton.LeftButton:
             super().mouseDoubleClickEvent(event)
             selected_text = self.textCursor().selectedText()
