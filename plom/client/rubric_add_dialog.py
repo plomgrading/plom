@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import sys
+from textwrap import shorten
 from typing import Any
 
 import arrow
@@ -473,14 +474,11 @@ class AddRubricBox(QDialog):
                 32, 10, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
             )
         )
-        lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
-        reapable_layout = lay
-
-        self.spell_checker = QPushButton("Check Spelling")
-        self.spell_checker.clicked.connect(self.TE.highlight_text)
-        lay.addWidget(self.spell_checker)
-
+        if self.use_experimental_features:
+            _ = QPushButton("Check Spelling")
+            _.clicked.connect(self.TE.highlight_text)
+            lay.addWidget(_)
         flay.addRow("", lay)
 
         frame = QFrame()
@@ -694,14 +692,17 @@ class AddRubricBox(QDialog):
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
-            self.reapable_CB.addItems(reapable)
+            reaplabels = [shorten(x.strip(), 42, placeholder="...") for x in reapable]
+            self.reapable_CB.addItems(reaplabels)
+            self._list_of_reapables = reapable
+            self.reapable_CB.setToolTip("Choose existing text from page")
         else:
-            for i in range(reapable_layout.count()):
-                w = reapable_layout.itemAt(i).widget()
-                if w and w != self.spell_checker:
-                    w.setEnabled(False)
+            self.reapable_CB.setEnabled(False)
+            self.reapable_CB.setToolTip(
+                "Choose existing text from page (none available)"
+            )
         # Set up TE and CB so that when CB changed, text is updated
-        self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
+        self.reapable_CB.currentIndexChanged.connect(self.changedReapableCB)
 
         # the rubric may have fields we don't modify: keep a copy around
         self._old_rubric = {} if not com else com.copy()
@@ -969,9 +970,14 @@ class AddRubricBox(QDialog):
         self.group_combobox.insertItem(n, s)
         self.group_combobox.setCurrentIndex(n)
 
-    def changedReapableCB(self):
+    def changedReapableCB(self, idx: int) -> None:
+        if idx <= 0:
+            # -1 for newly-empted combobox
+            # 0 for selecting the first empty placeholder
+            # In either case, user might be surprised by clearing the text
+            return
         self.TE.clear()
-        self.TE.insertPlainText(self.reapable_CB.currentText())
+        self.TE.insertPlainText(self._list_of_reapables[idx - 1])
 
     def toggle_version_specific(self):
         if self.version_specific_cb.isChecked():

@@ -236,6 +236,7 @@ class Annotator(QWidget):
         #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
         # )
         features = (
+            "Spelling checking in rubric creation",
             "Persistent held region between papers.",
             # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
         )
