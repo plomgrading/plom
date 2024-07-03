@@ -457,7 +457,11 @@ class MarkerClient(QWidget):
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
-        self.loadMarkedList()
+        if self.msgr.is_legacy_server():
+            self.loadMarkedList()
+        else:
+            assert self.msgr.username is not None
+            self.download_task_list(username=self.msgr.username)
 
         # Keep the original format around in case we need to change it
         self._cachedProgressFormatStr = self.ui.mProgressBar.format()
@@ -654,6 +658,8 @@ class MarkerClient(QWidget):
 
         Returns:
             None
+
+        Deprecated: only called on legacy servers.
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question_idx, self.version)
@@ -1044,6 +1050,7 @@ class MarkerClient(QWidget):
 
         self.get_downloads_for_src_img_data(src_img_data)
 
+        # TODO: do we really want to just hardcode "untouched" here?
         self.examModel.modify_task(
             task,
             src_img_data=src_img_data,
@@ -1206,15 +1213,17 @@ class MarkerClient(QWidget):
             self._show_only_my_tasks()
         elif cbidx == 1:
             self._show_all_tasks()
-            if not self._download_full_task_list():
+            if not self.download_task_list():
                 # could not update (maybe legacy server) so go back to only mine
                 self.ui.tasksComboBox.setCurrentIndex(0)
         else:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
-    def _download_full_task_list(self) -> bool:
+    def download_task_list(self, *, username: str = "") -> bool:
         try:
-            tasks = self.msgr.get_tasks(self.question_idx, self.version)
+            tasks = self.msgr.get_tasks(
+                self.question_idx, self.version, username=username
+            )
         except PlomNoServerSupportException as e:
             WarnMsg(self, str(e)).exec()
             return False
@@ -1224,6 +1233,7 @@ class MarkerClient(QWidget):
                 t["paper_number"], t["question"]
             )
             username = t.get("username", "")
+            integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
             mark = t.get("score", -1)  # not keen on this -1 sentinel
             try:
@@ -1234,6 +1244,7 @@ class MarkerClient(QWidget):
                     status=t["status"],
                     tags=t["tags"],
                     username=username,
+                    integrity_check=integrity,
                 )
             except KeyError:
                 # only update those tasks that aren't ours
@@ -1329,7 +1340,12 @@ class MarkerClient(QWidget):
                 s += f': {task} belongs to "{user}"'
             InfoMsg(self, s).exec()
             return
-        if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
+        if self.examModel.getStatusByTask(task).casefold() in (
+            "complete",
+            "marked",
+            "uploading...",
+            "???",
+        ):
             InfoMsg(self, "Cannot defer a marked test.").exec()
             return
         self.examModel.deferPaper(task)
@@ -1392,7 +1408,13 @@ class MarkerClient(QWidget):
         """
         status = self.examModel.getStatusByTask(task)
 
-        if status.casefold() not in ("marked", "uploading...", "???", "untouched"):
+        if status.casefold() not in (
+            "complete",
+            "marked",
+            "uploading...",
+            "???",
+            "untouched",
+        ):
             # TODO: should this make a dialog somewhere?
             log.warn(f"task {task} status '{status}' is not your's to annotate")
             return None
@@ -1408,7 +1430,7 @@ class MarkerClient(QWidget):
         aname = paperdir / Gtask
         pdict = None
 
-        if status in ("marked", "uploading...", "???"):
+        if status.casefold() in ("complete", "marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return None
@@ -1698,7 +1720,10 @@ class MarkerClient(QWidget):
         stat = self.examModel.getStatusByTask(task)
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
-            self.examModel.setStatusByTask(task, "marked")
+            if self.msgr.is_legacy_server():
+                self.examModel.setStatusByTask(task, "marked")
+            else:
+                self.examModel.setStatusByTask(task, "Complete")
         self.updateProgress(numDone, numtotal)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):

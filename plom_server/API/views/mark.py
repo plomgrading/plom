@@ -73,43 +73,6 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
-class MgetDoneTasks(APIView):
-    """Retrieve data for tasks which have already been graded by a particular user.
-
-    Respond with status 200.
-
-    Returns:
-        List of lists of info for each of the already-processed
-        questions by the calling user.  The first entry is the task
-        string of the form ``q0002g3``, the second is the score, the
-        floating-point time in seconds, a list of tags (strings), and
-        an "integrity code".  An empty list is returned if nothing has
-        been graded by this user.
-    """
-
-    def get(self, request: Request, *args) -> Response:
-        data = request.data
-        question = data["q"]
-        version = data["v"]
-
-        mts = MarkingTaskService()
-        marks = mts.get_user_mark_results(
-            request.user, question_idx=question, version=version
-        )
-
-        rows = map(
-            lambda annotation: [
-                annotation.task.code,
-                annotation.score,
-                annotation.marking_time,
-                mts.get_tags_for_task(annotation.task.code),
-                annotation.task.pk,  # TODO: integrity check is not implemented yet
-            ],
-            marks,
-        )
-        return Response(rows, status=status.HTTP_200_OK)
-
-
 class GetTasks(APIView):
     """Retrieve data for tasks.
 
@@ -125,18 +88,21 @@ class GetTasks(APIView):
     """
 
     def get(self, request: Request, *args) -> Response:
+        # TODO: data = request.query_data  # get the ?stuff
         data = request.data
         question_idx = data.get("q")
         version = data.get("v")
+        username = data.get("username")
         # TODO: much more optional things we could support: tag, paper_min, paper_max
         # TODO: see progress_task_annot.py
 
         data = MarkingStatsService().filter_marking_task_annotation_info(
             question_idx=question_idx,
             version=version,
+            username=username,
         )
-        # TODO: priority might be useful?
-        # TODO: this is list of dicts
+        # TODO: priority might be useful for client
+        # TODO: this is list of dicts, edit docs above?
         return Response(data, status=status.HTTP_200_OK)
 
 
