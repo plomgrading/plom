@@ -1959,6 +1959,25 @@ class PageScene(QGraphicsScene):
                 return idx
         raise KeyError(f"no row in src_img_data visible at n={n}")
 
+    def _id_from_visible_idx(self, n: int) -> int:
+        """Find the id from the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding `id` which is one of the keys of the
+            rows in the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
+        n_idx = self._idx_from_visible_idx(n)
+        return self.src_img_data[n_idx]["id"]
+
     def _shift_page_image_only(self, n: int, m: int) -> None:
         n_idx = self._idx_from_visible_idx(n)
         m_idx = self._idx_from_visible_idx(m)
@@ -2011,7 +2030,7 @@ class PageScene(QGraphicsScene):
         self.buildUnderLay()
 
     def dont_use_page_image(self, n: int) -> None:
-        n_idx = self._idx_from_visible_idx(n)
+        imgid = self._id_from_visible_idx(n)
         img = self.underImage.images[n]
         e = QGraphicsColorizeEffect()
         e.setColor(QColor("darkred"))
@@ -2047,7 +2066,7 @@ class PageScene(QGraphicsScene):
         stuff = self.find_items_right_of(loc)
 
         # like calling _set_visible_page_image but covered in undo sauce
-        cmd = CommandRemovePage(self, n_idx, n, go_left=go_left)
+        cmd = CommandRemovePage(self, imgid, n, go_left=go_left)
         self.undoStack.push(cmd)
 
         # enqueues appropriate CommmandMoves
@@ -2055,8 +2074,10 @@ class PageScene(QGraphicsScene):
 
         self.undoStack.endMacro()
 
-    def _set_visible_page_image(self, n_idx: int, show: bool = True) -> None:
-        self.src_img_data[n_idx]["visible"] = show
+    def _set_visible_page_image(self, imgid: int, show: bool = True) -> None:
+        for row in self.src_img_data:
+            if row["id"] == imgid:
+                row["visible"] = show
         # TODO: replace with emit signal (if needed)
         # self.parent().report_new_or_permuted_image_data(self.src_img_data)
         self.buildUnderLay()
