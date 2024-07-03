@@ -270,34 +270,6 @@ class WideTextEdit(QTextEdit):
         self.speller = SpellChecker(distance=1)
 
     def mouseDoubleClickEvent(self, event):
-        self.on_double_click(event)
-
-    def sizeHint(self):
-        sz = super().sizeHint()
-        sz.setWidth(sz.width() * 2)
-        return sz
-
-    def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
-        if e is not None:
-            if e.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
-                e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter
-            ):
-                e.ignore()
-                return
-
-            # Reset formatting, otherwise it can unexpectedly adopt the
-            # red squiggle line while backspacing.
-            # TODO: Decide whether reset format for any key or only backspace
-            # What should happen when text is inputted in the middle of
-            # the highlighted text?.
-            elif e.key() == Qt.Key.Key_Backspace:
-                super().keyPressEvent(e)
-                self.setCurrentCharFormat(QTextCharFormat())
-                return
-
-        super().keyPressEvent(e)
-
-    def on_double_click(self, event: QMouseEvent):
         """Handle double left-click event.
 
         Only pops up the spelling corrections if the most likely
@@ -333,6 +305,31 @@ class WideTextEdit(QTextEdit):
                     rubric_dialog.correction_widget.set_selected_word(
                         selected_text, self.textCursor()
                     )
+
+    def sizeHint(self):
+        sz = super().sizeHint()
+        sz.setWidth(sz.width() * 2)
+        return sz
+
+    def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
+        if e is not None:
+            if e.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
+                e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter
+            ):
+                e.ignore()
+                return
+
+            # Reset formatting, otherwise it can unexpectedly adopt the
+            # red squiggle line while backspacing.
+            # TODO: Decide whether reset format for any key or only backspace
+            # What should happen when text is inputted in the middle of
+            # the highlighted text?.
+            elif e.key() == Qt.Key.Key_Backspace:
+                super().keyPressEvent(e)
+                self.setCurrentCharFormat(QTextCharFormat())
+                return
+
+        super().keyPressEvent(e)
 
     def highlight_text(self) -> None:
         """Underline the texts that are suspected for spelling mistake.
