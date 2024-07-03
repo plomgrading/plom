@@ -14,6 +14,7 @@ import sys
 from typing import Any
 
 import arrow
+from spellchecker import SpellChecker
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -58,7 +59,6 @@ from PyQt6.QtWidgets import (
     QSplitter,
 )
 
-from spellchecker import SpellChecker
 import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
