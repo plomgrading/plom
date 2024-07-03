@@ -474,11 +474,10 @@ class AddRubricBox(QDialog):
             )
         )
         lay.addWidget(self.reapable_CB)
-        _ = QPushButton("Check Spelling")
-        _.clicked.connect(self.TE.highlight_text)
-        lay.addWidget(_)
-        # text_options_layout = lay
-
+        if self.use_experimental_features:
+            _ = QPushButton("Check Spelling")
+            _.clicked.connect(self.TE.highlight_text)
+            lay.addWidget(_)
         flay.addRow("", lay)
 
         frame = QFrame()
