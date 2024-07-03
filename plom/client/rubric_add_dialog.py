@@ -332,7 +332,7 @@ class WideTextEdit(QTextEdit):
                         selected_text, self.textCursor()
                     )
 
-    def highlight_text(self):
+    def highlight_text(self) -> None:
         """Underline the texts that are suspected for spelling mistake.
 
         The text is underlined with red squiggle line when the most likely
