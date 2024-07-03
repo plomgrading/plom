@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import sys
+from textwrap import shorten
 from typing import Any
 
 import arrow
@@ -691,7 +692,9 @@ class AddRubricBox(QDialog):
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
-            self.reapable_CB.addItems(reapable)
+            reaplabels = [shorten(x.strip(), 42, placeholder="...") for x in reapable]
+            self.reapable_CB.addItems(reaplabels)
+            self._list_of_reapables = reapable
             self.reapable_CB.setToolTip("Choose existing text from page")
         else:
             self.reapable_CB.setEnabled(False)
@@ -974,7 +977,7 @@ class AddRubricBox(QDialog):
             # In either case, user might be surprised by clearing the text
             return
         self.TE.clear()
-        self.TE.insertPlainText(self.reapable_CB.currentText())
+        self.TE.insertPlainText(self._list_of_reapables[idx - 1])
 
     def toggle_version_specific(self):
         if self.version_specific_cb.isChecked():
