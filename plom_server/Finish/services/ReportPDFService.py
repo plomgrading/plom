@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from textwrap import dedent
 
+import numpy as np
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
 
@@ -14,7 +15,6 @@ from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
-import numpy as np
 
 
 def _identity_in_first_input(x, *args, **kwargs):
