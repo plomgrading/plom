@@ -625,7 +625,7 @@ def main():
                 "  **Optional** - Please edit the template solution spec if you are including solutions in your workflow."
             )
             SpecVerifier.create_solution_template("solutionSpec.toml")
-        print('Creating "sourceVersions" directory for your test source PDFs.')
+        print('Creating "sourceVersions/" directory for your test source PDFs.')
         Path("sourceVersions").mkdir(exist_ok=True)
         if not args.demo:
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
@@ -662,6 +662,8 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
+        print('Creating "sourceVersions/" directory for your test source PDFs.')
+        Path("sourceVersions").mkdir(exist_ok=True)
 
     elif args.command == "class":
         msgr = start_messenger(args.server, args.password)

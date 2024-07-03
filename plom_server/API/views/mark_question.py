@@ -109,7 +109,8 @@ class QuestionMarkingViewSet(ViewSet):
         service = QuestionMarkingService(code=code, user=request.user)
         try:
             with transaction.atomic():
-                service.assign_task_to_user()
+                task = service._get_task_for_update()
+                MarkingTaskService.assign_task_to_user(task.pk, request.user)
                 question_data = service.get_page_data()
                 tags = MarkingTaskService().get_tags_for_task(code)
 

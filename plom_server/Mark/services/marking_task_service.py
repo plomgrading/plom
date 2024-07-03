@@ -213,23 +213,36 @@ class MarkingTaskService:
         """Return True if there is at least one marking task in the database."""
         return MarkingTask.objects.exists()
 
-    def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
+    @staticmethod
+    def assign_task_to_user(task_pk: int, user: User) -> None:
         """Associate a user to a marking task and update the task status.
+
+        The task must be TO_DO, and it will become OUT.
 
         Note: this looks superficially like :method:`reassign_task_to_user`;
         this current method is really about claiming "OUT" tasks for a user.
 
         Args:
-            user: reference to a User instance
-            task: reference to a MarkingTask instance
+            task_pk: a private key of a task.
+            user: reference to a User instance.
 
         Exceptions:
             RuntimeError: task is already assigned.
+            MarkingTask.DoesNotExist: if there is no such task.
         """
-        if task.status == MarkingTask.OUT:
+        task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        # TODO: != MarkingTask.TO_DO versus == MarkingTask.OUT
+        if task.status != MarkingTask.TO_DO:
             raise RuntimeError("Task is currently assigned.")
 
-        # TODO: needs ported to select_for_update, or is this dead code?
+        # the assigned_user is None, then okay, or if set to the current user okay,
+        # but otherwise throw an error.
+        if not (task.assigned_user is None or task.assigned_user == user):
+            raise RuntimeError(
+                f'Unable to assign task to user "{user}" - task has'
+                f'- a different assigned user "{task.assigned_user}".'
+            )
+
         task.assigned_user = user
         task.status = MarkingTask.OUT
         task.save()

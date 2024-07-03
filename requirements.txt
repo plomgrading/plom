@@ -8,6 +8,7 @@
 # Copyright (C) 2022-2024 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Bryan Tanady
 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -19,6 +20,7 @@ platformdirs==4.2.2
 PyQt6==6.6.1
 PyQt6-Qt6==6.6.3
 PyQt6-sip==13.6.0
+pyspellchecker==0.8.1
 pytest-qt==4.4.0
 
 # Legacy-server only deps
@@ -40,7 +42,7 @@ django-mathfilters==1.0.0
 django-polymorphic==3.1.0
 django-reset-migrations==0.4.0
 django-session-timeout==0.1.0
-djangorestframework==3.14.0
+djangorestframework==3.15.2
 exif==1.6.0
 file-magic==0.4.1
 fonttools==4.51.0

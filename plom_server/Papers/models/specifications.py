@@ -64,6 +64,15 @@ class Specification(SingletonBaseModel):
         """Return the questions in the form of a list."""
         return list(SpecQuestion.objects.all())
 
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the Specification model.
+
+        Raises:
+            Specification.DoesNotExist: If the Specification model does not exist.
+        """
+        return cls.objects.get(pk=1)
+
 
 class SolnSpecQuestion(models.Model):
     """A solution to a question in the solution specification."""

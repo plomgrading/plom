@@ -175,13 +175,17 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             return _error_response(
                 f"Client API version {client_api} is not supported by this server "
                 f"(server API version {Plom_API_Version})",
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return _error_response(
+                "The username / password pair are not authorized",
+                status.HTTP_401_UNAUTHORIZED,
+            )
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)

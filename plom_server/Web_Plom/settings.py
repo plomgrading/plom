@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     "Contrib",
     "TaskOrder",
     "Rectangles",
+    "QuestionTags",
 ]
 
 MIDDLEWARE = [

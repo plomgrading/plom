@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import logging
 from pathlib import Path
@@ -75,7 +76,8 @@ class ScrapPaperService:
     def delete_scrap_paper_pdf(self):
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ScrapPaperPDFTask.load()
-        Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
+        if task_obj.scrap_paper_pdf:
+            Path(task_obj.scrap_paper_pdf.path).unlink(missing_ok=True)
         task_obj.transition_back_to_todo()
 
     def build_scrap_paper_pdf(self):
