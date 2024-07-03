@@ -699,7 +699,7 @@ class AddRubricBox(QDialog):
                 "Choose existing text from page (none available)"
             )
         # Set up TE and CB so that when CB changed, text is updated
-        self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
+        self.reapable_CB.currentIndexChanged.connect(self.changedReapableCB)
 
         # the rubric may have fields we don't modify: keep a copy around
         self._old_rubric = {} if not com else com.copy()
@@ -967,7 +967,12 @@ class AddRubricBox(QDialog):
         self.group_combobox.insertItem(n, s)
         self.group_combobox.setCurrentIndex(n)
 
-    def changedReapableCB(self):
+    def changedReapableCB(self, idx: int) -> None:
+        if idx <= 0:
+            # -1 for newly-empted combobox
+            # 0 for selecting the first empty placeholder
+            # In either case, user might be surprised by clearing the text
+            return
         self.TE.clear()
         self.TE.insertPlainText(self.reapable_CB.currentText())
 
