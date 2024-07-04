@@ -592,7 +592,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        m.addAction("Reassign task to...", self.reassign_task)
+        # TODO: see method reassign_task(self) below
+        # m.addAction("Reassign task to...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
@@ -1287,6 +1288,7 @@ class MarkerClient(QWidget):
         return True
 
     def reassign_task(self):
+        """TODO: just a stub for now, no one is calling this."""
         task = self.get_current_task_id_or_none()
         if not task:
             return
