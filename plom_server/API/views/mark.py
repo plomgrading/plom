@@ -73,23 +73,21 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+# GET: /MK/tasks/all
 class GetTasks(APIView):
     """Retrieve data for tasks.
-
-    TODO: move the q data bits out of json into the url as optional q=7 stuff.
 
     Respond with status 200.
 
     Returns:
-        List of lists of info for each task...  TODO: docs.
+        List of dicts of info for each task...  TODO: docs.
         An empty list might be returned if no tasks.
         This is potentially a lot of data so we use a list
         of lists instead of a list of dicts for compactness.
     """
 
-    def get(self, request: Request, *args) -> Response:
-        # TODO: data = request.query_data  # get the ?stuff
-        data = request.data
+    def get(self, request: Request) -> Response:
+        data = request.query_params
         question_idx = data.get("q")
         version = data.get("v")
         username = data.get("username")
@@ -106,6 +104,8 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+# GET: /pagedata/{papernum}
+# GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):
     """Get page metadata for a particular test-paper optionally with a question highlighted.
 
@@ -197,7 +197,9 @@ class MgetPageDataQuestionInContext(APIView):
         ]
     """
 
-    def get(self, request, paper, question=None):
+    def get(
+        self, request: Request, *, papernum: int, questionidx: int | None = None
+    ) -> Response:
         service = PageDataService()
 
         try:
@@ -207,11 +209,14 @@ class MgetPageDataQuestionInContext(APIView):
             # anonymous grading) should filter this out.  This is the current behaviour
             # of the Plom Client UI tool.
             page_metadata = service.get_question_pages_metadata(
-                paper, question=question, include_idpage=True, include_dnmpages=True
+                papernum,
+                question=questionidx,
+                include_idpage=True,
+                include_dnmpages=True,
             )
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Paper {paper} does not exist: {e}", status.HTTP_409_CONFLICT
+                f"Paper {papernum} does not exist: {e}", status.HTTP_409_CONFLICT
             )
         return Response(page_metadata, status=status.HTTP_200_OK)
 

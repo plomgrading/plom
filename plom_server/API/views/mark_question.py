@@ -21,12 +21,15 @@ from .utils import _error_response
 class QuestionMarkingViewSet(ViewSet):
     """Controller for the question marking workflow."""
 
+    # GET: /MK/tasks/available
     @action(detail=False, methods=["get"], url_path="available")
     def available(self, request: Request, *args) -> Response:
-        """Get the next marking task.
+        """Get the next currently-available marking task.
 
-        get:
         Responds with a code for the next available marking task.
+        Callers then need to "claim" that marking task if they want it.
+        We are not holding it for you: the server may tell two users
+        the same task is available.
 
         The behaviour is influenced by various options.  A confusing case is
         ``tag`` which is a *preference* and not a *requiremennt*.
@@ -77,6 +80,8 @@ class QuestionMarkingViewSet(ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(task.code, status=status.HTTP_200_OK)
 
+    # POST: /MK/tasks/{code}
+    # PATCH: /MK/tasks/{code}
     @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
     def claim_or_mark_task(self, request: Request, code: str) -> Response:
         """Attach a user to a marking task, or accept a grade and annotation.

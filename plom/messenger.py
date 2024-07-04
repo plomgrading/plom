@@ -245,20 +245,17 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
+                query_params = []
+                if qidx is not None:
+                    query_params.append(f"q={qidx}")
+                if v is not None:
+                    query_params.append(f"v={v}")
+                if username:
+                    query_params.append(f"username={username}")
                 url = "/MK/tasks/all"
-                # extra = ""
-                # if qidx is not None:
-                #     extra += f"q={qidx}"
-                # if v is not None:
-                #     extra += f"v={v}"
-                # if extra:
-                #     url += "?" + extra
-                # TODO: make this optional ? stuff work, for now we use json
-                # TODO: but /MK/tasks/available also uses json, so which is right?
-                # response = self.get_auth(url)
-                response = self.get_auth(
-                    url, json={"q": qidx, "v": v, "username": username}
-                )
+                if query_params:
+                    url += "/MK/tasks/all?" + "&".join(query_params)
+                response = self.get_auth(url)
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
@@ -397,6 +394,7 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
+                # Note: non-legacy server ignores version here
                 response = self.patch(
                     f"/MK/tasks/{code}",
                     json={"user": self.user, "token": self.token, "version": version},
@@ -523,7 +521,6 @@ class Messenger(BaseMessenger):
 
         # put the scene in legacy format
         for x in pdict["sceneItems"]:
-            print(x)
             if x[0] == "Rubric":
                 x[0] = "GroupDeltaText"
                 # TODO: may need to do more if we change the format of the other fields
@@ -563,7 +560,6 @@ class Messenger(BaseMessenger):
                                 "plom": (orig_plomfile_name, f2, "text/plain"),
                             }
                         )
-                        print("here")
                         # increase read timeout relative to default: Issue #1575
                         timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
                         response = self.put(
@@ -573,7 +569,6 @@ class Messenger(BaseMessenger):
                             timeout=timeout,
                         )
                     response.raise_for_status()
-                    print("response back")
                     return response.json()
                 except (requests.ConnectionError, requests.Timeout) as e:
                     raise PlomTimeoutError(
