@@ -593,11 +593,11 @@ class RubricService:
         """Get the rubric data as a file.
 
         Args:
-            filetype (str): The type of file to generate. Supported file types are "json", "toml", and "csv".
-            question (int | None): The question ID to filter the rubric data. If None, all rubrics will be included.
+            filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
+            question: The question ID to filter the rubric data. If None, all rubrics will be included.
 
         Returns:
-            str: A string containing the rubric data from the specified file format.
+            A string containing the rubric data from the specified file format.
 
         Raises:
             ValueError: If the specified file type is not supported.
@@ -632,11 +632,11 @@ class RubricService:
         """Retrieves rubrics from a file.
 
         Args:
-            data (str): The file object containing the rubrics.
-            filetype (str): The type of the file (json, toml, csv).
+            data: The file object containing the rubrics.
+            filetype: The type of the file (json, toml, csv).
 
         Returns:
-            list: A list of rubrics retrieved from the file.
+            A list of rubrics retrieved from the file.
 
         Raises:
             ValueError: If the file type is not supported.
