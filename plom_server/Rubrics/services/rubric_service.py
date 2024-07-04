@@ -641,8 +641,6 @@ class RubricService:
         Raises:
             ValueError: If the file type is not supported.
         """
-        if filetype.casefold() not in ("json", "toml", "csv"):
-            raise ValueError(f"Unsupported file type: {filetype}")
 
         if filetype == "json":
             rubrics = json.loads(data)
@@ -653,7 +651,7 @@ class RubricService:
             reader = csv.DictReader(f)
             rubrics = list(reader)
         else:
-            raise ValueError("File not supported")
+            raise ValueError(f"Unsupported file type: {filetype}")
 
         service = RubricService()
         for rubric in rubrics:
