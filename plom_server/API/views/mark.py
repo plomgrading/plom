@@ -88,8 +88,7 @@ class GetTasks(APIView):
     """
 
     def get(self, request: Request) -> Response:
-        data = request.query_data
-        print(data)
+        data = request.query_params
         question_idx = data.get("q")
         version = data.get("v")
         username = data.get("username")
