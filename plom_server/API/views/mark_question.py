@@ -24,10 +24,12 @@ class QuestionMarkingViewSet(ViewSet):
     # GET: /MK/tasks/available
     @action(detail=False, methods=["get"], url_path="available")
     def available(self, request: Request, *args) -> Response:
-        """Get the next marking task.
+        """Get the next currently-available marking task.
 
-        get:
         Responds with a code for the next available marking task.
+        Callers then need to "claim" that marking task if they want it.
+        We are not holding it for you: the server may tell two users
+        the same task is available.
 
         The behaviour is influenced by various options.  A confusing case is
         ``tag`` which is a *preference* and not a *requiremennt*.
