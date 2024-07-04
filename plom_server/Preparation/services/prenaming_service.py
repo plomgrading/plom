@@ -20,12 +20,12 @@ class PrenameSettingService:
         Raises a PlomDependencyConflict if cannot modify."""
 
         from Preparation.services.preparation_dependency_service import (
-            can_modify_prenaming,
+            assert_can_modify_prenaming,
         )
 
         # raises a PlomDependencyConflict if fails.
-        if can_modify_prenaming():
-            pass
+        assert_can_modify_prenaming()
+
         p_obj = PrenamingSetting.load()
         p_obj.enabled = enable_disable
         p_obj.save()

@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import reverse
-from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 

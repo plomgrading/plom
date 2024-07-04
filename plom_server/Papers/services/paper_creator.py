@@ -21,6 +21,9 @@ from ..models import (
     DNMPage,
     QuestionPage,
 )
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
 
 
 log = logging.getLogger("PaperCreatorService")
@@ -160,6 +163,7 @@ class PaperCreatorService:
             return `(True, [])` else return `(False, list_of_errors)` where
             the list of errors is a list of pairs `(paper_number, error)`.
         """
+        assert_can_modify_qv_mapping_database()
         errors = []
         for paper_number, qv_mapping in qv_map.items():
             try:
@@ -177,6 +181,7 @@ class PaperCreatorService:
             return True, []
 
     def remove_all_papers_from_db(self) -> None:
+        assert_can_modify_qv_mapping_database()
         # hopefully we don't actually need to call this outside of testing.
         # Have to use a loop because of a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34

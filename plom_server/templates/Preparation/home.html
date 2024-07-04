@@ -64,16 +64,20 @@
                 </p>
                 <p class="fs-7">&emsp;&ensp; Optionally, upload a classlist and, also optionally, prenaming of papers</p>
             </a>
-            <a href="#" class="list-group-item list-group-item-action border mb-1">
+            <a href="{% url 'prep_qvmapping' %}"
+               class="list-group-item list-group-item-action border mb-1">
                 <p class="fs-4">
                     {% if papers_staged %}
                         <i class="bi bi-check-square text-success"></i>
                     {% else %}
                         <i class="bi bi-square"></i>
                     {% endif %}
-                    Manage question-version mapping
+                    Manage the number of papers and the question-version map
                 </p>
-                <p class="fs-7">&emsp;&ensp; Manage how different test versions are used</p>
+                <p class="fs-7">&emsp;&ensp; Set the number of papers to produce</p>
+                <p class="fs-7">
+                    &emsp;&ensp; If you have more than one source version, then you can also (optionally) manage the question-version map
+                </p>
             </a>
             <a href="{% url 'create_paperPDFs' %}"
                class="list-group-item list-group-item-action border mb-1">
@@ -146,7 +150,6 @@
                         </p>
                         <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
                     </div>
-                    <a class="btn btn-success float-end" href="{% url 'prep_source_view' %}">View</a>
                     <a>
                         Papers have been printed
                         <i class="bi bi-chevron-down"></i>

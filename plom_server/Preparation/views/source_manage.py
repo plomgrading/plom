@@ -18,7 +18,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 
-from ..services import SourceService, PapersPrinted
+from ..services import SourceService
 
 
 class TestSourceUploadForm(forms.Form):

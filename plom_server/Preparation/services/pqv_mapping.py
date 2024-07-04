@@ -15,9 +15,12 @@ from plom import SpecVerifier
 from plom.version_maps import version_map_to_csv, check_version_map
 
 from Papers.services import SpecificationService
+from .preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
 
 from ..models import StagingPQVMapping
-from ..services import StagingStudentService, PapersPrinted
+from ..services import StagingStudentService
 
 
 class PQVMappingService:
@@ -40,13 +43,9 @@ class PQVMappingService:
         """Erase the question-version map.
 
         Raises:
-            ValueError: cannot erase for example b/c papers already printed.
+            PlomDependencyConflict: cannot erase for example b/c papers already printed.
         """
-        # TODO: better more precise logic to protect this?
-        if PapersPrinted.have_papers_been_printed():
-            raise ValueError(
-                "You cannot erase the QV map b/c you indicated papers have been printed"
-            )
+        assert_can_modify_qv_mapping_database()
         StagingPQVMapping.objects.all().delete()
 
     @transaction.atomic()
@@ -57,8 +56,11 @@ class PQVMappingService:
         to the existing pqvmap.
 
         Raises:
+            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
             ValueError: invalid map.
         """
+        assert_can_modify_qv_mapping_database()
+
         check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
         for paper_number, qvmap in pqvmap.items():
             for question, version in qvmap.items():
@@ -155,9 +157,14 @@ class PQVMappingService:
         Keyword Args:
             first: the starting paper number.
 
+        Raises:
+            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
+
         Returns:
             None
         """
+        assert_can_modify_qv_mapping_database()
+
         self.remove_pqv_map()
         pqvmap = self.make_version_map(number_to_produce)
         # kind of hacky: we just increase/decrease the keys

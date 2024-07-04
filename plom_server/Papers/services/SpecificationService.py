@@ -21,6 +21,7 @@ from plom import SpecVerifier
 from Base.compat import load_toml_from_path
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
+from Preparation.services.preparation_dependency_service import assert_can_modify_spec
 
 # TODO - build similar for solution specs
 # NOTE - this does not **validate** test specs, it assumes the spec is valid
@@ -75,11 +76,9 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
-    from Preparation.services.preparation_dependency_service import can_modify_spec
 
     # this will Raise a PlomDependencyConflict if cannot modify the spec
-    if can_modify_spec():
-        pass
+    assert_can_modify_spec()
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
@@ -211,11 +210,9 @@ def remove_spec() -> None:
     if not is_there_a_spec():
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
-    from Preparation.services.preparation_dependency_service import can_modify_spec
-
-    if can_modify_spec():
-        Specification.objects.all().delete()
-        SpecQuestion.objects.all().delete()
+    assert_can_modify_spec()
+    Specification.objects.all().delete()
+    SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
@@ -466,3 +463,52 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     if not qindices:
         return "None"
     return ", ".join(render_html_question_label(qidx) for qidx in qindices)
+
+
+def get_question_selection_method(question_index: int) -> str:
+    """Get the selection method (shuffle/fix) of the given question.
+
+    Args:
+
+        question_index: question indexed from 1.
+
+    Returns:
+        The version selection method (shuffle or fix) as string.
+
+    Raises:
+        ObjectDoesNotExist: no question exists with the given index.
+    """
+    question = SpecQuestion.objects.get(question_index=question_index)
+    return question.select
+
+
+def get_selection_method_of_all_questions() -> dict[int:str]:
+    """Get the selection method (shuffle/fix) all questions
+
+    Returns:
+        Dict of {q_index: selection} where selection is 'fix' or 'shuffle'.
+    """
+    selection_method = {}
+    for question in SpecQuestion.objects.all().order_by("question_index"):
+        selection_method[question.question_index] = question.select
+    return selection_method
+
+
+def get_fix_questions() -> list[str]:
+    """Return list of html labels of questions that are select=fix"""
+    return [
+        render_html_question_label(question.question_index)
+        for question in SpecQuestion.objects.filter(select="fix").order_by(
+            "question_index"
+        )
+    ]
+
+
+def get_shuffle_questions() -> list[str]:
+    """Return list of html labels of questions that are select=shuffle"""
+    return [
+        render_html_question_label(question.question_index)
+        for question in SpecQuestion.objects.filter(select="shuffle").order_by(
+            "question_index"
+        )
+    ]

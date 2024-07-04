@@ -15,7 +15,9 @@ from django.core.files import File
 from django.db import transaction
 from Papers.services import SpecificationService
 from ..models import PaperSourcePDF
-from Preparation.services.preparation_dependency_service import can_modify_sources
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_sources,
+)
 from Preparation.services.mocker import ExamMockerService
 from plom.scan import QRextract
 from Scan.services import ScanService
@@ -58,8 +60,7 @@ def delete_source_pdf(source_version: int) -> None:
     then silently return (no error is raised).
     """
     # raises a PlomDependencyException if cannot modify
-    if can_modify_sources():
-        pass
+    assert_can_modify_sources()
 
     # delete the DB entry and the file
     try:
@@ -74,8 +75,7 @@ def delete_source_pdf(source_version: int) -> None:
 def delete_all_source_pdfs() -> None:
     """Delete all versions of the source PDF files."""
     # raises a PlomDependencyException if cannot modify
-    if can_modify_sources():
-        pass
+    assert_can_modify_sources()
 
     # delete the DB entry and the file
     for pdf_obj in PaperSourcePDF.objects.all():
@@ -120,8 +120,7 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
         ValueError: source already present for that version.
     """
     # raises a PlomDependencyException if cannot modify
-    if can_modify_sources():
-        pass
+    assert_can_modify_sources()
 
     try:
         PaperSourcePDF.objects.get(version=version)
@@ -158,8 +157,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
         A tuple with a boolean for success and a message or error message.
     """
     # raises a PlomDependencyException if cannot modify
-    if can_modify_sources():
-        pass
+    assert_can_modify_sources()
 
     if version not in SpecificationService.get_list_of_versions():
         return (False, f"Version {version} is out of range")

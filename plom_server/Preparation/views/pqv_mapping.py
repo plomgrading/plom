@@ -11,12 +11,15 @@ from typing import Any
 
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect, HttpResponse
+from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
+from django.contrib import messages
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperCreatorService
 
 from plom.misc_utils import format_int_list_with_runs
+from plom.plom_exceptions import PlomDependencyConflict
 
 from ..services import (
     PQVMappingService,
@@ -63,6 +66,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 
         try:
             PQVMappingService().use_pqv_map(vm)
+            PaperCreatorService().add_all_papers_in_qv_map(vm)
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
 
@@ -81,27 +85,31 @@ class PQVMappingDownloadView(ManagerRequiredView):
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
+    """Used to trigger a delete of the qv-map and the papers in the database"""
+
     def delete(self, request: HttpRequest) -> HttpResponse:
-        pqvs = PQVMappingService()
-        # fails with ValueError if state disallows delete
-        pqvs.remove_pqv_map()
-        return HttpResponseClientRedirect(".")
+        try:
+            PaperCreatorService().remove_all_papers_from_db()
+            PQVMappingService().remove_pqv_map()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
+
+        return HttpResponseClientRedirect(reverse("prep_qvmapping"))
 
 
 class PQVMappingView(ManagerRequiredView):
     def build_context(self) -> dict[str, Any]:
-        pqvs = PQVMappingService()
-        pss = PrenameSettingService()
-        sss = StagingStudentService()
-
         context = {
             "number_of_questions": SpecificationService.get_n_questions(),
             "question_indices": SpecificationService.get_question_indices(),
             "question_labels_html": SpecificationService.get_question_html_label_triples(),
-            "prenaming": pss.get_prenaming_setting(),
-            "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
-            "number_of_students": sss.how_many_students(),
-            "student_list_present": sss.are_there_students(),
+            "fix_questions": SpecificationService.get_fix_questions(),
+            "shuffle_questions": SpecificationService.get_shuffle_questions(),
+            "prenaming": PrenameSettingService().get_prenaming_setting(),
+            "pqv_mapping_present": PQVMappingService().is_there_a_pqv_map(),
+            "number_of_students": StagingStudentService().how_many_students(),
+            "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
         }
 
@@ -123,10 +131,12 @@ class PQVMappingView(ManagerRequiredView):
                 {"prenamed_papers_list": "n/a", "last_prenamed_paper": "n/a"}
             )
 
-        context["min_number_to_produce"] = sss.get_minimum_number_to_produce()
+        context["min_number_to_produce"] = (
+            StagingStudentService().get_minimum_number_to_produce()
+        )
 
         if context["pqv_mapping_present"]:
-            context["pqv_table"] = pqvs.get_pqv_map_as_table(
+            context["pqv_table"] = PQVMappingService().get_pqv_map_as_table(
                 prenaming=context["prenaming"]
             )
             context["pqv_number_rows"] = len(context["pqv_table"])
@@ -157,6 +167,12 @@ class PQVMappingView(ManagerRequiredView):
         except ValueError:
             return HttpResponseRedirect(".")
 
-        pqvs = PQVMappingService()
-        pqvs.generate_and_set_pqvmap(number_to_produce, first=first)
+        try:
+            PQVMappingService().generate_and_set_pqvmap(number_to_produce, first=first)
+            vm = PQVMappingService().get_pqv_map_dict()
+            PaperCreatorService().add_all_papers_in_qv_map(vm)
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
+
         return HttpResponseRedirect(".")

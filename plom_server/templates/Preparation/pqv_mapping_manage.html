@@ -1,103 +1,126 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Question-version mapping
+    Number of papers to produce and question-version mapping
 {% endblock title %}
 {% block page_heading %}
-    Question-version mapping
+    Number of papers to produce and question-version mapping
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if student_list_present %}
-            <div class="alert alert-warning">
-                <p>Student list present, contains {{ number_of_students }} entries</p>
-                {% if prenaming %}
-                    <p>Prenamed papers = {{ prenamed_papers_list }}</p>
-                {% else %}
-                    <p>Prenaming disabled</p>
+        <div class="alert alert-primary">
+            <p>
+                Assessment specification indicates:
+                <ul>
+                    {% if fix_questions %}
+                        <li>
+                            The following questions will all be taken from source-version 1:
+                            {% for ql in fix_questions %}
+                                {{ ql|safe }}
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        </li>
+                    {% endif %}
+                    {% if shuffle_questions %}
+                        <li>
+                            The following questions will be selected randomly from all source-versions:
+                            {% for ql in shuffle_questions %}
+                                {{ ql|safe }}
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        </li>
+                    {% endif %}
+                </ul>
+            </p>
+            {% if student_list_present %}
+                <p>
+                    Student list present, contains {{ number_of_students }} entries
+                    {% if prenaming %}
+                        of which papers {{ prenamed_papers_list }} will be prenamed
+                    {% else %}
+                        without any prenamed papers
+                    {% endif %}
                 {% endif %}
             </div>
-        {% endif %}
-        {% if pqv_mapping_present %}
-            <div class="alert alert-primary">
-                <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                <a href="{% url 'prep_qvmapping_download' %}"
-                   target="_blank"
-                   class="btn btn-info">download</a>
-                <button class="btn btn-danger"
-                        {% if have_papers_been_printed %}disabled{% endif %}
-                        hx-delete="delete"
-                        hx-confirm="Are you sure you want to delete the question-version map?"
-                        hx-target="body"
-                        hx-swap="outerHTML">delete question-version map</button>
-                {% if have_papers_been_printed %}<small class="text-muted">(cannot delete because papers printed)</small>{% endif %}
-            </div>
-            <div>
-                <table class="table table-striped border">
-                    <thead>
-                        <th>Paper number</th>
-                        {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
-                        {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
-                    </thead>
-                    <tbody>
-                        {% for paper_number, info in pqv_table.items %}
-                            <tr>
-                                <td>{{ paper_number }}</td>
-                                {% if prenaming %}
-                                    <td>
-                                        {% if info.prename %}
-                                            {{ info.prename.0 }}: {{ info.prename.1 }}
-                                        {% else %}
-                                            &bull;
-                                        {% endif %}
-                                    </td>
-                                {% endif %}
-                                {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Generate question-version map</h4>
-                    <div class="card-text">
-                        {% if student_list_present %}
-                            <p>
-                                <ul>
-                                    <li>Student list present, contains {{ number_of_students }} entries</li>
+            {% if pqv_mapping_present %}
+                <div class="alert alert-primary">
+                    <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
+                    <a href="{% url 'prep_qvmapping_download' %}"
+                       target="_blank"
+                       class="btn btn-info">download</a>
+                    <button class="btn btn-danger"
+                            hx-delete="{% url 'prep_qvmapping_delete' %}"
+                            hx-confirm="Are you sure you want to delete the question-version map and clean the database?"
+                            hx-target="body"
+                            hx-swap="outerHTML">delete question-version map and clean database</button>
+                </div>
+                <div>
+                    <table class="table table-striped border">
+                        <thead>
+                            <th>Paper number</th>
+                            {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
+                            {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
+                        </thead>
+                        <tbody>
+                            {% for paper_number, info in pqv_table.items %}
+                                <tr>
+                                    <td>{{ paper_number }}</td>
                                     {% if prenaming %}
-                                        <li>Last prenamed paper = {{ last_prenamed_paper }}</li>
-                                    {% else %}
-                                        <li>No prenaming</li>
+                                        <td>
+                                            {% if info.prename %}
+                                                {{ info.prename.0 }}: {{ info.prename.1 }}
+                                            {% else %}
+                                                &bull;
+                                            {% endif %}
+                                        </td>
                                     {% endif %}
-                                </ul>
+                                    {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Generate question-version map</h4>
+                        <div class="card-text">
+                            {% if student_list_present %}
                                 <details>
                                     <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
-                                    <ul>
-                                        <li>
-                                            We recommend that you produce the maximum of the following numbers
-                                            <ul>
-                                                <li>110% of the number of students in your classlist</li>
-                                                <li>the number of students in your classlist plus 20</li>
-                                                <li>the paper-number of the last prenamed paper plus 10</li>
-                                            </ul>
-                                        </li>
-                                        <li>
-                                            You do not have to print all of the resulting
-                                            papers. Rather, this ensures that you will have plenty
-                                            of spare papers <em>if you need them</em>
-                                        </li>
-                                    </ul>
+                                    <p>
+                                        <ul>
+                                            <li>
+                                                Student list present, contains {{ number_of_students }} entries
+                                                {% if prenaming %}
+                                                    of which papers {{ prenamed_papers_list }} will be prenamed
+                                                {% else %}
+                                                    without any prenamed papers
+                                                {% endif %}
+                                            </li>
+                                            <li>
+                                                We recommend that you produce the maximum of the following numbers
+                                                <ul>
+                                                    <li>110% of the number of students in your classlist</li>
+                                                    <li>the number of students in your classlist plus 20</li>
+                                                    <li>the paper-number of the last prenamed paper plus 10</li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                You do not have to print all of the resulting
+                                                papers. Rather, this ensures that you will have plenty
+                                                of spare papers <em>if you need them</em>
+                                            </li>
+                                        </ul>
+                                    </p>
                                 </details>
                             </p>
                         {% else %}
@@ -141,11 +164,13 @@
                                 <!-- TODO: this form has a lot of br in it :( -->
                                 <br />
                                 <br />
-                                First paper:
+                                <details>
+                                    <summary>First paper:</summary>
+                                    <p>
+                                        Typically the first paper has paper-number <q>1</q>, but you can choose to start from zero, or any other positive integer.
+                                    </p>
+                                </details>
                                 <ul>
-                                    <input type="radio" id="start0" name="first_paper_num" value="0" />
-                                    <label for="start0">Start at number zero (warning: experimental!)</label>
-                                    <br />
                                     <input type="radio" id="start1" name="first_paper_num" value="1" checked />
                                     <label for="start1">Start at number one (default)</label>
                                     <br />
@@ -156,8 +181,11 @@
                                            name="startn_value"
                                            min="0"
                                            max="9999">
+                                    <br />
+                                    <input type="radio" id="start0" name="first_paper_num" value="0" />
+                                    <label for="start0">Start at number zero (warning: experimental!)</label>
                                 </ul>
-                                <button class="btn btn-primary" type="submit">Build question-version map</button>
+                                <button class="btn btn-primary" type="submit">Build question-version map and populate database</button>
                             </form>
                         </div>
                     </div>

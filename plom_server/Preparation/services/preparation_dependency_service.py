@@ -3,19 +3,8 @@
 
 from plom.plom_exceptions import PlomDependencyConflict
 
-from BuildPaperPDF.services import BuildPapersService
-from . import (
-    SourceService,
-    PapersPrinted,
-    PrenameSettingService,
-    StagingStudentService,
-    PrenameSettingService,
-)
-
-from Papers.services import (
-    SpecificationService,
-    PaperInfoService,
-)
+# move all service imports into the functions in order
+# to avoid circular-dependency hell
 
 # preparation steps are
 # 1 = test-spec
@@ -25,10 +14,13 @@ from Papers.services import (
 # 5 = build tests paper pdfs
 # 6 = tell plom papers are printed.
 
+# give assert raising tests followed by true/false returning functions
 
-# 1 the test spec depends on nothing, but
-# sources depend on the spec
-def can_modify_spec() -> bool:
+
+# 1 the test spec depends on nothing, but sources depend on the spec
+def assert_can_modify_spec():
+    from . import PapersPrinted, SourceService
+
     # cannot modify spec if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -37,13 +29,14 @@ def can_modify_spec() -> bool:
         raise PlomDependencyConflict(
             "Source PDFs for your assessment have been uploaded."
         )
-    # TODO - decide if spec can be changed with/without classlist
-    return True
 
 
-# 2 = the sources depend on the spec,
-# and built-papers depend on the sources
-def can_modify_sources() -> bool:
+# 2 = the sources depend on the spec, and built-papers depend on the sources
+def assert_can_modify_sources():
+    from . import PapersPrinted
+    from Papers.services import SpecificationService
+    from BuildPaperPDF.services import BuildPapersService
+
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -55,12 +48,14 @@ def can_modify_sources() -> bool:
         raise PlomDependencyConflict(
             "Test PDFs have been built - these depend on the source pdfs."
         )
-    return True
 
 
-# 3 = classlist and prenaming - does not depend on spec, but
-# the database depends on prenaming and classlist.
-def can_modify_classlist() -> bool:
+# 3 = classlist and prenaming.
+# 3a = classlist - does not depend on spec, but the database depends on prenaming and classlist.
+def assert_can_modify_classlist():
+    from . import PapersPrinted, PrenameSettingService
+    from Papers import PaperInfoService
+
     # cannot modify classlist if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -74,7 +69,11 @@ def can_modify_classlist() -> bool:
         )
 
 
-def can_modify_prenaming() -> bool:
+# 3b - does not depend on spec, but qvmap/database depends on it (since prenamed papers have 'predictions' stored with those names)
+def assert_can_modify_prenaming():
+    from . import PapersPrinted
+    from Papers.services import PaperInfoService
+
     # cannot modify prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -84,12 +83,14 @@ def can_modify_prenaming() -> bool:
         raise PlomDependencyConflict(
             "The database has been populated, so cannot change the prenaming setting."
         )
-    return True
 
 
-# 4 - the qv-mapping depends on the classlist (prenaming), spec.
-# and the built papers depend on the qv-mapping.
-def can_modify_qv_mapping_database() -> bool:
+# 4 - the qv-mapping depends on the classlist (prenaming), spec. and the built papers depend on the qv-mapping.
+def assert_can_modify_qv_mapping_database():
+    from . import PapersPrinted, PrenameSettingService, StagingStudentService
+    from Papers.services import SpecificationService
+    from BuildPaperPDF.services import BuildPapersService
+
     # cannot modify qv mapping / database if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -99,7 +100,7 @@ def can_modify_qv_mapping_database() -> bool:
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.
-    if PrenameSettingService.get_prenaming_setting():
+    if PrenameSettingService().get_prenaming_setting():
         if not StagingStudentService().are_there_students():
             raise PlomDependencyConflict(
                 "Prenaming enabled, but no classlist has been uploaded"
@@ -112,12 +113,13 @@ def can_modify_qv_mapping_database() -> bool:
     # cannot modify qv-mapping if test papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict("Test PDFs have been built.")
-    return True
 
 
-# 5 - the test pdfs depend on the qv-map/db and source pdfs.
-# nothing depends on the test-pdfs
-def can_rebuild_test_pdfs() -> bool:
+# 5 - the test pdfs depend on the qv-map/db and source pdfs. Nothing depends on the test-pdfs
+def assert_can_rebuild_test_pdfs():
+    from . import PapersPrinted, SourceService
+    from Papers.services import PaperInfoService
+
     # cannot rebuild test pdfs if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
@@ -128,4 +130,58 @@ def can_rebuild_test_pdfs() -> bool:
         raise PlomDependencyConflict(
             "The qv-mapping has been built and the database have been populated."
         )
-    return True
+
+
+# now the true/false versions of these functions
+# assert_can_modify_spec
+def can_modify_spec():
+    try:
+        assert_can_modify_spec()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+# assert_can_modify_sources
+def can_modify_sources():
+    try:
+        assert_can_modify_sources()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+# assert_can_modify_classlist
+def can_modify_classlist():
+    try:
+        assert_can_modify_classlist()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+# assert_can_modify_prenaming
+def can_modify_prenaming():
+    try:
+        assert_can_modify_prenaming()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+# assert_can_modify_qv_mapping_database
+def can_modify_qv_mapping_database():
+    try:
+        assert_can_modify_qv_mapping_database()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+# assert_can_rebuild_test_pdfs
+def can_rebuild_test_pdfs():
+    try:
+        assert_can_rebuild_test_pdfs()
+        return True
+    except PlomDependencyConflict:
+        return False
