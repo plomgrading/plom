@@ -66,6 +66,8 @@ class Rubric(models.Model):
             collisions.  Modifying a rubric will increase this by one.
             If you are messing with this, presumably you are doing something
             creative/hacky.
+        latest: True when this is the latest version of the rubric and
+            false otherwise. There will be only one latest rubric per key.
     """
 
     class RubricKind(models.TextChoices):
@@ -98,7 +100,7 @@ class Rubric(models.Model):
         User, null=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, default=0)
-    valid = models.BooleanField(null=False, default=False)
+    latest = models.BooleanField(null=False, default=False)
 
 
 class RubricPane(models.Model):

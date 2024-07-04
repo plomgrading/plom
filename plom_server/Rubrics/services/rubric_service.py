@@ -121,7 +121,7 @@ class RubricService:
             # TODO: consult per-user permissions (not implemented yet)
             pass
 
-        rubric_data["valid"] = True
+        rubric_data["latest"] = True
         serializer = RubricSerializer(data=rubric_data)
         if serializer.is_valid():
             serializer.save()
@@ -174,7 +174,7 @@ class RubricService:
 
         try:
             rubric = (
-                Rubric.objects.filter(key=key, valid=True).select_for_update().get()
+                Rubric.objects.filter(key=key, latest=True).select_for_update().get()
             )
         except Rubric.DoesNotExist as e:
             raise ValueError(f"Rubric {key} does not exist.") from e
@@ -222,13 +222,13 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
         new_rubric_data["revision"] += 1
-        new_rubric_data["valid"] = True
+        new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key
         serializer = RubricSerializer(data=new_rubric_data)
         if serializer.is_valid():
             serializer.save()
             rubric_obj = serializer.instance
-            rubric.valid = False
+            rubric.latest = False
             rubric.save()
             return _Rubric_to_dict(rubric_obj)
         else:
@@ -266,7 +266,7 @@ class RubricService:
         Returns:
             Lazy queryset of all rubrics.
         """
-        return Rubric.objects.filter(valid=True)
+        return Rubric.objects.filter(latest=True)
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total."""
@@ -283,7 +283,7 @@ class RubricService:
             The rubric object.  It is not "selected for update" so should
             be read-only.
         """
-        return Rubric.objects.get(key=rubric_key, valid=True)
+        return Rubric.objects.get(key=rubric_key, latest=True)
 
     def get_past_revisions_by_key(self, rubric_key: str) -> List[Rubric]:
         """Get all rubrics by it's key.
@@ -294,7 +294,7 @@ class RubricService:
         Returns:
             List[Rubric]: A list of rubrics with the specified key
         """
-        return list(Rubric.objects.filter(key=rubric_key, valid=False).all())
+        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
 
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
@@ -334,7 +334,7 @@ class RubricService:
         Returns:
             Key-value pairs representing the rubric.
         """
-        r = Rubric.objects.get(key=rubric_key, valid=True)
+        r = Rubric.objects.get(key=rubric_key, latest=True)
         return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:

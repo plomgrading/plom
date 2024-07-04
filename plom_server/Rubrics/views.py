@@ -203,10 +203,10 @@ class RubricLandingPageView(ManagerRequiredView):
             kind_filter = filter_form.cleaned_data["kind_filter"]
 
             if question_filter:
-                rubrics = rubrics.filter(question=question_filter, valid=True)
+                rubrics = rubrics.filter(question=question_filter, latest=True)
 
             if kind_filter:
-                rubrics = rubrics.filter(kind=kind_filter, valid=True)
+                rubrics = rubrics.filter(kind=kind_filter, latest=True)
 
         context.update(
             {
