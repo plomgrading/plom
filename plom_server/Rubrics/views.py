@@ -355,13 +355,13 @@ class DownloadRubricView(ManagerRequiredView):
             response["Content-Disposition"] = "attachment; filename=rubrics.json"
         elif filetype == "toml":
             data_string = service.get_rubric_data("toml", question=question)
-            buf = BytesIO(data_string.encode("utf-8"))
-            response = HttpResponse(buf.getvalue(), content_type="application/toml")
+            buf2 = BytesIO(data_string.encode("utf-8"))
+            response = HttpResponse(buf2.getvalue(), content_type="application/toml")
             response["Content-Disposition"] = "attachment; filename=rubrics.toml"
         else:
             data_string = service.get_rubric_data("csv", question=question)
-            buf = StringIO(data_string)
-            response = HttpResponse(buf.getvalue(), content_type="text/csv")
+            buf3 = StringIO(data_string)
+            response = HttpResponse(buf3.getvalue(), content_type="text/csv")
             response["Content-Disposition"] = "attachment; filename=rubrics.csv"
         return response
 
@@ -375,8 +375,8 @@ class UploadRubricView(ManagerRequiredView):
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
             data_string = f.read()
         elif suffix == "toml":
-            f = BytesIO(request.FILES["rubric_file"].file.read())
-            data_string = f.getvalue().decode("utf-8")
+            f2 = BytesIO(request.FILES["rubric_file"].file.read())
+            data_string = f2.getvalue().decode("utf-8")
         else:
             messages.error(request, "Invalid rubric file format")
             return redirect("rubrics_admin")
