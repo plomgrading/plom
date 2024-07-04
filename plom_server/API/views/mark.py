@@ -210,11 +210,14 @@ class MgetPageDataQuestionInContext(APIView):
             # anonymous grading) should filter this out.  This is the current behaviour
             # of the Plom Client UI tool.
             page_metadata = service.get_question_pages_metadata(
-                paper, question=question, include_idpage=True, include_dnmpages=True
+                papernum,
+                question=questionidx,
+                include_idpage=True,
+                include_dnmpages=True,
             )
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Paper {paper} does not exist: {e}", status.HTTP_409_CONFLICT
+                f"Paper {papernum} does not exist: {e}", status.HTTP_409_CONFLICT
             )
         return Response(page_metadata, status=status.HTTP_200_OK)
 
