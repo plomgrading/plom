@@ -1404,10 +1404,16 @@ class MarkerClient(QWidget):
         task = self.get_current_task_id_or_none()
         if not task:
             return
+        if not self.examModel.is_our_task(task, self.msgr.username):
+            InfoMsg(self, f"Cannot annotate {task}: it is not assigned to you").exec()
+            return
         inidata = self.getDataForAnnotator(task)
         if inidata is None:
             InfoMsg(
-                self, f"Cannot annotate {task}, perhaps it is not assigned to you?"
+                self,
+                f"Cannot annotate {task},"
+                " perhaps it is not assigned to you, or a download failed"
+                " perhaps due to poor or missing internet connection.",
             ).exec()
             return
 

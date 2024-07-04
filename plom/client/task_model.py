@@ -56,7 +56,8 @@ local_possible_statuses = (
 )
 
 # there is some overlap with the servers's status strings
-server_possible_statuses = ("complete", "to do", "out")
+# note: we don't casefold these ones
+server_possible_statuses = ("Complete", "To Do", "Out")
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -248,7 +249,7 @@ class MarkerExamModel(QStandardItemModel):
         """
         assert (
             status.casefold() in local_possible_statuses
-            or status.casefold() in server_possible_statuses
+            or status in server_possible_statuses
         ), f'Task status "{status}" is not in the allow lists'
         self.setData(self.index(r, _idx_status), status)
 
