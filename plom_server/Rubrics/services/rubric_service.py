@@ -641,7 +641,6 @@ class RubricService:
         Raises:
             ValueError: If the file type is not supported.
         """
-
         if filetype == "json":
             rubrics = json.loads(data)
         elif filetype == "toml":
