@@ -219,20 +219,23 @@ class RubricService:
                 )
 
         new_rubric_data.pop("modified_by_username", None)
+
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
+
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key
         serializer = RubricSerializer(data=new_rubric_data)
-        if serializer.is_valid():
-            serializer.save()
-            rubric_obj = serializer.instance
-            rubric.latest = False
-            rubric.save()
-            return _Rubric_to_dict(rubric_obj)
-        else:
+
+        if not serializer.is_valid():
             raise ValidationError(serializer.errors)
+
+        serializer.save()
+        rubric_obj = serializer.instance
+        rubric.latest = False
+        rubric.save()
+        return _Rubric_to_dict(rubric_obj)
 
     def get_rubrics_as_dicts(
         self, *, question: int | None = None
