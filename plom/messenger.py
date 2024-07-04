@@ -521,7 +521,6 @@ class Messenger(BaseMessenger):
 
         # put the scene in legacy format
         for x in pdict["sceneItems"]:
-            print(x)
             if x[0] == "Rubric":
                 x[0] = "GroupDeltaText"
                 # TODO: may need to do more if we change the format of the other fields
@@ -561,7 +560,6 @@ class Messenger(BaseMessenger):
                                 "plom": (orig_plomfile_name, f2, "text/plain"),
                             }
                         )
-                        print("here")
                         # increase read timeout relative to default: Issue #1575
                         timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
                         response = self.put(
@@ -571,7 +569,6 @@ class Messenger(BaseMessenger):
                             timeout=timeout,
                         )
                     response.raise_for_status()
-                    print("response back")
                     return response.json()
                 except (requests.ConnectionError, requests.Timeout) as e:
                     raise PlomTimeoutError(
