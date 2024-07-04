@@ -47,6 +47,7 @@ class MarkURLPatterns:
         # Task management
         tasks = [
             path("tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
+            path("tasks/all/", GetTasks.as_view(), name="api_MK_get_tasks_all"),
         ]
         mark_patterns += tasks
 

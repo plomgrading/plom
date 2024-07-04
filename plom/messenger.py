@@ -245,20 +245,18 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                url = "/MK/tasks/all"
-                # extra = ""
-                # if qidx is not None:
-                #     extra += f"q={qidx}"
-                # if v is not None:
-                #     extra += f"v={v}"
-                # if extra:
-                #     url += "?" + extra
-                # TODO: make this optional ? stuff work, for now we use json
-                # TODO: but /MK/tasks/available also uses json, so which is right?
-                # response = self.get_auth(url)
-                response = self.get_auth(
-                    url, json={"q": qidx, "v": v, "username": username}
-                )
+                query_params = []
+                if qidx is not None:
+                    query_params.append(f"q={qidx}")
+                if v is not None:
+                    query_params.append(f"v={v}")
+                if username:
+                    query_params.append(f"username={username}")
+                if query_params:
+                    url = "/MK/tasks/all/" + "&".join(query_params)
+                else:
+                    url = "/MK/tasks/all"
+                response = self.get_auth(url)
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:

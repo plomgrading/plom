@@ -74,23 +74,22 @@ class MarkingProgressCount(APIView):
 
 
 # GET: /MK/tasks/all
+# GET: /MK/tasks/all/
 class GetTasks(APIView):
     """Retrieve data for tasks.
-
-    TODO: move the q data bits out of json into the url as optional q=7 stuff.
 
     Respond with status 200.
 
     Returns:
-        List of lists of info for each task...  TODO: docs.
+        List of dicts of info for each task...  TODO: docs.
         An empty list might be returned if no tasks.
         This is potentially a lot of data so we use a list
         of lists instead of a list of dicts for compactness.
     """
 
-    def get(self, request: Request, *args) -> Response:
-        # TODO: data = request.query_data  # get the ?stuff
-        data = request.data
+    def get(self, request: Request) -> Response:
+        data = request.query_data
+        print(data)
         question_idx = data.get("q")
         version = data.get("v")
         username = data.get("username")
