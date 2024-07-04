@@ -34,6 +34,7 @@ class Rubric(models.Model):
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
             implementation-specific.
+        kind: stores what kind of rubric this is.
         display_delta: short string to display, such as "+3" or "2 of 3",
             that illustrates to recipients how their score is changed by
             this rubric.
@@ -43,8 +44,15 @@ class Rubric(models.Model):
             ``kind`` and there maybe be hypothetical future circumstances
             such as mastery grading where the ``display_delta`` might
             differ substantially from ``value``.
+        out_of: the maximum possible value for this rubric. only
+            for absolute rubrics and is 0 for other types
+        text: the text of the rubric
+        question: the question this rubric is associated with.
+        tags: a list of tags for this rubric.
+        meta: text shown only to markers, not to students.
         versions: a list of question versions the rubric can be used on.
-        TODO: document other fields.
+        parameters: a list of parameters for the rubric, used in
+            parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
         system_rubric: this Rubric was created by or is otherwise
