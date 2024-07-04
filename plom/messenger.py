@@ -252,10 +252,9 @@ class Messenger(BaseMessenger):
                     query_params.append(f"v={v}")
                 if username:
                     query_params.append(f"username={username}")
+                url = "/MK/tasks/all"
                 if query_params:
-                    url = "/MK/tasks/all/?" + "&".join(query_params)
-                else:
-                    url = "/MK/tasks/all"
+                    url += "/MK/tasks/all?" + "&".join(query_params)
                 response = self.get_auth(url)
                 response.raise_for_status()
                 return response.json()
@@ -395,6 +394,7 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
+                # Note: non-legacy server ignores version here
                 response = self.patch(
                     f"/MK/tasks/{code}",
                     json={"user": self.user, "token": self.token, "version": version},

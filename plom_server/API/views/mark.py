@@ -74,7 +74,6 @@ class MarkingProgressCount(APIView):
 
 
 # GET: /MK/tasks/all
-# GET: /MK/tasks/all/
 class GetTasks(APIView):
     """Retrieve data for tasks.
 
