@@ -369,6 +369,7 @@ class MarkingStatsService:
                             task.latest_annotation.time_of_last_update
                         ).humanize(),
                         "score": task.latest_annotation.score,
+                        "marking_time": task.latest_annotation.marking_time,
                         "integrity": str(task.pk),  # TODO: not implemented yet
                     }
                 )
