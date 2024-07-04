@@ -292,10 +292,10 @@ class RubricService:
         """Get all rubrics by it's key.
 
         Args:
-            rubric_key (str): the key of the rubric
+            rubric_key (str): the key of the rubric.
 
         Returns:
-            List[Rubric]: A list of rubrics with the specified key
+            A list of rubrics with the specified key
         """
         return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
 
