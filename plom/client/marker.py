@@ -1220,6 +1220,20 @@ class MarkerClient(QWidget):
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
 
     def download_task_list(self, *, username: str = "") -> bool:
+        """Download and fill/update the task list.
+
+        Danger: there is quite a bit of subtly here about how to update
+        tasks when we already have local cached data or when the local
+        state might be mid-upload.
+
+        Keyword Args:
+            username: find tasks assigned to this user, or all tasks if
+                omitted.
+
+        Returns:
+            True if the donload was successful, False if the server
+            does not support this.
+        """
         try:
             tasks = self.msgr.get_tasks(
                 self.question_idx, self.version, username=username
@@ -1227,7 +1241,7 @@ class MarkerClient(QWidget):
         except PlomNoServerSupportException as e:
             WarnMsg(self, str(e)).exec()
             return False
-        print("=== PROCESSING lots of tasks... ====")
+        our_username = self.msgr.username
         for t in tasks:
             task_id_str = paper_question_index_to_task_id_str(
                 t["paper_number"], t["question"]
@@ -1236,32 +1250,40 @@ class MarkerClient(QWidget):
             integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
             mark = t.get("score", -1)  # not keen on this -1 sentinel
+            status = t["status"]
+            # mismatch b/w server status and how we represent claimed tasks locally
+            if status.casefold() == "out" and username == our_username:
+                status = "unmarked"
             try:
                 self.examModel.add_task(
                     task_id_str,
                     src_img_data=[],
                     mark=mark,
-                    status=t["status"],
+                    status=status,
                     tags=t["tags"],
                     username=username,
                     integrity_check=integrity,
                 )
             except KeyError:
-                # only update those tasks that aren't ours
-                # TODO: we can also check that server has "Out"/"Complete" for
-                # ours and consider updating those that are not (previous list
-                # could be out of date)
-                if self.examModel.is_our_task(task_id_str, self.msgr.username):
-                    log.debug(f"Skipping 'our' row {t}")
+                if username != our_username:
+                    # If server says its not our task, then overwrite local state
+                    # b/c the task may have been reassigned.
+                    # TODO: but this stomps on local cached annotation data, so that's wasteful
+                    # TODO: use the integrity_check?
+                    self.examModel.modify_task(
+                        task_id_str,
+                        src_img_data=[],
+                        mark=mark,
+                        status=status,
+                        tags=t["tags"],
+                        username=username,
+                    )
                     continue
-                self.examModel.modify_task(
-                    task_id_str,
-                    src_img_data=[],
-                    mark=mark,
-                    status=t["status"],
-                    tags=t["tags"],
-                    username=username,
-                )
+                # If it is our task, be careful b/c we don't want to stomp local state
+                # such as downloaded images, in-progress uploads etc.
+                # Currently we just keep the local state but this may not be correct
+                # if server has changed something.  TODO: use the integrity_check
+                # print(f"keeping local copy for {task_id_str}:\n\t{t}")
         return True
 
     def reassign_task(self):

@@ -56,7 +56,7 @@ local_possible_statuses = (
 )
 
 # there is some overlap with the servers's status strings
-server_possible_statuses = ("Complete", "To Do", "Out")
+server_possible_statuses = ("complete", "to do", "out")
 
 
 class MarkerExamModel(QStandardItemModel):
