@@ -254,7 +254,7 @@ class Messenger(BaseMessenger):
                     query_params.append(f"username={username}")
                 url = "/MK/tasks/all"
                 if query_params:
-                    url += "/MK/tasks/all?" + "&".join(query_params)
+                    url += "?" + "&".join(query_params)
                 response = self.get_auth(url)
                 response.raise_for_status()
                 return response.json()
