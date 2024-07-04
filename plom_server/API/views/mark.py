@@ -73,6 +73,7 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+# GET: /MK/tasks/all
 class GetTasks(APIView):
     """Retrieve data for tasks.
 
@@ -106,6 +107,8 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+# GET: /pagedata/{papernum}
+# GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):
     """Get page metadata for a particular test-paper optionally with a question highlighted.
 
@@ -197,7 +200,9 @@ class MgetPageDataQuestionInContext(APIView):
         ]
     """
 
-    def get(self, request, paper, question=None):
+    def get(
+        self, request: Request, *, papernum: int, questionidx: int | None = None
+    ) -> Response:
         service = PageDataService()
 
         try:
