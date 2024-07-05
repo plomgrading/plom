@@ -185,18 +185,28 @@ def can_rebuild_test_pdfs():
     except PlomDependencyConflict:
         return False
 
+
 def assert_can_set_papers_printed():
     # can set papers_printed once all PDFs are built.
     from BuildPaperPDF.services import BuildPapersService
+
     if not BuildPapersService().are_all_papers_built():
-        raise PlomDependencyConflict("Cannot set papers-printed since not all paper-pdfs have been built.")
-        
+        raise PlomDependencyConflict(
+            "Cannot set papers-printed since not all paper-pdfs have been built."
+        )
+
+
 def assert_can_unset_papers_printed():
     # can unset papers_printed provided no bundles have neen scanned.
     from Papers.models import Bundle
     from Scan.models import StagingBundle
-    return not (StagingBundle.objects.exists() or Bundle.objects.exists())
-        raise PlomDependencyConflict("Cannot unset papers-printed because bundles have been uploaded.")
+
+    # if any bundles uploaded then raise an exception
+    if StagingBundle.objects.exists() or Bundle.objects.exists():
+        raise PlomDependencyConflict(
+            "Cannot unset papers-printed because bundles have been uploaded."
+        )
+
 
 def can_set_papers_printed():
     try:
@@ -204,6 +214,7 @@ def can_set_papers_printed():
         return True
     except PlomDependencyConflict:
         return False
+
 
 def can_unset_papers_printed():
     try:

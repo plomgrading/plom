@@ -8,7 +8,9 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
-from django.contrib.messages import get_messages
+from django.contrib import messages
+
+from plom.plom_exceptions import PlomDependencyConflict
 
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
@@ -111,7 +113,7 @@ class PreparationDependencyConflictView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         reasons = []
-        for msg in get_messages(request):
+        for msg in messages.get_messages(request):
             reasons.append(f"{msg}")
 
         context.update({"reasons": reasons})
@@ -162,8 +164,7 @@ class PreparationFinishedToggle(ManagerRequiredView):
         current_setting = PapersPrinted.have_papers_been_printed()
         try:
             PapersPrinted.set_papers_printed(not current_setting)
-        except RuntimeError as e:
-            # TODO: uses the troubles-afoot kludge (Issue #3251)
-            hint = f"maybe-started-uploads-{e}"
-            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
-        return HttpResponseClientRefresh()
+            return HttpResponseClientRefresh()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))

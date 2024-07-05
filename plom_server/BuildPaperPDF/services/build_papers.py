@@ -35,6 +35,10 @@ from Preparation.models import PaperSourcePDF
 from Base.models import HueyTaskTracker
 from ..models import BuildPaperPDFChore
 
+from Preparation.services.preparation_dependency_service import (
+    assert_can_rebuild_test_pdfs,
+)
+
 
 # The decorated function returns a ``huey.api.Result``
 # ``context=True`` so that the task knows its ID etc.
@@ -189,9 +193,13 @@ class BuildPapersService:
     def send_all_tasks(self) -> int:
         """For each Paper without an QUEUED or COMPLETE chore, start building PDFs.
 
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+
         Returns:
             How many tasks did we launch?
         """
+        assert_can_rebuild_test_pdfs()
         N = 0
         for paper in Paper.objects.all():
             # This logic and flow is unpleasant...
@@ -226,8 +234,10 @@ class BuildPapersService:
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
+            PlomDependencyConflict: if dependencies not met
         """
         spec = SpecificationService.get_the_spec()
+        assert_can_rebuild_test_pdfs()
 
         # TODO: helper looks it up again, just here for error handling :(
         _ = Paper.objects.get(paper_number=paper_num)
@@ -353,7 +363,14 @@ class BuildPapersService:
             task.transition_to_error("never ran: forcibly dequeued")
 
     def retry_all_task(self) -> None:
-        """Retry all non-obsolete tasks that have error status."""
+        """Retry all non-obsolete tasks that have error status.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
+
+        assert_can_rebuild_test_pdfs()
+
         retry_tasks = BuildPaperPDFChore.objects.filter(
             status=BuildPaperPDFChore.ERROR, obsolete=False
         )
@@ -362,7 +379,12 @@ class BuildPapersService:
             self.send_single_task(paper_number)
 
     def reset_all_tasks(self) -> None:
-        """Reset all tasks, discarding all in-progress and complete PDF files."""
+        """Reset all tasks, discarding all in-progress and complete PDF files.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
+        assert_can_rebuild_test_pdfs()
         self.try_to_cancel_all_queued_tasks()
         for task in BuildPaperPDFChore.objects.all():
             task.set_as_obsolete()

@@ -8,6 +8,11 @@ from Papers.models import Paper, Bundle
 from Scan.models import StagingBundle
 from ..models import PapersPrintedSettingModel
 
+from Preparation.services.preparation_dependency_service import (
+    assert_can_set_papers_printed,
+    assert_can_unset_papers_printed,
+)
+
 
 @transaction.atomic
 def can_status_be_set_true() -> bool:
@@ -46,12 +51,12 @@ def set_papers_printed(status: bool):
     """Set the papers as (true) 'printed' or (false) 'yet to be printed'.
 
     Raises:
-        RuntimeError: if status cannot be set true/false.
+        PlomDependencyConflict: if status cannot be set true/false.
     """
-    if status and not can_status_be_set_true():
-        raise RuntimeError("Unable to mark papers as printed.")
-    if not status and not can_status_be_set_false():
-        raise RuntimeError("Unable to mark papers as yet to be printed.")
+    if status:  # trying to set papers-are-printed
+        assert_can_set_papers_printed()
+    else:  # trying to set papers-are-not-yet-printed
+        assert_can_unset_papers_printed()
 
     setting_obj = PapersPrintedSettingModel.load()
     setting_obj.have_printed_papers = status
