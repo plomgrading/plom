@@ -153,13 +153,14 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         if random.random() < 0.5:
             b = QToolButton(text="\N{Warning Sign}")
             b.setStyleSheet("QToolButton { background-color: #66ff66; }")
+            b.clicked.connect(self.dismiss_attn_button_interactively)
             # parenting the menu inside the scene
             m = QMenu(b)
             m.addAction(
-                "Update to latest", lambda: print("Update rubric: not implemented yet")
+                "Show me the diff", lambda: print("Update rubric: not implemented yet")
             )
             m.addSeparator()
-            m.addAction("Explain wtf is going on", lambda: print("hello world"))
+            m.addAction("Dismiss", self.dismiss_attn_button)
             b.setMenu(m)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = QGraphicsProxyWidget()
@@ -175,11 +176,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             h.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            b.setToolTip("This rubric needs an update")
+            b.setToolTip("This rubric has been updated")
             # TODO: both of these allow it to move but not receive mouse events
             # self.addToGroup(h)
             # h.setParentItem(self)
             _scene.addItem(h)
+            self._attn_button = h
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
@@ -262,6 +264,28 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def get_delta_value(self) -> int:
         return int(self.di.value)
+
+    def dismiss_attn_button_interactively(self):
+        # TODO: popup a dialog first
+        # InfoMsg("Rubric updated from ... to ...").exec()
+        print("hi")
+        self.dismiss_attn_button()
+
+    def dismiss_attn_button(self):
+        if not self.scene():
+            # nothing to do if we're not in a scene any more
+            print("nothing to do on attn button click b/c no scene")
+            return
+        print(self._attn_button)
+        if not self._attn_button:
+            print("nothing to do b/c no more attn button")
+            return
+        print("clearing the attn button")
+        print(self.scene())
+        print(type(self.scene()))
+        self.scene().removeItem(self._attn_button)
+        self._attn_button.deleteLater()
+        self._attn_button = None
 
 
 class GhostComment(QGraphicsItemGroup):
