@@ -290,9 +290,14 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         return int(self.di.value)
 
     def dismiss_attn_button_interactively(self):
-        # TODO: proper parenting!
+        if not self.scene():
+            # nothing to do if we're not in a scene any more
+            return
+        parent = self.scene().views()[0].parent()
+        # yuck, had to go way up the chain to find someone who can parent a dialog!
+        # maybe that means this code should NOT be opening dialogs
         InfoMsg(
-            None,
+            parent,
             self._attn_msg,
             info="""
                 Learn more about
@@ -306,15 +311,10 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def dismiss_attn_button(self):
         if not self.scene():
             # nothing to do if we're not in a scene any more
-            print("nothing to do on attn button click b/c no scene")
             return
-        print(self._attn_button)
         if not self._attn_button:
-            print("nothing to do b/c no more attn button")
+            # nothing to do b/c no more attn button
             return
-        print("clearing the attn button")
-        print(self.scene())
-        print(type(self.scene()))
         self.scene().removeItem(self._attn_button)
         self._attn_button.deleteLater()
         self._attn_button = None
