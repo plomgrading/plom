@@ -654,8 +654,5 @@ class RubricService:
 
         service = RubricService()
         for rubric in rubrics:
-            try:
-                service.create_rubric(rubric)
-            except Exception as e:
-                raise e
+            service.create_rubric(rubric)
         return rubrics
