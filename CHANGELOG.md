@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
 
 ### Changed
+* Client: improvements to the undo stack.
 
 ### Fixed
 

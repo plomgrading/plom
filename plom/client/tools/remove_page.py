@@ -12,12 +12,12 @@ class CommandRemovePage(QUndoCommand):
     """Remove or undo removing a page, not including cleanup moves of annotations."""
 
     def __init__(
-        self, scene, src_idx: int, page_image_idx: int, go_left: bool = False
+        self, scene, src_id: int, page_image_idx: int, go_left: bool = False
     ) -> None:
         # scene type is plom.client.pagescene.PageScene
         super().__init__()
         self.scene = scene
-        self.src_idx = src_idx
+        self.src_id = src_id
         self.page_image_idx = page_image_idx
         self.go_left = go_left
         self.setText("RotatePage")
@@ -26,7 +26,7 @@ class CommandRemovePage(QUndoCommand):
         # TODO: is this the correct boundary?
         img = self.scene.underImage.images[self.page_image_idx]
         r = img.mapRectToScene(img.boundingRect())
-        self.scene._set_visible_page_image(self.src_idx, show=False)
+        self.scene._set_visible_page_image(self.src_id, show=False)
         # temporary animation, removes itself when done
         if self.go_left:
             what = "disappear_left"
@@ -35,7 +35,7 @@ class CommandRemovePage(QUndoCommand):
         self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what=what))
 
     def undo(self):
-        self.scene._set_visible_page_image(self.src_idx, show=True)
+        self.scene._set_visible_page_image(self.src_id, show=True)
         # TODO: how to we figure out the index?
         img = self.scene.underImage.images[self.page_image_idx]
         r = img.mapRectToScene(img.boundingRect())
