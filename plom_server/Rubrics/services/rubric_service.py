@@ -434,7 +434,7 @@ class RubricService:
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
 
-            # half-mark deltas in demo: easy to turn off: change True to False
+            # non-integer rubrics in demo: easy to turn off: change True to False
             if True:
                 for rubric in [
                     {
@@ -515,6 +515,18 @@ class RubricService:
                         "out_of": 0,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
+                        "question": q,
+                        "meta": "",
+                        "tags": "",
+                        "username": username,
+                        "system_rubric": True,
+                    },
+                    {
+                        "display_delta": "1/49 of 1/7",
+                        "value": 1 / 49,
+                        "out_of": 1 / 7,
+                        "text": "testing absolute rubric",
+                        "kind": "absolute",
                         "question": q,
                         "meta": "",
                         "tags": "",

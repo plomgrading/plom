@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
+from plom.misc_utils import pprint_score
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
@@ -207,6 +209,10 @@ class RubricLandingPageView(ManagerRequiredView):
             if kind_filter:
                 rubrics = rubrics.filter(kind=kind_filter)
 
+        for index, r in enumerate(rubrics):
+            r.value_str = f"{r.value:.3g}"
+            r.out_of_str = f"{r.out_of:.3g}"
+
         context.update(
             {
                 "rubrics": rubrics,
@@ -232,6 +238,10 @@ class RubricItemView(ManagerRequiredView):
         rubric_key = str(rubric_key).zfill(12)
         rubric = rs.get_rubric_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        for index, task in enumerate(marking_tasks):
+            task.latest_annotation.score_str = pprint_score(
+                task.latest_annotation.score
+            )
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(
