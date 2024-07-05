@@ -145,9 +145,14 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
+        # TODO: proposal this attn_msg would be set when the rubrics are unpickled
         import random
 
+        self._attn_msg = ""
         if random.random() < 0.5:
+            self._attn_msg = "This rubric has been updated from rev 5 to rev 17"
+
+        if self._attn_msg:
             b = QToolButton(text="\N{Warning Sign}")
             b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
             b.clicked.connect(self.dismiss_attn_button_interactively)
@@ -173,7 +178,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             h.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            b.setToolTip("This rubric has been updated")
+            b.setToolTip(self._attn_msg)
             # TODO: both of these allow it to move but not receive mouse events
             # self.addToGroup(h)
             # h.setParentItem(self)
@@ -266,8 +271,13 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         # TODO: proper parenting!
         InfoMsg(
             None,
-            "Rubric updated from rev 5 to rev 17",
-            info='Learn more about <a href="meh">rubric revisions</a>.',
+            self._attn_msg,
+            info="""
+                Learn more about
+                <a href="https://plom.readthedocs.io/en/latest/rubrics.html">rubric
+                revisions</a>.
+            """,
+            info_pre=False,
         ).exec()
         self.dismiss_attn_button()
 
@@ -286,6 +296,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.scene().removeItem(self._attn_button)
         self._attn_button.deleteLater()
         self._attn_button = None
+        self._attn_msg = ""
 
 
 class GhostComment(QGraphicsItemGroup):
