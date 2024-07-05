@@ -76,7 +76,6 @@ def load_spec_from_dict(
     Returns:
         Specification: saved test spec instance.
     """
-
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
 
@@ -495,7 +494,7 @@ def get_selection_method_of_all_questions() -> dict[int:str]:
 
 
 def get_fix_questions() -> list[str]:
-    """Return list of html labels of questions that are select=fix"""
+    """Return list of html labels of questions that are select=fix."""
     return [
         render_html_question_label(question.question_index)
         for question in SpecQuestion.objects.filter(select="fix").order_by(
@@ -505,7 +504,7 @@ def get_fix_questions() -> list[str]:
 
 
 def get_shuffle_questions() -> list[str]:
-    """Return list of html labels of questions that are select=shuffle"""
+    """Return list of html labels of questions that are select=shuffle."""
     return [
         render_html_question_label(question.question_index)
         for question in SpecQuestion.objects.filter(select="shuffle").order_by(

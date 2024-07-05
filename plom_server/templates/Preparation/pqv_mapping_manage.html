@@ -5,6 +5,7 @@
     Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Number of papers to produce and question-version mapping
 {% endblock title %}
@@ -60,7 +61,11 @@
                             hx-delete="{% url 'prep_qvmapping_delete' %}"
                             hx-confirm="Are you sure you want to delete the question-version map and clean the database?"
                             hx-target="body"
-                            hx-swap="outerHTML">delete question-version map and clean database</button>
+                            hx-indicator="#mid_delete"
+                            hx-swap="outerHTML">delete question-version map and papers</button>
+                    <img id="mid_delete"
+                         class="htmx-indicator"
+                         src="{% static 'ball_triangle.svg' %}" />
                 </div>
                 <div>
                     <table class="table table-striped border">

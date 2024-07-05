@@ -85,7 +85,6 @@ def assert_can_modify_prenaming():
         )
 
 
-# 4 - the qv-mapping depends on the classlist (prenaming), spec. and the built papers depend on the qv-mapping.
 def assert_can_modify_qv_mapping_database():
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
     from Papers.services import SpecificationService

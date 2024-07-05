@@ -24,6 +24,10 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
+class NumberOfPapersToProduceSetting(SingletonBaseModel):
+    number_of_papers = models.PositiveIntegerField(default=0, null=False)
+
+
 # TODO: consider moving this field to Base.SettingsModel
 class PapersPrintedSettingModel(SingletonBaseModel):
     """Set this once user has printed papers."""

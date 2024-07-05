@@ -12,6 +12,7 @@ from typing import Any
 from django.db import transaction
 
 from plom import SpecVerifier
+from plom.plom_exceptions import PlomDependencyConflict
 from plom.version_maps import version_map_to_csv, check_version_map
 
 from Papers.services import SpecificationService
@@ -19,7 +20,7 @@ from .preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
 
-from ..models import StagingPQVMapping
+from ..models import StagingPQVMapping, NumberOfPapersToProduceSetting
 from ..services import StagingStudentService
 
 
@@ -27,6 +28,18 @@ class PQVMappingService:
     @transaction.atomic()
     def is_there_a_pqv_map(self):
         return StagingPQVMapping.objects.exists()
+
+    def _set_number_to_produce(self, numberToProduce: int):
+        nop = NumberOfPapersToProduceSetting.load()
+        nop.number_of_papers = numberToProduce
+        nop.save()
+
+    def _reset_number_to_produce(self):
+        self._set_number_to_produce(0)
+
+    def get_number_of_papers_in_pqv_map(self) -> int:
+        # get the number of distinct paper-numbers in the staging pqv-map
+        return StagingPQVMapping.objects.values("paper_number").distinct().count()
 
     @transaction.atomic()
     def list_of_paper_numbers(self):
@@ -47,6 +60,7 @@ class PQVMappingService:
         """
         assert_can_modify_qv_mapping_database()
         StagingPQVMapping.objects.all().delete()
+        self._reset_number_to_produce()
 
     @transaction.atomic()
     def use_pqv_map(self, pqvmap: dict[int, dict[int, int]]):
@@ -59,6 +73,10 @@ class PQVMappingService:
             PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
             ValueError: invalid map.
         """
+        if self.is_there_a_pqv_map():
+            raise PlomDependencyConflict(
+                "There is already a qv-map, you cannot create a new one until you remove the existing one."
+            )
         assert_can_modify_qv_mapping_database()
 
         check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
@@ -67,6 +85,7 @@ class PQVMappingService:
                 StagingPQVMapping.objects.create(
                     paper_number=paper_number, question=question, version=version
                 )
+        self._set_number_to_produce(len(pqvmap))
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:

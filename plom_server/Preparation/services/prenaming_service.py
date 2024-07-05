@@ -17,8 +17,8 @@ class PrenameSettingService:
     def set_prenaming_setting(self, enable_disable):
         """Set prenaming to the given bool.
 
-        Raises a PlomDependencyConflict if cannot modify."""
-
+        Raises a PlomDependencyConflict if cannot modify.
+        """
         from Preparation.services.preparation_dependency_service import (
             assert_can_modify_prenaming,
         )

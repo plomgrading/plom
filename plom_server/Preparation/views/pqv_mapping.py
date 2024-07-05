@@ -85,7 +85,7 @@ class PQVMappingDownloadView(ManagerRequiredView):
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
-    """Used to trigger a delete of the qv-map and the papers in the database"""
+    """Used to trigger a delete of the qv-map and the papers in the database."""
 
     def delete(self, request: HttpRequest) -> HttpResponse:
         try:
