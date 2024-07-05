@@ -597,10 +597,11 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text=f"Page {n}")
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
-            b = QToolButton(text="\N{Trigram For Heaven}")
-            b.setStyleSheet("QToolButton { background-color: #0000ff; }")
+            button = QToolButton(text="\N{Trigram For Heaven}")
+            button.setToolTip(f"Options for page {n + 1}")
+            button.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
-            m = QMenu(b)
+            m = QMenu(button)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
             # m = QMenu(self.parent())
             _ = m.addAction("Remove this page", page_delete_func_factory(n))
@@ -624,27 +625,28 @@ class PageScene(QGraphicsScene):
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
             m.addAction("Find other pages...", self.parent().rearrangePages)
-            b.setMenu(m)
-            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-            h = self.addWidget(b)
-            h.setZValue(20)
-            # h.setScale(0.9)
-            h.setOpacity(0.66)
+            button.setMenu(m)
+            button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            proxy_widget = self.addWidget(button)
+            proxy_widget.setZValue(20)
+            # proxy_widget.setScale(0.9)
+            proxy_widget.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
             # wbr = h.mapRectToScene(h.boundingRect())
             # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
             # maybe h.setTransformOriginPoint(...) would help?
-            h.setPos(
+            proxy_widget.setPos(
                 # br.left() + br.width() - wbr.width(),
                 br.left() + 0.86 * br.width(),
                 br.top(),
             )
-            h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            h.setFlag(
+            proxy_widget.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            )
+            proxy_widget.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            b.setToolTip(f"Options for page {n + 1}")
-            self._page_hack_buttons.append(h)
+            self._page_hack_buttons.append(proxy_widget)
 
     def getScore(self):
         return self.score
