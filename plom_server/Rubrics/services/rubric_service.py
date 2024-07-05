@@ -277,7 +277,7 @@ class RubricService:
         return Rubric.objects.count(latest=True)
 
     def get_rubric_by_key(self, rubric_key: str) -> Rubric:
-        """Get the past rubric revisions by its key/id.
+        """Get the latest rurbic revision by its key/id.
 
         Args:
             rubric_key: which rubric.  Note currently the key/id is not
