@@ -10,11 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
+* Client can spell check rubrics.
+* Client can query for a list of other papers that used a particular rubric and display those annotations to the user.
+* Tasks can be reassigned between users on the server.
 
 ### Changed
 * Client: improvements to the undo stack.
 
 ### Fixed
+* Misc fixes and improvements.
+* Continued implementation of the new server.
+* legacy-server: minor fixes to legacy workflow.
 
 
 
