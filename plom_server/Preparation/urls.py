@@ -11,7 +11,7 @@ from .views import (
     LandingPrenameToggle,
     LandingResetClasslist,
     LandingResetQVmap,
-    LandingFinishedToggle,
+    PreparationFinishedToggle,
     SourceManageView,
     PrenamingView,
     ClasslistView,
@@ -74,7 +74,9 @@ urlpatterns = [
     path("misc/extra_page", ExtraPageView.as_view(), name="extra_page"),
     path("misc/scrap_paper", ScrapPaperView.as_view(), name="scrap_paper"),
     path(
-        "pref_finished/", LandingFinishedToggle.as_view(), name="prep_finished_toggle"
+        "prep_finished/",
+        PreparationFinishedToggle.as_view(),
+        name="prep_finished_toggle",
     ),
     path(
         "reference_image/<int:version>/<int:page>",

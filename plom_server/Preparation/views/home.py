@@ -47,7 +47,6 @@ class PreparationLandingView(ManagerRequiredView):
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
             "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "can_unset_papers_printed": PapersPrinted.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -121,7 +120,7 @@ class PreparationDependencyConflictView(ManagerRequiredView):
 
 class LandingResetSources(ManagerRequiredView):
     # TODO - remove this view
-    def delete(self, request):
+    def delete(self, request: HttpRequest) -> HttpResponse:
         SourceService.delete_all_source_pdfs()
         return HttpResponseClientRefresh()
 
@@ -149,8 +148,15 @@ class LandingResetQVmap(ManagerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class LandingFinishedToggle(ManagerRequiredView):
+class PreparationFinishedToggle(ManagerRequiredView):
     """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = {
+            "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
+            "can_unset_papers_printed": PapersPrinted.can_status_be_set_false(),
+        }
+        return render(request, "Preparation/papers_printed_manage.html", context)
 
     def post(self, request):
         current_setting = PapersPrinted.have_papers_been_printed()

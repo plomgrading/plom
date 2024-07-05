@@ -1,0 +1,49 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block page_heading %}
+    Tell Plom that papers have been printed
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                {% if have_papers_been_printed %}
+                    <h4 class="card-title">Papers have been printed</h4>
+                    {% if can_unset_papers_printed %}
+                        <p>
+                            <ul>
+                                <li>Although you have set this, no scans have been uploaded, so this can be unset.</li>
+                                <li>
+                                    Be extremely careful doing this. Any existing papers - both PDFs and physical hard-copies - should be discarded before you change anything.
+                                </li>
+                            </ul>
+                        </p>
+                    {% else %}
+                        <p>Papers have been scanned, so you cannot change this setting.</p>
+                    {% endif %}
+                    <a class="btn btn-danger"
+                       hx-post="{% url 'prep_finished_toggle' %}"
+                       hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
+                {% else %}
+                    <h4 class="card-title">Papers have not yet been printed</h4>
+                    <p>
+                        <ul>
+                            <li>Before this set you can modify your assessment, but you cannot upload scanned paper bundles.</li>
+                            <li>After it is set, you cannot modify your assessment,  but you can upload scanned papers.</li>
+                            <li>
+                                Note that it is possible to unset this provided you have not uploaded any scans - but be careful to make sure any existing papers are discarded.
+                            </li>
+                        </ul>
+                    </p>
+                    <a class="btn btn-success" hx-post="{% url 'prep_finished_toggle' %}">Set 'papers are printed'</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
