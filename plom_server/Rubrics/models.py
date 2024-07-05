@@ -86,18 +86,18 @@ class Rubric(models.Model):
 
     key = models.TextField(null=False, default=generate_unique_key)
     kind = models.TextField(null=False, choices=RubricKind.choices)
-    display_delta = models.TextField(null=False, default="")  # is short
-    value = models.IntegerField(null=False, default=0)
-    out_of = models.IntegerField(null=False, default=0)
+    display_delta = models.TextField(null=False, blank=True, default="")  # is short
+    value = models.IntegerField(null=False, blank=True, default=0)
+    out_of = models.IntegerField(null=False, blank=True, default=0)
     text = models.TextField(null=False)  # can be long
-    question = models.IntegerField(null=False, default=0)
+    question = models.IntegerField(null=False, blank=True, default=0)
     tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, blank=True, default=list)
     parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
-    system_rubric = models.BooleanField(null=False, default=False)
-    published = models.BooleanField(null=False, default=True)
+    system_rubric = models.BooleanField(null=False, blank=True, default=False)
+    published = models.BooleanField(null=False, blank=True, default=True)
     # ForeignKey automatically creates a backreference from the User table
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     last_modified = models.DateTimeField(auto_now=True)
@@ -108,8 +108,8 @@ class Rubric(models.Model):
     modified_by_user = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
-    revision = models.IntegerField(null=False, default=0)
-    latest = models.BooleanField(null=False, default=True)
+    revision = models.IntegerField(null=False, blank=True, default=0)
+    latest = models.BooleanField(null=False, blank=True, default=True)
 
     def clean(self):
         if self.latest:
