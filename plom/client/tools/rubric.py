@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QToolButton,
 )
 
+from plom.client.useful_classes import InfoMsg
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill, AttnColourHex
 from plom.client.tools import CommandTool, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
@@ -262,9 +263,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         return int(self.di.value)
 
     def dismiss_attn_button_interactively(self):
-        # TODO: popup a dialog first
-        # InfoMsg("Rubric updated from ... to ...").exec()
-        print("hi")
+        # TODO: proper parenting!
+        InfoMsg(
+            None,
+            "Rubric updated from rev 5 to rev 17",
+            info='Learn more about <a href="meh">rubric revisions</a>.',
+        ).exec()
         self.dismiss_attn_button()
 
     def dismiss_attn_button(self):
