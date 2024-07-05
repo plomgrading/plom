@@ -127,6 +127,7 @@ class Rubric(models.Model):
         return super(Rubric, self).save(*args, **kwargs)
 
     def __str__(self):
+        """Return a string representation of the rubric."""
         return self.text
 
     class Meta:
