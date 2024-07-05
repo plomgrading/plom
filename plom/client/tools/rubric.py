@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import random
 from copy import deepcopy
 from typing import Any
 
@@ -34,7 +35,9 @@ class CommandRubric(CommandTool):
     "saved comment").
     """
 
-    def __init__(self, scene, pt: QPointF, rubric: dict[str, Any]) -> None:
+    def __init__(
+        self, scene, pt: QPointF, rubric: dict[str, Any], *, attn_msg: str = ""
+    ) -> None:
         """Constructor for this class.
 
         Args:
@@ -47,11 +50,22 @@ class CommandRubric(CommandTool):
                 We copy the data, so changes to the original will not
                 automatically update this object,
 
+        Keyword Args:
+            attn_msg: if set, this rubric is notifying the user of something,
+                generally. we'll call attention to that and allow the user to
+                clear the setting.
+
         Returns:
             None
         """
         super().__init__(scene)
-        self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
+        self.gdt = RubricItem(
+            pt,
+            rubric,
+            _scene=scene,
+            style=scene.style,
+            attn_msg=attn_msg,
+        )
         self.setText("Rubric")
 
     @classmethod
@@ -64,7 +78,18 @@ class CommandRubric(CommandTool):
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[1], X[2]), X[3])
+
+        # TODO: test if this is the latest, else set some attention stuff
+        attn_msg = ""
+        if random.random() < 0.5:
+            attn_msg = "This rubric has been updated from rev 5 to rev 17"
+
+        return cls(
+            scene,
+            QPointF(X[0], X[1]),
+            X[3],
+            attn_msg=attn_msg,
+        )
 
     def get_undo_redo_animation_shape(self):
         return self.gdt.shape()
@@ -86,7 +111,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """
 
     def __init__(
-        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any]
+        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any], attn_msg: str = ""
     ) -> None:
         """Constructor for this class.
 
@@ -104,6 +129,9 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
             style: various things effecting color, linewidths etc.
+            attn_msg: if set, this rubric is notifying the user of something,
+                generally. we'll call attention to that and allow the user to
+                clear the setting.
 
         Returns:
             None
@@ -112,6 +140,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.pt = pt
         self.style = style
         self._rubric = deepcopy(rubric)
+        self._attn_msg = attn_msg
         # TODO: replace each with @property?
         self.rubricID = rubric["rid"]
         self.kind = rubric["kind"]
@@ -145,15 +174,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        # TODO: proposal this attn_msg would be set when the rubrics are unpickled
-        import random
-
-        self._attn_msg = ""
-        if random.random() < 0.5:
-            self._attn_msg = "This rubric has been updated from rev 5 to rev 17"
-
         if self._attn_msg:
-            b = QToolButton(text="\N{Warning Sign}")
+            b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
             b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
             b.clicked.connect(self.dismiss_attn_button_interactively)
             # parenting the menu inside the scene
