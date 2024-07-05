@@ -120,37 +120,7 @@ class PreparationDependencyConflictView(ManagerRequiredView):
         return render(request, "Preparation/dependency_conflict.html", context)
 
 
-class LandingResetSources(ManagerRequiredView):
-    # TODO - remove this view
-    def delete(self, request: HttpRequest) -> HttpResponse:
-        SourceService.delete_all_source_pdfs()
-        return HttpResponseClientRefresh()
-
-
-class LandingPrenameToggle(ManagerRequiredView):
-    # TODO - remove this view
-    def post(self, request):
-        prename_service = PrenameSettingService()
-        curr_state = prename_service.get_prenaming_setting()
-        prename_service.set_prenaming_setting(not curr_state)
-        return HttpResponseClientRefresh()
-
-
-class LandingResetClasslist(ManagerRequiredView):
-    def delete(self, request):
-        students = StagingStudentService()
-        students.remove_all_students()
-        return HttpResponseClientRefresh()
-
-
-class LandingResetQVmap(ManagerRequiredView):
-    def delete(self, request):
-        qv_service = PQVMappingService()
-        qv_service.remove_pqv_map()
-        return HttpResponseClientRefresh()
-
-
-class PreparationFinishedToggle(ManagerRequiredView):
+class PreparationFinishedView(ManagerRequiredView):
     """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
 
     def get(self, request: HttpRequest) -> HttpResponse:

@@ -7,16 +7,11 @@ from django.urls import path
 from .views import (
     PreparationLandingView,
     PreparationDependencyConflictView,
-    LandingResetSources,
-    LandingPrenameToggle,
-    LandingResetClasslist,
-    LandingResetQVmap,
-    PreparationFinishedToggle,
+    PreparationFinishedView,
     SourceManageView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
-    ClasslistReadOnlyView,
     PQVMappingView,
     PQVMappingDownloadView,
     PQVMappingDeleteView,
@@ -32,14 +27,6 @@ from .views import (
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
     path("conflict", PreparationDependencyConflictView.as_view(), name="prep_conflict"),
-    path("reset/sources/", LandingResetSources.as_view(), name="prep_reset_sources"),
-    path(
-        "reset/prenaming/", LandingPrenameToggle.as_view(), name="prep_prename_toggle"
-    ),
-    path(
-        "reset/classlist/", LandingResetClasslist.as_view(), name="prep_reset_classlist"
-    ),
-    path("reset/qvmap/", LandingResetQVmap.as_view(), name="prep_reset_qvmap"),
     path("source/", SourceManageView.as_view(), name="prep_sources"),
     path(
         "source/<int:version>",
@@ -53,9 +40,6 @@ urlpatterns = [
         "classlist/download",
         ClasslistDownloadView.as_view(),
         name="prep_classlist_download",
-    ),
-    path(
-        "classlist/view/", ClasslistReadOnlyView.as_view(), name="prep_classlist_view"
     ),
     path("qvmapping/", PQVMappingView.as_view(), name="prep_qvmapping"),
     path(
@@ -75,8 +59,8 @@ urlpatterns = [
     path("misc/scrap_paper", ScrapPaperView.as_view(), name="scrap_paper"),
     path(
         "prep_finished/",
-        PreparationFinishedToggle.as_view(),
-        name="prep_finished_toggle",
+        PreparationFinishedView.as_view(),
+        name="prep_finished",
     ),
     path(
         "reference_image/<int:version>/<int:page>",

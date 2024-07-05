@@ -6,6 +6,10 @@ from django.db import transaction
 
 from Preparation.models import PrenamingSetting
 
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_prenaming,
+)
+
 
 class PrenameSettingService:
     @transaction.atomic
@@ -19,10 +23,6 @@ class PrenameSettingService:
 
         Raises a PlomDependencyConflict if cannot modify.
         """
-        from Preparation.services.preparation_dependency_service import (
-            assert_can_modify_prenaming,
-        )
-
         # raises a PlomDependencyConflict if fails.
         assert_can_modify_prenaming()
 

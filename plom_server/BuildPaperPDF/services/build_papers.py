@@ -368,7 +368,6 @@ class BuildPapersService:
         Raises:
             PlomDependencyConflict: if dependencies not met.
         """
-
         assert_can_rebuild_test_pdfs()
 
         retry_tasks = BuildPaperPDFChore.objects.filter(

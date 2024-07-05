@@ -6,18 +6,13 @@
 from .home import (
     PreparationLandingView,
     PreparationDependencyConflictView,
-    LandingResetSources,
-    LandingPrenameToggle,
-    LandingResetClasslist,
-    LandingResetQVmap,
-    PreparationFinishedToggle,
+    PreparationFinishedView,
 )
 from .source_manage import SourceManageView, ReferenceImageView
 from .prenaming import PrenamingView
 from .classlist_manage import (
     ClasslistView,
     ClasslistDownloadView,
-    ClasslistReadOnlyView,
 )
 from .pqv_mapping import (
     PQVMappingView,

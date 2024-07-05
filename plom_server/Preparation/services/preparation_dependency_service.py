@@ -54,7 +54,7 @@ def assert_can_modify_sources():
 # 3a = classlist - does not depend on spec, but the database depends on prenaming and classlist.
 def assert_can_modify_classlist():
     from . import PapersPrinted, PrenameSettingService
-    from Papers import PaperInfoService
+    from Papers.services import PaperInfoService
 
     # cannot modify classlist if papers printed
     if PapersPrinted.have_papers_been_printed():

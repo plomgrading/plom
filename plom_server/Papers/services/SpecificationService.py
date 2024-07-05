@@ -481,7 +481,7 @@ def get_question_selection_method(question_index: int) -> str:
     return question.select
 
 
-def get_selection_method_of_all_questions() -> dict[int:str]:
+def get_selection_method_of_all_questions() -> dict[int, str]:
     """Get the selection method (shuffle/fix) all questions
 
     Returns:

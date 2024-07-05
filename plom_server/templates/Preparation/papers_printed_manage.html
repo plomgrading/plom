@@ -28,7 +28,7 @@
                         <p>Papers have been scanned, so you cannot change this setting.</p>
                     {% endif %}
                     <a class="btn btn-danger"
-                       hx-post="{% url 'prep_finished_toggle' %}"
+                       hx-post="{% url 'prep_finished' %}"
                        hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
                 {% else %}
                     <h4 class="card-title">Papers have not yet been printed</h4>
@@ -41,7 +41,7 @@
                             </li>
                         </ul>
                     </p>
-                    <a class="btn btn-success" hx-post="{% url 'prep_finished_toggle' %}">Set 'papers are printed'</a>
+                    <a class="btn btn-success" hx-post="{% url 'prep_finished' %}">Set 'papers are printed'</a>
                 {% endif %}
             </div>
         </div>
