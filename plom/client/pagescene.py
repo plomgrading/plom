@@ -1200,7 +1200,7 @@ class PageScene(QGraphicsScene):
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    self.currentPos.x() - 20, self.currentPos.y() - 20, 40, 40
                 )
             connectingPath = self.whichLineToDraw(
                 ghost_rect,
@@ -1242,7 +1242,7 @@ class PageScene(QGraphicsScene):
             self.currentPos = event.scenePos()
             if ghost_rect is None:
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    self.currentPos.x() - 20, self.currentPos.y() - 20, 40, 40
                 )
             self.pathItem.setPath(
                 self.whichLineToDraw(
