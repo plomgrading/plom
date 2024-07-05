@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
-from .models import TmpAbstractQuestion, PedagogyTag
+from .models import TmpAbstractQuestion, PedagogyTag, QuestionTag
+from .forms import AddTagForm, RemoveTagForm
 
 
 class QTagsLandingView(ListView):
@@ -21,9 +22,32 @@ class QTagsLandingView(ListView):
         )
         context["tags"] = PedagogyTag.objects.all()
         context["question_tags"] = TmpAbstractQuestion.objects.prefetch_related(
-            "tags"
+            "questiontag_set__tag"
         ).all()
+        context["add_tag_form"] = AddTagForm()
+        context["remove_tag_form"] = RemoveTagForm()
         return context
+
+    def post(self, request, *args, **kwargs):
+        if "add_tag" in request.POST:
+            form = AddTagForm(request.POST)
+            if form.is_valid():
+                question_index = form.cleaned_data["question_index"]
+                tag_id = form.cleaned_data["tag_id"].id
+                tag = get_object_or_404(PedagogyTag, id=tag_id)
+                QuestionTagService.add_question_tag(
+                    question_index, [tag.tag_name], request.user
+                )
+        elif "remove_tag" in request.POST:
+            form = RemoveTagForm(request.POST)
+            if form.is_valid():
+                question_tag_id = form.cleaned_data["question_tag_id"]
+                try:
+                    question_tag = get_object_or_404(QuestionTag, id=question_tag_id)
+                    question_tag.delete()
+                except Exception as e:
+                    print("Error deleting QuestionTag:", e)  # Debug print
+        return redirect(reverse("qtags_landing"))
 
 
 class AddQuestionTagView(CreateView):

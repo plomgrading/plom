@@ -33,19 +33,48 @@
                 <tr>
                     <td>{{ index }}</td>
                     <td>{{ label_html|safe }}</td>
-                    <td>
+                    <td id="question-tags-{{ index }}">
                         {% for question_tag in question_tags %}
                             {% if question_tag.question_index == index %}
-                                {% for t in question_tag.tags.all %}
-                                    <a href="#"
-                                       class="tag-link {% cycle 'blue-tag' 'green-tag' %}"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#tagModal"
-                                       data-tag-name="{{ t.tag_name }}"
-                                       data-tag-description="{{ t.text }}">{{ t.tag_name }}</a>
+                                {% for qt in question_tag.questiontag_set.all %}
+                                    <span id="tag-{{ qt.id }}" class="badge bg-primary align-middle tag">
+                                        {{ qt.tag.tag_name }}
+                                        <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
+                                            <button class="btn btn-primary btn-sm p-0 ms-1"
+                                                    type="submit"
+                                                    name="remove_tag">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </form>
+                                    </span>
                                 {% endfor %}
                             {% endif %}
                         {% endfor %}
+                        <!-- Add Tag Dropdown -->
+                        <span class="dropdown">
+                            <button class="btn btn-success dropdown-toggle"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">Add tag</button>
+                            <ul class="dropdown-menu">
+                                {% for tag in tags %}
+                                    <li class="p-2">
+                                        <form method="post" action="{% url 'qtags_landing' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="question_index" value="{{ index }}">
+                                            <input type="hidden" name="tag_id" value="{{ tag.id }}">
+                                            <button class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"
+                                                    type="submit"
+                                                    name="add_tag">
+                                                <i class="bi bi-plus-square pe-1"></i>{{ tag.tag_name }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </span>
                     </td>
                 </tr>
             {% endfor %}
@@ -137,6 +166,24 @@
         }
         .select2-container {
             z-index: 9999;
+        }
+        .tag {
+            margin-right: 5px;
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 3px;
+            background-color: #007bff;
+            color: white;
+        }
+        .tag .btn {
+            padding: 0;
+            margin-left: 5px;
+            background: none;
+            border: none;
+            color: white;
+        }
+        .tag .btn:hover {
+            color: red;
         }
     </style>
 {% endblock main_content %}

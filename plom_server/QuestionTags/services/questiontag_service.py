@@ -9,16 +9,17 @@ class QuestionTagService:
     @staticmethod
     def add_question_tag(question_index, tag_names, user):
         """Add a question tag to the database."""
-        question_tag, created = TmpAbstractQuestion.objects.get_or_create(
+        question, created = TmpAbstractQuestion.objects.get_or_create(
             question_index=question_index
         )
         for tag_name in tag_names:
             tag, tag_created = PedagogyTag.objects.get_or_create(
                 tag_name=tag_name, defaults={"user": user}
             )
-            question_tag.tags.add(tag)
-            QuestionTag.objects.create(question=question_tag, tag=tag, user=user)
-        question_tag.save()
+            question_tag, qt_created = QuestionTag.objects.get_or_create(
+                question=question, tag=tag, user=user
+            )
+        question.save()
 
     @staticmethod
     def create_tag(tag_name, text, user):

@@ -4,6 +4,17 @@
 from django.contrib import admin
 from .models import TmpAbstractQuestion, PedagogyTag, QuestionTag
 
+
+class QuestionTagInline(admin.TabularInline):
+    model = QuestionTag
+    extra = 1
+
+
+@admin.register(TmpAbstractQuestion)
+class TmpAbstractQuestionAdmin(admin.ModelAdmin):
+    inlines = [QuestionTagInline]
+    list_display = ["question_index"]
+
+
 admin.site.register(PedagogyTag)
-admin.site.register(TmpAbstractQuestion)
 admin.site.register(QuestionTag)

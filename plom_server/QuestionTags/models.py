@@ -23,11 +23,10 @@ class PedagogyTag(Tag):
 
 class TmpAbstractQuestion(models.Model):
     question_index = models.IntegerField(default=0)
-    tags = models.ManyToManyField(PedagogyTag)
 
     def __str__(self):
         """Return the question index."""
-        return f"Question {str(self.question_index)}"
+        return f"Question index {str(self.question_index)}"
 
 
 class QuestionTag(models.Model):
@@ -35,6 +34,9 @@ class QuestionTag(models.Model):
     tag = models.ForeignKey(PedagogyTag, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ("question", "tag", "user")
 
     def __str__(self):
         """Return a string representation of the question-tag relationship."""
