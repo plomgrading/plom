@@ -124,9 +124,13 @@ class PreparationFinishedView(ManagerRequiredView):
     """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        from Preparation.services.preparation_dependency_conflict import (
+            can_unset_papers_printed,
+        )
+
         context = {
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "can_unset_papers_printed": PapersPrinted.can_status_be_set_false(),
+            "can_unset_papers_printed": can_unset_papers_printed,
         }
         return render(request, "Preparation/papers_printed_manage.html", context)
 
