@@ -14,7 +14,9 @@ from django.utils import timezone
 
 
 class PedagogyTag(Tag):
-    tag_name = models.TextField()
+    """Represents a tag with its description."""
+
+    tag_name = models.TextField(unique=True)
 
     def __str__(self):
         """Return the tag name."""
@@ -22,6 +24,8 @@ class PedagogyTag(Tag):
 
 
 class TmpAbstractQuestion(models.Model):
+    """Represents an abstract question with an index."""
+
     question_index = models.IntegerField(default=0)
 
     def __str__(self):
@@ -29,7 +33,15 @@ class TmpAbstractQuestion(models.Model):
         return f"Question index {str(self.question_index)}"
 
 
-class QuestionTag(models.Model):
+class QuestionTagLink(models.Model):
+    """Represents a tag associated with a question by a user.
+
+    question: The question being tagged.
+    tag: The pedagogy tag associated with the question.
+    user: The user who tagged the question.
+    time: The time the tag was added.
+    """
+
     question = models.ForeignKey(TmpAbstractQuestion, on_delete=models.CASCADE)
     tag = models.ForeignKey(PedagogyTag, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -39,7 +51,11 @@ class QuestionTag(models.Model):
         unique_together = ("question", "tag", "user")
 
     def __str__(self):
-        """Return a string representation of the question-tag relationship."""
+        """
+        Returns a string representation of the question-tag relationship.
+
+        The string shows the question index, tag name, and user id who tagged the question.
+        """
         user_id = self.user_id if self.user else "None"
         tag_name = self.tag.tag_name if self.tag else "None"
         return f"Question {self.question.id} tagged with '{tag_name}' by user {user_id}"

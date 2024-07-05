@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTag
+from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 from django.shortcuts import get_object_or_404
+from django.db.utils import IntegrityError
 
 
 class QuestionTagService:
@@ -13,12 +14,19 @@ class QuestionTagService:
             question_index=question_index
         )
         for tag_name in tag_names:
-            tag, tag_created = PedagogyTag.objects.get_or_create(
-                tag_name=tag_name, defaults={"user": user}
-            )
-            question_tag, qt_created = QuestionTag.objects.get_or_create(
-                question=question, tag=tag, user=user
-            )
+            try:
+                tag, tag_created = PedagogyTag.objects.get_or_create(
+                    tag_name=tag_name, defaults={"user": user}
+                )
+                question_tag, qt_created = QuestionTagLink.objects.get_or_create(
+                    question=question, tag=tag, user=user
+                )
+            except IntegrityError:
+                # Handle the case where the tag_name already exists in a race condition
+                tag = PedagogyTag.objects.get(tag_name=tag_name)
+                question_tag, qt_created = QuestionTagLink.objects.get_or_create(
+                    question=question, tag=tag, user=user
+                )
         question.save()
 
     @staticmethod

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
-from .models import TmpAbstractQuestion, PedagogyTag, QuestionTag
+from .models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 from .forms import AddTagForm, RemoveTagForm
 
 
@@ -22,7 +22,7 @@ class QTagsLandingView(ListView):
         )
         context["tags"] = PedagogyTag.objects.all()
         context["question_tags"] = TmpAbstractQuestion.objects.prefetch_related(
-            "questiontag_set__tag"
+            "questiontaglink_set__tag"
         ).all()
         context["add_tag_form"] = AddTagForm()
         context["remove_tag_form"] = RemoveTagForm()
@@ -43,7 +43,9 @@ class QTagsLandingView(ListView):
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
                 try:
-                    question_tag = get_object_or_404(QuestionTag, id=question_tag_id)
+                    question_tag = get_object_or_404(
+                        QuestionTagLink, id=question_tag_id
+                    )
                     question_tag.delete()
                 except Exception as e:
                     print("Error deleting QuestionTag:", e)  # Debug print

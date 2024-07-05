@@ -23,58 +23,59 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Question Index</th>
-                <th>Question Label</th>
+                <th class="fixed-width-index">Question Index</th>
+                <th class="fixed-width-label">Question Label</th>
                 <th>Tags</th>
             </tr>
         </thead>
         <tbody>
             {% for index, label_str, label_html in question_label_triple %}
                 <tr>
-                    <td>{{ index }}</td>
-                    <td>{{ label_html|safe }}</td>
+                    <td class="fixed-width-index">{{ index }}</td>
+                    <td class="fixed-width-label">{{ label_html|safe }}</td>
                     <td id="question-tags-{{ index }}">
-                        {% for question_tag in question_tags %}
-                            {% if question_tag.question_index == index %}
-                                {% for qt in question_tag.questiontag_set.all %}
-                                    <span id="tag-{{ qt.id }}" class="badge bg-primary align-middle tag">
-                                        {{ qt.tag.tag_name }}
-                                        <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
-                                            <button class="btn btn-primary btn-sm p-0 ms-1"
-                                                    type="submit"
-                                                    name="remove_tag">
-                                                <i class="bi bi-x"></i>
-                                            </button>
-                                        </form>
-                                    </span>
-                                {% endfor %}
-                            {% endif %}
-                        {% endfor %}
-                        <!-- Add Tag Dropdown -->
-                        <span class="dropdown">
-                            <button class="btn btn-success dropdown-toggle"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">Add tag</button>
-                            <ul class="dropdown-menu">
-                                {% for tag in tags %}
-                                    <li class="p-2">
-                                        <form method="post" action="{% url 'qtags_landing' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="question_index" value="{{ index }}">
-                                            <input type="hidden" name="tag_id" value="{{ tag.id }}">
-                                            <button class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"
-                                                    type="submit"
-                                                    name="add_tag">
-                                                <i class="bi bi-plus-square pe-1"></i>{{ tag.tag_name }}
-                                            </button>
-                                        </form>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </span>
+                        <div class="tag-container">
+                            <span class="dropdown add-tag-button">
+                                <button class="btn btn-success dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">Add tag</button>
+                                <ul class="dropdown-menu">
+                                    {% for tag in tags %}
+                                        <li class="p-2">
+                                            <form method="post" action="{% url 'qtags_landing' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="question_index" value="{{ index }}">
+                                                <input type="hidden" name="tag_id" value="{{ tag.id }}">
+                                                <button class="badge bg-success fs-6 align-middle dropdown-item py-2 text-start"
+                                                        type="submit"
+                                                        name="add_tag">
+                                                    <i class="bi bi-plus-square pe-1"></i>{{ tag.tag_name }}
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </span>
+                            {% for question_tag in question_tags %}
+                                {% if question_tag.question_index == index %}
+                                    {% for qt in question_tag.questiontaglink_set.all %}
+                                        <span id="tag-{{ qt.id }}" class="badge bg-primary align-middle tag">
+                                            {{ qt.tag.tag_name }}
+                                            <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
+                                                <button class="btn btn-primary btn-sm p-0 ms-1"
+                                                        type="submit"
+                                                        name="remove_tag">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </form>
+                                        </span>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                     </td>
                 </tr>
             {% endfor %}
@@ -97,15 +98,15 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Tag Name</th>
-                <th>Tag Description</th>
+                <th class="fixed-width-name">Tag Name</th>
+                <th class="fixed-width-description">Tag Description</th>
             </tr>
         </thead>
         <tbody>
             {% for tag in tags %}
                 <tr>
-                    <td>{{ tag.tag_name }}</td>
-                    <td>{{ tag.text }}</td>
+                    <td class="fixed-width-name">{{ tag.tag_name }}</td>
+                    <td class="fixed-width-description">{{ tag.text }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -147,6 +148,20 @@
         });
     </script>
     <style>
+        .fixed-width-index {
+            width: 300px;
+            text-align: left;
+        }
+        .fixed-width-label {
+            width: 300px;
+            text-align: center;
+        }
+        .tag-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
         .tag-link {
             display: inline-block;
             margin-right: 5px;
@@ -170,10 +185,11 @@
         .tag {
             margin-right: 5px;
             display: inline-block;
-            padding: 2px 5px;
+            padding: 5px 10px;
             border-radius: 3px;
             background-color: #007bff;
             color: white;
+            font-size: 0.875rem;
         }
         .tag .btn {
             padding: 0;
@@ -184,6 +200,29 @@
         }
         .tag .btn:hover {
             color: red;
+        }
+        .add-tag-button {
+            flex-shrink: 0;
+            margin-right: 10px;
+        }
+        .btn-success {
+            width: 100px;
+        }
+        .fixed-width-name {
+            max-width: 250px;
+            text-align: left;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .fixed-width-description {
+            max-width: 500px;
+            text-align: left;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .form-error {
+            color: red;
+            font-weight: bold;
         }
     </style>
 {% endblock main_content %}

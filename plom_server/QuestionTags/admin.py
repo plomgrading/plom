@@ -2,11 +2,11 @@
 # Copyright (C) 2024 Elisa Pan
 
 from django.contrib import admin
-from .models import TmpAbstractQuestion, PedagogyTag, QuestionTag
+from .models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 
 
 class QuestionTagInline(admin.TabularInline):
-    model = QuestionTag
+    model = QuestionTagLink
     extra = 1
 
 
@@ -17,4 +17,4 @@ class TmpAbstractQuestionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PedagogyTag)
-admin.site.register(QuestionTag)
+admin.site.register(QuestionTagLink)
