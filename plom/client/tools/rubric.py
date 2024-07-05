@@ -158,7 +158,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             m.addSeparator()
             m.addAction("Dismiss", self.dismiss_attn_button)
             b.setMenu(m)
-            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = QGraphicsProxyWidget()
             h.setWidget(b)
             h.setOpacity(0.66)
