@@ -4,8 +4,6 @@
 
 from django.db import transaction
 
-from Papers.models import Paper, Bundle
-from Scan.models import StagingBundle
 from ..models import PapersPrintedSettingModel
 
 from Preparation.services.preparation_dependency_service import (
