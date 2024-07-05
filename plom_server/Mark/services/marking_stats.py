@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 import statistics
 from typing import Any, Dict, List, Optional
@@ -13,6 +14,29 @@ from plom.misc_utils import pprint_score
 
 from Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
+
+
+def generic_stats_dict_from_list(mark_list):
+    stats_dict = {}
+    stats_dict["mark_max"] = max(mark_list)
+    stats_dict["mark_min"] = min(mark_list)
+    stats_dict["mark_median"] = statistics.median(mark_list)
+    stats_dict["mark_mean"] = statistics.mean(mark_list)
+    stats_dict["mark_mode"] = statistics.mode(mark_list)
+
+    stats_dict["mark_max_str"] = pprint_score(stats_dict["mark_max"])
+    stats_dict["mark_min_str"] = pprint_score(stats_dict["mark_min"])
+    stats_dict["mark_median_str"] = f"{stats_dict['mark_median']:.1f}"
+    stats_dict["mark_mean_str"] = f"{stats_dict['mark_mean']:.1f}"
+    stats_dict["mark_mode_str"] = pprint_score(stats_dict["mark_mode"])
+
+    if len(mark_list) >= 2:
+        stats_dict["mark_stdev"] = statistics.stdev(mark_list)
+        stats_dict["mark_stdev_str"] = f"{stats_dict['mark_stdev']:.1f}"
+    else:
+        stats_dict["mark_stdev"] = stats_dict["mark_stdev_str"] = "n/a"
+
+    return stats_dict
 
 
 class MarkingStatsService:
@@ -32,23 +56,30 @@ class MarkingStatsService:
 
         Returns:
             Dictionary containing the following, 'number_of_completed_tasks',
-                'all_task_count', 'completed_percentage', 'mark_max', 'mark_min',
-                'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'mark_full'
+                'all_task_count', 'completed_percentage', 'mark_max',
+                'mark_max_str', 'mark_min', 'mark_min_str', 'mark_median',
+                'mark_median_str', 'mark_mean', 'mark_mean_str', 'mark_mode',
+                'mark_mode_str', 'mark_stdev', 'mark_stdev_str', 'mark_full'
         """
         stats_dict = {
             "number_of_completed_tasks": 0,
             "all_task_count": 0,
             "completed_percentage": 0,
             "mark_max": 0,
+            "mark_max_str": "n/a",
             "mark_min": 0,
+            "mark_min_str": "n/a",
             "mark_median": 0,
-            "mode_mean": 0,
-            "mode_mode": 0,
+            "mark_median_str": "n/a",
+            "mark_mean": 0,
+            "mark_mean_str": "n/a",
+            "mark_mode": 0,
+            "mark_mode_str": "n/a",
             "mark_stdev": "n/a",
+            "mark_stdev_str": "n/a",
             "avg_marking_time": 0,
             "mark_full": SpecificationService.get_question_mark(question),
         }
-
         try:
             all_tasks = MarkingTask.objects.filter(question_index=question).exclude(
                 status=MarkingTask.OUT_OF_DATE
@@ -76,7 +107,6 @@ class MarkingStatsService:
         stats_dict["completed_percentage"] = round(
             stats_dict["number_of_completed_tasks"] / stats_dict["all_task_count"] * 100
         )
-
         if stats_dict["number_of_completed_tasks"]:
             stats_dict["avg_marking_time"] = round(
                 sum([X.latest_annotation.marking_time for X in completed_tasks])
@@ -90,16 +120,7 @@ class MarkingStatsService:
             )
             # the following don't make sense until something is marked
             mark_list = [X.latest_annotation.score for X in completed_tasks]
-            stats_dict["mark_max"] = max(mark_list)
-            stats_dict["mark_min"] = min(mark_list)
-            stats_dict["mark_median"] = round(statistics.median(mark_list), 1)
-            stats_dict["mark_mean"] = round(statistics.mean(mark_list), 1)
-            stats_dict["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                stats_dict["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                stats_dict["mark_stdev"] = "n/a"
-
+            stats_dict.update(generic_stats_dict_from_list(mark_list))
         return stats_dict
 
     @transaction.atomic
@@ -132,7 +153,7 @@ class MarkingStatsService:
         except MarkingTask.DoesNotExist:
             return hist
         for X in completed_tasks:
-            hist[X.latest_annotation.score] += 1
+            hist[round(X.latest_annotation.score, 0)] += 1
         return hist
 
     @transaction.atomic
@@ -170,12 +191,14 @@ class MarkingStatsService:
 
         Args:
             question (int): The question
-            version (int): THe version
+            version (int): The version
 
         Returns:
             dict (int, dict[str,any]): for each user-pk give a dict that
-            contains 'username', 'histogram', 'number', 'mark_max, 'mark_min',
-            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev'.
+            contains 'username', 'histogram', 'number', 'mark_max', 'mark_max_str',
+            'mark_min', 'mark_min_str', 'mark_median', 'mark_median_str',
+            'mark_mean', 'mark_mean_str', 'mark_mode', 'mark_mode_str',
+            'mark_stdev', 'mark_stdev_str'.
         """
         data: Dict[int, Dict[str, Any]] = {}
         try:
@@ -200,7 +223,9 @@ class MarkingStatsService:
                         )
                     },
                 }
-            data[X.assigned_user.pk]["histogram"][X.latest_annotation.score] += 1
+            data[X.assigned_user.pk]["histogram"][
+                round(X.latest_annotation.score, 0)
+            ] += 1
 
         for upk in data:
             mark_list = [
@@ -209,16 +234,7 @@ class MarkingStatsService:
                 for _ in range(value)
             ]
             data[upk]["number"] = len(mark_list)
-            data[upk]["mark_max"] = max(mark_list)
-            data[upk]["mark_min"] = min(mark_list)
-            data[upk]["mark_median"] = round(statistics.median(mark_list), 1)
-            data[upk]["mark_mean"] = round(statistics.mean(mark_list), 1)
-            data[upk]["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                data[upk]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                data[upk]["mark_stdev"] = "n/a"
-
+            data[upk].update(generic_stats_dict_from_list(mark_list))
         return data
 
     @transaction.atomic
@@ -232,8 +248,10 @@ class MarkingStatsService:
 
         Returns:
             dict (int, dict[str,any]): for each version give a dict that
-            contains 'histogram', 'number', 'mark_max, 'mark_min',
-            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'remaining'.
+            contains 'histogram', 'number', 'mark_max', 'mark_max_str',
+            'mark_min', 'mark_min_str', 'mark_median', 'mark_median_str',
+            'mark_mean','mark_mean_str', 'mark_mode','mark_mode_str',
+            'mark_stdev','mark_stdev_str', 'remaining'.
         """
         data: Dict[int, Dict[str, Any]] = {}
         try:
@@ -255,7 +273,9 @@ class MarkingStatsService:
                         )
                     },
                 }
-            data[X.question_version]["histogram"][X.latest_annotation.score] += 1
+            data[X.question_version]["histogram"][
+                round(X.latest_annotation.score, 0)
+            ] += 1
 
         for ver in data:
             mark_list = [
@@ -264,15 +284,7 @@ class MarkingStatsService:
                 for _ in range(value)
             ]
             data[ver]["number"] = len(mark_list)
-            data[ver]["mark_max"] = max(mark_list)
-            data[ver]["mark_min"] = min(mark_list)
-            data[ver]["mark_median"] = round(statistics.median(mark_list), 1)
-            data[ver]["mark_mean"] = round(statistics.mean(mark_list), 1)
-            data[ver]["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                data[ver]["mark_stdev"] = "n/a"
+            data[ver].update(generic_stats_dict_from_list(mark_list))
             # get remaining tasks by excluding COMPLETE and OUT_OF_DATE
             # TODO - can we optimise this a bit? one query per version is okay, but can likely do in 1.
             data[ver]["remaining"] = (
@@ -301,6 +313,7 @@ class MarkingStatsService:
                     {
                         "username": task.assigned_user.username,
                         "score": task.latest_annotation.score,
+                        "score_str": pprint_score(task.latest_annotation.score),
                         "annotation_image": task.latest_annotation.image.pk,
                     }
                 )
