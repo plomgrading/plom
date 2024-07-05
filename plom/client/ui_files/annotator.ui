@@ -85,7 +85,7 @@
               </font>
              </property>
              <property name="text">
-              <string notr="true">☰</string>
+              <string notr="true">menu</string>
              </property>
             </widget>
            </item>
