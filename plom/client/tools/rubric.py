@@ -20,12 +20,8 @@ from PyQt6.QtWidgets import (
     QToolButton,
 )
 
-from plom.client.tools import (
-    CommandTool,
-    OutOfBoundsFill,
-    OutOfBoundsPen,
-    UndoStackMoveMixin,
-)
+from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill, AttnColourHex
+from plom.client.tools import CommandTool, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 
@@ -152,7 +148,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
         if random.random() < 0.5:
             b = QToolButton(text="\N{Warning Sign}")
-            b.setStyleSheet("QToolButton { background-color: #66ff66; }")
+            b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
             b.clicked.connect(self.dismiss_attn_button_interactively)
             # parenting the menu inside the scene
             m = QMenu(b)
