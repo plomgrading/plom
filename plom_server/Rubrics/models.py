@@ -99,14 +99,14 @@ class Rubric(models.Model):
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
     # ForeignKey automatically creates a backreference from the User table
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     last_modified = models.DateTimeField(auto_now=True)
     # This ``modified_by_user`` field would also automatically create a backref
     # from User which would clash with the ``user`` field.  Setting ``related_name``
     # to ``+`` prevents the backref creation, to be revisited it we need the backref
     # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.ForeignKey.related_name "
     modified_by_user = models.ForeignKey(
-        User, null=True, on_delete=models.SET_NULL, related_name="+"
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, default=0)
     latest = models.BooleanField(null=False, default=True)
