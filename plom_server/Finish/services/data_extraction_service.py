@@ -57,6 +57,13 @@ class DataExtractionService:
         """
         return self.student_df
 
+    def get_student_data(self) -> pd.DataFrame:
+        """Return a copy dataframe of student data (safe copying to maintain encapsulation).
+
+        Warning: caller will need pandas installed as this method returns a dataframe.
+        """
+        return self.student_df.copy()
+
     def get_totals_average(self) -> float:
         """Return the average of the total mark over all students as a float."""
         return self.student_df["Total"].mean()
