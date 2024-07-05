@@ -91,10 +91,10 @@ class Rubric(models.Model):
     out_of = models.IntegerField(null=False, default=0)
     text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
-    tags = models.TextField(null=True, default="")  # can be long
+    tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
-    versions = models.JSONField(null=True, default=list)
-    parameters = models.JSONField(null=True, default=list)
+    versions = models.JSONField(null=True, blank=True, default=list)
+    parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, default=False)
     published = models.BooleanField(null=False, default=True)
