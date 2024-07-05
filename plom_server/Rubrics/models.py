@@ -112,9 +112,7 @@ class Rubric(models.Model):
     latest = models.BooleanField(null=False, default=True)
 
     def clean(self):
-        print("test2")
         if self.latest:
-            print("test")
             existing = (
                 Rubric.objects.filter(key=self.key, latest=True)
                 .exclude(pk=self.pk)
@@ -127,6 +125,9 @@ class Rubric(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(Rubric, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.text
 
     class Meta:
         constraints = [
