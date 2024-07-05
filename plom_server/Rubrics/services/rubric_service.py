@@ -274,7 +274,7 @@ class RubricService:
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
-        return Rubric.objects.count(latest=True)
+        return Rubric.objects.filter(latest=True).count()
 
     def get_rubric_by_key(self, rubric_key: str) -> Rubric:
         """Get the latest rurbic revision by its key/id.
