@@ -231,10 +231,11 @@ class RubricService:
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
 
-        serializer.save()
         rubric_obj = serializer.instance
         rubric.latest = False
         rubric.save()
+
+        serializer.save()
         return _Rubric_to_dict(rubric_obj)
 
     def get_rubrics_as_dicts(
