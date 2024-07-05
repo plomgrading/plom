@@ -66,7 +66,7 @@
                     <h5 class="card-header">Past Revisions</h5>
                     <div class="card-body">
                         <div class="accordion" id="accordion">
-                            {% for revision in revisions %}
+                            {% for revision in revisions reversed %}
                                 <div class="accordion-item">
                                     <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
                                         <button class="accordion-button collapsed"
