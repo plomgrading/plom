@@ -99,7 +99,7 @@
               <widget class="QComboBox" name="tasksComboBox">
                <item>
                 <property name="text">
-                 <string>Show my tasks</string>
+                 <string>Show only my tasks</string>
                 </property>
                </item>
                <item>

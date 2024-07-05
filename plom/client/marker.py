@@ -40,6 +40,7 @@ from packaging.version import Version
 
 
 from PyQt6 import uic, QtGui
+from PyQt6.QtGui import QAction
 from PyQt6.QtCore import (
     Qt,
     QTimer,
@@ -561,6 +562,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.tagSignal.connect(self.manage_tags)
         self.ui.tableView.claimSignal.connect(self.claim_task)
         self.ui.tableView.deferSignal.connect(self.defer_task)
+        self.ui.tableView.reassignSignal.connect(self.reassign_task)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
@@ -592,8 +594,13 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        # TODO: see method reassign_task(self) below
+        # TODO: once enabled we don't need the explicit QAction
         # m.addAction("Reassign task to...", self.reassign_task)
+        a = QAction("Reassign task to...", self)
+        a.triggered.connect(self.reassign_task)
+        # TODO: future work
+        a.setEnabled(False)
+        m.addAction(a)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)

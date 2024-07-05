@@ -28,6 +28,7 @@ class TaskTableView(QTableView):
     tagSignal = pyqtSignal()
     claimSignal = pyqtSignal()
     deferSignal = pyqtSignal()
+    reassignSignal = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -66,10 +67,11 @@ class TaskTableView(QTableView):
         a = QAction("Defer this task", self)
         a.triggered.connect(self.deferSignal.emit)
         menu.addAction(a)
+        a = QAction("Reassign task to...", self)
+        a.triggered.connect(self.reassignSignal.emit)
         # TODO: future work
-        # a = QAction("Reassign task to...", self)
-        # a.triggered.connect(lambda: print("TODO: reassign to..."))
-        # menu.addAction(a)
+        a.setEnabled(False)
+        menu.addAction(a)
 
         menu.popup(QCursor.pos())
         event.accept()
