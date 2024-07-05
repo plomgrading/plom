@@ -8,6 +8,7 @@
 
 import random
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from Mark.models.annotations import Annotation
@@ -108,7 +109,25 @@ class Rubric(models.Model):
         User, null=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, default=0)
-    latest = models.BooleanField(null=False, default=False)
+    latest = models.BooleanField(null=False, default=True)
+
+    def clean(self):
+        if self.latest:
+            existing = (
+                Rubric.objects.filter(key=self.key, latest=True)
+                .exclude(pk=self.pk)
+                .exists()
+            )
+            if existing:
+                raise ValidationError("Only one Rubric can be latest for a given key.")
+        super().clean()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "revision"], name="unique_revision_per_key"
+            )
+        ]
 
 
 class RubricPane(models.Model):
