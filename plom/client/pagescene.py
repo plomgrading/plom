@@ -454,7 +454,7 @@ class PageScene(QGraphicsScene):
             raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
         self.score = None
-        self._page_hack_buttons = []
+        self._page_action_buttons = []
         # Tool mode - initially set it to "move"
         self.mode = "move"
 
@@ -560,18 +560,18 @@ class PageScene(QGraphicsScene):
         # TODO: for debugging:
         # if True or self.parent().is_experimental():
         if self.parent().is_experimental():
-            self.build_page_hack_buttons()
+            self.build_page_action_buttons()
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
 
-    def remove_page_hack_buttons(self):
-        for h in self._page_hack_buttons:
+    def remove_page_action_buttons(self):
+        for h in self._page_action_buttons:
             self.removeItem(h)
             h.deleteLater()
-        self._page_hack_buttons = []
+        self._page_action_buttons = []
 
-    def build_page_hack_buttons(self):
+    def build_page_action_buttons(self):
 
         def page_delete_func_factory(n):
             def page_delete():
@@ -591,7 +591,7 @@ class PageScene(QGraphicsScene):
 
             return _page_rotate
 
-        self.remove_page_hack_buttons()
+        self.remove_page_action_buttons()
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
             # b = QToolButton(text=f"Page {n}")
@@ -646,7 +646,7 @@ class PageScene(QGraphicsScene):
             proxy_widget.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
             )
-            self._page_hack_buttons.append(proxy_widget)
+            self._page_action_buttons.append(proxy_widget)
 
     def getScore(self):
         return self.score
@@ -972,7 +972,7 @@ class PageScene(QGraphicsScene):
         """
         # don't want to render these, but should we restore them after?
         # TODO: or setVisible(False) instead of remove?
-        self.remove_page_hack_buttons()
+        self.remove_page_action_buttons()
 
         self._hideGhost()
 

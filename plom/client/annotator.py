@@ -226,7 +226,7 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._hold_crop_checkbox.setVisible(False)
             if self.scene:
-                self.scene.remove_page_hack_buttons()
+                self.scene.remove_page_action_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -260,7 +260,7 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._hold_crop_checkbox.setVisible(True)
         if self.scene:
-            self.scene.build_page_hack_buttons()
+            self.scene.build_page_action_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
