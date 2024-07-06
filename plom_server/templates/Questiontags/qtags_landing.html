@@ -15,6 +15,7 @@
         one might tag questions according their learning objective,
         format, or topic.
     </p>
+    {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
     <button type="button"
             class="btn btn-primary"
@@ -209,13 +210,13 @@
             width: 100px;
         }
         .fixed-width-name {
-            max-width: 250px;
+            width: 250px;
             text-align: left;
             white-space: normal;
             word-wrap: break-word;
         }
         .fixed-width-description {
-            max-width: 500px;
+            width: 500px;
             text-align: left;
             white-space: normal;
             word-wrap: break-word;

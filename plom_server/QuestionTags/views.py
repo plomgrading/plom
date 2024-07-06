@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
-from .models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
+from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
 
 
@@ -42,13 +42,7 @@ class QTagsLandingView(ListView):
             form = RemoveTagForm(request.POST)
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
-                try:
-                    question_tag = get_object_or_404(
-                        QuestionTagLink, id=question_tag_id
-                    )
-                    question_tag.delete()
-                except Exception as e:
-                    print("Error deleting QuestionTag:", e)  # Debug print
+                QuestionTagService.delete_question_tag(question_tag_id)
         return redirect(reverse("qtags_landing"))
 
 
@@ -68,7 +62,19 @@ class CreateTagView(CreateView):
     def post(self, request, *args, **kwargs):
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        QuestionTagService.create_tag(tag_name, text, request.user)
+        error_message = QuestionTagService.create_tag(tag_name, text, request.user)
+        if error_message:
+            context = {
+                "error_message": error_message,
+                "add_tag_form": AddTagForm(),
+                "remove_tag_form": RemoveTagForm(),
+                "tags": PedagogyTag.objects.all(),
+                "question_tags": TmpAbstractQuestion.objects.prefetch_related(
+                    "questiontaglink_set__tag"
+                ).all(),
+                "question_label_triple": SpecificationService.get_question_html_label_triples(),
+            }
+            return render(request, self.template_name, context)
         return redirect(reverse("qtags_landing"))
 
 

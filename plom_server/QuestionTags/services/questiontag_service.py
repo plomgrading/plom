@@ -32,7 +32,11 @@ class QuestionTagService:
     @staticmethod
     def create_tag(tag_name, text, user):
         """Create a new tag."""
-        PedagogyTag.objects.create(tag_name=tag_name, text=text, user=user)
+        try:
+            PedagogyTag.objects.create(tag_name=tag_name, text=text, user=user)
+            return None
+        except IntegrityError:
+            return f"A tag with the name '{tag_name}' already exists."
 
     @staticmethod
     def delete_tag(tag_id):
@@ -47,3 +51,9 @@ class QuestionTagService:
         tag.tag_name = tag_name
         tag.text = text
         tag.save()
+
+    @staticmethod
+    def delete_question_tag(question_tag_id):
+        """Delete a question-tag link."""
+        question_tag = get_object_or_404(QuestionTagLink, id=question_tag_id)
+        question_tag.delete()
