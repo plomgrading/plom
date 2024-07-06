@@ -200,37 +200,36 @@ class BuildPapersService:
             How many tasks did we launch?
         """
         assert_can_rebuild_test_pdfs()
-        N = 0
+        papers_to_build = []
         for paper in Paper.objects.all():
-            # This logic and flow is unpleasant...
-            # TODO: andrew may want to help make this all pre-fetchy later
-            # There are two things we need to build:
-            #   - Papers with no chore (non-obsolete)
-            #   - Papers with a Error chore (non-obsolete)
-            _do_build = False
-            try:
-                existing_task = BuildPaperPDFChore.objects.get(
-                    paper=paper, obsolete=False
-                )
-            except ObjectDoesNotExist:
-                _do_build = True
+            # if the paper has zero non-obsolete chores
+            if not paper.buildpaperpdfchore_set.filter(obsolete=False).exists():
+                papers_to_build.append(paper.paper_number)
+            # or if it has a non-obsolete chore that is ERROR
+            elif paper.buildpaperpdfchore_set.filter(
+                status=BuildPaperPDFChore.ERROR, obsolete=False
+            ).exists():
+                papers_to_build.append(paper.paper_number)
+            # otherwise it has a non-obsolete chore that is okay.
             else:
-                if existing_task.status == BuildPaperPDFChore.ERROR:
-                    _do_build = True
-                    existing_task.set_as_obsolete()
-            if _do_build:
-                paper_num = paper.paper_number
-                self.send_single_task(paper_num)
-                N += 1
-        return N
+                pass
+
+        # TODO - this call needs to be in the background, because
+        # it can take a long time to queue up all the tasks
+        self.send_list_of_tasks(papers_to_build)
+
+        return len(papers_to_build)
 
     def send_single_task(self, paper_num: int) -> None:
-        """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
+        self.send_list_of_tasks([paper_num])
+
+    def send_list_of_tasks(self, paper_number_list: list[int]) -> None:
+        """Create a new list of chores and enqueue the tasks to Huey to build PDF for papers.
 
         If there is a existing chore, it will be set to obsolete.
 
         Args:
-            paper_num: which paper number
+            paper_number_list: which paper numbers
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
@@ -240,19 +239,31 @@ class BuildPapersService:
         assert_can_rebuild_test_pdfs()
 
         # TODO: helper looks it up again, just here for error handling :(
-        _ = Paper.objects.get(paper_number=paper_num)
+        for paper_number in paper_number_list:
+            _ = Paper.objects.get(paper_number=paper_number)
 
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
-        qv_row = qvmap[paper_num]
-
         prenamed = StagingStudentService().get_prenamed_papers()
-        student_id, student_name = None, None
-        if paper_num in prenamed:
-            student_id, student_name = prenamed[paper_num]
+        for paper_number in paper_number_list:
+            qv_row = qvmap[paper_number]
+            student_id, student_name = None, None
+            if paper_number in prenamed:
+                student_id, student_name = prenamed[paper_number]
 
-        self._send_single_task(paper_num, spec, student_name, student_id, qv_row)
+            self._send_single_task(
+                paper_number,
+                spec,
+                student_name,
+                student_id,
+                qv_row,
+                obsolete_any_existing=False,
+            )
 
+    # TODO - make this take a list of papers etc
+    # and run as one big db operation for bulk
+    # queuing of papers, then have send_single as
+    # special case of the send list
     def _send_single_task(
         self,
         paper_num: int,
@@ -307,7 +318,7 @@ class BuildPapersService:
             tracker_pk=tracker_pk,
             _debug_be_flaky=False,
         )
-        print(f"Just enqueued Huey paper build task id={res.id}")
+        print(f"Just enqueued Huey paper {paper_num} build task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def try_to_cancel_all_queued_tasks(self) -> int:
