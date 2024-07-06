@@ -126,9 +126,16 @@ class Rubric(models.Model):
         self.full_clean()
         return super(Rubric, self).save(*args, **kwargs)
 
-    def __str__(self):
-        """Return a string representation of the rubric."""
-        return self.text
+    def __str__(self) -> str:
+        """Return a string representation of the rubric.
+
+        This is used when debugging and in the Django admin view.
+        """
+        if self.text == ".":
+            return f"[{self.display_delta}]"
+        if self.display_delta == ".":
+            return f"{self.text}"
+        return f"[{self.display_delta}] {self.text}"
 
     class Meta:
         constraints = [
