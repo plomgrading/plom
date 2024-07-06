@@ -263,7 +263,7 @@ class RubricService:
         return new_rubric_data
 
     def get_all_rubrics(self) -> QuerySet[Rubric]:
-        """Get all the rubrics lazily, so that lazy filtering is possible.
+        """Get all the rubrics (latest revisions) as a QuerySet, enabling further lazy filtering.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
 
