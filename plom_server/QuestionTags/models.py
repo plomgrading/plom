@@ -6,10 +6,11 @@ from Base.models import Tag
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-""" This presents the abstract notion of a question, which are otherwise
-    just integers of their question index. It exists mainly to support
-    the ManyToManyField contained in it.
-    TODO: it might be renamed or replaced some day
+"""
+This presents the abstract notion of a question, which are otherwise
+just integers of their question index. It exists mainly to support
+the ManyToManyField contained in it.
+TODO: it might be renamed or replaced some day.
 """
 
 
@@ -24,22 +25,30 @@ class PedagogyTag(Tag):
 
 
 class TmpAbstractQuestion(models.Model):
-    """Represents an abstract question with an index."""
+    """Represents the question index.
+
+    This model exists to support the many-to-many relationship between questions and tags.
+    It keeps track of multiple tags associated with a single question.
+    """
 
     question_index = models.IntegerField(default=0)
 
     def __str__(self):
         """Return the question index."""
-        return f"Question index {str(self.question_index)}"
+        return f"Question index {self.question_index}"
 
 
 class QuestionTagLink(models.Model):
     """Represents a tag associated with a question by a user.
 
-    question: The question being tagged.
-    tag: The pedagogy tag associated with the question.
-    user: The user who tagged the question.
-    time: The time the tag was added.
+    This model links a specific pedagogy tag to a question and records the user who tagged the question
+    as well as the time when the tag was added.
+
+    Attributes:
+        question (TmpAbstractQuestion): The question being tagged.
+        tag (PedagogyTag): The pedagogy tag associated with the question.
+        user (User): The user who tagged the question.
+        time (DateTimeField): The time the tag was added.
     """
 
     question = models.ForeignKey(TmpAbstractQuestion, on_delete=models.CASCADE)
@@ -51,11 +60,10 @@ class QuestionTagLink(models.Model):
         unique_together = ("question", "tag", "user")
 
     def __str__(self):
-        """
-        Returns a string representation of the question-tag relationship.
+        """Returns a string representation of the question-tag relationship.
 
-        The string shows the question index, tag name, and user id who tagged the question.
+        The string includes the question id, tag name, and user id who tagged the question.
         """
         user_id = self.user_id if self.user else "None"
         tag_name = self.tag.tag_name if self.tag else "None"
-        return f"Question {self.question.id} tagged with '{tag_name}' by user {user_id}"
+        return f"Question {self.question.question_index} tagged with '{tag_name}' by user {user_id}"
