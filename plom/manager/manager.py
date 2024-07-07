@@ -811,10 +811,10 @@ class Manager(QWidget):
         self.refresh_scan_status_lists()
 
     def refresh_scan_status_lists(self):
-        I = self._refreshIList()
-        S = self._refreshSList()
-        countstr = str(I + S)
-        countstr += "*" if I != 0 else "\N{CHECK MARK}"
+        numI = self._refreshIList()
+        numS = self._refreshSList()
+        countstr = str(numI + numS)
+        countstr += "*" if numI != 0 else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.scanTab),
             f"&Scan Status ({countstr})",
