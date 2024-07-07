@@ -1834,11 +1834,11 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I: list[QGraphicsItem], dx: float, dy: float) -> None:
+    def move_some_items(self, L: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
-            I: list of objects to move.  TODO: not quite sure yet
+            L: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
                 TODO: typed as ``QGraphicsItem`` but maybe Groups too?
@@ -1850,14 +1850,14 @@ class PageScene(QGraphicsScene):
         your own, see the low-level :py:method:`_move_some_items`.
         """
         self.undoStack.beginMacro("Move several items at once")
-        self._move_some_items(I, dx, dy)
+        self._move_some_items(L, dx, dy)
         self.undoStack.endMacro()
 
-    def _move_some_items(self, I: list, dx: float, dy: float) -> None:
+    def _move_some_items(self, L: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
-        log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        for item in I:
+        log.debug(f"Shifting {len(L)} objects by ({dx}, {dy})")
+        for item in L:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")

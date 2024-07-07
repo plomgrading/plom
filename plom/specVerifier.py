@@ -109,23 +109,23 @@ def isPositiveInt(s):
 
 
 # helper function
-def isListPosInt(l, lastPage) -> bool:
+def isListPosInt(L: list[str | int], lastPage: int) -> bool:
     """Check for a list of pos-int, bounded below by 1 and above by lastPage.
 
     It need not be contiguous or ordered.
 
     Args:
-        l (list): a list of strings or ints
-        lastPage (int): no element of list can be greater.
+        L: a list of strings or ints.
+        lastPage: no element of list can be greater.
 
     Returns:
         Whether input satisfies these conditions.
     """
     # check it is a list
-    if not isinstance(l, list):
+    if not isinstance(L, list):
         return False
     # check each entry is 0<n<=lastPage
-    for n in l:
+    for n in L:
         if not isPositiveInt(n):
             return False
         if n > lastPage:
@@ -135,18 +135,18 @@ def isListPosInt(l, lastPage) -> bool:
 
 
 # helper function
-def isContiguous(l) -> bool:
+def isContiguous(L: list[str | int]) -> bool:
     """Check input is a contiguous list of integers.
 
     Args:
-        l (list): a list of strings or ints
+        L: a list of strings or ints.
 
     Returns:
         bool
     """
-    if not isinstance(l, list):
+    if not isinstance(L, list):
         return False
-    sl = set(l)
+    sl = set(L)
     for n in range(min(sl), max(sl) + 1):
         if n not in sl:
             return False

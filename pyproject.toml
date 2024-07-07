@@ -304,3 +304,5 @@ exclude-file = ".codespell-ignorelines"
 [tool.ruff.lint]
 # TODO: at least in some cases, definign __all__ is probably the right fix
 per-file-ignores = {'__init__.py' = ['F401']}
+# "x not in y" better than "not x in y", but lots of these in legacy server
+ignore = ["E713"]

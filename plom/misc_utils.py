@@ -6,16 +6,14 @@
 
 from __future__ import annotations
 
-"""Misc utilities."""
-
-import arrow
-
 from contextlib import contextmanager
 import math
 import os
 import string
 import sys
 from typing import Any, Sequence
+
+import arrow
 
 
 # ------------------------------------------------
@@ -123,11 +121,11 @@ def _find_runs(S: list[int]) -> list[list[int]]:
 
 def _flatten_2len_runs(L: list[Any]) -> list[Any]:
     L2 = []
-    for l in L:
-        if len(l) < 3:
-            L2.extend(l)
+    for x in L:
+        if len(x) < 3:
+            L2.extend(x)
         else:
-            L2.append(l)
+            L2.append(x)
     return L2
 
 
