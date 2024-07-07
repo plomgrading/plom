@@ -80,7 +80,7 @@ class AddRemoveTagDialog(QDialog):
                 row.addItem(QSpacerItem(48, 1))
                 row.addWidget(QLabel(f"<big><em>{safe_tag}</em></big>"))
                 b = QToolButton()
-                b.setText("\N{Erase To The Left}")
+                b.setText("\N{ERASE TO THE LEFT}")
                 # b.setText("\N{Cross Mark}")
                 # b.setText("\N{Multiplication Sign}")
                 b.setToolTip(f'Remove tag "{safe_tag}"')
@@ -147,7 +147,7 @@ class AddRemoveTagDialog(QDialog):
     def remove_tag(self, tag):
         safe_tag = html.escape(tag)
         msg = f"<p>Do you want to remove tag &ldquo;{safe_tag}&rdquo;?"
-        title = f"Remove tag \u201C{safe_tag}\u201D{self.from_label}?"
+        title = f"Remove tag \u201c{safe_tag}\u201d{self.from_label}?"
         if QMessageBox.question(self, title, msg) != QMessageBox.StandardButton.Yes:
             return
         self.return_values = ("remove", tag)

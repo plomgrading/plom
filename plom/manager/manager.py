@@ -603,8 +603,8 @@ class Manager(QWidget):
     # config tab stuff
 
     def refreshConfig(self):
-        check_mark = "\N{Check Mark}"
-        cross = "\N{Multiplication Sign}"
+        check_mark = "\N{CHECK MARK}"
+        cross = "\N{MULTIPLICATION SIGN}"
         try:
             spec = self.msgr.get_spec()
         except PlomServerNotReady as e:
@@ -814,7 +814,7 @@ class Manager(QWidget):
         I = self._refreshIList()
         S = self._refreshSList()
         countstr = str(I + S)
-        countstr += "*" if I != 0 else "\N{check mark}"
+        countstr += "*" if I != 0 else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.scanTab),
             f"&Scan Status ({countstr})",
@@ -1218,7 +1218,7 @@ class Manager(QWidget):
         self.ui.unknownTV.resizeColumnsToContents()
 
         countstr = str(len(unknowns))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
@@ -1409,7 +1409,7 @@ class Manager(QWidget):
         self.ui.collideTV.resizeRowsToContents()
         self.ui.collideTV.resizeColumnsToContents()
         countstr = str(len(colDict.keys()))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.collideTab),
             f"&Colliding Pages ({countstr})",
@@ -1600,7 +1600,7 @@ class Manager(QWidget):
         self.ui.danglingTV.resizeColumnsToContents()
 
         countstr = str(len(danglers))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.dangleTab),
             f"Dan&gling Pages ({countstr})",

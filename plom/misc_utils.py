@@ -96,7 +96,7 @@ def format_int_list_with_runs(
             use_unicode = True
         else:
             use_unicode = False
-    dash = "\N{En Dash}" if use_unicode else "-"
+    dash = "\N{EN DASH}" if use_unicode else "-"
     L2 = _find_runs(sorted([int(x) for x in L]))
     L3 = _flatten_2len_runs(L2)
     z = zero_padding if zero_padding else 0

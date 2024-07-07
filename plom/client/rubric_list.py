@@ -825,8 +825,8 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        deltaP_label = "+\N{Greek Small Letter Delta}"
-        deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
+        deltaP_label = "+\N{GREEK SMALL LETTER DELTA}"
+        deltaN_label = "\N{MINUS SIGN}\N{GREEK SMALL LETTER DELTA}"
         self.tabS = RubricTable(self, shortname="All", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
@@ -1021,14 +1021,14 @@ class RubricWidget(QWidget):
             name = next_in_longest_subsequence(tab_names)
         if not name:
             syms = (
-                "\N{Black Star}",
-                "\N{Black Heart Suit}",
-                "\N{Black Spade Suit}",
-                "\N{Black Diamond Suit}",
-                "\N{Black Club Suit}",
-                "\N{Double Dagger}",
-                "\N{Floral Heart}",
-                "\N{Rotated Floral Heart Bullet}",
+                "\N{BLACK STAR}",
+                "\N{BLACK HEART SUIT}",
+                "\N{BLACK SPADE SUIT}",
+                "\N{BLACK DIAMOND SUIT}",
+                "\N{BLACK CLUB SUIT}",
+                "\N{DOUBLE DAGGER}",
+                "\N{FLORAL HEART}",
+                "\N{ROTATED FLORAL HEART BULLET}",
             )
             extra = ""
             counter = 0
@@ -1113,7 +1113,7 @@ class RubricWidget(QWidget):
         tab.set_name(s)
 
     def _sync_button_temporary_change_text(self, set=False):
-        tempstr = "Sync \N{Check Mark}"
+        tempstr = "Sync \N{CHECK MARK}"
         if set:
             self.syncB.setText(tempstr)
             return
@@ -1151,9 +1151,9 @@ class RubricWidget(QWidget):
             # then remove the checkmark a few seconds later
             timer = QTimer()
             timer.singleShot(2000, self._sync_button_temporary_change_text)
-        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
+        msg = "<p>\N{CHECK MARK} Your tabs have been synced to the server.</p>\n"
         # msg += "<p>No changes to server rubrics.</p>"
-        msg += "<p>\N{Check Mark} server: "
+        msg += "<p>\N{CHECK MARK} server: "
         msg += f"<b>{len(added)} new</b>, "
         msg += f"<b>{len(deleted)} deleted</b> rubrics.</p>\n"
         d = ""
@@ -1172,7 +1172,7 @@ class RubricWidget(QWidget):
                 d += render_rubric_as_html(old[rid])
                 d += "</li>\n"
             d += "</ul>\n"
-        msg += "<p>\N{Check Mark} server: "
+        msg += "<p>\N{CHECK MARK} server: "
         msg += f"<b>{len(changed)} changed</b> rubrics.</p>\n"
         if changed:
             d += "<h3>Changes</h3>\n"

@@ -597,7 +597,7 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text=f"Page {n}")
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
-            button = QToolButton(text="\N{Trigram For Heaven}")
+            button = QToolButton(text="\N{TRIGRAM FOR HEAVEN}")
             button.setToolTip(f"Options for page {n + 1}")
             button.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
@@ -615,11 +615,11 @@ class PageScene(QGraphicsScene):
             if n == len(self.underImage.images) - 1:
                 _.setEnabled(False)
             m.addAction(
-                "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
+                "\N{ANTICLOCKWISE OPEN CIRCLE ARROW} Rotate CCW",
                 page_rotate_func_factory(n, 90),
             )
             m.addAction(
-                "\N{Clockwise Open Circle Arrow} Rotate CW",
+                "\N{CLOCKWISE OPEN CIRCLE ARROW} Rotate CW",
                 page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))

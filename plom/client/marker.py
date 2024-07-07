@@ -562,7 +562,7 @@ class MarkerClient(QWidget):
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu(self)
-        m.addAction("Get \N{Mathematical Italic Small N}th...", self.requestInteractive)
+        m.addAction("Get \N{MATHEMATICAL ITALIC SMALL N}th...", self.requestInteractive)
         m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -609,9 +609,9 @@ class MarkerClient(QWidget):
             exclaim = True
             s = "Restricted paper number "
             if mx is None:
-                s += f"\N{Greater-than Or Equal To} {mn}"
+                s += f"\N{GREATER-THAN OR EQUAL TO} {mn}"
             elif mn is None:
-                s += f"\N{Less-than Or Equal To} {mx}"
+                s += f"\N{LESS-THAN OR EQUAL TO} {mx}"
             else:
                 s += f"in [{mn}, {mx}]"
             tips.append(s)
