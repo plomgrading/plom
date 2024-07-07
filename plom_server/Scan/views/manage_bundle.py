@@ -27,7 +27,6 @@ class GetBundleImageView(ScannerRequiredView):
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-
     def filter_bundle_pages(self, page_list, filter_kind):
         if filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
             return [pg for pg in page_list if pg["status"] == filter_kind]

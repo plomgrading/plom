@@ -572,7 +572,6 @@ class PageScene(QGraphicsScene):
         self._page_action_buttons = []
 
     def build_page_action_buttons(self):
-
         def page_delete_func_factory(n):
             def page_delete():
                 self.dont_use_page_image(n)
