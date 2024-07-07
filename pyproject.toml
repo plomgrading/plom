@@ -300,3 +300,7 @@ check-hidden = true
 quiet-level = 3
 ignore-words = ".codespell-ignorewords"
 exclude-file = ".codespell-ignorelines"
+
+[tool.ruff.lint]
+# TODO: at least in some cases, definign __all__ is probably the right fix
+per-file-ignores = {'__init__.py' = ['F401']}
