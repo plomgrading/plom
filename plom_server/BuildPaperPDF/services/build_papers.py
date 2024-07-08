@@ -158,7 +158,9 @@ class BuildPapersService:
 
     def are_any_papers_built(self) -> bool:
         """Return true if any papers have had their PDFs built successfully."""
-        return self.get_n_complete_tasks() > 0
+        return BuildPaperPDFChore.objects.filter(
+            status=BuildPaperPDFChore.COMPLETE, obsolete=False
+        ).exists()
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
@@ -366,9 +368,12 @@ class BuildPapersService:
         """
         assert_can_rebuild_test_pdfs()
         self.try_to_cancel_all_queued_tasks()
-        for task in BuildPaperPDFChore.objects.all():
-            task.set_as_obsolete()
-            task.unlink_associated_pdf()
+        with transaction.atomic():
+            # bulk set all obsolete
+            BuildPaperPDFChore.set_every_task_obsolete()
+            # now delete all the associated pdfs
+            for task in BuildPaperPDFChore.objects.all():
+                task.unlink_associated_pdf()
 
     @transaction.atomic
     def get_all_task_status(self) -> dict[int, str]:
