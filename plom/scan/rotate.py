@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 
@@ -11,12 +13,12 @@ from PIL import Image
 log = logging.getLogger("scan")
 
 
-def rotate_bitmap(fname, angle, *, clockwise=False):
+def rotate_bitmap(fname: Path | str, angle: int, *, clockwise=False):
     """Rotate bitmap counterclockwise, possibly in metadata.
 
     Args:
-        filename (pathlib.Path/str): name of a file
-        angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
+        fname: file to rotate.
+        angle: CCW angle of rotation: 0, 90, 180, 270, or -90.
 
     Keyword Args:
         clockwise (bool): By default this is False and we do anti-clockwise
@@ -49,14 +51,14 @@ def rotate_bitmap(fname, angle, *, clockwise=False):
     new_img.save(fname)
 
 
-def rotate_bitmap_jpeg_exif(fname, angle):
+def rotate_bitmap_jpeg_exif(fname: Path, angle: int):
     """Rotate jpeg using exif metadata rotations.
 
     Rotations are done cumulatively with any existing exif rotations.
 
     Args:
-        filename (pathlib.Path): name of a file
-        angle (int): CCW angle of rotation 0, 90, 180, 270, or -90.
+        fname: what file to rotate.
+        angle: CCW angle of rotation 0, 90, 180, 270, or -90.
 
     Raises:
         ValueError: unexpected exif rotation that we cannot handle such

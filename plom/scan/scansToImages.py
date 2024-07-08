@@ -252,12 +252,12 @@ def try_to_extract_image(
             uniqifying pages, you can pass whatever you want.
 
     Keyword Args:
-        do_not_extract (bool): always render, do no extract even if
+        do_not_extract: always render, do no extract even if
             it seems possible to do so.  This is off-by-default until
             we are confident extracting won't miss anything.
             See more detailed description in the user-facing command-line
             tool `plom-scan`.
-        add_metadata (bool): add invisible metadata to each image
+        add_metadata: add invisible metadata to each image
             including bundle name and random numbers.  Default: True.
             If you disable this, you can get two identical images
             (from different pages) giving identical hashes, which
