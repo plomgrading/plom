@@ -307,11 +307,12 @@ select = ["D"]
 # F401: defining __all__ might be right fix
 # E402: re-ordering causes circular imports
 per-file-ignores = {'__init__.py' = ['F401', 'E402']}
-# E713: "x not in y" better than "not x in y", but lots of these in legacy server
 # Dxxx: many of these should be fixed instead of ignored!
 # TODO: try without...
 # TODO: D417
-ignore = ["E713", "D100", "D101", "D102", "D103", "D104", "D107", "D106", "D417"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D106", "D417"]
+# Legacy stuff: would need lots of edits to pass
+exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
