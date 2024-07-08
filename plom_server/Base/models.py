@@ -151,6 +151,18 @@ class HueyTaskTracker(models.Model):
             # tr.save()
 
     @classmethod
+    def bulk_transition_to_queued_or_running(cls, pk_huey_id_pair_list):
+        """Move to the Queued state using locking, or a no-op if we're already Running.
+
+        A bulk version of transition_to_queued_or_running.
+        """
+        with transaction.atomic(durable=True):
+            for pk, huey_id in pk_huey_id_pair_list:
+                cls.objects.select_for_update().filter(
+                    pk=pk, status=cls.STARTING
+                ).update(huey_id=huey_id, status=cls.QUEUED)
+
+    @classmethod
     def transition_to_complete(cls, pk):
         """Move to the complete state.
 

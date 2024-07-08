@@ -216,14 +216,14 @@ class BuildPapersService:
 
         # TODO - this call needs to be in the background, because
         # it can take a long time to queue up all the tasks
-        self.send_list_of_tasks(papers_to_build)
+        self._send_list_of_tasks(papers_to_build)
 
         return len(papers_to_build)
 
     def send_single_task(self, paper_num: int) -> None:
-        self.send_list_of_tasks([paper_num])
+        self._send_list_of_tasks([paper_num])
 
-    def send_list_of_tasks(self, paper_number_list: list[int]) -> None:
+    def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
         """Create a new list of chores and enqueue the tasks to Huey to build PDF for papers.
 
         If there is a existing chore, it will be set to obsolete.
@@ -235,91 +235,61 @@ class BuildPapersService:
             ObjectDoesNotExist: non-existent paper number.
             PlomDependencyConflict: if dependencies not met
         """
-        spec = SpecificationService.get_the_spec()
         assert_can_rebuild_test_pdfs()
 
-        # TODO: helper looks it up again, just here for error handling :(
-        for paper_number in paper_number_list:
-            _ = Paper.objects.get(paper_number=paper_number)
-
+        # get all the qvmap and student-id/name info
+        spec = SpecificationService.get_the_spec()
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
         prenamed = StagingStudentService().get_prenamed_papers()
-        for paper_number in paper_number_list:
-            qv_row = qvmap[paper_number]
-            student_id, student_name = None, None
-            if paper_number in prenamed:
-                student_id, student_name = prenamed[paper_number]
 
-            self._send_single_task(
-                paper_number,
-                spec,
-                student_name,
-                student_id,
-                qv_row,
-                obsolete_any_existing=False,
+        the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
+        # Check paper-numbers all legal and store the corresponding paper-objects
+        check = the_papers.count()
+        if check != len(paper_number_list):
+            raise ObjectDoesNotExist(
+                "Could not find all papers from supplied list of paper_numbers."
             )
 
-    # TODO - make this take a list of papers etc
-    # and run as one big db operation for bulk
-    # queuing of papers, then have send_single as
-    # special case of the send list
-    def _send_single_task(
-        self,
-        paper_num: int,
-        spec: dict,
-        student_name: str | None,
-        student_id: str | None,
-        qv_row: dict[int, int],
-        *,
-        obsolete_any_existing: bool = True,
-    ) -> None:
-        paper = Paper.objects.get(paper_number=paper_num)
-
-        # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
         with transaction.atomic(durable=True):
-            q = BuildPaperPDFChore.objects.filter(
-                paper=paper, obsolete=False
-            ).select_for_update()
-            n_chores = q.count()
-            if n_chores == 0:
-                pass
-            elif n_chores == 1:
-                if not obsolete_any_existing:
-                    raise ValueError(
-                        f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
-                        " make them obsolete before creating another"
+            # first set any existing non-obsolete chores to obsolete
+            for chore in BuildPaperPDFChore.objects.filter(
+                obsolete=False, paper__paper_number__in=paper_number_list
+            ):
+                chore.set_as_obsolete()
+            # now make a list of new chores as they are created
+            chore_list = []
+            for paper in the_papers:
+                if paper.paper_number in prenamed:
+                    student_id, student_name = prenamed[paper.paper_number]
+                else:
+                    student_id, student_name = None, None
+                chore_list.append(
+                    BuildPaperPDFChore.objects.create(
+                        paper=paper,
+                        huey_id=None,
+                        status=BuildPaperPDFChore.STARTING,
+                        student_name=student_name,
+                        student_id=student_id,
                     )
-                c = q.get()
-                c.set_as_obsolete()
-            else:
-                raise RuntimeError(
-                    f"Paper build serious error: there are {n_chores} non-obsolete"
-                    f" chores for paper {paper}, when there should be at most one"
                 )
-            task = BuildPaperPDFChore.objects.create(
-                paper=paper,
-                huey_id=None,
-                status=BuildPaperPDFChore.STARTING,
-                student_name=student_name,
-                student_id=student_id,
+        # for each of the newly created chores, actually ask Huey to run them
+        chore_pk_huey_id_list = []
+        for chore in chore_list:
+            if chore.student_name and chore.student_id:
+                student_info = {"id": chore.student_id, "name": chore.student_name}
+            else:
+                student_info = None
+            res = huey_build_single_paper(
+                chore.paper.paper_number,
+                spec,
+                qvmap[paper.paper_number],
+                student_info=student_info,
+                tracker_pk=chore.pk,
+                _debug_be_flaky=False,
             )
-            task.save()
-            tracker_pk = task.pk
-
-        student_info = None
-        if student_name and student_id:
-            student_info = {"id": student_id, "name": student_name}
-        res = huey_build_single_paper(
-            paper_num,
-            spec,
-            qv_row,
-            student_info=student_info,
-            tracker_pk=tracker_pk,
-            _debug_be_flaky=False,
-        )
-        print(f"Just enqueued Huey paper {paper_num} build task id={res.id}")
-        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
+            chore_pk_huey_id_list.append((chore.pk, res.id))
+        HueyTaskTracker.bulk_transition_to_queued_or_running(chore_pk_huey_id_list)
 
     def try_to_cancel_all_queued_tasks(self) -> int:
         """Try to cancel all the queued tasks in the Huey queue.
