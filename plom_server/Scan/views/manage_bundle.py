@@ -49,6 +49,7 @@ class BundleThumbnailsView(ScannerRequiredView):
 
         Keyword Args:
             bundle_id: which bundle.
+            the_filter: related to the current filter.
         """
         # TODO: not clear if superclass forbids this?
         assert bundle_id is not None, "bundle_id must be specified (?)"
