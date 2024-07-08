@@ -20,6 +20,12 @@
 {% endblock page_heading %}
 {% block main_content %}
     <ul class="list-group ms-3">
+        {% if not can_unset_papers_printed %}
+            <div class="card mb-2">
+                <div class="card-header bg-danger text-bold text-white">Alert: Papers already uploaded</div>
+                <div class="card-body">You cannot change these settings now, as papers have already been uploaded to the server</div>
+            </div>
+        {% endif %}
         <li class="list-group-item list-group-item-action">
             <div class="d-flex align-items-center gap-1">
                 <div class="flex-fill">
