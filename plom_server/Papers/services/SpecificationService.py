@@ -65,7 +65,7 @@ def load_spec_from_dict(
     Will call the SpecSerializer on the loaded TOML string and validate.
 
     Args:
-        spec_dict:
+        spec_dict: the dictionary describing the assessment.
 
     Keyword Args:
         public_code: optionally pass a manually specified public code (mainly for unit testing)

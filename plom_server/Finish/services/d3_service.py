@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
+
+from typing import Any
 
 import numpy as np
-from typing import Any, Dict, List, Tuple
 
 
 class D3Service:
@@ -11,7 +14,7 @@ class D3Service:
 
     def convert_stats_to_d3_hist_format(
         self,
-        stats: List[Tuple[int, str, float]],
+        stats: list[tuple[int, str, float]],
         *,
         xlabel: str = "",
         ylabel: str = "",
@@ -30,7 +33,7 @@ class D3Service:
         Returns:
             data in dict format that can be used by the d3 histogram.
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "title": title,
             "xLabel": xlabel,
             "yLabel": ylabel,
@@ -45,8 +48,8 @@ class D3Service:
         title: str = "",
         xtitle: str = "",
         ytitle: str = "",
-        xlabels: List[str],
-        ylabels: List[str],
+        xlabels: list[str],
+        ylabels: list[str],
     ) -> dict:
         """Convert the correlation matrix to a format that can be used by the heatmap.
 
@@ -54,11 +57,11 @@ class D3Service:
             correlation: The 2d correlation matrix.
 
         Keyword Args:
-            title:
-            xtitle:
-            ytitle:
-            xlabels:
-            ylabels:
+            title: string to use for title on top.
+            xtitle: x axis overall label.
+            ytitle: y axis  overall  label.
+            xlabels: x axis tick labels
+            ylabels: y axis tick labels
 
         Returns:
             data in dict format that can be used by the d3 heatmap.

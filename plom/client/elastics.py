@@ -118,8 +118,8 @@ def which_centre_to_centre(ghost, r):
     """Get approximately shortest line between two shapes "center-to-centre".
 
     Args:
-        ghost (QRect/QPointF):
-        r (QRect):
+        ghost (QRect/QPointF): a shape.
+        r (QRect): another shape.
 
     Returns:
         QPainterPath

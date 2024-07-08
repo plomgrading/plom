@@ -113,7 +113,7 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
 
     Args:
         assignment: a canvasapi assignment object
-        marks:
+        marks: list of marks for each question.
 
     Keyword Args:
         dur: where to write the toml file.
@@ -216,10 +216,10 @@ def configure_running_server(
     and PLOM_MANAGER_PASSWORD.
 
     Args:
-        course:
-        section:
-        assignment:
-        marks:
+        course: which course by Canvas id.
+        section: which section by Canvas id.
+        assignment: which assignment by Canvas id.
+        marks: list of marks for each question.
 
     Keyword Args:
         work_dir: where to download the classlist and other incidental files.
@@ -292,20 +292,20 @@ def get_submissions(
     assignment,
     *,
     work_dir=".",
-    name_by_info=True,
-    dry_run=False,
-    replace_existing=False,
+    name_by_info: bool = True,
+    dry_run: bool = False,
+    replace_existing: bool = False,
 ):
     """Get the submission pdfs out of Canvas.
 
     Args:
-        assignment:
+        assignment: which assignmeny by Canvas id.
 
     Keyword Args:
-        work_dir:
+        work_dir: where to create files.
         name_by_info: Whether to make the filenames of the form ID_Last_First.pdf
-        dry_run:
-        replace_existing:
+        dry_run: go through steps but don't actually get anything.
+        replace_existing: TODO.
     """
     work_dir = Path(work_dir)
 
@@ -449,6 +449,7 @@ def scan_submissions(
         server: taken from env var PLOM_SERVER if omitted.
         manager_pwd: taken from env var PLOM_MANAGER_PASSWORD if omitted.
         scan_pwd: taken from env var PLOM_SCAN_PASSWORD if omitted.
+        page_question_map_params: TODO.
     """
     upload_dir = Path(upload_dir)
     errors = []
