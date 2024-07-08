@@ -90,13 +90,6 @@ class SignedSB(QSpinBox):
         if self.value() == 0:
             self.setValue(self.value() + steps)
 
-    def isVali(self, value):
-        print("Value: ", value)
-        if value != 0:
-            return True
-        else:
-            return False
-
     def textFromValue(self, v) -> str:
         t = QSpinBox().textFromValue(v)
         if v > 0:
