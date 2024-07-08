@@ -76,7 +76,7 @@ class ImageBundleTests(TestCase):
         return super().setUp()
 
     def test_create_bundle(self) -> None:
-        """Test ImageBundlseService.create_bundle()"""
+        """Test ImageBundlseService.create_bundle()."""
         n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 0)
 
@@ -132,7 +132,7 @@ class ImageBundleTests(TestCase):
         self.assertFalse(ibs.all_staged_imgs_valid(imgs))
 
     def test_find_internal_collisions(self) -> None:
-        """Test ImageBundleService.find_internal_collisions()"""
+        """Test ImageBundleService.find_internal_collisions()."""
         ibs = ImageBundleService()
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
@@ -245,7 +245,7 @@ class ImageBundleTests(TestCase):
         )
 
     def test_find_external_collisions(self) -> None:
-        """Test ImageBundleService.find_external_collisions()"""
+        """Test ImageBundleService.find_external_collisions()."""
         ibs = ImageBundleService()
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])

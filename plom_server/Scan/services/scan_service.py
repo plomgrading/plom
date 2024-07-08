@@ -531,7 +531,7 @@ class ScanService:
         Args:
             bundle_pk: primary key of bundle DB object.
 
-        Keyword args:
+        Keyword Args:
             papernum (int): the number of the test-paper
             pages_to_question_indices: a list same length
                 as the bundle, each element is variable-length list
