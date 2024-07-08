@@ -184,7 +184,7 @@ class KeyEditDialog(QDialog):
         TODO: custom line edit eats enter and esc.
 
         Args:
-            parent (QWidget)
+            parent (QWidget): what widget to parent this dialog.
 
         Keyword Args:
             label (str): What action are we changing?

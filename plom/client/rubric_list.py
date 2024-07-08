@@ -72,15 +72,15 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) 
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        rubric (dict):
+        rubric: a particular rubric to check.
 
     Keyword Args:
         scene (PageScene): we'll grab the in-use rubrics from it
-        maxMark (int):
-        version (int):
+        maxMark: maximum possible score on this question.
+        version: which version.
 
     Returns:
-        int: 0, 1, 2, 3 as documented above.
+        integer 0, 1, 2, or 3 as documented above.
     """
     if rubric["versions"]:
         if version not in rubric["versions"]:
@@ -121,18 +121,28 @@ class RubricTable(QTableWidget):
     ``.tabType``.
     """
 
-    def __init__(self, parent, shortname=None, *, sort=False, tabType=None):
+    def __init__(
+        self,
+        parent: RubricWidget,
+        shortname: str | None = None,
+        *,
+        sort: bool = False,
+        tabType: str | None = None,
+    ):
         """Initialize a new RubricTable.
 
         Args:
-            parent:
-            shortname (str):
+            parent: the parent widget.  Cannot be a general widget, must be a
+                RubricWidget (or something like it) because we call methods
+                of the parent.  TODO: in principle, can use signals/slots?
+            shortname: a short string describing the assessment.
 
         Keyword Args:
-            tabType (str/None): "show", "hide", "group", "delta", `None`.
+            tabType: controls what type of tab this is:
+                "show", "hide", "group", "delta", `None`.
                 Here `"show"` is used for the "All" tab, `None` is used
                 for custom "user tabs".
-            sort (bool):
+            sort: is the tab sorted.
 
         Returns:
             None
@@ -143,10 +153,14 @@ class RubricTable(QTableWidget):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.horizontalHeader().setVisible(False)
-        self.horizontalHeader().setStretchLastSection(True)
+        head = self.horizontalHeader()
+        assert head
+        head.setVisible(False)
+        head.setStretchLastSection(True)
         # Issue #1498: use these for shortcut key indicators
-        self.verticalHeader().setVisible(False)
+        head = self.verticalHeader()
+        assert head
+        head.setVisible(False)
         self.setGridStyle(Qt.PenStyle.DotLine)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
@@ -167,7 +181,7 @@ class RubricTable(QTableWidget):
         # CSS cannot set relative fontsize
         f = self.font()
         f.setPointSizeF(0.67 * f.pointSizeF())
-        self.verticalHeader().setFont(f)
+        head.setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         _col_headers = ("Key", "Username", "Delta", "Text")

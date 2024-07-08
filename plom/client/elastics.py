@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """Elastic band options for connecting rubrics to labels."""
@@ -150,7 +150,7 @@ def which_sticky_corners(g, r):
 
     Args:
         g (QRect/QPointF): The ghost, can be rect or a point.
-        r (QRect):
+        r (QRect): a rectangle.
 
     Returns:
         QPainterPath
