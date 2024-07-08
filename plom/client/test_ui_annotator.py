@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from PyQt6.QtCore import Qt
 from plom.client.annotator import Annotator
@@ -7,7 +7,7 @@ from plom.client.marker import MarkerClient
 
 
 class MockMarker:
-    """Just enough Marker to open Annotator"""
+    """Just enough Marker to open Annotator."""
 
     annotatorSettings = {
         "keybinding_name": None,

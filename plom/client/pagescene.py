@@ -936,7 +936,7 @@ class PageScene(QGraphicsScene):
     def hasAnnotations(self) -> bool:
         """Checks for pickleable annotations.
 
-        Returns
+        Returns:
             True if page scene has any pickle-able annotations.
             False otherwise.
         """

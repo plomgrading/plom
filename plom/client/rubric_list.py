@@ -426,10 +426,10 @@ class RubricTable(QTableWidget):
 
         If its a dupe, don't add.
 
-        Args
+        Args:
             key: the key associated with a rubric.
 
-        Raises
+        Raises:
             what happens on invalid key?
         """
         # ensure there is exactly one matching rubric in the list and grab it
@@ -1459,7 +1459,7 @@ class RubricWidget(QWidget):
     def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
         """Set the current rubric key and the current tab, as if it was clicked on.
 
-        Args
+        Args:
             key: which rubric to highlight.  If None, no action.
             tab: index of which tab to choose.
 
@@ -1723,7 +1723,7 @@ class RubricWidget(QWidget):
                 depending on next arg.  If set to None, which always
                 means create new.
 
-        Keyword args:
+        Keyword Args:
             edit: True if we are modifying the comment.  If False, use
                 `com` as a template for a new duplicated comment.
             index: the index of the comment inside the current rubric list
