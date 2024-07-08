@@ -10,7 +10,6 @@ The last names are currently hard-coded translations of the word "Extra", while 
 Re-generation of data requires the names_dataset which is (essentially) a big dump of names from facebook, and also the alphabet-detector module.
 """
 
-
 # some simple translations of extra into other languages courtesy of google-translate
 # and https://www.indifferentlanguages.com/words/extra
 extra_last_names = [

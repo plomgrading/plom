@@ -1,9 +1,9 @@
 #!/bin/env -S python3 -u
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
-"""Pre-ID individual papers on a Plom Server
+"""Pre-ID individual papers on a Plom Server.
 
 This can be used for "just-in-time" paper assignments, in conjunction
 with `plom-hwscan`.

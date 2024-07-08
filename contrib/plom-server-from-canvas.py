@@ -22,9 +22,9 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
-TODO:
-  * needs to log instead of just discarding so much output
-  * support an existing configured server in basedir: or fork
+Notes:
+  * TODO: needs to log instead of just discarding so much output
+  * TODO: support an existing configured server in basedir: or fork
 """
 
 import argparse
@@ -301,7 +301,7 @@ def get_submissions(
     Args:
         assignment:
 
-    Keyword Args
+    Keyword Args:
         work_dir:
         name_by_info: Whether to make the filenames of the form ID_Last_First.pdf
         dry_run:
