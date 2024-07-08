@@ -385,6 +385,19 @@ flake8:
     - flake8
 
 
+# TODO: replaces pydocstyle but how to we get it to do that?
+# TODO: does this fully replace flake8?
+# TODO: `ruff format` seems not completely compatible with black
+ruff:
+  image: python:3
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install ruff~=0.5.1
+  script:
+    - ruff check .
+    # ruff format .
+
+
 pydocstyle-plom-count:
   image: python:3
   stage: static_analysis
