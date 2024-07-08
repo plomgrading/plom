@@ -74,12 +74,28 @@ class SignedSB(QSpinBox):
         super().__init__()
         self.setRange(-maxMark, maxMark)
         self.setValue(1)
+        self.val_before = self.value()
+        self.valueChanged.connect(self.onValueChanged)
+
+    def onValueChanged(self, value):
+        if value != 0:
+            self.setValue(value)
+            self.val_before = value
+        else:
+            self.setValue(self.val_before)
 
     def stepBy(self, steps):
         self.setValue(self.value() + steps)
         # to skip 0.
         if self.value() == 0:
             self.setValue(self.value() + steps)
+
+    def isVali(self, value):
+        print("Value: ", value)
+        if value != 0:
+            return True
+        else:
+            return False
 
     def textFromValue(self, v) -> str:
         t = QSpinBox().textFromValue(v)
