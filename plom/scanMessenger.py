@@ -111,7 +111,7 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def uploadTestPage(
-        self, code, test, page, version, f, md5sum, bundle, bundle_order
+        self, code, test, page, version, f, md5sum: str, bundle: str, bundle_order: int
     ):
         """Update a test page which has known page, known paper number, usually QR-coded.
 
@@ -126,10 +126,10 @@ class ScanMessenger(BaseMessenger):
             version (int): which version.  Server knows this so probably used
                 for sanity checks.
             f (pathlib.Path): file to upload.  Filename is uploaded too.
-            md5sum (str): hash of file's content.
-            bundle (str): the name of a group of images scanned together
+            md5sum: hash of file's content.
+            bundle: the name of a group of images scanned together
                 such as a single PDF file.
-            bundle_order): this image's place within the bundle (e.g.,
+            bundle_order: this image's place within the bundle (e.g.,
                 PDF page number).
 
         Returns:
@@ -171,7 +171,9 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadHWPage(self, sid, questions, order, f, md5sum, bundle, bundle_order):
+    def uploadHWPage(
+        self, sid, questions, order, f, md5sum: str, bundle: str, bundle_order: int
+    ):
         """Upload a homework page: self-scanned, known student, and known(-ish) questions.
 
         This is intended for "homework pages", often self-scanned or
@@ -194,10 +196,10 @@ class ScanMessenger(BaseMessenger):
                 increase by ones.  Most likely you can just pass the
                 `bundle_order` parameter below here too.
             f (pathlib.Path): the file to be uploaded.
-            md5sum (str): hash of file's content.
-            bundle (str): the name of a group of images scanned together
+            md5sum: hash of file's content.
+            bundle: the name of a group of images scanned together
                 such as a single PDF file.
-            bundle_order): this image's place within the bundle (e.g.,
+            bundle_order: this image's place within the bundle (e.g.,
                 PDF page number).
 
         Returns:
