@@ -18,7 +18,7 @@ def rotate_bitmap(fname, angle, *, clockwise=False):
         filename (pathlib.Path/str): name of a file
         angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
 
-    Keyword args:
+    Keyword Args:
         clockwise (bool): By default this is False and we do anti-clockwise
             ("counter-clockwise") rotations.  Pass True if you want `+90`
             to be a clockwise rotation instead.
@@ -54,7 +54,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
 
     Rotations are done cumulatively with any existing exif rotations.
 
-    args:
+    Args:
         filename (pathlib.Path): name of a file
         angle (int): CCW angle of rotation 0, 90, 180, 270, or -90.
 
