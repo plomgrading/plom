@@ -198,6 +198,8 @@ class Annotator(QWidget):
             log.info("loaded custom overlay: %s", self.keybinding_custom_overlay)
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
+        # heaven == hamburger? works for me!
+        self.ui.hamMenuButton.setText("\N{Trigram For Heaven}")
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
@@ -226,7 +228,7 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._hold_crop_checkbox.setVisible(False)
             if self.scene:
-                self.scene.remove_page_hack_buttons()
+                self.scene.remove_page_action_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -239,7 +241,7 @@ class Annotator(QWidget):
         features = (
             "Spelling checking in rubric creation",
             "Persistent held region between papers.",
-            # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
+            "Page manipulation in annotator.",
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -261,7 +263,7 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._hold_crop_checkbox.setVisible(True)
         if self.scene:
-            self.scene.build_page_hack_buttons()
+            self.scene.build_page_action_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
@@ -1242,7 +1244,7 @@ class Annotator(QWidget):
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
         else:
             self.setToolMode("image", imagePath=fileName)
