@@ -153,14 +153,6 @@ class RubricTable(QTableWidget):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        head = self.horizontalHeader()
-        assert head
-        head.setVisible(False)
-        head.setStretchLastSection(True)
-        # Issue #1498: use these for shortcut key indicators
-        head = self.verticalHeader()
-        assert head
-        head.setVisible(False)
         self.setGridStyle(Qt.PenStyle.DotLine)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
@@ -178,10 +170,20 @@ class RubricTable(QTableWidget):
             }
         """
         )
-        # CSS cannot set relative fontsize
-        f = self.font()
-        f.setPointSizeF(0.67 * f.pointSizeF())
-        head.setFont(f)
+        head = self.horizontalHeader()
+        if head:
+            # it seems during unit tests there isn't one?
+            head.setVisible(False)
+            head.setStretchLastSection(True)
+        # Issue #1498: use these for shortcut key indicators
+        head = self.verticalHeader()
+        if head:
+            # it seems during unit tests there isn't one?
+            head.setVisible(False)
+            # CSS cannot set relative fontsize
+            f = self.font()
+            f.setPointSizeF(0.67 * f.pointSizeF())
+            head.setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         _col_headers = ("Key", "Username", "Delta", "Text")
