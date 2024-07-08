@@ -128,6 +128,7 @@ def isListPosInt(L: list[str | int], lastPage: int) -> bool:
     for n in L:
         if not isPositiveInt(n):
             return False
+        n = int(n)
         if n > lastPage:
             return False
     # all tests passed
@@ -146,7 +147,7 @@ def isContiguous(L: list[str | int]) -> bool:
     """
     if not isinstance(L, list):
         return False
-    sl = set(L)
+    sl = set(int(n) for n in L)
     for n in range(min(sl), max(sl) + 1):
         if n not in sl:
             return False
