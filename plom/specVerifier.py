@@ -624,7 +624,7 @@ class SpecVerifier:
         """Saves the verified spec to a particular name.
 
         Keyword Args:
-            verbose (bool)
+            verbose (bool): output messages about what is happening.
             basedir (pathlib.Path): save to `basedir/specdir/verifiedSpec.toml`.
             outfile (pathlib.Path): or specify the path and filename instead.
                 If both specified, `outfile` takes precedence.
