@@ -546,14 +546,17 @@ class SpecVerifier:
         Exceptions:
             ValueError: with a message indicating the problem.
         """
+
+        def _noop(x):
+            return
+
+        prnt: Any = None
         if verbose == "log":
-            prnt = log.info  # type: ignore
+            prnt = log.info
         elif verbose:
-            prnt = print  # type: ignore
+            prnt = print
         else:
-            prnt: Any = lambda x: None  # type: ignore
-            # def prnt(x):
-            #     return None  # no-op
+            prnt = _noop
 
         self._check_keys(print=prnt)
         self._check_name_and_production_numbers(print=prnt)
@@ -593,14 +596,17 @@ class SpecVerifier:
         Returns:
             None
         """
+
+        def _noop(x):
+            return
+
+        prnt: Any = None
         if verbose == "log":
             prnt = log.info
         elif verbose:
-            prnt = print  # type: ignore
+            prnt = print
         else:
-            prnt: Any = lambda x: None  # type: ignore
-            # def prnt(x):
-            #     return None  # no-op
+            prnt = _noop
 
         if "privateSeed" in self.spec:
             prnt("NOTE: this spec has a 'privateSeed': no need to autogenerate")
