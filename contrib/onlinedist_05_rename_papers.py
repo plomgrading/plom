@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 
-"""
-Rename files for online distribution.
+"""Rename files for online distribution.
 
 1. Make the files in Plom first
 2. Run the 01 script to make randomized filenames

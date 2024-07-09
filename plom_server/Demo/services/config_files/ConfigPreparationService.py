@@ -163,6 +163,7 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
         echo("Creating test paper instances...")
         create_papers(config)
 
-    if PapersPrinted.can_status_be_set_true():
-        PapersPrinted.set_papers_printed(True)
-        echo("Preparation complete, papers printed.")
+    # here we override the dependency checking since
+    # we do not want to actually build pdfs.
+    PapersPrinted.set_papers_printed(True, ignore_dependencies=True)
+    echo("Preparation complete, papers printed.")

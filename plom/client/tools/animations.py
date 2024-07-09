@@ -75,7 +75,6 @@ class AnimatingTempItemMixin:
 
 
 class _AnimatorCtrlr(QObject):
-
     _prop = -1.0  # unused, but the animator expects getter/setter
 
     def __init__(self, item: AnimatingTempItemMixin) -> None:

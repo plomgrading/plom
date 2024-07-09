@@ -392,8 +392,8 @@ class RearrangementViewer(QDialog):
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
-        self.rotateB_cw = QPushButton("\N{Clockwise Open Circle Arrow} Rotate CW")
-        self.rotateB_ccw = QPushButton("\N{Anticlockwise Open Circle Arrow} Rotate CCW")
+        self.rotateB_cw = QPushButton("\N{CLOCKWISE OPEN CIRCLE ARROW} Rotate CW")
+        self.rotateB_ccw = QPushButton("\N{ANTICLOCKWISE OPEN CIRCLE ARROW} Rotate CCW")
 
         self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")

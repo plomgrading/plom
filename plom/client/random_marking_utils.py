@@ -291,13 +291,13 @@ def do_random_marking_backend(
         remarking_counter += 1
 
 
-def build_random_rubrics(question, *, username, messenger) -> None:
+def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
     """Push random rubrics into a server: only for testing/demo purposes.
 
     .. caution:: Do not use on a real production server.
 
     Args:
-        question (int)
+        question_idx: which question.
 
     Keyword Args:
         messenger: a messenger object already connected to the server.
@@ -315,14 +315,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
         com = messenger.McreateRubric(com)
-        if question in positiveRubrics:
-            positiveRubrics[question].append(com)
+        if question_idx in positiveRubrics:
+            positiveRubrics[question_idx].append(com)
         else:
-            positiveRubrics[question] = [com]
+            positiveRubrics[question_idx] = [com]
     for d, t in negativeComments:
         com = {
             "value": int(d),
@@ -332,14 +332,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
         com = messenger.McreateRubric(com)
-        if question in negativeRubrics:
-            negativeRubrics[question].append(com)
+        if question_idx in negativeRubrics:
+            negativeRubrics[question_idx].append(com)
         else:
-            negativeRubrics[question] = [com]
+            negativeRubrics[question_idx] = [com]
 
 
 def do_rando_marking(
@@ -359,9 +359,9 @@ def do_rando_marking(
     randomly selected tags.
 
     Args:
-        server (str)
-        user (str)
-        password (str)
+        server: which server.
+        user: credientials.
+        password: credientials.
 
     Keyword Args:
         partial: what percentage of papers to grade?

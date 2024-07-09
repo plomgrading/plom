@@ -6,7 +6,7 @@ from .misc_utils import run_length_encoding
 from .misc_utils import interpolate_questions_over_pages as interp
 
 
-endash = "\N{En Dash}"
+endash = "\N{EN DASH}"
 
 
 def test_runs() -> None:

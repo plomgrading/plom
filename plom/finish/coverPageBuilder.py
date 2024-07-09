@@ -93,7 +93,7 @@ def makeCover(
     else:
         text = "Results"
     tw.append((m, vpos), text, fontsize=big_font)
-    bullet = "\N{Bullet}"
+    bullet = "\N{BULLET}"
     if info:
         sname, sid = info
         if sname is None:

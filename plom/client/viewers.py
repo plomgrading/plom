@@ -134,6 +134,8 @@ class QuestionViewDialog(GroupView):
 
 
 class WholeTestView(QDialog):
+    """View all the pages of a particular test."""
+
     def __init__(self, testnum, filenames, labels=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Original scans of test {testnum}")
@@ -169,12 +171,14 @@ class WholeTestView(QDialog):
             self.pageTabs.currentWidget().resetView()
 
     def nextTab(self):
+        """Change to the next tab."""
         t = self.pageTabs.currentIndex() + 1
         if t >= self.pageTabs.count():
             t = 0
         self.pageTabs.setCurrentIndex(t)
 
     def previousTab(self):
+        """Change to the previous tab."""
         t = self.pageTabs.currentIndex() - 1
         if t < 0:
             t = self.pageTabs.count() - 1
@@ -236,6 +240,7 @@ class SelectPaperQuestion(QDialog):
         self.setLayout(vlay)
 
     def get_results(self) -> tuple[int, int, bool]:
+        """Return a tuple of what the user has set in the dialog."""
         return (
             self.tsb.value(),
             self.which_question.currentIndex() + 1,
@@ -278,6 +283,7 @@ class SolutionViewer(QWidget):
         self.show()
 
     def refresh(self):
+        """Re-download the solution image from the server."""
         fname = self._annotr.refreshSolutionImage()
         self.sv.updateImage(fname)
         if fname is None:
@@ -331,6 +337,7 @@ class PreviousPaperViewer(QDialog):
         self.setWindowTitle(f"Previous annotations - {task}")
 
     def previous_task(self):
+        """Move to the previous task in the list of task history."""
         self.nextTaskB.setEnabled(True)
         if self.index == 0:
             return
@@ -342,6 +349,7 @@ class PreviousPaperViewer(QDialog):
             self.prevTaskB.setEnabled(False)
 
     def next_task(self):
+        """Move to the next task in the list of task history."""
         self.prevTaskB.setEnabled(True)
         if self.index == len(self.task_history) - 1:
             return
@@ -353,5 +361,6 @@ class PreviousPaperViewer(QDialog):
             self.nextTaskB.setEnabled(False)
 
     def tag_paper(self):
+        """Tag the paper on the server by asking the parent Annotator to do it."""
         task = self.task_history[self.index]
         self._annotr.tag_paper(task=task, dialog_parent=self)

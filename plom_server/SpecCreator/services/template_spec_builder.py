@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-204 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from plom.misc_utils import interpolate_questions_over_pages
@@ -58,7 +58,7 @@ doNotMarkPages = []
 
         for k in range(questions):
             spec_toml += f"""
-[[question]]
+[[question]]  # q.{k+1}
 ## pages = {question_pages[k]}  ## <<<<< This needs editing
 ## mark = {question_scores[k]}  ## <<<<< This needs editing
 """

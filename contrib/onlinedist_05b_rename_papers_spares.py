@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 
-"""
-Rename files for online distribution: just the spares
+"""Rename files for online distribution: just the spares.
 
 This was original written to do all the files but if there are multiple
 room than we needed more work.

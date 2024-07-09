@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 
-"""
-Merge the filenames in the Canvas classlist.
+"""Merge the filenames in the Canvas classlist.
 
 TODO: probably the 04x scripts can all be merged into one calling
 some functions.

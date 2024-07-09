@@ -77,7 +77,7 @@ class TaggingAndRangeOptions(QDialog):
         lay.setContentsMargins(48, 0, 0, 0)
         t_min = QLineEdit()
         lay.addWidget(t_min, 3)
-        _ = QLabel("\N{Less-than Or Equal To} paper number \N{Less-than Or Equal To}")
+        _ = QLabel("\N{LESS-THAN OR EQUAL TO} paper number \N{LESS-THAN OR EQUAL TO}")
         lay.addWidget(_)
         # TODO: remove this sometime in 2024!
         c.setToolTip(

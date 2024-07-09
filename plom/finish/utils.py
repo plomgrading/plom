@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020, 2023 Colin B. Macdonald
+# Copyright (C) 2018-2020, 2023-2024 Colin B. Macdonald
 # Copyright (C) 2019 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -42,11 +42,11 @@ def salted_int_hash_from_str(s, salt=None, digits=9):
     if digits == 12:
         # SPECIAL CASE for backwards compat
         b = 899_999_999_999
-        l = 100_000_000_000
-        return str(int(h, 16) % b + l)
+        low = 100_000_000_000
+        return str(int(h, 16) % b + low)
     b = 9 * 10 ** (digits - 1)
-    l = 10 ** (digits - 1)
-    return str(int(h, 16) % b + l)
+    low = 10 ** (digits - 1)
+    return str(int(h, 16) % b + low)
 
 
 def salted_hex_hash_from_str(s, salt=None, digits=16):
@@ -91,8 +91,8 @@ def rand_integer_code(digits=9):
         int: random code.
     """
     b = 9 * 10 ** (digits - 1)
-    l = 10 ** (digits - 1)
-    return secrets.randbelow(b) + l
+    low = 10 ** (digits - 1)
+    return secrets.randbelow(b) + low
 
 
 def rand_hex(digits=16):

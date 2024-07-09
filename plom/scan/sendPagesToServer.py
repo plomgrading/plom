@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -216,7 +216,8 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, *, msgr):
         file_list (list): each row is `[n, f, q]` where `n` is the page
             number in the bundle, `f` is the filename, and `q` is a list
             of questions to which this upload should be attached.
-        bundle_name (str)
+        bundle_name (str): which bundle.
+        bundledir: where is or maybe "to put" the bundle.
         sid (str): student ID number.
 
     Keyword Args:

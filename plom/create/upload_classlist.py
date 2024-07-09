@@ -16,11 +16,11 @@ from .buildClasslist import get_demo_classlist
 def upload_classlist(classlist, *, msgr, force=False):
     """Uploads a classlist file to the server.
 
-    Arguments:
+    Arg:
         classdict (list): list of dict, each has at least keys `"id"` and
             `"name"`, optionally other fields too.
 
-    Keyword Arguments:
+    Keyword Arg:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         force (bool): Force uploading if a classlist already exists,
@@ -74,11 +74,17 @@ def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
 def upload_demo_classlist(spec, *, msgr, force=False):
     """Uploads the demo classlist file to the server.
 
+    Args:
+        spec: the server assessment specification.
+
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         force (bool): Force uploading if a classlist already exists,
             default `False`.
+
+    Returns:
+        None
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist(spec)

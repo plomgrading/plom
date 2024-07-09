@@ -19,13 +19,12 @@ from ..models import MarkingTask
 class MarkingTaskTestsWithConfig(TestCase):
     @config_test()
     def test_create_task(self) -> None:
-        """Test MarkingTaskService.create_task()
+        """Test MarkingTaskService.create_task().
 
         Config:
         test_spec = "demo"
         num_to_produce = 2
         """
-
         paper1 = Paper.objects.get(paper_number=1)
         paper2 = Paper.objects.get(paper_number=2)
 
@@ -88,7 +87,7 @@ class MarkingTaskTestsWithConfig(TestCase):
 
     @config_test()
     def test_user_can_update_task(self) -> None:
-        """Test MarkingTaskService.user_can_update_task()
+        """Test MarkingTaskService.user_can_update_task().
 
         Config:
         test_spec = "config_files/tiny_spec.toml"

@@ -198,7 +198,7 @@ class Annotator(QWidget):
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         # heaven == hamburger? works for me!
-        self.ui.hamMenuButton.setText("\N{Trigram For Heaven}")
+        self.ui.hamMenuButton.setText("\N{TRIGRAM FOR HEAVEN}")
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()

@@ -883,7 +883,7 @@ class BaseMessenger:
         """Add a tag to a task.
 
         Args:
-            task: e.g., like ``q0013g1``, for paper 13 question 1.
+            code: e.g., like ``q0013g1``, for paper 13 question 1.
             tag_text: the tag.
 
         Returns:
@@ -1039,7 +1039,7 @@ class BaseMessenger:
         we fake it by getting all rubrics and filtering.
 
         Args:
-            The key/id of the rubric we want.
+            key: The key/id of the rubric we want.
 
         Raises:
             PlomNoRubric: no such rubric.

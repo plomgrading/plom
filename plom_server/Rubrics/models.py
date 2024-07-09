@@ -4,12 +4,15 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 import random
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from Mark.models.annotations import Annotation
+from django.utils.translation import gettext_lazy as _
 
 
 def generate_key():
@@ -32,6 +35,7 @@ class Rubric(models.Model):
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
             implementation-specific.
+        kind: stores what kind of rubric this is.
         display_delta: short string to display, such as "+3" or "2 of 3",
             that illustrates to recipients how their score is changed by
             this rubric.
@@ -41,7 +45,15 @@ class Rubric(models.Model):
             ``kind`` and there maybe be hypothetical future circumstances
             such as mastery grading where the ``display_delta`` might
             differ substantially from ``value``.
-        TODO: document other fields.
+        out_of: the maximum possible value for this rubric. only
+            for absolute rubrics and is 0 for other types
+        text: the text of the rubric
+        question: the question this rubric is associated with.
+        tags: a list of tags for this rubric.
+        meta: text shown only to markers, not to students.
+        versions: a list of question versions the rubric can be used on.
+        parameters: a list of parameters for the rubric, used in
+            parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
         system_rubric: this Rubric was created by or is otherwise
@@ -63,33 +75,74 @@ class Rubric(models.Model):
             collisions.  Modifying a rubric will increase this by one.
             If you are messing with this, presumably you are doing something
             creative/hacky.
+        latest: True when this is the latest version of the rubric and
+            false otherwise. There will be only one latest rubric per key.
     """
 
+    class RubricKind(models.TextChoices):
+        ABSOLUTE = "absolute", _("Absolute")
+        NEUTRAL = "neutral", _("Neutral")
+        RELATIVE = "relative", _("Relative")
+
     key = models.TextField(null=False, default=generate_unique_key)
-    kind = models.TextField(null=False)
-    display_delta = models.TextField(null=False, default="")  # is short
-    value = models.IntegerField(null=False, default=0)
-    out_of = models.IntegerField(null=False, default=0)
+    kind = models.TextField(null=False, choices=RubricKind.choices)
+    display_delta = models.TextField(null=False, blank=True, default="")  # is short
+    value = models.IntegerField(null=False, blank=True, default=0)
+    out_of = models.IntegerField(null=False, blank=True, default=0)
     text = models.TextField(null=False)  # can be long
-    question = models.IntegerField(null=False, default=0)
-    tags = models.TextField(null=True, default="")  # can be long
+    question = models.IntegerField(null=False, blank=True, default=0)
+    tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
-    versions = models.JSONField(null=True, default=list)
-    parameters = models.JSONField(null=True, default=list)
+    versions = models.JSONField(null=True, blank=True, default=list)
+    parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
-    system_rubric = models.BooleanField(null=False, default=False)
-    published = models.BooleanField(null=False, default=True)
+    system_rubric = models.BooleanField(null=False, blank=True, default=False)
+    published = models.BooleanField(null=False, blank=True, default=True)
     # ForeignKey automatically creates a backreference from the User table
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     last_modified = models.DateTimeField(auto_now=True)
     # This ``modified_by_user`` field would also automatically create a backref
     # from User which would clash with the ``user`` field.  Setting ``related_name``
     # to ``+`` prevents the backref creation, to be revisited it we need the backref
     # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.ForeignKey.related_name "
     modified_by_user = models.ForeignKey(
-        User, null=True, on_delete=models.SET_NULL, related_name="+"
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
-    revision = models.IntegerField(null=False, default=0)
+    revision = models.IntegerField(null=False, blank=True, default=0)
+    latest = models.BooleanField(null=False, blank=True, default=True)
+
+    def clean(self):
+        if self.latest:
+            existing = (
+                Rubric.objects.filter(key=self.key, latest=True)
+                .exclude(pk=self.pk)
+                .exists()
+            )
+            if existing:
+                raise ValidationError("Only one Rubric can be latest for a given key.")
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(Rubric, self).save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        """Return a string representation of the rubric.
+
+        This is used when debugging and in the Django admin view.
+        """
+        if self.text == ".":
+            return f"[{self.display_delta}]"
+        if self.display_delta == ".":
+            return f"{self.text}"
+        return f"[{self.display_delta}] {self.text}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "revision"], name="unique_revision_per_key"
+            )
+        ]
 
 
 class RubricPane(models.Model):

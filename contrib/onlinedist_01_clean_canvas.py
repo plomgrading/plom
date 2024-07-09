@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021, 2023 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 
-"""
-Read Canvas exported csv and remove test students etc, ensure all have Student Numbers.
-"""
+"""Read Canvas exported csv and remove test students etc, ensure all have Student Numbers."""
 
 from pathlib import Path
 from plom.finish.return_tools import import_canvas_csv
