@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
@@ -18,11 +18,13 @@ from django.http import FileResponse, StreamingHttpResponse, Http404
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
 
+from django.contrib import messages
+
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-
-
 from .services import BuildPapersService
+
+from plom.plom_exceptions import PlomDependencyConflict
 
 
 def _task_context_and_status() -> tuple[dict[str, Any], int]:
@@ -141,15 +143,23 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
 class StartAllPDFs(PDFTableView):
     def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
-        bps.send_all_tasks()
-        return self.render_pdf_table(request)
+        try:
+            bps.send_all_tasks()
+            return self.render_pdf_table(request)
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
 
 class StartOnePDF(PDFTableView):
     def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
         bps = BuildPapersService()
-        bps.send_single_task(paper_number)
-        return self.render_pdf_table(request)
+        try:
+            bps.send_single_task(paper_number)
+            return self.render_pdf_table(request)
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
 
 class CancelAllPDFs(PDFTableView):
@@ -159,22 +169,24 @@ class CancelAllPDFs(PDFTableView):
         return self.render_pdf_table(request)
 
 
-class CancelOnePDF(PDFTableView):
-    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
-        bps = BuildPapersService()
-        bps.try_to_cancel_single_queued_task(paper_number)
-        return self.render_pdf_table(request)
-
-
 class RetryAllPDF(PDFTableView):
     def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
-        bps.retry_all_task()
-        return self.render_pdf_table(request)
+        try:
+            bps.retry_all_task()
+            return self.render_pdf_table(request)
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
 
 class DeleteAllPDFs(ManagerRequiredView):
+
     def post(self, request: HttpRequest) -> HttpResponse:
-        BuildPapersService().reset_all_tasks()
+        try:
+            BuildPapersService().reset_all_tasks()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
         return HttpResponseClientRedirect(reverse("create_paperPDFs"))

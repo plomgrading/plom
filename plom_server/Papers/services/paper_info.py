@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 import logging
@@ -9,6 +9,7 @@ from typing import List
 from django.db import transaction
 
 from ..models import Paper, FixedPage, QuestionPage
+from Preparation.models import NumberOfPapersToProduceSetting
 
 log = logging.getLogger("PaperInfoService")
 
@@ -18,6 +19,25 @@ class PaperInfoService:
     def how_many_papers_in_database(self):
         """How many papers have been created in the database."""
         return Paper.objects.count()
+
+    def is_paper_database_partially_populated(self):
+        """Returns true when at least one paper exists in the DB."""
+        return Paper.objects.filter().exists()
+
+    def is_paper_database_fully_populated(self):
+        """Returns true when number of papers in the database equals the number to produce."""
+        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        db_count = Paper.objects.count()
+        if db_count > 0 and db_count == nop:
+            return True
+        else:
+            return False
+
+    def is_paper_database_partially_but_not_fully_populated(self):
+        """Returns true when number of papers in the database is positive but strictly less than the number to produce."""
+        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        db_count = Paper.objects.count()
+        return db_count > 0 and db_count < nop
 
     @transaction.atomic
     def is_paper_database_populated(self):

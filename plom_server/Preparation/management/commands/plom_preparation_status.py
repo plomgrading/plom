@@ -12,6 +12,10 @@ from ...services import (
     PQVMappingService,
     PapersPrinted,
 )
+from Preparation.services.preparation_dependency_service import (
+    can_set_papers_printed,
+    can_unset_papers_printed,
+)
 
 
 class Command(BaseCommand):
@@ -58,13 +62,13 @@ class Command(BaseCommand):
         else:
             status = options["set"][0]
             if status == "finished":
-                if not PapersPrinted.can_status_be_set_true():
+                if not can_set_papers_printed():
                     raise CommandError(
                         "Unable to set paper-printing as finished - test-papers have not been saved to the database."
                     )
                 PapersPrinted.set_papers_printed(True)
             elif status == "todo":
-                if not PapersPrinted.can_status_be_set_false():
+                if not can_unset_papers_printed():
                     raise CommandError(
                         "Unable to set paper-printing as todo - bundles have been pushed to the database."
                     )

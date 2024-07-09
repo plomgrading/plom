@@ -70,8 +70,9 @@ class ImageBundleTests(TestCase):
             version=3,
         )
 
-        # Set preparation as finished
-        PapersPrinted.set_papers_printed(True)
+        # Set preparation as finished - since we are not actually
+        # building the pdfs, we set 'ignore_dependencies'
+        PapersPrinted.set_papers_printed(True, ignore_dependencies=True)
 
         return super().setUp()
 

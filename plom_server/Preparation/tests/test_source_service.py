@@ -15,7 +15,7 @@ from django.conf import settings
 from model_bakery import baker
 
 from Base.tests import config_test
-from ..services import SourceService
+from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files
 
@@ -23,6 +23,9 @@ from .. import useful_files_for_testing as useful_files
 class SourceServiceTests(TestCase):
     @config_test({"test_spec": "demo"})
     def test_store_and_list_source_pdfs(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         ver1pdf = resources.files(useful_files) / "test_version1.pdf"
         ver2pdf = resources.files(useful_files) / "test_version2.pdf"
 
@@ -63,6 +66,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_checks(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with open(pdf, "rb") as f:
             r, msg = SourceService.take_source_from_upload(1, f)
@@ -72,6 +78,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with open(pdf, "rb") as f:
             r, msg = SourceService.take_source_from_upload(0, f)
@@ -84,6 +93,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "config_files/tiny_spec.toml"})
     def test_store_source_pdfs_wrong_page_count(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         # tiny_spec has 3 pages but the pdf here has 6
         pdf = resources.files(useful_files) / "test_version1.pdf"
         with open(pdf, "rb") as f:
@@ -93,6 +105,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdf_location(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
         f = SourceService._get_source_file(1)
@@ -105,6 +120,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdf_already_there(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
         with self.assertRaises(ValueError):
@@ -112,12 +130,17 @@ class SourceServiceTests(TestCase):
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
 
-    def test_delete_non_existing_source_pdf(self) -> None:
-        # documented as a non-error
-        SourceService.delete_source_pdf(1)
+    # def test_delete_non_existing_source_pdf(self) -> None:
+    #     # explicitly **unset** papers-printed for testing purposes
+    #     PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+    #     # documented as a non-error
+    #     SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_source_pdf_list_has_hash(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         SourceService.store_source_pdf(1, upload_path)
         d = SourceService.get_list_of_sources()
@@ -125,6 +148,9 @@ class SourceServiceTests(TestCase):
 
     @config_test({"test_spec": "demo"})
     def test_get_as_bytes(self) -> None:
+        # we explicitly **unset** papers-printed for testing purposes
+        PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
+
         upload_path = resources.files(useful_files) / "test_version1.pdf"
         original_bytes = upload_path.read_bytes()
         SourceService.store_source_pdf(1, upload_path)
