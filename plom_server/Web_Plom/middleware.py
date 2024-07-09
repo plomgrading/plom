@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.core.cache import cache
 from django.conf import settings

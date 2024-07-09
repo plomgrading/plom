@@ -1,0 +1,35 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block page_heading %}
+    Preparation dependency conflict
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    {% if reasons %}
+                        <div class="card-title">
+                            <h4>Your attempted modification of the assessment could not be completed because:</h4>
+                        </div>
+                        <div class="card-text">
+                            <ul>
+                                {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <h4>
+                            Your attempted modification of the assessment could not be completed - please return to the assessment preparation page.
+                        </h4>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

@@ -152,6 +152,21 @@ class HueyTaskTracker(models.Model):
             # tr.save()
 
     @classmethod
+    def bulk_transition_to_queued_or_running(cls, pk_huey_id_pair_list):
+        """Move to the Queued state using locking, or a no-op if we're already Running.
+
+        A bulk version of method 'transition_to_queued_or_running'. Note that it
+        is set as a durable-transaction, so that it must be the outermost atomic
+        transaction and ensures that any database changes are committed when it
+        runs without errors. See django documentation for more details.
+        """
+        with transaction.atomic(durable=True):
+            for pk, huey_id in pk_huey_id_pair_list:
+                cls.objects.select_for_update().filter(
+                    pk=pk, status=cls.STARTING
+                ).update(huey_id=huey_id, status=cls.QUEUED)
+
+    @classmethod
     def transition_to_complete(cls, pk):
         """Move to the complete state.
 
@@ -175,12 +190,23 @@ class HueyTaskTracker(models.Model):
         self.obsolete = True
         self.save()
 
+    @classmethod
+    def set_every_task_obsolete(cls):
+        """Set every single task as obsolete."""
+        cls.objects.all().update(obsolete=True)
+
     def transition_to_error(self, errmsg: str) -> None:
         """Move to the error state."""
         self.huey_id = None
         self.status = self.ERROR
         self.message = errmsg
         self.save()
+
+    @classmethod
+    def set_every_task_with_status_error_obsolete(cls):
+        """Set every single task with status=error as obsolete."""
+        with transaction.atomic():
+            cls.objects.filter(status=cls.ERROR).update(obsolete=True)
 
 
 # ---------------------------------

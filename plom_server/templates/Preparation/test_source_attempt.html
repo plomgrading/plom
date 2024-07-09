@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
 -->
@@ -14,8 +14,9 @@
             {% if success %}
                 <h4 class="card-title">Source PDF version {{ version }} uploaded successfully</h4>
             {% else %}
-                <h4 class="card-title">Source PDF version {{ version }} upload failed</h4>
-                <p class="card-text">{{ message }}</p>
+                <div>
+                    <h4 class="card-title">Source PDF version {{ version }} upload failed - {{ message }}</h4>
+                </div>
             {% endif %}
             <a href="{% url 'prep_sources' %}" class="btn btn-primary card-link">return</a>
         </div>

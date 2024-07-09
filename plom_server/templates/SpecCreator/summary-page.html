@@ -5,10 +5,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Create Specification - Summary
+    Assessment Specification
 {% endblock title %}
 {% block page_heading %}
-    Create Specification - Summary
+    Assessment Specification
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
@@ -16,57 +16,68 @@
             <a type="button"
                class="btn btn-primary me-2"
                href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
-            <a type="button"
-               class="btn btn-secondary"
-               href="{% url 'spec_download' %}">
-                Download <tt>.toml</tt>
-                <icon class="bi bi-file-earmark-arrow-down"></icon>
-            </a>
+            {% if spec %}
+                <a type="button"
+                   class="btn btn-secondary"
+                   href="{% url 'spec_download' %}">
+                    Download <tt>.toml</tt>
+                    <icon class="bi bi-file-earmark-arrow-down"></icon>
+                </a>
+                <button class="btn btn-danger"
+                        hx-confirm="Are you sure?"
+                        hx-delete="{% url 'spec_delete' %}">Delete specification</button>
+                <a class="btn btn-warning" href="{% url 'creator_launch' %}">Modify specification</a>
+            {% endif %}
         </div>
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">Test specification</h4>
-                <p class="card-subtitle">The following will be used to generate test papers:</p>
-                <dl class="row">
-                    <dt class="col-sm-2">Name</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.name }}
-                    </dd>
-                    <dt class="col-sm-2" style="margin-bottom: 25px;">Long name</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.longName }}
-                    </dd>
-                    <dt class="col-sm-2">Versions</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.numberOfVersions }}
-                    </dd>
-                    <dt class="col-sm-2">Pages</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.numberOfPages }}
-                    </dd>
-                    <dt class="col-sm-2">ID page</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.idPage }}
-                    </dd>
-                    <dt class="col-sm-2" style="margin-bottom: 25px;">Total marks</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.totalMarks }}
-                    </dd>
-                    <dt class="col-sm-2">Questions</dt>
-                    <dd class="col-sm-10">
-                        {{ spec.numberOfQuestions }}
-                    </dd>
-                    {% for i in spec.question %}
-                        <!-- heads up: using HTMX here -->
-                        <div hx-get="{% url 'spec_summary_q' forloop.counter %}"
-                             hx-trigger="load"
-                             hx-swap="outerHTML"></div>
-                    {% endfor %}
-                    <dt class="col-sm-2" style="margin-top: 25px;">Do-not-mark pages</dt>
-                    <dd class="col-sm-10" style="margin-top: 25px;">
-                        {{ spec.doNotMarkPages }}
-                    </dd>
-                </dl>
+                {% if spec %}
+                    <h4 class="card-title">Assssment specification</h4>
+                    <p class="card-subtitle">The following will be used to generate test papers:</p>
+                    <dl class="row">
+                        <dt class="col-sm-2">Name</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.name }}
+                        </dd>
+                        <dt class="col-sm-2" style="margin-bottom: 25px;">Long name</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.longName }}
+                        </dd>
+                        <dt class="col-sm-2">Versions</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.numberOfVersions }}
+                        </dd>
+                        <dt class="col-sm-2">Pages</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.numberOfPages }}
+                        </dd>
+                        <dt class="col-sm-2">ID page</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.idPage }}
+                        </dd>
+                        <dt class="col-sm-2" style="margin-bottom: 25px;">Total marks</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.totalMarks }}
+                        </dd>
+                        <dt class="col-sm-2">Questions</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.numberOfQuestions }}
+                        </dd>
+                        {% for i in spec.question %}
+                            <!-- heads up: using HTMX here -->
+                            <div hx-get="{% url 'spec_summary_q' forloop.counter %}"
+                                 hx-trigger="load"
+                                 hx-swap="outerHTML"></div>
+                        {% endfor %}
+                        <dt class="col-sm-2" style="margin-top: 25px;">Do-not-mark pages</dt>
+                        <dd class="col-sm-10" style="margin-top: 25px;">
+                            {{ spec.doNotMarkPages }}
+                        </dd>
+                    </dl>
+                {% else %}
+                    <h4 class="card-title">There is no assessment specification</h4>
+                    <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
+                {% endif %}
             </div>
         </div>
     </div>
