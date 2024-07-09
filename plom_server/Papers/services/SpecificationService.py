@@ -66,15 +66,16 @@ def load_spec_from_dict(
     Will call the SpecSerializer on the loaded TOML string and validate.
 
     Args:
-        spec_dict:
-    Raises:
-        PlomDependencyConflict: if the spec cannot be modified
+        spec_dict: the dictionary describing the assessment.
 
     Keyword Args:
         public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
         Specification: saved test spec instance.
+
+    Raises:
+        PlomDependencyConflict: if the spec cannot be modified.
     """
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
@@ -468,7 +469,6 @@ def get_question_selection_method(question_index: int) -> str:
     """Get the selection method (shuffle/fix) of the given question.
 
     Args:
-
         question_index: question indexed from 1.
 
     Returns:

@@ -83,7 +83,6 @@ def pdf_builder(
     histogram_of_grades_q = []
     marks_for_questions = des._get_marks_for_all_questions()
     for _q, _ in enumerate(marks_for_questions):
-
         question_idx = _q + 1  # 1-indexing
         histogram_of_grades_q.append(  # add to the list
             # each base64-encoded image

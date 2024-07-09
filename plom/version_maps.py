@@ -175,7 +175,7 @@ def make_random_version_map(
 
 
 def undo_json_packing_of_version_map(
-    vermap_in: dict[str, dict[str, int]]
+    vermap_in: dict[str, dict[str, int]],
 ) -> dict[int, dict[int, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 

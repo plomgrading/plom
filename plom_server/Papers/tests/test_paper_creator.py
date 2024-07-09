@@ -35,7 +35,6 @@ class PaperCreatorTests(TestCase):
 
     def get_n_models(self):
         """Helper function for getting the current number of papers/pages."""
-
         n_papers = Paper.objects.all().count()
         n_pages = FixedPage.objects.all().count()
         n_id = IDPage.objects.all().count()

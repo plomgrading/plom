@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021, 2023 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 # Copyright (C) 2021 Jenny Li
 
-"""
-We may have students writing in different rooms at different times, create columns for room.
+"""We may have students writing in different rooms at different times, create columns for room.
 
 Input should be a Canvas export with non-students removed:
 No "Student, test" etc, everyone must have student numbers.  A previous

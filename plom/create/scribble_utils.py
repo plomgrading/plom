@@ -275,11 +275,11 @@ def scribble_name_and_id(
 ):
     """Write name/number on coverpage of fitz pdf_doc.
 
-    Arguments:
+    Args:
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
-        student_number (str)
-        student_name (str)
+        student_number (str): student number to write on page.
+        student_name (str): student name to write on page.
 
     Keyword Args:
         pagenum (int): which page is the coverpage, default 0 (1st page).
@@ -339,10 +339,12 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
 
+    Keyword Args:
+        exclude: which pages to exclude.  By default exclude pages 0 and 1
+            (the ID page and DNM page in our demo data).
+
     Returns:
         None: but modifies the open document as a side effect.
-
-    By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
     # In principle you can put other fonts in plom.create.fonts
     # Can also use "helv" and `None` for the fontfile

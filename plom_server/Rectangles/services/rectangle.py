@@ -288,7 +288,7 @@ class RectangleExtractor:
         """Helper function for extracting the largest box from an image.
 
         Args:
-            filename: the image where the largest box is extracted from.
+            region: part of the image where the largest box is extracted from.
 
         Returns:
             A dict of the coordinates of the top-left and bottom-right corners of the rectangle

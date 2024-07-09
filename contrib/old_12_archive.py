@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2021, 2024 Colin B. Macdonald
 # Copyright (C) 2019 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
-"""
-Produce a minimal archive of your test.
+"""Produce a minimal archive of your test.
 
 This is intended for archival purposes.  Note it would not be easy to
 regrade a question within Plom using this archive.  If you ever

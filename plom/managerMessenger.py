@@ -141,8 +141,8 @@ class ManagerMessenger(BaseMessenger):
         """Pre-id a paper.
 
         Args:
-            paper_number (str)
-            studentID (str)
+            paper_number (str): which paper.
+            studentID (str): student ID to predict for that paper.
 
         Keyword Args:
             predictor: defaults to "prename"
