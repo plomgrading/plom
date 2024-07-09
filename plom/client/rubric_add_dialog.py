@@ -74,15 +74,6 @@ class SignedSB(QSpinBox):
         super().__init__()
         self.setRange(-maxMark, maxMark)
         self.setValue(1)
-        self.val_before = self.value()
-        self.valueChanged.connect(self.onValueChanged)
-
-    def onValueChanged(self, value):
-        if value != 0:
-            self.setValue(value)
-            self.val_before = value
-        else:
-            self.setValue(self.val_before)
 
     def stepBy(self, steps):
         self.setValue(self.value() + steps)
@@ -1032,6 +1023,10 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
+        print(self.relative_value_SB.value())
+        if self.relative_value_SB.value() == 0:
+            WarnMsg(self, "Relative rubric cannot be zero.").exec()
+            return
         if not self.version_specific_le.hasAcceptableInput():
             WarnMsg(
                 self, '"Versions" must be a comma-separated list of positive integers.'
