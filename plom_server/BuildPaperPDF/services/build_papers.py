@@ -230,7 +230,7 @@ class BuildPapersService:
         If there is a existing chore, it will be set to obsolete.
 
         Args:
-            paper_number_list: which paper numbers
+            paper_number_list: which paper number - entries must be unique.
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
