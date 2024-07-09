@@ -82,7 +82,6 @@ def huey_build_single_paper(
         block or detect whether a task has finished".
     """
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
@@ -284,7 +283,7 @@ class BuildPapersService:
             res = huey_build_single_paper(
                 chore.paper.paper_number,
                 spec,
-                qvmap[paper.paper_number],
+                qvmap[chore.paper.paper_number],
                 student_info=student_info,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
