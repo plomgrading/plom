@@ -1023,7 +1023,6 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
-        print(self.relative_value_SB.value())
         if self.relative_value_SB.value() == 0:
             WarnMsg(self, "Relative rubric cannot be zero.").exec()
             return
