@@ -5,14 +5,17 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
 import re
 import sys
+from textwrap import shorten
 from typing import Any
 
 import arrow
+from spellchecker import SpellChecker
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -27,6 +30,8 @@ from PyQt6.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
     QRegularExpressionValidator,
+    QTextCursor,
+    QMouseEvent,
 )
 
 
@@ -50,6 +55,9 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QTextEdit,
     QVBoxLayout,
+    QPushButton,
+    QListWidget,
+    QSplitter,
 )
 
 import plom.client.icons
@@ -82,14 +90,22 @@ class SignedSB(QSpinBox):
 
 
 class SubstitutionsHighlighter(QSyntaxHighlighter):
-    """Highlight tex prefix and parametric substitutions."""
+    """Highlight tex prefix, parametric substitutions, and spelling mistakes."""
 
     def __init__(self, *args, **kwargs):
         # TODO: initial value of subs?
         self.subs = []
         super().__init__(*args, **kwargs)
+        # TODO: see dynamic spellchecker, future work
+        # self.wordRegEx = re.compile(r"\b([A-Za-z]{2,})\b")
+        self.speller = SpellChecker(distance=1)
 
     def highlightBlock(self, text: str | None) -> None:
+        self._highlight_prefix(text)
+        # TODO: new MR for dynamic spellchecker
+        # self._highlight_spelling(text)
+
+    def _highlight_prefix(self, text: str | None):
         """Highlight tex prefix and matches in our substitution list.
 
         Args:
@@ -115,9 +131,133 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
                 # frmt.setToolTip('v2 subs: "TODO"')
                 self.setFormat(match.start(), match.end() - match.start(), frmt)
 
+    # def _highlight_spelling(self, text: str | None):
+    #     """Highlight spelling mistakes with red squiggle line.
+    #
+    #     TODO: Currently unused, pending testing and review in new MR.
+    #
+    #     Args:
+    #         text: the text to be highlighted.
+    #     """
+    #     if text is None:
+    #         return
+    #
+    #     self.misspelledFormat = QTextCharFormat()
+    #     self.misspelledFormat.setUnderlineStyle(
+    #         QTextCharFormat.UnderlineStyle.SpellCheckUnderline
+    #     )  # Platform and theme dependent
+    #     self.misspelledFormat.setUnderlineColor(QColor("red"))
+    #
+    #     for word_object in self.wordRegEx.finditer(text):
+    #         if word_object.group() != "tex" and word_object.group().isalpha():
+    #             most_likely_word = self.speller.correction(word_object.group())
+    #
+    #             if most_likely_word and most_likely_word != word_object.group():
+    #                 self.setFormat(
+    #                     word_object.start(),
+    #                     word_object.end() - word_object.start(),
+    #                     self.misspelledFormat,
+    #                 )
+
     def setSubs(self, subs):
         self.subs = subs
         self.rehighlight()
+
+
+class CorrectionWidget(QFrame):
+    def __init__(self):
+        """Constructor of the QFrame showing spelling correction suggestions."""
+        super().__init__()
+        self.speller = SpellChecker(distance=1)
+        self.list_widget = QListWidget()
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.list_widget.doubleClicked.connect(self.replace_word_from_correction_list)
+
+        self.init_ui()
+
+        # Only show the widget when it's not empty
+        self.hide()
+
+    def init_ui(self):
+        self.label = QLabel("Suggestions:")
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Apply
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+
+        buttons.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(
+            self.replace_word_from_correction_list
+        )
+        buttons.rejected.connect(self.close)
+
+        # Layouts
+        v_layout = QVBoxLayout()
+        v_layout.addWidget(self.label)
+        v_layout.addWidget(self.list_widget)
+
+        h_layout = QHBoxLayout()
+        h_layout.addStretch()
+        v_layout.addLayout(h_layout)
+        self.setLayout(v_layout)
+
+        h_layout.addWidget(buttons)
+
+    def set_selected_word(self, selected_word: str, cursor: QTextCursor):
+        """Request spelling correction for the selected word.
+
+        Args:
+            selected_word: the word that will be requested for
+            spelling corrections.
+
+            cursor: the text cursor location in WideTextEdit text box.
+        """
+        self.selected_word = selected_word
+        self.cursor_position = cursor
+        self.update_suggestions()
+
+    def update_suggestions(self):
+        """Update the spelling correction suggestion list."""
+        self.list_widget.clear()
+        suggestions = self.speller.candidates(self.selected_word)
+        capitalized = self.selected_word.istitle()
+
+        # Most probable candidate is set as the first item.
+        if suggestions:
+            most_probable_candidate = self.speller.correction(self.selected_word)
+            if capitalized:
+                self.list_widget.addItem(most_probable_candidate.capitalize())
+            else:
+                self.list_widget.addItem(most_probable_candidate)
+
+            for suggestion in suggestions:
+                if suggestion != most_probable_candidate:
+                    if capitalized:
+                        self.list_widget.addItem(suggestion.capitalize())
+                    else:
+                        self.list_widget.addItem(suggestion)
+
+        # the first item in the list is the default chosen correction.
+        self.list_widget.setCurrentRow(0)
+        if self.list_widget.count() > 0:
+            self.show()
+        else:
+            self.hide()
+
+    def replace_word_from_correction_list(self):
+        """Replace the selected text with the chosen correction option."""
+        selected_items = self.list_widget.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(
+                self, "No Selection", "Please select an option for correction."
+            )
+            return
+        selected_correction = selected_items[0].text()
+        cursor = self.cursor_position
+        cursor.beginEditBlock()
+        cursor.removeSelectedText()
+        cursor.insertText(selected_correction)
+        cursor.endEditBlock()
+        self.close()
 
 
 class WideTextEdit(QTextEdit):
@@ -126,20 +266,116 @@ class WideTextEdit(QTextEdit):
     Also, hacked to ignore shift-enter.
     """
 
+    def __init__(self):
+        super().__init__()
+        self.speller = SpellChecker(distance=1)
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
+        """Handle double left-click event.
+
+        Only pops up the spelling corrections if the most likely
+        replacement word is different from the selected text, and the
+        selected text is not empty.
+
+        Note: Ignore the word "tex" and non alphabetical.
+
+        Raises:
+            RunTimeError if the AddRubricBox dialog is uninitialized.
+        """
+        if not event:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
+            super().mouseDoubleClickEvent(event)
+            selected_text = self.textCursor().selectedText()
+            best_correction = self.speller.correction(selected_text)
+            if (
+                selected_text.isalpha()
+                and selected_text != "tex"
+                and len(selected_text)
+                and best_correction
+                and best_correction != selected_text
+            ):
+                # The first parent is QSplitter
+                splitter = self.parentWidget()
+                if splitter:
+                    rubric_dialog = splitter.parentWidget()
+                else:
+                    raise RuntimeError(
+                        "Rubric Box Dialog is unexpectedly uninitialized"
+                    )
+
+                if isinstance(rubric_dialog, AddRubricBox):
+                    rubric_dialog.correction_widget.set_selected_word(
+                        selected_text, self.textCursor()
+                    )
+
     def sizeHint(self):
         sz = super().sizeHint()
         sz.setWidth(sz.width() * 2)
         return sz
 
     def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
-        if (
-            e is not None
-            and e.modifiers() == Qt.KeyboardModifier.ShiftModifier
-            and (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter)
-        ):
-            e.ignore()
-            return
+        if e is not None:
+            if e.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
+                e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter
+            ):
+                e.ignore()
+                return
+
+            # Reset formatting, otherwise it can unexpectedly adopt the
+            # red squiggle line while backspacing.
+            # TODO: Decide whether reset format for any key or only backspace
+            # What should happen when text is inputted in the middle of
+            # the highlighted text?.
+            elif e.key() == Qt.Key.Key_Backspace:
+                super().keyPressEvent(e)
+                self.setCurrentCharFormat(QTextCharFormat())
+                return
+
         super().keyPressEvent(e)
+
+    def highlight_text(self) -> None:
+        """Underline the texts that are suspected for spelling mistake.
+
+        The text is underlined with red squiggle line when the most likely
+        replacement word is not an empty text and is different from the
+        selected text.
+
+        Note: Ignore "tex" and non alphabetical.
+        """
+        cursor = QTextCursor(self.document())
+        cursor.select(QTextCursor.SelectionType.Document)
+        cursor.setCharFormat(QTextCharFormat())
+        cursor.beginEditBlock()
+
+        # Create a QTextCharFormat for formatting
+        format = QTextCharFormat()
+        format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SpellCheckUnderline)
+        format.setUnderlineColor(QColor("red"))
+
+        start_position = 0
+        cursor.setPosition(start_position)
+        selected_text = " "
+        while not cursor.atEnd():
+            cursor.movePosition(
+                QTextCursor.MoveOperation.EndOfWord,
+                QTextCursor.MoveMode.KeepAnchor,
+            )
+            selected_text = cursor.selectedText()
+            best_correction = self.speller.correction(selected_text)
+            if (
+                selected_text.isalpha()
+                and selected_text != "tex"
+                and best_correction
+                and best_correction != selected_text
+            ):
+                cursor.mergeCharFormat(format)
+            cursor.movePosition(
+                QTextCursor.MoveOperation.NextWord, QTextCursor.MoveMode.MoveAnchor
+            )
+
+        cursor.endEditBlock()
+        self.setCurrentCharFormat(QTextCharFormat())
 
 
 class AddRubricBox(QDialog):
@@ -206,6 +442,11 @@ class AddRubricBox(QDialog):
 
         self.reapable_CB = QComboBox()
         self.TE = WideTextEdit()
+        self.correction_widget = CorrectionWidget()
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(self.TE)
+        self.splitter.addWidget(self.correction_widget)
+
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
@@ -226,16 +467,18 @@ class AddRubricBox(QDialog):
         self.TEmeta.setSizePolicy(sizePolicy)
 
         flay = QFormLayout()
-        flay.addRow("Text", self.TE)
+        flay.addRow("Text", self.splitter)
         lay = QHBoxLayout()
         lay.addItem(
             QSpacerItem(
                 32, 10, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
             )
         )
-        lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
-        reapable_layout = lay
+        if self.use_experimental_features:
+            _ = QPushButton("Check Spelling")
+            _.clicked.connect(self.TE.highlight_text)
+            lay.addWidget(_)
         flay.addRow("", lay)
 
         frame = QFrame()
@@ -264,6 +507,7 @@ class AddRubricBox(QDialog):
             )
         )
         vlay.addLayout(lay)
+
         hlay = QHBoxLayout()
         b = QRadioButton("absolute")
         abs_tooltip = "Indicates a score as a part of a maximum possible amount"
@@ -448,14 +692,17 @@ class AddRubricBox(QDialog):
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
-            self.reapable_CB.addItems(reapable)
+            reaplabels = [shorten(x.strip(), 42, placeholder="...") for x in reapable]
+            self.reapable_CB.addItems(reaplabels)
+            self._list_of_reapables = reapable
+            self.reapable_CB.setToolTip("Choose existing text from page")
         else:
-            for i in range(reapable_layout.count()):
-                w = reapable_layout.itemAt(i).widget()
-                if w:
-                    w.setEnabled(False)
+            self.reapable_CB.setEnabled(False)
+            self.reapable_CB.setToolTip(
+                "Choose existing text from page (none available)"
+            )
         # Set up TE and CB so that when CB changed, text is updated
-        self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
+        self.reapable_CB.currentIndexChanged.connect(self.changedReapableCB)
 
         # the rubric may have fields we don't modify: keep a copy around
         self._old_rubric = {} if not com else com.copy()
@@ -723,9 +970,14 @@ class AddRubricBox(QDialog):
         self.group_combobox.insertItem(n, s)
         self.group_combobox.setCurrentIndex(n)
 
-    def changedReapableCB(self):
+    def changedReapableCB(self, idx: int) -> None:
+        if idx <= 0:
+            # -1 for newly-empted combobox
+            # 0 for selecting the first empty placeholder
+            # In either case, user might be surprised by clearing the text
+            return
         self.TE.clear()
-        self.TE.insertPlainText(self.reapable_CB.currentText())
+        self.TE.insertPlainText(self._list_of_reapables[idx - 1])
 
     def toggle_version_specific(self):
         if self.version_specific_cb.isChecked():
