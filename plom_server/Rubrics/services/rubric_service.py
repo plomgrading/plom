@@ -13,14 +13,14 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import html
+import json
 import logging
 import sys
-from typing import Any
-import json
 import tomlkit
-import io
-import csv
+from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
