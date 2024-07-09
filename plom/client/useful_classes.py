@@ -299,6 +299,8 @@ class SimpleQuestionCheckBox(QMessageBox):
 
 
 class BlankIDBox(QDialog):
+    """Ask user what precisely is blank about a paper."""
+
     def __init__(self, parent, testNumber):
         super().__init__(parent)
         self.testNumber = testNumber
@@ -329,6 +331,8 @@ class BlankIDBox(QDialog):
 
 
 class SNIDBox(QDialog):
+    """Ask user to enter a student ID and student name, with dynamic lookup from a list."""
+
     def __init__(self, parent, id_name_text):
         super().__init__(parent)
         self.sidLE = QLineEdit()
@@ -369,6 +373,7 @@ class SNIDBox(QDialog):
         self.snameLE.setText(sname.strip())
 
     def check(self):
+        """Validate the user input, ensuring valid Student ID and non-blank name."""
         self.sid = self.sidLE.text().strip()
         self.sname = self.snameLE.text().strip()
         if not isValidStudentID(self.sid):
@@ -385,6 +390,8 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
+    """A settings dialog to change some of the Plom Client settings."""
+
     def __init__(self, parent, s, logdir, cfgfile, tmpdir):
         super().__init__(parent)
         self.setWindowTitle("Plom client options")
@@ -447,6 +454,7 @@ class ClientSettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
     def get_options_back(self):
+        """Return the options that have been changed by the dialog."""
         return {
             "FOREGROUND": self.checkFore.isChecked(),
             "LogLevel": self.comboLog.currentText(),

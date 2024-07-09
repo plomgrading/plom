@@ -2,13 +2,11 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Philip Loewen
 
-"""
-Connect to a running Plom server and retrieve its classlist,
-communicating exclusively through a ManagerMessenger.
+"""Connect to a running Plom server and retrieve its classlist, using a ManagerMessenger.
 
 Environment variables PLOM_SERVER and PLOM_MANAGER_PASSWORD
 are essential. Perhaps PLOM_NO_SSL_VERIFY must also have a value.

@@ -375,11 +375,12 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MclaimThisTask(self, code, version):
+    def MclaimThisTask(self, code: str, version: int) -> list:
         """Claim a task from server and get back metadata.
 
         Args:
             code (str): a task code such as `"q0123g2"`.
+            version: we should know which version we are claiming.
 
         Returns:
             list: Consisting of image_metadata, [list of tags], integrity_check.
@@ -462,6 +463,7 @@ class Messenger(BaseMessenger):
             code (str): e.g., "q0003g1"
             pg (int): question number.
             ver (int): which version.
+            score: assigned score for the task.
             marking_time (int/float): number of seconds spend on grading
                 the paper.
             annotated_img (pathlib.Path): the annotated image, either a

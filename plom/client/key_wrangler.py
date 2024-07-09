@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 from copy import deepcopy
 import logging
@@ -184,7 +184,7 @@ class KeyEditDialog(QDialog):
         TODO: custom line edit eats enter and esc.
 
         Args:
-            parent (QWidget)
+            parent (QWidget): what widget to parent this dialog.
 
         Keyword Args:
             label (str): What action are we changing?
@@ -194,7 +194,7 @@ class KeyEditDialog(QDialog):
             legal (str): keys that can entered.  If omitted/empty, use
                 a default.
 
-        Returns
+        Returns:
             None
         """
         super().__init__(parent)

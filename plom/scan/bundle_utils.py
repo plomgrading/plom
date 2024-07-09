@@ -80,9 +80,9 @@ def bundle_name_from_file(filename: str | pathlib.Path) -> str:
     Args:
         filename (str/pathlib.Path): name of file, typically a PDF file.
 
-    Returns
+    Returns:
         str: Currently bundle name is the file name (including extension) with
-            some input sanitizing such as spaces replaced with underscores.
+        some input sanitizing such as spaces replaced with underscores.
     """
     filename = Path(filename)
     return filename.name.replace(" ", "_")
@@ -94,7 +94,7 @@ def bundle_name_and_md5_from_file(filename: str | pathlib.Path) -> tuple[str, st
     Args:
         filename (str/Path): name of file.
 
-    Returns
+    Returns:
         The bundle name and md5sum.
 
     Exceptions:

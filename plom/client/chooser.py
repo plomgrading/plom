@@ -611,8 +611,7 @@ class Chooser(QDialog):
         except PlomSeriousException as e:
             ErrorMsg(
                 self,
-                "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e),
+                f"Could not get authentication token.\n\nUnexpected error: {str(e)}",
             ).exec()
             self.messenger = None
             return

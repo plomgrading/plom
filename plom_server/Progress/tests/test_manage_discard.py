@@ -22,7 +22,7 @@ from Progress.services import ManageDiscardService
 
 
 class ManageScanTests(TestCase):
-    """Tests for Progress.services.ManageScanService"""
+    """Tests for Progress.services.ManageScanService."""
 
     def setUp(self) -> None:
         self.user0: User = baker.make(User, username="user0")

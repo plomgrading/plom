@@ -56,15 +56,19 @@ class CommandTool(QUndoCommand):
         )
 
     def redo_animation(self) -> None:
+        """An animation of redoing something."""
         self.scene.addItem(self.get_undo_redo_animation())
 
     def redo(self) -> None:
+        """Redo a command, putting it back in the scene with an animation."""
         self.scene.addItem(self.obj)
         self.redo_animation()
 
     def undo_animation(self) -> None:
+        """An animation of undoing something."""
         self.scene.addItem(self.get_undo_redo_animation(backward=True))
 
     def undo(self) -> None:
+        """Undo a command, removing from the scene with an animation."""
         self.scene.removeItem(self.obj)
         self.undo_animation()

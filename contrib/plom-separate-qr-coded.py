@@ -5,8 +5,7 @@
 # Copyright (C) 2021 Nicholas JH Lai
 # Copyright (C) 2024 Colin B. Macdonald
 
-"""
-Separate qr_coded pages from blank pages.
+"""Separate qr_coded pages from blank pages.
 
 This script is helpful if you accidentally printed the exam
 single-sided. This script will separate blank pages from
