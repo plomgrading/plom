@@ -410,7 +410,7 @@ count-no-docstring:
     - ruff check --select D100,D101,D102,D103,D104,D106,D107 --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 2621 ]]"
+    - bash -c "[[ $HOWMANY -le 2147 ]]"
   allow_failure: true
 
 
