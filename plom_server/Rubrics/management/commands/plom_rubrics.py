@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
-import json
 import pathlib
 from pathlib import Path
 import sys
@@ -18,7 +18,6 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
@@ -135,9 +134,9 @@ class Command(BaseCommand):
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        rubrics = service.get_rubrics_as_dicts(question=question)
 
         if not filename:
+            rubrics = service.get_rubrics_as_dicts(question=question)
             if not rubrics and question:
                 self.stdout.write(f"No rubrics for question index {question}")
                 return
@@ -150,26 +149,14 @@ class Command(BaseCommand):
         filename = Path(filename)
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
             filename = filename.with_suffix(filename.suffix + ".toml")
-        suffix = filename.suffix
+        suffix = filename.suffix[1:]
 
         if verbose:
             self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
 
         with open(filename, "w") as f:
-            if suffix == ".json":
-                json.dump(rubrics, f, indent="  ")
-            elif suffix == ".toml":
-                tomlkit.dump({"rubric": rubrics}, f)
-            elif suffix == ".csv":
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV writing needs "pandas" library: {e}')
-
-                df = pandas.json_normalize(rubrics)
-                df.to_csv(f, index=False, sep=",", encoding="utf-8")
-            else:
-                raise CommandError(f'Don\'t know how to export to "{filename}"')
+            data = service.get_rubric_data(suffix, question=question)
+            f.write(data)
 
     def upload_rubrics_from_file(self, filename):
         """Load rubrics from a file and upload them to the server.
@@ -187,40 +174,20 @@ class Command(BaseCommand):
         autogenerted.  See `upload_rubrics` in `push_pull_rubrics.py`.
         """
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
-            filename = filename.with_suffix(filename.suffix + ".toml")
+            raise CommandError(f"Unsupported file type: {filename}")
         suffix = filename.suffix
 
-        if suffix == ".json":
-            with open(filename, "r") as f:
-                rubrics = json.load(f)
+        if suffix in (".json", ".csv"):
+            f = open(filename, "r")
+            data = f.read()
         elif suffix == ".toml":
-            with open(filename, "rb") as f:
-                rubrics = tomllib.load(f)["rubric"]
-        elif suffix == ".csv":
-            with open(filename, "r") as f:
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV reading needs "pandas" library: {e}')
-
-                df = pandas.read_csv(f)
-                df.fillna("", inplace=True)
-                # TODO: flycheck is whining about this to_json
-                rubrics = json.loads(df.to_json(orient="records"))
+            f = open(filename, "rb")
+            data = f.read().decode("utf-8")
         else:
-            raise CommandError(f'Don\'t know how to import from "{filename}"')
+            raise CommandError(f"Unsupported file type: {filename}")
 
         service = RubricService()
-        for rubric in rubrics:
-            # rubric.pop("id")
-            try:
-                service.create_rubric(rubric)
-            except KeyError as e:
-                raise CommandError(f"{e} field(s) missing from rubrics file.")
-            except ValidationError as e:
-                raise CommandError(e.args[0])
-            except ValueError as e:
-                raise CommandError(e)
+        rubrics = service.update_rubric_data(data, suffix[1:])
         return len(rubrics)
 
     def add_arguments(self, parser):
