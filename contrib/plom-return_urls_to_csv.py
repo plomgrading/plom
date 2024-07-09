@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020, 2023 Colin B. Macdonald
+# Copyright (C) 2020, 2023-2024 Colin B. Macdonald
 
-"""Put Plom's return codes into a Canvas sheet for use with [1]
+"""Put Plom's return codes into a Canvas sheet for use with `sending-conversations` script.
 
-[1] https://github.com/ubccapico/sending-conversations
+Reference: https://github.com/ubccapico/sending-conversations
 
 Modify the `where_csv` variable if you're not running in the directory
 with the CSV files.

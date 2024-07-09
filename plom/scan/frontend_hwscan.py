@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 """Plom's frontend scanning routines for self-scanned work.
 
@@ -13,6 +13,8 @@ template.
 If you instead are dealing with QR-coded pages where you may not yet know
 which pages belong to which student, see :py:module:`frontend_scan`.
 """
+
+from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
@@ -41,21 +43,21 @@ from plom.scan import with_scanner_messenger
 @with_scanner_messenger
 def processHWScans(
     pdf_fname,
-    student_id,
+    student_id: str,
     questions,
     *,
     msgr,
-    gamma=False,
-    extractbmp=False,
-    basedir=Path("."),
-    bundle_name=None,
+    gamma: bool = False,
+    extractbmp: bool = False,
+    basedir: Path = Path("."),
+    bundle_name: str | None = None,
 ):
     """Process the given PDF bundle into images, upload, then archive the pdf.
 
     Args:
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
-        student_id (str):
+        student_id: the student ID to upload this to.
         questions (list): to which questions should we upload these pages?
 
               * a scalar number: all pages map to this question.
@@ -76,10 +78,11 @@ def processHWScans(
         basedir (pathlib.Path): where on the file system do we perform
             the work.  By default, the current working directory is used.
             Subdirectories "archivePDFs" and "bundles" will be created.
-        bundle_name (str/None): Override the bundle name (which is by
+        bundle_name: Override the bundle name (which is by
             default is generated from the PDF filename).
-        gamma (bool):
-        extractbmp (bool):
+        gamma: do gamma correction
+        extractbmp: whether to try extracting bitmaps instead of the default
+            of rendering the page image.
 
     Returns:
         None
@@ -142,6 +145,7 @@ def processHWScans(
     if not bundle_name:
         bundle_name = _
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, msgr=msgr)
+    assert bundle_name is not None
     if exists:
         if reason == "name":
             raise ValueError(

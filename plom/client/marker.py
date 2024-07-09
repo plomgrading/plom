@@ -263,7 +263,8 @@ def upload(
             the .plom file's name and the comment file's name, in that order.
         marking_time (float/int): the marking time (s) for this specific question.
         question_idx (int or str): the question index number.
-        ver (int or str): the version number
+        ver (int or str): the version number.
+        rubrics: list of rubrics used.
         integrity_check (str): the integrity_check string of the task.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
@@ -562,7 +563,7 @@ class MarkerClient(QWidget):
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu(self)
-        m.addAction("Get \N{Mathematical Italic Small N}th...", self.requestInteractive)
+        m.addAction("Get \N{MATHEMATICAL ITALIC SMALL N}th...", self.requestInteractive)
         m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -609,9 +610,9 @@ class MarkerClient(QWidget):
             exclaim = True
             s = "Restricted paper number "
             if mx is None:
-                s += f"\N{Greater-than Or Equal To} {mn}"
+                s += f"\N{GREATER-THAN OR EQUAL TO} {mn}"
             elif mn is None:
-                s += f"\N{Less-than Or Equal To} {mx}"
+                s += f"\N{LESS-THAN OR EQUAL TO} {mx}"
             else:
                 s += f"in [{mn}, {mx}]"
             tips.append(s)
@@ -1497,7 +1498,7 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task ID of the current test.
             numDone (int): number of exams marked
-            numTotal (int): total number of exams to mark.
+            numtotal (int): total number of exams to mark.
 
         Returns:
             None
@@ -1792,7 +1793,7 @@ class MarkerClient(QWidget):
             cache_invalid (bool): whether to cache invalid TeX.  Useful
                 to prevent repeated calls to render bad TeX but might
                 prevent users from seeing (again) an error dialog that
-            try_again_if_cache_invalid (bool): if True then when we get
+            cache_invalid_tryagain (bool): if True then when we get
                 a cache hit of `None` (corresponding to bad TeX) then we
                 try to to render again.
 

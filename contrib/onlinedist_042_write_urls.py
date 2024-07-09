@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 
-"""
-Write the URLs for each student to get their test from.
+"""Write the URLs for each student to get their test from.
 
 Read columns:
     "test_filename"
@@ -13,7 +12,6 @@ Read columns:
 New columns:
     "test_url": a personalized URL
 """
-
 
 from pathlib import Path
 import urllib

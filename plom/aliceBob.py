@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -92,7 +92,7 @@ names = """
 def simple_password(n=3):
     """Creates a new simple password containing a number of words.
 
-    args:
+    Args:
         n (int): number of words for the password. Default n = 3.
 
     Returns:

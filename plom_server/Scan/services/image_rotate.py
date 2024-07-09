@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
@@ -22,13 +22,17 @@ class ImageRotateService:
         self,
         bundle_id: int,
         bundle_order: int,
+        *,
         angle: int,
     ) -> None:
         """A wrapper around rotate_image_cmd.
 
         Args:
-            bundle_id: (int) The pk of the bundle.
-            bundle_order: (int) Bundle order of a page.
+            bundle_id: which bundle, by the pk of the bundle.
+            bundle_order: Position ("order") of a page within the bundle.
+
+        Keyword Args:
+            angle: rotation angle.
 
         Returns:
             None.

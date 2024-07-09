@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022, 2024 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
@@ -394,9 +394,8 @@ def RgetCompletionStatus(self):
     """
     t0 = time()
     progress = {}
-    last_update_dict = (
-        {}
-    )  # to hold the ID-group last update for each test between loops over tests
+    # to hold the ID-group last update for each test between loops over tests
+    last_update_dict = {}
     the_tests = Test.select()
     the_idg = IDGroup.select()
     the_qg = QGroup.select()

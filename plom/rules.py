@@ -6,7 +6,6 @@
 
 """Utils concerning rules about data, like valid student numbers."""
 
-
 StudentIDLength = 8
 
 
