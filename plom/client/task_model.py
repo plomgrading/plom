@@ -433,8 +433,8 @@ class ProxyModel(QSortFilterProxyModel):
         """Sees if left data is less than right data.
 
         Args:
-            left (QModelIndex):
-            right (QModelIndex):
+            left (QModelIndex): comparing inequality between left and right.
+            right (QModelIndex): as above.
 
         Returns:
             bool: if both can be converted to int, compare as ints.

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021, 2023 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2023-2024 Colin B. Macdonald
 
-"""
-Crawl a directory of zip files and upload contents to Plom.
+"""Crawl a directory of zip files and upload contents to Plom.
 
 Instructions: define PLOM_SERVER and PLOM_SCAN_PASSWORD environment
 variables.  Run this script in directory of zip files that come from
@@ -46,7 +45,8 @@ df = pd.read_csv(in_csv)
 def sid_name_from_cid(df, cid):
     """Get the name and Student ID associated with a Canvas User ID.
 
-    TODO: for now, this needs the spreadsheet passed in."""
+    TODO: for now, this needs the spreadsheet passed in.
+    """
     L = df[df["ID"] == int(cid)].index.tolist()
     assert len(L) == 1
     (i,) = L

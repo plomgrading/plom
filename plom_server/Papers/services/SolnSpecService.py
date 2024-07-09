@@ -35,7 +35,8 @@ def load_soln_spec_from_dict(
     Will call the SolnSpecSerializer on the loaded TOML string and validate.
 
     Args:
-        soln_spec_dict:
+        soln_spec_dict: the dictionary describing the structure of the
+            solution of this assessment.
 
     Returns:
         Specification: saved test spec instance.

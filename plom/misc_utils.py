@@ -6,16 +6,14 @@
 
 from __future__ import annotations
 
-"""Misc utilities."""
-
-import arrow
-
 from contextlib import contextmanager
 import math
 import os
 import string
 import sys
 from typing import Any, Sequence
+
+import arrow
 
 
 # ------------------------------------------------
@@ -105,7 +103,7 @@ def format_int_list_with_runs(
             use_unicode = True
         else:
             use_unicode = False
-    dash = "\N{En Dash}" if use_unicode else "-"
+    dash = "\N{EN DASH}" if use_unicode else "-"
     L2 = _find_runs(sorted([int(x) for x in L]))
     L3 = _flatten_2len_runs(L2)
     z = zero_padding if zero_padding else 0
@@ -132,11 +130,11 @@ def _find_runs(S: list[int]) -> list[list[int]]:
 
 def _flatten_2len_runs(L: list[Any]) -> list[Any]:
     L2 = []
-    for l in L:
-        if len(l) < 3:
-            L2.extend(l)
+    for x in L:
+        if len(x) < 3:
+            L2.extend(x)
         else:
-            L2.append(l)
+            L2.append(x)
     return L2
 
 

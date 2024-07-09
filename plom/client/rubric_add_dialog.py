@@ -386,7 +386,7 @@ class AddRubricBox(QDialog):
         parent,
         username,
         maxMark,
-        question_number,
+        question_idx,
         question_label,
         version,
         maxver,
@@ -403,11 +403,12 @@ class AddRubricBox(QDialog):
             parent (QWidget): the parent window.
             username (str): who is creating this rubric or who is
                 modifying this rubric.
-            maxMark (int)
-            question_number (int)
-            question_label (str)
-            version (int)
-            maxver (int)
+            maxMark (int): the maximum score for this question.
+            question_idx (int): which question?
+            question_label (str): human-readable label for the question.
+            version (int): which version?
+            maxver (int): the largest version: versions range from 1
+                to this value.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
 
@@ -428,7 +429,7 @@ class AddRubricBox(QDialog):
         super().__init__(parent)
 
         self.use_experimental_features = experimental
-        self.question_number = question_number
+        self.question_idx = question_idx
         self.version = version
         self.maxver = maxver
         self._username = username
@@ -556,7 +557,7 @@ class AddRubricBox(QDialog):
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
         cb = QCheckBox(
-            f'specific to question "{question_label}" (index {question_number})'
+            f'specific to question "{question_label}" (index {question_idx})'
         )
         cb.setEnabled(False)
         cb.setChecked(True)
@@ -1136,7 +1137,7 @@ class AddRubricBox(QDialog):
                 "text": txt,
                 "tags": tags,
                 "meta": meta,
-                "question": self.question_number,
+                "question": self.question_idx,
                 "versions": vers,
                 "parameters": params,
             }

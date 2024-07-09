@@ -9,11 +9,7 @@ from plom.create.buildDatabaseAndPapers import check_equal_page_count
 
 
 def test_equal_page_count_true(tmp_path) -> None:
-    """Checks that the page counts of each source version pdf are equal.
-
-    Arguments:
-        tmpdir (dir): The directory holding the source version pdfs.
-    """
+    """Checks that the page counts of each source version pdf are equal."""
     # build the source version pdfs in sourceVersions/
     buildDemoSourceFiles(tmp_path)
     assert check_equal_page_count(tmp_path / "sourceVersions")

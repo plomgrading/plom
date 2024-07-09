@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022, 2024 Colin B. Macdonald
 
 import ast
 from pathlib import Path
@@ -11,7 +11,7 @@ status = ""
 
 
 class StringPrinter(ast.NodeTransformer):
-    """Prints all strings containing braces with some word-char in them"""
+    """Prints all strings containing braces with some word-char in them."""
 
     def visit_Str(self, node):
         global status

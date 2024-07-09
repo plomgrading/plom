@@ -575,7 +575,6 @@ class PageScene(QGraphicsScene):
         self._page_action_buttons = []
 
     def build_page_action_buttons(self):
-
         def page_delete_func_factory(n):
             def page_delete():
                 self.dont_use_page_image(n)
@@ -600,7 +599,7 @@ class PageScene(QGraphicsScene):
             # b = QToolButton(text=f"Page {n}")
             # b = QToolButton(text="\N{Page}")
             # heaven == hamburger? works for me!
-            button = QToolButton(text="\N{Trigram For Heaven}")
+            button = QToolButton(text="\N{TRIGRAM FOR HEAVEN}")
             button.setToolTip(f"Options for page {n + 1}")
             button.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
@@ -618,11 +617,11 @@ class PageScene(QGraphicsScene):
             if n == len(self.underImage.images) - 1:
                 _.setEnabled(False)
             m.addAction(
-                "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
+                "\N{ANTICLOCKWISE OPEN CIRCLE ARROW} Rotate CCW",
                 page_rotate_func_factory(n, 90),
             )
             m.addAction(
-                "\N{Clockwise Open Circle Arrow} Rotate CW",
+                "\N{CLOCKWISE OPEN CIRCLE ARROW} Rotate CW",
                 page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
@@ -940,7 +939,7 @@ class PageScene(QGraphicsScene):
     def hasAnnotations(self) -> bool:
         """Checks for pickleable annotations.
 
-        Returns
+        Returns:
             True if page scene has any pickle-able annotations.
             False otherwise.
         """
@@ -1838,11 +1837,11 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I: list[QGraphicsItem], dx: float, dy: float) -> None:
+    def move_some_items(self, L: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
         Args:
-            I: list of objects to move.  TODO: not quite sure yet
+            L: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
                 TODO: typed as ``QGraphicsItem`` but maybe Groups too?
@@ -1854,14 +1853,14 @@ class PageScene(QGraphicsScene):
         your own, see the low-level :py:method:`_move_some_items`.
         """
         self.undoStack.beginMacro("Move several items at once")
-        self._move_some_items(I, dx, dy)
+        self._move_some_items(L, dx, dy)
         self.undoStack.endMacro()
 
-    def _move_some_items(self, I: list, dx: float, dy: float) -> None:
+    def _move_some_items(self, L: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
-        log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        for item in I:
+        log.debug(f"Shifting {len(L)} objects by ({dx}, {dy})")
+        for item in L:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")

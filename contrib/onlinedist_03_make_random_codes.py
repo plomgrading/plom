@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2021 Jenny Li
 
-"""
-Read Plom's produced_papers.csv and make new spreadsheet of random codes for online distro.
+"""Read Plom's produced_papers.csv and make new spreadsheet of random codes for online distro.
 
 1. Use `plom-create` to create your `produced_papers.csv`.
 2. Run this.

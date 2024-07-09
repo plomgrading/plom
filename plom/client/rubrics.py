@@ -16,14 +16,14 @@ def compute_score_naive(rubrics: list[dict[str, Any]], maxscore: int) -> int:
     """Compute score given a set of rubrics, using naive straight sum rules.
 
     Args:
-        rubrics (list):
-        maxscore (int): the maximum anticipated score
+        rubrics: list of rubrics.
+        maxscore: the maximum anticipated score
 
     Returns:
-        int: the computed score
+        The computed score
 
     Raises:
-        ValueError: int is outside range [0, maxscore].
+        ValueError: score is outside range [0, maxscore].
 
     This is probably the simplest scoring system: literally
     just add/subject the values of each rubric.  Likely too
