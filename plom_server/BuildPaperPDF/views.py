@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
@@ -166,13 +166,6 @@ class CancelAllPDFs(PDFTableView):
     def post(self, request: HttpRequest) -> HttpResponse:
         bps = BuildPapersService()
         bps.try_to_cancel_all_queued_tasks()
-        return self.render_pdf_table(request)
-
-
-class CancelOnePDF(PDFTableView):
-    def post(self, request: HttpRequest, paper_number: int) -> HttpResponse:
-        bps = BuildPapersService()
-        bps.try_to_cancel_single_queued_task(paper_number)
         return self.render_pdf_table(request)
 
 

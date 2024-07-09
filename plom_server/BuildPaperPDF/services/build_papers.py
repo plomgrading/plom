@@ -158,7 +158,9 @@ class BuildPapersService:
 
     def are_any_papers_built(self) -> bool:
         """Return true if any papers have had their PDFs built successfully."""
-        return self.get_n_complete_tasks() > 0
+        return BuildPaperPDFChore.objects.filter(
+            status=BuildPaperPDFChore.COMPLETE, obsolete=False
+        ).exists()
 
     @transaction.atomic
     def are_all_papers_built(self) -> bool:
@@ -200,115 +202,95 @@ class BuildPapersService:
             How many tasks did we launch?
         """
         assert_can_rebuild_test_pdfs()
-        N = 0
+        # first we set all tasks with status=error as obsolete.
+        BuildPaperPDFChore.set_every_task_with_status_error_obsolete()
+        # now iterate over papers that have zero non-obsolete chores.
+        papers_to_build = []
         for paper in Paper.objects.all():
-            # This logic and flow is unpleasant...
-            # TODO: andrew may want to help make this all pre-fetchy later
-            # There are two things we need to build:
-            #   - Papers with no chore (non-obsolete)
-            #   - Papers with a Error chore (non-obsolete)
-            _do_build = False
-            try:
-                existing_task = BuildPaperPDFChore.objects.get(
-                    paper=paper, obsolete=False
-                )
-            except ObjectDoesNotExist:
-                _do_build = True
-            else:
-                if existing_task.status == BuildPaperPDFChore.ERROR:
-                    _do_build = True
-                    existing_task.set_as_obsolete()
-            if _do_build:
-                paper_num = paper.paper_number
-                self.send_single_task(paper_num)
-                N += 1
-        return N
+            # if the paper has some non-obsolete chore - do not rebuild
+            if paper.buildpaperpdfchore_set.filter(obsolete=False).exists():
+                pass
+            else:  # rebuild this paper's pdf
+                papers_to_build.append(paper.paper_number)
 
-    def send_single_task(self, paper_num: int) -> None:
-        """Create a new chore and enqueue a task to Huey to build the PDF for a paper.
+        self._send_list_of_tasks(papers_to_build)
+        return len(papers_to_build)
+
+    def send_single_task(self, paper_num: int):
+        """Start building the PDF for the given paper, provided it does not have a QUEUED or COMPLETE chore.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
+        self._send_list_of_tasks([paper_num])
+
+    def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
+        """Create a new list of chores and enqueue the tasks to Huey to build PDF for papers.
 
         If there is a existing chore, it will be set to obsolete.
 
         Args:
-            paper_num: which paper number
+            paper_number_list: which paper number - entries must be unique.
 
         Raises:
             ObjectDoesNotExist: non-existent paper number.
             PlomDependencyConflict: if dependencies not met
         """
-        spec = SpecificationService.get_the_spec()
         assert_can_rebuild_test_pdfs()
 
-        # TODO: helper looks it up again, just here for error handling :(
-        _ = Paper.objects.get(paper_number=paper_num)
-
+        # get all the qvmap and student-id/name info
+        spec = SpecificationService.get_the_spec()
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
-        qv_row = qvmap[paper_num]
-
         prenamed = StagingStudentService().get_prenamed_papers()
-        student_id, student_name = None, None
-        if paper_num in prenamed:
-            student_id, student_name = prenamed[paper_num]
 
-        self._send_single_task(paper_num, spec, student_name, student_id, qv_row)
-
-    def _send_single_task(
-        self,
-        paper_num: int,
-        spec: dict,
-        student_name: str | None,
-        student_id: str | None,
-        qv_row: dict[int, int],
-        *,
-        obsolete_any_existing: bool = True,
-    ) -> None:
-        paper = Paper.objects.get(paper_number=paper_num)
-
-        # TODO: does the chore really need to know the name and id?  Maybe Huey should put it there...
-        with transaction.atomic(durable=True):
-            q = BuildPaperPDFChore.objects.filter(
-                paper=paper, obsolete=False
-            ).select_for_update()
-            n_chores = q.count()
-            if n_chores == 0:
-                pass
-            elif n_chores == 1:
-                if not obsolete_any_existing:
-                    raise ValueError(
-                        f"There are non-obsolete BuildPaperPDFChores for papernum {paper_num}:"
-                        " make them obsolete before creating another"
-                    )
-                c = q.get()
-                c.set_as_obsolete()
-            else:
-                raise RuntimeError(
-                    f"Paper build serious error: there are {n_chores} non-obsolete"
-                    f" chores for paper {paper}, when there should be at most one"
-                )
-            task = BuildPaperPDFChore.objects.create(
-                paper=paper,
-                huey_id=None,
-                status=BuildPaperPDFChore.STARTING,
-                student_name=student_name,
-                student_id=student_id,
+        the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
+        # Check paper-numbers all legal and store the corresponding paper-objects
+        check = the_papers.count()
+        if check != len(paper_number_list):
+            raise ObjectDoesNotExist(
+                "Could not find all papers from supplied list of paper_numbers."
             )
-            task.save()
-            tracker_pk = task.pk
 
-        student_info = None
-        if student_name and student_id:
-            student_info = {"id": student_id, "name": student_name}
-        res = huey_build_single_paper(
-            paper_num,
-            spec,
-            qv_row,
-            student_info=student_info,
-            tracker_pk=tracker_pk,
-            _debug_be_flaky=False,
-        )
-        print(f"Just enqueued Huey paper build task id={res.id}")
-        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
+        with transaction.atomic(durable=True):
+            # first set any existing non-obsolete chores to obsolete
+            for chore in BuildPaperPDFChore.objects.filter(
+                obsolete=False, paper__paper_number__in=paper_number_list
+            ):
+                chore.set_as_obsolete()
+            # now make a list of new chores as they are created
+            chore_list = []
+            for paper in the_papers:
+                if paper.paper_number in prenamed:
+                    student_id, student_name = prenamed[paper.paper_number]
+                else:
+                    student_id, student_name = None, None
+                chore_list.append(
+                    BuildPaperPDFChore.objects.create(
+                        paper=paper,
+                        huey_id=None,
+                        status=BuildPaperPDFChore.STARTING,
+                        student_name=student_name,
+                        student_id=student_id,
+                    )
+                )
+        # for each of the newly created chores, actually ask Huey to run them
+        chore_pk_huey_id_list = []
+        for chore in chore_list:
+            if chore.student_name and chore.student_id:
+                student_info = {"id": chore.student_id, "name": chore.student_name}
+            else:
+                student_info = None
+            res = huey_build_single_paper(
+                chore.paper.paper_number,
+                spec,
+                qvmap[paper.paper_number],
+                student_info=student_info,
+                tracker_pk=chore.pk,
+                _debug_be_flaky=False,
+            )
+            chore_pk_huey_id_list.append((chore.pk, res.id))
+        HueyTaskTracker.bulk_transition_to_queued_or_running(chore_pk_huey_id_list)
 
     def try_to_cancel_all_queued_tasks(self) -> int:
         """Try to cancel all the queued tasks in the Huey queue.
@@ -385,9 +367,9 @@ class BuildPapersService:
         """
         assert_can_rebuild_test_pdfs()
         self.try_to_cancel_all_queued_tasks()
-        for task in BuildPaperPDFChore.objects.all():
-            task.set_as_obsolete()
-            task.unlink_associated_pdf()
+        with transaction.atomic():
+            # bulk set all obsolete and delete associated files
+            BuildPaperPDFChore.set_every_task_obsolete(unlink_files=True)
 
     @transaction.atomic
     def get_all_task_status(self) -> dict[int, str]:
