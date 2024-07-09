@@ -13,20 +13,24 @@ class QuestionTagService:
         question, created = TmpAbstractQuestion.objects.get_or_create(
             question_index=question_index
         )
+
         for tag_name in tag_names:
             try:
                 tag, tag_created = PedagogyTag.objects.get_or_create(
                     tag_name=tag_name, defaults={"user": user}
                 )
-                question_tag, qt_created = QuestionTagLink.objects.get_or_create(
+            except IntegrityError:
+                # Handle the case where the tag_name already exists
+                tag = PedagogyTag.objects.get(tag_name=tag_name)
+
+            try:
+                QuestionTagLink.objects.get_or_create(
                     question=question, tag=tag, user=user
                 )
             except IntegrityError:
-                # Handle the case where the tag_name already exists in a race condition
-                tag = PedagogyTag.objects.get(tag_name=tag_name)
-                question_tag, qt_created = QuestionTagLink.objects.get_or_create(
-                    question=question, tag=tag, user=user
-                )
+                # Handle the case where the question-tag link already exists
+                QuestionTagLink.objects.get(question=question, tag=tag, user=user)
+
         question.save()
 
     @staticmethod
@@ -53,7 +57,7 @@ class QuestionTagService:
         tag.save()
 
     @staticmethod
-    def delete_question_tag(question_tag_id):
+    def delete_question_tag_link(question_tag_id):
         """Delete a question-tag link."""
         question_tag = get_object_or_404(QuestionTagLink, id=question_tag_id)
         question_tag.delete()

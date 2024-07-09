@@ -42,7 +42,7 @@ class QTagsLandingView(ListView):
             form = RemoveTagForm(request.POST)
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
-                QuestionTagService.delete_question_tag(question_tag_id)
+                QuestionTagService.delete_question_tag_link(question_tag_id)
         return redirect(reverse("qtags_landing"))
 
 

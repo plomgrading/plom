@@ -17,10 +17,6 @@
     </p>
     {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#linkQtagModal">Tag a Question</button>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -62,7 +58,12 @@
                                 {% if question_tag.question_index == index %}
                                     {% for qt in question_tag.questiontaglink_set.all %}
                                         <span id="tag-{{ qt.id }}" class="badge bg-primary align-middle tag">
-                                            {{ qt.tag.tag_name }}
+                                            <a href="#"
+                                               class="text-white"
+                                               data-bs-toggle="modal"
+                                               data-bs-target="#tagModal"
+                                               data-tag-name="{{ qt.tag.tag_name }}"
+                                               data-tag-description="{{ qt.tag.text }}">{{ qt.tag.tag_name }}</a>
                                             <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
@@ -119,32 +120,32 @@
           rel="stylesheet" />
     <script>
         $(document).ready(function() {
-            $('#tagName').select2({
+            $('#tag_id_edit').select2({
                 placeholder: 'Select or search for tags',
                 allowClear: true
             });
-
-            $('#addQuestionTagModal').on('shown.bs.modal', function () {
-                $('#tagName').select2({
-                    placeholder: 'Select or search for tags',
-                    allowClear: true
-                });
-            });
-
             $('.tag-link').on('click', function() {
                 var tagName = $(this).data('tag-name');
                 var tagDescription = $(this).data('tag-description');
                 $('#modalTagName').text(tagName);
                 $('#modalTagDescription').text(tagDescription);
             });
-
+    
             $('#tag_id_edit').change(function() {
                 var selectedTag = $(this).val();
                 var selectedTagText = $(this).find('option:selected').text();
                 $('#tagName_edit').val(selectedTagText);
-                // TO-DO: get the description and tag name to display dynamically
-                var selectedTagDescription = tags.find(tag => tag.id == selectedTag).description;
-                $('#tagDescription_edit').val(selectedTagDescription);
+                var selectedTagDescription = $(this).find('option:selected').data('description');
+                $('#text_edit').val(selectedTagDescription);
+            });
+    
+            $('#tagModal').on('show.bs.modal', function(event) {
+                var button = $(event.relatedTarget); // Button that triggered the modal
+                var tagName = button.data('tag-name'); // Extract info from data-* attributes
+                var tagDescription = button.data('tag-description');
+                var modal = $(this);
+                modal.find('#modalTagName').text(tagName);
+                modal.find('#modalTagDescription').text(tagDescription);
             });
         });
     </script>

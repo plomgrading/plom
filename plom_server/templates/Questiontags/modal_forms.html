@@ -1,44 +1,4 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- Copyright (C) 2024 Elisa Pan -->
-<!-- Modal for Linking Question to Tag -->
-<div class="modal fade"
-     id="linkQtagModal"
-     tabindex="-1"
-     role="dialog"
-     aria-labelledby="linkQtagModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="linkQtagModalLabel">Link Question to Tag</h5>
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="linkQtagForm" method="post" action="{% url 'add_question_tag' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="questionIndex">Question Index</label>
-                        <select class="form-control" id="questionIndex" name="questionIndex">
-                            {% for index, label_str, label_html in question_label_triple %}
-                                <option value="{{ index }}">{{ index }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="tagName">Tag Name</label>
-                        <select class="form-control" id="tagName" name="tagName" multiple="multiple">
-                            {% for tag in tags %}<option value="{{ tag.tag_name }}">{{ tag.tag_name }}</option>{% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 <!-- Modal for Creating Tag -->
 <div class="modal fade"
      id="createTagModal"
@@ -94,6 +54,7 @@
                     <div class="form-group">
                         <label for="tag_id">Select Tag to Delete</label>
                         <select class="form-control" id="tag_id" name="tag_id">
+                            <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
@@ -104,8 +65,6 @@
     </div>
 </div>
 <!-- Modal for Editing Tag -->
-<!-- TO-DO: have the tag name and description display when choosing an option 
-            have a delete button -->
 <div class="modal fade"
      id="editTagModal"
      tabindex="-1"
@@ -127,7 +86,10 @@
                     <div class="form-group">
                         <label for="tag_id_edit">Select Tag to Edit</label>
                         <select class="form-control" id="tag_id_edit" name="tag_id">
-                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
+                            <option value="" disabled selected>Select a tag</option>
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}" data-description="{{ tag.text }}">{{ tag.tag_name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
