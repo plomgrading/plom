@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
@@ -190,7 +191,7 @@ class HueyTaskTracker(models.Model):
 # ---------------------------------
 
 
-class SingletonBaseModel(models.Model):
+class SingletonABCModel(models.Model):
     """We define a singleton model for the test-specification.
 
     This abstract model ensures that any derived models have at most a
@@ -209,8 +210,7 @@ class SingletonBaseModel(models.Model):
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
+        raise NotImplementedError("load() should be overridden in derived classes")
 
 
 class BaseTask(PolymorphicModel):
@@ -286,13 +286,26 @@ class Tag(models.Model):
         return str(self.text)
 
 
-class SettingsModel(SingletonBaseModel):
+class SettingsModel(SingletonABCModel):
     """Global configurable settings."""
 
     # TODO: intention is a tri-state: "permissive", "per-user", "locked"
     who_can_create_rubrics = models.TextField(default="permissive")
     who_can_modify_rubrics = models.TextField(default="per-user")
     feedback_rules = models.JSONField(default=dict)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the SettingsModel."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "who_can_create_rubrics": "permissive",
+                "who_can_modify_rubrics": "per-user",
+                "feedback_rules": {},
+            },
+        )
+        return obj
 
 
 # ---------------------------------
