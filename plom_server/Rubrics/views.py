@@ -3,16 +3,19 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
+from io import TextIOWrapper, StringIO, BytesIO
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
+from django.contrib import messages
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
@@ -20,8 +23,8 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricWipeForm
-from .forms import RubricFilterForm, RubricEditForm
+from .forms import RubricAdminForm, RubricWipeForm, RubricUploadForm
+from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -30,12 +33,16 @@ class RubricAdminPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.GET)
+        download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         rubrics = RubricService().get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -43,6 +50,8 @@ class RubricAdminPageView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.POST)
+        download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         if form.is_valid():
             # TODO: not necessarily the one who logged in; does it matter?
@@ -54,6 +63,8 @@ class RubricAdminPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -324,3 +335,52 @@ class FeedbackRulesView(ManagerRequiredView):
             }
         )
         return render(request, template_name, context=context)
+
+
+class DownloadRubricView(ManagerRequiredView):
+    def get(self, request: HttpRequest):
+        service = RubricService()
+        question = request.GET.get("question_filter")
+        filetype = request.GET.get("file_type")
+
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
+
+        if filetype == "json":
+            data_string = service.get_rubric_data("json", question=question)
+            buf = StringIO(data_string)
+            response = HttpResponse(buf.getvalue(), content_type="text/json")
+            response["Content-Disposition"] = "attachment; filename=rubrics.json"
+        elif filetype == "toml":
+            data_string = service.get_rubric_data("toml", question=question)
+            buf2 = BytesIO(data_string.encode("utf-8"))
+            response = HttpResponse(buf2.getvalue(), content_type="application/toml")
+            response["Content-Disposition"] = "attachment; filename=rubrics.toml"
+        else:
+            data_string = service.get_rubric_data("csv", question=question)
+            buf3 = StringIO(data_string)
+            response = HttpResponse(buf3.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=rubrics.csv"
+        return response
+
+
+class UploadRubricView(ManagerRequiredView):
+    def post(self, request: HttpRequest):
+        service = RubricService()
+        suffix = request.FILES["rubric_file"].name.split(".")[-1]
+
+        if suffix == "csv" or suffix == "json":
+            f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
+            data_string = f.read()
+        elif suffix == "toml":
+            f2 = BytesIO(request.FILES["rubric_file"].file.read())
+            data_string = f2.getvalue().decode("utf-8")
+        else:
+            messages.error(request, "Invalid rubric file format")
+            return redirect("rubrics_admin")
+
+        service.update_rubric_data(data_string, suffix)
+        messages.success(request, "Rubric file uploaded successfully.")
+        return redirect("rubrics_admin")

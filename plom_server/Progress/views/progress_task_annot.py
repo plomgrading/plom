@@ -42,6 +42,12 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
         the_tag = request.GET.get("the_tag", "*")
+        status = request.GET.get("status", "*")
+        if status != "*":
+            status = int(status)
+            status_label = MarkingTask.StatusChoices(status).label
+        else:
+            status_label = "*"
 
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
@@ -57,6 +63,12 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         else:
             mark_list = [str(m) for m in range(maxmark + 1)]
         tag_list = sorted([X[1] for X in MarkingTaskService().get_all_tags()])
+        # the item in status_list will be tuple (value, label), eg: (1, To Do)
+        status_list = MarkingTask._meta.get_field("status").choices
+
+        # get rid of "Out Of Date"
+        if (4, "Out Of Date") in status_list:
+            status_list.remove((4, "Out Of Date"))
 
         context.update(
             {
@@ -67,18 +79,24 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
                 "version": version,
                 "username": username,
                 "score": score,
+                "status": status,
                 "the_tag": the_tag,
                 "paper_list": paper_list,
                 "version_list": version_list,
                 "mark_list": mark_list,
                 "username_list": mss.get_list_of_users_who_marked_anything(),
                 "tag_list": tag_list,
+                "status_list": status_list,
+                "status_label": status_label,
             }
         )
 
         # if all filters set to * then ask user to set at least one
         # don't actually filter **all** tasks
-        if all(X == "*" for X in [paper, question, version, username, score, the_tag]):
+        if all(
+            X == "*"
+            for X in [paper, question, version, username, score, the_tag, status]
+        ):
             context.update({"warning": True})
             return render(request, "Progress/Mark/task_filter.html", context)
 
@@ -100,6 +118,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
             score_min=optional_arg(score),
             score_max=optional_arg(score),
             the_tag=optional_arg(the_tag),
+            status=optional_arg(status),
         )
         context.update({"task_info": task_info})
 

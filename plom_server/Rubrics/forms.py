@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django import forms
+
+from Papers.services import SpecificationService
 
 from .models import Rubric
 
@@ -22,13 +25,6 @@ class RubricWipeForm(forms.Form):
 
 
 class RubricFilterForm(forms.Form):
-    # using hard-coded choices for now
-    QUESTION_CHOICES = [
-        ("", "All Questions"),
-        ("1", "Question 1"),
-        ("2", "Question 2"),
-        ("3", "Question 3"),
-    ]
     KIND_CHOICES = [
         ("", "All Kinds"),
         ("absolute", "Absolute"),
@@ -36,8 +32,16 @@ class RubricFilterForm(forms.Form):
         ("relative", "Relative"),
     ]
 
-    question_filter = forms.TypedChoiceField(choices=QUESTION_CHOICES, required=False)
+    question_filter = forms.TypedChoiceField(required=False)
     kind_filter = forms.TypedChoiceField(choices=KIND_CHOICES, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+        self.fields["question_filter"].choices = question_choices
 
 
 class RubricEditForm(forms.ModelForm):
@@ -47,3 +51,26 @@ class RubricEditForm(forms.ModelForm):
         widgets = {
             "meta": forms.Textarea(attrs={"rows": 2, "cols": 50}),
         }
+
+
+class RubricDownloadForm(forms.Form):
+    FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
+    question_filter = forms.TypedChoiceField(required=False)
+    file_type = forms.TypedChoiceField(
+        choices=FILE_TYPE_CHOICES, required=False, initial=".csv"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+
+        question_choices.insert(0, ("", "All Questions"))
+
+        self.fields["question_filter"].choices = question_choices
+
+
+class RubricUploadForm(forms.Form):
+    rubric_file = forms.FileField(label="")
