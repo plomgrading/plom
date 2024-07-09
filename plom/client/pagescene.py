@@ -2047,10 +2047,10 @@ class PageScene(QGraphicsScene):
 
     def dont_use_page_image(self, n: int) -> None:
         imgid = self._id_from_visible_idx(n)
+        img = self.underImage.images[n]
         # the try behaves like "with highlighted_pages([n]):"
         self.highlight_pages([n], "darkred")
         try:
-            img = self.underImage.images[n]
             d = SimpleQuestion(
                 self.parent(),  # self.addWidget(d) instead?
                 """Remove this page? <ul>\n
