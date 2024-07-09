@@ -2,11 +2,12 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
 from django.conf import settings
 
-from Base.models import SingletonBaseModel
+from Base.models import SingletonABCModel
 from Base.models import HueyTaskTracker
 
 
@@ -20,15 +21,37 @@ class PaperSourcePDF(models.Model):
         return settings.MEDIA_ROOT / cls.source_pdf.field.upload_to
 
 
-class PrenamingSetting(SingletonBaseModel):
+class PrenamingSetting(SingletonABCModel):
     enabled = models.BooleanField(default=False, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the PrenamingSettings model."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "enabled": False,
+            },
+        )
+        return obj
 
 
 # TODO: consider moving this field to Base.SettingsModel
-class PapersPrintedSettingModel(SingletonBaseModel):
+class PapersPrintedSettingModel(SingletonABCModel):
     """Set this once user has printed papers."""
 
     have_printed_papers = models.BooleanField(default=False, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the PapersPrintedSettingModel."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "have_printed_papers": False,
+            },
+        )
+        return obj
 
 
 # ---------------------------------

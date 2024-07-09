@@ -73,14 +73,10 @@ class CommandRubric(CommandTool):
     def redo(self):
         self.scene.addItem(self.gdt)
         self.redo_animation()
-        # TODO: IMHO it is not the job of undo/redo code to trigger score refresh
-        self.scene.refreshStateAndScore()
 
     def undo(self):
         self.scene.removeItem(self.gdt)
         self.undo_animation()
-        # TODO: IMHO it is not the job of undo/redo code to trigger score refresh
-        self.scene.refreshStateAndScore()
 
 
 class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):

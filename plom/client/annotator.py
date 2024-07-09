@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -196,6 +197,8 @@ class Annotator(QWidget):
             log.info("loaded custom overlay: %s", self.keybinding_custom_overlay)
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
+        # heaven == hamburger? works for me!
+        self.ui.hamMenuButton.setText("\N{Trigram For Heaven}")
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
@@ -224,7 +227,7 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._hold_crop_checkbox.setVisible(False)
             if self.scene:
-                self.scene.remove_page_hack_buttons()
+                self.scene.remove_page_action_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -235,8 +238,9 @@ class Annotator(QWidget):
         #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
         # )
         features = (
+            "Spelling checking in rubric creation",
             "Persistent held region between papers.",
-            # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
+            "Page manipulation in annotator.",
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -258,7 +262,7 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._hold_crop_checkbox.setVisible(True)
         if self.scene:
-            self.scene.build_page_hack_buttons()
+            self.scene.build_page_action_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
@@ -1235,7 +1239,7 @@ class Annotator(QWidget):
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
         else:
             self.setToolMode("image", imagePath=fileName)
@@ -1878,6 +1882,42 @@ class Annotator(QWidget):
     def getOneRubricFromServer(self, key):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
+
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Request a list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric, excluding the paper
+            the annotator currently at.
+        """
+        curr_paper_number = int(self.tgvID[:4])
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        if curr_paper_number in result:
+            result.remove(curr_paper_number)
+        return result
+
+    def view_other_paper(
+        self, paper_number: int, *, _parent: QWidget | None = None
+    ) -> None:
+        """Opens another dialog to view a paper.
+
+        Args:
+            paper_number: the paper number of the paper to be viewed.
+
+        Keyword:
+            _parent: override the default parent which is ourselves.
+
+        Returns:
+            None
+        """
+        if _parent is None:
+            _parent = self
+        self.parentMarkerUI.view_other(
+            paper_number=paper_number, question_idx=self.question_num, _parent=_parent
+        )
 
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""

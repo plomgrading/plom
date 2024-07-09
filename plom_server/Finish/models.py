@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from django.db import models
 

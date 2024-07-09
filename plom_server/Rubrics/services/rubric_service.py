@@ -8,12 +8,25 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 import html
 import logging
+import sys
 from typing import Any
+import json
+import tomlkit
+import io
+import csv
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 
 from operator import itemgetter
 
@@ -102,12 +115,13 @@ class RubricService:
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
-        username = rubric_data.pop("username")
-        try:
-            user = User.objects.get(username=username)
-            rubric_data["user"] = user.pk
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"User {username} does not exist.") from e
+        if "user" not in rubric_data.keys():
+            username = rubric_data.pop("username")
+            try:
+                user = User.objects.get(username=username)
+                rubric_data["user"] = user.pk
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User {username} does not exist.") from e
 
         s = SettingsModel.load()
         if creating_user is None:
@@ -271,6 +285,34 @@ class RubricService:
             be read-only.
         """
         return Rubric.objects.get(key=rubric_key)
+
+    def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
+        """Get a list of paper number using the given rubric.
+
+        Args:
+            rubric_key: the identifier of the rubric.
+
+        Returns:
+            A list of paper number using that rubric.
+        """
+        seen_paper = set()
+        paper_numbers = list()
+        # Iterate from newest to oldest updates, ignore duplicate papers seen at later time
+        # Append to paper_numbers if the *NEWEST* annotation on that paper uses the rubric.
+        annotions_using_the_rubric = Rubric.objects.get(
+            key=rubric_key
+        ).annotations.all()
+
+        annotations = Annotation.objects.all().order_by("-time_of_last_update")
+        for annotation in annotations:
+            paper_number = annotation.task.paper.paper_number
+            if (paper_number not in seen_paper) and (
+                annotation in annotions_using_the_rubric
+            ):
+                paper_numbers.append(paper_number)
+            seen_paper.add(paper_number)
+
+        return paper_numbers
 
     def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
         """Get a rubric by its key/id and return as a dictionary.
@@ -546,3 +588,71 @@ class RubricService:
                 </tr>
             </table>
         """
+
+    def get_rubric_data(self, filetype: str, question: int | None) -> str:
+        """Get the rubric data as a file.
+
+        Args:
+            filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
+            question: The question ID to filter the rubric data. If None, all rubrics will be included.
+
+        Returns:
+            A string containing the rubric data from the specified file format.
+
+        Raises:
+            ValueError: If the specified file type is not supported.
+        """
+        rubrics = self.get_rubrics_as_dicts(question=question)
+
+        if filetype == "json":
+            if question is not None:
+                queryset = Rubric.objects.filter(question=question)
+            else:
+                queryset = Rubric.objects.all()
+            serializer = RubricSerializer(queryset, many=True)
+            data_string = json.dumps(serializer.data, indent="  ")
+        elif filetype == "toml":
+            for dictionary in rubrics:
+                filtered = {k: v for k, v in dictionary.items() if v is not None}
+                dictionary.clear()
+                dictionary.update(filtered)
+            data_string = tomlkit.dumps({"rubric": rubrics})
+        elif filetype == "csv":
+            f = io.StringIO()
+            writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
+            writer.writeheader()
+            writer.writerows(rubrics)
+            data_string = f.getvalue()
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        return data_string
+
+    def update_rubric_data(self, data: str, filetype: str):
+        """Retrieves rubrics from a file.
+
+        Args:
+            data: The file object containing the rubrics.
+            filetype: The type of the file (json, toml, csv).
+
+        Returns:
+            A list of rubrics retrieved from the file.
+
+        Raises:
+            ValueError: If the file type is not supported.
+        """
+        if filetype == "json":
+            rubrics = json.loads(data)
+        elif filetype == "toml":
+            rubrics = tomllib.loads(data)["rubric"]
+        elif filetype == "csv":
+            f = io.StringIO(data)
+            reader = csv.DictReader(f)
+            rubrics = list(reader)
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        service = RubricService()
+        for rubric in rubrics:
+            service.create_rubric(rubric)
+        return rubrics
