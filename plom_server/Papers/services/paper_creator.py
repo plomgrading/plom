@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Dict
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
@@ -116,7 +116,7 @@ class PaperCreatorService:
         id_page_number = int(spec_obj.idPage)
         dnm_page_numbers = [int(pg) for pg in spec_obj.doNotMarkPages]
         for paper_number, qv_row in qv_map.items():
-            print(f"Constructing paper {paper_number} with {qv_row}")
+            log.info(f"Constructing paper {paper_number} with {qv_row}")
             # build all the objects, then save.
             paper_obj = Paper(paper_number=paper_number)
             # TODO - change how DNM and ID pages taken from versions
