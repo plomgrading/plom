@@ -45,7 +45,7 @@ class NumberOfPapersToProduceSetting(SingletonABCModel):
         obj, created = cls.objects.get_or_create(
             pk=1,
             defaults={
-                "enabled": False,
+                "number_of_papers": 0,
             },
         )
         return obj
