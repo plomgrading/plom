@@ -36,8 +36,19 @@ class PrenamingSetting(SingletonABCModel):
         return obj
 
 
-class NumberOfPapersToProduceSetting(SingletonBaseModel):
+class NumberOfPapersToProduceSetting(SingletonABCModel):
     number_of_papers = models.PositiveIntegerField(default=0, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the NumberOfPapersToProduceSetting model."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "enabled": False,
+            },
+        )
+        return obj
 
 
 # TODO: consider moving this field to Base.SettingsModel
