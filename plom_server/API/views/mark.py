@@ -359,11 +359,14 @@ class MgetAnnotationImage(APIView):
 class TagsFromCodeView(APIView):
     """Handle getting and setting tags for marking tasks."""
 
-    def get(self, request, code):
+    def get(self, request: Request, *, code: str) -> Response:
         """Get all of the tags for a particular task.
 
         Args:
-            code: str, question/paper code for a task
+            request: an http request.
+
+        Keyword Args:
+            code: question/paper code for a task.
 
         Returns:
             200: list of tag texts
@@ -380,11 +383,14 @@ class TagsFromCodeView(APIView):
         except RuntimeError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
-    def patch(self, request, code):
+    def patch(self, request: Request, *, code: str) -> Response:
         """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
 
         Args:
-            code: str, question/paper code for a task
+            request: an http request.
+
+        Keyword Args:
+            code: str, question/paper code for a task.
 
         Returns:
             200: OK response

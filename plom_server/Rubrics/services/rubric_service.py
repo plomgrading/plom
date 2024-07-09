@@ -147,7 +147,7 @@ class RubricService:
             key: a string that uniquely identify a specific rubric.
                 Generally not the same as the "private key" used
                 internally, although this could change in the future.
-            rubric_data: data for a rubric submitted by a web request.
+            new_rubric_data: data for a rubric submitted by a web request.
                 This input will not be modified by this call.
 
         Keyword Args:
@@ -318,7 +318,7 @@ class RubricService:
         """Add special rubrics such as deltas and per-question specific.
 
         Args:
-            Username to associate with the initialized rubrics.
+            username: which user to associate with the initialized rubrics.
 
         Returns:
             True if initialized or False if it was already initialized.
@@ -484,26 +484,26 @@ class RubricService:
         pass
 
     def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
-        """Get the queryset of annotations that use this rubric.
+        """Get the QuerySet of Annotations that use this Rubric.
 
         Args:
-            Rubric instance
+            rubric: a Rubric object instance.
 
         Returns:
-            A query of Annotation instances
+            A query set of Annotation instances.
         """
         return rubric.annotations.all()
 
     def get_marking_tasks_with_rubric_in_latest_annotation(
         self, rubric: Rubric
     ) -> QuerySet[MarkingTask]:
-        """Get the queryset of marking tasks that use this rubric in their latest annotations.
+        """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
         Args:
-            Rubric instance
+            rubric: a Rubric object instance.
 
         Returns:
-            A query of MarkingTask instances
+            A query of MarkingTask instances.
         """
         return (
             MarkingTask.objects.filter(

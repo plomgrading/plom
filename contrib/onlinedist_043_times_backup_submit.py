@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2024 Colin B. Macdonald
 # Copyright (C) 2020 Jenny Li
 
-"""
-Update the mappings to for human-readable room, time, and emerg. links
+"""Update the mappings to for human-readable room, time, and emerg. links.
 
 *** IMPORTANT STUFF TO CHANGE
  * See Room names below

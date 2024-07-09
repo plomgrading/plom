@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2022, 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -10,20 +12,22 @@ solution_path = Path("solutionImages")
 
 
 @with_manager_messenger
-def putSolutionImage(question, version, imageName, *, msgr):
+def putSolutionImage(
+    question: int, version: int, imageName: str | Path, *, msgr
+) -> tuple[bool, str]:
     """Push a solution image to a server.
 
     Args:
-        question (int):
-        version (int):
-        imageName (str/pathlib.Path):
+        question: which question.
+        version: which version.
+        imageName: local image name to upload.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
     Returns:
-        `[True, msg]` or `[False, msg]` where `msg` is either an
+        Tuple of `(True, msg)` or `(False, msg)` where `msg` is either an
         error message (on failure) or a diagnostic message (on success).
     """
     spec = msgr.get_spec()
@@ -31,14 +35,14 @@ def putSolutionImage(question, version, imageName, *, msgr):
     iq = int(question)
     iv = int(version)
     if iq < 1 or iq > spec["numberOfQuestions"]:
-        return [False, "Question number out of range"]
+        return (False, "Question number out of range")
     if iv < 1 or iv > spec["numberOfVersions"]:
-        return [False, "Version number out of range"]
+        return (False, "Version number out of range")
     if spec["question"][question]["select"] == "fix" and iv != 1:
-        return [False, f"Question{question} has fixed version = 1"]
+        return (False, f"Question{question} has fixed version = 1")
 
     msgr.putSolutionImage(question, version, imageName)
-    return [True, f"Solution for {question}.{version} uploaded"]
+    return (True, f"Solution for {question}.{version} uploaded")
 
 
 @with_manager_messenger

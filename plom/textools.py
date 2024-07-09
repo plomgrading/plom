@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 """Tools for working with TeX."""
@@ -150,11 +150,11 @@ def texFragmentToPNG(
             return (True, f.read())
 
 
-def buildLaTeX(src, out):
+def buildLaTeX(src: str, out):
     """Compile a string of latex.
 
     Args:
-        src (str):
+        src: a string of LaTeX code to compile.
         out (file-like): the binary pdf file will be written into this.
 
     Returns:
@@ -163,7 +163,7 @@ def buildLaTeX(src, out):
         - (`int`): exit value from the subprocess call (zero good, non-zero bad)
         - (`str`): stdout/stderr from the subprocess call
 
-    TODO: this is more generally useful but how to handle the idBox2?
+    TODO: this is more generally useful but how to generalize/handle the idBox?
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox4.pdf", "wb") as fh:

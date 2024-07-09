@@ -134,7 +134,7 @@ def _reassemble_one_paper(
 
     Args:
         msgr (ManagerMessenger): Messenger object that talks to the server.
-        tmpdir (pathlib.Path/str): The directory where we will download
+        tmpdir: The directory where we will download
             the annotated images for each question.
             We will also build cover pages there.
         outdir: where to build the reassembled pdf.
@@ -142,6 +142,7 @@ def _reassemble_one_paper(
             a filename prefix, e.g., "math107mt1".
         max_marks: the maximum mark for each question, keyed by the
             question number, which seems to be a string.
+        num_questions: how many questions did the assessment have?
         t: Test number.
         sid: The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.

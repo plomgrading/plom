@@ -368,16 +368,17 @@ class Manager(QWidget):
         """Start a new Plom Manager window.
 
         Args:
-            Qapp (QApplication):
+            Qapp (QApplication): the application for whom we are opening
+                a window.
 
         Keyword Args:
             manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
                 Note that the plain 'ol Messenger will not work.  By default
                 or if `None` is passed, we'll make the user login or use
                 other kwargs.
-            server (str/None):
-            user (str/None):
-            password (str/None):
+            server (str/None): what server.
+            user (str/None): credientials.
+            password (str/None): credientials.
 
         Returns:
             None
@@ -2544,8 +2545,8 @@ class Manager(QWidget):
         """Manage the tags of a task.
 
         Args:
-            paper_num (int/str):
-            question (int/str):
+            paper_num (int/str): paper number.
+            question (int/str): question idex.
 
         Keyword Args:
             parent (Window/None): Which window should be dialog's parent?

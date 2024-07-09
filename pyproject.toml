@@ -302,8 +302,15 @@ ignore-words = ".codespell-ignorewords"
 exclude-file = ".codespell-ignorelines"
 
 [tool.ruff.lint]
+# enable docstring
+select = ["D"]
 # F401: defining __all__ might be right fix
 # E402: re-ordering causes circular imports
 per-file-ignores = {'__init__.py' = ['F401', 'E402']}
-# "x not in y" better than "not x in y", but lots of these in legacy server
-ignore = ["E713"]
+# D10x: most of these are about missing docstrings
+ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D106"]
+# Legacy stuff: would need lots of edits to pass
+exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

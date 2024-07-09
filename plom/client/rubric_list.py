@@ -72,15 +72,15 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) 
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        rubric (dict):
+        rubric: a particular rubric to check.
 
     Keyword Args:
         scene (PageScene): we'll grab the in-use rubrics from it
-        maxMark (int):
-        version (int):
+        maxMark: maximum possible score on this question.
+        version: which version.
 
     Returns:
-        int: 0, 1, 2, 3 as documented above.
+        integer 0, 1, 2, or 3 as documented above.
     """
     if rubric["versions"]:
         if version not in rubric["versions"]:
@@ -121,18 +121,28 @@ class RubricTable(QTableWidget):
     ``.tabType``.
     """
 
-    def __init__(self, parent, shortname=None, *, sort=False, tabType=None):
+    def __init__(
+        self,
+        parent: RubricWidget,
+        shortname: str | None = None,
+        *,
+        sort: bool = False,
+        tabType: str | None = None,
+    ):
         """Initialize a new RubricTable.
 
         Args:
-            parent:
-            shortname (str):
+            parent: the parent widget.  Cannot be a general widget, must be a
+                RubricWidget (or something like it) because we call methods
+                of the parent.  TODO: in principle, can use signals/slots?
+            shortname: a short string describing the assessment.
 
         Keyword Args:
-            tabType (str/None): "show", "hide", "group", "delta", `None`.
+            tabType: controls what type of tab this is:
+                "show", "hide", "group", "delta", `None`.
                 Here `"show"` is used for the "All" tab, `None` is used
                 for custom "user tabs".
-            sort (bool):
+            sort: is the tab sorted.
 
         Returns:
             None
@@ -143,10 +153,6 @@ class RubricTable(QTableWidget):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.horizontalHeader().setVisible(False)
-        self.horizontalHeader().setStretchLastSection(True)
-        # Issue #1498: use these for shortcut key indicators
-        self.verticalHeader().setVisible(False)
         self.setGridStyle(Qt.PenStyle.DotLine)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
@@ -164,10 +170,20 @@ class RubricTable(QTableWidget):
             }
         """
         )
-        # CSS cannot set relative fontsize
-        f = self.font()
-        f.setPointSizeF(0.67 * f.pointSizeF())
-        self.verticalHeader().setFont(f)
+        head = self.horizontalHeader()
+        if head:
+            # it seems during unit tests there isn't one?
+            head.setVisible(False)
+            head.setStretchLastSection(True)
+        # Issue #1498: use these for shortcut key indicators
+        head = self.verticalHeader()
+        if head:
+            # it seems during unit tests there isn't one?
+            head.setVisible(False)
+            # CSS cannot set relative fontsize
+            f = self.font()
+            f.setPointSizeF(0.67 * f.pointSizeF())
+            head.setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         _col_headers = ("Key", "Username", "Delta", "Text")
@@ -426,10 +442,10 @@ class RubricTable(QTableWidget):
 
         If its a dupe, don't add.
 
-        Args
+        Args:
             key: the key associated with a rubric.
 
-        Raises
+        Raises:
             what happens on invalid key?
         """
         # ensure there is exactly one matching rubric in the list and grab it
@@ -1459,7 +1475,7 @@ class RubricWidget(QWidget):
     def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
         """Set the current rubric key and the current tab, as if it was clicked on.
 
-        Args
+        Args:
             key: which rubric to highlight.  If None, no action.
             tab: index of which tab to choose.
 
@@ -1723,7 +1739,7 @@ class RubricWidget(QWidget):
                 depending on next arg.  If set to None, which always
                 means create new.
 
-        Keyword args:
+        Keyword Args:
             edit: True if we are modifying the comment.  If False, use
                 `com` as a template for a new duplicated comment.
             index: the index of the comment inside the current rubric list
