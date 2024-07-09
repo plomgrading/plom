@@ -124,6 +124,7 @@ class MarkerExamModel(QStandardItemModel):
                 The server expects us to be able to give it back to them.
             src_img_data: a list of dicts of md5sums, filenames and other
                 metadata of the images for the test question.
+            username: who owns this task.
 
         Returns:
             The integer row identifier of the added paper.
@@ -194,6 +195,7 @@ class MarkerExamModel(QStandardItemModel):
                 The server expects us to be able to give it back to them.
             src_img_data: a list of dicts of md5sums, filenames and other
                 metadata of the images for the test question.
+            username: who owns this task.
 
         Returns:
             The integer row identifier of the added/modified paper.
