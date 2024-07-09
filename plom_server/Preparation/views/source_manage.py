@@ -69,7 +69,7 @@ class SourceManageView(ManagerRequiredView):
             )
             context.update({"version": version, "success": success, "message": message})
 
-        return render(request, "Preparation/test_source_attempt.html", context)
+        return render(request, "Preparation/source_attempt.html", context)
 
     def delete(self, request, version=None):
         if PapersPrinted.have_papers_been_printed():
