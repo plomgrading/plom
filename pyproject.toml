@@ -304,9 +304,6 @@ exclude-file = ".codespell-ignorelines"
 [tool.ruff.lint]
 # enable docstring
 select = ["D"]
-# F401: defining __all__ might be right fix
-# E402: re-ordering causes circular imports
-per-file-ignores = {'__init__.py' = ['F401', 'E402']}
 # D10x: most of these are about missing docstrings
 ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D106"]
 # Legacy stuff: would need lots of edits to pass
@@ -314,3 +311,10 @@ exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# F401: defining __all__ might be right fix
+# E402: re-ordering causes circular imports
+'__init__.py' = ['F401', 'E402']
+# tests don't need docstrings
+'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']
